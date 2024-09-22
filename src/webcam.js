@@ -438,7 +438,7 @@ function showSummary() {
           <script>
             function onSignInSuccess(data) {
   console.log("Sign-in success with data:", data);
-  const ws = new WebSocket('wss://your-vercel-deployment-url.vercel.app/api/websocket');
+  const ws = new WebSocket('wss://imperfect-form-v2.vercel.app/api/websocket');
 
   ws.onopen = () => {
     console.log('WebSocket connection established');
