@@ -1,3 +1,5 @@
+let storage = null;
+
 module.exports = {
   tempStorage: {
     set: (data) => {
