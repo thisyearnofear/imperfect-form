@@ -440,7 +440,7 @@ function showSummary() {
             console.log("Sign-in success with data:", data);
             
             try {
-              const storeResponse = await fetch('/api/store-signer', {
+const storeResponse = await fetch('/api/store-signer', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -472,7 +472,7 @@ function showSummary() {
               document.getElementById("confirmCastButton").addEventListener("click", async () => {
                 console.log('Confirm and Send button clicked');
                 
-                const castResponse = await fetch('/api/confirm-cast', {
+const castResponse = await fetch('/api/confirm-cast', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
