@@ -30,6 +30,8 @@
     "node-fetch": "2.6.1",
     "os-browserify": "^0.3.0",
     "process": "^0.11.10",
+    "pusher": "^5.2.0",
+    "pusher-js": "^8.4.0-rc2",
     "react": "18",
     "react-dom": "18",
     "react-is": "^18.3.1",
