@@ -1,0 +1,947 @@
+/* Base styles */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Press Start 2P", cursive;
+  background-color: #000;
+  color: #fff;
+  overflow-y: auto; /* Allow vertical scrolling */
+  min-height: 100vh;
+}
+
+/* Layout */
+#game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center content horizontally */
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto; /* Allow vertical scrolling within the container */
+  justify-content: center; /* Added to vertically center all content */
+}
+
+/* Banner */
+#banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.olympic-rings {
+  display: flex;
+  margin-right: 20px;
+}
+
+.ring {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin: 0 5px;
+  border: 3px solid transparent; /* Change to transparent to show filled color */
+  /* Add this to ensure the rings are filled */
+  display: inline-block; /* Ensure they are inline */
+}
+
+.blue {
+  background-color: #416ced; /* Fill color for the blue ring */
+  border-color: #416ced; /* Same color for the border */
+}
+
+.red {
+  background-color: #ff69b4; /* Fill color for the red ring */
+  border-color: #ff69b4; /* Same color for the border */
+}
+
+h1 {
+  font-size: 24px;
+  color: #fcb131;
+  text-shadow: 2px 2px #000;
+}
+
+.login-button {
+  background-color: #855dcd; /* Purple color */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.login-button img {
+  margin-left: 5px; /* Space between text and icon */
+  height: 30px; /* Adjust icon size */
+}
+
+/* Game screen */
+#screen {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  background-color: #000;
+  border: 4px solid #fff;
+  box-shadow: 0 0 10px #fcb131;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+
+#canvasContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Neynar */
+
+.neynar-container {
+  background-color: #000;
+  border: 3px solid #fcb131;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  font-family: "Press Start 2P", cursive;
+  color: #fcb131;
+  max-width: 300px;
+  margin: 20px auto;
+}
+
+.neynar-button {
+  background-color: #9146ff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.neynar-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px #9146ff;
+}
+
+.confirm-cast-container {
+  background-color: #000;
+  border: 3px solid #fcb131;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  font-family: "Press Start 2P", cursive;
+  color: #fcb131;
+  max-width: 300px;
+  margin: 20px auto;
+}
+
+.confirm-cast-text {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.confirm-cast-button {
+  background-color: #00a651;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-cast-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px #00a651;
+}
+
+/* Messages and instructions */
+#welcomeMessage,
+#instructions {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+#instructions a:hover {
+  color: #dee561; /* White on hover */
+}
+
+.positive-message {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #000; /* Solid black background */
+  color: #fcb131;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 1000; /* Ensure it is on top of other elements */
+}
+
+.positive-message p {
+  margin-bottom: 15px;
+}
+
+/* Loading animation */
+.loading-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  text-align: center;
+}
+
+.loading-text {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #fcb131;
+}
+
+.loading-rings {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.loading-ring {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 5px;
+  background-color: #fcb131;
+  animation: pulse 1s infinite alternate;
+}
+
+.loading-instruction {
+  font-size: 18px;
+  color: #fcb131;
+  text-align: center;
+  min-height: 1.5em;
+  opacity: 1;
+  transition: opacity 0.8s ease-in-out;
+  animation: pulse 1.2s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+/* Timer and counter */
+.timer {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 18px;
+  color: #fcb131;
+}
+
+.push-up-counter {
+  font-size: 18px;
+  color: #fcb131;
+  text-shadow: 2px 2px #000;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+}
+
+/* Controls */
+#controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+button {
+  font-family: "Press Start 2P", cursive;
+  font-size: 14px;
+  margin: 0 10px;
+  padding: 10px 20px;
+  color: #000;
+  background-color: #fcb131;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px #fcb131;
+}
+
+#startButton {
+  background-color: #00a651;
+}
+#stopButton {
+  background-color: #ee334e;
+}
+#resetButton {
+  background-color: #0081c8;
+}
+#toggleFullScreen {
+  position: relative;
+  overflow: hidden; /* Ensure the overlay does not spill outside the button */
+}
+
+.farcaster-button {
+  background-color: #9146ff; /* Farcaster purple */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.farcaster-button:hover {
+  background-color: #7a3bcc; /* Darker purple on hover */
+}
+
+.twitter-button {
+  background-color: #1da1f2; /* Twitter blue */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.twitter-button:hover {
+  background-color: #0d8ddb; /* Darker blue on hover */
+}
+
+.coming-soon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75); /* Semi-transparent black background */
+  color: #fcb131; /* Gold color text */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px; /* Smaller font size for the overlay text */
+  text-transform: uppercase;
+  pointer-events: none; /* Prevents interaction with the overlay */
+}
+
+.button-text {
+  display: inline-block;
+  font-size: 18px;
+  padding: 5px 10px;
+  margin: 2px;
+  border-radius: 5px;
+  text-transform: uppercase;
+}
+
+.button-text.start {
+  background-color: #00a651;
+  color: #fff;
+}
+.button-text.stop {
+  background-color: #ee334e;
+  color: #fff;
+}
+.button-text.reset {
+  background-color: #0081c8;
+  color: #fff;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+  background-color: #000;
+  margin: 15% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  color: #fff;
+  text-align: center;
+  font-family: "Press Start 2P", cursive;
+}
+
+.close-button {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Medal */
+.medal {
+  margin-top: 20px;
+  font-size: 24px;
+  color: #ffd700;
+}
+
+.medal-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.blockchain-submission {
+  margin-top: 20px;
+  text-align: center;
+}
+
+#connectWalletButton,
+#submitScoreButton {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+#connectWalletButton:hover,
+#submitScoreButton:hover {
+  background-color: #45a049;
+}
+
+#connectWalletButton:disabled,
+#submitScoreButton:disabled {
+  background-color: #9e9e9e; /* Grey color for disabled state */
+  cursor: not-allowed;
+}
+
+#submissionStatus {
+  margin-top: 10px;
+  font-style: italic;
+}
+
+#submissionStatus.warning {
+  color: #ff9800; /* Orange color for warning */
+}
+
+#submissionStatus.processing {
+  color: #2196f3; /* Blue color for processing */
+}
+/* Miscellaneous */
+.built-by {
+  text-align: center;
+  font-size: 16px;
+  color: #fcb131;
+  margin-top: 20px;
+}
+
+.highlight {
+  color: #800080;
+}
+
+.styled-text {
+  font-family: "Press Start 2P", cursive;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.typewriter {
+  overflow: hidden;
+  border-right: 0.15em solid #fcb131;
+  white-space: nowrap;
+  margin: 0 auto;
+  letter-spacing: 0.15em;
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink-caret {
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: #fcb131;
+  }
+}
+
+.gold-medal-arrow {
+  width: 60px;
+  height: 90px;
+  background-color: #ffd700;
+  border-radius: 30px 30px 5px 5px;
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Leaderboard */
+.leaderboard-container {
+  width: 100%;
+  max-width: 640px;
+  margin: 20px 0;
+  background-color: #000;
+  border: 4px solid #fff;
+  box-shadow: 0 0 10px #fcb131;
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: center;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.view-more-button {
+  font-family: "Press Start 2P", cursive;
+  font-size: 12px;
+  margin: 5px;
+  padding: 8px 12px;
+  color: #000;
+  background-color: #9932cc;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-more-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 5px #fcb131;
+}
+
+.full-leaderboard {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.full-leaderboard th,
+.full-leaderboard td {
+  border: 1px solid #fcb131;
+  padding: 10px;
+  text-align: center;
+  color: #fff;
+}
+
+.full-leaderboard th {
+  background-color: #fcb131;
+  color: #000;
+}
+
+.full-leaderboard tr:nth-child(even) {
+  background-color: rgba(252, 177, 49, 0.1);
+}
+
+.leaderboard-container h2 {
+  color: #fcb131;
+  text-align: center;
+  margin-bottom: 15px;
+  position: relative;
+  display: inline-block; /* Ensure the h2 and button are inline */
+}
+
+.exercise-header {
+  background-color: #fcb131;
+  color: #000;
+  text-align: center;
+  padding: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+#leaderboardTable tr:not(:first-child) {
+  border-top: 2px solid #fcb131;
+}
+
+.load-button {
+  position: relative;
+  top: -5px; /* Adjust as needed to align with the h2 */
+  margin-left: 20px; /* Adjust as needed to align with the h2 */
+  font-family: "Press Start 2P", cursive;
+  font-size: 12px;
+  padding: 5px 10px;
+  color: #000;
+  background-color: #fcb131;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.load-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 5px #fcb131;
+}
+
+#leaderboardTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#leaderboardTable th,
+#leaderboardTable td {
+  border: 1px solid #fcb131;
+  padding: 10px;
+  text-align: center;
+  color: #fff;
+}
+
+#leaderboardTable th {
+  background-color: #fcb131;
+  color: #000;
+}
+
+#leaderboardTable tr:nth-child(even) {
+  background-color: rgba(252, 177, 49, 0.1);
+}
+
+#leaderboardTable tr.blue-entry {
+  background-color: rgba(29, 33, 242, 0.1); /* Light blue background */
+}
+
+#leaderboardTable tr.pink-entry {
+  background-color: rgba(255, 105, 180, 0.1); /* Light pink background */
+}
+
+#leaderboardTable tr.blue-entry td {
+  color: #416ced; /* Base blue text */
+}
+
+#leaderboardTable tr.pink-entry td {
+  color: #ff69b4; /* Hot pink text */
+}
+
+/* Remove or comment out this block */
+/*
+.orientation-message {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fcb131;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  pointer-events: auto;
+}
+*/
+
+.dismiss-button {
+  background-color: #4caf50; /* Green background */
+  color: white; /* White text */
+  padding: 10px 20px; /* Padding */
+  border: none; /* No border */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor on hover */
+  font-size: 16px; /* Font size */
+  margin-top: 10px; /* Margin on top */
+}
+
+.dismiss-button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .view-more-button {
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+
+  .full-leaderboard th,
+  .full-leaderboard td {
+    padding: 8px;
+    font-size: 12px;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  body,
+  html {
+    font-size: 14px;
+  }
+
+  .button-text {
+    font-size: 16px;
+    padding: 8px 12px;
+  }
+
+  .loading-text {
+    font-size: 20px;
+  }
+
+  .loading-instruction {
+    font-size: 16px;
+  }
+
+  .modal-content {
+    font-size: 14px;
+    max-width: 600px;
+  }
+
+  #game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  #banner {
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+
+  .olympic-rings {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  #screen {
+    width: 100%;
+    height: 400px;
+    border: 2px solid #fff;
+    overflow: hidden;
+  }
+
+  #canvasContainer {
+    width: 100%;
+    height: 100%;
+  }
+
+  .timer {
+    font-size: 16px;
+    top: 5px;
+    right: 5px;
+  }
+
+  #controls {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    margin-top: 10px;
+  }
+
+  button {
+    margin: 5px;
+    width: auto;
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 10px;
+  }
+
+  .push-up-counter {
+    font-size: 14px;
+    top: 5px;
+    left: 5px;
+  }
+}
+
+/* Landscape-specific styles */
+@media (max-width: 768px) and (orientation: landscape) {
+  #banner,
+  #leaderboardContainer {
+    display: none;
+  }
+
+  #screen {
+    width: 100%;
+    height: auto;
+    border: 2px solid #fff;
+    flex-grow: 1; /* Allow the screen to grow and take up available space */
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  #canvasContainer {
+    width: 100%;
+    height: auto;
+  }
+
+  .timer {
+    font-size: 16px;
+    top: 5px;
+    right: 5px;
+  }
+
+  #controls {
+    flex-direction: row; /* Display buttons side by side */
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping if needed */
+    flex-shrink: 0;
+    margin-top: 10px; /* Add margin to ensure buttons are visible */
+  }
+
+  button {
+    margin: 5px;
+    width: auto; /* Adjust width to fit content */
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 10px;
+  }
+
+  .push-up-counter {
+    font-size: 14px;
+    top: 5px;
+    left: 5px;
+  }
+}
+
+/* Portrait-specific styles */
+@media (max-width: 768px) and (orientation: portrait) {
+  @media (max-width: 768px) and (orientation: portrait) {
+    #game-container {
+      flex-direction: column;
+      height: auto;
+      min-height: 100vh;
+    }
+
+    #banner {
+      flex-direction: column;
+      margin-bottom: 10px;
+    }
+
+    .olympic-rings {
+      margin-right: 0;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 20px;
+    }
+
+    #screen {
+      width: 100%;
+      height: auto;
+      border: 2px solid #fff;
+      flex-grow: 1; /* Allow the screen to grow and take up available space */
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    #canvasContainer {
+      width: 100%;
+      height: auto;
+    }
+
+    .timer {
+      font-size: 16px;
+      top: 5px;
+      right: 5px;
+    }
+
+    #controls {
+      flex-direction: row; /* Display buttons side by side */
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap; /* Allow wrapping if needed */
+      flex-shrink: 0;
+      margin-top: 10px; /* Add margin to ensure buttons are visible */
+    }
+
+    button {
+      margin: 5px;
+      width: auto; /* Adjust width to fit content */
+    }
+
+    .modal-content {
+      width: 90%;
+      padding: 10px;
+    }
+
+    .push-up-counter {
+      font-size: 14px;
+      top: 5px;
+      left: 5px;
+    }
+  }
+}
+
+#modeButton {
+  background-color: #800080; /* Purple color for the mode button */
+}
+
+#modeButton:hover {
+  background-color: #9932cc; /* Lighter purple on hover */
+}

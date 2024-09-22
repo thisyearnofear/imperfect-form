@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>Imperfect Form</title>
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      as="style"
+    />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"
+      defer
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"
+      defer
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"
+      defer
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"
+      defer
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"
+      defer
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.0/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="bundle.js" defer></script>
+    <script src="webcam.js" defer></script>
+    <script src="leaderboard.js" type="module" defer></script>
+  </head>
+  <body>
+    <!-- <div id="orientationMessage" class="orientation-message">
+      <p>Portrait mode for squats. Landscape mode for push-ups.</p>
+      <button id="dismissOrientationButton" class="dismiss-button">
+        Dismiss
+      </button>
+    </div> -->
+    <div id="game-container">
+      <div id="banner">
+        <div class="olympic-rings" aria-label="Olympic Rings">
+          <div class="ring blue"></div>
+          <div class="ring red"></div>
+        </div>
+        <h1>Imperfect Form</h1>
+      </div>
+      <div id="screen">
+        <div id="welcomeMessage" class="typewriter" aria-live="polite"></div>
+        <div id="instructions" style="display: none" aria-live="polite">
+          <p>a) Press START to begin</p>
+          <p>b) Press STOP to end</p>
+          <p>c) Press RESET to start again</p>
+          <p>d) Try your best, have fun!</p>
+        </div>
+        <div id="canvasContainer" aria-label="Game Canvas"></div>
+        <div class="loading-container" style="display: none" aria-live="polite">
+          <div class="loading-text">Loading...</div>
+          <div class="loading-rings" aria-label="Loading animation">
+            <div class="loading-ring"></div>
+            <div class="loading-ring"></div>
+            <div class="loading-ring"></div>
+          </div>
+          <div class="loading-instruction"></div>
+        </div>
+        <div class="timer" style="display: none" aria-live="polite">00:00</div>
+        <div id="repCounterContainer" class="rep-counter-container"></div>
+        <div
+          id="tutorialOverlay"
+          class="tutorial-overlay"
+          style="display: none"
+        >
+          <p>Welcome to Onchain Olympics!</p>
+          <p>1. Stand in front of the camera</p>
+          <p>2. Choose your exercise mode</p>
+          <p>3. Press START to begin</p>
+          <p>Click anywhere to close this tutorial</p>
+        </div>
+      </div>
+      <div id="controls">
+        <button id="modeButton" aria-label="Switch exercise mode">
+          MODE: PUSH-UPS
+        </button>
+        <button id="startButton" aria-label="Start game">START</button>
+        <button id="stopButton" aria-label="Stop game">STOP</button>
+        <button id="resetButton" aria-label="Reset game">RESET</button>
+      </div>
+      <div id="leaderboardContainer" class="leaderboard-container">
+        <h2>Top Performers</h2>
+        <button id="loadLeaderboardButton" class="load-button">Load</button>
+        <button id="view-more-button" class="view-more-button">Expand</button>
+        <table id="leaderboardTable">
+          <tbody id="leaderboardBody">
+            <!-- Leaderboard entries will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Modal Dialog -->
+    <div id="summaryModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Summary</h2>
+        <div
+          class="olympic-rings"
+          aria-label="Olympic Rings"
+          style="justify-content: center"
+        >
+          <div class="ring blue"></div>
+          <div class="ring yellow"></div>
+          <div class="ring black"></div>
+          <div class="ring green"></div>
+          <div class="ring red"></div>
+        </div>
+        <p id="summaryText"></p>
+        <div id="medal" class="medal"></div>
+        <div class="share-button">
+          <button id="shareFarcasterButton" class="farcaster-button">
+            Farcaster
+          </button>
+          <button id="shareTwitterButton" class="twitter-button">
+            Twitter
+          </button>
+        </div>
+        <div class="blockchain-submission">
+          <p>Submit score to leaderboard</p>
+          <select id="networkSelect">
+            <option value="" disabled selected>Choose Chain</option>
+            <option value="amoy">Polygon Amoy</option>
+            <option value="base">Base Sepolia</option>
+          </select>
+          <button id="connectWalletButton">Wallet</button>
+          <button id="submitScoreButton" style="display: none">
+            Submit Score
+          </button>
+          <p id="submissionStatus"></p>
+        </div>
+        <p>Click RESET to start again</p>
+      </div>
+    </div>
+    <!-- Expanded Leaderboard Modal -->
+    <div id="expandedLeaderboardModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span
+          class="close-button"
+          onclick="this.closest('.modal').style.display='none'"
+          >&times;</span
+        >
+        <h2>Leaderboard</h2>
+        <div id="expandedLeaderboardBody">
+          <!-- Expanded leaderboard entries will be inserted here -->
+        </div>
+      </div>
+    </div>
+    <noscript>
+      <p>
+        This application requires JavaScript to run. Please enable JavaScript in
+        your browser settings.
+      </p>
+    </noscript>
+    <!-- <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const dismissButton = document.getElementById(
+          "dismissOrientationButton"
+        );
+        const orientationMessage =
+          document.getElementById("orientationMessage");
+
+        dismissButton.addEventListener("click", () => {
+          orientationMessage.style.display = "none";
+        });
+      });
+    </script> -->
+  </body>
+</html>
