@@ -429,73 +429,106 @@ function showSummary() {
             }
           </style>
         </head>
-        <body>
-          <div class="neynar-container">
-            <h2>Imperfect Form</h2>
-            <div class="neynar_signin" data-client_id="9c260f93-357a-4952-8090-a03f10e742f4" data-success-callback="onSignInSuccess" data-theme="dark"></div>
-          </div>
-          <script src="https://neynarxyz.github.io/siwn/raw/1.2.0/index.js" async></script>
-          <script>
-            function onSignInSuccess(data) {
-  console.log("Sign-in success with data:", data);
-  const ws = new WebSocket('wss://imperfect-form-v2.vercel.app/api/websocket');
+       <body>
+        <div class="neynar-container">
+          <h2>Imperfect Form</h2>
+          <div class="neynar_signin" data-client_id="9c260f93-357a-4952-8090-a03f10e742f4" data-success-callback="onSignInSuccess" data-theme="dark"></div>
+        </div>
+        <script src="https://neynarxyz.github.io/siwn/raw/1.2.0/index.js" async></script>
+        <script>
+          async function onSignInSuccess(data) {
+            console.log("Sign-in success with data:", data);
+            
+            try {
+              const response = await fetch('/api/store-signer', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  signer_uuid: data.signer_uuid,
+                  fid: data.fid,
+                  reps: ${reps},
+                  exerciseMode: '${exerciseMode}',
+                  formattedTimeSpent: '${formattedTimeSpent}'
+                }),
+              });
 
-  ws.onopen = () => {
-    console.log('WebSocket connection established');
-    ws.send(JSON.stringify({
-      type: 'store-signer',
-      payload: {
-        signer_uuid: data.signer_uuid,
-        fid: data.fid,
-        reps: ${reps},
-        exerciseMode: '${exerciseMode}',
-        formattedTimeSpent: '${formattedTimeSpent}'
-      }
-    }));
-  };
-  
-              ws.onmessage = (event) => {
-                const response = JSON.parse(event.data);
-                if (response.success) {
-                  console.log('Signer stored successfully');
-                  document.body.innerHTML = \`
-                    <div class="confirm-cast-container">
-                      <h2>Share Cast On /fitness</h2>
-                      <p class="confirm-cast-text">${reps} ${exerciseMode} in ${formattedTimeSpent}</p>
-                      <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
-                    </div>
-                  \`;
-  
-                  document.getElementById("confirmCastButton").addEventListener("click", () => {
-                    console.log('Confirm and Send button clicked');
-                    ws.send(JSON.stringify({
-                      type: 'confirm-cast',
-                      payload: {
-                        signer_uuid: data.signer_uuid,
-                        text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #OnchainOlympics #ImperfectForm',
-                        embeds: [{ url: '${memeUrl}' }],
-                        replyTo: '${fitnessChannelUrl}'
-                      }
-                    }));
-                    console.log('Confirm-cast message sent');
-                  });
-                } else {
-                  console.error('Error storing signer:', response.error);
-                }
-              };
-  
-              ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-              };
-  
-              ws.onclose = () => {
-                console.log('WebSocket connection closed');
-              };
+              const result = await response.json();
+              if (result.success) {
+                console.log('Signer stored successfully');
+                showConfirmCastUI();
+              } else {
+                console.error('Error storing signer:', result.error);
+              }
+            } catch (error) {
+              console.error('Error storing signer:', error);
             }
-          </script>
-        </body>
-      </html>
-    `);
+          }
+
+          function showConfirmCastUI() {
+            document.body.innerHTML = \`
+              <div class="confirm-cast-container">
+                <h2>Share Cast On /fitness</h2>
+                <p class="confirm-cast-text">${reps} ${exerciseMode} in ${formattedTimeSpent}</p>
+                <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
+              </div>
+            \`;
+
+            document.getElementById("confirmCastButton").addEventListener("click", sendCast);
+          }
+
+          async function sendCast() {
+            try {
+              const response = await fetch('/api/confirm-cast', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  signer_uuid: data.signer_uuid,
+                  text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #ImperfectForm',
+                  embeds: [{ url: '${memeUrl}' }],
+                  replyTo: '${fitnessChannelUrl}'
+                }),
+              });
+
+              const result = await response.json();
+              if (result.success) {
+                console.log('Cast sent successfully:', result);
+                pollCastStatus(data.signer_uuid);
+              } else {
+                console.error('Error sending cast:', result.error);
+              }
+            } catch (error) {
+              console.error('Error sending cast:', error);
+            }
+          }
+
+          async function pollCastStatus(signer_uuid) {
+            const pollInterval = setInterval(async () => {
+              try {
+                const response = await fetch(\`/api/poll-cast-status/\${signer_uuid}\`);
+                const result = await response.json();
+                
+                if (result.status === 'completed') {
+                  clearInterval(pollInterval);
+                  console.log('Cast completed:', result);
+                  // Update UI to show completion
+                } else if (result.status === 'error') {
+                  clearInterval(pollInterval);
+                  console.error('Cast failed:', result.error);
+                  // Update UI to show error
+                }
+              } catch (error) {
+                console.error('Error polling cast status:', error);
+              }
+            }, 5000); // Poll every 5 seconds
+          }
+        </script>
+      </body>
+    </html>
+  `);
     newWindow.document.close();
   });
 

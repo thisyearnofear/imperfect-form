@@ -2,10 +2,6 @@
     "version": 2,
     "builds": [
         {
-            "src": "api/websocket.js",
-            "use": "@vercel/edge"
-        },
-        {
             "src": "api/**/*.js",
             "use": "@vercel/node"
         },
@@ -18,10 +14,6 @@
         }
     ],
     "routes": [
-        {
-            "src": "/api/websocket",
-            "dest": "/api/websocket.js"
-        },
         {
             "src": "/api/(.*)",
             "dest": "/api/$1"
