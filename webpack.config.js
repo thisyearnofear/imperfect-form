@@ -1,7 +1,6 @@
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-
 const webpack = require("webpack");
 
 module.exports = {
@@ -9,6 +8,7 @@ module.exports = {
   output: {
     filename: "bundle.js",
     path: path.resolve(__dirname, "dist"),
+    publicPath: "/",
   },
   module: {
     rules: [
@@ -23,7 +23,11 @@ module.exports = {
         },
       },
       {
-        test: /\.json$/, // Add this rule to handle JSON files
+        test: /\.css$/,
+        use: ["style-loader", "css-loader"],
+      },
+      {
+        test: /\.json$/,
         loader: "json-loader",
         type: "javascript/auto",
       },
@@ -35,7 +39,7 @@ module.exports = {
       "@coinbase/wallet-sdk": path.resolve(
         __dirname,
         "node_modules/@coinbase/wallet-sdk"
-      ), // Add alias for wallet-sdk
+      ),
     },
     fallback: {
       crypto: require.resolve("crypto-browserify"),
@@ -45,19 +49,19 @@ module.exports = {
       https: require.resolve("https-browserify"),
       os: require.resolve("os-browserify/browser"),
       url: require.resolve("url/"),
-      buffer: require.resolve("buffer/"), // Added buffer fallback
+      buffer: require.resolve("buffer/"),
     },
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "./src/index.html", // Path to your template HTML file
+      template: "./src/index.html",
     }),
     new CopyWebpackPlugin({
       patterns: [
-        { from: "style.css", to: "style.css" },
+        { from: "src/style.css", to: "style.css" },
         { from: "src/leaderboard.js", to: "leaderboard.js" },
         { from: "src/webcam.js", to: "webcam.js" },
-        { from: "assets", to: "assets" }, // Copy assets to the dist folder
+        { from: "assets", to: "assets" },
       ],
     }),
     new webpack.ProvidePlugin({
@@ -73,7 +77,7 @@ module.exports = {
     },
     compress: true,
     port: 9000,
-    historyApiFallback: true, // Serve index.html for all routes
-    allowedHosts: "all", // Allow all hosts
+    historyApiFallback: true,
+    allowedHosts: "all",
   },
 };
