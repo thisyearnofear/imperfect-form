@@ -66,7 +66,6 @@ wss.on("connection", (ws) => {
 
       try {
         console.log("Sending cast to Farcaster API...");
-        console.log("Using API Key:", NEYNAR_API_KEY);
         console.log("Using signer_uuid:", signer_uuid);
 
         const response = await fetch(
@@ -80,8 +79,6 @@ wss.on("connection", (ws) => {
             body: JSON.stringify({
               signer_uuid,
               text,
-              embeds,
-              parent: replyTo, // Use 'parent' instead of 'replyTo' for the API
             }),
           }
         );

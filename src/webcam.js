@@ -438,25 +438,26 @@ function showSummary() {
           <script>
             function onSignInSuccess(data) {
   console.log("Sign-in success with data:", data);
+  const ws = new WebSocket('wss://your-vercel-deployment-url.vercel.app/api/websocket');
+
+  ws.onopen = () => {
+    console.log('WebSocket connection established');
+    ws.send(JSON.stringify({
+      type: 'store-signer',
+      payload: {
+        signer_uuid: data.signer_uuid,
+        fid: data.fid,
+        reps: ${reps},
+        exerciseMode: '${exerciseMode}',
+        formattedTimeSpent: '${formattedTimeSpent}'
+      }
+    }));
+  };
   
-  // Store signer data
-  fetch('/api/store-signer', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      signer_uuid: data.signer_uuid,
-      fid: data.fid,
-      reps: reps,
-      exerciseMode: exerciseMode,
-      formattedTimeSpent: formattedTimeSpent
-    }),
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      console.log('Signer stored successfully');
+              ws.onmessage = (event) => {
+                const response = JSON.parse(event.data);
+                if (response.success) {
+                  console.log('Signer stored successfully');
                   document.body.innerHTML = \`
                     <div class="confirm-cast-container">
                       <h2>Share Cast On /fitness</h2>
@@ -465,42 +466,32 @@ function showSummary() {
                     </div>
                   \`;
   
-                   document.getElementById("confirmCastButton").addEventListener("click", () => {
-  fetch('/api/publish-cast', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      signer_uuid: data.signer_uuid,
-                        text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #ImperfectForm',
-                        embeds: [{ url: memeUrl }],
-      replyTo: fitnessChannelUrl
-    }),
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      console.log('Cast published successfully');
-      // Handle success (e.g., close window, show success message)
-    } else {
-      console.error('Failed to publish cast:', data.error);
-      // Handle error
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    // Handle error
-  });
-});
-    } else {
-      console.error('Error storing signer:', data.error);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
-}
+                  document.getElementById("confirmCastButton").addEventListener("click", () => {
+                    console.log('Confirm and Send button clicked');
+                    ws.send(JSON.stringify({
+                      type: 'confirm-cast',
+                      payload: {
+                        signer_uuid: data.signer_uuid,
+                        text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #OnchainOlympics #ImperfectForm',
+                        embeds: [{ url: '${memeUrl}' }],
+                        replyTo: '${fitnessChannelUrl}'
+                      }
+                    }));
+                    console.log('Confirm-cast message sent');
+                  });
+                } else {
+                  console.error('Error storing signer:', response.error);
+                }
+              };
+  
+              ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+              };
+  
+              ws.onclose = () => {
+                console.log('WebSocket connection closed');
+              };
+            }
           </script>
         </body>
       </html>
