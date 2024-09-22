@@ -12,7 +12,7 @@ module.exports = (req, res) => {
       formattedTimeSpent,
     });
     console.log("Stored signer data:", tempStorage.get());
-    res.json({
+    res.status(200).json({
       success: true,
       message: "Signer data stored successfully",
     });

@@ -441,18 +441,18 @@ function showSummary() {
             
             try {
 const storeResponse = await fetch('/api/store-signer', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  signer_uuid: data.signer_uuid,
-                  fid: data.fid,
-                  reps: ${reps},
-                  exerciseMode: '${exerciseMode}',
-                  formattedTimeSpent: '${formattedTimeSpent}'
-                }),
-              });
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    signer_uuid: data.signer_uuid,
+    fid: data.fid,
+    reps: ${reps},
+    exerciseMode: '${exerciseMode}',
+    formattedTimeSpent: '${formattedTimeSpent}'
+  }),
+});
 
               if (!storeResponse.ok) {
                 throw new Error('Failed to store signer data');
