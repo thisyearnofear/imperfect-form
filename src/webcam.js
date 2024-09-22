@@ -429,73 +429,90 @@ function showSummary() {
             }
           </style>
         </head>
-        <body>
-          <div class="neynar-container">
-            <h2>Imperfect Form</h2>
-            <div class="neynar_signin" data-client_id="9c260f93-357a-4952-8090-a03f10e742f4" data-success-callback="onSignInSuccess" data-theme="dark"></div>
-          </div>
-          <script src="https://neynarxyz.github.io/siwn/raw/1.2.0/index.js" async></script>
-          <script>
-            function onSignInSuccess(data) {
-              console.log("Sign-in success with data:", data);
-              const ws = new WebSocket('ws://localhost:3000');
-  
-              ws.onopen = () => {
-                console.log('WebSocket connection established');
-                ws.send(JSON.stringify({
-                  type: 'store-signer',
-                  payload: {
+       <body>
+        <div class="neynar-container">
+          <h2>Imperfect Form</h2>
+          <div class="neynar_signin" data-client_id="9c260f93-357a-4952-8090-a03f10e742f4" data-success-callback="onSignInSuccess" data-theme="dark"></div>
+        </div>
+        <script src="https://neynarxyz.github.io/siwn/raw/1.2.0/index.js" async></script>
+        <script>
+          async function onSignInSuccess(data) {
+            console.log("Sign-in success with data:", data);
+            
+            try {
+              const storeResponse = await fetch('/api/store-signer', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  signer_uuid: data.signer_uuid,
+                  fid: data.fid,
+                  reps: ${reps},
+                  exerciseMode: '${exerciseMode}',
+                  formattedTimeSpent: '${formattedTimeSpent}'
+                }),
+              });
+
+              if (!storeResponse.ok) {
+                throw new Error('Failed to store signer data');
+              }
+
+              const storeResult = await storeResponse.json();
+              console.log('Signer stored successfully');
+
+              document.body.innerHTML = \`
+                <div class="confirm-cast-container">
+                  <h2>Share Cast On /fitness</h2>
+                  <p class="confirm-cast-text">${reps} ${exerciseMode} in ${formattedTimeSpent}</p>
+                  <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
+                </div>
+              \`;
+
+              document.getElementById("confirmCastButton").addEventListener("click", async () => {
+                console.log('Confirm and Send button clicked');
+                
+                const castResponse = await fetch('/api/confirm-cast', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
                     signer_uuid: data.signer_uuid,
-                    fid: data.fid,
-                    reps: ${reps},
-                    exerciseMode: '${exerciseMode}',
-                    formattedTimeSpent: '${formattedTimeSpent}'
-                  }
-                }));
-              };
-  
-              ws.onmessage = (event) => {
-                const response = JSON.parse(event.data);
-                if (response.success) {
-                  console.log('Signer stored successfully');
-                  document.body.innerHTML = \`
-                    <div class="confirm-cast-container">
-                      <h2>Share Cast On /fitness</h2>
-                      <p class="confirm-cast-text">${reps} ${exerciseMode} in ${formattedTimeSpent}</p>
-                      <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
-                    </div>
-                  \`;
-  
-                  document.getElementById("confirmCastButton").addEventListener("click", () => {
-                    console.log('Confirm and Send button clicked');
-                    ws.send(JSON.stringify({
-                      type: 'confirm-cast',
-                      payload: {
-                        signer_uuid: data.signer_uuid,
-                        text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #OnchainOlympics #ImperfectForm',
-                        embeds: [{ url: '${memeUrl}' }],
-                        replyTo: '${fitnessChannelUrl}'
-                      }
-                    }));
-                    console.log('Confirm-cast message sent');
-                  });
-                } else {
-                  console.error('Error storing signer:', response.error);
+                    text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #OnchainOlympics #ImperfectForm',
+                    embeds: [{ url: '${memeUrl}' }],
+                    replyTo: '${fitnessChannelUrl}'
+                  }),
+                });
+
+                if (!castResponse.ok) {
+                  throw new Error('Failed to send cast');
                 }
-              };
-  
-              ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-              };
-  
-              ws.onclose = () => {
-                console.log('WebSocket connection closed');
-              };
+
+                const castResult = await castResponse.json();
+                console.log('Cast sent successfully', castResult);
+                
+                document.body.innerHTML = \`
+                  <div class="confirm-cast-container">
+                    <h2>Success!</h2>
+                    <p class="confirm-cast-text">Your cast has been sent successfully.</p>
+                  </div>
+                \`;
+              });
+            } catch (error) {
+              console.error('Error:', error);
+              document.body.innerHTML = \`
+                <div class="confirm-cast-container">
+                  <h2>Error</h2>
+                  <p class="confirm-cast-text">An error occurred: \${error.message}</p>
+                </div>
+              \`;
             }
-          </script>
-        </body>
-      </html>
-    `);
+          }
+        </script>
+      </body>
+    </html>
+  `);
     newWindow.document.close();
   });
 
