@@ -1,5 +1,3 @@
-import useLocalStorage from "../hooks/useLocalStorage";
-
 class FarcasterShareComponent {
   constructor(containerId, options = {}) {
     this.container = document.getElementById(containerId);

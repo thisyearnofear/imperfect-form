@@ -1,25 +1,22 @@
-const { tempStorage } = require("../utils/tempStorage");
+import { kv } from "@vercel/kv";
 
-module.exports = (req, res) => {
-  console.log("Request method:", req.method);
-  console.log("Request body:", req.body);
-
+export default async function handler(req, res) {
   if (req.method === "POST") {
     const { signer_uuid, fid, reps, exerciseMode, formattedTimeSpent } =
       req.body;
-    tempStorage.set({
-      signer_uuid,
-      fid,
-      reps,
-      exerciseMode,
-      formattedTimeSpent,
-    });
-    console.log("Stored signer data:", tempStorage.get());
-    res.status(200).json({
-      success: true,
-      message: "Signer data stored successfully",
-    });
+
+    try {
+      await kv.set(
+        `signer:${signer_uuid}`,
+        { fid, reps, exerciseMode, formattedTimeSpent },
+        { ex: 3600 }
+      ); // expires in 1 hour
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error storing signer data:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
   } else {
-    res.status(405).json({ success: false, error: "Method not allowed" });
+    res.status(405).end();
   }
-};
+}
