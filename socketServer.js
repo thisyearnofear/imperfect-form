@@ -10,7 +10,7 @@ const io = socketIo(server, {
   },
 });
 
-const signers = new Map(); // This will store signer_uuid and associated data
+const signers = new Map(); // store signer_uuid and associated data
 
 io.on("connection", (socket) => {
   console.log("New client connected");
@@ -25,7 +25,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("confirm-cast", async (data) => {
-    const { signer_uuid, text, embeds, replyTo } = data;
+    const { signer_uuid, text, embeds, parent } = data;
     if (!signers.has(signer_uuid)) {
       socket.emit("confirm-cast-response", {
         success: false,
@@ -45,7 +45,7 @@ io.on("connection", (socket) => {
           signer_uuid,
           text,
           embeds,
-          parent: replyTo ? { id: replyTo } : undefined,
+          parent,
         }),
       });
 

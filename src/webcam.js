@@ -365,136 +365,136 @@ function showSummary() {
   farcasterButton.addEventListener("click", () => {
     const newWindow = window.open("", "_blank");
     newWindow.document.write(`
-         <html>
-           <head>
-             <style>
-               body {
-                 background-color: #000;
-                 font-family: "Press Start 2P", cursive;
-                 display: flex;
-                 justify-content: center;
-                 align-items: center;
-                 height: 100vh;
-                 margin: 0;
-                 color: #fcb131;
-               }
-               .neynar-container {
-                 background-color: #000;
-                 border: 3px solid #fcb131;
-                 border-radius: 10px;
-                 padding: 20px;
-                 text-align: center;
-                 max-width: 300px;
-               }
-               .neynar-button {
-                 background-color: #9146ff;
-                 color: #fff;
-                 border: none;
-                 padding: 10px 20px;
-                 font-family: "Press Start 2P", cursive;
-                 font-size: 14px;
-                 cursor: pointer;
-                 transition: all 0.3s ease;
-                 margin-top: 10px;
-               }
-               .neynar-button:hover {
-                 transform: scale(1.1);
-                 box-shadow: 0 0 10px #9146ff;
-               }
-               .confirm-cast-container {
-                 background-color: #000;
-                 border: 3px solid #fcb131;
-                 border-radius: 10px;
-                 padding: 20px;
-                 text-align: center;
-                 max-width: 300px;
-               }
-               .confirm-cast-text {
-                 font-size: 14px;
-                 margin-bottom: 20px;
-               }
-               .confirm-cast-button {
-                 background-color: #00a651;
-                 color: #fff;
-                 border: none;
-                 padding: 10px 20px;
-                 font-family: "Press Start 2P", cursive;
-                 font-size: 14px;
-                 cursor: pointer;
-                 transition: all 0.3s ease;
-               }
-               .confirm-cast-button:hover {
-                 transform: scale(1.1);
-                 box-shadow: 0 0 10px #00a651;
-               }
-             </style>
-             <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-           </head>
-           <body>
-             <div class="neynar-container">
-               <h2>Imperfect Form</h2>
-               <div class="neynar_signin" data-client_id="9c260f93-357a-4952-8090-a03f10e742f4" data-success-callback="onSignInSuccess" data-theme="dark"></div>
-             </div>
-             <script src="https://neynarxyz.github.io/siwn/raw/1.2.0/index.js" async></script>
-             <script>
-               function onSignInSuccess(data) {
-                 console.log("Sign-in success with data:", data);
-                 const socket = io("https://imperfect-form.onrender.com/"); 
-  
-                 socket.on("connect", () => {
-                   console.log("Connected to Socket.io server");
-  
-                   socket.emit("store-signer", {
-                     signer_uuid: data.signer_uuid,
-                     fid: data.fid,
-                     reps: ${reps},
-                     exerciseMode: '${exerciseMode}',
-                     formattedTimeSpent: '${formattedTimeSpent}',
-                   });
-  
-                   socket.on("store-signer-response", (response) => {
-                     console.log(response);
-                     if (response.success) {
-                       document.body.innerHTML = \`
-                         <div class="confirm-cast-container">
-                           <h2>Share Cast On /fitness</h2>
-                           <p class="confirm-cast-text">${reps} ${exerciseMode} in ${formattedTimeSpent}</p>
-                           <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
-                         </div>
-                       \`;
-  
-                       document.getElementById("confirmCastButton").addEventListener("click", () => {
-                         console.log('Confirm and Send button clicked');
-                         socket.emit("confirm-cast", {
-                           signer_uuid: data.signer_uuid,
-                           text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #OnchainOlympics #ImperfectForm',
-                           embeds: [{ url: '${memeUrl}' }],
-                           replyTo: '${fitnessChannelUrl}',
-                         });
-                         console.log('Confirm-cast message sent');
-                       });
-                     } else {
-                       console.error('Error storing signer:', response.error);
-                     }
-                   });
-  
-                   socket.on("confirm-cast-response", (response) => {
-                     if (response.success) {
-                       alert("Successfully shared on Farcaster!");
-                     } else {
-                       alert("Failed to share on Farcaster: " + response.error);
-                     }
-                   });
-                 });
-  
-                 socket.on("disconnect", () => {
-                   console.log("Disconnected from Socket.io server");
-                 });
-               }
-             </script>
-           </body>
-         </html>
-       `);
+    <html>
+      <head>
+        <style>
+          body {
+            background-color: #000;
+            font-family: "Press Start 2P", cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #fcb131;
+          }
+          .neynar-container {
+            background-color: #000;
+            border: 3px solid #fcb131;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            max-width: 300px;
+          }
+          .neynar-button {
+            background-color: #9146ff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-family: "Press Start 2P", cursive;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+          }
+          .neynar-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px #9146ff;
+          }
+          .confirm-cast-container {
+            background-color: #000;
+            border: 3px solid #fcb131;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            max-width: 300px;
+          }
+          .confirm-cast-text {
+            font-size: 14px;
+            margin-bottom: 20px;
+          }
+          .confirm-cast-button {
+            background-color: #00a651;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-family: "Press Start 2P", cursive;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          }
+          .confirm-cast-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px #00a651;
+          }
+        </style>
+        <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+      </head>
+      <body>
+        <div class="neynar-container">
+          <h2>Imperfect Form</h2>
+          <div class="neynar_signin" data-client_id="9c260f93-357a-4952-8090-a03f10e742f4" data-success-callback="onSignInSuccess" data-theme="dark"></div>
+        </div>
+        <script src="https://neynarxyz.github.io/siwn/raw/1.2.0/index.js" async></script>
+        <script>
+          function onSignInSuccess(data) {
+            console.log("Sign-in success with data:", data);
+            const socket = io("https://imperfect-form.onrender.com/"); 
+
+            socket.on("connect", () => {
+              console.log("Connected to Socket.io server");
+
+              socket.emit("store-signer", {
+                signer_uuid: data.signer_uuid,
+                fid: data.fid,
+                reps: ${reps},
+                exerciseMode: '${exerciseMode}',
+                formattedTimeSpent: '${formattedTimeSpent}',
+              });
+
+              socket.on("store-signer-response", (response) => {
+                console.log(response);
+                if (response.success) {
+                  document.body.innerHTML = \`
+                    <div class="confirm-cast-container">
+                      <h2>Share Cast On /fitness</h2>
+                      <p class="confirm-cast-text">${reps} ${exerciseMode} in ${formattedTimeSpent}</p>
+                      <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
+                    </div>
+                  \`;
+
+                  document.getElementById("confirmCastButton").addEventListener("click", () => {
+                    console.log('Confirm and Send button clicked');
+                    socket.emit("confirm-cast", {
+                      signer_uuid: data.signer_uuid,
+                      text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #OnchainOlympics #ImperfectForm',
+                      embeds: [{ url: '${memeUrl}' }],
+                      parent: '${fitnessChannelUrl}' 
+                    });
+                    console.log('Confirm-cast message sent');
+                  });
+                } else {
+                  console.error('Error storing signer:', response.error);
+                }
+              });
+
+              socket.on("confirm-cast-response", (response) => {
+                if (response.success) {
+                  alert("Successfully shared on Farcaster!");
+                } else {
+                  alert("Failed to share on Farcaster: " + response.error);
+                }
+              });
+            });
+
+            socket.on("disconnect", () => {
+              console.log("Disconnected from Socket.io server");
+            });
+          }
+        </script>
+      </body>
+    </html>
+  `);
     newWindow.document.close();
   });
 
