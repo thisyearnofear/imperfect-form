@@ -36,12 +36,23 @@ let isInCorrectPosition = false;
 let lastValidSquatAngle = 180;
 let squatStartTime = 0;
 let lastSquatType = "";
+let farcasterListenerAdded = false;
 
 const SQUAT_HOLD_TIME = 500; // milliseconds
 const PARTIAL_SQUAT_ANGLE = 150;
 const PARALLEL_SQUAT_ANGLE = 110;
 const DEEP_SQUAT_ANGLE = 80;
-const fitnessChannelUrl = "https://veryinter.net/person";
+const channelOptions = [
+  {
+    name: "Fitness",
+    parent_url:
+      "chain://eip155:1/erc721:0xee442da02f2cdcbc0140162490a068c1da94b929",
+  },
+  { name: "Very Internet Person", parent_url: "https://veryinter.net/person" },
+  { name: "Spanish", parent_url: "https://farcaster.group/spanish" },
+  { name: "Wellness", parent_url: "https://farcaster.group/wellness" },
+  { name: "Random", parent_url: "https://farcaster.group/random" },
+];
 const memeUrl = "https://imgur.com/a/imperfect-form-aviu4z4";
 
 function setup() {
@@ -363,97 +374,121 @@ function showSummary() {
   document.getElementById("shareFarcasterButton").disabled = true;
   document.getElementById("shareTwitterButton").disabled = true;
 
-  // Event listener for the Farcaster button
-  const farcasterButton = document.getElementById("shareFarcasterButton");
-  farcasterButton.addEventListener("click", () => {
-    const transactionDetails =
-      window.transactionHash && window.selectedNetwork
-        ? `\n\nTransaction Hash: ${window.transactionHash}\n\nChain: ${
-            window.selectedNetwork === "amoy"
-              ? "Polygon Amoy Testnet"
-              : "Base Sepolia Testnet"
-          }`
-        : "";
+  // Add event listener for the Farcaster button if not already added
+  if (!farcasterListenerAdded) {
+    const farcasterButton = document.getElementById("shareFarcasterButton");
+    farcasterButton.addEventListener("click", shareFarcaster);
+    farcasterListenerAdded = true;
+  }
 
-    // Open a new window with a blank page
-    const newWindow = window.open("", "_blank");
+  const shareTwitterButton = document.getElementById("shareTwitterButton");
+  shareTwitterButton.addEventListener("click", () => {
+    const tweetText = `I just rocked ${reps} ${exerciseMode} in ${formattedTimeSpent} #ImperfectForm\n\nBuilt on @base & @0xPolygon\n\nhttps://imperfect-form-v2.vercel.app`;
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      tweetText
+    )}`;
+    window.open(tweetUrl, "_blank");
+  });
+}
 
+function shareFarcaster() {
+  const transactionDetails =
+    window.transactionHash && window.selectedNetwork
+      ? `\n\nTransaction Hash: ${window.transactionHash}\n\nChain: ${
+          window.selectedNetwork === "amoy"
+            ? "Polygon Amoy Testnet"
+            : "Base Sepolia Testnet"
+        }`
+      : "";
+
+  // Open a new window with a blank page
+  const newWindow = window.open("", "_blank");
+
+  // Check if the new window was successfully opened
+  if (newWindow) {
     // Write the initial HTML with just the sign-in button
     newWindow.document.write(`
     <html>
       <head>
         <style>
-          body {
-            background-color: #000;
-            font-family: "Press Start 2P", cursive;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: #fcb131;
-          }
-          .neynar-container {
-            background-color: #000;
-            border: 3px solid #fcb131;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            max-width: 300px;
-          }
-          .neynar-button {
-            background-color: #9146ff;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            font-family: "Press Start 2P", cursive;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-          }
-          .neynar-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px #9146ff;
-          }
-          .confirm-cast-container {
-            background-color: #000;
-            border: 3px solid #fcb131;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            max-width: 300px;
-          }
-          .confirm-cast-text {
-            font-size: 14px;
-            margin-bottom: 20px;
-          }
-          .confirm-cast-button {
-            background-color: #00a651;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            font-family: "Press Start 2P", cursive;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-          }
-          .confirm-cast-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px #00a651;
-          }
-          .cast-textarea {
-            width: 100%;
-            height: 100px;
-            margin-bottom: 20px;
-            font-family: "Press Start 2P", cursive;
-            font-size: 14px;
-            color: #000;
-            padding: 10px;
-            border-radius: 5px;
-            border: 2px solid #fcb131;
-          }
-        </style>
+    body {
+      background-color: #000;
+      font-family: 'Arial', sans-serif; /* Changed to a more homely font */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: #fff;
+      background-image: linear-gradient(45deg, #000 25%, #111 25%, #111 50%, #000 50%, #000 75%, #111 75%, #111 100%);
+      background-size: 40px 40px;
+    }
+    .neynar-container {
+      background-color: #000;
+      border: 3px solid #fcb131;
+      border-radius: 10px;
+      padding: 30px; /* Increased padding for a more spacious feel */
+      text-align: center;
+      max-width: 350px; /* Increased max width */
+    }
+    .neynar-button,
+    .confirm-cast-button {
+      background-color: #9146ff;
+      color: #fff;
+      border: none;
+      padding: 12px 24px; /* Increased padding for a more substantial button */
+      font-family: 'Arial', sans-serif; /* Changed font */
+      font-size: 16px; /* Increased font size */
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+      border-radius: 5px; /* Added border radius for a softer look */
+    }
+    .neynar-button:hover,
+    .confirm-cast-button:hover {
+      transform: scale(1.05); /* Slightly reduced scale for a more subtle effect */
+      box-shadow: 0 0 10px #9146ff;
+    }
+    .confirm-cast-container {
+      background-color: rgba(0, 0, 0, 0.8);
+      border: 4px solid #fcb131;
+      border-radius: 10px;
+      padding: 25px; /* Adjusted padding */
+      text-align: center;
+      max-width: 320px; /* Increased max width */
+      box-shadow: 0 0 20px #fcb131, 0 0 30px #416ced, 0 0 40px #ff69b4;
+    }
+    .confirm-cast-text {
+      font-size: 16px; /* Increased font size */
+      margin-bottom: 20px;
+    }
+    .cast-preview {
+      width: 100%;
+      margin-bottom: 15px;
+      font-size: 14px; /* Kept consistent */
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      border: 2px solid #416ced;
+      background-color: rgba(65, 108, 237, 0.1);
+      white-space: normal; 
+      word-wrap: break-word;
+      text-align: center; /* Centered the text */
+      line-height: 1.5; /* Increased line height for readability */
+    }
+    .channel-select {
+      width: 100%;
+      padding: 10px; /* Increased padding */
+      margin-bottom: 10px;
+      font-family: 'Arial', sans-serif; /* Changed font */
+      font-size: 14px; /* Adjusted font size */
+      background-color: #000;
+      color: #fcb131;
+      border: 2px solid #ff69b4;
+      border-radius: 5px;
+      text-align: center; /* Centered the text */
+    }
+  </style>
         <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
       </head>
       <body>
@@ -474,7 +509,7 @@ function showSummary() {
             signerData = data;
 
             // Establish a Socket.io connection to the server
-            const socket = io("https://imperfect-form.onrender.com");
+            const socket = io("https://imperfect-form.onrender.com/");
 
             socket.on("connect", () => {
               console.log("Connected to Socket.io server");
@@ -494,25 +529,39 @@ function showSummary() {
                 if (response.success) {
                   // Update the UI to show the text area and confirm button after sign-in
                   document.body.innerHTML = \`
-                    <div class="confirm-cast-container">
-                      <h2>Share Cast On /fitness</h2>
-                      <textarea id="castText" class="cast-textarea">I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #ImperfectForm /imperfectform\n\nBuilt on @base & @0xPolygon\n\nTipping any feedback\nhttps://imperfect-form-v2.vercel.app${transactionDetails}</textarea>
-                      <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
-                    </div>
+                     <div class="confirm-cast-container">
+    <h2>Share Cast</h2>
+    <select id="channelSelect" class="channel-select">
+      ${channelOptions
+        .map(
+          (channel) =>
+            `<option value="${channel.parent_url}">${channel.name}</option>`
+        )
+        .join("")}
+    </select>
+    <div id="castPreview" class="cast-preview">
+  <p>I just rocked ${reps} ${exerciseMode} in ${formattedTimeSpent} on /imperfectform https://imperfect-form-v2.vercel.app</p>
+  <p>Built on @base & @0xPolygon</p>
+  <p>${transactionDetails}</p>
+</div>
+    <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
+  </div>
                   \`;
 
                   // Add event listener for the Confirm and Send button
                   document.getElementById("confirmCastButton").addEventListener("click", () => {
-                    const castText = document.getElementById("castText").value;
-                    console.log('Confirm and Send button clicked with text:', castText);
-                    socket.emit("confirm-cast", {
-                      signer_uuid: data.signer_uuid,
-                      text: castText,
-                      embeds: [{ url: '${memeUrl}' }],
-                      parent: '${fitnessChannelUrl}'
-                    });
-                    console.log('Confirm-cast message sent');
-                  });
+  const castText = document.getElementById("castText").value;
+  const selectedChannel = document.getElementById("channelSelect").value;
+  console.log('Confirm and Send button clicked with text:', castText);
+  console.log('Selected channel:', selectedChannel);
+  socket.emit("confirm-cast", {
+    signer_uuid: data.signer_uuid,
+    text: castText,
+    embeds: [{ url: '${memeUrl}' }],
+    parent: selectedChannel
+  });
+  console.log('Confirm-cast message sent');
+});
                 } else {
                   console.error('Error storing signer:', response.error);
                 }
@@ -539,47 +588,34 @@ function showSummary() {
 
           // Function to handle Confirm and Send action
           function handleConfirmCast() {
-            if (!signedIn) {
-              alert("Please sign in with Neynar first.");
-              return;
-            }
+  if (!signedIn) {
+    alert("Please sign in with Neynar first.");
+    return;
+  }
 
-            const castText = document.getElementById("castText").value;
-            console.log('Confirm and Send button clicked with text:', castText);
+  const castPreview = document.getElementById("castPreview");
+  const castText = castPreview.innerText;
+  const selectedChannel = document.getElementById("channelSelect").value;
+  console.log('Confirm and Send button clicked with text:', castText);
+  console.log('Selected channel:', selectedChannel);
 
-            const socket = io("https://imperfect-form.onrender.com");
-            socket.emit("confirm-cast", {
-              signer_uuid: signerData.signer_uuid,
-              text: castText,
-              embeds: [{ url: '${memeUrl}' }],
-              parent: '${fitnessChannelUrl}'
-            });
-            console.log('Confirm-cast message sent');
-          }
+  const socket = io("https://imperfect-form.onrender.com/");
+  socket.emit("confirm-cast", {
+    signer_uuid: signerData.signer_uuid,
+    text: castText,
+    embeds: [{ url: '${memeUrl}' }],
+    parent: selectedChannel
+  });
+  console.log('Confirm-cast message sent');
+}
         </script>
       </body>
     </html>
-  `);
+   `);
     newWindow.document.close();
-  });
-
-  // Add event listener for messages from the popup
-  window.addEventListener("message", (event) => {
-    if (event.data.type === "FARCASTER_SHARE_SUCCESS") {
-      alert("Successfully shared on Farcaster!");
-    } else if (event.data.type === "FARCASTER_SHARE_FAILURE") {
-      alert("Failed to share on Farcaster: " + event.data.error);
-    }
-  });
-
-  const shareTwitterButton = document.getElementById("shareTwitterButton");
-  shareTwitterButton.addEventListener("click", () => {
-    const tweetText = `I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #ImperfectForm\n\nBuilt on @base & @0xPolygon\n\nhttps://imperfect-form-v2.vercel.app`;
-    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-      tweetText
-    )}`;
-    window.open(tweetUrl, "_blank");
-  });
+  } else {
+    alert("Popup blocked! Please allow popups for this website.");
+  }
 }
 
 function showPositiveMessage() {
