@@ -16,6 +16,7 @@ io.on("connection", (socket) => {
   console.log("New client connected");
 
   socket.on("store-signer", (data) => {
+    console.log("store-signer event received:", data);
     const { signer_uuid, fid, reps, exerciseMode, formattedTimeSpent } = data;
     signers.set(signer_uuid, { fid, reps, exerciseMode, formattedTimeSpent });
     socket.emit("store-signer-response", {
@@ -25,6 +26,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("confirm-cast", async (data) => {
+    console.log("confirm-cast event received:", data);
     const { signer_uuid, text, embeds, parent } = data;
     if (!signers.has(signer_uuid)) {
       socket.emit("confirm-cast-response", {

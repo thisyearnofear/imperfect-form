@@ -9,6 +9,8 @@ let amoyLeaderboardContract;
 let baseLeaderboardContract;
 let sortedPushups = [];
 let sortedSquats = [];
+window.transactionHash = "";
+window.selectedNetwork = "";
 
 const baseContractAddress = "0x45d1a7976477DC2cDD5d40e1e15f22138F20816F";
 const amoyContractAddress = "0x6c5B97eC4E66FD3b507400BBA80898f13170943A";
@@ -710,6 +712,9 @@ function shortenAddress(address) {
   return `${address.substr(0, 6)}...${address.substr(-4)}`;
 }
 
+window.transactionHash = "";
+window.selectedNetwork = "";
+
 async function submitScore() {
   if (!userAddress) {
     await connectWallet();
@@ -723,17 +728,17 @@ async function submitScore() {
   }
 
   const networkSelect = document.getElementById("networkSelect");
-  const selectedNetwork = networkSelect.value;
+  window.selectedNetwork = networkSelect.value;
 
-  if (!selectedNetwork) {
+  if (!window.selectedNetwork) {
     displayError("Please select a network from the dropdown.");
     return;
   }
 
   const targetChainId =
-    selectedNetwork === "amoy" ? amoyChainId : baseSepoliaChainId;
+    window.selectedNetwork === "amoy" ? amoyChainId : baseSepoliaChainId;
   const contract =
-    selectedNetwork === "amoy"
+    window.selectedNetwork === "amoy"
       ? amoyLeaderboardContract
       : baseLeaderboardContract;
 
@@ -741,7 +746,7 @@ async function submitScore() {
   if (!isCorrectNetwork) {
     displayError(
       `Please switch to the ${
-        selectedNetwork === "amoy" ? "Polygon Amoy" : "Base Sepolia"
+        window.selectedNetwork === "amoy" ? "Polygon Amoy" : "Base Sepolia"
       } Testnet before submitting`
     );
     return;
@@ -754,11 +759,11 @@ async function submitScore() {
   // Log the values of pushups and squats for debugging
   console.log(`Pushups: ${pushups}, Squats: ${squats}`);
 
+  const submissionStatus = document.getElementById("submissionStatus");
+
   try {
     // Validate the scores
     validateScore(pushups, squats);
-
-    const submissionStatus = document.getElementById("submissionStatus");
 
     // Show warning message
     if (!submissionStatus.classList.contains("warning")) {
@@ -786,8 +791,13 @@ async function submitScore() {
     });
 
     console.log("Transaction result:", result);
+    window.transactionHash = result.transactionHash; // Store the transaction hash
     submissionStatus.textContent = "Score submitted successfully!";
     submissionStatus.classList.remove("processing");
+
+    // Enable sharing buttons
+    document.getElementById("shareFarcasterButton").disabled = false;
+    document.getElementById("shareTwitterButton").disabled = false;
 
     // Disable further interaction with the submit button
     submitButton.disabled = true;
@@ -798,10 +808,8 @@ async function submitScore() {
     await updateLeaderboard();
   } catch (error) {
     console.error("Error submitting score:", error);
-    displayError(`Error submitting score: ${error.message}. Please try again.`);
-    const submissionStatus = document.getElementById("submissionStatus");
+    submissionStatus.textContent = `Error: ${error.message}`;
     submissionStatus.classList.remove("processing");
-    submissionStatus.textContent = "";
     const submitButton = document.getElementById("submitScoreButton");
     submitButton.disabled = false;
   }

@@ -326,6 +326,12 @@ button:hover {
   overflow: hidden; /* Ensure the overlay does not spill outside the button */
 }
 
+.farcaster-button:disabled,
+.twitter-button:disabled {
+  background-color: #9e9e9e; /* Grey color for disabled state */
+  cursor: not-allowed;
+}
+
 .farcaster-button {
   background-color: #9146ff; /* Farcaster purple */
   color: white;
@@ -501,15 +507,6 @@ button:hover {
   background-color: rgba(0, 0, 0, 0.8);
   padding: 10px;
   border-radius: 5px;
-}
-
-.typewriter {
-  overflow: hidden;
-  border-right: 0.15em solid #fcb131;
-  white-space: nowrap;
-  margin: 0 auto;
-  letter-spacing: 0.15em;
-  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
 }
 
 @keyframes typing {

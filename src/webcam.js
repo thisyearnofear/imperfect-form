@@ -41,9 +41,8 @@ const SQUAT_HOLD_TIME = 500; // milliseconds
 const PARTIAL_SQUAT_ANGLE = 150;
 const PARALLEL_SQUAT_ANGLE = 110;
 const DEEP_SQUAT_ANGLE = 80;
-const fitnessChannelUrl =
-  "chain://eip155:1/erc721:0xee442da02f2cdcbc0140162490a068c1da94b929";
-const memeUrl = "https://imgur.com/a/improper-form-rvaU9ev";
+const fitnessChannelUrl = "https://veryinter.net/person";
+const memeUrl = "https://imgur.com/a/imperfect-form-aviu4z4";
 
 function setup() {
   const canvas = createCanvas(640, 480);
@@ -360,10 +359,26 @@ function showSummary() {
     console.error("Close button not found");
   }
 
-  // New event listener for shareFarcasterButton
+  // Enable sharing buttons
+  document.getElementById("shareFarcasterButton").disabled = true;
+  document.getElementById("shareTwitterButton").disabled = true;
+
+  // Event listener for the Farcaster button
   const farcasterButton = document.getElementById("shareFarcasterButton");
   farcasterButton.addEventListener("click", () => {
+    const transactionDetails =
+      window.transactionHash && window.selectedNetwork
+        ? `\n\nTransaction Hash: ${window.transactionHash}\n\nChain: ${
+            window.selectedNetwork === "amoy"
+              ? "Polygon Amoy Testnet"
+              : "Base Sepolia Testnet"
+          }`
+        : "";
+
+    // Open a new window with a blank page
     const newWindow = window.open("", "_blank");
+
+    // Write the initial HTML with just the sign-in button
     newWindow.document.write(`
     <html>
       <head>
@@ -427,23 +442,44 @@ function showSummary() {
             transform: scale(1.1);
             box-shadow: 0 0 10px #00a651;
           }
+          .cast-textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+            font-family: "Press Start 2P", cursive;
+            font-size: 14px;
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #fcb131;
+          }
         </style>
-        <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+        <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
       </head>
       <body>
         <div class="neynar-container">
           <h2>Imperfect Form</h2>
+          <!-- Display only the Neynar sign-in button initially -->
           <div class="neynar_signin" data-client_id="9c260f93-357a-4952-8090-a03f10e742f4" data-success-callback="onSignInSuccess" data-theme="dark"></div>
         </div>
         <script src="https://neynarxyz.github.io/siwn/raw/1.2.0/index.js" async></script>
         <script>
+          let signedIn = false;
+          let signerData = null;
+
+          // Function called on successful sign-in
           function onSignInSuccess(data) {
             console.log("Sign-in success with data:", data);
-            const socket = io("https://imperfect-form.onrender.com/"); 
+            signedIn = true;
+            signerData = data;
+
+            // Establish a Socket.io connection to the server
+            const socket = io("https://imperfect-form.onrender.com");
 
             socket.on("connect", () => {
               console.log("Connected to Socket.io server");
 
+              // Send sign-in data and workout details to the server
               socket.emit("store-signer", {
                 signer_uuid: data.signer_uuid,
                 fid: data.fid,
@@ -452,24 +488,28 @@ function showSummary() {
                 formattedTimeSpent: '${formattedTimeSpent}',
               });
 
+              // Handle server response for storing signer data
               socket.on("store-signer-response", (response) => {
                 console.log(response);
                 if (response.success) {
+                  // Update the UI to show the text area and confirm button after sign-in
                   document.body.innerHTML = \`
                     <div class="confirm-cast-container">
                       <h2>Share Cast On /fitness</h2>
-                      <p class="confirm-cast-text">${reps} ${exerciseMode} in ${formattedTimeSpent}</p>
+                      <textarea id="castText" class="cast-textarea">I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #ImperfectForm /imperfectform\n\nBuilt on @base & @0xPolygon\n\nTipping any feedback\nhttps://imperfect-form-v2.vercel.app${transactionDetails}</textarea>
                       <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
                     </div>
                   \`;
 
+                  // Add event listener for the Confirm and Send button
                   document.getElementById("confirmCastButton").addEventListener("click", () => {
-                    console.log('Confirm and Send button clicked');
+                    const castText = document.getElementById("castText").value;
+                    console.log('Confirm and Send button clicked with text:', castText);
                     socket.emit("confirm-cast", {
                       signer_uuid: data.signer_uuid,
-                      text: 'I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #OnchainOlympics #ImperfectForm',
+                      text: castText,
                       embeds: [{ url: '${memeUrl}' }],
-                      parent: '${fitnessChannelUrl}' 
+                      parent: '${fitnessChannelUrl}'
                     });
                     console.log('Confirm-cast message sent');
                   });
@@ -478,6 +518,7 @@ function showSummary() {
                 }
               });
 
+              // Handle the confirm-cast response from the server
               socket.on("confirm-cast-response", (response) => {
                 if (response.success) {
                   alert("Successfully shared on Farcaster!");
@@ -487,9 +528,33 @@ function showSummary() {
               });
             });
 
+            // Handle disconnection from the server
             socket.on("disconnect", () => {
               console.log("Disconnected from Socket.io server");
             });
+
+            // Handle Confirm and Send button click
+            document.getElementById("confirmCastButton")?.addEventListener("click", handleConfirmCast);
+          }
+
+          // Function to handle Confirm and Send action
+          function handleConfirmCast() {
+            if (!signedIn) {
+              alert("Please sign in with Neynar first.");
+              return;
+            }
+
+            const castText = document.getElementById("castText").value;
+            console.log('Confirm and Send button clicked with text:', castText);
+
+            const socket = io("https://imperfect-form.onrender.com");
+            socket.emit("confirm-cast", {
+              signer_uuid: signerData.signer_uuid,
+              text: castText,
+              embeds: [{ url: '${memeUrl}' }],
+              parent: '${fitnessChannelUrl}'
+            });
+            console.log('Confirm-cast message sent');
           }
         </script>
       </body>
@@ -509,7 +574,7 @@ function showSummary() {
 
   const shareTwitterButton = document.getElementById("shareTwitterButton");
   shareTwitterButton.addEventListener("click", () => {
-    const tweetText = `I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} /ImperfectForm`;
+    const tweetText = `I just pumped ${reps} ${exerciseMode} in ${formattedTimeSpent} #ImperfectForm\n\nBuilt on @base & @0xPolygon\n\nhttps://imperfect-form-v2.vercel.app`;
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       tweetText
     )}`;
