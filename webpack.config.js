@@ -74,10 +74,14 @@ module.exports = {
   devServer: {
     static: {
       directory: path.join(__dirname, "dist"),
+      watch: true, // Ensure changes are watched
     },
     compress: true,
     port: 9000,
-    historyApiFallback: true,
     allowedHosts: "all",
+    historyApiFallback: {
+      // Serves index.html only for specific routes, not for all 404s
+      rewrites: [{ from: /^\/$/, to: "/index.html" }],
+    },
   },
 };

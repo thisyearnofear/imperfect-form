@@ -37,6 +37,18 @@ let lastValidSquatAngle = 180;
 let squatStartTime = 0;
 let lastSquatType = "";
 let farcasterListenerAdded = false;
+let faceMesh;
+let faceMeshResults;
+let filterOptions = [
+  { name: "none", path: null },
+  { name: "nose", path: "/assets/nose.png" },
+  { name: "tache", path: "/assets/mustache.png" },
+  { name: "arch", path: "/assets/arch.png" },
+  { name: "degen", path: "/assets/degen.png" },
+];
+let currentFilterIndex = 0;
+let currentFilter = "none";
+let noseFilter; // Variable to hold the filter image
 
 const SQUAT_HOLD_TIME = 500; // milliseconds
 const PARTIAL_SQUAT_ANGLE = 150;
@@ -54,6 +66,75 @@ const channelOptions = [
   { name: "Random", parent_url: "https://farcaster.group/random" },
 ];
 const memeUrl = "https://imgur.com/a/imperfect-form-aviu4z4";
+
+// Initialize FaceMesh
+async function initFaceMesh() {
+  try {
+    if (faceMesh) {
+      await faceMesh.close();
+    }
+    faceMesh = new FaceMesh({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+      },
+    });
+    faceMesh.setOptions({
+      maxNumFaces: 1,
+      refineLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    });
+    faceMesh.onResults(onFaceMeshResults);
+  } catch (error) {
+    console.error("Error initializing FaceMesh:", error);
+    alert("Unable to initialize FaceMesh. Please try again later.");
+  }
+}
+
+// Handle FaceMesh results
+function onFaceMeshResults(results) {
+  faceMeshResults = results;
+}
+
+// Load the filter image
+function preload() {
+  noseFilter = loadImage("/assets//nose.png"); // Adjust the path as necessary
+}
+
+// Start FaceMesh processing
+async function startFaceMesh() {
+  if (video && faceMesh) {
+    try {
+      const sendToFaceMesh = async () => {
+        if (faceMesh) {
+          await faceMesh.send({ image: video.elt });
+          requestAnimationFrame(sendToFaceMesh);
+        }
+      };
+      sendToFaceMesh();
+    } catch (error) {
+      console.error("Error processing FaceMesh:", error);
+    }
+  } else {
+    // If faceMesh is null, try to reinitialize it
+    await initFaceMesh();
+    startFaceMesh();
+  }
+}
+
+async function sendToFaceMesh() {
+  if (!faceMesh || !video || !video.elt) {
+    console.error("FaceMesh or video is not initialized.");
+    return;
+  }
+
+  try {
+    await faceMesh.send({ image: video.elt });
+    requestAnimationFrame(sendToFaceMesh);
+  } catch (error) {
+    console.error("Error processing FaceMesh:", error);
+  }
+}
 
 function setup() {
   const canvas = createCanvas(640, 480);
@@ -90,6 +171,7 @@ function setup() {
   exerciseCounter.hide();
 
   showInstructions(); // Add this line to show instructions immediately
+  initFaceMesh();
 }
 
 function showInstructions() {
@@ -143,10 +225,20 @@ const loadingInstructions = [
 
 function toggleMode() {
   if (!started) {
+    // Switch between exercise modes
     exerciseMode = exerciseMode === "pushups" ? "squats" : "pushups";
     modeButton.html(`MODE: ${exerciseMode.toUpperCase()}`);
     updateInstructions();
     exerciseCounter.html(`${capitalizeFirstLetter(exerciseMode)} Completed: 0`);
+  } else {
+    // Switch between filter options
+    currentFilterIndex = (currentFilterIndex + 1) % filterOptions.length;
+    currentFilter = filterOptions[currentFilterIndex].name;
+    noseFilter =
+      currentFilter === "none"
+        ? null
+        : loadImage(filterOptions[currentFilterIndex].path);
+    modeButton.html(`FILTER: ${currentFilter.toUpperCase()}`);
   }
 }
 
@@ -156,7 +248,9 @@ function startDetection() {
     loading = true;
     showView(".loading-container");
 
-    modeButton.attribute("disabled", "");
+    modeButton.html(
+      `FILTER: ${filterOptions[currentFilterIndex].name.toUpperCase()}`
+    );
 
     timer.show();
     cycleLoadingInstructions();
@@ -170,6 +264,9 @@ function startDetection() {
             console.log("Webcam access granted");
             video.hide();
             initDetector();
+
+            // Call startFaceMesh after initializing the detector
+            startFaceMesh();
           });
           video.parent("canvasContainer");
         }
@@ -178,6 +275,27 @@ function startDetection() {
         console.error("Error starting audio context:", error);
       });
   }
+}
+
+function stopDetection() {
+  if (video) {
+    video.stop();
+    video.remove();
+  }
+  noLoop();
+  clear();
+  clearInterval(timerInterval);
+  console.log("Detection stopped");
+
+  showPositiveMessage();
+
+  showSummary();
+
+  // Reset mode button to exercise mode selection
+  modeButton.html(`MODE: ${exerciseMode.toUpperCase()}`);
+  modeButton.removeAttribute("disabled");
+  currentFilterIndex = 0;
+  currentFilter = "none";
 }
 
 function showView(viewToShow) {
@@ -218,7 +336,6 @@ function formatTime(seconds) {
 function cycleLoadingInstructions() {
   const instructionElement = select(".loading-instruction");
 
-  // sourcery skip: avoid-function-declarations-in-blocks
   function updateInstruction() {
     instructionElement.style("opacity", "0");
 
@@ -373,8 +490,9 @@ function showSummary() {
   // Enable sharing buttons
   document.getElementById("shareFarcasterButton").disabled = true;
   document.getElementById("shareTwitterButton").disabled = true;
+  document.getElementById("shareLensButton").disabled = true;
 
-  // Add event listener for the Farcaster button if not already added
+  // event listener for the Farcaster button
   if (!farcasterListenerAdded) {
     const farcasterButton = document.getElementById("shareFarcasterButton");
     farcasterButton.addEventListener("click", shareFarcaster);
@@ -640,26 +758,15 @@ function showPositiveMessage() {
   `);
 }
 
-function stopDetection() {
+async function resetDetection() {
+  // Stop and remove the video capture
   if (video) {
     video.stop();
     video.remove();
+    video = null; // Ensure video is nullified
   }
-  noLoop();
-  clear();
-  clearInterval(timerInterval);
-  console.log("Detection stopped");
 
-  showPositiveMessage();
-
-  showSummary();
-}
-
-function resetDetection() {
-  if (video) {
-    video.stop();
-    video.remove();
-  }
+  // Reset state variables
   videoInitialized = false;
   started = false;
   reps = 0;
@@ -670,6 +777,7 @@ function resetDetection() {
   console.log("Application reset");
   loop();
 
+  // Remove any positive messages or welcome messages
   const positiveMessage = select(".positive-message");
   if (positiveMessage) {
     positiveMessage.remove();
@@ -680,12 +788,25 @@ function resetDetection() {
     welcomeMessage.hide();
   }
 
+  // Show instructions and update UI
   showView("#instructions");
   updateInstructions();
 
+  // Reset UI elements
   modeButton.removeAttribute("disabled");
   squatFeedbackText = "";
   squatAngle = 0;
+
+  // Ensure FaceMesh is properly closed and nullified
+  if (faceMesh) {
+    try {
+      await faceMesh.close();
+    } catch (error) {
+      console.error("Error closing FaceMesh:", error);
+    }
+    faceMesh = null;
+  }
+  detectorReady = false;
 }
 
 function startUserAudio() {
@@ -715,9 +836,7 @@ async function initDetector() {
       detectorConfig
     );
   } catch (webglError) {
-    console.warn(
-      "WebGL initialization failed with SINGLEPOSE_THUNDER, trying SINGLEPOSE_LIGHTNING on CPU."
-    );
+    console.warn("WebGL initialization failed, trying CPU.");
     try {
       await tf.setBackend("cpu");
       await tf.ready();
@@ -729,8 +848,7 @@ async function initDetector() {
       );
     } catch (cpuError) {
       console.error("Error initializing detector with CPU fallback:", cpuError);
-      console.warn("Trying BlazePose as a fallback.");
-      await initBlazePose();
+      alert("Please check your browser compatibility or try a different one.");
     }
   }
 
@@ -828,6 +946,26 @@ function draw() {
       }
     }
 
+    // Draw FaceMesh landmarks only if FaceMesh is enabled and no filter is applied
+    if (faceMesh && faceMeshResults && faceMeshResults.multiFaceLandmarks) {
+      // Skip drawing landmarks if a filter is applied
+      if (currentFilter === "none") {
+        for (const landmarks of faceMeshResults.multiFaceLandmarks) {
+          drawFaceMeshLandmarks(landmarks);
+        }
+      }
+    }
+
+    // Draw the filter if it's not "none"
+    if (currentFilter !== "none" && noseFilter) {
+      // Get the position of the nose landmark (index 1 for MediaPipe FaceMesh)
+      const nose = faceMeshResults.multiFaceLandmarks[0][1]; // Adjust index based on your needs
+      const x = nose.x * width; // Scale to canvas size
+      const y = nose.y * height; // Scale to canvas size
+
+      image(noseFilter, x - noseFilter.width / 2, y - noseFilter.height / 2);
+    }
+
     resetMatrix();
     fill(255);
     strokeWeight(2);
@@ -864,6 +1002,15 @@ function draw() {
       );
       drawAngleRange(0, PARALLEL_SQUAT_ANGLE, angleIndicatorY);
     }
+  }
+}
+
+// Function to draw FaceMesh landmarks
+function drawFaceMeshLandmarks(landmarks) {
+  for (const landmark of landmarks) {
+    fill(0, 255, 0);
+    noStroke();
+    ellipse(landmark.x * width, landmark.y * height, 5, 5);
   }
 }
 

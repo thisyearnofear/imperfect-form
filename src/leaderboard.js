@@ -541,7 +541,6 @@ async function updateLeaderboard() {
     const pushupLeaderboard = [];
     const squatLeaderboard = [];
 
-    // sourcery skip: avoid-function-declarations-in-blocks
     function processData(data, network) {
       data.forEach((entry) => {
         if (entry.user !== "0x0000000000000000000000000000000000000000") {
@@ -583,7 +582,6 @@ async function updateLeaderboardUI(pushupLeaderboard, squatLeaderboard) {
   const leaderboardBody = document.getElementById("leaderboardBody");
   leaderboardBody.innerHTML = ""; // Clear existing entries
 
-  // sourcery skip: avoid-function-declarations-in-blocks
   async function displayEntries(entries, headerText, headerColor) {
     const header = document.createElement("tr");
     header.innerHTML = `<td colspan="5" style="background-color: ${headerColor}; text-align: center;">${headerText}</td>`;
