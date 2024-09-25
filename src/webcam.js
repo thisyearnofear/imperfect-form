@@ -70,7 +70,6 @@ const channelOptions = [
 const memeUrl = "https://imgur.com/a/imperfect-form-aviu4z4";
 
 // Initialize FaceMesh
-// Initialize FaceMesh
 async function initFaceMesh() {
   if (fallbackActivated) return; // Skip FaceMesh initialization if fallback is activated
 
@@ -650,12 +649,11 @@ function shareFarcaster() {
       text-align: center; /* Centered the text */
     }
   </style>
-        <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
+       <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
       </head>
       <body>
         <div class="neynar-container">
           <h2>Imperfect Form</h2>
-          <!-- Display only the Neynar sign-in button initially -->
           <div class="neynar_signin" data-client_id="9c260f93-357a-4952-8090-a03f10e742f4" data-success-callback="onSignInSuccess" data-theme="dark"></div>
         </div>
         <script src="https://neynarxyz.github.io/siwn/raw/1.2.0/index.js" async></script>
@@ -701,28 +699,31 @@ function shareFarcaster() {
         .join("")}
     </select>
     <div id="castPreview" class="cast-preview">
-  <p>I just rocked ${reps} ${exerciseMode} in ${formattedTimeSpent} on /imperfectform https://imperfect-form-v2.vercel.app</p>
-  <p>Built on @base & @0xPolygon</p>
-  <p>${transactionDetails}</p>
-</div>
+      <p>I just rocked ${reps} ${exerciseMode} in ${formattedTimeSpent} on /imperfectform https://imperfect-form-v2.vercel.app</p>
+      <p>Built on @base & @0xPolygon</p>
+      <p>${transactionDetails}</p>
+    </div>
     <button id="confirmCastButton" class="confirm-cast-button">Confirm and Send</button>
   </div>
                   \`;
 
                   // Add event listener for the Confirm and Send button
                   document.getElementById("confirmCastButton").addEventListener("click", () => {
-  const castText = document.getElementById("castText").value;
-  const selectedChannel = document.getElementById("channelSelect").value;
-  console.log('Confirm and Send button clicked with text:', castText);
-  console.log('Selected channel:', selectedChannel);
-  socket.emit("confirm-cast", {
-    signer_uuid: data.signer_uuid,
-    text: castText,
-    embeds: [{ url: '${memeUrl}' }],
-    parent: selectedChannel
-  });
-  console.log('Confirm-cast message sent');
-});
+                    const castText = document.getElementById("castPreview").innerText;
+                    const selectedChannel = document.getElementById("channelSelect").value;
+
+                    // Log the selected channel to the console
+                    console.log('Confirm and Send button clicked with text:', castText);
+                    console.log('Selected channel:', selectedChannel);
+
+                    socket.emit("confirm-cast", {
+                      signer_uuid: data.signer_uuid,
+                      text: castText,
+                      embeds: [{ url: '${memeUrl}' }],
+                      parent: selectedChannel
+                    });
+                    console.log('Confirm-cast message sent');
+                  });
                 } else {
                   console.error('Error storing signer:', response.error);
                 }
@@ -742,33 +743,7 @@ function shareFarcaster() {
             socket.on("disconnect", () => {
               console.log("Disconnected from Socket.io server");
             });
-
-            // Handle Confirm and Send button click
-            document.getElementById("confirmCastButton")?.addEventListener("click", handleConfirmCast);
           }
-
-          // Function to handle Confirm and Send action
-          function handleConfirmCast() {
-  if (!signedIn) {
-    alert("Please sign in with Neynar first.");
-    return;
-  }
-
-  const castPreview = document.getElementById("castPreview");
-  const castText = castPreview.innerText;
-  const selectedChannel = document.getElementById("channelSelect").value;
-  console.log('Confirm and Send button clicked with text:', castText);
-  console.log('Selected channel:', selectedChannel);
-
-  const socket = io("https://imperfect-form.onrender.com/");
-  socket.emit("confirm-cast", {
-    signer_uuid: signerData.signer_uuid,
-    text: castText,
-    embeds: [{ url: '${memeUrl}' }],
-    parent: selectedChannel
-  });
-  console.log('Confirm-cast message sent');
-}
         </script>
       </body>
     </html>
