@@ -49,6 +49,8 @@ let filterOptions = [
 let currentFilterIndex = 0;
 let currentFilter = "none";
 let noseFilter; // Variable to hold the filter image
+let fallbackActivated = false; // Track if fallback is activated
+let frameCount = 0;
 
 const SQUAT_HOLD_TIME = 500; // milliseconds
 const PARTIAL_SQUAT_ANGLE = 150;
@@ -68,7 +70,10 @@ const channelOptions = [
 const memeUrl = "https://imgur.com/a/imperfect-form-aviu4z4";
 
 // Initialize FaceMesh
+// Initialize FaceMesh
 async function initFaceMesh() {
+  if (fallbackActivated) return; // Skip FaceMesh initialization if fallback is activated
+
   try {
     if (faceMesh) {
       await faceMesh.close();
@@ -103,6 +108,8 @@ function preload() {
 
 // Start FaceMesh processing
 async function startFaceMesh() {
+  if (fallbackActivated) return; // Skip FaceMesh processing if fallback is activated
+
   if (video && faceMesh) {
     try {
       const sendToFaceMesh = async () => {
@@ -123,6 +130,8 @@ async function startFaceMesh() {
 }
 
 async function sendToFaceMesh() {
+  if (fallbackActivated) return; // Skip FaceMesh processing if fallback is activated
+
   if (!faceMesh || !video || !video.elt) {
     console.error("FaceMesh or video is not initialized.");
     return;
@@ -135,7 +144,6 @@ async function sendToFaceMesh() {
     console.error("Error processing FaceMesh:", error);
   }
 }
-
 function setup() {
   const canvas = createCanvas(640, 480);
   canvas.parent("canvasContainer");
@@ -221,6 +229,9 @@ const loadingInstructions = [
   "Maintain a steady pace throughout",
   "Stretch while you wait?",
   "Any issues: RESET & START again",
+  "Tested on Brave (fast), Chrome (med) & Safari (slow)",
+  "Chrome: enable hardware acceleration in settings",
+  "Mobile: open inside wallet browswer for onchain powers",
 ];
 
 function toggleMode() {
@@ -265,8 +276,14 @@ function startDetection() {
             video.hide();
             initDetector();
 
-            // Call startFaceMesh after initializing the detector
-            startFaceMesh();
+            // Check if WebGL is available before starting FaceMesh
+            if (isWebGLAvailable()) {
+              startFaceMesh();
+            } else {
+              console.error(
+                "WebGL is not available. FaceMesh will not be started."
+              );
+            }
           });
           video.parent("canvasContainer");
         }
@@ -277,11 +294,32 @@ function startDetection() {
   }
 }
 
+// Function to check if WebGL is available
+function isWebGLAvailable() {
+  try {
+    const canvas = document.createElement("canvas");
+    return !!window.WebGLRenderingContext && !!canvas.getContext("webgl");
+  } catch (e) {
+    return false;
+  }
+}
+
 function stopDetection() {
   if (video) {
     video.stop();
     video.remove();
   }
+
+  // Ensure FaceMesh is properly closed
+  if (faceMesh) {
+    try {
+      faceMesh.close(); // Close FaceMesh instance
+    } catch (error) {
+      console.error("Error closing FaceMesh:", error);
+    }
+    faceMesh = null; // Nullify to prevent further access
+  }
+
   noLoop();
   clear();
   clearInterval(timerInterval);
@@ -377,7 +415,12 @@ function adjustCanvasSize() {
   const screenWidth = screen.offsetWidth;
   const screenHeight = screen.offsetHeight;
 
-  resizeCanvas(screenWidth, screenHeight);
+  // Ensure resizeCanvas is called from p5.js context
+  if (typeof resizeCanvas === "function") {
+    resizeCanvas(screenWidth, screenHeight);
+  } else {
+    console.error("resizeCanvas is not defined.");
+  }
 }
 
 function adjustLayoutForMobile() {
@@ -836,9 +879,9 @@ async function initDetector() {
       detectorConfig
     );
   } catch (webglError) {
-    console.warn("WebGL initialization failed, trying CPU.");
+    console.warn("WebGL initialization failed, trying WASM.");
     try {
-      await tf.setBackend("cpu");
+      await tf.setBackend("wasm");
       await tf.ready();
       detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet,
@@ -846,9 +889,13 @@ async function initDetector() {
           modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
         }
       );
-    } catch (cpuError) {
-      console.error("Error initializing detector with CPU fallback:", cpuError);
-      alert("Please check your browser compatibility or try a different one.");
+    } catch (wasmError) {
+      console.warn(
+        "WASM initialization failed, trying TensorFlow.js fallback."
+      );
+      // Load the fallback script for TensorFlow.js
+      loadFallbackScripts();
+      fallbackActivated = true; // Activate fallback
     }
   }
 
@@ -856,6 +903,22 @@ async function initDetector() {
     detectorReady = true;
     hideLoadingScreen();
     getPoses();
+  } else {
+    // Do not initialize FaceMesh if detector is not ready
+    faceMesh = null; // Ensure faceMesh is null
+  }
+}
+
+async function getPoses() {
+  if (detectorReady && videoInitialized && detector) {
+    // Check if detector is initialized
+    try {
+      poses = await detector.estimatePoses(video.elt);
+      const delay = tf.getBackend() === "wasm" ? 200 : 100; // Increase delay for WASM
+      setTimeout(getPoses, delay); // Adjusted delay for WASM
+    } catch (error) {
+      console.error("Error estimating poses:", error);
+    }
   }
 }
 
@@ -889,36 +952,6 @@ async function initBlazePose() {
   }
 }
 
-function onBlazePoseResults(results) {
-  poses = results.poseLandmarks ? [{ keypoints: results.poseLandmarks }] : [];
-}
-
-async function getPosesWithBlazePose() {
-  if (detectorReady && videoInitialized) {
-    try {
-      await detector.send({ image: video.elt });
-      setTimeout(getPosesWithBlazePose, 0);
-    } catch (error) {
-      console.error("Error estimating poses with BlazePose:", error);
-    }
-  }
-}
-
-async function getPoses() {
-  if (detectorReady && videoInitialized) {
-    try {
-      if (detector instanceof window.Pose) {
-        await getPosesWithBlazePose();
-      } else {
-        poses = await detector.estimatePoses(video.elt);
-        setTimeout(getPoses, 0);
-      }
-    } catch (error) {
-      console.error("Error estimating poses:", error);
-    }
-  }
-}
-
 function draw() {
   if (loading || !started) {
     return;
@@ -948,22 +981,28 @@ function draw() {
 
     // Draw FaceMesh landmarks only if FaceMesh is enabled and no filter is applied
     if (faceMesh && faceMeshResults && faceMeshResults.multiFaceLandmarks) {
-      // Skip drawing landmarks if a filter is applied
-      if (currentFilter === "none") {
-        for (const landmarks of faceMeshResults.multiFaceLandmarks) {
-          drawFaceMeshLandmarks(landmarks);
+      // Check if multiFaceLandmarks has at least one face detected
+      if (faceMeshResults.multiFaceLandmarks.length > 0) {
+        // Skip drawing landmarks if a filter is applied
+        if (currentFilter === "none") {
+          for (const landmarks of faceMeshResults.multiFaceLandmarks) {
+            drawFaceMeshLandmarks(landmarks);
+          }
+        }
+
+        // Draw the filter if it's not "none"
+        if (currentFilter !== "none" && noseFilter) {
+          const nose = faceMeshResults.multiFaceLandmarks[0][1]; // Accessing the nose landmark
+          const x = nose.x * width; // Scale to canvas size
+          const y = nose.y * height; // Scale to canvas size
+
+          image(
+            noseFilter,
+            x - noseFilter.width / 2,
+            y - noseFilter.height / 2
+          );
         }
       }
-    }
-
-    // Draw the filter if it's not "none"
-    if (currentFilter !== "none" && noseFilter) {
-      // Get the position of the nose landmark (index 1 for MediaPipe FaceMesh)
-      const nose = faceMeshResults.multiFaceLandmarks[0][1]; // Adjust index based on your needs
-      const x = nose.x * width; // Scale to canvas size
-      const y = nose.y * height; // Scale to canvas size
-
-      image(noseFilter, x - noseFilter.width / 2, y - noseFilter.height / 2);
     }
 
     resetMatrix();

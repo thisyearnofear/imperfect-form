@@ -17,12 +17,13 @@
       rel="stylesheet"
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+
     <script
       src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"
       defer
     ></script>
+
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"
       defer
@@ -50,6 +51,47 @@
     <script src="bundle.js" defer></script>
     <script src="webcam.js" defer></script>
     <script src="leaderboard.js" type="module" defer></script>
+    <script>
+      // Fallback script for TensorFlow.js if WebGL fails
+      function loadFallbackScripts() {
+        // Deactivate the specified scripts
+        const scriptsToDeactivate = [
+          "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core",
+          "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter",
+          "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl",
+          "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh",
+          "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js",
+          "https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js",
+          "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils",
+        ];
+
+        scriptsToDeactivate.forEach((src) => {
+          const script = document.querySelector(`script[src="${src}"]`);
+          if (script) {
+            script.remove();
+          }
+        });
+
+        // Load the fallback script
+        const fallbackScript = document.createElement("script");
+        fallbackScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs";
+        document.head.appendChild(fallbackScript);
+      }
+
+      // Check if WebGL is available and load fallback if not
+      function isWebGLAvailable() {
+        try {
+          const canvas = document.createElement("canvas");
+          return !!window.WebGLRenderingContext && !!canvas.getContext("webgl");
+        } catch (e) {
+          return false;
+        }
+      }
+
+      if (!isWebGLAvailable()) {
+        loadFallbackScripts();
+      }
+    </script>
   </head>
   <body>
     <!-- <div id="orientationMessage" class="orientation-message">

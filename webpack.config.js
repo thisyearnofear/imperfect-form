@@ -35,12 +35,6 @@ module.exports = {
   },
   resolve: {
     extensions: [".js"],
-    alias: {
-      "@coinbase/wallet-sdk": path.resolve(
-        __dirname,
-        "node_modules/@coinbase/wallet-sdk"
-      ),
-    },
     fallback: {
       crypto: require.resolve("crypto-browserify"),
       stream: require.resolve("stream-browserify"),
@@ -74,14 +68,10 @@ module.exports = {
   devServer: {
     static: {
       directory: path.join(__dirname, "dist"),
-      watch: true, // Ensure changes are watched
     },
     compress: true,
     port: 9000,
+    historyApiFallback: true,
     allowedHosts: "all",
-    historyApiFallback: {
-      // Serves index.html only for specific routes, not for all 404s
-      rewrites: [{ from: /^\/$/, to: "/index.html" }],
-    },
   },
 };
