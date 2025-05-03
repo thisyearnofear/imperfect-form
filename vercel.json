@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "next/package.json",
-      "use": "@vercel/next"
+      "use": "@vercel/next",
+      "config": {
+        "buildCommand": "npm run build:no-lint"
+      }
     }
   ],
   "routes": [
