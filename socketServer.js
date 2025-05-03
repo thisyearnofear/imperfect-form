@@ -1,6 +1,7 @@
 const http = require("http");
 const socketIo = require("socket.io");
-require("dotenv").config();
+const { storeSigner, shareCast } = require("./backend/signerManager");
+const { SOCKET_PORT } = require("./backend/config");
 
 const server = http.createServer();
 const io = socketIo(server, {
@@ -10,15 +11,14 @@ const io = socketIo(server, {
   },
 });
 
-const signers = new Map(); // store signer_uuid and associated data
+// Signer data is now managed via backend/signerManager
 
 io.on("connection", (socket) => {
   console.log("New client connected");
 
   socket.on("store-signer", (data) => {
     console.log("store-signer event received:", data);
-    const { signer_uuid, fid, reps, exerciseMode, formattedTimeSpent } = data;
-    signers.set(signer_uuid, { fid, reps, exerciseMode, formattedTimeSpent });
+    storeSigner(data);
     socket.emit("store-signer-response", {
       success: true,
       message: "Signer data stored successfully",
@@ -27,45 +27,13 @@ io.on("connection", (socket) => {
 
   socket.on("confirm-cast", async (data) => {
     console.log("confirm-cast event received:", data);
-    const { signer_uuid, text, embeds, parent } = data;
-    if (!signers.has(signer_uuid)) {
-      socket.emit("confirm-cast-response", {
-        success: false,
-        error: "Invalid signer_uuid",
-      });
-      return;
-    }
-
     try {
-      const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          api_key: process.env.NEYNAR_API_KEY,
-        },
-        body: JSON.stringify({
-          signer_uuid,
-          text,
-          embeds,
-          parent,
-        }),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to share cast: ${response.status} ${response.statusText} - ${responseData.message}`
-        );
-      }
-
-      console.log("Cast shared successfully:", responseData);
+      const result = await shareCast({ ...data, replyTo: data.parent });
       socket.emit("confirm-cast-response", {
         success: true,
-        result: responseData,
+        result,
       });
     } catch (error) {
-      console.error("Error sharing cast:", error);
       socket.emit("confirm-cast-response", {
         success: false,
         error: error.message,
@@ -78,7 +46,6 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.SOCKET_PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`Socket.io server is running on port ${PORT}`);
+server.listen(SOCKET_PORT, () => {
+  console.log(`Socket.io server is running on port ${SOCKET_PORT}`);
 });

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="participationGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#b0b0b0;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#808080;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#606060;stop-opacity:1" />
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Medal body -->
+  <circle cx="100" cy="100" r="80" fill="url(#participationGradient)" filter="url(#glow)" />
+  
+  <!-- Medal rim -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="#808080" stroke-width="5" />
+  
+  <!-- Medal shine -->
+  <ellipse cx="70" cy="70" rx="25" ry="20" fill="white" opacity="0.2" />
+  
+  <!-- Medal ribbon -->
+  <path d="M60,100 L40,200 L70,180 L100,200 L130,180 L160,200 L140,100" fill="#9370db" />
+  
+  <!-- Star symbol -->
+  <path d="M100,60 L113,90 L145,90 L120,110 L130,140 L100,120 L70,140 L80,110 L55,90 L87,90 Z" fill="#ffffff" />
+</svg>

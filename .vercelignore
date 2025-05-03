@@ -1,0 +1,5 @@
+# Ignore everything except the next directory
+/*
+!/next
+/next/node_modules
+/next/.next/cache

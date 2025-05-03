@@ -1,0 +1,871 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+@import "../styles/leaderboard.css";
+@import "../styles/filters.css";
+
+/* Base styles */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Press Start 2P", cursive;
+  background-color: #000;
+  color: #fff;
+  overflow-y: auto; /* Allow vertical scrolling */
+  min-height: 100vh;
+}
+
+/* Layout */
+#game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center content horizontally */
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto; /* Allow vertical scrolling within the container */
+  justify-content: flex-start; /* Changed to align content from the top */
+}
+
+/* Banner */
+#banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.olympic-rings {
+  display: flex;
+  margin-right: 20px;
+}
+
+.ring {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin: 0 5px;
+  border: 3px solid transparent; /* Change to transparent to show filled color */
+  /* Add this to ensure the rings are filled */
+  display: inline-block; /* Ensure they are inline */
+}
+
+.blue {
+  background-color: #416ced; /* Fill color for the blue ring */
+  border-color: #416ced; /* Same color for the border */
+}
+
+.red {
+  background-color: #ff69b4; /* Fill color for the red ring */
+  border-color: #ff69b4; /* Same color for the border */
+}
+
+.yellow {
+  background-color: #fcb131; /* Fill color for the yellow ring */
+  border-color: #fcb131; /* Same color for the border */
+}
+
+.black {
+  background-color: #000000; /* Fill color for the black ring */
+  border-color: #000000; /* Same color for the border */
+}
+
+.green {
+  background-color: #11aa11; /* Fill color for the green ring */
+  border-color: #11aa11; /* Same color for the border */
+}
+
+h1 {
+  font-size: 24px;
+  color: #fcb131;
+  text-shadow: 2px 2px #000;
+}
+
+/* Game screen */
+#screen {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  background-color: #000;
+  border: 4px solid #fff;
+  box-shadow: 0 0 10px #fcb131;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+
+#canvasContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 3px solid #ff00ff !important; /* Bright magenta border for visibility */
+}
+
+/* Make sure canvas is visible */
+canvas {
+  border: 4px solid #00ff00 !important; /* Bright green border for visibility */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+/* Messages and instructions */
+#welcomeMessage,
+#instructions {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+/* Controls */
+#controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 640px;
+}
+
+button {
+  font-family: "Press Start 2P", cursive;
+  font-size: 14px;
+  margin: 0 10px;
+  padding: 10px 20px;
+  color: #000;
+  background-color: #fcb131;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px #fcb131;
+}
+
+#startButton {
+  background-color: #00a651;
+  color: #fff;
+}
+
+#stopButton {
+  background-color: #ee334e;
+  color: #fff;
+}
+
+#resetButton {
+  background-color: #0081c8;
+  color: #fff;
+}
+
+#modeButton {
+  background-color: #800080; /* Purple color for the mode button */
+  color: #fff;
+}
+
+/* Filter button states */
+#modeButton.filter-none {
+  background-color: #fcb131;
+}
+
+#modeButton.filter-nose {
+  background-color: #ff5e5e;
+}
+
+#modeButton.filter-mustache {
+  background-color: #5e5eff;
+}
+
+#modeButton.filter-arch {
+  background-color: #5eff5e;
+}
+
+#modeButton.filter-degen {
+  background-color: #ff5eff;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Timer and Rep Counter */
+.timer {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 16px;
+  color: #fcb131;
+  z-index: 100;
+  border: 2px solid #fcb131;
+  box-shadow: 0 0 10px rgba(252, 177, 49, 0.5);
+  text-align: center;
+  min-width: 80px;
+}
+
+.rep-counter-container {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 10px 15px;
+  border-radius: 50%;
+  font-size: 28px;
+  color: #fcb131;
+  z-index: 100;
+  border: 2px solid #fcb131;
+  box-shadow: 0 0 15px rgba(252, 177, 49, 0.7);
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Tutorial Overlay */
+.tutorial-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+  font-size: 14px;
+  line-height: 2;
+  color: #fff;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Loading screen styles */
+.loading-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.95);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.loading-text {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #fcb131;
+  text-shadow: 0 0 10px rgba(252, 177, 49, 0.7);
+}
+
+.loading-instruction {
+  font-size: 18px;
+  text-align: center;
+  max-width: 80%;
+  margin-top: 20px;
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* Typewriter effect */
+.typewriter-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.typewriter h2 {
+  color: #fcb131;
+  font-size: 20px;
+  overflow: hidden;
+  border-right: 3px solid #fcb131;
+  white-space: nowrap;
+  margin: 0 auto;
+  letter-spacing: 2px;
+  animation:
+    typing 3.5s steps(40, end),
+    blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: #fcb131 }
+}
+
+/* Wallet Connection Styles */
+.wallet-connection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.wallet-prompt {
+  display: flex;
+  justify-content: center;
+}
+
+.wallet-connected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 2px solid #fcb131;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+.wallet-button {
+  background-color: #800080;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(128, 0, 128, 0.5);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wallet-button:hover {
+  transform: scale(1.05);
+  background-color: #9932cc;
+  box-shadow: 0 0 15px #fcb131;
+}
+
+.wallet-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.wallet-modal-content {
+  background-color: #000;
+  border: 4px solid #fcb131;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 400px;
+  width: 90%;
+  color: #fff;
+  text-align: center;
+  position: relative;
+}
+
+.wallet-details {
+  margin: 15px 0;
+}
+
+.address-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.address-text {
+  font-size: 12px;
+  word-break: break-all;
+  background-color: rgba(128, 0, 128, 0.2);
+  border: 1px solid #fcb131;
+  border-radius: 4px;
+  padding: 8px;
+  max-width: 280px;
+  margin: 0;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px;
+  margin: 0;
+  transition: transform 0.2s;
+}
+
+.copy-button:hover {
+  transform: scale(1.2);
+}
+
+/* Social identities styles */
+.social-identities {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: rgba(128, 0, 128, 0.1);
+  border-radius: 8px;
+  border: 1px solid #fcb131;
+}
+
+.social-identities h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #fcb131;
+  font-size: 14px;
+}
+
+.identities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.identity-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.identity-label {
+  color: #fcb131;
+  font-weight: bold;
+  min-width: 80px;
+  text-align: right;
+}
+
+.identity-value {
+  color: white;
+  background-color: rgba(128, 0, 128, 0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  flex-grow: 1;
+  text-align: left;
+}
+
+/* Leaderboard */
+.leaderboard-container {
+  margin-top: 30px;
+  width: 100%;
+  max-width: 640px;
+  background-color: #000;
+  border: 4px solid #fff;
+  box-shadow: 0 0 10px #fcb131;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.leaderboard-container h2 {
+  color: #fcb131;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+#leaderboardTable {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+  font-size: 12px;
+}
+
+#leaderboardTable th, #leaderboardTable td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #fcb131;
+}
+
+.load-button, .view-more-button {
+  font-family: "Press Start 2P", cursive;
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #fcb131;
+  border-radius: 5px;
+  padding: 5px 10px;
+  margin: 10px auto;
+  cursor: pointer;
+  font-size: 10px;
+  display: block;
+}
+
+/* Modal Dialog */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(0, 0, 0); /* Fully opaque black background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: #000;
+  border: 4px solid #fcb131;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 0 25px rgba(252, 177, 49, 0.5);
+}
+
+/* Radix UI Dialog Styling */
+[data-radix-popper-content-wrapper] {
+  z-index: 2001 !important;
+}
+
+/* Thirdweb Modal Styling - Fix transparency issues */
+.tw-connect-wallet {
+  --tw-bg-opacity: 1 !important;
+}
+
+/* Target all thirdweb modal backdrops */
+div[data-dialog-backdrop],
+div[data-modal-backdrop],
+div[data-overlay],
+div[data-backdrop],
+.tw-connect-wallet-modal-overlay,
+.tw-modal-overlay,
+.tw-overlay {
+  --tw-bg-opacity: 1 !important;
+  background-color: rgb(0 0 0) !important;
+  opacity: 1 !important;
+}
+
+/* Additional backdrop for all modals */
+body::after {
+  content: "";
+  display: var(--modal-open, none);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: black;
+  z-index: 1998;
+}
+
+/* Second additional backdrop for extra opacity */
+body::before {
+  content: "";
+  display: var(--modal-open, none);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: black;
+  z-index: 1997;
+}
+
+/* Set the variable when any modal is open */
+body:has(div[data-dialog-backdrop]),
+body:has(div[data-modal-backdrop]),
+body:has(div[data-overlay]),
+body:has(div[data-backdrop]),
+body:has(.modal[style*="display: block"]),
+body:has(.tw-connect-wallet-modal-overlay),
+body:has(.tw-modal-overlay),
+body:has(.tw-overlay) {
+  --modal-open: block;
+}
+
+/* Force all modal content to have solid black backgrounds */
+[data-dialog-content],
+[data-modal-content],
+.modal-content,
+.tw-connect-wallet-modal-content,
+.tw-modal-content {
+  background-color: black !important;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  color: #fcb131;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.medal {
+  width: 100px;
+  height: 100px;
+  margin: 20px auto;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  color: #000;
+  font-weight: bold;
+}
+
+.gold {
+  background-color: gold;
+  box-shadow: 0 0 20px gold;
+}
+
+.silver {
+  background-color: silver;
+  box-shadow: 0 0 20px silver;
+}
+
+.bronze {
+  background-color: #cd7f32;
+  box-shadow: 0 0 20px #cd7f32;
+}
+
+.share-button {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.farcaster-button, .twitter-button, .lens-button {
+  margin: 0 10px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Press Start 2P", cursive;
+  font-size: 10px;
+  transition: all 0.3s ease;
+}
+
+.farcaster-button {
+  background-color: #9146ff;
+  color: #fff;
+}
+
+.twitter-button {
+  background-color: #1da1f2;
+  color: #fff;
+}
+
+.lens-button {
+  background-color: #00a651;
+  color: #fff;
+}
+
+.blockchain-submission {
+  margin-top: 20px;
+  padding: 15px;
+  border: 2px solid #fcb131;
+  border-radius: 5px;
+}
+
+.blockchain-submission p {
+  margin-top: 0;
+  font-size: 12px;
+  color: #fcb131;
+}
+
+#networkSelect {
+  font-family: "Press Start 2P", cursive;
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #fcb131;
+  border-radius: 5px;
+  padding: 8px;
+  margin-right: 10px;
+  font-size: 10px;
+}
+
+/* Loading Animation */
+.loading-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 1500;
+}
+
+.loading-text {
+  color: #fcb131;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.loading-rings {
+  display: flex;
+  justify-content: center;
+}
+
+.loading-ring {
+  width: 20px;
+  height: 20px;
+  margin: 0 5px;
+  border-radius: 50%;
+  background-color: #fcb131;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.loading-ring:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.loading-ring:nth-child(3) {
+  animation-delay: 1s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+/* Typewriter effect */
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  margin: 0 auto;
+  animation: typing 3.5s steps(40, end);
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+/* Button text styling */
+.button-text {
+  display: inline-block;
+  font-size: 18px;
+  padding: 5px 10px;
+  margin: 2px;
+  border-radius: 5px;
+  text-transform: uppercase;
+}
+
+.button-text.start {
+  background-color: #00a651;
+  color: #fff;
+}
+
+.button-text.stop {
+  background-color: #ee334e;
+  color: #fff;
+}
+
+.button-text.reset {
+  background-color: #0081c8;
+  color: #fff;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 18px;
+  }
+
+  #screen {
+    max-width: 90vw;
+  }
+
+  #controls {
+    max-width: 90vw;
+    flex-wrap: wrap;
+  }
+
+  button {
+    margin: 5px;
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+
+  .leaderboard-container {
+    max-width: 90vw;
+  }
+
+  #leaderboardTable {
+    font-size: 8px;
+  }
+}
+
+/* Spinner Component */
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: #fcb131;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

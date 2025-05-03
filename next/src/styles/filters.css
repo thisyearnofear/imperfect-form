@@ -1,0 +1,57 @@
+/* Face Filter Styles */
+.filter-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.filter-overlay {
+  position: absolute;
+  transition: all 0.3s ease;
+}
+
+.filter-nose {
+  width: 50px;
+  height: 50px;
+}
+
+.filter-mustache {
+  width: 100px;
+  height: 30px;
+}
+
+.filter-arch, .filter-degen {
+  width: 150px;
+  height: 150px;
+}
+
+/* Filter button styles */
+#modeButton.filter-active {
+  background-color: #ff00ff;
+  color: white;
+  border: 2px solid #00ffff;
+}
+
+#modeButton.filter-none {
+  background-color: #fcb131;
+}
+
+#modeButton.filter-nose {
+  background-color: #ff5e5e;
+}
+
+#modeButton.filter-mustache {
+  background-color: #5e5eff;
+}
+
+#modeButton.filter-arch {
+  background-color: #5eff5e;
+}
+
+#modeButton.filter-degen {
+  background-color: #ff5eff;
+}

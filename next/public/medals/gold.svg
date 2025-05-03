@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="goldGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#ffdf00;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#ffa700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff8c00;stop-opacity:1" />
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Medal body -->
+  <circle cx="100" cy="100" r="80" fill="url(#goldGradient)" filter="url(#glow)" />
+  
+  <!-- Medal rim -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="#ffd700" stroke-width="5" />
+  
+  <!-- Medal shine -->
+  <ellipse cx="70" cy="70" rx="25" ry="20" fill="white" opacity="0.3" />
+  
+  <!-- Medal ribbon -->
+  <path d="M60,100 L40,200 L70,180 L100,200 L130,180 L160,200 L140,100" fill="#ff4500" />
+  
+  <!-- Number 1 -->
+  <text x="100" y="120" font-family="Arial, sans-serif" font-size="80" font-weight="bold" text-anchor="middle" fill="#ffffff">1</text>
+</svg>
