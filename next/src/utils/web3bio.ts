@@ -1,7 +1,11 @@
 // Utility for resolving wallet addresses to social identities using web3bio API
 
 // Cache for resolved identities to avoid repeated API calls
-const identityCache: Record<string, any> = {};
+const identityCache: Record<string, {
+  ens: string | null;
+  lens: string | null;
+  farcaster: string | null;
+}> = {};
 
 /**
  * Resolves a wallet address to social identities using web3bio API
@@ -28,13 +32,13 @@ export async function resolveIdentity(address: string): Promise<{
   try {
     // Call web3bio API to get identity information
     const response = await fetch(`https://api.web3.bio/profile/${address}`);
-    
+
     if (!response.ok) {
       throw new Error(`Network response was not ok: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
-    
+
     // Extract identities from response
     if (data && Array.isArray(data) && data.length > 0) {
       // Find ENS identity
@@ -42,23 +46,23 @@ export async function resolveIdentity(address: string): Promise<{
       if (ensIdentity && ensIdentity.identity) {
         result.ens = ensIdentity.identity;
       }
-      
+
       // Find Lens identity
       const lensIdentity = data.find(item => item.platform === 'lens');
       if (lensIdentity && lensIdentity.identity) {
         result.lens = lensIdentity.identity;
       }
-      
+
       // Find Farcaster identity
       const farcasterIdentity = data.find(item => item.platform === 'farcaster');
       if (farcasterIdentity && farcasterIdentity.identity) {
         result.farcaster = farcasterIdentity.identity;
       }
     }
-    
+
     // Cache the result
     identityCache[address] = result;
-    
+
     return result;
   } catch (error) {
     console.error(`Error resolving identity for address ${address}:`, error);
@@ -75,11 +79,11 @@ export async function resolveIdentity(address: string): Promise<{
  */
 export async function getBestDisplayName(address: string): Promise<string> {
   const identities = await resolveIdentity(address);
-  
+
   // Priority: Farcaster > ENS > Lens > shortened address
-  return identities.farcaster || 
-         identities.ens || 
-         identities.lens || 
+  return identities.farcaster ||
+         identities.ens ||
+         identities.lens ||
          shortenAddress(address);
 }
 

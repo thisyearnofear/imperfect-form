@@ -1,4 +1,5 @@
 import { useEffect, useRef, RefObject } from 'react';
+import { WorkerMessage, WorkerResponse } from '../types/mediapipe';
 
 type ExerciseMode = 'pushups' | 'squats';
 
@@ -25,15 +26,22 @@ export function usePoseWorker(
       streamRef.current = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
       video.srcObject = streamRef.current;
       await video.play();
-      worker.postMessage(
-        { type: 'init', canvas: offscreen, mode, width: video.videoWidth, height: video.videoHeight },
-        [offscreen]
-      );
+      const initMessage: WorkerMessage = {
+        type: 'init',
+        canvas: offscreen,
+        mode,
+        width: video.videoWidth,
+        height: video.videoHeight
+      };
+      worker.postMessage(initMessage, [offscreen]);
       // Process each video frame
-      function frameCallback(now: DOMHighResTimeStamp, metadata: VideoFrameCallbackMetadata) {
+      function frameCallback() {
+        // DOMHighResTimeStamp and VideoFrameCallbackMetadata parameters are required by the interface
+        // but not used in this implementation, so they're omitted
         video.requestVideoFrameCallback(frameCallback);
         createImageBitmap(video).then((bitmap) => {
-          worker.postMessage({ type: 'frame', bitmap }, [bitmap]);
+          const frameMessage: WorkerMessage = { type: 'frame', bitmap };
+          worker.postMessage(frameMessage, [bitmap]);
         });
       }
       video.requestVideoFrameCallback(frameCallback);
@@ -41,7 +49,7 @@ export function usePoseWorker(
 
     start();
 
-    worker.onmessage = (e) => {
+    worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
       if (e.data.type === 'rep') onRepCount(e.data.count);
     };
 

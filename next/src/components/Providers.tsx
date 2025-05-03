@@ -148,7 +148,7 @@ const Providers: React.FC<ProvidersProps> = ({ children }) => {
           dAppMeta={{
             name: "Imperfect Form",
             description: "Submit your fitness scores to the blockchain",
-            logoUrl: "/favicon.ico",
+            logoUrl: "/favicon.ico", // Next.js App Router will serve the favicon from /src/app/favicon.ico
             url: "https://imperfectform.fun", // Hardcoded URL instead of using window
             isDarkMode: true,
           }}
@@ -189,7 +189,7 @@ const Providers: React.FC<ProvidersProps> = ({ children }) => {
                   name: "Imperfect Form",
                   description: "Submit your fitness scores to the blockchain",
                   url: "https://imperfectform.fun",
-                  icons: ["/favicon.ico"],
+                  icons: ["/favicon.ico"], // Next.js App Router will serve the favicon from /src/app/favicon.ico
                 },
                 // Updated namespaces configuration for better compatibility with Rainbow wallet
                 // This uses a more flexible approach that works with more wallets

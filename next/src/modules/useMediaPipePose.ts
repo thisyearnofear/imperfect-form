@@ -1,9 +1,19 @@
-import { useEffect, useRef, RefObject } from "react";
+import { useEffect, useRef, RefObject, useCallback } from "react";
+import type { Pose } from '@mediapipe/pose';
+import type { Camera } from '@mediapipe/camera_utils';
+
+// Define our own PoseLandmark type
+interface PoseLandmark {
+  x: number;
+  y: number;
+  z: number;
+  visibility?: number;
+}
 
 type ExerciseMode = "pushups" | "squats";
 
 // Define joint names to match the TensorFlow pose model's naming
-const POSE_KEYPOINTS = {
+const POSE_KEYPOINTS: Record<number, string> = {
   0: "nose",
   11: "left_shoulder",
   12: "right_shoulder",
@@ -27,6 +37,13 @@ type KeypointWithName = {
   name: string;
 };
 
+type Point = {
+  x: number;
+  y: number;
+  z?: number;
+  visibility?: number;
+};
+
 export function useMediaPipePose(
   canvasRef: RefObject<HTMLCanvasElement | null>,
   mode: ExerciseMode = "pushups",
@@ -36,10 +53,10 @@ export function useMediaPipePose(
   const videoRef = useRef<HTMLVideoElement>(null);
   const repState = useRef<"up" | "down" | "middle">("middle");
   const repCount = useRef(0);
-  const poseRef = useRef<any>(null);
-  const cameraRef = useRef<any>(null);
+  const poseRef = useRef<Pose | null>(null);
+  const cameraRef = useRef<Camera | null>(null);
 
-  function calculateAngle(a: any, b: any, c: any) {
+  function calculateAngle(a: Point, b: Point, c: Point) {
     if (!a || !b || !c) return 0;
     const radians =
       Math.atan2(c.y - b.y, c.x - b.x) -
@@ -101,9 +118,13 @@ export function useMediaPipePose(
     return false;
   }
 
+  // Define the exercise detection functions with useCallback to include them in dependencies
+  const detectPushupCallback = useCallback(detectPushup, []);
+  const detectSquatCallback = useCallback(detectSquat, []);
+
   useEffect(() => {
     if (!isActive || !videoRef.current || !canvasRef.current) return;
-    
+
     // Clean up old instances
     if (poseRef.current) {
       poseRef.current.close();
@@ -113,16 +134,16 @@ export function useMediaPipePose(
       cameraRef.current.stop();
       cameraRef.current = null;
     }
-    
+
     let isMounted = true;
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    
+
     // Dynamically import MediaPipe components
     const setupPose = async () => {
       if (!isMounted) return;
-      
+
       try {
         // Dynamic imports to avoid SSR issues
         const [
@@ -134,12 +155,12 @@ export function useMediaPipePose(
           import('@mediapipe/camera_utils'),
           import('@mediapipe/drawing_utils')
         ]);
-        
+
         // Set up pose detection
         const pose = new Pose({
           locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
         });
-        
+
         pose.setOptions({
           modelComplexity: 0,
           smoothLandmarks: true,
@@ -147,51 +168,51 @@ export function useMediaPipePose(
           minDetectionConfidence: 0.5,
           minTrackingConfidence: 0.5
         });
-        
+
         poseRef.current = pose;
-        
+
         // Handle pose detection results
         pose.onResults((results) => {
           if (!ctx || !isMounted) return;
-          
+
           // Set canvas dimensions to match video
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
-          
+
           // Clear canvas and draw video frame
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-          
+
           if (results.poseLandmarks) {
             // Draw pose landmarks and connections
             drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {
               color: "#00ff00",
               lineWidth: 3,
             });
-            
+
             drawLandmarks(ctx, results.poseLandmarks, {
               color: "#ff0000",
               lineWidth: 2,
             });
-            
+
             // Create keypoints with names
-            const keypoints: KeypointWithName[] = results.poseLandmarks.map((lm: any, idx: number) => ({
+            const keypoints: KeypointWithName[] = results.poseLandmarks.map((lm: PoseLandmark, idx: number) => ({
               x: lm.x,
               y: lm.y,
               z: lm.z,
               visibility: lm.visibility,
-              name: (POSE_KEYPOINTS as any)[idx] || ""
+              name: POSE_KEYPOINTS[idx] || ""
             }));
-            
+
             // Detect exercises
-            if (mode === "pushups" ? detectPushup(keypoints) : detectSquat(keypoints)) {
+            if (mode === "pushups" ? detectPushupCallback(keypoints) : detectSquatCallback(keypoints)) {
               const count = repCount.current + 1;
               repCount.current = count;
               onRepCount(count);
             }
           }
         });
-        
+
         // Set up camera
         const camera = new Camera(video, {
           onFrame: async () => {
@@ -202,17 +223,17 @@ export function useMediaPipePose(
           width: 640,
           height: 480,
         });
-        
+
         cameraRef.current = camera;
         await camera.start();
-        
+
       } catch (error) {
         console.error("Error setting up MediaPipe:", error);
       }
     };
-    
+
     setupPose();
-    
+
     // Clean up
     return () => {
       isMounted = false;
@@ -225,7 +246,7 @@ export function useMediaPipePose(
         cameraRef.current = null;
       }
     };
-  }, [canvasRef, isActive, mode, onRepCount]);
+  }, [canvasRef, isActive, mode, onRepCount, detectPushupCallback, detectSquatCallback]);
 
   return videoRef;
 }

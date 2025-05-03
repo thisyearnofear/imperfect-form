@@ -23,7 +23,8 @@ const Webcam = dynamic(() => import("./Webcam"), {
 
 const Game: React.FC = () => {
   const [showWelcome, setShowWelcome] = useState(true);
-  const [showTutorial, setShowTutorial] = useState(true);
+  // Tutorial state is managed but not displayed in current UI
+  const [, setShowTutorial] = useState(true);
   const [started, setStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
   const [repCount, setRepCount] = useState(0);
@@ -31,16 +32,26 @@ const Game: React.FC = () => {
   const [showSummary, setShowSummary] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
-  const [currentFilter, setCurrentFilter] = useState<string>("none");
+  // Filter state is managed but currently only 'none' is used
+  const [, setCurrentFilter] = useState<string>("none");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
 
   // Get wallet address from ThirdWeb
   const address = useAddress();
 
   // Leaderboard data for the expanded modal
-  const [pushupLeaderboard, setPushupLeaderboard] = useState<any[]>([]);
-  const [squatLeaderboard, setSquatLeaderboard] = useState<any[]>([]);
-  const [displayNames, setDisplayNames] = useState<Record<string, string>>({});
+  // Define Score type to replace any[]
+  type Score = {
+    user: string;
+    score: number;
+    network: "polygon" | "base";
+    displayName?: string;
+  };
+
+  const [pushupLeaderboard] = useState<Score[]>([]);
+  const [squatLeaderboard] = useState<Score[]>([]);
+  const [displayNames] = useState<Record<string, string>>({});
 
   const formatTime = (sec: number) => {
     const minutes = Math.floor((120 - sec) / 60);
@@ -48,6 +59,24 @@ const Game: React.FC = () => {
     return `${minutes.toString().padStart(2, "0")}:${secs
       .toString()
       .padStart(2, "0")}`;
+  };
+
+  // Function to start the timer
+  const startTimer = () => {
+    if (timerRef.current) return; // Don't start if already running
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Use the ref to call the latest version of handleStop
+          if (handleStopRef.current) {
+            handleStopRef.current();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   // Handle rep counting from webcam component
@@ -62,21 +91,6 @@ const Game: React.FC = () => {
     },
     [started]
   );
-
-  // Function to start the timer
-  const startTimer = () => {
-    if (timerRef.current) return; // Don't start if already running
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          handleStop();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
 
   useEffect(() => {
     if (started) {
@@ -93,31 +107,8 @@ const Game: React.FC = () => {
     };
   }, [started]);
 
-  const handleStart = () => {
-    setShowWelcome(false);
-    setShowTutorial(false); // Hide tutorial when starting
-    setShowLoading(true);
-
-    // Reset counters
-    setRepCount(0);
-    setTimeLeft(120);
-
-    // The LoadingScreen component will automatically transition to started state
-    // after its hideDelay time expires via the onComplete callback
-  };
-
-  const handleStop = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setStarted(false);
-    setShowTutorial(false);
-    setShowSummary(true);
-
-    // Force camera to stop by accessing the video tracks and stopping them
-    stopAllCameras();
-  };
-
   // Function to aggressively stop all cameras
-  const stopAllCameras = () => {
+  const stopAllCameras = useCallback(() => {
     // Method 1: Stop all video tracks from video elements
     const videoElements = document.getElementsByTagName("video");
     if (videoElements.length > 0) {
@@ -145,7 +136,7 @@ const Game: React.FC = () => {
           console.log("Stopped additional track:", track.kind, track.id);
         });
       })
-      .catch((err) => console.log("No additional media tracks to stop"));
+      .catch(() => console.log("No additional media tracks to stop"));
 
     // Method 3: Cancel any animation frames that might be running
     if (window.requestAnimationFrame) {
@@ -154,9 +145,40 @@ const Game: React.FC = () => {
         window.cancelAnimationFrame(i);
       }
     }
+  }, []);
+
+  const handleStop = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setStarted(false);
+    setShowTutorial(false);
+    setShowSummary(true);
+
+    // Force camera to stop by accessing the video tracks and stopping them
+    stopAllCameras();
+  }, [stopAllCameras]);
+
+  // Update the ref whenever handleStop changes
+  useEffect(() => {
+    handleStopRef.current = handleStop;
+  }, [handleStop]);
+
+  const handleStart = () => {
+    setShowWelcome(false);
+    setShowTutorial(false); // Hide tutorial when starting
+    setShowLoading(true);
+
+    // Reset counters
+    setRepCount(0);
+    setTimeLeft(120);
+
+    // The LoadingScreen component will automatically transition to started state
+    // after its hideDelay time expires via the onComplete callback
   };
 
-  const handleReset = () => {
+  // This useEffect is already handled by the one above
+  // Removing duplicate effect
+
+  const handleReset = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     setRepCount(0);
     setTimeLeft(120);
@@ -167,7 +189,7 @@ const Game: React.FC = () => {
 
     // Also stop the camera when resetting
     stopAllCameras();
-  };
+  }, [stopAllCameras]);
 
   const handleModeChange = () => {
     if (!started) {

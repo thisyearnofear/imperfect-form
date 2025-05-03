@@ -8,13 +8,6 @@ import Medal from "@/components/Medal";
 import Dialog from "@/components/ui/Dialog";
 import { getBestDisplayName } from "@/utils/web3bio";
 
-// Add global transaction hash for social sharing
-declare global {
-  interface Window {
-    transactionHash: string;
-  }
-}
-
 // Initialize window.transactionHash if it doesn't exist
 if (typeof window !== "undefined" && window.transactionHash === undefined) {
   window.transactionHash = "";

@@ -7,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://imperfect-form.onren
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://imperfect-form.onrender.com';
 
 // Import socket.io-client only on the client side
-let io: any;
+let io: typeof import('socket.io-client').default | null = null;
 if (typeof window !== 'undefined') {
   // Dynamic import to avoid SSR issues
   import('socket.io-client').then((module) => {
@@ -90,7 +90,7 @@ export function connectSocket() {
  * Store signer data via Socket.IO
  */
 export function storeSignerSocket(
-  socket: any,
+  socket: ReturnType<typeof import('socket.io-client').default> | null,
   data: {
     signer_uuid: string;
     fid: string;
@@ -107,7 +107,7 @@ export function storeSignerSocket(
 
     socket.emit('store-signer', data);
 
-    socket.on('store-signer-response', (response: any) => {
+    socket.on('store-signer-response', (response: { success: boolean; error?: string }) => {
       if (response.success) {
         resolve(response);
       } else {
@@ -121,7 +121,7 @@ export function storeSignerSocket(
  * Share a cast via Socket.IO
  */
 export function shareCastSocket(
-  socket: any,
+  socket: ReturnType<typeof import('socket.io-client').default> | null,
   data: {
     signer_uuid: string;
     text: string;
@@ -137,7 +137,7 @@ export function shareCastSocket(
 
     socket.emit('confirm-cast', data);
 
-    socket.on('confirm-cast-response', (response: any) => {
+    socket.on('confirm-cast-response', (response: { success: boolean; error?: string }) => {
       if (response.success) {
         resolve(response);
       } else {

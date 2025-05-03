@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import "@/styles/leaderboard.css";
 import { useContract } from "@thirdweb-dev/react";
 import { ethers } from "ethers";
-import { ChainContext } from "@/components/Providers";
 import {
   fitnessLeaderboardABI,
   POLYGON_CONTRACT_ADDRESS,
@@ -38,7 +37,8 @@ interface LeaderboardProps {
 
 const Leaderboard: React.FC<LeaderboardProps> = ({
   limit,
-  showNetworkSelector = false,
+  // Network selector is defined but not currently used in the UI
+  // showNetworkSelector = false,
   onViewMore,
   initialPushups,
   initialSquats,
@@ -51,7 +51,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   const [squatLeaderboard, setSquatLeaderboard] = useState<Score[]>(
     initialSquats || []
   );
-  const [activeTab, setActiveTab] = useState<"pushups" | "squats">("pushups");
+  // Tab state is defined but currently not used for switching in the UI
+  // const [activeTab] = useState<"pushups" | "squats">("pushups");
   const [displayNames, setDisplayNames] = useState<Record<string, string>>(
     initialDisplayNames || {}
   );
@@ -66,26 +67,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     fitnessLeaderboardABI
   );
 
-  // Fetch leaderboard data on component mount
-  useEffect(() => {
-    // Skip fetching if initial data is provided
-    if (initialPushups && initialSquats && initialDisplayNames) {
-      setIsLoading(false);
-      return;
-    }
-
-    fetchLeaderboardData();
-  }, [
-    polygonContract,
-    baseContract,
-    initialPushups,
-    initialSquats,
-    initialDisplayNames,
-  ]);
-
   // Function to fetch data using fallback RPC URLs
   const fetchWithFallbackRpcs = async (
-    contract: any,
+    contract: ethers.Contract | null,
     contractAddress: string,
     fallbackRpcUrls: string[]
   ) => {
@@ -156,19 +140,24 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
         const data = await contractInstance.getLeaderboard();
         console.log(`Successfully fetched data from ${rpcUrl}`);
         return data || [];
-      } catch (error: any) {
+      } catch (error) {
         // Provide more detailed error logging
-        if (error && error.code === "CALL_EXCEPTION") {
+        const err = error as {
+          code?: string;
+          reason?: string;
+          message?: string;
+        };
+        if (err && err.code === "CALL_EXCEPTION") {
           console.error(
             `Contract call exception for ${rpcUrl}:`,
-            error.reason || "No reason provided"
+            err.reason || "No reason provided"
           );
-        } else if (error && error.code === "TIMEOUT") {
+        } else if (err && err.code === "TIMEOUT") {
           console.error(`Timeout error for ${rpcUrl}`);
-        } else if (error && error.code === "NETWORK_ERROR") {
-          console.error(`Network error for ${rpcUrl}:`, error.message);
+        } else if (err && err.code === "NETWORK_ERROR") {
+          console.error(`Network error for ${rpcUrl}:`, err.message);
         } else {
-          console.error(`Error fetching data from ${rpcUrl}:`, error);
+          console.error(`Error fetching data from ${rpcUrl}:`, err);
         }
 
         // Continue to the next RPC URL
@@ -180,7 +169,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     return [];
   };
 
-  const fetchLeaderboardData = async () => {
+  // Define fetchLeaderboardData using useCallback to avoid dependency issues
+  const fetchLeaderboardData = React.useCallback(async () => {
     setIsLoading(true);
 
     try {
@@ -202,7 +192,17 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       const squats: Score[] = [];
 
       // Helper function to process data from each network
-      const processNetworkData = (data: any[], network: "polygon" | "base") => {
+      // Define a type for the contract data structure
+      type ContractEntry = {
+        user: string;
+        pushups: ethers.BigNumber | number;
+        squats: ethers.BigNumber | number;
+      };
+
+      const processNetworkData = (
+        data: ContractEntry[],
+        network: "polygon" | "base"
+      ) => {
         data.forEach((entry) => {
           if (entry.user !== "0x0000000000000000000000000000000000000000") {
             // Convert BigNumber to number if needed
@@ -237,10 +237,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       };
 
       // Process data from both networks
-      // Note: In the vanilla JS implementation, the network names were "amoy" and "base"
-      // In our Next.js implementation, we're using "polygon" and "base" for consistency
-      processNetworkData(polygonData, "polygon"); // Polygon Amoy network
-      processNetworkData(baseData, "base"); // Base Sepolia network
+      processNetworkData(polygonData, "polygon");
+      processNetworkData(baseData, "base");
 
       // Sort by score (highest first)
       const sortedPushups = pushups.sort((a, b) => b.score - a.score);
@@ -261,29 +259,50 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
         try {
           const displayName = await getDisplayName(address);
           names[address] = displayName;
-        } catch (error) {
+        } catch {
           names[address] = shortenAddress(address);
         }
       }
 
       setDisplayNames(names);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching leaderboard data:", error);
       toast.error("Failed to load leaderboard data");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [polygonContract, baseContract]);
+
+  // Fetch leaderboard data on component mount
+  useEffect(() => {
+    // Skip fetching if initial data is provided
+    if (initialPushups && initialSquats && initialDisplayNames) {
+      setIsLoading(false);
+      return;
+    }
+
+    fetchLeaderboardData();
+  }, [
+    fetchLeaderboardData,
+    initialPushups,
+    initialSquats,
+    initialDisplayNames,
+  ]);
+
+  // fetchWithFallbackRpcs is now defined above
+
+  // fetchLeaderboardData is now defined above using useCallback
 
   // Get the active leaderboard based on the selected tab
-  const activeLeaderboard =
-    activeTab === "pushups" ? pushupLeaderboard : squatLeaderboard;
+  // This is not currently used since we display both pushups and squats
+  // const activeLeaderboard =
+  //   activeTab === "pushups" ? pushupLeaderboard : squatLeaderboard;
 
-  // Apply limit if specified
-  const displayScores =
-    typeof limit === "number"
-      ? activeLeaderboard.slice(0, limit)
-      : activeLeaderboard;
+  // We don't use displayScores directly since we render pushups and squats separately
+  // const displayScores =
+  //   typeof limit === "number"
+  //     ? activeLeaderboard.slice(0, limit)
+  //     : activeLeaderboard;
 
   if (isLoading) {
     return (

@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import '@tensorflow/tfjs-backend-webgl';
 import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
+import { Keypoint, WorkerMessage } from '../types/mediapipe';
 
 let detector: PoseDetector;
 let ctx: OffscreenCanvasRenderingContext2D;
@@ -8,7 +9,14 @@ let repState: 'up' | 'down' | 'middle' = 'middle';
 let repCount = 0;
 let mode: 'pushups' | 'squats' = 'pushups';
 
-function calculateAngle(a: any, b: any, c: any) {
+interface Point {
+  x: number;
+  y: number;
+  score?: number;
+  name?: string;
+}
+
+function calculateAngle(a: Point, b: Point, c: Point) {
   if (!a || !b || !c) return 0;
   const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
   let angle = Math.abs((radians * 180.0) / Math.PI);
@@ -16,7 +24,7 @@ function calculateAngle(a: any, b: any, c: any) {
   return angle;
 }
 
-function detectPushup(keypoints: any[]) {
+function detectPushup(keypoints: Keypoint[]) {
   const leftShoulder = keypoints.find(kp => kp.name === 'left_shoulder');
   const rightShoulder = keypoints.find(kp => kp.name === 'right_shoulder');
   const leftElbow = keypoints.find(kp => kp.name === 'left_elbow');
@@ -40,7 +48,7 @@ function detectPushup(keypoints: any[]) {
   return false;
 }
 
-function detectSquat(keypoints: any[]) {
+function detectSquat(keypoints: Keypoint[]) {
   const leftHip = keypoints.find(kp => kp.name === 'left_hip');
   const rightHip = keypoints.find(kp => kp.name === 'right_hip');
   const leftKnee = keypoints.find(kp => kp.name === 'left_knee');
@@ -65,10 +73,11 @@ function detectSquat(keypoints: any[]) {
 }
 
 self.addEventListener('message', async (event) => {
-  const data = event.data;
+  const data = event.data as WorkerMessage;
+
   if (data.type === 'init') {
     const offscreen: OffscreenCanvas = data.canvas;
-    mode = data.mode;
+    mode = data.mode as 'pushups' | 'squats';
     offscreen.width = data.width;
     offscreen.height = data.height;
     ctx = offscreen.getContext('2d') as OffscreenCanvasRenderingContext2D;
@@ -78,21 +87,32 @@ self.addEventListener('message', async (event) => {
     const bitmap: ImageBitmap = data.bitmap;
     const poses = await detector.estimatePoses(bitmap);
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
     if (poses.length > 0) {
-      const keypoints = poses[0].keypoints.map((kp: any) => ({ ...kp, name: kp.name || '' }));
+      const keypoints = poses[0].keypoints.map((kp) => ({
+        ...kp,
+        name: kp.name || ''
+      })) as Keypoint[];
+
       if ((mode === 'pushups' && detectPushup(keypoints)) || (mode === 'squats' && detectSquat(keypoints))) {
         repCount += 1;
         self.postMessage({ type: 'rep', count: repCount });
       }
+
       // draw skeleton
-      ctx.strokeStyle = '#fcb131'; ctx.lineWidth = 2;
-      poses[0].keypoints.forEach((kp: any) => {
-        if (kp.score > 0.5) {
-          ctx.beginPath(); ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
-          ctx.fillStyle = '#00ff00'; ctx.fill();
+      ctx.strokeStyle = '#fcb131';
+      ctx.lineWidth = 2;
+
+      poses[0].keypoints.forEach((kp) => {
+        if (kp.score && kp.score > 0.5) {
+          ctx.beginPath();
+          ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = '#00ff00';
+          ctx.fill();
         }
       });
     }
+
     bitmap.close();
   }
 });

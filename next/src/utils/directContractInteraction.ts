@@ -125,41 +125,46 @@ export async function submitScoreDirectly(
       success: true,
       transactionHash: receipt.transactionHash
     };
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
+    const err = error as {
+      code?: string;
+      reason?: string;
+      message?: string;
+    };
     console.error('Error submitting score:', error);
 
     // Handle specific error types with user-friendly messages
-    if (error.code === 'ACTION_REJECTED') {
+    if (err.code === 'ACTION_REJECTED') {
       return {
         success: false,
         error: 'Transaction rejected by user'
       };
-    } else if (error.code === 'INSUFFICIENT_FUNDS') {
+    } else if (err.code === 'INSUFFICIENT_FUNDS') {
       return {
         success: false,
         error: 'Insufficient funds for transaction'
       };
-    } else if (error.code === 'UNPREDICTABLE_GAS_LIMIT') {
+    } else if (err.code === 'UNPREDICTABLE_GAS_LIMIT') {
       return {
         success: false,
         error: 'Contract error: The transaction may revert. Check if you have already submitted recently.'
       };
-    } else if (error.message && error.message.includes('execution reverted')) {
+    } else if (err.message && err.message.includes('execution reverted')) {
       return {
         success: false,
         error: 'Contract execution reverted. You may have already submitted recently or the contract has restrictions.'
       };
-    } else if (error.message && error.message.includes('timeout')) {
+    } else if (err.message && err.message.includes('timeout')) {
       return {
         success: false,
         error: 'Network is slow or unresponsive. Please try again later or switch to a different network.'
       };
-    } else if (error.message && error.message.includes('Transaction confirmation timeout')) {
+    } else if (err.message && err.message.includes('Transaction confirmation timeout')) {
       return {
         success: false,
         error: 'Transaction is taking too long to confirm. It may still complete in the background.'
       };
-    } else if (error.message && error.message.includes('the tx doesn\'t have the correct nonce')) {
+    } else if (err.message && err.message.includes('the tx doesn\'t have the correct nonce')) {
       return {
         success: false,
         error: 'Transaction nonce issue. Please reset your wallet connection and try again.'
@@ -169,7 +174,7 @@ export async function submitScoreDirectly(
     // For other errors, provide a simplified message
     return {
       success: false,
-      error: 'Transaction failed: ' + (error.reason || error.message || 'Unknown error')
+      error: 'Transaction failed: ' + (err.reason || err.message || 'Unknown error')
     };
   }
 }

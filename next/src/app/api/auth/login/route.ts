@@ -14,19 +14,20 @@ export async function POST(req: NextRequest) {
     // Handle the nested payload format we're seeing in the logs
     // The format appears to be { payload: { payload: {...}, signature: "..." } }
     let address = null;
-    let signature = null;
+    // Signature is extracted but not used in the current implementation
+    // let signature = null;
 
     // Try to extract address from various possible formats
     if (body.payload && typeof body.payload === 'object') {
       // Handle nested payload format
       if (body.payload.payload && typeof body.payload.payload === 'object') {
         address = body.payload.payload.address;
-        signature = body.payload.signature;
+        // signature = body.payload.signature;
         console.log('Found nested payload format with address:', address);
       } else if (body.payload.address) {
         // Handle direct payload format
         address = body.payload.address;
-        signature = body.signature;
+        // signature = body.signature;
         console.log('Found direct payload format with address:', address);
       }
     } else if (body.address) {

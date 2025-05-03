@@ -1,89 +1,104 @@
 "use client";
 
 import React, { useEffect } from "react";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 /**
- * This component fixes the Radix UI Dialog accessibility warning
- * by adding a hidden DialogTitle to any Radix Dialog that might be missing one.
+ * This component fixes accessibility warnings for dialogs that might be missing titles.
  *
- * This improved version also handles ThirdWeb's modal dialogs.
+ * It specifically targets third-party components like ThirdWeb's modals that we don't
+ * have direct control over, serving as a fallback to ensure all dialogs are accessible.
+ *
+ * Our own Dialog components already have proper titles, so this is mainly for
+ * components we don't control directly.
  */
 export const RadixUIFix: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  // This effect handles dynamically added dialogs that might not be properly structured
   useEffect(() => {
-    // Find all DialogContent elements that don't have a DialogTitle sibling
-    const fixDialogs = () => {
-      // Add a MutationObserver to watch for new Dialog elements
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.addedNodes.length) {
-            mutation.addedNodes.forEach((node) => {
-              if (node instanceof HTMLElement) {
-                // Find any dialog content without titles
-                // This selector catches both Radix UI dialogs and ThirdWeb modals
-                const dialogContents = node.querySelectorAll(
-                  '[role="dialog"], .tw-connect-wallet-modal'
-                );
+    // Process the document immediately on mount
+    const processExistingDialogs = () => {
+      // Target third-party dialogs that might not have proper accessibility attributes
+      // Specifically looking for ThirdWeb modals and any other dialogs without aria-labelledby
+      const dialogContents = document.querySelectorAll(
+        '.tw-connect-wallet-modal, [role="dialog"]:not([aria-labelledby]):not([id^="radix-"])'
+      );
 
-                dialogContents.forEach((dialog) => {
-                  // Check if it already has a title
-                  const hasTitle = dialog.querySelector(
-                    '[id^="radix-:"], [role="heading"]'
-                  );
+      dialogContents.forEach((dialog) => {
+        // Check if it already has a title
+        const hasTitle = dialog.querySelector(
+          '[id^="radix-:"], [role="heading"]'
+        );
 
-                  if (!hasTitle) {
-                    // Create a hidden title element with the DialogTitle component
-                    const titleId = `dialog-title-${Math.random()
-                      .toString(36)
-                      .substr(2, 9)}`;
-                    const titleElement = document.createElement("div");
-                    titleElement.setAttribute("id", titleId);
-                    titleElement.setAttribute("role", "heading");
-                    titleElement.setAttribute("aria-level", "2");
-                    titleElement.textContent = "Dialog Title"; // Provide a default title
-                    titleElement.style.position = "absolute";
-                    titleElement.style.width = "1px";
-                    titleElement.style.height = "1px";
-                    titleElement.style.padding = "0";
-                    titleElement.style.margin = "-1px";
-                    titleElement.style.overflow = "hidden";
-                    titleElement.style.clip = "rect(0, 0, 0, 0)";
-                    titleElement.style.whiteSpace = "nowrap";
-                    titleElement.style.borderWidth = "0";
-
-                    // Add the title to the dialog
-                    dialog.prepend(titleElement);
-
-                    // Set aria-labelledby on the dialog if it doesn't have it
-                    if (!dialog.hasAttribute("aria-labelledby")) {
-                      dialog.setAttribute("aria-labelledby", titleId);
-                    }
-                  }
-                });
-              }
-            });
+        if (!hasTitle) {
+          // Create a hidden title element
+          const titleId = `dialog-title-${Math.random()
+            .toString(36)
+            .substring(2, 9)}`;
+          const titleElement = document.createElement("h2");
+          titleElement.setAttribute("id", titleId);
+          titleElement.setAttribute(
+            "style",
+            "position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; " +
+              "overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;"
+          );
+          // Set a more descriptive title based on dialog type
+          if (dialog.classList.contains("tw-connect-wallet-modal")) {
+            titleElement.textContent = "Connect Wallet Dialog";
+          } else {
+            // Try to infer a title from content or use a generic one
+            const possibleTitle = dialog.querySelector(
+              'h1, h2, h3, h4, h5, h6, [class*="title"], [class*="header"]'
+            );
+            titleElement.textContent = possibleTitle
+              ? possibleTitle.textContent || "Dialog"
+              : "Dialog";
           }
-        });
-      });
 
-      // Start observing the document with a more comprehensive configuration
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ["role", "class"],
-      });
+          // Add the title to the dialog
+          dialog.prepend(titleElement);
 
-      return () => observer.disconnect();
+          // Set aria-labelledby on the dialog
+          dialog.setAttribute("aria-labelledby", titleId);
+        }
+      });
     };
 
-    const cleanup = fixDialogs();
-    return cleanup;
+    // Process existing dialogs on mount
+    processExistingDialogs();
+
+    // Set up observer for future dialogs
+    const observer = new MutationObserver((mutations) => {
+      let shouldProcess = false;
+
+      mutations.forEach((mutation) => {
+        if (
+          mutation.addedNodes.length ||
+          (mutation.type === "attributes" &&
+            (mutation.attributeName === "role" ||
+              mutation.attributeName === "class"))
+        ) {
+          shouldProcess = true;
+        }
+      });
+
+      if (shouldProcess) {
+        processExistingDialogs();
+      }
+    });
+
+    // Start observing with a comprehensive configuration
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["role", "class", "aria-labelledby"],
+    });
+
+    return () => observer.disconnect();
   }, []);
 
+  // Simply return children without wrapping in Provider
   return <>{children}</>;
 };
 

@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   title: "Imperfect Form | Onchain Olympians",
   description:
     "Track your fitness with real-time pose detection and have fun competing onchain",
+  // Note: favicon.ico is automatically handled by Next.js App Router
+  // The favicon.ico file in this directory (src/app/) will be served at /favicon.ico
 };
 
 // Using static client component import for Providers

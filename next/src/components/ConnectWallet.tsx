@@ -5,9 +5,6 @@ import {
   ConnectWallet as ThirdwebConnectWallet,
   useAddress,
   useDisconnect,
-  useChain,
-  useSwitchChain,
-  useNetworkMismatch,
 } from "@thirdweb-dev/react";
 import { shortenAddress } from "@/utils/formatters";
 import { ChainContext } from "@/components/Providers";
@@ -162,7 +159,8 @@ const WalletModal: React.FC<WalletModalProps> = ({
 const ConnectWalletButton: React.FC = () => {
   const address = useAddress();
   const disconnect = useDisconnect();
-  const { chain } = useContext(ChainContext);
+  // Chain context is available but not used in this component
+  useContext(ChainContext);
   const [showModal, setShowModal] = useState(false);
   const [displayName, setDisplayName] = useState<string>("");
 
@@ -215,12 +213,12 @@ const ConnectWalletButton: React.FC = () => {
           title: "Onchain Olympics",
           subtitle: "Connect to submit your score",
           img: {
-            src: "/favicon.ico",
+            src: "/favicon.ico", // Next.js App Router will serve the favicon from /src/app/favicon.ico
             width: 150,
             height: 150,
           },
         }}
-        modalTitleIconUrl="/favicon.ico"
+        modalTitleIconUrl="/favicon.ico" // Next.js App Router will serve the favicon from /src/app/favicon.ico
         detailsBtn={() => <></>}
         btnTitle="Connect Wallet"
         className="wallet-button"

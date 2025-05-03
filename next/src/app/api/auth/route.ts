@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function POST(req: NextRequest) {
+export async function POST(/* req: NextRequest */) {
   try {
     // This is a simple auth endpoint that always succeeds
     // In a real app, you would validate the payload and perform actual authentication

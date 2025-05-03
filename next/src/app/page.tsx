@@ -21,9 +21,17 @@ const ExpandedLeaderboardModal = dynamic(
 
 export default function Home() {
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
+  // Import Score type from Leaderboard component
+  type Score = {
+    user: string;
+    score: number;
+    network: "polygon" | "base";
+    displayName?: string;
+  };
+
   const [leaderboardData, setLeaderboardData] = useState<{
-    pushups: any[];
-    squats: any[];
+    pushups: Score[];
+    squats: Score[];
     displayNames: Record<string, string>;
   }>({
     pushups: [],
@@ -32,8 +40,8 @@ export default function Home() {
   });
 
   const handleViewMore = (
-    pushups: any[],
-    squats: any[],
+    pushups: Score[],
+    squats: Score[],
     displayNames: Record<string, string>
   ) => {
     setLeaderboardData({ pushups, squats, displayNames });

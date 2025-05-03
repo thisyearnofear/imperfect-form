@@ -45,7 +45,7 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
       if (!provider) return false;
 
       const currentChainId = await provider.request({ method: "eth_chainId" });
-      const currentChainIdDecimal = parseInt(currentChainId, 16);
+      const currentChainIdDecimal = parseInt(currentChainId as string, 16);
 
       // Get the expected chain ID from the context
       const expectedChainId = chainId;
@@ -78,7 +78,8 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
           });
 
           return true;
-        } catch (switchError: any) {
+        } catch (switchErr) {
+          const switchError = switchErr as { code?: number; message?: string };
           // This error code indicates that the chain has not been added to MetaMask
           if (switchError.code === 4902) {
             try {
@@ -228,7 +229,7 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
 
       // Store the network for social sharing
       if (typeof window !== "undefined") {
-        // @ts-ignore - Adding custom property to window
+        // Add network name to window object for social sharing
         window.selectedNetworkName =
           chainId === 80002 ? "Polygon Amoy" : "Base Sepolia";
       }
@@ -243,7 +244,7 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
           const chainIdHex = await window.ethereum.request({
             method: "eth_chainId",
           });
-          const currentChainId = parseInt(chainIdHex, 16);
+          const currentChainId = parseInt(chainIdHex as string, 16);
 
           if (currentChainId !== chainId) {
             // If we're on the wrong chain, try to switch
@@ -261,7 +262,11 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
                 id: "network-switch",
                 duration: 3000,
               });
-            } catch (switchError: any) {
+            } catch (switchErr) {
+              const switchError = switchErr as {
+                code?: number;
+                message?: string;
+              };
               // This error code indicates that the chain has not been added to MetaMask
               if (switchError.code === 4902) {
                 toast.error(`Please add the network to your wallet manually`, {
@@ -302,7 +307,8 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
       if (result.success && result.transactionHash) {
         // Store transaction hash for social sharing
         if (typeof window !== "undefined") {
-          // @ts-ignore - Adding custom property to window
+          // Add transaction hash to window object for social sharing
+          // Using the globally declared Window interface
           window.transactionHash = result.transactionHash;
         }
 
@@ -353,15 +359,19 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
       setConfirmStep(false);
 
       return result;
-    } catch (err: any) {
-      console.error("Contract error:", err);
+    } catch (err) {
+      const error = err as {
+        message?: string;
+        code?: number | string;
+      };
+      console.error("Contract error:", error);
 
       // Reset states
       setIsLoading(false);
       setConfirmStep(false);
 
       // Handle specific error types with cleaner messages
-      if (err.message?.includes("user rejected") || err.code === 4001) {
+      if (error.message?.includes("user rejected") || error.code === 4001) {
         toast.dismiss("submit-score");
         toast.error("Transaction cancelled", {
           id: "submit-score",
@@ -369,27 +379,27 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
           icon: "❌",
         });
       } else if (
-        err.code === "CALL_EXCEPTION" ||
-        err.message?.includes("execution reverted")
+        error.code === "CALL_EXCEPTION" ||
+        error.message?.includes("execution reverted")
       ) {
         toast.error(
           "Contract call failed. You may have already submitted recently.",
           { id: "submit-score" }
         );
       } else if (
-        err.message?.includes("missing response") ||
-        err.message?.includes("timeout")
+        error.message?.includes("missing response") ||
+        error.message?.includes("timeout")
       ) {
         toast.error(
           "Network is slow or unresponsive. Please try again later or switch networks.",
           { id: "submit-score" }
         );
-      } else if (err.message?.includes("Cannot read properties")) {
+      } else if (error.message?.includes("Cannot read properties")) {
         toast.error(
           "Contract not available. Please check your network connection.",
           { id: "submit-score" }
         );
-      } else if (err.message?.includes("underlying network changed")) {
+      } else if (error.message?.includes("underlying network changed")) {
         // Handle the specific network change error
         toast.error("Network changed during transaction. Please try again.", {
           id: "submit-score",
@@ -417,9 +427,9 @@ const SubmitScore: React.FC<SubmitScoreProps> = ({
       } else {
         // Simplify error message for better UX
         let errorMsg = "Error submitting score";
-        if (err.message) {
+        if (error.message) {
           // Extract just the main part of the error message
-          const simpleError = err.message.split("\n")[0].trim();
+          const simpleError = error.message.split("\n")[0].trim();
           // Limit the length of the error message
           if (simpleError.length > 100) {
             errorMsg = `${errorMsg}: ${simpleError.substring(0, 100)}...`;

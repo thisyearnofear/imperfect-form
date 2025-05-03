@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
       const body = await req.json();
       console.log('Auth payload body:', JSON.stringify(body, null, 2));
       address = body.address;
-    } catch (e) {
+    } catch {
+      // Error is intentionally not caught or used
       console.log('Failed to parse request body, using empty address');
       // If we can't parse the body, just use a placeholder
       address = '';

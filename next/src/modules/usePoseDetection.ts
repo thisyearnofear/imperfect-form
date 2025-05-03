@@ -1,9 +1,20 @@
-import { useEffect, useRef, RefObject } from "react";
-import * as tf from '@tensorflow/tfjs';
+import { useEffect, useRef, RefObject, useCallback } from "react";
+// TensorFlow is imported but not directly used in this file
+// import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 import { initializeTensorFlow } from '@/utils/tfUtils';
+import type { PoseDetector } from '@tensorflow-models/pose-detection';
 
 type ExerciseMode = "pushups" | "squats";
+
+// Define keypoint type
+type Keypoint = {
+  x: number;
+  y: number;
+  z?: number;
+  score?: number;
+  name?: string;
+};
 
 export function usePoseDetection(
   canvasRef: RefObject<HTMLCanvasElement | null>,
@@ -15,67 +26,71 @@ export function usePoseDetection(
   const repState = useRef<"up" | "down" | "middle">("middle");
   const repCount = useRef(0);
   const lastRepTime = useRef(0);
-  const detectorRef = useRef<any>(null);
+  const detectorRef = useRef<PoseDetector | null>(null);
   const requestRef = useRef<number>(0);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const drawSkeleton = (ctx: CanvasRenderingContext2D, keypoints: any[]) => {
-    // Function to draw the connections between joints
-    ctx.strokeStyle = "#00FF00";
-    ctx.lineWidth = 2;
+  // This function is defined but not used in the current implementation
+  // It's kept for reference and potential future use
+  // const drawSkeleton = (ctx: CanvasRenderingContext2D, keypoints: any[]) => {
+  //   // Function to draw the connections between joints
+  //   ctx.strokeStyle = "#00FF00";
+  //   ctx.lineWidth = 2;
 
-    // Torso
-    drawConnection(ctx, keypoints, "left_shoulder", "right_shoulder");
-    drawConnection(ctx, keypoints, "left_shoulder", "left_hip");
-    drawConnection(ctx, keypoints, "right_shoulder", "right_hip");
-    drawConnection(ctx, keypoints, "left_hip", "right_hip");
+  //   // Torso
+  //   drawConnection(ctx, keypoints, "left_shoulder", "right_shoulder");
+  //   drawConnection(ctx, keypoints, "left_shoulder", "left_hip");
+  //   drawConnection(ctx, keypoints, "right_shoulder", "right_hip");
+  //   drawConnection(ctx, keypoints, "left_hip", "right_hip");
 
-    // Arms
-    drawConnection(ctx, keypoints, "left_shoulder", "left_elbow");
-    drawConnection(ctx, keypoints, "left_elbow", "left_wrist");
-    drawConnection(ctx, keypoints, "right_shoulder", "right_elbow");
-    drawConnection(ctx, keypoints, "right_elbow", "right_wrist");
+  //   // Arms
+  //   drawConnection(ctx, keypoints, "left_shoulder", "left_elbow");
+  //   drawConnection(ctx, keypoints, "left_elbow", "left_wrist");
+  //   drawConnection(ctx, keypoints, "right_shoulder", "right_elbow");
+  //   drawConnection(ctx, keypoints, "right_elbow", "right_wrist");
 
-    // Legs
-    drawConnection(ctx, keypoints, "left_hip", "left_knee");
-    drawConnection(ctx, keypoints, "left_knee", "left_ankle");
-    drawConnection(ctx, keypoints, "right_hip", "right_knee");
-    drawConnection(ctx, keypoints, "right_knee", "right_ankle");
+  //   // Legs
+  //   drawConnection(ctx, keypoints, "left_hip", "left_knee");
+  //   drawConnection(ctx, keypoints, "left_knee", "left_ankle");
+  //   drawConnection(ctx, keypoints, "right_hip", "right_knee");
+  //   drawConnection(ctx, keypoints, "right_knee", "right_ankle");
 
-    // Draw each joint
-    keypoints.forEach((keypoint) => {
-      if (keypoint.score > 0.3) {
-        ctx.beginPath();
-        ctx.arc(keypoint.x, keypoint.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = "#FF0000";
-        ctx.fill();
-      }
-    });
-  };
+  //   // Draw each joint
+  //   keypoints.forEach((keypoint) => {
+  //     if (keypoint.score > 0.3) {
+  //       ctx.beginPath();
+  //       ctx.arc(keypoint.x, keypoint.y, 5, 0, 2 * Math.PI);
+  //       ctx.fillStyle = "#FF0000";
+  //       ctx.fill();
+  //     }
+  //   });
+  // };
 
-  const drawConnection = (
-    ctx: CanvasRenderingContext2D,
-    keypoints: any[],
-    from: string,
-    to: string
-  ) => {
-    const fromKeypoint = keypoints.find((kp) => kp.name === from);
-    const toKeypoint = keypoints.find((kp) => kp.name === to);
+  // This function is defined but not used in the current implementation
+  // It's kept for reference and potential future use
+  // const drawConnection = (
+  //   ctx: CanvasRenderingContext2D,
+  //   keypoints: any[],
+  //   from: string,
+  //   to: string
+  // ) => {
+  //   const fromKeypoint = keypoints.find((kp) => kp.name === from);
+  //   const toKeypoint = keypoints.find((kp) => kp.name === to);
 
-    if (
-      fromKeypoint &&
-      toKeypoint &&
-      fromKeypoint.score > 0.3 &&
-      toKeypoint.score > 0.3
-    ) {
-      ctx.beginPath();
-      ctx.moveTo(fromKeypoint.x, fromKeypoint.y);
-      ctx.lineTo(toKeypoint.x, toKeypoint.y);
-      ctx.stroke();
-    }
-  };
+  //   if (
+  //     fromKeypoint &&
+  //     toKeypoint &&
+  //     fromKeypoint.score > 0.3 &&
+  //     toKeypoint.score > 0.3
+  //   ) {
+  //     ctx.beginPath();
+  //     ctx.moveTo(fromKeypoint.x, fromKeypoint.y);
+  //     ctx.lineTo(toKeypoint.x, toKeypoint.y);
+  //     ctx.stroke();
+  //   }
+  // };
 
-  function calculateAngle(a: any, b: any, c: any) {
+  function calculateAngle(a: Keypoint, b: Keypoint, c: Keypoint) {
     if (!a || !b || !c) return 0;
     const radians =
       Math.atan2(c.y - b.y, c.x - b.x) -
@@ -85,7 +100,7 @@ export function usePoseDetection(
     return angle;
   }
 
-  function detectPushup(keypoints: any[]) {
+  function detectPushup(keypoints: Keypoint[]) {
     const leftShoulder = keypoints.find((kp) => kp.name === "left_shoulder");
     const rightShoulder = keypoints.find((kp) => kp.name === "right_shoulder");
     const leftElbow = keypoints.find((kp) => kp.name === "left_elbow");
@@ -100,12 +115,12 @@ export function usePoseDetection(
       !rightElbow ||
       !leftWrist ||
       !rightWrist ||
-      leftShoulder.score < 0.3 ||
-      rightShoulder.score < 0.3 ||
-      leftElbow.score < 0.3 ||
-      rightElbow.score < 0.3 ||
-      leftWrist.score < 0.3 ||
-      rightWrist.score < 0.3
+      !leftShoulder.score || leftShoulder.score < 0.3 ||
+      !rightShoulder.score || rightShoulder.score < 0.3 ||
+      !leftElbow.score || leftElbow.score < 0.3 ||
+      !rightElbow.score || rightElbow.score < 0.3 ||
+      !leftWrist.score || leftWrist.score < 0.3 ||
+      !rightWrist.score || rightWrist.score < 0.3
     ) {
       return false;
     }
@@ -139,7 +154,7 @@ export function usePoseDetection(
     return false;
   }
 
-  function detectSquat(keypoints: any[]) {
+  function detectSquat(keypoints: Keypoint[]) {
     const leftHip = keypoints.find((kp) => kp.name === "left_hip");
     const rightHip = keypoints.find((kp) => kp.name === "right_hip");
     const leftKnee = keypoints.find((kp) => kp.name === "left_knee");
@@ -154,12 +169,12 @@ export function usePoseDetection(
       !rightKnee ||
       !leftAnkle ||
       !rightAnkle ||
-      leftHip.score < 0.3 ||
-      rightHip.score < 0.3 ||
-      leftKnee.score < 0.3 ||
-      rightKnee.score < 0.3 ||
-      leftAnkle.score < 0.3 ||
-      rightAnkle.score < 0.3
+      !leftHip.score || leftHip.score < 0.3 ||
+      !rightHip.score || rightHip.score < 0.3 ||
+      !leftKnee.score || leftKnee.score < 0.3 ||
+      !rightKnee.score || rightKnee.score < 0.3 ||
+      !leftAnkle.score || leftAnkle.score < 0.3 ||
+      !rightAnkle.score || rightAnkle.score < 0.3
     ) {
       return false;
     }
@@ -193,10 +208,18 @@ export function usePoseDetection(
     return false;
   }
 
+  // Define the exercise detection functions with useCallback to include them in dependencies
+  const detectPushupCallback = useCallback(detectPushup, []);
+  const detectSquatCallback = useCallback(detectSquat, []);
+
   useEffect(() => {
     if (!isActive) return;
 
-    let isMounted = true;
+    // Using a ref for isMounted state to avoid the prefer-const warning
+    const isMountedRef = { current: true };
+
+    // Capture the video ref at the beginning of the effect to avoid the React hooks warning
+    const videoElement = videoRef.current;
 
     // Clean up previous instances
     if (streamRef.current) {
@@ -210,7 +233,7 @@ export function usePoseDetection(
     }
 
     const initPoseDetection = async () => {
-      if (!videoRef.current || !canvasRef.current || !isMounted) return;
+      if (!videoRef.current || !canvasRef.current || !isMountedRef.current) return;
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -252,7 +275,7 @@ export function usePoseDetection(
         // Initialize the TensorFlow.js pose detection model
         const poseDetectionModule = await import("@tensorflow-models/pose-detection");
 
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
 
         // Create MoveNet detector
         detectorRef.current = await poseDetectionModule.createDetector(
@@ -265,7 +288,7 @@ export function usePoseDetection(
         const detectionInterval = 100; // Limit to 10 detections per second
 
         const detectFrame = async (timestamp: number) => {
-          if (!isMounted || !detectorRef.current || !ctx || !video) return;
+          if (!isMountedRef.current || !detectorRef.current || !ctx || !video) return;
 
           // Throttle detection to improve performance
           if (timestamp - lastDetectionTime >= detectionInterval) {
@@ -280,7 +303,7 @@ export function usePoseDetection(
               const poses = await detectorRef.current.estimatePoses(video);
 
               if (poses.length > 0) {
-                const keypoints = poses[0].keypoints.map((kp: any) => ({ ...kp }));
+                const keypoints = poses[0].keypoints.map((kp: Keypoint) => ({ ...kp }));
 
                 // Draw skeleton with improved visibility
                 drawSkeleton(ctx, keypoints);
@@ -289,7 +312,7 @@ export function usePoseDetection(
                 drawExerciseState(ctx, canvas.width, canvas.height);
 
                 // Check for rep completion
-                if (mode === 'pushups' ? detectPushup(keypoints) : detectSquat(keypoints)) {
+                if (mode === 'pushups' ? detectPushupCallback(keypoints) : detectSquatCallback(keypoints)) {
                   const count = repCount.current + 1;
                   repCount.current = count;
                   onRepCount(count);
@@ -312,52 +335,57 @@ export function usePoseDetection(
       }
     };
 
-    function getKeypointColor(name: string): string {
-      // Group keypoints by color for better visualization
-      if (name.includes('shoulder') || name.includes('hip')) {
-        return '#ff0000'; // Red for core points
-      } else if (name.includes('elbow') || name.includes('wrist') || name.includes('hand')) {
-        return '#00ff00'; // Green for arm points
-      } else if (name.includes('knee') || name.includes('ankle') || name.includes('foot')) {
-        return '#0000ff'; // Blue for leg points
-      } else if (name.includes('eye') || name.includes('ear') || name.includes('nose')) {
-        return '#ffff00'; // Yellow for face points
-      }
-      return '#ffffff'; // White for other points
-    }
+    // This function is defined but not used in the current implementation
+    // function getKeypointColor(name: string): string {
+    //   // Group keypoints by color for better visualization
+    //   if (name.includes('shoulder') || name.includes('hip')) {
+    //     return '#ff0000'; // Red for core points
+    //   } else if (name.includes('elbow') || name.includes('wrist') || name.includes('hand')) {
+    //     return '#00ff00'; // Green for arm points
+    //   } else if (name.includes('knee') || name.includes('ankle') || name.includes('foot')) {
+    //     return '#0000ff'; // Blue for leg points
+    //   } else if (name.includes('eye') || name.includes('ear') || name.includes('nose')) {
+    //     return '#ffff00'; // Yellow for face points
+    //   }
+    //   return '#ffffff'; // White for other points
+    // }
 
-    function drawKeypoint(ctx: CanvasRenderingContext2D, keypoint: any, color: string) {
-      const { x, y } = keypoint;
+    // This function is defined but not used in the current implementation
+    // function drawKeypoint(ctx: CanvasRenderingContext2D, keypoint: any, color: string) {
+    //   const { x, y } = keypoint;
 
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
+    //   ctx.beginPath();
+    //   ctx.arc(x, y, 5, 0, 2 * Math.PI);
+    //   ctx.fillStyle = color;
+    //   ctx.fill();
+    //   ctx.strokeStyle = '#000000';
+    //   ctx.lineWidth = 2;
+    //   ctx.stroke();
+    // }
 
-    function drawSkeleton(ctx: CanvasRenderingContext2D, keypoints: any[]) {
+    function drawSkeleton(ctx: CanvasRenderingContext2D, keypoints: Keypoint[]) {
       const confidenceThreshold = 0.3;
 
       // Define connections between keypoints for a skeleton
-      const connections = [
-        ['nose', 'left_eye'], ['nose', 'right_eye'],
-        ['left_eye', 'left_ear'], ['right_eye', 'right_ear'],
-        ['left_shoulder', 'right_shoulder'], ['left_shoulder', 'left_elbow'],
-        ['right_shoulder', 'right_elbow'], ['left_elbow', 'left_wrist'],
-        ['right_elbow', 'right_wrist'], ['left_shoulder', 'left_hip'],
-        ['right_shoulder', 'right_hip'], ['left_hip', 'right_hip'],
-        ['left_hip', 'left_knee'], ['right_hip', 'right_knee'],
-        ['left_knee', 'left_ankle'], ['right_knee', 'right_ankle']
-      ];
+      // This array is defined but not directly used in the current implementation
+      // const connections = [
+      //   ['nose', 'left_eye'], ['nose', 'right_eye'],
+      //   ['left_eye', 'left_ear'], ['right_eye', 'right_ear'],
+      //   ['left_shoulder', 'right_shoulder'], ['left_shoulder', 'left_elbow'],
+      //   ['right_shoulder', 'right_elbow'], ['left_elbow', 'left_wrist'],
+      //   ['right_elbow', 'right_wrist'], ['left_shoulder', 'left_hip'],
+      //   ['right_shoulder', 'right_hip'], ['left_hip', 'right_hip'],
+      //   ['left_hip', 'left_knee'], ['right_hip', 'right_knee'],
+      //   ['left_knee', 'left_ankle'], ['right_knee', 'right_ankle']
+      // ];
 
       // Create a map for faster keypoint lookup
       const keypointMap = keypoints.reduce((map, kp) => {
-        map[kp.name] = kp;
+        if (kp.name) {
+          map[kp.name] = kp;
+        }
         return map;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, Keypoint>);
 
       // Draw the connections with extremely thick lines and very strong glow effect
       ctx.lineWidth = mode === 'squats' ? 20 : 18; // Super thick lines for maximum visibility
@@ -415,7 +443,7 @@ export function usePoseDetection(
 
       // Draw keypoints with larger radius for better visibility
       keypoints.forEach(keypoint => {
-        if (keypoint.score > confidenceThreshold) {
+        if (keypoint.score && keypoint.score > confidenceThreshold && keypoint.name) {
           const isLegPoint = ['left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle'].includes(keypoint.name);
           const isArmPoint = ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist'].includes(keypoint.name);
 
@@ -433,7 +461,7 @@ export function usePoseDetection(
           } else if (isArmPoint) {
             ctx.fillStyle = mode === 'pushups' ? '#00ff00' : '#00ffff'; // Green for arms in pushup mode, cyan otherwise
             ctx.shadowColor = '#00ff00';
-          } else if (['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear'].includes(keypoint.name)) {
+          } else if (keypoint.name && ['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear'].includes(keypoint.name)) {
             ctx.fillStyle = '#ffffff'; // White for face
             ctx.shadowColor = '#ffffff';
           } else {
@@ -462,7 +490,7 @@ export function usePoseDetection(
           const p1 = keypointMap[p1Name];
           const p2 = keypointMap[p2Name];
 
-          if (p1 && p2 && p1.score > confidenceThreshold && p2.score > confidenceThreshold) {
+          if (p1 && p2 && p1.score && p2.score && p1.score > confidenceThreshold && p2.score > confidenceThreshold) {
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
@@ -581,6 +609,9 @@ export function usePoseDetection(
     initPoseDetection();
 
     return () => {
+      // Mark component as unmounted
+      isMountedRef.current = false;
+
       // Cancel any animation frames
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
@@ -588,23 +619,25 @@ export function usePoseDetection(
       }
 
       // Dispose of the detector
-      if (detectorRef.current?.dispose) {
+      if (detectorRef.current) {
         try {
-          detectorRef.current.dispose();
+          // Use optional chaining to safely call dispose if it exists
+          // Using type interface augmentation in tensorflow.d.ts to allow this
+          detectorRef.current.dispose?.();
         } catch (error) {
           console.error("Error disposing detector:", error);
         }
         detectorRef.current = null;
       }
 
-      // Stop all media tracks
-      if (videoRef.current?.srcObject) {
+      // Stop all media tracks using the captured ref value
+      if (videoElement?.srcObject) {
         try {
-          const stream = videoRef.current.srcObject as MediaStream;
+          const stream = videoElement.srcObject as MediaStream;
           stream.getTracks().forEach((track) => {
             track.stop();
           });
-          videoRef.current.srcObject = null;
+          videoElement.srcObject = null;
         } catch (error) {
           console.error("Error stopping video tracks:", error);
         }
@@ -622,7 +655,7 @@ export function usePoseDetection(
         }
       }
     };
-  }, [canvasRef, mode, onRepCount, isActive]);
+  }, [canvasRef, mode, onRepCount, isActive, detectPushupCallback, detectSquatCallback]);
 
   return videoRef;
 }
