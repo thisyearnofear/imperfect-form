@@ -6,9 +6,29 @@ import SummaryModal from "@/components/SummaryModal";
 import ExpandedLeaderboardModal from "@/components/ExpandedLeaderboardModal";
 import Welcome from "@/components/Welcome";
 import LoadingScreen from "@/components/LoadingScreen";
-import ConnectWalletButton from "@/components/ConnectWallet";
-import ChainSelector from "@/components/ChainSelector";
-import { useAddress } from "@thirdweb-dev/react";
+import WalletButton from "@/components/WalletButton";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { useAccount as useWagmiAccount } from "wagmi";
+
+// Import ThirdWeb hooks at the top level
+import { useAddress as useThirdwebAddress } from "@thirdweb-dev/react";
+
+// Create a custom hook to safely use ThirdWeb's useAddress
+function useSafeThirdwebAddress(): string | undefined {
+  // Get the current network
+  const { network } = useNetwork();
+
+  // Call the hook unconditionally to satisfy React's rules
+  const thirdwebAddress = useThirdwebAddress();
+
+  // Only return the address if we're on the Polygon network
+  if (network === "polygon") {
+    return thirdwebAddress;
+  }
+
+  // Otherwise return undefined
+  return undefined;
+}
 
 // Add type declaration for window object
 declare global {
@@ -37,8 +57,20 @@ const Game: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
 
-  // Get wallet address from ThirdWeb
-  const address = useAddress();
+  // Get network from context
+  const { network } = useNetwork();
+
+  // Get address based on the selected network
+  // Always call hooks at the top level
+  // For Wagmi (Base)
+  const { address: wagmiAddress } = useWagmiAccount();
+
+  // For ThirdWeb (Polygon)
+  // Use our safe hook that properly follows React rules
+  const thirdwebAddress = useSafeThirdwebAddress();
+
+  // Then conditionally use the values
+  const address = network === "base" ? wagmiAddress : thirdwebAddress;
 
   // Leaderboard data for the expanded modal
   // Define Score type to replace any[]
@@ -226,16 +258,9 @@ const Game: React.FC = () => {
 
         {/* Wallet connection centered at the top */}
         <div id="wallet-connection" className="wallet-connection">
-          {!address ? (
-            <div className="wallet-prompt">
-              <ConnectWalletButton />
-            </div>
-          ) : (
-            <div className="wallet-connected">
-              <ConnectWalletButton />
-              <ChainSelector />
-            </div>
-          )}
+          <div className={address ? "wallet-connected" : "wallet-prompt"}>
+            <WalletButton />
+          </div>
         </div>
 
         <div id="screen">

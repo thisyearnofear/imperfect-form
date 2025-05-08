@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import Spinner from "@/components/Spinner";
-const Game = dynamic(() => import("@/components/Game"), {
+const GameWrapper = dynamic(() => import("@/components/GameWrapper"), {
   ssr: false,
   loading: () => <Spinner />,
 });
@@ -50,7 +50,7 @@ export default function Home() {
 
   return (
     <>
-      <Game />
+      <GameWrapper />
       <div id="leaderboardContainer" className="leaderboard-container">
         <Leaderboard limit={2} onViewMore={handleViewMore} />
       </div>

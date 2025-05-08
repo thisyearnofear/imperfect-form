@@ -16,9 +16,8 @@ export const metadata: Metadata = {
   // The favicon.ico file in this directory (src/app/) will be served at /favicon.ico
 };
 
-// Using static client component import for Providers
-import Providers from "@/components/Providers";
-import { Toaster } from "react-hot-toast";
+// Using static client component import for AppProviders
+import AppProviders from "@/components/AppProviders";
 
 export default function RootLayout({
   children,
@@ -66,10 +65,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${pressStart2P.className} antialiased`}>
-        <Providers>
-          <Toaster position="top-right" />
-          {children}
-        </Providers>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

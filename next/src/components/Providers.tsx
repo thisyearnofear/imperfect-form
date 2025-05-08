@@ -4,6 +4,7 @@ import React, { ReactNode, createContext, useState, useEffect } from "react";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { Toaster } from "react-hot-toast";
 import RadixUIFix from "./RadixUIFix";
+import { useNetwork as useNetworkContext } from "@/contexts/NetworkContext";
 import {
   POLYGON_CONTRACT_ADDRESS,
   BASE_CONTRACT_ADDRESS,
@@ -22,34 +23,65 @@ export interface ChainContextType {
   contractAddress: string;
 }
 
+// Import baseSepolia to ensure we're using the correct chain ID
+import { baseSepolia } from "wagmi/chains";
+
+// Define chain IDs for our supported networks
 const chainIdMap = {
   amoy: 80002, // Polygon Amoy testnet
-  base: 84532, // Base Sepolia testnet
+  base: baseSepolia.id, // Base Sepolia testnet - use the chain ID from wagmi/chains
 };
 
 export const ChainContext = createContext<ChainContextType>({
-  chain: "amoy",
+  chain: "base",
   setChain: () => {},
-  chainId: chainIdMap.amoy,
-  contractAddress: POLYGON_CONTRACT_ADDRESS,
+  chainId: chainIdMap.base,
+  contractAddress: BASE_CONTRACT_ADDRESS,
 });
 
 const Providers: React.FC<ProvidersProps> = ({ children }) => {
-  // Use localStorage to persist chain selection (if available)
-  const [chain, setChain] = useState<Chain>("amoy");
+  // Use localStorage to persist chain selection (if available), default to "base"
+  const [chain, setChain] = useState<Chain>("base");
 
-  // Update chain from localStorage on client-side only
+  // Get the network context
+  const { network, setNetwork } = useNetworkContext();
+
+  // Update chain from localStorage and sync with network context on client-side only
   useEffect(() => {
     const savedChain = localStorage.getItem("selectedChain");
-    if (savedChain && (savedChain === "amoy" || savedChain === "base")) {
-      setChain(savedChain as Chain);
-    }
-  }, []);
+    // Default to "base" if no chain is saved or if the saved chain is invalid
+    const validChain =
+      savedChain === "amoy" || savedChain === "base" ? savedChain : "base";
 
-  // Save chain selection to localStorage
+    // Set the chain state
+    setChain(validChain as Chain);
+
+    // Also update localStorage to ensure it has the correct value
+    localStorage.setItem("selectedChain", validChain);
+
+    // Also update the network context to keep them in sync
+    const correspondingNetwork = validChain === "amoy" ? "polygon" : "base";
+    if (network !== correspondingNetwork) {
+      setNetwork(correspondingNetwork);
+      console.log(
+        `Synced network context with chain: ${validChain} -> ${correspondingNetwork}`
+      );
+    }
+  }, [network, setNetwork]);
+
+  // Save chain selection to localStorage and update network context
   const handleChainChange = (newChain: Chain) => {
     setChain(newChain);
     localStorage.setItem("selectedChain", newChain);
+
+    // Also update the network context to keep them in sync
+    const correspondingNetwork = newChain === "amoy" ? "polygon" : "base";
+    if (network !== correspondingNetwork) {
+      setNetwork(correspondingNetwork);
+      console.log(
+        `Updated network context from chain change: ${newChain} -> ${correspondingNetwork}`
+      );
+    }
   };
 
   const configMap: Record<Chain, { chainId: number; contractAddress: string }> =

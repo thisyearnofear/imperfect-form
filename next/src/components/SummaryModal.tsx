@@ -1,16 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import ConnectWalletButton from "@/components/ConnectWallet";
 import SubmitScore from "@/components/SubmitScore";
 import ChainSelector from "@/components/ChainSelector";
 import Medal from "@/components/Medal";
 import Dialog from "@/components/ui/Dialog";
 import { getBestDisplayName } from "@/utils/web3bio";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { ChainContext } from "@/components/Providers";
+import SetupSpendLimits from "@/components/SetupSpendLimits";
 
-// Initialize window.transactionHash if it doesn't exist
-if (typeof window !== "undefined" && window.transactionHash === undefined) {
-  window.transactionHash = "";
+// Initialize window properties if they don't exist
+if (typeof window !== "undefined") {
+  if (window.transactionHash === undefined) {
+    window.transactionHash = "";
+  }
+  if (window.selectedNetworkName === undefined) {
+    window.selectedNetworkName = "";
+  }
 }
 
 export interface SummaryModalProps {
@@ -33,6 +41,27 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [medalClass, setMedalClass] = useState("");
   const [performance, setPerformance] = useState("");
   const [displayName, setDisplayName] = useState<string>("");
+
+  // Get network and chain information
+  const { network } = useNetwork();
+  const { chain } = useContext(ChainContext);
+
+  // Update the window.selectedNetworkName when network or chain changes, or when modal opens
+  useEffect(() => {
+    if (open) {
+      const newNetworkName =
+        network === "polygon" ? "Polygon Amoy" : "Base Sepolia";
+
+      // Update window object for compatibility with existing code
+      if (typeof window !== "undefined") {
+        window.selectedNetworkName = newNetworkName;
+      }
+
+      console.log(
+        `SummaryModal: Updated network name to ${newNetworkName} (network: ${network}, chain: ${chain})`
+      );
+    }
+  }, [network, chain, open]);
 
   useEffect(() => {
     // Determine medal based on rep count and exercise type
@@ -170,6 +199,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 Wallet connected: {displayName}
               </p>
               <ChainSelector />
+              {network === "base" && <SetupSpendLimits />}
               <SubmitScore score={repCount} exerciseType={mode} />
             </>
           )}

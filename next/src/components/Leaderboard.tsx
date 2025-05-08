@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import "@/styles/leaderboard.css";
-import { useContract } from "@thirdweb-dev/react";
 import { ethers } from "ethers";
 import {
   fitnessLeaderboardABI,
@@ -57,15 +56,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     initialDisplayNames || {}
   );
 
-  // Initialize contracts for both networks
-  const { contract: polygonContract } = useContract(
-    POLYGON_CONTRACT_ADDRESS,
-    fitnessLeaderboardABI
-  );
-  const { contract: baseContract } = useContract(
-    BASE_CONTRACT_ADDRESS,
-    fitnessLeaderboardABI
-  );
+  // We'll use ethers.js directly instead of ThirdWeb hooks
+  // This avoids React hook issues when switching between wallet modes
 
   // Function to fetch data using fallback RPC URLs
   const fetchWithFallbackRpcs = async (
@@ -176,13 +168,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     try {
       // Fetch data from both networks using fallback mechanism
       const polygonData = await fetchWithFallbackRpcs(
-        polygonContract,
+        null, // No ThirdWeb contract
         POLYGON_CONTRACT_ADDRESS,
         POLYGON_FALLBACK_RPCS
       );
 
       const baseData = await fetchWithFallbackRpcs(
-        baseContract,
+        null, // No ThirdWeb contract
         BASE_CONTRACT_ADDRESS,
         BASE_FALLBACK_RPCS
       );
@@ -271,7 +263,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [polygonContract, baseContract]);
+  }, []);
 
   // Fetch leaderboard data on component mount
   useEffect(() => {

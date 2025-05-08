@@ -1,15 +1,13 @@
 "use client";
 
 import React, { useContext, useState, useEffect } from "react";
-import {
-  ConnectWallet as ThirdwebConnectWallet,
-  useAddress,
-  useDisconnect,
-} from "@thirdweb-dev/react";
+import { ConnectWallet as ThirdwebConnectWallet } from "@thirdweb-dev/react";
 import { shortenAddress } from "@/utils/formatters";
 import { ChainContext } from "@/components/Providers";
 import Dialog from "@/components/ui/Dialog";
 import { getBestDisplayName } from "@/utils/web3bio";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { useAccount, useDisconnect as useWagmiDisconnect } from "wagmi";
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -156,9 +154,83 @@ const WalletModal: React.FC<WalletModalProps> = ({
   );
 };
 
+// Create a safe wrapper component that only renders its children when in the right network context
+const SafeThirdwebWrapper = ({
+  children,
+  network,
+}: {
+  children: React.ReactNode;
+  network: string | null;
+}) => {
+  // Only render children if we're in the polygon network
+  if (network === "polygon") {
+    return <>{children}</>;
+  }
+  return null;
+};
+
+// Import ThirdWeb hooks at the top level
+import * as thirdwebAddressHooks from "@thirdweb-dev/react";
+
+// Create a component that safely uses ThirdWeb hooks
+const ThirdwebAddressHandler = ({
+  onAddressData,
+}: {
+  onAddressData: (data: {
+    address: string | undefined;
+    disconnect: () => void;
+  }) => void;
+}) => {
+  // We don't need state here since we're just passing the values up
+
+  // Use effect to safely try to get ThirdWeb data
+  useEffect(() => {
+    try {
+      if (
+        thirdwebAddressHooks.useAddress &&
+        thirdwebAddressHooks.useDisconnect
+      ) {
+        // Get the values from the hooks
+        const address = thirdwebAddressHooks.useAddress();
+        const disconnect = thirdwebAddressHooks.useDisconnect();
+
+        // Pass the data up to the parent
+        onAddressData({ address, disconnect });
+      } else {
+        onAddressData({ address: undefined, disconnect: () => {} });
+      }
+    } catch (error) {
+      console.error("Error using ThirdWeb hooks:", error);
+      // If there's an error, pass undefined
+      onAddressData({ address: undefined, disconnect: () => {} });
+    }
+  }, [onAddressData]);
+
+  return null;
+};
+
 const ConnectWalletButton: React.FC = () => {
-  const address = useAddress();
-  const disconnect = useDisconnect();
+  // Get the current network
+  const { network } = useNetwork();
+
+  // Use Wagmi hooks for Base network
+  const { address: wagmiAddress } = useAccount();
+  const { disconnect: wagmiDisconnect } = useWagmiDisconnect();
+
+  // State to store ThirdWeb data
+  const [thirdwebData, setThirdwebData] = useState<{
+    address: string | undefined;
+    disconnect: () => void;
+  }>({
+    address: undefined,
+    disconnect: () => {},
+  });
+
+  // Determine which data to use based on the selected network
+  const address = network === "polygon" ? thirdwebData.address : wagmiAddress;
+  const disconnect =
+    network === "polygon" ? thirdwebData.disconnect : wagmiDisconnect;
+
   // Chain context is available but not used in this component
   useContext(ChainContext);
   const [showModal, setShowModal] = useState(false);
@@ -204,37 +276,61 @@ const ConnectWalletButton: React.FC = () => {
     );
   }
 
+  // Render the ThirdwebAddressHandler to get ThirdWeb data
   return (
-    <div id="connectWalletContainer">
-      <ThirdwebConnectWallet
-        theme="dark"
-        modalSize="compact"
-        welcomeScreen={{
-          title: "Onchain Olympics",
-          subtitle: "Connect to submit your score",
-          img: {
-            src: "/favicon.ico", // Next.js App Router will serve the favicon from /src/app/favicon.ico
-            width: 150,
-            height: 150,
-          },
-        }}
-        modalTitleIconUrl="/favicon.ico" // Next.js App Router will serve the favicon from /src/app/favicon.ico
-        detailsBtn={() => <></>}
-        btnTitle="Connect Wallet"
-        className="wallet-button"
-        style={{
-          // Override any transparency in the ThirdwebConnectWallet modal
-          "--tw-bg-opacity": "1 !important",
-        }}
-        // Explicitly set supported wallet types
-        supportedWallets={[
-          "metamask",
-          "walletConnect",
-          "coinbaseWallet",
-          "injected",
-        ]}
-      />
-    </div>
+    <>
+      {/* Render the ThirdwebAddressHandler only when in polygon network */}
+      {network === "polygon" && (
+        <SafeThirdwebWrapper network={network}>
+          <ThirdwebAddressHandler onAddressData={setThirdwebData} />
+        </SafeThirdwebWrapper>
+      )}
+
+      <div id="connectWalletContainer">
+        {network === "polygon" ? (
+          <ThirdwebConnectWallet
+            theme="dark"
+            modalSize="compact"
+            welcomeScreen={{
+              title: "Onchain Olympics",
+              subtitle: "Connect to submit your score",
+              img: {
+                src: "/favicon.ico", // Next.js App Router will serve the favicon from /src/app/favicon.ico
+                width: 150,
+                height: 150,
+              },
+            }}
+            modalTitleIconUrl="/favicon.ico" // Next.js App Router will serve the favicon from /src/app/favicon.ico
+            detailsBtn={() => <></>}
+            btnTitle="Connect Wallet"
+            className="wallet-button"
+            style={{
+              // Override any transparency in the ThirdwebConnectWallet modal
+              "--tw-bg-opacity": "1 !important",
+            }}
+            // Explicitly set supported wallet types
+            supportedWallets={[
+              "metamask",
+              "walletConnect",
+              "coinbaseWallet",
+              "injected",
+            ]}
+          />
+        ) : (
+          <button
+            className="wallet-button"
+            onClick={() => {
+              // For Base network, we'll use a simple button that opens a modal
+              alert(
+                "Please use the wallet button in the top right corner to connect your Base wallet"
+              );
+            }}
+          >
+            Connect Wallet
+          </button>
+        )}
+      </div>
+    </>
   );
 };
 
