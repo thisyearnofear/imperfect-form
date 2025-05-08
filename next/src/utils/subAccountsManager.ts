@@ -1,33 +1,33 @@
-import { createPublicClient, http, parseEther } from "viem";
+import { createPublicClient, http, parseEther, Address } from "viem";
 import { baseSepolia } from "viem/chains";
 import {
   SUBACCOUNT_FACTORY_ADDRESS,
   subAccountFactoryABI,
   SPEND_PERMISSION_MANAGER_ADDRESS,
   NATIVE_ETH_ADDRESS,
+  spendPermissionManagerABI,
 } from "@/constants/subAccountsContracts";
 import toast from "react-hot-toast";
 
 // Interface for the SpendPermission structure
 export interface SpendPermission {
-  account: `0x${string}`; // User's wallet address
-  spender: `0x${string}`; // App's sub-account address
-  token: `0x${string}`; // Token address (use NATIVE_ETH_ADDRESS for ETH)
-  allowance: bigint; // Amount allowed per period
-  period: number; // Period in seconds
-  start: number; // Start timestamp
-  end: number; // End timestamp
-  salt: bigint; // Random salt
-  extraData: `0x${string}`; // Additional data
+  account: `0x${string}`;
+  spender: `0x${string}`;
+  token: `0x${string}`;
+  allowance: bigint;
+  period: number;
+  start: number;
+  end: number;
+  salt: bigint;
+  extraData: `0x${string}`;
 }
 
 // Get a public client for Base Sepolia
 export async function getPublicClient() {
-  const client = createPublicClient({
+  return createPublicClient({
     chain: baseSepolia,
     transport: http(),
   });
-  return client;
 }
 
 // Store a mapping of parent wallet addresses to their sub-accounts
@@ -59,11 +59,11 @@ export async function getSubAccount(
         subAccountsCache[parentAddress] = subAccounts[0];
         return subAccounts[0];
       }
-    } catch (error) {
+    } catch (subAccountError) {
       // If the call fails, it likely means the user doesn't have a sub-account yet
       console.log(
-        "No existing sub-accounts found, may need to create one",
-        error
+        "No existing sub-accounts found, may need to create one:",
+        subAccountError
       );
     }
 
@@ -83,54 +83,79 @@ export async function getSubAccount(
 
 // Create a spend permission request for the user to sign
 export function createSpendPermission(
-  userAddress: string,
-  spenderAddress: string,
+  userAddress: Address,
+  spenderAddress: Address,
   amount: bigint = parseEther("0.01"), // Default small amount for testing
   period: number = 86400 // Default 1 day period
 ): SpendPermission {
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+
   // Create a random salt
   const salt = BigInt(
     "0x" + Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)
   );
 
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-
   return {
     account: userAddress as `0x${string}`,
     spender: spenderAddress as `0x${string}`,
-    token: NATIVE_ETH_ADDRESS as `0x${string}`, // Using native ETH
+    token: NATIVE_ETH_ADDRESS as `0x${string}`,
     allowance: amount,
-    period: period,
+    period,
     start: currentTimestamp,
     end: currentTimestamp + 365 * 24 * 60 * 60, // 1 year from now
-    salt: salt,
+    salt,
     extraData: "0x" as `0x${string}`,
+  };
+}
+
+// Helper function to get the domain for EIP-712 signing
+export function getSpendPermissionDomain() {
+  return {
+    name: "Spend Permission Manager",
+    version: "1",
+    chainId: baseSepolia.id,
+    verifyingContract: SPEND_PERMISSION_MANAGER_ADDRESS,
   };
 }
 
 // Function to submit a spend permission with user signature
 export async function approveSpendPermissionWithSignature(
   spendPermission: SpendPermission,
-  signature: string
+  signature: `0x${string}`
 ) {
   try {
-    // We would typically do this in a server endpoint
-    // Here we're just showing a toast notification instead of actually
-    // sending a transaction to the blockchain
-    console.log("Would approve spend permission:", {
-      spendPermission,
-      signature,
+    const publicClient = await getPublicClient();
+
+    // Call the contract's approveWithSignature function
+    const result = await publicClient.simulateContract({
+      address: SPEND_PERMISSION_MANAGER_ADDRESS,
+      abi: spendPermissionManagerABI,
+      functionName: "approveWithSignature",
+      args: [
+        {
+          account: spendPermission.account,
+          spender: spendPermission.spender,
+          token: spendPermission.token,
+          allowance: spendPermission.allowance,
+          period: spendPermission.period,
+          start: spendPermission.start,
+          end: spendPermission.end,
+          salt: spendPermission.salt,
+          extraData: spendPermission.extraData,
+        },
+        signature,
+      ],
     });
 
-    toast.success(
-      "Spend permission approved! You can now submit scores without signing each transaction."
-    );
+    if (result.request) {
+      toast.success("Spend permission approved successfully!");
+      return true;
+    }
 
-    // Return success
-    return true;
+    return false;
   } catch (error) {
     console.error("Error approving spend permission:", error);
-    toast.error("Failed to approve spend permission.");
+    toast.error("Failed to approve spend permission");
     return false;
   }
 }
@@ -158,60 +183,17 @@ export async function useSpendPermission(spendPermission: SpendPermission) {
   }
 }
 
-// Helper function to get the domain for EIP-712 signing
-export function getSpendPermissionDomain() {
-  return {
-    name: "Spend Permission Manager",
-    version: "1",
-    chainId: baseSepolia.id,
-    verifyingContract: SPEND_PERMISSION_MANAGER_ADDRESS as `0x${string}`,
-  };
-}
-
-// Function to create a sub-account for a parent wallet
-export async function createSubAccountForParent(
-  parentAddress: string
-): Promise<string | null> {
-  try {
-    toast.success("Creating your sub-account... This may take a moment");
-
-    // Call our API endpoint to create the sub-account
-    const response = await fetch("/api/create-subaccount", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ parentAddress }),
-    });
-
-    const data = await response.json();
-
-    if (!data.success) {
-      throw new Error(data.error || "Failed to create sub-account");
-    }
-
-    if (data.subAccountAddress) {
-      // Cache the sub-account address
-      subAccountsCache[parentAddress] = data.subAccountAddress;
-
-      toast.success("Sub-account created successfully!");
-      return data.subAccountAddress;
-    } else if (data.hash) {
-      // If we got a transaction hash but no address yet, the transaction was submitted
-      // but we might need to wait a bit longer
-      toast.success(
-        "Sub-account creation transaction submitted. Please wait for confirmation."
-      );
-
-      // In a production app, you might want to poll for the sub-account to be created
-      // For simplicity, we'll just return null and let the user refresh
-      return null;
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Error creating sub-account:", error);
-    toast.error("Failed to create sub-account. Please try again.");
-    return null;
-  }
-}
+// Constants for EIP-712 signing
+export const SPEND_PERMISSION_EIP712_TYPES = {
+  SpendPermission: [
+    { name: "account", type: "address" },
+    { name: "spender", type: "address" },
+    { name: "token", type: "address" },
+    { name: "allowance", type: "uint160" },
+    { name: "period", type: "uint48" },
+    { name: "start", type: "uint48" },
+    { name: "end", type: "uint48" },
+    { name: "salt", type: "uint256" },
+    { name: "extraData", type: "bytes" },
+  ],
+} as const;

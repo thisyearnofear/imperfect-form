@@ -83,7 +83,13 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
     connectors: [
       coinbaseWallet({
         appName: "Imperfect Form",
-        preference: "smartWalletOnly",
+        headlessMode: false,
+        version: "4",
+        appLogoUrl: null,
+        preference: {
+          keysUrl: "https://keys.coinbase.com/connect",
+          options: "smartWalletOnly", // Force smart wallet mode
+        },
       }),
     ],
     ssr: true,

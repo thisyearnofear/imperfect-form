@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useAccount, useSignTypedData } from "wagmi";
 import { useNetwork as useNetworkContext } from "@/contexts/NetworkContext";
 import { parseEther } from "viem";
@@ -10,35 +10,24 @@ import {
   SpendPermission,
   createSpendPermission,
   getSpendPermissionDomain,
-  getSubAccount,
   approveSpendPermissionWithSignature,
-  createSubAccountForParent,
+  SPEND_PERMISSION_EIP712_TYPES,
 } from "@/utils/subAccountsManager";
-
-const SPEND_PERMISSION_EIP712_TYPES = {
-  SpendPermission: [
-    { name: "account", type: "address" },
-    { name: "spender", type: "address" },
-    { name: "token", type: "address" },
-    { name: "allowance", type: "uint160" },
-    { name: "period", type: "uint48" },
-    { name: "start", type: "uint48" },
-    { name: "end", type: "uint48" },
-    { name: "salt", type: "uint256" },
-    { name: "extraData", type: "bytes" },
-  ],
-};
+import {
+  ConnectWallet,
+  Wallet,
+  WalletDropdown,
+  WalletDropdownLink,
+} from "@coinbase/onchainkit/wallet";
+import { Avatar, Name, Identity } from "@coinbase/onchainkit/identity";
 
 const SetupSpendLimits: React.FC = () => {
   const { address } = useAccount();
   const { network } = useNetworkContext();
+
   const [isLoading, setIsLoading] = useState(false);
-  const [spendPermission, setSpendPermission] =
-    useState<SpendPermission | null>(null);
   const [hasSetupSpendLimits, setHasSetupSpendLimits] = useState(false);
-  const [subAccountAddress, setSubAccountAddress] = useState<string | null>(
-    null
-  );
+  const [hasSubAccount, setHasSubAccount] = useState<boolean | null>(null);
 
   // Wagmi hook for signing typed data
   const { signTypedDataAsync } = useSignTypedData();
@@ -46,78 +35,105 @@ const SetupSpendLimits: React.FC = () => {
   // Only show for Base network with coinbase wallet
   const shouldShowSetup = network === "base" && address && !hasSetupSpendLimits;
 
-  // Add a state for tracking if we're creating a sub-account
-  const [isCreatingSubAccount, setIsCreatingSubAccount] = useState(false);
+  // Function to open Coinbase Wallet for sub-account creation
+  const openCoinbaseWallet = () => {
+    // Try to use the Coinbase Wallet deep link first
+    window.open("https://wallet.coinbase.com/smart-wallet", "_blank");
 
-  // Check if user has a sub-account - define this function before the useEffect that calls it
-  const checkSubAccount = useCallback(async () => {
-    if (!address) return;
-
-    setIsLoading(true);
-    try {
-      // Try to get existing sub-account
-      const existingSubAccount = await getSubAccount(address);
-
-      if (existingSubAccount) {
-        setSubAccountAddress(existingSubAccount);
-        // You would also check if there's an existing spend permission
-        // For this example, we'll assume there isn't one yet
+    // Show a toast with instructions
+    toast.success(
+      "Opening Coinbase Wallet. Please create a smart account and return here.",
+      {
+        duration: 6000,
+        icon: "👛",
       }
-    } catch (error) {
-      console.error("Error checking sub-account:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [address]);
+    );
+  };
 
-  // Check if user already has sub-account and spend limits
+  // Check if the user has a sub-account by attempting a transaction
   useEffect(() => {
     if (network === "base" && address) {
+      const checkSubAccount = async () => {
+        try {
+          setIsLoading(true);
+          // Try to create a spend permission - this will fail if no sub-account exists
+          const newSpendPermission = createSpendPermission(
+            address as `0x${string}`,
+            address as `0x${string}`,
+            parseEther("0.01"),
+            86400
+          );
+
+          // Get EIP-712 domain
+          const domain = getSpendPermissionDomain();
+
+          // Try to sign - this will reveal if they have a sub-account
+          await signTypedDataAsync({
+            domain,
+            types: SPEND_PERMISSION_EIP712_TYPES,
+            primaryType: "SpendPermission",
+            message: newSpendPermission,
+          });
+
+          setHasSubAccount(true);
+          toast.success(
+            "Smart Account detected! You can now set up spend limits.",
+            {
+              icon: "✅",
+            }
+          );
+        } catch (error: unknown) {
+          const errorObj = error as { message?: string };
+          // Check if the error is related to sub-account issues
+          if (
+            errorObj?.message?.includes("SubAccount") ||
+            errorObj?.message?.includes(
+              "0x000000006551c19487814612e58FE06813775758"
+            )
+          ) {
+            setHasSubAccount(false);
+            toast.error(
+              "No Smart Account found. Please create one in your Coinbase Wallet.",
+              {
+                icon: "❌",
+                duration: 5000,
+              }
+            );
+          } else {
+            // Other error - might have a sub-account but other issues
+            setHasSubAccount(true);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
       checkSubAccount();
     }
-  }, [network, address, checkSubAccount]);
-
-  // Function to handle sub-account creation
-  const handleCreateSubAccount = async () => {
-    if (!address) return;
-
-    setIsCreatingSubAccount(true);
-    try {
-      // Call the function to create a sub-account
-      const newSubAccount = await createSubAccountForParent(address);
-
-      if (newSubAccount) {
-        setSubAccountAddress(newSubAccount);
-      } else {
-        // If we didn't get a sub-account immediately, wait a moment and check again
-        setTimeout(async () => {
-          await checkSubAccount();
-          setIsCreatingSubAccount(false);
-        }, 5000);
-      }
-    } catch (error) {
-      console.error("Error creating sub-account:", error);
-    } finally {
-      setIsCreatingSubAccount(false);
-    }
-  };
+  }, [network, address, signTypedDataAsync]);
 
   // Setup spend limits
   const setupSpendLimits = async () => {
-    if (!address || !subAccountAddress) return;
+    if (!address) return;
+
+    if (!hasSubAccount) {
+      openCoinbaseWallet();
+      return;
+    }
 
     setIsLoading(true);
     try {
-      // Create a new spend permission with a typed annotation
+      // Create a new spend permission
       const newSpendPermission: SpendPermission = createSpendPermission(
-        address,
-        subAccountAddress,
-        parseEther("0.01"), // Allow 0.01 ETH per transaction
-        86400 // 1 day period
+        address as `0x${string}`,
+        address as `0x${string}`,
+        parseEther("0.01"),
+        86400
       );
 
-      // Update the state with the new spend permission
-      setSpendPermission(newSpendPermission);
+      toast.loading("Please sign the spend permission in your wallet...", {
+        id: "spend-permission",
+      });
 
       // Get EIP-712 domain
       const domain = getSpendPermissionDomain();
@@ -127,26 +143,58 @@ const SetupSpendLimits: React.FC = () => {
         domain,
         types: SPEND_PERMISSION_EIP712_TYPES,
         primaryType: "SpendPermission",
-        message: newSpendPermission as unknown as Record<string, unknown>,
+        message: newSpendPermission,
+      });
+
+      toast.loading("Setting up spend limits...", {
+        id: "spend-permission",
       });
 
       // Approve the spend permission with the signature
       const success = await approveSpendPermissionWithSignature(
         newSpendPermission,
-        signature
+        signature as `0x${string}`
       );
 
       if (success) {
         setHasSetupSpendLimits(true);
         toast.success(
-          "Spend limits set up successfully! You can now submit scores without signing each transaction."
+          "Spend limits set up successfully! You can now submit scores without signing each transaction.",
+          {
+            id: "spend-permission",
+            icon: "🎉",
+            duration: 5000,
+          }
         );
       } else {
-        toast.error("Failed to set up spend limits.");
+        toast.error("Failed to set up spend limits.", {
+          id: "spend-permission",
+        });
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorObj = error as { message?: string };
       console.error("Error setting up spend limits:", error);
-      toast.error("Error setting up spend limits. Please try again.");
+
+      // Check if the error is related to sub-account issues
+      if (
+        errorObj?.message?.includes("SubAccount") ||
+        errorObj?.message?.includes(
+          "0x000000006551c19487814612e58FE06813775758"
+        )
+      ) {
+        setHasSubAccount(false);
+        toast.error(
+          "You need to create a Smart Account in your Coinbase Wallet first",
+          {
+            id: "spend-permission",
+            icon: "❌",
+          }
+        );
+      } else {
+        toast.error("Error setting up spend limits. Please try again.", {
+          id: "spend-permission",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -159,67 +207,93 @@ const SetupSpendLimits: React.FC = () => {
     <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md">
       <h3 className="text-lg font-bold mb-2">Enable One-Click Submissions</h3>
 
-      {!subAccountAddress ? (
-        // If no sub-account exists yet, show the creation button and instructions
+      {hasSubAccount === false ? (
+        // Show sub-account setup instructions if they don't have one
         <>
-          <p className="mb-3">
-            To enable faster submissions, create a sub-account:
+          <p className="mb-4">
+            To enable faster submissions, you first need to create a Smart
+            Account in your Coinbase Wallet:
           </p>
+          <div className="flex flex-col items-center space-y-4 mb-4">
+            {/* OnchainKit Wallet Button */}
+            <Wallet>
+              <ConnectWallet>
+                <div className="flex items-center space-x-2 bg-[#0052FF] text-white px-4 py-2 rounded-lg hover:bg-[#0039B3] transition-colors cursor-pointer">
+                  <Avatar className="h-6 w-6" />
+                  <span>Open in Coinbase Wallet</span>
+                </div>
+              </ConnectWallet>
+              <WalletDropdown>
+                <Identity className="px-4 pt-3 pb-2" hasCopyAddressOnClick>
+                  <Avatar />
+                  <Name />
+                </Identity>
+                <WalletDropdownLink
+                  icon="wallet"
+                  href="https://wallet.coinbase.com/smart-wallet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Create Smart Account
+                </WalletDropdownLink>
+              </WalletDropdown>
+            </Wallet>
 
-          <button
-            onClick={handleCreateSubAccount}
-            disabled={isCreatingSubAccount}
-            className={`w-full py-2 px-4 rounded-md transition-all mb-3 ${
-              isCreatingSubAccount
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700 text-white"
-            }`}
-          >
-            {isCreatingSubAccount ? (
-              <span className="flex items-center justify-center">
-                <Spinner />{" "}
-                <span className="ml-2">Creating Sub-Account...</span>
-              </span>
-            ) : (
-              "Create Sub-Account"
-            )}
-          </button>
-
-          <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-100">
-            <p className="text-sm text-blue-800 font-medium mb-1">
-              What this does:
+            {/* Fallback direct deep link button */}
+            <button
+              onClick={openCoinbaseWallet}
+              className="text-[#0052FF] underline text-sm hover:text-[#0039B3]"
+            >
+              Open wallet directly
+            </button>
+          </div>
+          <ol className="list-decimal ml-5 mb-4 text-sm space-y-2">
+            <li>Click one of the buttons above to open Coinbase Wallet</li>
+            <li>Go to Settings → Smart Accounts</li>
+            <li>Tap &quot;Create Smart Account&quot;</li>
+            <li>Follow the prompts to create your account</li>
+            <li>Return here and click the button below</li>
+          </ol>
+          <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4 text-sm">
+            <strong>Why do I need this?</strong>
+            <p className="mt-1">
+              Smart Accounts enable gas-free transactions and automatic
+              approvals, making your experience smoother. Your funds remain
+              secure, and you maintain full control.
             </p>
-            <ul className="text-xs text-blue-700 list-disc ml-4 space-y-1">
-              <li>Creates a private sub-account linked to your wallet</li>
-              <li>
-                Enables seamless score submissions without multiple signatures
-              </li>
-              <li>Improves your experience with the app</li>
-            </ul>
           </div>
         </>
       ) : (
-        // If sub-account exists, show the standard flow
+        // Show spend limits setup if they have a sub-account
         <>
           <p className="mb-4">
             Set up spend limits to submit your scores without signing each
             transaction. This will make the experience smoother!
           </p>
-
-          {/* Show if spend permission is set but not yet approved */}
-          {spendPermission && !hasSetupSpendLimits && (
-            <div className="mb-3 p-2 bg-green-50 rounded text-sm">
-              Spend permission created! Please approve it to continue.
-            </div>
-          )}
+          <div className="mb-4">
+            <Identity
+              className="px-4 pt-3 pb-2 bg-blue-50 rounded-lg"
+              hasCopyAddressOnClick
+            >
+              <div className="flex items-center space-x-2">
+                <Avatar className="h-8 w-8" />
+                <div>
+                  <Name className="font-medium" />
+                  <div className="text-sm text-gray-600">
+                    Smart Account Connected
+                  </div>
+                </div>
+              </div>
+            </Identity>
+          </div>
         </>
       )}
 
       <button
         onClick={setupSpendLimits}
-        disabled={isLoading || !subAccountAddress}
+        disabled={isLoading}
         className={`w-full py-2 px-4 rounded-md transition-all ${
-          isLoading || !subAccountAddress
+          isLoading
             ? "bg-gray-400 cursor-not-allowed"
             : "bg-blue-600 hover:bg-blue-700 text-white"
         }`}
@@ -228,8 +302,8 @@ const SetupSpendLimits: React.FC = () => {
           <span className="flex items-center justify-center">
             <Spinner /> <span className="ml-2">Setting up...</span>
           </span>
-        ) : !subAccountAddress ? (
-          "Create Sub-Account First"
+        ) : hasSubAccount === false ? (
+          "Create Smart Account"
         ) : (
           "Set Up Spend Limits"
         )}

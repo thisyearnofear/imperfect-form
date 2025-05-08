@@ -1,3 +1,5 @@
+import { Address } from "viem";
+
 // Sub-account Factory ABI (simplified for this example)
 export const SUBACCOUNT_FACTORY_ADDRESS =
   "0x000000006551c19487814612e58FE06813775758"; // Base Sepolia
@@ -47,141 +49,61 @@ export const subAccountFactoryABI = [
   },
 ];
 
-// Spend Permission Manager ABI (simplified for this example)
+// Base Sepolia contract addresses
 export const SPEND_PERMISSION_MANAGER_ADDRESS =
-  "0x00000000Ea70745D4f5CF8d80Ea7C9E19D11deD9"; // Base Sepolia
+  "0xf85210B21cC50302F477BA56686d2019dC9b67Ad" as Address;
+export const NATIVE_ETH_ADDRESS =
+  "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" as Address;
+
+// ABI for SpendPermissionManager
 export const spendPermissionManagerABI = [
   {
+    type: "function",
+    name: "approve",
     inputs: [
       {
-        components: [
-          {
-            internalType: "address",
-            name: "account",
-            type: "address",
-          },
-          {
-            internalType: "address",
-            name: "spender",
-            type: "address",
-          },
-          {
-            internalType: "address",
-            name: "token",
-            type: "address",
-          },
-          {
-            internalType: "uint160",
-            name: "allowance",
-            type: "uint160",
-          },
-          {
-            internalType: "uint48",
-            name: "period",
-            type: "uint48",
-          },
-          {
-            internalType: "uint48",
-            name: "start",
-            type: "uint48",
-          },
-          {
-            internalType: "uint48",
-            name: "end",
-            type: "uint48",
-          },
-          {
-            internalType: "uint256",
-            name: "salt",
-            type: "uint256",
-          },
-          {
-            internalType: "bytes",
-            name: "extraData",
-            type: "bytes",
-          },
-        ],
-        internalType: "struct SpendPermissionManager.SpendPermission",
         name: "spendPermission",
         type: "tuple",
-      },
-      {
-        internalType: "bytes",
-        name: "signature",
-        type: "bytes",
+        internalType: "struct SpendPermissionManager.SpendPermission",
+        components: [
+          { name: "account", type: "address", internalType: "address" },
+          { name: "spender", type: "address", internalType: "address" },
+          { name: "token", type: "address", internalType: "address" },
+          { name: "allowance", type: "uint160", internalType: "uint160" },
+          { name: "period", type: "uint48", internalType: "uint48" },
+          { name: "start", type: "uint48", internalType: "uint48" },
+          { name: "end", type: "uint48", internalType: "uint48" },
+          { name: "salt", type: "uint256", internalType: "uint256" },
+          { name: "extraData", type: "bytes", internalType: "bytes" },
+        ],
       },
     ],
-    name: "approveWithSignature",
-    outputs: [],
+    outputs: [{ name: "", type: "bool", internalType: "bool" }],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
+    type: "function",
+    name: "approveWithSignature",
     inputs: [
       {
-        components: [
-          {
-            internalType: "address",
-            name: "account",
-            type: "address",
-          },
-          {
-            internalType: "address",
-            name: "spender",
-            type: "address",
-          },
-          {
-            internalType: "address",
-            name: "token",
-            type: "address",
-          },
-          {
-            internalType: "uint160",
-            name: "allowance",
-            type: "uint160",
-          },
-          {
-            internalType: "uint48",
-            name: "period",
-            type: "uint48",
-          },
-          {
-            internalType: "uint48",
-            name: "start",
-            type: "uint48",
-          },
-          {
-            internalType: "uint48",
-            name: "end",
-            type: "uint48",
-          },
-          {
-            internalType: "uint256",
-            name: "salt",
-            type: "uint256",
-          },
-          {
-            internalType: "bytes",
-            name: "extraData",
-            type: "bytes",
-          },
-        ],
-        internalType: "struct SpendPermissionManager.SpendPermission",
         name: "spendPermission",
         type: "tuple",
+        internalType: "struct SpendPermissionManager.SpendPermission",
+        components: [
+          { name: "account", type: "address", internalType: "address" },
+          { name: "spender", type: "address", internalType: "address" },
+          { name: "token", type: "address", internalType: "address" },
+          { name: "allowance", type: "uint160", internalType: "uint160" },
+          { name: "period", type: "uint48", internalType: "uint48" },
+          { name: "start", type: "uint48", internalType: "uint48" },
+          { name: "end", type: "uint48", internalType: "uint48" },
+          { name: "salt", type: "uint256", internalType: "uint256" },
+          { name: "extraData", type: "bytes", internalType: "bytes" },
+        ],
       },
-      {
-        internalType: "uint160",
-        name: "amount",
-        type: "uint160",
-      },
+      { name: "signature", type: "bytes", internalType: "bytes" },
     ],
-    name: "spend",
-    outputs: [],
+    outputs: [{ name: "", type: "bool", internalType: "bool" }],
     stateMutability: "nonpayable",
-    type: "function",
   },
-];
-
-// Native ETH token address (used for spend permissions)
-export const NATIVE_ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+] as const;

@@ -1,3 +1,0 @@
-# Temporarily ignore these files during build
-src/app/api/create-subaccount/route.ts
-src/utils/subAccountsManager.ts 
