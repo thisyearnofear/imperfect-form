@@ -13,7 +13,9 @@ const nextConfig = {
     return config;
   },
   // Add output configuration for standalone mode
-  output: 'standalone',
+  output: "standalone",
+  // Specify the source directory
+  distDir: ".next",
 };
 
 module.exports = nextConfig;

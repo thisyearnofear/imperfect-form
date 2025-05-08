@@ -4,38 +4,53 @@ A web app for on-chain fitness challenges with real-time pose detection, leaderb
 
 ---
 
-## 🚀 Migration Plan: Next.js + thirdweb Wallet
+## 🚀 Project Structure
 
-We are migrating the project to [Next.js](https://nextjs.org/) for a modern, scalable, and performant architecture, and integrating [thirdweb](https://thirdweb.com/) for seamless wallet support and web3 SDK features.
+This repository contains two implementations of the Imperfect Form application:
+
+1. **Next.js Implementation** (current development focus)
+2. **Vanilla JS Implementation** (legacy version)
+
+### Next.js Implementation
+
+The Next.js implementation is located in the `next/` directory and represents the modern, scalable version of the application with improved architecture and features.
+
+### Vanilla JS Implementation
+
+The original implementation using vanilla JavaScript is preserved in the `vanillaJS/` directory for reference and backward compatibility.
 
 ---
 
-## New Project Structure (Post-Migration)
+## Project Structure
 
 ```
 imperfect-form/
 ├── README.md
-├── package.json
-├── next.config.js
-├── public/                  # Static assets (images, icons, etc.)
-├── src/
-│   ├── pages/               # Next.js pages (routes)
-│   │   ├── _app.tsx         # App entry (global providers)
-│   │   ├── index.tsx        # Home page
-│   │   └── ...
-│   ├── components/          # Reusable UI components (Leaderboard, Webcam, etc.)
-│   ├── modules/             # Business logic, hooks, pose detection, services
-│   ├── utils/               # Utility/helper functions
-│   ├── constants/           # Config, contract addresses/ABIs
-│   ├── styles/              # CSS/SCSS modules
-│   └── thirdweb/            # thirdweb config, wallet setup, SDK helpers
-├── backend/                 # (Optional) Express/Socket backend if needed
+├── next/                    # Next.js implementation (current development)
+│   ├── package.json
+│   ├── next.config.js
+│   ├── public/              # Static assets (images, icons, etc.)
+│   ├── src/
+│   │   ├── app/             # Next.js App Router
+│   │   ├── components/      # Reusable UI components (Leaderboard, Webcam, etc.)
+│   │   ├── modules/         # Business logic, hooks, pose detection, services
+│   │   ├── utils/           # Utility/helper functions
+│   │   ├── constants/       # Config, contract addresses/ABIs
+│   │   ├── styles/          # CSS/SCSS modules
+│   │   └── types/           # TypeScript type definitions
+│   └── contracts/           # Smart contract files
+├── vanillaJS/               # Original vanilla JS implementation
+│   ├── package.json
+│   ├── webpack.config.js
 │   ├── server.js
 │   ├── socketServer.js
-│   ├── signerManager.js
-│   ├── config.js
+│   ├── assets/              # Static assets for vanilla JS version
+│   └── src/                 # Source code for vanilla JS version
+├── backend/                 # Backend services (used by both implementations)
+│   ├── server.js
+│   ├── socketServer.js
 │   └── utils/
-└── .env
+└── .env                     # Environment variables
 ```
 
 ---
@@ -55,32 +70,54 @@ imperfect-form/
 
 ---
 
-## Getting Started (Next.js)
+## Getting Started
 
 ### Prerequisites
-- Node.js >= 18.x
+
+- Node.js >= 20.x (for Next.js implementation)
+- Node.js >= 18.x (for vanilla JS implementation)
 - Yarn or npm
 
-### Installation
-```bash
-yarn install
-# or
-npm install
-```
+### Next.js Implementation
 
-### Running the App
 ```bash
-yarn dev
-# or
+# Navigate to the Next.js directory
+cd next
+
+# Install dependencies
+npm install
+
+# Run the development server
 npm run dev
 ```
 
+### Vanilla JS Implementation
+
+```bash
+# Navigate to the vanilla JS directory
+cd vanillaJS
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run start
+
+# In a separate terminal, run the backend server
+npm run server
+
+# In another terminal, run the socket server (if needed)
+npm run socket-server
+```
+
 ### Configuration
-- Copy `.env.example` to `.env` and fill in the required API keys and environment variables (thirdweb, etc.)
+
+- Copy `.env.example` to `.env` and fill in the required API keys and environment variables
 
 ---
 
 ## Features
+
 - Real-time pose detection for fitness challenges
 - On-chain leaderboard integration
 - Social sharing (Farcaster, Twitter)
@@ -90,6 +127,7 @@ npm run dev
 ---
 
 ## Contributing
+
 1. Fork the repo
 2. Create your feature branch (`git checkout -b feature/YourFeature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
@@ -99,11 +137,13 @@ npm run dev
 ---
 
 ## License
+
 MIT
 
 ---
 
 ## Acknowledgements
+
 - [Next.js](https://nextjs.org/)
 - [thirdweb](https://thirdweb.com/)
 - [MediaPipe](https://mediapipe.dev/)
