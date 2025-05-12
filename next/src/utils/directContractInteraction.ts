@@ -54,7 +54,8 @@ export async function submitScoreDirectly(
   pushups: number,
   squats: number,
   isBaseNetwork: boolean = false,
-  connectedAddress?: string // Pass the connected address from the React component
+  connectedAddress?: string, // Pass the connected address from the React component
+  skipSubAccountCheck: boolean = false // Flag to skip sub-account check for direct submission
 ): Promise<{
   success: boolean;
   transactionHash?: string;
@@ -82,33 +83,49 @@ export async function submitScoreDirectly(
       userAddress = connectedAddress;
       console.log("Using provided address:", userAddress);
 
-      // Check if the user has a sub-account with spend limits
-      try {
-        const subAccount = await getSubAccount(userAddress);
-        if (subAccount) {
-          console.log("Found sub-account with address:", subAccount);
-          // User has a sub-account, we might be able to use spend limits
-          // In a full implementation, we would check if there's an active spend permission
+      // Skip sub-account check if direct submission was requested
+      if (!skipSubAccountCheck) {
+        // Check if the user has a sub-account with spend limits
+        try {
+          const subAccount = await getSubAccount(userAddress);
+          if (subAccount) {
+            console.log("Found sub-account with address:", subAccount);
+            // User has a sub-account, we might be able to use spend limits
+            // In a full implementation, we would check if there's an active spend permission
 
-          // For now, we'll still use Wagmi but indicate that spend limits might be usable
-          return {
-            success: false,
-            processingType: "wagmi",
-            useSpendLimit: true,
-            error: "Use Wagmi for Base transactions with spend limits",
-          };
+            // For now, we'll still use Wagmi but indicate that spend limits might be usable
+            return {
+              success: false,
+              processingType: "wagmi",
+              useSpendLimit: true,
+              error: "Use Wagmi for Base transactions with spend limits",
+            };
+          }
+        } catch (subAccountError) {
+          console.error("Error checking for sub-account:", subAccountError);
+          // Fall back to standard approach if checking for sub-account fails
         }
-      } catch (subAccountError) {
-        console.error("Error checking for sub-account:", subAccountError);
-        // Fall back to standard approach if checking for sub-account fails
+      } else {
+        console.log("Skipping sub-account check for direct submission");
       }
 
-      // For Base Smart Wallet, we'll return a status that indicates the process should continue with Wagmi
-      return {
-        success: false, // Changed to false to prevent false positive
-        processingType: "wagmi", // New field to indicate we need to use Wagmi
-        error: "Use Wagmi for Base transactions", // This is not a user-facing error but an internal signal
-      };
+      // For direct submission with skipSubAccountCheck=true, we'll use Wagmi without spend limits
+      if (skipSubAccountCheck) {
+        console.log("Using direct submission mode without spend limits");
+        return {
+          success: false,
+          processingType: "wagmi",
+          useSpendLimit: false, // Explicitly set to false for direct submission
+          error: "Use Wagmi for direct Base transactions", // Not an error, just an internal signal
+        };
+      } else {
+        // For other Base Smart Wallet cases (not direct submission)
+        return {
+          success: false, // Changed to false to prevent false positive
+          processingType: "wagmi", // New field to indicate we need to use Wagmi
+          error: "Use Wagmi for Base transactions", // This is not a user-facing error but an internal signal
+        };
+      }
     } else {
       // For Polygon network, use window.ethereum
       if (!window.ethereum) {

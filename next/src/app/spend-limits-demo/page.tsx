@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import SimplifiedSetupSpendLimits from "@/components/SimplifiedSetupSpendLimits";
-import ServerSideSetupSpendLimits from "@/components/ServerSideSetupSpendLimits";
+import { SimplifiedSetupSpendLimits, ServerSideSetupSpendLimits } from "@/components/wallet";
 import { Toaster } from "react-hot-toast";
 
 export default function SpendLimitsDemo() {

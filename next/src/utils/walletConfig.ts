@@ -40,6 +40,7 @@ export const coinbaseWalletConnector = coinbaseWallet({
     keysUrl: "https://keys.coinbase.com/connect",
     options: "smartWalletOnly", // Force smart wallet mode
   },
+  // Note: checkCrossOriginOpenerPolicy is not supported in the current version
 });
 
 // Create a Wagmi config with the Coinbase Wallet connector
@@ -50,7 +51,7 @@ export function getWagmiConfig() {
     storage: createStorage({
       storage: cookieStorage,
     }),
-    ssr: true,
+    ssr: false, // Set to false to prevent server-side evaluation
     transports: {
       [baseSepolia.id]: http(
         process.env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_URL ||
@@ -58,7 +59,7 @@ export function getWagmiConfig() {
       ),
     },
     syncConnectedChain: true, // Sync connected chain with wallet
-    multiInjectedProviderDiscovery: true, // Enable discovery of multiple injected providers
+    multiInjectedProviderDiscovery: false, // Disable multi-provider which can cause conflicts
   });
 }
 

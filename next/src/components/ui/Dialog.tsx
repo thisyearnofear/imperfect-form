@@ -11,6 +11,7 @@ interface DialogProps {
   children: React.ReactNode;
   maxWidth?: string; // Optional custom max width
   showTitle?: boolean; // Option to visually hide the title
+  preventClose?: boolean; // Option to prevent closing the dialog
 }
 
 /**
@@ -25,6 +26,7 @@ const Dialog: React.FC<DialogProps> = ({
   children,
   maxWidth = "500px", // Default max width
   showTitle = true, // By default, show the title
+  preventClose = false, // By default, allow closing
 }) => {
   return (
     <AccessibleDialog
@@ -34,6 +36,7 @@ const Dialog: React.FC<DialogProps> = ({
       description={description}
       maxWidth={maxWidth}
       showTitle={showTitle}
+      preventClose={preventClose}
     >
       {children}
     </AccessibleDialog>

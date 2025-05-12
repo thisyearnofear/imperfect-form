@@ -2,17 +2,17 @@
 
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
-import Spinner from "@/components/Spinner";
-const GameWrapper = dynamic(() => import("@/components/GameWrapper"), {
+import { Spinner } from "@/components/ui";
+const GameWrapper = dynamic(() => import("@/components/game/GameWrapper"), {
   ssr: false,
   loading: () => <Spinner />,
 });
-const Leaderboard = dynamic(() => import("@/components/Leaderboard"), {
+const Leaderboard = dynamic(() => import("@/components/game/Leaderboard"), {
   ssr: false,
   loading: () => <Spinner />,
 });
 const ExpandedLeaderboardModal = dynamic(
-  () => import("@/components/ExpandedLeaderboardModal"),
+  () => import("@/components/modals/ExpandedLeaderboardModal"),
   {
     ssr: false,
     loading: () => <Spinner />,

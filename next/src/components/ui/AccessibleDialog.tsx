@@ -12,6 +12,7 @@ interface AccessibleDialogProps {
   children: React.ReactNode;
   maxWidth?: string;
   showTitle?: boolean;
+  preventClose?: boolean;
 }
 
 /**
@@ -26,9 +27,10 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
   children,
   maxWidth = "500px",
   showTitle = true,
+  preventClose = false,
 }) => {
   return (
-    <DialogPrimitive.Root open={isOpen} onOpenChange={onClose}>
+    <DialogPrimitive.Root open={isOpen} onOpenChange={preventClose ? undefined : onClose}>
       <DialogPrimitive.Portal>
         {/* Triple-layered backdrop for maximum opacity */}
         <div className="fixed inset-0 bg-black z-[1997]" />
@@ -38,7 +40,7 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
         <DialogPrimitive.Overlay className="fixed inset-0 bg-black z-[2000]" />
         <DialogPrimitive.Content
           className={`fixed left-[50%] top-[50%] z-[2001] max-h-[90vh] w-[90vw] max-w-[${maxWidth}] translate-x-[-50%] translate-y-[-50%] rounded-[10px] bg-black border-4 border-[#fcb131] p-6 shadow-[0_0_25px_rgba(252,177,49,0.5)] focus:outline-none overflow-y-auto text-center`}
-          onEscapeKeyDown={onClose}
+          onEscapeKeyDown={preventClose ? undefined : onClose}
           style={{
             maxWidth: maxWidth,
             backgroundColor: "black", // Ensure background is solid black
@@ -63,12 +65,14 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
 
           {children}
 
-          <DialogPrimitive.Close
-            className="absolute right-4 top-4 text-[#fcb131] hover:text-white text-xl font-bold cursor-pointer bg-transparent border-none"
-            aria-label="Close"
-          >
-            &times;
-          </DialogPrimitive.Close>
+          {!preventClose && (
+            <DialogPrimitive.Close
+              className="absolute right-4 top-4 text-[#fcb131] hover:text-white text-xl font-bold cursor-pointer bg-transparent border-none"
+              aria-label="Close"
+            >
+              &times;
+            </DialogPrimitive.Close>
+          )}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

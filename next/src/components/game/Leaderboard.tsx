@@ -11,7 +11,7 @@ import {
 import { shortenAddress } from "@/utils/formatters";
 import { getDisplayName } from "@/utils/ensResolver";
 import { POLYGON_FALLBACK_RPCS, BASE_FALLBACK_RPCS } from "@/utils/rpcUtils";
-import Spinner from "@/components/Spinner";
+import { Spinner } from "@/components/ui";
 import toast from "react-hot-toast";
 
 interface Score {
@@ -27,7 +27,7 @@ interface LeaderboardProps {
   onViewMore?: (
     pushups: Score[],
     squats: Score[],
-    displayNames: Record<string, string>
+    displayNames: Record<string, string>,
   ) => void;
   initialPushups?: Score[];
   initialSquats?: Score[];
@@ -45,15 +45,15 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(!initialPushups && !initialSquats);
   const [pushupLeaderboard, setPushupLeaderboard] = useState<Score[]>(
-    initialPushups || []
+    initialPushups || [],
   );
   const [squatLeaderboard, setSquatLeaderboard] = useState<Score[]>(
-    initialSquats || []
+    initialSquats || [],
   );
   // Tab state is defined but currently not used for switching in the UI
   // const [activeTab] = useState<"pushups" | "squats">("pushups");
   const [displayNames, setDisplayNames] = useState<Record<string, string>>(
-    initialDisplayNames || {}
+    initialDisplayNames || {},
   );
 
   // We'll use ethers.js directly instead of ThirdWeb hooks
@@ -63,7 +63,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   const fetchWithFallbackRpcs = async (
     contract: ethers.Contract | null,
     contractAddress: string,
-    fallbackRpcUrls: string[]
+    fallbackRpcUrls: string[],
   ) => {
     // Try using ThirdWeb contract first
     try {
@@ -95,7 +95,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
         // Create provider with correct network info and options
         const provider = new ethers.providers.StaticJsonRpcProvider(
           rpcUrl,
-          networkInfo
+          networkInfo,
         );
 
         // Set a custom timeout for the provider connection
@@ -106,8 +106,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           const timeoutPromise = new Promise((_, reject) =>
             setTimeout(
               () => reject(new Error(`RPC timeout for ${rpcUrl}`)),
-              TIMEOUT_MS
-            )
+              TIMEOUT_MS,
+            ),
           );
 
           // Race between provider connection and timeout
@@ -116,7 +116,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           // Verify the provider is connected to the expected network
           const network = await provider.getNetwork();
           console.log(
-            `Connected to network: ${network.name} (${network.chainId})`
+            `Connected to network: ${network.name} (${network.chainId})`,
           );
         } catch (timeoutError) {
           console.error(`Connection timeout for ${rpcUrl}:`, timeoutError);
@@ -126,7 +126,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
         const contractInstance = new ethers.Contract(
           contractAddress,
           fitnessLeaderboardABI,
-          provider
+          provider,
         );
 
         const data = await contractInstance.getLeaderboard();
@@ -142,7 +142,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
         if (err && err.code === "CALL_EXCEPTION") {
           console.error(
             `Contract call exception for ${rpcUrl}:`,
-            err.reason || "No reason provided"
+            err.reason || "No reason provided",
           );
         } else if (err && err.code === "TIMEOUT") {
           console.error(`Timeout error for ${rpcUrl}`);
@@ -170,13 +170,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       const polygonData = await fetchWithFallbackRpcs(
         null, // No ThirdWeb contract
         POLYGON_CONTRACT_ADDRESS,
-        POLYGON_FALLBACK_RPCS
+        POLYGON_FALLBACK_RPCS,
       );
 
       const baseData = await fetchWithFallbackRpcs(
         null, // No ThirdWeb contract
         BASE_CONTRACT_ADDRESS,
-        BASE_FALLBACK_RPCS
+        BASE_FALLBACK_RPCS,
       );
 
       // Process the data
@@ -193,7 +193,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
       const processNetworkData = (
         data: ContractEntry[],
-        network: "polygon" | "base"
+        network: "polygon" | "base",
       ) => {
         data.forEach((entry) => {
           if (entry.user !== "0x0000000000000000000000000000000000000000") {

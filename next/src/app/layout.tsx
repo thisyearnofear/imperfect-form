@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 // Using static client component import for AppProviders
-import AppProviders from "@/components/AppProviders";
+import { AppProviders } from "@/components/providers";
 
 export default function RootLayout({
   children,

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import SpendLimitsDebugAndFix from "@/components/SpendLimitsDebugAndFix";
+import { SpendLimitsDebugAndFix } from "@/components/wallet";
 import { Toaster } from "react-hot-toast";
 
 export default function SpendLimitsFixPage() {

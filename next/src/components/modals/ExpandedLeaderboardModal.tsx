@@ -3,7 +3,7 @@
 import React from "react";
 import "@/styles/leaderboard.css";
 import { shortenAddress } from "@/utils/formatters";
-import Dialog from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui";
 
 interface Score {
   user: string;

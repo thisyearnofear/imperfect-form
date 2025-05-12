@@ -5,7 +5,7 @@ import { useAccount, useSignTypedData } from "wagmi";
 import { useNetwork as useNetworkContext } from "@/contexts/NetworkContext";
 import { parseEther } from "viem";
 import toast from "react-hot-toast";
-import Spinner from "@/components/Spinner";
+import { Spinner } from "@/components/ui";
 import {
   ConnectWallet,
   Wallet,

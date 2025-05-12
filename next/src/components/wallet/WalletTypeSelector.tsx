@@ -1,24 +1,51 @@
 "use client";
 
-import React from "react";
-import { useNetwork } from "@/contexts/NetworkContext";
+import React, { useEffect } from "react";
+import { useWalletProvider } from "@/contexts/WalletProviderContext";
+import { useDisconnect } from "wagmi";
 import Dialog from "@/components/ui/Dialog";
 import Image from "next/image";
 
-interface NetworkSelectorProps {
+interface WalletTypeSelectorProps {
   onClose?: () => void;
 }
 
 /**
- * NetworkSelector component that displays a dialog for selecting a network
+ * WalletTypeSelector component that displays a dialog for selecting a wallet type
+ * This replaces the previous NetworkSelector which confused wallet types with networks
  */
-export default function NetworkSelector({ onClose }: NetworkSelectorProps) {
-  const { setNetwork } = useNetwork();
+export default function WalletTypeSelector({ onClose }: WalletTypeSelectorProps) {
+  const { setWalletProvider, resetAll } = useWalletProvider();
+  const { disconnect } = useDisconnect();
 
-  // Handle network selection
-  const handleNetworkSelected = (network: "polygon" | "base") => {
-    setNetwork(network);
+  // Ensure clean state before selection
+  useEffect(() => {
+    // Clean up any existing wallet connections
+    disconnect();
+    
+    // Wait for disconnect to take effect
+    const timer = setTimeout(() => {
+      console.log("WalletTypeSelector: Disconnected wallet, ready for selection");
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [disconnect]);
+
+  // Handle wallet type selection
+  const handleWalletTypeSelected = (walletType: "signature" | "smart") => {
+    // Disconnect current connections but don't force reload
+    disconnect();
+    
+    // Clear localStorage but don't trigger a page reload
+    resetAll(false);
+    
+    // Then set the new wallet provider immediately
+    setWalletProvider(walletType);
+    
+    // Close dialog if callback provided
     if (onClose) onClose();
+    
+    console.log(`WalletTypeSelector: Selected ${walletType} wallet type`);
   };
 
   return (
@@ -26,7 +53,7 @@ export default function NetworkSelector({ onClose }: NetworkSelectorProps) {
       isOpen={true}
       onClose={onClose || (() => {})}
       title="Select Wallet Type"
-      description="Choose which wallet type you want to use for connecting to networks"
+      description="Choose how you want to connect to the blockchain"
       maxWidth="450px"
     >
       <div
@@ -40,15 +67,15 @@ export default function NetworkSelector({ onClose }: NetworkSelectorProps) {
         <div className="ring green" />
       </div>
 
-      <div className="network-selection-dialog p-4">
+      <div className="wallet-type-selection-dialog p-4">
         <button
-          onClick={() => handleNetworkSelected("polygon")}
-          className="network-option network-option-polygon w-full mb-4"
+          onClick={() => handleWalletTypeSelected("signature")}
+          className="wallet-option wallet-option-signature w-full mb-4"
         >
           <span className="flex items-center">
             <Image
               src="/wallet-icon.svg"
-              alt="Regular Wallet"
+              alt="Signature Wallet"
               width={24}
               height={24}
               className="mr-2"
@@ -59,16 +86,16 @@ export default function NetworkSelector({ onClose }: NetworkSelectorProps) {
               // Fallback image
               unoptimized
             />
-            Regular Wallet
+            Signature Wallet
           </span>
           <span className="text-xs bg-white text-purple-700 px-2 py-1 rounded font-bold">
-            ThirdWeb
+            Sign with Key
           </span>
         </button>
 
         <button
-          onClick={() => handleNetworkSelected("base")}
-          className="network-option network-option-base w-full"
+          onClick={() => handleWalletTypeSelected("smart")}
+          className="wallet-option wallet-option-smart w-full"
         >
           <span className="flex items-center">
             <Image
@@ -87,7 +114,7 @@ export default function NetworkSelector({ onClose }: NetworkSelectorProps) {
             Smart Wallet
           </span>
           <span className="text-xs bg-white text-blue-700 px-2 py-1 rounded font-bold">
-            Coinbase
+            No Signature
           </span>
         </button>
       </div>

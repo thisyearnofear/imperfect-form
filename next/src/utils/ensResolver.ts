@@ -14,20 +14,38 @@ export async function resolveENSName(address: string): Promise<string | null> {
 
   try {
     // Attempt to resolve ENS name using the ENS Data API
-    const response = await fetch(`https://api.ensdata.net/${address}`);
-    if (!response.ok) {
-      throw new Error(`Network response was not ok: ${response.statusText}`);
+    // Wrap in a timeout to prevent long-hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+    try {
+      const response = await fetch(`https://api.ensdata.net/${address}`, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.log(`ENS API response not OK: ${response.status} ${response.statusText}`);
+        ensCache[address] = null;
+        return null;
+      }
+
+      const data = await response.json();
+      const ensName = data.ens_primary || null;
+
+      // Cache the result
+      ensCache[address] = ensName;
+
+      return ensName;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.log(`ENS API fetch error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
+      ensCache[address] = null;
+      return null;
     }
-    
-    const data = await response.json();
-    const ensName = data.ens_primary || null;
-    
-    // Cache the result
-    ensCache[address] = ensName;
-    
-    return ensName;
   } catch (error) {
-    console.error(`Error resolving ENS name for address ${address}:`, error);
+    console.log(`Error resolving ENS name for address ${address}:`, error);
     ensCache[address] = null;
     return null;
   }

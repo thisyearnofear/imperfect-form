@@ -343,6 +343,46 @@ button:disabled {
   position: relative;
 }
 
+/* Wallet Switcher styles */
+.wallet-switcher-button {
+  font-family: "Press Start 2P", cursive;
+  font-size: 12px;
+  padding: 8px 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.wallet-selection-dialog {
+  background-color: #000;
+  border-radius: 8px;
+}
+
+/* Wallet Type Indicator */
+.wallet-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.wallet-type-indicator {
+  font-size: 10px;
+  color: #fcb131;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 1px solid #fcb131;
+  border-radius: 4px;
+  padding: 3px 8px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.wallet-type-indicator:hover {
+  background-color: #fcb131;
+  color: #000;
+}
+
 .wallet-prompt {
   display: flex;
   justify-content: center;
@@ -358,6 +398,20 @@ button:disabled {
   border-radius: 8px;
   padding: 5px 10px;
   font-size: 14px;
+}
+
+.reset-wallet-button {
+  background-color: #ee334e;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(238, 51, 78, 0.5);
+  margin-left: 10px;
 }
 
 .wallet-button {
@@ -431,18 +485,39 @@ button:disabled {
   margin: 0;
 }
 
-.copy-button {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 5px;
+.wallet-address-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 1px solid #fcb131;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.wallet-address {
+  font-size: 14px;
+  font-family: monospace;
   margin: 0;
-  transition: transform 0.2s;
+  color: white;
+}
+
+.copy-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .copy-button:hover {
-  transform: scale(1.2);
+  transform: scale(1.05);
+  background-color: #2563eb;
 }
 
 /* Social identities styles */
@@ -542,16 +617,18 @@ button:disabled {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgb(0, 0, 0); /* Fully opaque black background */
+  background-color: rgba(0, 0, 0, 0.95); /* Almost fully opaque black background */
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
+  overflow-y: auto;
+  padding: 20px;
 }
 
 .modal-content {
-  background-color: #000;
-  border: 4px solid #fcb131;
+  background-color: #111;
+  border: 3px solid #fcb131;
   border-radius: 10px;
   padding: 20px;
   max-width: 500px;
@@ -562,6 +639,9 @@ button:disabled {
   color: #fff;
   text-align: center;
   box-shadow: 0 0 25px rgba(252, 177, 49, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 /* Radix UI Dialog Styling */
@@ -596,7 +676,7 @@ body::after {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: black;
+  background-color: rgba(0, 0, 0, 0.9);
   z-index: 1998;
 }
 
@@ -609,8 +689,9 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: black;
+  background-color: rgba(0, 0, 0, 0.9);
   z-index: 1997;
+  backdrop-filter: blur(4px);
 }
 
 /* Set the variable when any modal is open */
@@ -681,12 +762,12 @@ body:has(.tw-overlay) {
 
 .farcaster-button, .twitter-button, .lens-button {
   margin: 0 10px;
-  padding: 10px 15px;
+  padding: 8px 12px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-family: "Press Start 2P", cursive;
-  font-size: 10px;
+  font-size: 9px;
   transition: all 0.3s ease;
 }
 
@@ -705,17 +786,76 @@ body:has(.tw-overlay) {
   color: #fff;
 }
 
+/* Blockchain submission */
 .blockchain-submission {
   margin-top: 20px;
   padding: 15px;
-  border: 2px solid #fcb131;
-  border-radius: 5px;
+  border: 4px solid #fcb131;
+  border-radius: 10px;
+  position: relative;
+  background-color: rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 15px rgba(252, 177, 49, 0.3);
 }
 
 .blockchain-submission p {
   margin-top: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #fcb131;
+  font-weight: bold;
+}
+
+/* Submit button special styling */
+#submit-score-btn {
+  animation: pulse-border 2s infinite;
+  position: relative;
+  z-index: 100;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px;
+  color: white !important;
+  opacity: 1 !important;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8) !important;
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    border-color: white;
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    border-color: #fcb131;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    border-color: white;
+  }
+}
+
+/* Add animation for the submit container */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+  }
+  50% {
+    transform: scale(1.01);
+    opacity: 1;
+    box-shadow: 0 0 10px 5px rgba(255, 215, 0, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  backdrop-filter: blur(0) !important;
+  border: 2px solid #fcb131 !important;
 }
 
 #networkSelect {

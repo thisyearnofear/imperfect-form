@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import WalletButton from "@/components/WalletButton";
+import { WalletButton } from "@/components/wallet";
 
 export default function Navigation() {
   const pathname = usePathname();

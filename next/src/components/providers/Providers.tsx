@@ -3,8 +3,9 @@
 import React, { ReactNode, createContext, useState, useEffect } from "react";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { Toaster } from "react-hot-toast";
-import RadixUIFix from "./RadixUIFix";
+import { RadixUIFix } from "@/components/utils";
 import { useNetwork as useNetworkContext } from "@/contexts/NetworkContext";
+// QueryClient is not used in this file
 import {
   POLYGON_CONTRACT_ADDRESS,
   BASE_CONTRACT_ADDRESS,
@@ -40,6 +41,8 @@ export const ChainContext = createContext<ChainContextType>({
 });
 
 const Providers: React.FC<ProvidersProps> = ({ children }) => {
+  // We don't need to create a QueryClient here as it's already created in AppProviders
+
   // Use localStorage to persist chain selection (if available), default to "base"
   const [chain, setChain] = useState<Chain>("base");
 
@@ -184,94 +187,24 @@ const Providers: React.FC<ProvidersProps> = ({ children }) => {
             url: "https://imperfectform.fun", // Hardcoded URL instead of using window
             isDarkMode: true,
           }}
+          // Use wallet connectors with proper configuration for ThirdWeb v4
           walletConnectors={[
             {
-              name: "metamask",
-              options: {
-                projectId:
-                  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
-                  "3a8170812b534d0ff9d794f19a901d64",
-                chains: [chainIdMap.amoy, chainIdMap.base],
-                optionalChains: [1, 137, 8453], // Add mainnet chains as optional
-                enableNetworkView: true, // Allow users to switch networks in the wallet UI
-              },
+              id: "metamask",
+              recommended: true,
             },
             {
-              name: "walletConnect",
-              options: {
-                projectId:
-                  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
-                  "3a8170812b534d0ff9d794f19a901d64",
-                chains: [chainIdMap.amoy, chainIdMap.base],
-                optionalChains: [1, 137, 8453], // Add mainnet chains as optional
-                enableNetworkView: true, // Allow users to switch networks in the wallet UI
-                showQrModal: true,
-                qrModalOptions: {
-                  themeMode: "dark",
-                  themeVariables: {
-                    "--wcm-z-index": "2500",
-                    "--wcm-accent-color": "#fcb131",
-                    "--wcm-accent-fill-color": "#000000",
-                    "--wcm-background-color": "#000000",
-                    "--wcm-background-border-radius": "8px",
-                  },
-                },
-                // Fix for namespaces error with Rainbow wallet
-                metadata: {
-                  name: "Imperfect Form",
-                  description: "Submit your fitness scores to the blockchain",
-                  url: "https://imperfectform.fun",
-                  icons: ["/favicon.ico"], // Next.js App Router will serve the favicon from /src/app/favicon.ico
-                },
-                // Updated namespaces configuration for better compatibility with Rainbow wallet
-                // This uses a more flexible approach that works with more wallets
-                namespaces: {
-                  eip155: {
-                    methods: [
-                      "eth_sendTransaction",
-                      "eth_signTransaction",
-                      "eth_sign",
-                      "personal_sign",
-                      "eth_signTypedData",
-                      "eth_signTypedData_v4",
-                    ],
-                    chains: [
-                      `eip155:${chainIdMap.amoy}`,
-                      `eip155:${chainIdMap.base}`,
-                      "eip155:1", // Ethereum Mainnet
-                      "eip155:137", // Polygon Mainnet
-                      "eip155:8453", // Base Mainnet
-                    ],
-                    events: ["chainChanged", "accountsChanged"],
-                  },
-                },
-                // Remove requiredNamespaces as it's causing issues with Rainbow wallet
-                // requiredNamespaces: {
-                //   eip155: {
-                //     methods: [
-                //       "eth_sendTransaction",
-                //       "eth_signTransaction",
-                //       "eth_sign",
-                //       "personal_sign",
-                //       "eth_signTypedData",
-                //     ],
-                //     chains: [
-                //       `eip155:${chainIdMap.amoy}`,
-                //       `eip155:${chainIdMap.base}`,
-                //     ],
-                //     events: ["chainChanged", "accountsChanged"],
-                //   },
-                // },
-              },
+              id: "walletConnect",
+              recommended: false,
             },
             {
-              name: "coinbaseWallet",
-              options: {
-                appName: "Imperfect Form",
-                headlessMode: true,
-              },
+              id: "coinbase",
+              recommended: false,
             },
-            "injected", // Add support for injected wallets
+            {
+              id: "injected",
+              recommended: false,
+            },
           ]}
         >
           <Toaster

@@ -26,30 +26,23 @@ const Webcam: React.FC<WebcamProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = usePoseDetection(canvasRef, mode, onRepCount, isActive);
 
-  // Initialize face detection for filters
-  const { cycleFilter } = useFaceDetection(videoRef, canvasRef, isActive);
+  // Initialize face detection API but don't actually use face detection
+  // This maintains API compatibility without loading heavy ML libraries
+  const { } = useFaceDetection(videoRef, canvasRef, isActive);
 
   // Function to handle filter cycling - expose it to parent component
+  // We keep this for API compatibility but it doesn't do much
   useEffect(() => {
     // Add a method to the window object that the Game component can call
     const handleFilterChange = () => {
-      try {
-        if (typeof cycleFilter !== "function") {
-          console.error("cycleFilter is not a function");
-          throw new Error("cycleFilter is not a function");
-        }
-
-        const newFilterName = cycleFilter();
-
-        if (typeof onFilterChange === "function") {
-          onFilterChange(newFilterName);
-        }
-
-        return newFilterName;
-      } catch (error) {
-        console.error("Error in handleFilterChange:", error);
-        throw error;
+      const newFilterName = "none"; // Always return "none" as we don't use filters
+      
+      // Notify parent component
+      if (typeof onFilterChange === "function") {
+        onFilterChange(newFilterName);
       }
+      
+      return newFilterName;
     };
 
     // Add to window for Game component to access
@@ -59,7 +52,7 @@ const Webcam: React.FC<WebcamProps> = ({
       // Clean up when component unmounts
       delete window.cycleWebcamFilter;
     };
-  }, [cycleFilter, onFilterChange]);
+  }, [onFilterChange]);
 
   // Handle video play interruptions
   useEffect(() => {

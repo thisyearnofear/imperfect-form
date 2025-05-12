@@ -1,34 +1,21 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
-import Spinner from "@/components/Spinner";
-import SummaryModal from "@/components/SummaryModal";
-import ExpandedLeaderboardModal from "@/components/ExpandedLeaderboardModal";
-import Welcome from "@/components/Welcome";
-import LoadingScreen from "@/components/LoadingScreen";
-import WalletButton from "@/components/WalletButton";
+import { Spinner, LoadingScreen } from "@/components/ui";
+import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
+import { Welcome } from "@/components/game";
+import { WalletButton } from "@/components/wallet";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useAccount as useWagmiAccount } from "wagmi";
+import toast from "react-hot-toast";
 
-// Import ThirdWeb hooks at the top level
-import { useAddress as useThirdwebAddress } from "@thirdweb-dev/react";
+// Dynamically import Webcam component to avoid SSR issues with face detection
+const Webcam = dynamic(() => import("./Webcam"), {
+  ssr: false,
+  loading: () => <Spinner />,
+});
 
-// Create a custom hook to safely use ThirdWeb's useAddress
-function useSafeThirdwebAddress(): string | undefined {
-  // Get the current network
-  const { network } = useNetwork();
-
-  // Call the hook unconditionally to satisfy React's rules
-  const thirdwebAddress = useThirdwebAddress();
-
-  // Only return the address if we're on the Polygon network
-  if (network === "polygon") {
-    return thirdwebAddress;
-  }
-
-  // Otherwise return undefined
-  return undefined;
-}
+// No need to dynamically import ThirdWeb hooks anymore
 
 // Add type declaration for window object
 declare global {
@@ -36,12 +23,13 @@ declare global {
     cycleWebcamFilter?: () => string;
   }
 }
-const Webcam = dynamic(() => import("./Webcam"), {
-  ssr: false,
-  loading: () => <Spinner />,
-});
+// Webcam is now imported at the top of the file
 
-const Game: React.FC = () => {
+interface GameProps {
+  thirdwebAddress?: string;
+}
+
+const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [showWelcome, setShowWelcome] = useState(true);
   // Tutorial state is managed but not displayed in current UI
   const [, setShowTutorial] = useState(true);
@@ -60,17 +48,51 @@ const Game: React.FC = () => {
   // Get network from context
   const { network } = useNetwork();
 
+  // For Wagmi (Base), we can always call this hook
+  const wagmiAccount = useWagmiAccount();
+  const wagmiAddress = wagmiAccount?.address;
+
   // Get address based on the selected network
-  // Always call hooks at the top level
+  let address: string | undefined = undefined;
+
   // For Wagmi (Base)
-  const { address: wagmiAddress } = useWagmiAccount();
+  if (network === "base") {
+    try {
+      address = wagmiAddress;
+      console.log("Game: Using Wagmi address for Base network:", address);
+    } catch (error) {
+      console.log("Error using Wagmi account:", error);
+    }
+  }
 
-  // For ThirdWeb (Polygon)
-  // Use our safe hook that properly follows React rules
-  const thirdwebAddress = useSafeThirdwebAddress();
+  // For ThirdWeb (Polygon), use the address passed as prop
+  if (network === "polygon") {
+    // If thirdwebAddress is provided as a prop, use it
+    if (thirdwebAddress) {
+      address = thirdwebAddress;
+      console.log("Game: Using ThirdWeb address from prop:", address);
+    }
+    // Otherwise, check localStorage for a stored address
+    else {
+      const storedAddress = localStorage.getItem("userAddress");
+      if (storedAddress) {
+        address = storedAddress;
+        console.log("Game: Using ThirdWeb address from localStorage:", address);
+      } else {
+        console.log("Game: No ThirdWeb address available");
+      }
+    }
+  }
 
-  // Then conditionally use the values
-  const address = network === "base" ? wagmiAddress : thirdwebAddress;
+  // Log the final address being used
+  console.log("Game: Final address being used:", address, "Network:", network);
+
+  // Store the address in localStorage for persistence
+  useEffect(() => {
+    if (address) {
+      localStorage.setItem("userAddress", address);
+    }
+  }, [address]);
 
   // Leaderboard data for the expanded modal
   // Define Score type to replace any[]
@@ -183,11 +205,22 @@ const Game: React.FC = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     setStarted(false);
     setShowTutorial(false);
-    setShowSummary(true);
+
+    // Log the address state before showing the summary
+    console.log("Game: handleStop called with address:", address);
+
+    // Only show summary if we have an address
+    if (address) {
+      setShowSummary(true);
+    } else {
+      // If no address, show a toast message
+      toast.error("Please connect your wallet to submit your score");
+      console.error("Please connect your wallet to submit your score");
+    }
 
     // Force camera to stop by accessing the video tracks and stopping them
     stopAllCameras();
-  }, [stopAllCameras]);
+  }, [stopAllCameras, address]);
 
   // Update the ref whenever handleStop changes
   useEffect(() => {
@@ -260,6 +293,24 @@ const Game: React.FC = () => {
         <div id="wallet-connection" className="wallet-connection">
           <div className={address ? "wallet-connected" : "wallet-prompt"}>
             <WalletButton />
+            {address && (
+              <button
+                className="reset-wallet-button"
+                onClick={() => {
+                  // Clear localStorage
+                  localStorage.removeItem("userAddress");
+                  localStorage.removeItem("selectedNetwork");
+                  localStorage.removeItem("selectedChain");
+                  localStorage.removeItem("selectedWalletProvider");
+
+                  // Force reload to reset all wallet state
+                  window.location.reload();
+                }}
+                title="Reset wallet connection"
+              >
+                Reset Wallet
+              </button>
+            )}
           </div>
         </div>
 
@@ -385,7 +436,7 @@ const Game: React.FC = () => {
         </div>
       </div>
       <SummaryModal
-        open={showSummary}
+        isOpen={showSummary}
         onClose={() => setShowSummary(false)}
         repCount={repCount}
         timeLeft={timeLeft}

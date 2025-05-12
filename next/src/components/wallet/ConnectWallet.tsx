@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { ConnectWallet as ThirdwebConnectWallet } from "@thirdweb-dev/react";
 import { shortenAddress } from "@/utils/formatters";
-import { ChainContext } from "@/components/Providers";
-import Dialog from "@/components/ui/Dialog";
+import { ChainContext } from "@/components/providers/Providers";
+import { Dialog } from "@/components/ui";
 import { getBestDisplayName } from "@/utils/web3bio";
-import { useNetwork } from "@/contexts/NetworkContext";
+import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useAccount, useDisconnect as useWagmiDisconnect } from "wagmi";
+import ThirdwebQueryProvider from "./ThirdwebQueryProvider";
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -157,14 +158,14 @@ const WalletModal: React.FC<WalletModalProps> = ({
 // Create a safe wrapper component that only renders its children when in the right network context
 const SafeThirdwebWrapper = ({
   children,
-  network,
+  walletProvider,
 }: {
   children: React.ReactNode;
-  network: string | null;
+  walletProvider: string | null;
 }) => {
-  // Only render children if we're in the polygon network
-  if (network === "polygon") {
-    return <>{children}</>;
+  // Only render children if we're using signature wallet type
+  if (walletProvider === "signature") {
+    return <ThirdwebQueryProvider>{children}</ThirdwebQueryProvider>;
   }
   return null;
 };
@@ -181,37 +182,41 @@ const ThirdwebAddressHandler = ({
     disconnect: () => void;
   }) => void;
 }) => {
-  // We don't need state here since we're just passing the values up
+  // Directly use the hooks - this is the correct way to use React hooks
+  // These hooks will only work inside a ThirdwebProvider
+  // Always declare hooks at the top level
+  let address: string | undefined;
 
-  // Use effect to safely try to get ThirdWeb data
-  useEffect(() => {
+  try {
+    // Try to use ThirdWeb hooks
+    address = thirdwebAddressHooks.useAddress();
+  } catch (error) {
+    // If hooks throw an error (not inside ThirdwebProvider), handle it gracefully
+    console.error("Error using ThirdWeb hooks:", error);
+    address = undefined;
+  }
+
+  // Wrap disconnect in useCallback to prevent it from changing on every render
+  const disconnect = useCallback(() => {
     try {
-      if (
-        thirdwebAddressHooks.useAddress &&
-        thirdwebAddressHooks.useDisconnect
-      ) {
-        // Get the values from the hooks
-        const address = thirdwebAddressHooks.useAddress();
-        const disconnect = thirdwebAddressHooks.useDisconnect();
-
-        // Pass the data up to the parent
-        onAddressData({ address, disconnect });
-      } else {
-        onAddressData({ address: undefined, disconnect: () => {} });
-      }
+      return thirdwebAddressHooks.useDisconnect()();
     } catch (error) {
-      console.error("Error using ThirdWeb hooks:", error);
-      // If there's an error, pass undefined
-      onAddressData({ address: undefined, disconnect: () => {} });
+      console.error("Error using ThirdWeb disconnect hook:", error);
+      return;
     }
-  }, [onAddressData]);
+  }, []);
+
+  // Always use the effect, regardless of whether the hooks succeeded
+  useEffect(() => {
+    onAddressData({ address, disconnect });
+  }, [address, disconnect, onAddressData]);
 
   return null;
 };
 
 const ConnectWalletButton: React.FC = () => {
-  // Get the current network
-  const { network } = useNetwork();
+  // Get the wallet provider type
+  const { walletProvider } = useWalletProvider();
 
   // Use Wagmi hooks for Base network
   const { address: wagmiAddress } = useAccount();
@@ -226,10 +231,11 @@ const ConnectWalletButton: React.FC = () => {
     disconnect: () => {},
   });
 
-  // Determine which data to use based on the selected network
-  const address = network === "polygon" ? thirdwebData.address : wagmiAddress;
+  // Determine which data to use based on the selected wallet provider
+  const address =
+    walletProvider === "signature" ? thirdwebData.address : wagmiAddress;
   const disconnect =
-    network === "polygon" ? thirdwebData.disconnect : wagmiDisconnect;
+    walletProvider === "signature" ? thirdwebData.disconnect : wagmiDisconnect;
 
   // Chain context is available but not used in this component
   useContext(ChainContext);
@@ -279,43 +285,57 @@ const ConnectWalletButton: React.FC = () => {
   // Render the ThirdwebAddressHandler to get ThirdWeb data
   return (
     <>
-      {/* Render the ThirdwebAddressHandler only when in polygon network */}
-      {network === "polygon" && (
-        <SafeThirdwebWrapper network={network}>
+      {/* Render the ThirdwebAddressHandler only when using signature wallet */}
+      {walletProvider === "signature" && (
+        <SafeThirdwebWrapper walletProvider={walletProvider}>
           <ThirdwebAddressHandler onAddressData={setThirdwebData} />
         </SafeThirdwebWrapper>
       )}
 
       <div id="connectWalletContainer">
-        {network === "polygon" ? (
-          <ThirdwebConnectWallet
-            theme="dark"
-            modalSize="compact"
-            welcomeScreen={{
-              title: "Onchain Olympics",
-              subtitle: "Connect to submit your score",
-              img: {
-                src: "/favicon.ico", // Next.js App Router will serve the favicon from /src/app/favicon.ico
-                width: 150,
-                height: 150,
-              },
-            }}
-            modalTitleIconUrl="/favicon.ico" // Next.js App Router will serve the favicon from /src/app/favicon.ico
-            detailsBtn={() => <></>}
-            btnTitle="Connect Wallet"
-            className="wallet-button"
-            style={{
-              // Override any transparency in the ThirdwebConnectWallet modal
-              "--tw-bg-opacity": "1 !important",
-            }}
-            // Explicitly set supported wallet types
-            supportedWallets={[
-              "metamask",
-              "walletConnect",
-              "coinbaseWallet",
-              "injected",
-            ]}
-          />
+        {walletProvider === "signature" ? (
+          <ThirdwebQueryProvider>
+            <ThirdwebConnectWallet
+              theme="dark"
+              modalSize="compact"
+              welcomeScreen={{
+                title: "Onchain Olympics",
+                subtitle: "Connect to submit your score",
+                img: {
+                  src: "/favicon.ico", // Next.js App Router will serve the favicon from /src/app/favicon.ico
+                  width: 150,
+                  height: 150,
+                },
+              }}
+              modalTitleIconUrl="/favicon.ico" // Next.js App Router will serve the favicon from /src/app/favicon.ico
+              detailsBtn={() => <></>}
+              btnTitle="Connect Wallet"
+              className="wallet-button"
+              style={{
+                // Override any transparency in the ThirdwebConnectWallet modal
+                "--tw-bg-opacity": "1 !important",
+              }}
+              // Use wallet connectors with proper configuration for ThirdWeb v4
+              walletConnectors={[
+                {
+                  id: "metamask",
+                  recommended: true,
+                },
+                {
+                  id: "walletConnect",
+                  recommended: false,
+                },
+                {
+                  id: "coinbase",
+                  recommended: false,
+                },
+                {
+                  id: "injected",
+                  recommended: false,
+                },
+              ]}
+            />
+          </ThirdwebQueryProvider>
         ) : (
           <button
             className="wallet-button"

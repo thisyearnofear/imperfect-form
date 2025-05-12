@@ -5,8 +5,8 @@ import { WagmiProvider, useAccount } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getWagmiConfig } from "@/utils/walletConfig";
 import { SmartAccountProvider } from "@/contexts/SmartAccountContext";
-import SmartAccountConnector from "@/components/SmartAccountConnector";
-import SpendLimitsDebugAndFix from "@/components/SpendLimitsDebugAndFix";
+import { SmartAccountConnector } from "@/components/wallet";
+import { SpendLimitsDebugAndFix } from "@/components/wallet";
 import { Toaster } from "react-hot-toast";
 
 // Create a new QueryClient

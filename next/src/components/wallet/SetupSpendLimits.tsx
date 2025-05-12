@@ -5,7 +5,7 @@ import { useAccount, useSignTypedData } from "wagmi";
 import { useNetwork as useNetworkContext } from "@/contexts/NetworkContext";
 import { parseEther } from "viem";
 import toast from "react-hot-toast";
-import Spinner from "@/components/Spinner";
+import { Spinner } from "@/components/ui";
 import {
   SpendPermission,
   createSpendPermission,
@@ -33,7 +33,8 @@ const SetupSpendLimits: React.FC = () => {
   const { signTypedDataAsync } = useSignTypedData();
 
   // Only show for Base network with coinbase wallet
-  const shouldShowSetup = network === "base" && address && !hasSetupSpendLimits;
+  // Don't check network === "base" to prevent modal from disappearing
+  const shouldShowSetup = address && !hasSetupSpendLimits;
 
   // Function to open Coinbase Wallet for sub-account creation
   const openCoinbaseWallet = () => {
