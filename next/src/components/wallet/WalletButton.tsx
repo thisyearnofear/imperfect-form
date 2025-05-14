@@ -32,10 +32,36 @@ const SmartWalletButton = dynamic(() => import("./SmartWalletButton"), {
  */
 export default function WalletButton() {
   const { walletProvider, isWalletProviderSelected } = useWalletProvider();
+  
+  // Check URL parameter for selector request
+  const [forceSelector, setForceSelector] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('showSelector') === 'true') {
+        console.log("WalletButton: showSelector parameter found, forcing selector");
+        setForceSelector(true);
+        // Clear the parameter from URL without refreshing
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+  }, []);
 
-  // If no wallet provider is selected, show the wallet type selector
-  if (!isWalletProviderSelected) {
-    return <WalletTypeSelector />;
+  // If URL parameter is present or no wallet provider is selected, show the wallet type selector
+  if (forceSelector || !isWalletProviderSelected) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[20vh] animate-fade-in">
+        <div className="mb-6 text-center">
+          <h1 className="text-4xl font-bold text-yellow-400 mb-1 mt-0 title-animation animate-pulse-slow">IMPERFECT FORM</h1>
+          <h2 className="text-2xl text-yellow-200 mb-2 subtitle-animation">ONCHAIN OLYMPICS</h2>
+        </div>
+        <div className="wallet-button-animation">
+          <WalletTypeSelector />
+        </div>
+      </div>
+    );
   }
 
   // Render the appropriate wallet button based on the selected wallet provider

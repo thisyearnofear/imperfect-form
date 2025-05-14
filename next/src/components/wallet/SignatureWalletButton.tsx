@@ -4,10 +4,9 @@ import React, { useState, useEffect } from "react";
 import { ConnectWallet } from "@thirdweb-dev/react";
 import { shortenAddress } from "@/utils/formatters";
 import { getBestDisplayName } from "@/utils/web3bio";
-import { Dialog } from "@/components/ui";
+import Dialog from "@/components/ui/Dialog";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { NetworkSwitcher } from "@/components/network";
 import dynamic from "next/dynamic";
 import ThirdwebQueryProvider from "./ThirdwebQueryProvider";
 
@@ -86,6 +85,7 @@ export default function SignatureWalletButton() {
   }, [address, thirdwebAddress]);
 
   // Update display name and contexts when address changes
+  // Update wallet provider and network when address changes
   useEffect(() => {
     const currentAddress = thirdwebAddress;
 
@@ -98,8 +98,9 @@ export default function SignatureWalletButton() {
         setWalletProvider("signature");
       }
 
-      if (network !== "polygon") {
-        console.log("SignatureWalletButton: Syncing network to 'polygon'");
+      // Only set default network if no network is selected
+      if (!network || (network !== "polygon" && network !== "monad" && network !== "celo")) {
+        console.log("SignatureWalletButton: Setting default network to 'polygon'");
         setNetwork("polygon");
       }
 
@@ -222,36 +223,66 @@ export default function SignatureWalletButton() {
           </div>
         </div>
 
-        <div className="text-center text-sm text-purple-400 mb-2">
-          Connected with Signature Wallet (Sign-with-Key)
+        <div className="wallet-type-badge flex justify-center">
+          <span className="bg-purple-700 text-white px-1.5 py-0.5 rounded text-[10px] flex items-center">
+            Signature Wallet
+          </span>
         </div>
 
-        <div className="border-t border-b border-gray-700 py-4 my-4 w-full">
-          <h3 className="text-center text-sm font-bold mb-3 text-yellow-400">
-            NETWORK SELECTION
-          </h3>
-          <NetworkSwitcher
-            currentNetwork={network || "polygon"}
-            keepModalOpen={true}
-          />
-          <div className="text-center text-xs text-gray-400 mt-2">
-            Network selection will affect where your scores are submitted
+        <div className="border-t border-b border-gray-700 py-2 my-2 w-full">
+          <div className="py-1 text-center space-x-1">
+            {network === "polygon" && (
+              <span className="bg-purple-900/30 inline-block px-2 py-0.5 rounded text-[10px]">
+                Polygon
+              </span>
+            )}
+            {network === "monad" && (
+              <span className="bg-yellow-900/30 inline-block px-2 py-0.5 rounded text-[10px]">
+                Monad
+              </span>
+            )}
+            {network === "celo" && (
+              <span className="bg-green-900/30 inline-block px-2 py-0.5 rounded text-[10px]">
+                Celo
+              </span>
+            )}
+          </div>
+          
+          <div className="flex justify-center space-x-1 mt-1">
+            <button
+              onClick={() => setNetwork("polygon")}
+              className={`${network === "polygon" ? "bg-purple-800" : "bg-purple-900/30"} text-[10px] px-1.5 py-0.5 rounded`}
+            >
+              Polygon
+            </button>
+            <button
+              onClick={() => setNetwork("monad")}
+              className={`${network === "monad" ? "bg-yellow-800" : "bg-yellow-900/30"} text-[10px] px-1.5 py-0.5 rounded`}
+            >
+              Monad
+            </button>
+            <button
+              onClick={() => setNetwork("celo")}
+              className={`${network === "celo" ? "bg-green-800" : "bg-green-900/30"} text-[10px] px-1.5 py-0.5 rounded`}
+            >
+              Celo
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-col space-y-3 w-full">
+        <div className="flex space-x-2 w-full">
           <button
             onClick={handleDisconnect}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
+            className="bg-red-600 hover:bg-red-700 text-white px-1.5 py-0.5 rounded transition-colors text-[10px] flex-1"
           >
-            Disconnect Wallet
+            Disconnect
           </button>
 
           <button
             onClick={handleChangeWalletType}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-1.5 py-0.5 rounded transition-colors text-[10px] flex-1"
           >
-            Change Wallet Type
+            Smart Wallet
           </button>
         </div>
       </div>
@@ -280,46 +311,82 @@ export default function SignatureWalletButton() {
     // This component will only be rendered if we're inside a ThirdwebProvider
     return (
       <ThirdwebQueryProvider>
-        <ConnectWallet
-          theme="dark"
-          modalSize="compact"
-          welcomeScreen={{
-            title: "Onchain Olympics",
-            subtitle: "Connect to submit your score",
-            img: {
-              src: "/favicon.ico",
-              width: 150,
-              height: 150,
-            },
-          }}
-          modalTitleIconUrl="/favicon.ico"
-          detailsBtn={() => <></>}
-          btnTitle="Connect Wallet"
-          className="wallet-button signature-wallet"
-          id="thirdwebConnectButton"
-          style={{
-            "--tw-bg-opacity": "1 !important",
-          }}
-          // Use wallet connectors with proper configuration for ThirdWeb v4
-          walletConnectors={[
-            {
-              id: "metamask",
-              recommended: true,
-            },
-            {
-              id: "walletConnect",
-              recommended: false,
-            },
-            {
-              id: "coinbase",
-              recommended: false,
-            },
-            {
-              id: "injected",
-              recommended: false,
-            },
-          ]}
-        />
+        <div className="inline-flex space-x-1">
+          <ConnectWallet
+            theme="dark"
+            modalSize="compact"
+            welcomeScreen={{
+              title: "Onchain Olympics",
+              subtitle: "Connect to submit your score",
+              img: {
+                src: "/favicon.ico",
+                width: 150,
+                height: 150,
+              },
+            }}
+            modalTitleIconUrl="/favicon.ico"
+            detailsBtn={() => <></>}
+            btnTitle="Connect"
+            className="wallet-button signature-wallet text-sm py-1"
+            id="thirdwebConnectButton"
+            style={{
+              "--tw-bg-opacity": "1 !important",
+            }}
+            // Use wallet connectors with proper configuration for ThirdWeb v4
+            walletConnectors={[
+              {
+                id: "metamask",
+                recommended: true,
+              },
+              {
+                id: "walletConnect",
+                recommended: false,
+              },
+              {
+                id: "coinbase",
+                recommended: false,
+              },
+              {
+                id: "injected",
+                recommended: false,
+              },
+            ]}
+          />
+          <button
+            className="text-xs bg-red-800 text-white px-2 py-1 rounded"
+            onClick={() => {
+              // Reset all wallet state
+              if (typeof window !== "undefined") {
+                localStorage.removeItem("selectedWalletProvider");
+                localStorage.removeItem("selectedNetwork");
+                localStorage.removeItem("selectedChain");
+                localStorage.removeItem("userAddress");
+                localStorage.removeItem("thirdweb.auth.token");
+                localStorage.removeItem("thirdweb.wallets");
+                
+                // Clear other wallet-related storage
+                localStorage.removeItem("walletconnect");
+                localStorage.removeItem("WALLETCONNECT_DEEPLINK_CHOICE");
+                
+                // Clear any potential Coinbase wallet state
+                Object.keys(localStorage).forEach(key => {
+                  if (key.startsWith('coinbase') || 
+                      key.startsWith('walletlink') || 
+                      key.startsWith('wagmi') ||
+                      key.startsWith('cbw_') ||
+                      key.includes('wallet')) {
+                    localStorage.removeItem(key);
+                  }
+                });
+                
+                // Navigate to dedicated wallet selection page
+                window.location.href = "/select-wallet";
+              }
+            }}
+          >
+            Reset
+          </button>
+        </div>
       </ThirdwebQueryProvider>
     );
   };

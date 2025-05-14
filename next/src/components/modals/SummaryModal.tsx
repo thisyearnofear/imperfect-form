@@ -5,13 +5,10 @@ import { Dialog } from "@/components/ui";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { ConnectWallet } from "@/components/wallet";
-import { SetupSpendLimits } from "@/components/wallet";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
 import { submitScoreDirectly } from "@/utils/directContractInteraction";
 import { POLYGON_CONTRACT_ADDRESS } from "@/constants/contracts";
 import toast from "react-hot-toast";
-
-// Network switching is disabled in the summary modal
 
 // Initialize window properties if they don't exist
 if (typeof window !== "undefined") {
@@ -48,7 +45,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   // Use the address from props if provided, otherwise fall back to userAddress from context
   const effectiveAddress = address || userAddress;
-  // Network switching is disabled to prevent wallet compatibility issues
   const [useSpendLimits, setUseSpendLimits] = useState(false);
   const [showDirectSubmit, setShowDirectSubmit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,21 +159,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       preventClose={false}
     >
       <div className="space-y-6">
-        {/* Network Info */}
-        <div className="border-b border-gray-700 pb-4">
-          <h3 className="text-center text-sm font-bold mb-2 text-yellow-400">
-            CURRENT NETWORK
-          </h3>
-          <div className="text-center py-2">
-            <p className="text-sm mb-2">
-              Submitting to:{" "}
-              <span className="font-bold">
-                {networkType === "polygon" ? "Polygon Amoy" : "Base Sepolia"}
-              </span>
-            </p>
-            <p className="text-xs text-gray-400">
-              To change networks, reset and select again before starting your
-              exercise
+        {/* Network Info - Simplified */}
+        <div className="border-b border-gray-700 pb-2">
+          <div className="text-center">
+            <p className="text-sm">
+              Network: <span className="font-bold">{networkType === "polygon" ? "Polygon Amoy" : "Base Sepolia"}</span>
             </p>
           </div>
         </div>
@@ -196,11 +182,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               !showDirectSubmit && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-center">
                   <h3 className="font-bold mb-2 text-blue-800">
-                    Choose Submission Method:
+                    Submission Options
                   </h3>
-                  <p className="text-sm mb-3 text-blue-700">
-                    Your Coinbase Smart Wallet gives you two ways to submit:
-                  </p>
                   <div className="flex gap-3 justify-center">
                     <button
                       onClick={() => {
@@ -209,9 +192,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                       }}
                       className="px-4 py-3 rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700 flex-1 flex flex-col items-center"
                     >
-                      <span className="font-bold text-lg">Direct Submit</span>
+                      <span className="font-bold">Standard</span>
                       <span className="text-xs text-blue-200">
-                        Standard transaction
+                        Sign each transaction
                       </span>
                     </button>
                     <button
@@ -221,34 +204,24 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                       }}
                       className="px-4 py-3 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700 flex-1 flex flex-col items-center"
                     >
-                      <span className="font-bold text-lg">Spend Limits</span>
+                      <span className="font-bold">One-Click</span>
                       <span className="text-xs text-green-200">
-                        No-signature transactions
+                        No signatures needed
                       </span>
                     </button>
                   </div>
-                  <p className="text-xs mt-3 text-gray-600">
-                    Direct Submit: Simple, one-time transaction
-                    <br />
-                    Spend Limits: Set up once, then submit without signing each
-                    time
-                  </p>
                 </div>
               )}
 
-            {/* Show setup spend limits component when using spend limits */}
+            {/* One-click info when using spend limits */}
             {walletProvider === "smart" &&
               networkType === "base" &&
               showDirectSubmit &&
               useSpendLimits && (
-                <div className="mb-4 border-2 border-green-500 rounded-md p-3">
-                  <h3 className="text-center font-bold text-green-500 mb-2">
-                    Spend Limits Setup
-                  </h3>
-                  <p className="text-sm text-white mb-2">
-                    This one-time setup allows gasless submissions:
+                <div className="mb-2 p-2 bg-green-100 rounded-md">
+                  <p className="text-xs text-green-800 text-center">
+                    One-click submission is ready! No signatures needed.
                   </p>
-                  <SetupSpendLimits />
                 </div>
               )}
 
@@ -257,19 +230,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               walletProvider !== "smart" ||
               networkType !== "base" ||
               showDirectSubmit) && (
-              <div
-                className={`bg-gradient-to-r ${
-                  useSpendLimits
-                    ? "from-green-800 to-green-900"
-                    : "from-gray-800 to-gray-900"
-                } rounded-md p-4 border-2 ${
-                  useSpendLimits ? "border-green-500" : "border-yellow-500"
-                }`}
-              >
-                <h3 className="text-center font-bold mb-2">
-                  {useSpendLimits
-                    ? "Submit Using Spend Limits"
-                    : "Submit Your Score"}
+              <div className="rounded-md p-3">
+                <h3 className="text-center font-bold mb-2 text-white">
+                  Submit Your Score
                 </h3>
 
                 {/* Use different submission methods based on network */}
@@ -278,23 +241,16 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     id="submitScoreButton"
                     onClick={handleThirdwebSubmission}
                     disabled={isSubmitting}
-                    className={`bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-md transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg w-full flex items-center justify-center text-xl border-4 border-white z-50 relative`}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md w-full flex items-center justify-center"
                   >
                     {isSubmitting ? (
                       <>
-                        <span className="mr-2 text-2xl font-extrabold">
-                          SUBMITTING...
-                        </span>
-                        <div className="animate-spin h-6 w-6 border-4 border-white rounded-full border-t-transparent"></div>
+                        <span className="mr-2">Submitting...</span>
+                        <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
                       </>
                     ) : (
-                      <span
-                        style={{
-                          textShadow: "0px 0px 8px rgba(255,255,255,0.8)",
-                        }}
-                        className="text-2xl font-extrabold"
-                      >
-                        🏆 SUBMIT SCORE 🏆
+                      <span className="font-bold">
+                        Submit Score
                       </span>
                     )}
                   </button>
@@ -304,6 +260,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     exerciseType={mode}
                     forceDirectSubmission={true}
                     walletAddress={effectiveAddress}
+                    useSpendLimits={useSpendLimits} // Pass the flag to control transaction flow
                   />
                 )}
               </div>
@@ -311,51 +268,41 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
         )}
 
-        {/* Social sharing buttons */}
-        <div className="border-t border-gray-700 pt-4">
-          <p className="text-xs text-center text-gray-400 mb-2">
-            {window.transactionHash
-              ? "Share your achievement:"
-              : "Submit your score to enable sharing"}
-          </p>
-          <div className="flex justify-center space-x-4">
-            <button
-              className="farcaster-button"
-              disabled={!window.transactionHash}
-              onClick={() => {
-                const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
-                const url = `https://imperfect-form.vercel.app?ref=farcaster`;
-                window.open(
-                  `https://warpcast.com/~/compose?text=${encodeURIComponent(
-                    text + " " + url
-                  )}`,
-                  "_blank"
-                );
-              }}
-            >
-              Farcaster
-            </button>
-            <button
-              className="twitter-button"
-              disabled={!window.transactionHash}
-              onClick={() => {
-                const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
-                const url = `https://imperfect-form.vercel.app?ref=twitter`;
-                const hashtags = ["OnchainOlympics", "FitnessOnchain"];
-                window.open(
-                  `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                    text
-                  )}&url=${encodeURIComponent(url)}&hashtags=${hashtags.join(
-                    ","
-                  )}`,
-                  "_blank"
-                );
-              }}
-            >
-              Twitter
-            </button>
+        {/* Social sharing buttons - Simplified */}
+        {window.transactionHash && (
+          <div className="border-t border-gray-700 pt-4">
+            <p className="text-xs text-center text-gray-400 mb-2">Share your achievement:</p>
+            <div className="flex justify-center space-x-4">
+              <button
+                className="farcaster-button"
+                onClick={() => {
+                  const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
+                  const url = `https://imperfect-form.vercel.app?ref=farcaster`;
+                  window.open(
+                    `https://warpcast.com/~/compose?text=${encodeURIComponent(text + " " + url)}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Farcaster
+              </button>
+              <button
+                className="twitter-button"
+                onClick={() => {
+                  const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
+                  const url = `https://imperfect-form.vercel.app?ref=twitter`;
+                  const hashtags = ["OnchainOlympics", "FitnessOnchain"];
+                  window.open(
+                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=${hashtags.join(",")}`,
+                    "_blank"
+                  );
+                }}
+              >
+                Twitter
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Dialog>
   );

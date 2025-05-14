@@ -1,9 +1,13 @@
 "use client";
 import React from 'react';
 
-const Spinner: React.FC = () => (
+interface SpinnerProps {
+  className?: string;
+}
+
+const Spinner: React.FC<SpinnerProps> = ({ className }) => (
   <>
-    <div className="spinner" />
+    <div className={`spinner ${className || ''}`} />
     <style jsx>{`
       .spinner {
         border: 4px solid rgba(0, 0, 0, 0.1);

@@ -1,4 +1,4 @@
-// Leaderboard contract addresses for Polygon and Base
+// Leaderboard contract addresses for all supported networks
 export const POLYGON_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_POLYGON ||
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT ||
@@ -8,6 +8,15 @@ export const BASE_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_BASE ||
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT ||
   "0x45d1a7976477DC2cDD5d40e1e15f22138F20816F"; // Base Sepolia contract
+
+// Placeholder addresses for new networks - replace with actual deployed contracts
+export const MONAD_CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_MONAD ||
+  "0x0000000000000000000000000000000000000000"; // Monad Testnet placeholder
+
+export const CELO_CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_CELO ||
+  "0x0000000000000000000000000000000000000000"; // Celo Mainnet placeholder
 
 // Full ABI for the FitnessLeaderboard contract
 export const fitnessLeaderboardABI = [

@@ -23,8 +23,31 @@ export default function GameWrapper() {
   // Detect wagmi wallet connection
   const wagmiAccount = useAccount();
 
+  // Check URL parameters first (outside of effect)
+  const showSelectorFromURL = React.useMemo(() => {
+    // Only run on client side
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const showSelector = params.get('showSelector');
+      
+      // Clear the parameter from URL without refreshing
+      if (showSelector === 'true') {
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        console.log("GameWrapper: Detected showSelector URL parameter, forcing selector display");
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
   // Log wallet detection but don't auto-change network
   React.useEffect(() => {
+    // If URL parameter was detected, don't auto-detect
+    if (showSelectorFromURL) {
+      return;
+    }
+    
     if (wagmiAccount.address) {
       console.log(
         "Wagmi wallet detected in GameWrapper with address:",
@@ -37,10 +60,10 @@ export default function GameWrapper() {
         localStorage.setItem("selectedChain", "base");
       }
     }
-  }, [wagmiAccount.address, network]);
+  }, [wagmiAccount.address, network, showSelectorFromURL]);
 
-  // If no network is selected, show the wallet type selector
-  if (!isNetworkSelected) {
+  // If URL parameter is present or no network is selected, show the wallet type selector
+  if (showSelectorFromURL || !isNetworkSelected) {
     return <WalletTypeSelector />;
   }
 

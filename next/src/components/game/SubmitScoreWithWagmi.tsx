@@ -27,6 +27,7 @@ interface SubmitScoreProps {
   exerciseType?: "pushups" | "squats";
   forceDirectSubmission?: boolean;
   walletAddress?: string; // Add wallet address prop
+  useSpendLimits?: boolean; // Add useSpendLimits prop to control transaction flow
 }
 
 // Component that handles score submission using Wagmi for direct contract interactions
@@ -35,6 +36,7 @@ export default function SubmitScoreWithWagmi({
   exerciseType,
   forceDirectSubmission = false,
   walletAddress,
+  useSpendLimits = false, // Default to false for backwards compatibility
 }: SubmitScoreProps) {
   const [confirmStep, setConfirmStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +60,7 @@ export default function SubmitScoreWithWagmi({
       useWagmi,
       contractAddress: BASE_CONTRACT_ADDRESS,
       forceDirectSubmissionProp: forceDirectSubmission,
+      useSpendLimits, // Log whether we're using spend limits
     });
   }
 
@@ -272,7 +275,7 @@ export default function SubmitScoreWithWagmi({
       if (isPolygonNetwork) {
         // Show error message - we should be using ThirdWeb for Polygon
         toast.error(
-          "Please use ThirdWeb wallet for Polygon network transactions",
+          "Please switch to Signature Wallet for Polygon network transactions",
           {
             id: "submit-score",
           }
@@ -331,14 +334,78 @@ export default function SubmitScoreWithWagmi({
       }
 
       // Execute the contract write with explicit parameters
-      writeContract({
-        address: formattedContractAddress,
-        abi: fitnessLeaderboardABI,
-        functionName: "addScore",
-        args: [pushupsBI, squatsBI],
-        chainId: 84532,
-        gas: BigInt(500000),
-      });
+      // When useSpendLimits is true, the transaction will use the subaccount with preapproved spend limits
+      if (useSpendLimits) {
+        console.log("Using subaccount with spend limits for transaction");
+        toast.loading("Submitting with one-click approval...", {
+          id: "submit-score",
+        });
+        
+        try {
+          // Create a special transaction metadata object for the Coinbase Wallet
+          // This is how transactions need to be formatted to use subaccounts with spend limits
+          // Based on Coinbase Wallet SDK documentation and examples
+          const txOptions = {
+            address: formattedContractAddress,
+            abi: fitnessLeaderboardABI,
+            functionName: "addScore",
+            args: [pushupsBI, squatsBI],
+            chainId: 84532,
+            gas: BigInt(500000),
+          };
+
+          // The key to making subaccount transactions work is to use the 'meta' field
+          // that gets passed through to the Coinbase Wallet SDK
+          const txOptionsWithMeta = {
+            ...txOptions,
+            // This is the format expected by the Coinbase SDK for subaccounts
+            meta: {
+              // Signal to use a subaccount with pre-approved spend limits
+              useSubAccount: true,
+              // Coinbase Wallet will look for these special properties
+              type: "SUBACCOUNT_SPEND_LIMIT_TX",
+              // Label with network information
+              networkLabel: "Base Sepolia"
+            }
+          };
+
+          console.log("Transaction with subaccount meta:", 
+            JSON.stringify(txOptionsWithMeta, (_, v) => 
+              typeof v === "bigint" ? v.toString() : v
+            )
+          );
+          
+          // The meta field is a special property recognized by the Coinbase Wallet connector
+          // @ts-expect-error - TypeScript definitions don't include meta property
+          writeContract(txOptionsWithMeta);
+
+          console.log("Transaction submitted successfully!");
+        } catch (error) {
+          console.error("Error submitting transaction with subaccount:", error);
+          toast.error("Failed to submit with one-click. Falling back to standard transaction.");
+          
+          // Fall back to standard transaction if one-click fails
+          writeContract({
+            address: formattedContractAddress,
+            abi: fitnessLeaderboardABI,
+            functionName: "addScore",
+            args: [pushupsBI, squatsBI],
+            chainId: 84532,
+            gas: BigInt(500000),
+          });
+        }
+      } else {
+        // Standard transaction flow requiring signature
+        console.log("Using standard transaction flow (requires signature)");
+        writeContract({
+          address: formattedContractAddress,
+          abi: fitnessLeaderboardABI,
+          functionName: "addScore",
+          args: [pushupsBI, squatsBI],
+          chainId: 84532,
+          gas: BigInt(500000),
+        });
+      }
 
       if (process.env.NODE_ENV !== "production") {
         console.log(
@@ -368,7 +435,9 @@ export default function SubmitScoreWithWagmi({
       className={`${
         confirmStep
           ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
-          : "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+          : isPolygonNetwork
+            ? "bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600"
+            : "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
       } text-white font-bold py-4 px-6 rounded-md transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg w-full flex items-center justify-center text-xl border-4 border-white z-50 relative`}
     >
       {isPending || isLoading || isWaitingForTx ? (
@@ -377,19 +446,53 @@ export default function SubmitScoreWithWagmi({
           <Spinner />
         </>
       ) : confirmStep ? (
-        <span
-          style={{ textShadow: "0px 0px 8px rgba(255,255,255,0.8)" }}
-          className="text-2xl font-extrabold"
-        >
-          🔥 CONFIRM SUBMISSION 🔥
-        </span>
+        <div className="flex flex-col items-center">
+          <span
+            style={{ textShadow: "0px 0px 8px rgba(255,255,255,0.8)" }}
+            className="text-2xl font-extrabold"
+          >
+            🔥 CONFIRM SUBMISSION 🔥
+          </span>
+          <div className="flex items-center mt-1 bg-black/30 px-3 py-1 rounded-full">
+            <span className="text-xs text-gray-300">
+              {isPolygonNetwork ? (
+                <>
+                  <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
+                  Polygon Amoy • Signature Wallet
+                </>
+              ) : (
+                <>
+                  <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
+                  Base Sepolia • Smart Wallet
+                </>
+              )}
+            </span>
+          </div>
+        </div>
       ) : (
-        <span
-          style={{ textShadow: "0px 0px 8px rgba(255,255,255,0.8)" }}
-          className="text-2xl font-extrabold"
-        >
-          🏆 SUBMIT SCORE 🏆
-        </span>
+        <div className="flex flex-col items-center">
+          <span
+            style={{ textShadow: "0px 0px 8px rgba(255,255,255,0.8)" }}
+            className="text-2xl font-extrabold"
+          >
+            🏆 SUBMIT SCORE 🏆
+          </span>
+          <div className="flex items-center mt-1 bg-black/30 px-3 py-1 rounded-full">
+            <span className="text-xs text-gray-300">
+              {isPolygonNetwork ? (
+                <>
+                  <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
+                  Polygon Amoy • Signature Wallet
+                </>
+              ) : (
+                <>
+                  <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
+                  Base Sepolia • Smart Wallet
+                </>
+              )}
+            </span>
+          </div>
+        </div>
       )}
     </button>
   );

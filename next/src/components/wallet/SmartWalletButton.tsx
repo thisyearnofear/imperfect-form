@@ -4,10 +4,10 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { shortenAddress } from "@/utils/formatters";
 import { getBestDisplayName } from "@/utils/web3bio";
-import { Dialog } from "@/components/ui";
+import Dialog from "@/components/ui/Dialog";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { NetworkSwitcher } from "@/components/network";
+
 
 /**
  * SmartWalletButton component for connecting to Smart Wallets with no-signature
@@ -313,7 +313,9 @@ export default function SmartWalletButton() {
         <div className="text-center">
           <h3 className="text-lg font-bold">{displayName}</h3>
           <div className="wallet-address-container">
-            <p className="wallet-address">{shortenAddress(address || "")}</p>
+            <p className="wallet-address">
+              {shortenAddress(address || "")}
+            </p>
             <button
               onClick={copyToClipboard}
               className="copy-button bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600"
@@ -324,42 +326,33 @@ export default function SmartWalletButton() {
           </div>
         </div>
 
-        <div className="text-center text-sm text-blue-400 mb-2">
-          Connected with Smart Wallet (No-Signature)
+        <div className="wallet-type-badge flex justify-center">
+          <span className="bg-blue-700 text-white px-1.5 py-0.5 rounded text-[10px]">
+            Smart Wallet
+          </span>
         </div>
 
-        <div className="border-t border-b border-gray-700 py-4 my-4 w-full">
-          <h3 className="text-center text-sm font-bold mb-3 text-yellow-400">
-            NETWORK SELECTION
-          </h3>
-          <NetworkSwitcher
-            currentNetwork={network || "base"}
-            keepModalOpen={true}
-          />
-          <div className="text-center text-xs text-gray-400 mt-2">
-            Network selection will affect where your scores are submitted
+        <div className="border-t border-b border-gray-700 py-2 my-2 w-full">
+          <div className="py-1 text-center">
+            <span className="bg-blue-900/30 inline-block px-2 py-0.5 rounded text-[10px]">
+              Base Sepolia
+            </span>
           </div>
         </div>
 
-        <div className="flex flex-col items-center space-y-4 w-full">
-          {/* Sub-account functionality is now handled in SummaryModal via SetupSpendLimits */}
-          <div className="text-center text-sm text-gray-400 mb-2">
-            Sub-account and spend limit settings are available when submitting
-            scores.
-          </div>
-
+        <div className="flex space-x-2 w-full">
           <button
             onClick={handleDisconnect}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors w-full"
+            className="bg-red-600 hover:bg-red-700 text-white px-1.5 py-0.5 rounded transition-colors text-[10px] flex-1"
           >
-            Disconnect Wallet
+            Disconnect
           </button>
 
           <button
             onClick={handleChangeWalletType}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors w-full"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-1.5 py-0.5 rounded transition-colors text-[10px] flex-1"
           >
-            Change Wallet Type
+            Signature Wallet
           </button>
         </div>
       </div>
@@ -386,147 +379,95 @@ export default function SmartWalletButton() {
   // If not connected, show the connect button with status
   return (
     <>
-      <button
-        id="connectWalletButton"
-        className="wallet-button smart-wallet"
-        onClick={handleConnect}
-        disabled={isPending || connectionAttemptRef.current}
-      >
-        {isPending || connectionAttemptRef.current
-          ? "Connecting..."
-          : "Connect Smart Wallet"}
-      </button>
+      <div className="inline-flex space-x-1">
+        <button
+          id="connectWalletButton"
+          className="wallet-button smart-wallet text-sm py-1"
+          onClick={handleConnect}
+          disabled={isPending || connectionAttemptRef.current}
+        >
+          {isPending || connectionAttemptRef.current
+            ? "Connecting..."
+            : "Connect"}
+        </button>
+        
+        {/* Reset button - always visible */}
+        <button
+          className="text-xs bg-red-800 text-white px-2 py-1 rounded"
+          onClick={() => {
+            // First reset all connection state
+            resetConnect();
+            disconnect();
+            connectionAttemptRef.current = false;
+            wasConnectedRef.current = false;
+
+            // Then reset all context values
+            setWalletProvider(null);
+            setNetwork(null);
+            setIsConnected(false);
+            setUserAddress(undefined);
+
+            // Clear all local storage related to wallet state
+            localStorage.removeItem("selectedWalletProvider");
+            localStorage.removeItem("selectedNetwork");
+            localStorage.removeItem("selectedChain");
+            localStorage.removeItem("connectedWallet");
+            localStorage.removeItem("wagmi.wallet");
+            localStorage.removeItem("wagmi.connected");
+            localStorage.removeItem("wagmi.store");
+            localStorage.removeItem("wagmi.account");
+            localStorage.removeItem("wagmi.chainId");
+            localStorage.removeItem("walletconnect");
+            localStorage.removeItem("WALLETCONNECT_DEEPLINK_CHOICE");
+            localStorage.removeItem("userAddress");
+            localStorage.removeItem("thirdweb.auth.token");
+            localStorage.removeItem("thirdweb.wallets");
+            
+            // VERY IMPORTANT: Remove any persisted Coinbase Wallet state
+            // These keys may vary based on Coinbase SDK version
+            Object.keys(localStorage).forEach(key => {
+              if (key.startsWith('coinbase') || 
+                  key.startsWith('walletlink') || 
+                  key.startsWith('wagmi') ||
+                  key.startsWith('cbw_') ||
+                  key.includes('wallet')) {
+                localStorage.removeItem(key);
+              }
+            });
+            
+            // Navigate to dedicated wallet selection page
+            window.location.href = "/select-wallet";
+          }}
+        >
+          Reset
+        </button>
+      </div>
 
       {/* Show error if any */}
       {error && (
-        <div className="text-red-500 text-xs mt-2 max-w-xs mx-auto">
-          Error: {error.message}
-          <button
-            className="ml-2 underline text-blue-400"
-            onClick={() => {
-              resetConnect();
-              connectionAttemptRef.current = false;
-            }}
-          >
-            Reset
-          </button>
+        <div className="text-red-500 text-xs mt-1 max-w-xs mx-auto">
+          {error.message}
         </div>
       )}
 
       {/* Debug button - only visible in development */}
       {process.env.NODE_ENV === "development" && (
-        <button
-          className="text-xs mt-2 bg-gray-800 text-white p-1 rounded"
-          onClick={() => {
-            if (typeof window !== "undefined") {
-              console.log("Debug: Available connectors", connectors);
-              console.log(
-                "Debug: Coinbase Wallet connector",
-                cbWalletConnector
-              );
-              console.log("Debug: Current chain", window.ethereum?.chainId);
-              console.log("Debug: Current walletProvider", walletProvider);
-              console.log("Debug: Current network", network);
-              console.log(
-                "Debug: Connection attempt status",
-                connectionAttemptRef.current
-              );
-              console.log(
-                "Debug: Was connected status",
-                wasConnectedRef.current
-              );
-            }
-
-            // Force reset any existing connection attempts
-            resetConnect();
-            connectionAttemptRef.current = false;
-
-            // Force a hard reset (stronger than just disconnect)
-            disconnect();
-            setIsConnected(false);
-            setUserAddress(undefined);
-
-            // Set context values first
-            setWalletProvider("smart");
-            setNetwork("base");
-
-            // Mark connection attempt
-            connectionAttemptRef.current = true;
-
-            // Try connecting with a timeout
-            setTimeout(() => {
-              if (cbWalletConnector) {
-                if (typeof window !== "undefined") {
-                  console.log(
-                    "Debug: Forcing new connection with CB Wallet connector",
-                    cbWalletConnector.id
-                  );
-                }
-                connect({ connector: cbWalletConnector });
-              } else {
-                if (typeof window !== "undefined") {
-                  console.error("Debug: Coinbase Wallet connector not found");
-                }
-                connectionAttemptRef.current = false;
-              }
-            }, 500);
-          }}
-        >
-          Force Connect
-        </button>
-      )}
-
-      {/* Reset functionality - available in all environments */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="flex space-x-2 mt-2">
-          <button
-            className="text-xs bg-red-800 text-white p-1 rounded"
-            onClick={() => {
-              // First reset all connection state
-              resetConnect();
-              disconnect();
-              connectionAttemptRef.current = false;
-              wasConnectedRef.current = false;
-
-              // Then reset all context values
-              setWalletProvider(null);
-              setNetwork(null);
-              setIsConnected(false);
-              setUserAddress(undefined);
-
-              // Clear all local storage
-              localStorage.removeItem("selectedWalletProvider");
-              localStorage.removeItem("selectedNetwork");
-              localStorage.removeItem("selectedChain");
-              localStorage.removeItem("connectedWallet");
-              localStorage.removeItem("wagmi.wallet");
-              localStorage.removeItem("wagmi.connected");
-              localStorage.removeItem("wagmi.store");
-
-              if (typeof window !== "undefined") {
-                console.log("Debug: Full reset performed");
-
-                // Log reset but don't force page reload
-                // This allows smoother transitions between wallet types
-                console.log(
-                  "Debug: Avoiding forced reload for better user experience"
-                );
-              }
-            }}
-          >
-            Reset All
-          </button>
-
-          <button
-            className="text-xs bg-green-800 text-white p-1 rounded"
-            onClick={() => {
-              window.open("https://wallet.coinbase.com", "_blank");
-            }}
-          >
-            Open CB Wallet
-          </button>
+        <div className="hidden">
+          {/* Placeholder for any debug functionality */}
         </div>
       )}
+      
+      {/* Open Coinbase Wallet link - visible and smaller */}
+      <div className="mt-1 text-center">
+        <button
+          className="text-blue-400 hover:text-blue-300 text-[10px] underline"
+          onClick={() => {
+            window.open("https://wallet.coinbase.com", "_blank");
+          }}
+        >
+          Open Coinbase Wallet
+        </button>
+      </div>
     </>
   );
 }

@@ -31,6 +31,33 @@ export const chainConfigs = {
     ],
     blockExplorerUrls: ["https://sepolia-explorer.base.org/"],
   },
+  monad: {
+    id: 10143,
+    name: "Monad Testnet",
+    nativeCurrency: {
+      name: "MON",
+      symbol: "MON",
+      decimals: 18,
+    },
+    rpcUrls: [
+      "https://testnet-rpc.monad.xyz",
+    ],
+    blockExplorerUrls: ["https://testnet.monadexplorer.com/"],
+  },
+  celo: {
+    id: 42220,
+    name: "Celo Mainnet",
+    nativeCurrency: {
+      name: "CELO",
+      symbol: "CELO",
+      decimals: 18,
+    },
+    rpcUrls: [
+      "https://forno.celo.org",
+      "https://rpc.ankr.com/celo",
+    ],
+    blockExplorerUrls: ["https://explorer.celo.org/"],
+  },
 };
 
 // Enum for wallet provider types
@@ -43,6 +70,8 @@ export enum WalletProviderType {
 export enum SupportedChain {
   POLYGON = "polygon",
   BASE = "base",
+  MONAD = "monad",
+  CELO = "celo",
 }
 
 /**
@@ -167,6 +196,8 @@ export async function switchChain(
 export function getChainFromNetwork(network: string | null): SupportedChain | null {
   if (network === "polygon") return SupportedChain.POLYGON;
   if (network === "base") return SupportedChain.BASE;
+  if (network === "monad") return SupportedChain.MONAD;
+  if (network === "celo") return SupportedChain.CELO;
   return null;
 }
 
@@ -174,6 +205,8 @@ export function getChainFromNetwork(network: string | null): SupportedChain | nu
 export function getNetworkFromChain(chain: SupportedChain | null): string | null {
   if (chain === SupportedChain.POLYGON) return "polygon";
   if (chain === SupportedChain.BASE) return "base";
+  if (chain === SupportedChain.MONAD) return "monad";
+  if (chain === SupportedChain.CELO) return "celo";
   return null;
 }
 

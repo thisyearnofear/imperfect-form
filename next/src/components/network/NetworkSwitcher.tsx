@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { POLYGON_CONTRACT_ADDRESS, BASE_CONTRACT_ADDRESS } from "@/constants/contracts";
 import toast from "react-hot-toast";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -14,22 +14,19 @@ import {
 
 interface NetworkSwitcherProps {
   onNetworkChange?: (network: "polygon" | "base") => void;
-  currentNetwork?: "polygon" | "base";
-  connectedToPolygon?: boolean;
-  keepModalOpen?: boolean; // Optional prop to prevent modal closure
+    currentNetwork?: "polygon" | "base";
+    keepModalOpen?: boolean; // Optional prop to prevent modal closure
 }
 
 export default function NetworkSwitcher({ 
   onNetworkChange,
   currentNetwork = "base",
-  connectedToPolygon = false,
   keepModalOpen = false
 }: NetworkSwitcherProps) {
   const [network, setNetwork] = useState<"polygon" | "base">(currentNetwork);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Get Wagmi connection status and chain switcher
-  const { address: wagmiAddress } = useAccount();
+  // Get Wagmi chain switcher
   const { switchChainAsync } = useSwitchChain();
   
   // Network context
@@ -37,10 +34,6 @@ export default function NetworkSwitcher({
   
   // Wallet provider context
   const { walletProvider, isConnected } = useWalletProvider();
-  
-  // Check connection status based on props and Wagmi
-  const isPolygonConnected = connectedToPolygon;
-  const isBaseConnected = !!wagmiAddress;
   
   // Define networks
   const networks = [
@@ -110,7 +103,8 @@ export default function NetworkSwitcher({
           // Get the switchChain async function for Wagmi
           const switchChainFn = async (chainId: number) => {
             if (switchChainAsync) {
-              await switchChainAsync({ chainId });
+              // Cast the chainId to the specific type that switchChainAsync expects
+              await switchChainAsync({ chainId: chainId as 84532 });
             } else {
               throw new Error("Chain switching not available");
             }
@@ -155,39 +149,31 @@ export default function NetworkSwitcher({
 
   return (
     <div className="network-switcher">      
-      <div className="flex items-center justify-center space-x-4">
+      <div className="flex items-center justify-center space-x-2">
         {networks.map((net) => (
           <button
             key={net.id}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-2 py-1 rounded ${
               network === net.id
-                ? "bg-gray-800 border-2 border-yellow-500"
+                ? `bg-${net.id === 'polygon' ? 'purple' : 'blue'}-900/40 border border-${net.id === 'polygon' ? 'purple' : 'blue'}-500`
                 : "bg-gray-700 hover:bg-gray-600"
-            } transition-colors`}
-            style={{ color: net.color }}
+            } transition-colors text-[10px]`}
             onClick={() => switchNetworkHandler(net.id as "polygon" | "base")}
             disabled={isLoading}
           >
-            <span className="font-bold">{net.name}</span>
-            {network === net.id && (
-              <span className="ml-2 text-xs text-green-400">✓ ACTIVE</span>
-            )}
-            {isLoading && net.id !== network && (
-              <span className="ml-2 text-xs">⟳</span>
-            )}
+            {net.id === 'polygon' ? 'Polygon' : 'Base'}
+            {network === net.id && " ✓"}
+            {isLoading && net.id !== network && "..."}
           </button>
         ))}
       </div>
       
-      <p className="text-xs text-center mt-2 text-gray-400">
-        {keepModalOpen ? (
-          "Set preferred network for score submission"
-        ) : (
-          (isPolygonConnected && network === "polygon") || (isBaseConnected && network === "base")
-            ? `Connected to ${network === "polygon" ? "Polygon Amoy" : "Base Sepolia"}`
-            : "Change network to match your connected wallet"
-        )}
-      </p>
+      {((network === "polygon" && walletProvider === "smart") ||
+        (network === "base" && walletProvider === "signature")) && (
+        <p className="text-[9px] text-center text-orange-300 mt-1">
+          ⚠️ Requires wallet switch
+        </p>
+      )}
     </div>
   );
 }

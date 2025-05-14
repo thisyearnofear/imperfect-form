@@ -9,7 +9,7 @@ import React, {
 } from "react";
 
 // Define the network types
-export type Network = "polygon" | "base" | null;
+export type Network = "polygon" | "base" | "monad" | "celo" | null;
 
 // Define the context type
 interface NetworkContextType {
@@ -18,11 +18,11 @@ interface NetworkContextType {
   isNetworkSelected: boolean;
 }
 
-// Create the context with default values - using "base" as the default
+// Create the context with default values - using null as the default
 const NetworkContext = createContext<NetworkContextType>({
-  network: "base",
+  network: null,
   setNetwork: () => {},
-  isNetworkSelected: true,
+  isNetworkSelected: false,
 });
 
 // Props for the NetworkProvider component
@@ -35,13 +35,13 @@ interface NetworkProviderProps {
  * and persists it to localStorage
  */
 export function NetworkProvider({ children }: NetworkProviderProps) {
-  // Initialize network state from localStorage if available, default to "base"
+  // Initialize network state from localStorage if available, default to null
   const [network, setNetworkState] = useState<Network>(() => {
     // Only access localStorage on the client side
-    if (typeof window === "undefined") return "base";
+    if (typeof window === "undefined") return null;
 
     const savedNetwork = localStorage.getItem("selectedNetwork");
-    return (savedNetwork as Network) || "base";
+    return (savedNetwork as Network) || null;
   });
 
   // Derived state to check if a network is selected

@@ -3,15 +3,15 @@
 import React, { ReactNode, useEffect, useRef } from "react";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createConfig, http } from "wagmi";
 import { baseSepolia } from "wagmi/chains";
-import { coinbaseWallet } from "wagmi/connectors";
+import { getWagmiConfig } from "@/utils/walletConfig";
 import { NetworkProvider, useNetwork } from "@/contexts/NetworkContext";
 import {
   WalletProviderProvider,
   useWalletProvider,
 } from "@/contexts/WalletProviderContext";
 import { Toaster } from "react-hot-toast";
+import GlobalErrorHandler from "./GlobalErrorHandler";
 
 // Props for the ConditionalProviders component
 interface ConditionalProvidersProps {
@@ -43,53 +43,27 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
     []
   );
 
-  // Create Wagmi config for Base with detailed logging
+  // Get the Wagmi config from walletConfig.ts
   // Use useMemo to prevent unnecessary re-renders
   const wagmiConfig = React.useMemo(
-    () =>
-      createConfig({
-        chains: [baseSepolia],
-        multiInjectedProviderDiscovery: false, // Disable multi-provider discovery to avoid conflicts
-        connectors: [
-          coinbaseWallet({
-            appName: "Imperfect Form",
-            headlessMode: false,
-            version: "4",
-            appLogoUrl: null,
-            // Allow both smart wallet and regular wallet modes
-            preference: {
-              keysUrl: "https://keys.coinbase.com/connect",
-              options: "all", // Allow both EOA and smart wallet options
-            },
-            // Note: checkCrossOriginOpenerPolicy is not supported in the current version
-            // We'll need to handle COOP errors differently
-          }),
-        ],
-        ssr: false, // Set to false to avoid SSR issues with wallet connections
-        transports: {
-          [baseSepolia.id]: http(
-            process.env.NEXT_PUBLIC_ALCHEMY_BASE_SEPOLIA_URL ||
-              "https://base-sepolia.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
-          ),
-        },
-        syncConnectedChain: false, // Disable auto-syncing to prevent disconnection issues
-      }),
+    () => getWagmiConfig(),
     []
   );
 
-  // Only log on client side to prevent server log flooding
-  if (typeof window !== "undefined") {
-    // Log the Base Sepolia chain ID for debugging
-    console.log("Base Sepolia Chain ID:", baseSepolia.id);
-
-    // Log Wagmi configuration details
-    console.log("AppProviders: Wagmi configuration", {
-      chains: [baseSepolia],
-      connectors: "Coinbase Wallet Connector",
-      network,
-      walletProvider,
-    });
-  }
+  // Only log once on initial render to prevent flooding and render loops
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Use a debugging flag to avoid excessive logging
+      const debugMode = false;
+      if (debugMode) {
+        console.log("Base Sepolia Chain ID:", baseSepolia.id);
+        console.log("AppProviders: Wagmi configuration", {
+          network,
+          walletProvider,
+        });
+      }
+    }
+  }, [network, walletProvider]); // Only re-run if these specific props change
 
   // Always use WagmiProvider + QueryClientProvider regardless of network
   // ThirdwebProvider will be added at the GameWrapper level when needed
@@ -102,6 +76,15 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
 
   // Use a stable callback to prevent unnecessary re-renders
   const syncWalletProvider = React.useCallback(() => {
+    // Check URL parameters first
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('showSelector') === 'true') {
+        console.log("AppProviders: showSelector URL parameter found, skipping auto-sync");
+        return;
+      }
+    }
+    
     // Skip if already syncing to prevent update loops
     if (syncingRef.current) return;
 
@@ -115,7 +98,7 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
 
     // Update the previous values
     prevValuesRef.current = { network, walletProvider };
-
+    
     // Check if we have a wallet provider from localStorage
     const storedWalletProvider = localStorage.getItem("selectedWalletProvider");
 
@@ -160,6 +143,18 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
 
   // Use effect to call the stable callback
   useEffect(() => {
+    // Give URL parameter check higher priority
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('showSelector') === 'true') {
+        // Clear the URL parameter without refreshing
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        // Skip auto-sync completely when showing selector
+        return;
+      }
+    }
+    
     syncWalletProvider();
   }, [syncWalletProvider]);
 
@@ -183,6 +178,7 @@ export default function AppProviders({ children }: AppProvidersProps) {
     <NetworkProvider>
       <WalletProviderProvider>
         <ConditionalProviders>
+          <GlobalErrorHandler />
           <Toaster
             position="top-center"
             toastOptions={{

@@ -10,7 +10,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { shortenAddress } from "@/utils/formatters";
 import { getBestDisplayName } from "@/utils/web3bio";
-import { Dialog } from "@/components/ui";
+import Dialog from "@/components/ui/Dialog";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
@@ -206,6 +206,7 @@ const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent() {
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           title="Wallet Options"
+          description="Your wallet information and controls"
         >
           <div className="wallet-modal-content">
             <div className="wallet-address-container">
@@ -221,29 +222,41 @@ const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent() {
                 {copied ? "Copied!" : "Copy"}
               </button>
             </div>
-            <button
-              className="disconnect-button"
-              onClick={() => {
-                // Disconnect ThirdWeb wallet
-                disconnect();
+            <div className="flex flex-col space-y-2 w-full">
+              <button
+                className="disconnect-button"
+                onClick={() => {
+                  // Disconnect ThirdWeb wallet
+                  disconnect();
 
-                // Update wallet provider context
-                setIsConnected(false);
-                setUserAddress(undefined);
+                  // Update wallet provider context
+                  setIsConnected(false);
+                  setUserAddress(undefined);
 
-                // Close modal
-                setShowModal(false);
+                  // Close modal
+                  setShowModal(false);
 
-                console.log(
-                  "StandaloneThirdwebButton: Disconnected ThirdWeb wallet"
-                );
+                  console.log(
+                    "StandaloneThirdwebButton: Disconnected ThirdWeb wallet"
+                  );
 
-                // Clear the address from localStorage
-                localStorage.removeItem("userAddress");
-              }}
-            >
-              Disconnect Wallet
-            </button>
+                  // Clear the address from localStorage
+                  localStorage.removeItem("userAddress");
+                }}
+              >
+                Disconnect Wallet
+              </button>
+              
+              <button
+                className="text-xs bg-red-800 text-white px-2 py-1 rounded"
+                onClick={() => {
+                  // Navigate to dedicated wallet selection page
+                  window.location.href = "/select-wallet";
+                }}
+              >
+                Reset
+              </button>
+            </div>
           </div>
         </Dialog>
       </>

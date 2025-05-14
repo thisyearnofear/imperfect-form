@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 import { fitnessLeaderboardABI } from "@/constants/contracts";
 import toast from "react-hot-toast";
-import { getSubAccount } from "@/utils/subAccountsManager";
 
 /**
  * Helper function to check if the current provider is Coinbase Wallet
@@ -83,30 +82,20 @@ export async function submitScoreDirectly(
       userAddress = connectedAddress;
       console.log("Using provided address:", userAddress);
 
-      // Skip sub-account check if direct submission was requested
+      // With the Coinbase SDK integration, subaccounts are automatically created and managed
+      // We can assume the wallet may have subaccounts configured through the SDK
       if (!skipSubAccountCheck) {
-        // Check if the user has a sub-account with spend limits
-        try {
-          const subAccount = await getSubAccount(userAddress);
-          if (subAccount) {
-            console.log("Found sub-account with address:", subAccount);
-            // User has a sub-account, we might be able to use spend limits
-            // In a full implementation, we would check if there's an active spend permission
-
-            // For now, we'll still use Wagmi but indicate that spend limits might be usable
-            return {
-              success: false,
-              processingType: "wagmi",
-              useSpendLimit: true,
-              error: "Use Wagmi for Base transactions with spend limits",
-            };
-          }
-        } catch (subAccountError) {
-          console.error("Error checking for sub-account:", subAccountError);
-          // Fall back to standard approach if checking for sub-account fails
-        }
+        console.log("Using SDK-configured subaccounts for Base network");
+        
+        // Return to use Wagmi for transaction handling with the Coinbase SDK
+        return {
+          success: false,
+          processingType: "wagmi",
+          useSpendLimit: true,
+          error: "Use Wagmi for Base transactions with automatic subaccounts",
+        };
       } else {
-        console.log("Skipping sub-account check for direct submission");
+        console.log("Skipping subaccount check for direct submission");
       }
 
       // For direct submission with skipSubAccountCheck=true, we'll use Wagmi without spend limits

@@ -15,8 +15,28 @@ export default function WalletTypeDetector() {
   const { address: wagmiAddress } = useAccount();
   const { network, setNetwork } = useNetwork();
 
+  // Check URL parameter for wallet selector request
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('showSelector') === 'true') {
+        // If URL has the showSelector parameter, don't do any auto-detection
+        console.log("WalletTypeDetector: showSelector parameter found, skipping detection");
+        return;
+      }
+    }
+  }, []);
+
   // Handle wagmi address detection, but only if network is not already set
   useEffect(() => {
+    // First check if we're in a reset flow via URL parameter
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('showSelector') === 'true') {
+        return;
+      }
+    }
+    
     if (wagmiAddress) {
       console.log("Wagmi wallet detected:", wagmiAddress);
       

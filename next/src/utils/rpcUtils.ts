@@ -17,6 +17,17 @@ export const BASE_FALLBACK_RPCS = [
   "https://sepolia.base.org",
 ];
 
+// Fallback RPC URLs for Monad Testnet
+export const MONAD_FALLBACK_RPCS = [
+  "https://testnet-rpc.monad.xyz",
+];
+
+// Fallback RPC URLs for Celo Mainnet
+export const CELO_FALLBACK_RPCS = [
+  "https://forno.celo.org",
+  "https://rpc.ankr.com/celo",
+];
+
 /**
  * Gets a random RPC URL from the provided list
  * This helps distribute the load across multiple providers

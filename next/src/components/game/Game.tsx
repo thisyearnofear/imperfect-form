@@ -59,9 +59,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   if (network === "base") {
     try {
       address = wagmiAddress;
-      console.log("Game: Using Wagmi address for Base network:", address);
-    } catch (error) {
-      console.log("Error using Wagmi account:", error);
+    } catch {
+      // Ignoring error in render cycle
     }
   }
 
@@ -70,22 +69,36 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     // If thirdwebAddress is provided as a prop, use it
     if (thirdwebAddress) {
       address = thirdwebAddress;
-      console.log("Game: Using ThirdWeb address from prop:", address);
     }
     // Otherwise, check localStorage for a stored address
     else {
       const storedAddress = localStorage.getItem("userAddress");
       if (storedAddress) {
         address = storedAddress;
-        console.log("Game: Using ThirdWeb address from localStorage:", address);
-      } else {
-        console.log("Game: No ThirdWeb address available");
       }
     }
   }
-
-  // Log the final address being used
-  console.log("Game: Final address being used:", address, "Network:", network);
+  
+  // Move all logging to a useEffect to prevent excessive re-renders
+  useEffect(() => {
+    // Only log in development environment to reduce production noise
+    if (process.env.NODE_ENV === "development") {
+      if (network === "base") {
+        console.log("Game: Using Wagmi address for Base network:", address);
+      } else if (network === "polygon") {
+        if (thirdwebAddress) {
+          console.log("Game: Using ThirdWeb address from prop:", address);
+        } else if (address) {
+          console.log("Game: Using ThirdWeb address from localStorage:", address);
+        } else {
+          console.log("Game: No ThirdWeb address available");
+        }
+      }
+      
+      // Log the final address being used
+      console.log("Game: Final address being used:", address, "Network:", network);
+    }
+  }, [address, network, thirdwebAddress]); // Only re-run when these values change
 
   // Store the address in localStorage for persistence
   useEffect(() => {
@@ -297,14 +310,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               <button
                 className="reset-wallet-button"
                 onClick={() => {
-                  // Clear localStorage
-                  localStorage.removeItem("userAddress");
-                  localStorage.removeItem("selectedNetwork");
-                  localStorage.removeItem("selectedChain");
-                  localStorage.removeItem("selectedWalletProvider");
-
-                  // Force reload to reset all wallet state
-                  window.location.reload();
+                  // Navigate to dedicated wallet selection page
+                  window.location.href = "/select-wallet";
                 }}
                 title="Reset wallet connection"
               >
