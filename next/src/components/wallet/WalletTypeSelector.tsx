@@ -74,10 +74,12 @@ export default function WalletTypeSelector({
             disabled={isSelectingWallet}
           >
             <div className="flex flex-col items-center">
-              <div className="font-bold text-lg text-white animate-shimmer">Signature Wallet</div>
+              <div className="font-bold text-lg text-white animate-shimmer">
+                Signature Wallet
+              </div>
               <div className="flex mt-1 items-center justify-center">
                 <span className="text-[10px] bg-purple-800 text-white px-2 py-0.5 rounded">
-                  Amoy
+                  Polygon
                 </span>
                 <span className="mx-1 text-gray-500">|</span>
                 <span className="text-[10px] bg-yellow-800 text-white px-2 py-0.5 rounded">
@@ -103,7 +105,9 @@ export default function WalletTypeSelector({
             disabled={isSelectingWallet}
           >
             <div className="flex flex-col items-center">
-              <div className="font-bold text-lg text-white animate-shimmer">Smart Wallet</div>
+              <div className="font-bold text-lg text-white animate-shimmer">
+                Smart Wallet
+              </div>
               <div className="flex mt-1 justify-center">
                 <span className="text-[10px] bg-blue-800 text-white px-1.5 py-0.5 rounded">
                   Base

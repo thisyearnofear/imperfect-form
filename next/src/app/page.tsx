@@ -19,15 +19,10 @@ const ExpandedLeaderboardModal = dynamic(
   }
 );
 
+import { Score } from "@/types";
+
 export default function Home() {
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
-  // Import Score type from Leaderboard component
-  type Score = {
-    user: string;
-    score: number;
-    network: "polygon" | "base";
-    displayName?: string;
-  };
 
   const [leaderboardData, setLeaderboardData] = useState<{
     pushups: Score[];

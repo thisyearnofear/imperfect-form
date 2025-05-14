@@ -42,14 +42,34 @@
   border-bottom: 1px solid #333;
 }
 
-.leaderboard-container .pink-entry {
+.leaderboard-container .polygon-entry {
   background-color: rgba(255, 105, 180, 0.2);
   border-left: 3px solid hotpink;
 }
 
-.leaderboard-container .blue-entry {
+.leaderboard-container .base-entry {
   background-color: rgba(0, 123, 255, 0.2);
   border-left: 3px solid #0d6efd;
+}
+
+.leaderboard-container .monad-entry {
+  background-color: rgba(234, 179, 8, 0.2);
+  border-left: 3px solid #eab308;
+}
+
+.leaderboard-container .celo-entry {
+  background-color: rgba(16, 185, 129, 0.2);
+  border-left: 3px solid #10b981;
+}
+
+.leaderboard-container .yellow-entry {
+  background-color: rgba(234, 179, 8, 0.2);
+  border-left: 3px solid #eab308;
+}
+
+.leaderboard-container .green-entry {
+  background-color: rgba(16, 185, 129, 0.2);
+  border-left: 3px solid #10b981;
 }
 
 .leaderboard-container .load-button {

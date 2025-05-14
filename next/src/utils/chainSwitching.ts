@@ -4,18 +4,19 @@ import toast from "react-hot-toast";
 // Configuration for each supported chain
 export const chainConfigs = {
   polygon: {
-    id: 80002,
-    name: "Polygon Amoy",
+    id: 137,
+    name: "Polygon Mainnet",
     nativeCurrency: {
       name: "MATIC",
       symbol: "MATIC",
       decimals: 18,
     },
     rpcUrls: [
-      "https://polygon-amoy.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-      "https://rpc-amoy.polygon.technology",
+      "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
+      "https://polygon-rpc.com",
+      "https://rpc-mainnet.matic.network",
     ],
-    blockExplorerUrls: ["https://amoy.polygonscan.com/"],
+    blockExplorerUrls: ["https://polygonscan.com/"],
   },
   base: {
     id: 84532,
@@ -40,7 +41,7 @@ export const chainConfigs = {
       decimals: 18,
     },
     rpcUrls: [
-      "https://testnet-rpc.monad.xyz",
+      "https://testnet-rpc.monad.xyz/",
     ],
     blockExplorerUrls: ["https://testnet.monadexplorer.com/"],
   },
@@ -86,23 +87,43 @@ export async function switchThirdwebChain(
     // Get the chainId
     const chainId = chainConfigs[chainName].id;
 
+    console.log(`Attempting to switch to ${chainName} with chain ID: ${chainId}`);
+
     // Access ThirdWeb SDK from window if available (for already connected wallet)
     // This is a hack to avoid React hooks rules violations
     if (window.thirdwebSDK) {
-      await window.thirdwebSDK.wallet.switchChain(chainId);
-      toast.success(`Switched to ${chainConfigs[chainName].name}`, {
-        id: toastId,
-      });
-      return true;
+      console.log(`Using ThirdWeb SDK to switch chain to ${chainId}`);
+      try {
+        await window.thirdwebSDK.wallet.switchChain(chainId);
+        console.log(`Successfully switched to ${chainConfigs[chainName].name} using ThirdWeb SDK`);
+        toast.success(`Switched to ${chainConfigs[chainName].name}`, {
+          id: toastId,
+        });
+        return true;
+      } catch (error) {
+        console.error(`Error switching to ${chainName} using ThirdWeb SDK:`, error);
+        // Continue to try with window.ethereum
+      }
     }
 
     // If we don't have SDK in window, use ethereum provider directly
     if (window.ethereum) {
       try {
+        // Ensure the hex chain ID is properly formatted
+        let hexChainId = chainId.toString(16);
+        // Pad with leading zeros if needed to ensure even length
+        if (hexChainId.length % 2 !== 0) {
+          hexChainId = '0' + hexChainId;
+        }
+        hexChainId = `0x${hexChainId}`;
+
+        console.log(`Using window.ethereum to switch chain to ${hexChainId} (decimal: ${chainId})`);
+
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: `0x${chainId.toString(16)}` }],
+          params: [{ chainId: hexChainId }],
         });
+        console.log(`Successfully switched to ${chainConfigs[chainName].name} using window.ethereum`);
         toast.success(`Switched to ${chainConfigs[chainName].name}`, {
           id: toastId,
         });
@@ -110,25 +131,46 @@ export async function switchThirdwebChain(
       } catch (switchError: unknown) {
         // Type assertion for the error
         const error = switchError as { code?: number; message?: string };
+        console.error(`Error switching to ${chainName} using window.ethereum:`, error);
+
         // Chain doesn't exist yet, add it
         if (error.code === 4902) {
           const config = chainConfigs[chainName];
-          await window.ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [
-              {
-                chainId: `0x${config.id.toString(16)}`,
-                chainName: config.name,
-                nativeCurrency: config.nativeCurrency,
-                rpcUrls: config.rpcUrls,
-                blockExplorerUrls: config.blockExplorerUrls,
-              },
-            ],
-          });
-          toast.success(`Added and switched to ${config.name}`, {
-            id: toastId,
-          });
-          return true;
+          // Ensure the hex chain ID is properly formatted
+          let hexChainId = config.id.toString(16);
+          // Pad with leading zeros if needed to ensure even length
+          if (hexChainId.length % 2 !== 0) {
+            hexChainId = '0' + hexChainId;
+          }
+          hexChainId = `0x${hexChainId}`;
+          console.log(`Adding network ${chainName} with chainId ${hexChainId} (decimal: ${config.id}) to wallet`);
+
+          try {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: hexChainId,
+                  chainName: config.name,
+                  nativeCurrency: config.nativeCurrency,
+                  rpcUrls: config.rpcUrls,
+                  blockExplorerUrls: config.blockExplorerUrls,
+                },
+              ],
+            });
+            console.log(`Successfully added and switched to ${config.name}`);
+            toast.success(`Added and switched to ${config.name}`, {
+              id: toastId,
+            });
+            return true;
+          } catch (addError: unknown) {
+            const addErr = addError as { message?: string };
+            console.error(`Error adding ${chainName} network:`, addErr);
+            toast.error(`Failed to add network: ${addErr.message || 'Unknown error'}`, {
+              id: toastId,
+            });
+            return false;
+          }
         }
         toast.error(`Failed to switch network: ${error.message || 'Unknown error'}`, {
           id: toastId,

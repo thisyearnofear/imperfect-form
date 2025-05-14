@@ -35,8 +35,8 @@ const WalletDialog: React.FC<WalletDialogProps> = ({
       onOpenChange={preventClose ? undefined : onClose}
     >
       <DialogPrimitive.Portal>
-        {/* Special backdrop for wallet dialogs */}
-        <div className="fixed inset-0 bg-black z-[2000]" />
+        {/* Special backdrop for wallet dialogs - now with higher opacity */}
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-[2000]" />
 
         <DialogPrimitive.Content
           className="fixed left-[50%] top-[20%] sm:top-[20%] z-[2001] max-h-[90vh] sm:max-h-[85vh] w-[95vw] sm:w-[90vw] max-w-[450px]

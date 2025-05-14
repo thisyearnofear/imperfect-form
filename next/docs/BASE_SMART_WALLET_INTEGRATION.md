@@ -30,7 +30,7 @@ export default function NetworkSelector({ onNetworkSelected }) {
           className="network-option-polygon"
         >
           <img src="/polygon-logo.svg" alt="Polygon" />
-          <span>Polygon Amoy</span>
+          <span>Polygon</span>
         </button>
 
         <button
@@ -222,7 +222,7 @@ function PolygonSubmitScore({ pushups, squats }) {
   const handleSubmit = async () => {
     try {
       await mutateAsync({ args: [pushups, squats] });
-      toast.success("Score submitted to Polygon Amoy!");
+      toast.success("Score submitted to Polygon!");
     } catch (error) {
       toast.error("Failed to submit score");
       console.error(error);

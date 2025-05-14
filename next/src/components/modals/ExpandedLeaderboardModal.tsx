@@ -4,13 +4,7 @@ import React from "react";
 import "@/styles/leaderboard.css";
 import { shortenAddress } from "@/utils/formatters";
 import { Dialog } from "@/components/ui";
-
-interface Score {
-  user: string;
-  score: number;
-  network: "polygon" | "base";
-  displayName?: string;
-}
+import { Score } from "@/types";
 
 interface ExpandedLeaderboardModalProps {
   pushupLeaderboard: Score[];
@@ -108,10 +102,16 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                       className={`px-2 py-1 rounded-full text-xs ${
                         entry.network === "polygon"
                           ? "bg-pink-500/20 text-pink-400"
-                          : "bg-blue-500/20 text-blue-400"
+                          : entry.network === "base"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : entry.network === "monad"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-green-500/20 text-green-400"
                       }`}
                     >
-                      {entry.network === "polygon" ? "Polygon" : "Base"}
+                      {entry.network === "polygon" ? "Polygon" : 
+                       entry.network === "base" ? "Base" : 
+                       entry.network === "monad" ? "Monad" : "Celo"}
                     </span>
                   </td>
                 </tr>
@@ -166,10 +166,16 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                       className={`px-2 py-1 rounded-full text-xs ${
                         entry.network === "polygon"
                           ? "bg-pink-500/20 text-pink-400"
-                          : "bg-blue-500/20 text-blue-400"
+                          : entry.network === "base"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : entry.network === "monad"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-green-500/20 text-green-400"
                       }`}
                     >
-                      {entry.network === "polygon" ? "Polygon" : "Base"}
+                      {entry.network === "polygon" ? "Polygon" : 
+                       entry.network === "base" ? "Base" : 
+                       entry.network === "monad" ? "Monad" : "Celo"}
                     </span>
                   </td>
                 </tr>

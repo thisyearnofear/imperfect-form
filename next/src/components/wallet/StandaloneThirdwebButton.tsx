@@ -6,6 +6,8 @@ import {
   ConnectWallet,
   useAddress,
   useDisconnect,
+  useChainId,
+  useChain,
 } from "@thirdweb-dev/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { shortenAddress } from "@/utils/formatters";
@@ -43,42 +45,97 @@ export default function StandaloneThirdwebButton() {
     []
   );
 
-  // Define Polygon Amoy chain config
-  // Use React.useMemo to ensure the chain config is only created once
-  const polygonAmoy = React.useMemo(
+  // Define chain configs for all supported networks
+  // Use React.useMemo to ensure the chain configs are only created once
+  const chainConfigs = React.useMemo(
     () => ({
-      chainId: 80002,
-      rpc: [
-        process.env.NEXT_PUBLIC_ALCHEMY_AMOY_URL ||
-          "https://polygon-amoy.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-        "https://rpc-amoy.polygon.technology",
-      ],
-      nativeCurrency: {
-        name: "MATIC",
-        symbol: "MATIC",
-        decimals: 18,
-      },
-      shortName: "amoy",
-      slug: "amoy",
-      testnet: true,
-      name: "Polygon Amoy",
-      network: "polygon-amoy",
-      explorers: [
-        {
-          name: "Polygon Amoy Explorer",
-          url: "https://amoy.polygonscan.com",
-          standard: "EIP3091",
+      polygon: {
+        chainId: 137,
+        rpc: [
+          "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
+          "https://polygon-rpc.com",
+          "https://rpc-mainnet.matic.network",
+        ],
+        nativeCurrency: {
+          name: "MATIC",
+          symbol: "MATIC",
+          decimals: 18,
         },
-      ],
+        shortName: "polygon",
+        slug: "polygon",
+        testnet: false,
+        name: "Polygon Mainnet",
+        network: "polygon",
+        explorers: [
+          {
+            name: "Polygon Explorer",
+            url: "https://polygonscan.com",
+            standard: "EIP3091",
+          },
+        ],
+      },
+      monad: {
+        chainId: 10143,
+        rpc: ["https://testnet-rpc.monad.xyz"],
+        nativeCurrency: {
+          name: "MON",
+          symbol: "MON",
+          decimals: 18,
+        },
+        shortName: "monad-testnet",
+        slug: "monad-testnet",
+        testnet: true,
+        name: "Monad Testnet",
+        network: "monad-testnet",
+        explorers: [
+          {
+            name: "Monad Testnet Explorer",
+            url: "https://testnet.monadexplorer.com",
+            standard: "EIP3091",
+          },
+        ],
+      },
+      celo: {
+        chainId: 42220,
+        rpc: ["https://forno.celo.org", "https://rpc.ankr.com/celo"],
+        nativeCurrency: {
+          name: "CELO",
+          symbol: "CELO",
+          decimals: 18,
+        },
+        shortName: "celo",
+        slug: "celo",
+        testnet: false,
+        name: "Celo Mainnet",
+        network: "celo",
+        explorers: [
+          {
+            name: "Celo Explorer",
+            url: "https://explorer.celo.org",
+            standard: "EIP3091",
+          },
+        ],
+      },
     }),
     []
   );
+
+  // Get the selected network from localStorage or default to polygon
+  const selectedNetwork = React.useMemo(() => {
+    if (typeof window !== "undefined") {
+      const storedNetwork = localStorage.getItem("selectedNetwork");
+      if (storedNetwork === "monad" || storedNetwork === "celo") {
+        return storedNetwork;
+      }
+    }
+    return "polygon";
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThirdwebProvider
         clientId={process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || ""}
-        activeChain={polygonAmoy}
+        activeChain={chainConfigs[selectedNetwork as keyof typeof chainConfigs]}
         dAppMeta={{
           name: "Imperfect Form",
           description: "Onchain olympians",
@@ -107,7 +164,7 @@ export default function StandaloneThirdwebButton() {
           },
         ]}
       >
-        <ThirdwebButtonContent />
+        <ThirdwebButtonContent selectedNetwork={selectedNetwork} />
       </ThirdwebProvider>
     </QueryClientProvider>
   );
@@ -119,36 +176,164 @@ export default function StandaloneThirdwebButton() {
  * This component contains the actual button content and is wrapped by the necessary providers.
  * We use React.memo to prevent unnecessary re-renders.
  */
-const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent() {
+interface ThirdwebButtonContentProps {
+  selectedNetwork: string;
+}
+
+const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent({
+  selectedNetwork,
+}: ThirdwebButtonContentProps) {
   const [showModal, setShowModal] = useState(false);
   const [displayName, setDisplayName] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
   // Access network and wallet provider contexts
-  const { setNetwork } = useNetwork();
+  const { network, setNetwork } = useNetwork();
   const { setWalletProvider, setIsConnected, setUserAddress } =
     useWalletProvider();
 
   // Use ThirdWeb hooks directly - this is safe because we're inside ThirdwebProvider
   const address = useAddress();
   const disconnect = useDisconnect();
+  const chainId = useChainId();
+  const chain = useChain();
+
+  // Create refs at the top level of the component
+  const lastDetectedChainId = React.useRef<number | null>(null);
+  const lastAddress = React.useRef<string | null>(null);
+  const lastNetwork = React.useRef<string | null>(null);
+
+  // Map chain IDs to our network names
+  const chainIdToNetwork = React.useMemo(
+    () => ({
+      137: "polygon", // Polygon Mainnet
+      10143: "monad", // Monad Testnet
+      42220: "celo", // Celo Mainnet
+      84532: "base", // Base Sepolia
+    }),
+    []
+  );
 
   // When address changes, update the wallet provider context
   useEffect(() => {
     if (address) {
-      console.log(
-        "StandaloneThirdwebButton: ThirdWeb wallet connected with address:",
-        address
+      // Determine the network based on the connected chain
+      let detectedNetwork = selectedNetwork; // Start with the prop value
+
+      if (
+        chainId &&
+        typeof chainId === "number" &&
+        Object.prototype.hasOwnProperty.call(chainIdToNetwork, chainId) &&
+        lastDetectedChainId.current !== chainId
+      ) {
+        detectedNetwork =
+          chainIdToNetwork[chainId as keyof typeof chainIdToNetwork];
+        lastDetectedChainId.current = chainId;
+
+        // Reduce logging frequency
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `StandaloneThirdwebButton: Detected network from chain ID ${chainId}: ${detectedNetwork}`
+          );
+        }
+      } else if (
+        chain?.name &&
+        !chainId &&
+        lastDetectedChainId.current === null
+      ) {
+        // Try to detect from chain name if chainId mapping fails - only do this once
+        const chainName = chain.name.toLowerCase();
+        if (chainName.includes("celo")) {
+          detectedNetwork = "celo";
+        } else if (chainName.includes("monad")) {
+          detectedNetwork = "monad";
+        } else if (chainName.includes("polygon")) {
+          detectedNetwork = "polygon";
+        } else if (
+          chainName.includes("base") ||
+          chainName.includes("sepolia")
+        ) {
+          detectedNetwork = "base";
+        }
+
+        // Reduce logging frequency
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `StandaloneThirdwebButton: Detected network from chain name ${chain.name}: ${detectedNetwork}`
+          );
+        }
+      }
+
+      // Special handling for Monad testnet - this takes precedence over everything else
+      if (chainId === 10143) {
+        detectedNetwork = "monad";
+        lastDetectedChainId.current = chainId;
+
+        // Store chain ID in localStorage
+        localStorage.setItem("lastChainId", chainId.toString());
+
+        // Reduce logging frequency
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `StandaloneThirdwebButton: Detected Monad testnet from chain ID ${chainId}`
+          );
+        }
+
+        // Set network to monad if needed, but don't force updates
+        if (network !== "monad") {
+          setNetwork("monad");
+        }
+      }
+
+      // Only log connection details when they change
+      if (
+        lastAddress.current !== address ||
+        lastNetwork.current !== detectedNetwork
+      ) {
+        lastAddress.current = address;
+        lastNetwork.current = detectedNetwork;
+
+        // Reduce logging frequency
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `StandaloneThirdwebButton: ThirdWeb wallet connected with address: ${address} on network: ${detectedNetwork} (Chain ID: ${chainId}, Chain: ${chain?.name})`
+          );
+        }
+      }
+
+      // Only update network context if it changed
+      const currentNetwork = localStorage.getItem("selectedNetwork");
+      if (currentNetwork !== detectedNetwork) {
+        setNetwork(detectedNetwork as "polygon" | "monad" | "celo" | "base");
+        localStorage.setItem("selectedNetwork", detectedNetwork);
+      }
+
+      // Only update localStorage if needed
+      const currentChain = localStorage.getItem("selectedChain");
+      let newChain = "";
+
+      if (detectedNetwork === "polygon") {
+        newChain = "polygon";
+      } else if (detectedNetwork === "monad") {
+        newChain = "monad";
+      } else if (detectedNetwork === "celo") {
+        newChain = "celo";
+      } else if (detectedNetwork === "base") {
+        newChain = "base";
+      }
+
+      if (currentChain !== newChain) {
+        localStorage.setItem("selectedChain", newChain);
+      }
+
+      // Only set wallet provider if it's not already set
+      const currentWalletProvider = localStorage.getItem(
+        "selectedWalletProvider"
       );
-
-      // Set network to polygon
-      setNetwork("polygon");
-      localStorage.setItem("selectedNetwork", "polygon");
-      localStorage.setItem("selectedChain", "amoy");
-
-      // Set wallet provider to signature
-      setWalletProvider("signature");
-      localStorage.setItem("selectedWalletProvider", "signature");
+      if (currentWalletProvider !== "signature") {
+        setWalletProvider("signature");
+        localStorage.setItem("selectedWalletProvider", "signature");
+      }
 
       // Set connected status
       setIsConnected(true);
@@ -157,13 +342,27 @@ const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent() {
       setUserAddress(address);
 
       // Store the address in localStorage for persistence
-      localStorage.setItem("userAddress", address);
+      const storedAddress = localStorage.getItem("userAddress");
+      if (storedAddress !== address) {
+        localStorage.setItem("userAddress", address);
+      }
     } else {
       // When disconnected, update connected status
       setIsConnected(false);
       setUserAddress(undefined);
     }
-  }, [address, setNetwork, setWalletProvider, setIsConnected, setUserAddress]);
+  }, [
+    address,
+    chainId,
+    chain,
+    network,
+    setNetwork,
+    setWalletProvider,
+    setIsConnected,
+    setUserAddress,
+    selectedNetwork,
+    chainIdToNetwork,
+  ]);
 
   // Resolve the address to a social identity when it changes
   useEffect(() => {
@@ -246,7 +445,7 @@ const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent() {
               >
                 Disconnect Wallet
               </button>
-              
+
               <button
                 className="text-xs bg-red-800 text-white px-2 py-1 rounded"
                 onClick={() => {

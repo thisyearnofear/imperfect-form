@@ -13,7 +13,12 @@ import {
 import {
   BASE_CONTRACT_ADDRESS,
   POLYGON_CONTRACT_ADDRESS,
+  MONAD_CONTRACT_ADDRESS,
+  CELO_CONTRACT_ADDRESS,
   fitnessLeaderboardABI,
+  monadLeaderboardABI,
+  polygonLeaderboardABI,
+  baseLeaderboardABI,
 } from "@/constants/contracts";
 
 // Verify the ABI and contract address are valid
@@ -42,9 +47,14 @@ export default function SubmitScoreWithWagmi({
   const [isLoading, setIsLoading] = useState(false);
   const { address: wagmiAddress } = useAccount();
   const { network } = useNetworkContext();
-  // Create a type-safe network variable
+  // Create type-safe network variables
   const isPolygonNetwork = network === "polygon";
+  const isMonadNetwork = network === "monad";
+  const isCeloNetwork = network === "celo";
   const isBaseNetwork = network === "base";
+
+  // Check if this is a ThirdWeb network (Polygon, Monad, or Celo)
+  const isThirdwebNetwork = isPolygonNetwork || isMonadNetwork || isCeloNetwork;
 
   // Use the wallet address prop if provided, otherwise fall back to the wagmi address
   const address = walletAddress || wagmiAddress;
@@ -73,9 +83,15 @@ export default function SubmitScoreWithWagmi({
 
   // Simulation hook
   // Get the appropriate contract address based on the network
-  const contractAddress = isPolygonNetwork
-    ? POLYGON_CONTRACT_ADDRESS
-    : BASE_CONTRACT_ADDRESS;
+  let contractAddress = BASE_CONTRACT_ADDRESS;
+
+  if (isPolygonNetwork) {
+    contractAddress = POLYGON_CONTRACT_ADDRESS;
+  } else if (isMonadNetwork) {
+    contractAddress = MONAD_CONTRACT_ADDRESS;
+  } else if (isCeloNetwork) {
+    contractAddress = CELO_CONTRACT_ADDRESS;
+  }
 
   // Ensure contract address is properly formatted as 0x-prefixed string
   const formattedContractAddress = contractAddress.startsWith("0x")
@@ -86,10 +102,23 @@ export default function SubmitScoreWithWagmi({
     console.log("Using contract address:", formattedContractAddress);
   }
 
+  // Determine which ABI to use based on the network
+  let contractABI = fitnessLeaderboardABI;
+
+  if (isMonadNetwork) {
+    contractABI = monadLeaderboardABI;
+  } else if (isPolygonNetwork) {
+    contractABI = polygonLeaderboardABI;
+  } else if (isBaseNetwork) {
+    contractABI = baseLeaderboardABI;
+  } else if (isCeloNetwork) {
+    contractABI = fitnessLeaderboardABI; // Already using the updated ABI
+  }
+
   // Simulation hook
   const { error: simulateError } = useSimulateContract({
     address: formattedContractAddress,
-    abi: fitnessLeaderboardABI,
+    abi: contractABI,
     functionName: "addScore",
     args: [pushupsBI, squatsBI],
     query: {
@@ -101,9 +130,21 @@ export default function SubmitScoreWithWagmi({
   useEffect(() => {
     if (useWagmi && address) {
       // Verify contract address is in correct 0x format
-      const selectedContractAddress = isPolygonNetwork
-        ? POLYGON_CONTRACT_ADDRESS
-        : BASE_CONTRACT_ADDRESS;
+      // Get the appropriate contract address based on the network
+      let selectedContractAddress = BASE_CONTRACT_ADDRESS;
+      let chainInfo = "Base Sepolia (84532)";
+
+      if (isPolygonNetwork) {
+        selectedContractAddress = POLYGON_CONTRACT_ADDRESS;
+        chainInfo = "Polygon Mainnet (137)";
+      } else if (isMonadNetwork) {
+        selectedContractAddress = MONAD_CONTRACT_ADDRESS;
+        chainInfo = "Monad Testnet (10143)";
+      } else if (isCeloNetwork) {
+        selectedContractAddress = CELO_CONTRACT_ADDRESS;
+        chainInfo = "Celo Mainnet (42220)";
+      }
+
       const formattedSelectedContractAddress =
         selectedContractAddress.toLowerCase();
 
@@ -114,13 +155,19 @@ export default function SubmitScoreWithWagmi({
           function: "addScore",
           args: [pushups, squats],
           address: address,
-          chain: isPolygonNetwork
-            ? "Polygon Amoy (80002)"
-            : "Base Sepolia (84532)",
+          chain: chainInfo,
         });
       }
     }
-  }, [useWagmi, address, pushups, squats, isPolygonNetwork]);
+  }, [
+    useWagmi,
+    address,
+    pushups,
+    squats,
+    isPolygonNetwork,
+    isMonadNetwork,
+    isCeloNetwork,
+  ]);
 
   // Write contract hook
   const { writeContract, isPending, data: txHash } = useWriteContract();
@@ -271,11 +318,13 @@ export default function SubmitScoreWithWagmi({
     }
 
     try {
-      // For Polygon network, we should use the ThirdWeb wallet via directContractInteraction
-      if (isPolygonNetwork) {
-        // Show error message - we should be using ThirdWeb for Polygon
+      // For ThirdWeb networks (Polygon, Monad, Celo), we should use the ThirdWeb wallet via directContractInteraction
+      if (isThirdwebNetwork) {
+        // Show error message - we should be using ThirdWeb for these networks
         toast.error(
-          "Please switch to Signature Wallet for Polygon network transactions",
+          `Please switch to Signature Wallet for ${network
+            ?.charAt(0)
+            .toUpperCase()}${network?.slice(1)} network transactions`,
           {
             id: "submit-score",
           }
@@ -304,7 +353,7 @@ export default function SubmitScoreWithWagmi({
       // Create a transaction object with the correct format
       const txRequest = {
         address: formattedContractAddress,
-        abi: fitnessLeaderboardABI,
+        abi: contractABI, // Use the network-specific ABI
         functionName: "addScore",
         args: [pushupsBI, squatsBI],
         chainId: 84532, // Explicitly set Base Sepolia chain ID
@@ -321,7 +370,7 @@ export default function SubmitScoreWithWagmi({
       }
 
       // Double check ABI for the correct function
-      const addScoreAbi = fitnessLeaderboardABI.find(
+      const addScoreAbi = contractABI.find(
         (item) => item.name === "addScore" && item.type === "function"
       );
 
@@ -340,14 +389,14 @@ export default function SubmitScoreWithWagmi({
         toast.loading("Submitting with one-click approval...", {
           id: "submit-score",
         });
-        
+
         try {
           // Create a special transaction metadata object for the Coinbase Wallet
           // This is how transactions need to be formatted to use subaccounts with spend limits
           // Based on Coinbase Wallet SDK documentation and examples
           const txOptions = {
             address: formattedContractAddress,
-            abi: fitnessLeaderboardABI,
+            abi: contractABI, // Use the network-specific ABI
             functionName: "addScore",
             args: [pushupsBI, squatsBI],
             chainId: 84532,
@@ -365,16 +414,17 @@ export default function SubmitScoreWithWagmi({
               // Coinbase Wallet will look for these special properties
               type: "SUBACCOUNT_SPEND_LIMIT_TX",
               // Label with network information
-              networkLabel: "Base Sepolia"
-            }
+              networkLabel: "Base Sepolia",
+            },
           };
 
-          console.log("Transaction with subaccount meta:", 
-            JSON.stringify(txOptionsWithMeta, (_, v) => 
+          console.log(
+            "Transaction with subaccount meta:",
+            JSON.stringify(txOptionsWithMeta, (_, v) =>
               typeof v === "bigint" ? v.toString() : v
             )
           );
-          
+
           // The meta field is a special property recognized by the Coinbase Wallet connector
           // @ts-expect-error - TypeScript definitions don't include meta property
           writeContract(txOptionsWithMeta);
@@ -382,12 +432,14 @@ export default function SubmitScoreWithWagmi({
           console.log("Transaction submitted successfully!");
         } catch (error) {
           console.error("Error submitting transaction with subaccount:", error);
-          toast.error("Failed to submit with one-click. Falling back to standard transaction.");
-          
+          toast.error(
+            "Failed to submit with one-click. Falling back to standard transaction."
+          );
+
           // Fall back to standard transaction if one-click fails
           writeContract({
             address: formattedContractAddress,
-            abi: fitnessLeaderboardABI,
+            abi: contractABI, // Use the network-specific ABI
             functionName: "addScore",
             args: [pushupsBI, squatsBI],
             chainId: 84532,
@@ -399,7 +451,7 @@ export default function SubmitScoreWithWagmi({
         console.log("Using standard transaction flow (requires signature)");
         writeContract({
           address: formattedContractAddress,
-          abi: fitnessLeaderboardABI,
+          abi: contractABI, // Use the network-specific ABI
           functionName: "addScore",
           args: [pushupsBI, squatsBI],
           chainId: 84532,
@@ -436,8 +488,8 @@ export default function SubmitScoreWithWagmi({
         confirmStep
           ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
           : isPolygonNetwork
-            ? "bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600"
-            : "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+          ? "bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600"
+          : "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
       } text-white font-bold py-4 px-6 rounded-md transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg w-full flex items-center justify-center text-xl border-4 border-white z-50 relative`}
     >
       {isPending || isLoading || isWaitingForTx ? (
@@ -458,7 +510,7 @@ export default function SubmitScoreWithWagmi({
               {isPolygonNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
-                  Polygon Amoy • Signature Wallet
+                  Polygon Mainnet • Signature Wallet
                 </>
               ) : (
                 <>
@@ -482,7 +534,7 @@ export default function SubmitScoreWithWagmi({
               {isPolygonNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
-                  Polygon Amoy • Signature Wallet
+                  Polygon Mainnet • Signature Wallet
                 </>
               ) : (
                 <>

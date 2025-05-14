@@ -29,7 +29,7 @@ import { baseSepolia } from "wagmi/chains";
 
 // Define chain IDs for our supported networks
 const chainIdMap = {
-  amoy: 80002, // Polygon Amoy testnet
+  amoy: 137, // Polygon Mainnet
   base: baseSepolia.id, // Base Sepolia testnet - use the chain ID from wagmi/chains
 };
 
@@ -63,6 +63,7 @@ const Providers: React.FC<ProvidersProps> = ({ children }) => {
     localStorage.setItem("selectedChain", validChain);
 
     // Also update the network context to keep them in sync
+    // Keep using "amoy" for backward compatibility, even though it's now Polygon Mainnet
     const correspondingNetwork = validChain === "amoy" ? "polygon" : "base";
     if (network !== correspondingNetwork) {
       setNetwork(correspondingNetwork);
@@ -78,6 +79,7 @@ const Providers: React.FC<ProvidersProps> = ({ children }) => {
     localStorage.setItem("selectedChain", newChain);
 
     // Also update the network context to keep them in sync
+    // Keep using "amoy" for backward compatibility, even though it's now Polygon Mainnet
     const correspondingNetwork = newChain === "amoy" ? "polygon" : "base";
     if (network !== correspondingNetwork) {
       setNetwork(correspondingNetwork);
@@ -107,26 +109,27 @@ const Providers: React.FC<ProvidersProps> = ({ children }) => {
       chainId: chainIdMap.amoy,
       rpc: [
         // Use your own Alchemy API key for better reliability
-        process.env.NEXT_PUBLIC_ALCHEMY_AMOY_URL ||
-          "https://polygon-amoy.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-        "https://rpc-amoy.polygon.technology",
+        process.env.NEXT_PUBLIC_ALCHEMY_POLYGON_URL ||
+          "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
+        "https://polygon-rpc.com",
+        "https://rpc-mainnet.matic.network",
       ],
       nativeCurrency: {
         name: "MATIC",
         symbol: "MATIC",
         decimals: 18,
       },
-      shortName: "amoy",
-      slug: "amoy",
-      testnet: true,
-      name: "Polygon Amoy",
+      shortName: "polygon",
+      slug: "polygon",
+      testnet: false,
+      name: "Polygon Mainnet",
       // Add explicit network information to prevent defaulting to Ethereum
-      network: "polygon-amoy",
+      network: "polygon",
       // Add explorer information
       explorers: [
         {
-          name: "Polygon Amoy Explorer",
-          url: "https://amoy.polygonscan.com",
+          name: "Polygon Explorer",
+          url: "https://polygonscan.com",
           standard: "EIP3091",
         },
       ],

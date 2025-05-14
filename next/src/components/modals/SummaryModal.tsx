@@ -7,7 +7,11 @@ import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { ConnectWallet } from "@/components/wallet";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
 import { submitScoreDirectly } from "@/utils/directContractInteraction";
-import { POLYGON_CONTRACT_ADDRESS } from "@/constants/contracts";
+import {
+  POLYGON_CONTRACT_ADDRESS,
+  MONAD_CONTRACT_ADDRESS,
+  CELO_CONTRACT_ADDRESS,
+} from "@/constants/contracts";
 import toast from "react-hot-toast";
 
 // Initialize window properties if they don't exist
@@ -41,7 +45,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const { walletProvider, userAddress } = useWalletProvider();
 
   // Type assertion to help TypeScript understand the network type
-  const networkType = network as "polygon" | "base";
+  const networkType = network as "polygon" | "base" | "monad" | "celo";
 
   // Use the address from props if provided, otherwise fall back to userAddress from context
   const effectiveAddress = address || userAddress;
@@ -64,9 +68,15 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       return;
     }
 
-    // Only proceed if we're on Polygon network
-    if (networkType !== "polygon") {
-      toast.error("ThirdWeb wallet can only be used with Polygon network");
+    // Only proceed if we're on a network supported by ThirdWeb
+    if (
+      networkType !== "polygon" &&
+      networkType !== "monad" &&
+      networkType !== "celo"
+    ) {
+      toast.error(
+        "ThirdWeb wallet can only be used with Polygon, Monad, or Celo networks"
+      );
       return;
     }
 
@@ -81,9 +91,17 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         id: "submit-score",
       });
 
+      // Get the appropriate contract address based on the network
+      let contractAddress = POLYGON_CONTRACT_ADDRESS;
+      if (networkType === "monad") {
+        contractAddress = MONAD_CONTRACT_ADDRESS;
+      } else if (networkType === "celo") {
+        contractAddress = CELO_CONTRACT_ADDRESS;
+      }
+
       // Use direct contract interaction for ThirdWeb
       const result = await submitScoreDirectly(
-        POLYGON_CONTRACT_ADDRESS,
+        contractAddress,
         pushups,
         squats,
         false, // not Base network
@@ -94,11 +112,26 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         // Store transaction hash for social sharing
         if (typeof window !== "undefined" && result.transactionHash) {
           window.transactionHash = result.transactionHash;
-          window.selectedNetworkName = "Polygon Amoy";
+
+          // Set the appropriate network name
+          if (networkType === "polygon") {
+            window.selectedNetworkName = "Polygon Amoy";
+          } else if (networkType === "monad") {
+            window.selectedNetworkName = "Monad Testnet";
+          } else if (networkType === "celo") {
+            window.selectedNetworkName = "Celo Mainnet";
+          }
         }
 
-        // Show success message with explorer link
-        const explorerUrl = `https://amoy.polygonscan.com/tx/${result.transactionHash}`;
+        // Get the appropriate explorer URL based on the network
+        let explorerUrl;
+        if (networkType === "polygon") {
+          explorerUrl = `https://polygonscan.com/tx/${result.transactionHash}`;
+        } else if (networkType === "monad") {
+          explorerUrl = `https://testnet.monadexplorer.com/tx/${result.transactionHash}`;
+        } else if (networkType === "celo") {
+          explorerUrl = `https://explorer.celo.org/mainnet/tx/${result.transactionHash}`;
+        }
 
         toast.success(
           <div>
@@ -163,7 +196,26 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         <div className="border-b border-gray-700 pb-2">
           <div className="text-center">
             <p className="text-sm">
-              Network: <span className="font-bold">{networkType === "polygon" ? "Polygon Amoy" : "Base Sepolia"}</span>
+              Network:{" "}
+              <span
+                className={`font-bold px-2 py-0.5 rounded-full text-xs ${
+                  networkType === "polygon"
+                    ? "bg-purple-900/50 text-purple-300"
+                    : networkType === "monad"
+                    ? "bg-yellow-900/50 text-yellow-300"
+                    : networkType === "celo"
+                    ? "bg-green-900/50 text-green-300"
+                    : "bg-blue-900/50 text-blue-300"
+                }`}
+              >
+                {networkType === "polygon"
+                  ? "Polygon Amoy"
+                  : networkType === "monad"
+                  ? "Monad Testnet"
+                  : networkType === "celo"
+                  ? "Celo Mainnet"
+                  : "Base Sepolia"}
+              </span>
             </p>
           </div>
         </div>
@@ -236,12 +288,22 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </h3>
 
                 {/* Use different submission methods based on network */}
-                {networkType === "polygon" ? (
+                {networkType === "polygon" ||
+                networkType === "monad" ||
+                networkType === "celo" ? (
                   <button
                     id="submitScoreButton"
                     onClick={handleThirdwebSubmission}
                     disabled={isSubmitting}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md w-full flex items-center justify-center"
+                    className={`text-white font-bold py-3 px-4 rounded-md w-full flex items-center justify-center transition-all transform hover:scale-[1.02] ${
+                      networkType === "polygon"
+                        ? "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 shadow-[0_0_10px_rgba(168,85,247,0.3)]"
+                        : networkType === "monad"
+                        ? "bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 shadow-[0_0_10px_rgba(250,204,21,0.3)]"
+                        : networkType === "celo"
+                        ? "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 shadow-[0_0_10px_rgba(74,222,128,0.3)]"
+                        : "bg-gradient-to-r from-blue-600 to-cyan-700 hover:from-blue-500 hover:to-cyan-600 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+                    }`}
                   >
                     {isSubmitting ? (
                       <>
@@ -249,9 +311,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
                       </>
                     ) : (
-                      <span className="font-bold">
-                        Submit Score
-                      </span>
+                      <span className="font-bold">Submit Score</span>
                     )}
                   </button>
                 ) : (
@@ -271,15 +331,19 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         {/* Social sharing buttons - Simplified */}
         {window.transactionHash && (
           <div className="border-t border-gray-700 pt-4">
-            <p className="text-xs text-center text-gray-400 mb-2">Share your achievement:</p>
+            <p className="text-xs text-center text-gray-400 mb-2">
+              Share your achievement:
+            </p>
             <div className="flex justify-center space-x-4">
               <button
-                className="farcaster-button"
+                className="farcaster-button transition-all transform hover:scale-105"
                 onClick={() => {
                   const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
                   const url = `https://imperfect-form.vercel.app?ref=farcaster`;
                   window.open(
-                    `https://warpcast.com/~/compose?text=${encodeURIComponent(text + " " + url)}`,
+                    `https://warpcast.com/~/compose?text=${encodeURIComponent(
+                      text + " " + url
+                    )}`,
                     "_blank"
                   );
                 }}
@@ -287,13 +351,17 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 Farcaster
               </button>
               <button
-                className="twitter-button"
+                className="twitter-button transition-all transform hover:scale-105"
                 onClick={() => {
                   const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
                   const url = `https://imperfect-form.vercel.app?ref=twitter`;
                   const hashtags = ["OnchainOlympics", "FitnessOnchain"];
                   window.open(
-                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=${hashtags.join(",")}`,
+                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                      text
+                    )}&url=${encodeURIComponent(url)}&hashtags=${hashtags.join(
+                      ","
+                    )}`,
                     "_blank"
                   );
                 }}

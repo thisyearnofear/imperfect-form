@@ -1,6 +1,6 @@
-export const amoyChainId = 80002;
+export const polygonChainId = 137;
 export const baseSepoliaChainId = 84532;
-export const amoyRpcUrl = "https://rpc-amoy.polygon.technology/";
+export const polygonRpcUrl = "https://polygon-rpc.com/";
 export const baseSepoliaRpcUrl = "https://sepolia.base.org";
 
 let web3;
@@ -683,7 +683,6 @@ document
 async function resolveENSName(address) {
   try {
     // Attempt to resolve ENS name using the ENS Data API directly
-    // sourcery skip: inline-immediately-returned-variable
     const ensName = await resolveENSNameFallback(address);
     return ensName;
   } catch (error) {

@@ -54,8 +54,23 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
     // Persist to localStorage
     if (newNetwork) {
       localStorage.setItem("selectedNetwork", newNetwork);
+
+      // Set the appropriate chain based on the network
+      let selectedChain = "base";
+      if (newNetwork === "polygon") {
+        selectedChain = "amoy"; // Keep as "amoy" for backward compatibility
+      } else if (newNetwork === "monad") {
+        selectedChain = "monad";
+      } else if (newNetwork === "celo") {
+        selectedChain = "celo";
+      }
+      localStorage.setItem("selectedChain", selectedChain);
+
+      // Add timestamp to force UI updates
+      localStorage.setItem("lastNetworkChange", Date.now().toString());
     } else {
       localStorage.removeItem("selectedNetwork");
+      localStorage.removeItem("selectedChain");
     }
   };
 

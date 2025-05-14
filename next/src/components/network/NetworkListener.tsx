@@ -10,33 +10,51 @@ import { useNetwork } from "@/contexts/NetworkContext";
 export default function NetworkListener() {
   const { network } = useNetwork();
   const [networkKey, setNetworkKey] = useState(Date.now());
-  
+
   // Listen for network changes
   useEffect(() => {
     // Update key to force re-renders of components that depend on this
     setNetworkKey(Date.now());
-    
+
     // Also listen for localStorage changes
-    const handleStorageChange = () => {
-      setNetworkKey(Date.now());
+    const handleStorageChange = (event: StorageEvent) => {
+      if (
+        event.key === "selectedNetwork" ||
+        event.key === "selectedChain" ||
+        event.key === "lastNetworkChange" ||
+        event.key === "lastChainId"
+      ) {
+        console.log(
+          `NetworkListener: Storage change detected for ${event.key}`
+        );
+        setNetworkKey(Date.now());
+      }
     };
-    
+
     window.addEventListener("storage", handleStorageChange);
-    
-    // Custom interval to check for network changes
+
+    // Custom interval to check for network changes, but less frequently
     const checkInterval = setInterval(() => {
       const lastChange = localStorage.getItem("lastNetworkChange");
       if (lastChange && parseInt(lastChange) > networkKey) {
+        console.log("NetworkListener: Detected network change via timestamp");
         setNetworkKey(parseInt(lastChange));
       }
-    }, 500);
-    
+    }, 1000); // Check less frequently to reduce performance impact
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       clearInterval(checkInterval);
     };
   }, [network, networkKey]);
-  
+
   // Invisible component that forces re-renders
-  return <div id="network-listener" data-network={network} data-key={networkKey} style={{ display: "none" }} />;
+  return (
+    <div
+      id="network-listener"
+      data-network={network}
+      data-key={networkKey}
+      style={{ display: "none" }}
+    />
+  );
 }

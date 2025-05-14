@@ -2,11 +2,11 @@
  * Utility functions for RPC URL handling
  */
 
-// Fallback RPC URLs for Polygon Amoy testnet
+// Fallback RPC URLs for Polygon Mainnet
 export const POLYGON_FALLBACK_RPCS = [
-  "https://polygon-amoy.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-  "https://polygon-amoy.drpc.org",
-  "https://rpc-amoy.polygon.technology/",
+  "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
+  "https://polygon-rpc.com",
+  "https://rpc-mainnet.matic.network",
 ];
 
 // Fallback RPC URLs for Base Sepolia testnet

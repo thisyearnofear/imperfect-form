@@ -4,7 +4,10 @@ import React, { useState } from "react";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { Dialog } from "@/components/ui";
 import Image from "next/image";
-import { POLYGON_CONTRACT_ADDRESS, BASE_CONTRACT_ADDRESS } from "@/constants/contracts";
+import {
+  POLYGON_CONTRACT_ADDRESS,
+  BASE_CONTRACT_ADDRESS,
+} from "@/constants/contracts";
 
 interface ChainSelectorProps {
   onClose?: () => void;
@@ -21,15 +24,18 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
   // Handle chain selection
   const handleChainSelected = async (selectedNetwork: "polygon" | "base") => {
     setIsLoading(true);
-    
+
     try {
       // Update local storage and context
       localStorage.setItem("selectedNetwork", selectedNetwork);
-      localStorage.setItem("selectedChain", selectedNetwork === "polygon" ? "amoy" : "base");
-      
+      localStorage.setItem(
+        "selectedChain",
+        selectedNetwork === "polygon" ? "amoy" : "base" // Keep as "amoy" for backward compatibility
+      );
+
       // Update context
       setNetwork(selectedNetwork);
-      
+
       // Close dialog
       if (onClose) onClose();
     } catch (error) {
@@ -74,10 +80,10 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
               onError={() => true}
               unoptimized
             />
-            Polygon Amoy
+            Polygon Mainnet
           </span>
           <span className="text-xs bg-white text-purple-700 px-2 py-1 rounded font-bold">
-            Testnet
+            Mainnet
           </span>
         </button>
 
@@ -102,11 +108,17 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
             Testnet
           </span>
         </button>
-        
+
         <div className="mt-4 text-xs text-gray-400 text-center">
           <p>Contract Addresses:</p>
-          <p>Polygon Amoy: {POLYGON_CONTRACT_ADDRESS.slice(0, 6)}...{POLYGON_CONTRACT_ADDRESS.slice(-4)}</p>
-          <p>Base Sepolia: {BASE_CONTRACT_ADDRESS.slice(0, 6)}...{BASE_CONTRACT_ADDRESS.slice(-4)}</p>
+          <p>
+            Polygon Mainnet: {POLYGON_CONTRACT_ADDRESS.slice(0, 6)}...
+            {POLYGON_CONTRACT_ADDRESS.slice(-4)}
+          </p>
+          <p>
+            Base Sepolia: {BASE_CONTRACT_ADDRESS.slice(0, 6)}...
+            {BASE_CONTRACT_ADDRESS.slice(-4)}
+          </p>
         </div>
       </div>
     </Dialog>

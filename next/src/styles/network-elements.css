@@ -1,0 +1,19 @@
+/* Network-related styling for Imperfect Form - Optimized */
+
+/* Shadow glow effect - combined for performance */
+.shadow-glow {
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+/* Minimal badge styling */
+.network-badge {
+  transition: transform 0.2s ease;
+}
+
+/* Basic responsive styling */
+@media (max-width: 640px) {
+  .network-badge {
+    font-size: 0.7rem !important;
+    padding: 0.1rem 0.3rem !important;
+  }
+}

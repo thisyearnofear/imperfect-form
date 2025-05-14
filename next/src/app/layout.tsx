@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import "@/styles/animations.css";
+// Removed static import of network-elements.css in favor of dynamic loading
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -28,6 +29,29 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Dynamic CSS loading script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Only load network styles when needed
+              function loadNetworkCSS() {
+                if (
+                  localStorage.getItem('selectedNetwork') === 'monad' || 
+                  localStorage.getItem('selectedNetwork') === 'celo' ||
+                  localStorage.getItem('selectedWalletProvider') === 'signature'
+                ) {
+                  const link = document.createElement('link');
+                  link.rel = 'stylesheet';
+                  link.href = '/network-elements.css';
+                  document.head.appendChild(link);
+                }
+              }
+              // Try to load immediately but also after DOM content loaded
+              loadNetworkCSS();
+              document.addEventListener('DOMContentLoaded', loadNetworkCSS);
+            `,
+          }}
+        />
         {/* Extra styles to ensure modals have solid backgrounds */}
         <style
           dangerouslySetInnerHTML={{

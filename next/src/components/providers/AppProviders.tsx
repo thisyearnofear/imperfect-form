@@ -45,10 +45,7 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
 
   // Get the Wagmi config from walletConfig.ts
   // Use useMemo to prevent unnecessary re-renders
-  const wagmiConfig = React.useMemo(
-    () => getWagmiConfig(),
-    []
-  );
+  const wagmiConfig = React.useMemo(() => getWagmiConfig(), []);
 
   // Only log once on initial render to prevent flooding and render loops
   useEffect(() => {
@@ -77,14 +74,16 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
   // Use a stable callback to prevent unnecessary re-renders
   const syncWalletProvider = React.useCallback(() => {
     // Check URL parameters first
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('showSelector') === 'true') {
-        console.log("AppProviders: showSelector URL parameter found, skipping auto-sync");
+      if (params.get("showSelector") === "true") {
+        console.log(
+          "AppProviders: showSelector URL parameter found, skipping auto-sync"
+        );
         return;
       }
     }
-    
+
     // Skip if already syncing to prevent update loops
     if (syncingRef.current) return;
 
@@ -98,7 +97,7 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
 
     // Update the previous values
     prevValuesRef.current = { network, walletProvider };
-    
+
     // Check if we have a wallet provider from localStorage
     const storedWalletProvider = localStorage.getItem("selectedWalletProvider");
 
@@ -125,11 +124,14 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
       setTimeout(() => {
         syncingRef.current = false;
       }, 1000);
-    } else if (network === "polygon" && walletProvider === null) {
+    } else if (
+      (network === "polygon" || network === "monad" || network === "celo") &&
+      walletProvider === null
+    ) {
       // Only log on client side
       if (typeof window !== "undefined") {
         console.log(
-          "Auto-setting wallet provider to 'signature' for new user with 'polygon' network"
+          `Auto-setting wallet provider to 'signature' for new user with '${network}' network`
         );
       }
       syncingRef.current = true;
@@ -144,9 +146,9 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
   // Use effect to call the stable callback
   useEffect(() => {
     // Give URL parameter check higher priority
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('showSelector') === 'true') {
+      if (params.get("showSelector") === "true") {
         // Clear the URL parameter without refreshing
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
@@ -154,7 +156,7 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
         return;
       }
     }
-    
+
     syncWalletProvider();
   }, [syncWalletProvider]);
 

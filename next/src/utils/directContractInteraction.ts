@@ -1,5 +1,10 @@
 import { ethers } from "ethers";
-import { fitnessLeaderboardABI } from "@/constants/contracts";
+import {
+  fitnessLeaderboardABI,
+  monadLeaderboardABI,
+  polygonLeaderboardABI,
+  baseLeaderboardABI
+} from "@/constants/contracts";
 import toast from "react-hot-toast";
 
 /**
@@ -86,7 +91,7 @@ export async function submitScoreDirectly(
       // We can assume the wallet may have subaccounts configured through the SDK
       if (!skipSubAccountCheck) {
         console.log("Using SDK-configured subaccounts for Base network");
-        
+
         // Return to use Wagmi for transaction handling with the Coinbase SDK
         return {
           success: false,
@@ -116,7 +121,7 @@ export async function submitScoreDirectly(
         };
       }
     } else {
-      // For Polygon network, use window.ethereum
+      // For ThirdWeb-compatible networks (Polygon/Monad/Celo), use window.ethereum
       if (!window.ethereum) {
         return {
           success: false,
@@ -125,7 +130,18 @@ export async function submitScoreDirectly(
         };
       }
 
-      console.log("Using window.ethereum provider for Polygon network");
+      // Determine which network we're using based on the contract address
+      let networkName = "Unknown";
+      if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
+        networkName = "Polygon Mainnet";
+      } else if (contractAddress === "0x653d41Fba630381aA44d8598a4b35Ce257924d65") {
+        networkName = "Monad Testnet";
+        console.log("Detected Monad Testnet contract");
+      } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
+        networkName = "Celo Mainnet";
+      }
+
+      console.log(`Using window.ethereum provider for ${networkName} network`);
 
       // Create a provider without custom options first
       provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -142,10 +158,28 @@ export async function submitScoreDirectly(
       userAddress = await signer.getAddress();
     }
 
-    // Create contract instance
+    // Determine which ABI to use based on the contract address
+    let contractABI = fitnessLeaderboardABI;
+
+    // Use network-specific ABIs
+    if (contractAddress === "0x653d41Fba630381aA44d8598a4b35Ce257924d65") {
+      // Monad Testnet
+      contractABI = monadLeaderboardABI;
+    } else if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
+      // Polygon Mainnet
+      contractABI = polygonLeaderboardABI;
+    } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
+      // Base Sepolia
+      contractABI = baseLeaderboardABI;
+    } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
+      // Celo Mainnet
+      contractABI = fitnessLeaderboardABI; // Already using the updated ABI
+    }
+
+    // Create contract instance with the appropriate ABI
     const contract = new ethers.Contract(
       contractAddress,
-      fitnessLeaderboardABI,
+      contractABI,
       signer
     );
 
@@ -182,26 +216,105 @@ export async function submitScoreDirectly(
     });
 
     // Send transaction with explicit gas limit
-    // Try with EIP-1559 parameters first, but fall back to legacy if needed
+    // Use different transaction parameters based on the network
     let tx;
-    try {
-      // Try EIP-1559 transaction (supported by most modern wallets)
-      tx = await contract.addScore(pushups, squats, {
-        gasLimit: gasLimit,
-        maxPriorityFeePerGas: ethers.utils.parseUnits("2", "gwei"), // Higher priority fee
-        maxFeePerGas: ethers.utils.parseUnits("50", "gwei"), // Higher max fee
-      });
-    } catch (error) {
-      console.log(
-        "EIP-1559 transaction failed, falling back to legacy:",
-        error
-      );
 
-      // Fall back to legacy transaction format
-      tx = await contract.addScore(pushups, squats, {
-        gasLimit: gasLimit,
-        gasPrice: ethers.utils.parseUnits("30", "gwei"), // Higher gas price for legacy transactions
-      });
+    // Network-specific transaction parameters
+    if (contractAddress === "0x653d41Fba630381aA44d8598a4b35Ce257924d65") {
+      // Monad Testnet
+      console.log("Using Monad testnet specific transaction parameters");
+      try {
+        // For Monad testnet, use legacy transaction format with higher gas price
+        // Include the submission fee (0.001 MON) required by the contract
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit.mul(2), // Double the gas limit for Monad
+          gasPrice: ethers.utils.parseUnits("50", "gwei"), // Higher gas price for Monad
+          value: ethers.utils.parseEther("0.001"), // Send 0.001 MON as submission fee (native token)
+        });
+      } catch (error) {
+        console.error("Monad transaction failed:", error);
+        // Try with even higher gas price
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit.mul(3), // Triple the gas limit
+          gasPrice: ethers.utils.parseUnits("100", "gwei"), // Much higher gas price
+          value: ethers.utils.parseEther("0.001"), // Send 0.001 MON as submission fee (native token)
+        });
+      }
+    } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
+      // Celo Mainnet
+      console.log("Using Celo mainnet specific transaction parameters");
+      try {
+        // For Celo mainnet standardized contract, don't include a submission fee
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit.mul(2), // Double the gas limit for Celo
+          // No value parameter - the standardized contract doesn't require a fee
+        });
+      } catch (error) {
+        console.error("Celo transaction failed:", error);
+        // Try with higher gas limit and legacy transaction format
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit.mul(3), // Triple the gas limit
+          gasPrice: ethers.utils.parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
+          // No value parameter - the standardized contract doesn't require a fee
+        });
+      }
+    } else if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
+      // Polygon Mainnet
+      console.log("Using Polygon mainnet specific transaction parameters");
+      try {
+        // For Polygon mainnet, use EIP-1559 transaction
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit.mul(2), // Double the gas limit for Polygon
+          maxPriorityFeePerGas: ethers.utils.parseUnits("30", "gwei"), // Higher priority fee for Polygon
+          maxFeePerGas: ethers.utils.parseUnits("100", "gwei"), // Higher max fee for Polygon
+        });
+      } catch (error) {
+        console.error("Polygon transaction failed:", error);
+        // Fall back to legacy transaction format
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit.mul(3), // Triple the gas limit
+          gasPrice: ethers.utils.parseUnits("50", "gwei"), // Higher gas price for Polygon
+        });
+      }
+    } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
+      // Base Sepolia
+      console.log("Using Base Sepolia specific transaction parameters");
+      try {
+        // For Base Sepolia, use EIP-1559 transaction
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit.mul(2), // Double the gas limit for Base
+          maxPriorityFeePerGas: ethers.utils.parseUnits("2", "gwei"), // Priority fee for Base
+          maxFeePerGas: ethers.utils.parseUnits("50", "gwei"), // Max fee for Base
+        });
+      } catch (error) {
+        console.error("Base transaction failed:", error);
+        // Fall back to legacy transaction format
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit.mul(3), // Triple the gas limit
+          gasPrice: ethers.utils.parseUnits("30", "gwei"), // Gas price for Base
+        });
+      }
+    } else {
+      // Generic fallback for any other networks
+      try {
+        // Try EIP-1559 transaction (supported by most modern wallets)
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit,
+          maxPriorityFeePerGas: ethers.utils.parseUnits("2", "gwei"), // Higher priority fee
+          maxFeePerGas: ethers.utils.parseUnits("50", "gwei"), // Higher max fee
+        });
+      } catch (error) {
+        console.log(
+          "EIP-1559 transaction failed, falling back to legacy:",
+          error
+        );
+
+        // Fall back to legacy transaction format
+        tx = await contract.addScore(pushups, squats, {
+          gasLimit: gasLimit,
+          gasPrice: ethers.utils.parseUnits("30", "gwei"), // Higher gas price for legacy transactions
+        });
+      }
     }
 
     // Show pending transaction toast
@@ -270,11 +383,40 @@ export async function submitScoreDirectly(
           "Contract error: The transaction may revert. Check if you have already submitted recently.",
       };
     } else if (err.message && err.message.includes("execution reverted")) {
-      return {
-        success: false,
-        error:
-          "Contract execution reverted. You may have already submitted recently or the contract has restrictions.",
-      };
+      // Check for specific contract errors
+      if (err.message.includes("InsufficientFee")) {
+        return {
+          success: false,
+          error: "Insufficient fee. The contract requires a submission fee of 0.001 MON (Monad's native token).",
+        };
+      } else if (err.message.includes("CooldownNotExpired")) {
+        return {
+          success: false,
+          error: "Cooldown period not expired. Please wait before submitting again.",
+        };
+      } else if (err.message.includes("ScoreExceedsMaximum")) {
+        return {
+          success: false,
+          error: "Score exceeds maximum allowed per submission (100).",
+        };
+      } else if (err.message.includes("OperationFailed")) {
+        // This could be from the onlyCeloNetwork modifier or other checks
+        return {
+          success: false,
+          error: "Operation failed. Make sure you're on the correct network for this contract.",
+        };
+      } else if (err.message.includes("Unauthorized")) {
+        return {
+          success: false,
+          error: "Unauthorized operation. This function may be restricted to the contract owner.",
+        };
+      } else {
+        return {
+          success: false,
+          error:
+            "Contract execution reverted. You may have already submitted recently or the contract has restrictions.",
+        };
+      }
     } else if (err.message && err.message.includes("timeout")) {
       return {
         success: false,
@@ -329,7 +471,7 @@ export async function canUserSubmit(
       // Default to allowing submission for Base Smart Wallet
       return { canSubmit: true };
     } else {
-      // For Polygon network, use window.ethereum
+      // For Polygon/Monad/Celo networks, use window.ethereum
       if (!window.ethereum) {
         return { canSubmit: false };
       }
@@ -337,23 +479,47 @@ export async function canUserSubmit(
       // Create a provider
       provider = new ethers.providers.Web3Provider(window.ethereum);
 
-      // Get the current network to check if we're on Polygon Amoy
+      // Get the current network to check if we're on a supported network
       const network = await provider.getNetwork();
       console.log("Checking submission eligibility on network:", network);
 
-      // For Polygon Amoy, bypass the cooldown check due to contract issues
-      if (network.chainId === 80002) {
+      // For all supported networks, bypass the cooldown check due to potential contract issues
+      // This ensures users can submit scores on all networks without cooldown restrictions
+      if (
+        network.chainId === 137 || // Polygon Mainnet
+        network.chainId === 10143 || // Monad Testnet
+        network.chainId === 42220 || // Celo Mainnet
+        network.chainId === 84532 // Base Sepolia
+      ) {
         console.log(
-          "On Polygon Amoy, bypassing cooldown check due to contract issues"
+          `On network ${network.name} (${network.chainId}), bypassing cooldown check to ensure consistent experience`
         );
         return { canSubmit: true };
       }
     }
 
-    // Create contract instance (read-only)
+    // Determine which ABI to use based on the contract address
+    let contractABI = fitnessLeaderboardABI;
+
+    // Use network-specific ABIs
+    if (contractAddress === "0x653d41Fba630381aA44d8598a4b35Ce257924d65") {
+      // Monad Testnet
+      contractABI = monadLeaderboardABI;
+    } else if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
+      // Polygon Mainnet
+      contractABI = polygonLeaderboardABI;
+    } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
+      // Base Sepolia
+      contractABI = baseLeaderboardABI;
+    } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
+      // Celo Mainnet
+      contractABI = fitnessLeaderboardABI; // Already using the updated ABI
+    }
+
+    // Create contract instance (read-only) with the appropriate ABI
     const contract = new ethers.Contract(
       contractAddress,
-      fitnessLeaderboardABI,
+      contractABI,
       provider
     );
 

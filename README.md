@@ -8,16 +8,16 @@ A web app for on-chain fitness challenges with real-time pose detection, leaderb
 
 This repository contains two implementations of the Imperfect Form application:
 
-1. **Next.js Implementation** (current development focus)
-2. **Vanilla JS Implementation** (legacy version)
+1. **Next.js Implementation** (active production version)
+2. **Vanilla JS Implementation** (legacy reference only - not for production use)
 
 ### Next.js Implementation
 
-The Next.js implementation is located in the `next/` directory and represents the modern, scalable version of the application with improved architecture and features.
+The Next.js implementation is located in the `next/` directory and represents the modern, scalable version of the application with improved architecture and features. This is the only version that should be used for production and active development.
 
 ### Vanilla JS Implementation
 
-The original implementation using vanilla JavaScript is preserved in the `vanillaJS/` directory for reference and backward compatibility.
+The original implementation using vanilla JavaScript is preserved in the root and `vanillaJS/` directories for reference purposes only. This code is not actively maintained and should not be built or deployed.
 
 ---
 
@@ -74,11 +74,10 @@ imperfect-form/
 
 ### Prerequisites
 
-- Node.js >= 20.x (for Next.js implementation)
-- Node.js >= 18.x (for vanilla JS implementation)
+- Node.js >= 20.x
 - Yarn or npm
 
-### Next.js Implementation
+### Next.js Implementation (Production Version)
 
 ```bash
 # Navigate to the Next.js directory
@@ -110,24 +109,9 @@ Common issues and solutions:
 
 5. **Dependency Arrays**: Always include all dependencies in useEffect and useCallback dependency arrays to prevent stale closures and unnecessary re-renders.
 
-### Vanilla JS Implementation
+### Legacy Vanilla JS Implementation (Reference Only)
 
-```bash
-# Navigate to the vanilla JS directory
-cd vanillaJS
-
-# Install dependencies
-npm install
-
-# Run the development server
-npm run start
-
-# In a separate terminal, run the backend server
-npm run server
-
-# In another terminal, run the socket server (if needed)
-npm run socket-server
-```
+The vanilla JS implementation is kept for reference purposes only and should not be used for production. The code in the root and `vanillaJS/` directories is not actively maintained.
 
 ### Configuration
 
@@ -151,7 +135,7 @@ The application supports two main wallet integration approaches:
 1. **ThirdWeb Signature Wallet** (for Polygon network)
 
    - Traditional EOA wallet integration
-   - Used for Polygon Amoy testnet
+   - Used for Polygon Mainnet
 
 2. **Coinbase Smart Wallet** (for Base network)
    - Account abstraction wallet with advanced features

@@ -8,6 +8,7 @@ import { WalletButton } from "@/components/wallet";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useAccount as useWagmiAccount } from "wagmi";
 import toast from "react-hot-toast";
+import { Score } from "@/types";
 
 // Dynamically import Webcam component to avoid SSR issues with face detection
 const Webcam = dynamic(() => import("./Webcam"), {
@@ -46,7 +47,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
 
   // Get network from context
-  const { network } = useNetwork();
+  const { network, setNetwork } = useNetwork();
 
   // For Wagmi (Base), we can always call this hook
   const wagmiAccount = useWagmiAccount();
@@ -64,8 +65,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     }
   }
 
-  // For ThirdWeb (Polygon), use the address passed as prop
-  if (network === "polygon") {
+  // For ThirdWeb (Polygon, Monad, Celo), use the address passed as prop
+  if (network === "polygon" || network === "monad" || network === "celo") {
     // If thirdwebAddress is provided as a prop, use it
     if (thirdwebAddress) {
       address = thirdwebAddress;
@@ -78,25 +79,55 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       }
     }
   }
-  
+
+  // Check for chain ID and force the correct network
+  useEffect(() => {
+    // Check if we have a chain ID that indicates Monad testnet
+    const chainId = localStorage.getItem("lastChainId");
+    if (chainId === "10143" && network !== "monad") {
+      console.log(
+        "Game: Detected Monad testnet chain ID, forcing network to monad"
+      );
+      setNetwork("monad");
+      // No reload - just update the context
+    }
+  }, [network, setNetwork]);
+
   // Move all logging to a useEffect to prevent excessive re-renders
   useEffect(() => {
     // Only log in development environment to reduce production noise
     if (process.env.NODE_ENV === "development") {
       if (network === "base") {
         console.log("Game: Using Wagmi address for Base network:", address);
-      } else if (network === "polygon") {
+      } else if (
+        network === "polygon" ||
+        network === "monad" ||
+        network === "celo"
+      ) {
         if (thirdwebAddress) {
-          console.log("Game: Using ThirdWeb address from prop:", address);
+          console.log(
+            `Game: Using ThirdWeb address from prop for ${network} network:`,
+            address
+          );
         } else if (address) {
-          console.log("Game: Using ThirdWeb address from localStorage:", address);
+          console.log(
+            `Game: Using ThirdWeb address from localStorage for ${network} network:`,
+            address
+          );
         } else {
-          console.log("Game: No ThirdWeb address available");
+          console.log(
+            `Game: No ThirdWeb address available for ${network} network`
+          );
         }
       }
-      
+
       // Log the final address being used
-      console.log("Game: Final address being used:", address, "Network:", network);
+      console.log(
+        "Game: Final address being used:",
+        address,
+        "Network:",
+        network
+      );
     }
   }, [address, network, thirdwebAddress]); // Only re-run when these values change
 
@@ -108,13 +139,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, [address]);
 
   // Leaderboard data for the expanded modal
-  // Define Score type to replace any[]
-  type Score = {
-    user: string;
-    score: number;
-    network: "polygon" | "base";
-    displayName?: string;
-  };
+  // Using the shared Score type from @/types
 
   const [pushupLeaderboard] = useState<Score[]>([]);
   const [squatLeaderboard] = useState<Score[]>([]);
