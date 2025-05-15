@@ -9,8 +9,19 @@ export async function GET(req: NextRequest) {
 
   // Get workout details from query params
   const reps = searchParams.get("reps") || "0";
+  const repCount = parseInt(reps, 10);
   const exerciseMode = searchParams.get("exerciseMode") || "squats";
-  const timeSpent = searchParams.get("timeSpent") || "0:00";
+  
+  // Format exercise mode to be properly capitalized and singular/plural
+  const formattedExerciseMode = exerciseMode.toLowerCase().startsWith('push') 
+    ? repCount === 1 ? 'Pushup' : 'Pushups'
+    : repCount === 1 ? 'Squat' : 'Squats';
+    
+  // Time formatting - ensure it matches the frontend format (seconds)
+  const timeSpent = searchParams.get("timeSpent") || "0 seconds";
+  const formattedTime = timeSpent.includes(":") 
+    ? timeSpent // Already formatted
+    : timeSpent.endsWith("s") ? timeSpent : `${timeSpent} seconds`;
 
   // Generate image
   return new ImageResponse(
@@ -70,7 +81,7 @@ export async function GET(req: NextRequest) {
                 marginBottom: "10px",
               }}
             >
-              {exerciseMode.toUpperCase()}
+              {formattedExerciseMode.toUpperCase()}
             </h2>
 
             <div
@@ -131,7 +142,7 @@ export async function GET(req: NextRequest) {
                     fontWeight: "bold",
                   }}
                 >
-                  {timeSpent}
+                  {formattedTime}
                 </span>
               </div>
             </div>

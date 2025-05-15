@@ -5,6 +5,7 @@ import { Dialog } from "@/components/ui";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { ConnectWallet } from "@/components/wallet";
+import { FarcasterShare } from "@/components/social";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
 import { submitScoreDirectly } from "@/utils/directContractInteraction";
 import {
@@ -167,6 +168,21 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Format exercise time to handle durations over 2 minutes correctly
+  const formatExerciseTime = (seconds: number) => {
+    if (seconds < 60) {
+      return `${seconds} seconds`;
+    } else {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      if (remainingSeconds === 0) {
+        return minutes === 1 ? `1 minute` : `${minutes} minutes`;
+      } else {
+        return `${minutes} min ${remainingSeconds} sec`;
+      }
+    }
+  };
+
   // Determine the medal based on rep count
   const getMedalEmoji = () => {
     if (mode === "pushups") {
@@ -328,28 +344,22 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
         )}
 
-        {/* Social sharing buttons - Simplified */}
+        {/* Social sharing buttons */}
         {window.transactionHash && (
           <div className="border-t border-gray-700 pt-4">
             <p className="text-xs text-center text-gray-400 mb-2">
               Share your achievement:
             </p>
-            <div className="flex justify-center space-x-4">
-              <button
-                className="farcaster-button transition-all transform hover:scale-105"
-                onClick={() => {
-                  const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
-                  const url = `https://imperfect-form.vercel.app?ref=farcaster`;
-                  window.open(
-                    `https://warpcast.com/~/compose?text=${encodeURIComponent(
-                      text + " " + url
-                    )}`,
-                    "_blank"
-                  );
-                }}
-              >
-                Farcaster
-              </button>
+            <div className="flex flex-col items-center space-y-4">
+              {/* Enhanced Farcaster integration */}
+              <FarcasterShare 
+                reps={repCount} 
+                exerciseMode={mode} 
+                timeSpent={formatExerciseTime(120 - timeLeft)} // Calculate elapsed time: 120 seconds (2 min) - timeLeft
+                network={networkType} // Pass the direct network type (polygon, base, celo, monad)
+              />
+              
+              {/* Twitter sharing */}
               <button
                 className="twitter-button transition-all transform hover:scale-105"
                 onClick={() => {
