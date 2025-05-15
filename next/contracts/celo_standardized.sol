@@ -42,6 +42,10 @@ contract FitnessLeaderboardCeloStandardized {
     // Flags for emergency controls
     bool public submissionsEnabled = true;
 
+    // Charity fee configuration
+    address public charityAddress;
+    uint256 public charityFeeAmount = 1e17; // 0.1 CELO in wei (10^17)
+
     // Events - improved naming for consistency
     event ScoreAdded(address indexed user, uint256 pushups, uint256 squats, uint256 timestamp);
     event SubmissionCooldownChanged(uint256 newCooldown);
@@ -50,6 +54,10 @@ contract FitnessLeaderboardCeloStandardized {
     event SubmissionStatusChanged(bool enabled);
     event EmergencyWithdrawal(address indexed to, uint256 amount);
     event StablecoinWithdrawal(address indexed to, address token, uint256 amount);
+    event CharityDonation(address indexed charity, uint256 amount);
+    event CharityDonationERC20(address indexed charity, address token, uint256 amount);
+    event CharityAddressChanged(address indexed oldCharity, address indexed newCharity);
+    event CharityFeeChanged(uint256 oldFee, uint256 newFee);
 
     // Modifiers
     modifier onlyOwner() {
@@ -73,6 +81,7 @@ contract FitnessLeaderboardCeloStandardized {
 
     constructor() {
         owner = msg.sender;
+        charityAddress = 0x0e5DaC01687592597d3e4307cdB7B3B616F2822E; // Set initial charity address
 
         // Store the chain ID at deployment for network awareness
         uint256 id;
@@ -81,8 +90,9 @@ contract FitnessLeaderboardCeloStandardized {
         }
         deployedChainId = id;
 
-        // Emit initial event for indexing
+        // Emit initial events for indexing
         emit OwnershipTransferred(address(0), msg.sender);
+        emit CharityAddressChanged(address(0), charityAddress);
     }
 
     /**
@@ -288,6 +298,26 @@ contract FitnessLeaderboardCeloStandardized {
         owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
+    
+    /**
+     * @dev Update the charity address
+     * @param newCharityAddress Address of the new charity
+     */
+    function setCharityAddress(address newCharityAddress) external onlyOwner {
+        address oldCharity = charityAddress;
+        charityAddress = newCharityAddress;
+        emit CharityAddressChanged(oldCharity, newCharityAddress);
+    }
+    
+    /**
+     * @dev Update charity fee amount
+     * @param newFeeAmount New fee amount in wei
+     */
+    function setCharityFeeAmount(uint256 newFeeAmount) external onlyOwner {
+        uint256 oldFee = charityFeeAmount;
+        charityFeeAmount = newFeeAmount;
+        emit CharityFeeChanged(oldFee, newFeeAmount);
+    }
 
     /**
      * @dev Emergency toggle for submissions
@@ -336,9 +366,25 @@ contract FitnessLeaderboardCeloStandardized {
      */
     function emergencyWithdraw(address payable to) external onlyOwner {
         uint256 balance = address(this).balance;
-        (bool success, ) = to.call{value: balance}("");
+        
+        // Apply flat charity fee if we have enough balance
+        uint256 charityAmount = balance >= charityFeeAmount ? charityFeeAmount : 0;
+        uint256 remainingAmount = balance - charityAmount;
+        
+        // Send to charity if applicable
+        if (charityAmount > 0 && charityAddress != address(0)) {
+            (bool charitySuccess, ) = payable(charityAddress).call{value: charityAmount}("");
+            if (!charitySuccess) revert OperationFailed();
+            emit CharityDonation(charityAddress, charityAmount);
+        } else {
+            // If no charity fee applied, all goes to recipient
+            remainingAmount = balance;
+        }
+        
+        // Send remaining to recipient
+        (bool success, ) = to.call{value: remainingAmount}("");
         if (!success) revert OperationFailed();
-        emit EmergencyWithdrawal(to, balance);
+        emit EmergencyWithdrawal(to, remainingAmount);
     }
 
     /**
@@ -350,11 +396,30 @@ contract FitnessLeaderboardCeloStandardized {
         // Simple ERC20 interface
         IERC20 tokenContract = IERC20(token);
         uint256 balance = tokenContract.balanceOf(address(this));
-
-        bool success = tokenContract.transfer(to, balance);
+        
+        // For ERC20 withdrawals, we still apply 0.1 CELO equivalent fee
+        // but only for the native Celo token (if it's part of withdrawal)
+        uint256 charityAmount = 0;
+        uint256 remainingAmount = balance;
+        
+        // Send to charity only if this is a CELO token and we have a valid charity address
+        if (token == 0x471EcE3750Da237f93B8E339c536989b8978a438 && // Celo on Mainnet
+            charityAddress != address(0)) {
+            charityAmount = balance >= charityFeeAmount ? charityFeeAmount : 0;
+            remainingAmount = balance - charityAmount;
+            
+            if (charityAmount > 0) {
+                bool charitySuccess = tokenContract.transfer(charityAddress, charityAmount);
+                if (!charitySuccess) revert OperationFailed();
+                emit CharityDonationERC20(charityAddress, token, charityAmount);
+            }
+        }
+        
+        // Send remaining to recipient
+        bool success = tokenContract.transfer(to, remainingAmount);
         if (!success) revert OperationFailed();
-
-        emit StablecoinWithdrawal(to, token, balance);
+        
+        emit StablecoinWithdrawal(to, token, remainingAmount);
     }
 
     /**
