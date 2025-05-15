@@ -6,6 +6,7 @@ import {
   baseLeaderboardABI
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
+import { isFirstTimeUser, getDivviDataSuffix, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
 
 /**
  * Helper function to check if the current provider is Coinbase Wallet
@@ -243,20 +244,91 @@ export async function submitScoreDirectly(
     } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
       // Celo Mainnet
       console.log("Using Celo mainnet specific transaction parameters");
+      
+      // Check if this is a first-time user for Divvi integration
+      const isFirstTime = await isFirstTimeUser(contractAddress, userAddress);
+      console.log("Is first-time Celo user:", isFirstTime);
+      
+      // If first-time user, show enhanced features prompt and prepare Divvi integration
+      let dataSuffix = "";
+      if (isFirstTime) {
+        const userAccepted = await showEnhancedFeaturesPrompt();
+        if (userAccepted) {
+          dataSuffix = getDivviDataSuffix();
+          console.log("Added Divvi data suffix for first-time user");
+        }
+      }
+      
       try {
-        // For Celo mainnet standardized contract, don't include a submission fee
-        tx = await contract.addScore(pushups, squats, {
-          gasLimit: gasLimit.mul(2), // Double the gas limit for Celo
-          // No value parameter - the standardized contract doesn't require a fee
-        });
+        // Get the contract interface to encode function data manually
+        const iface = contract.interface;
+        
+        // Encode the function call data
+        const data = iface.encodeFunctionData("addScore", [pushups, squats]);
+        
+        // Add Divvi data suffix if this is a first-time user
+        const finalData = dataSuffix ? data + dataSuffix : data;
+        
+        // For Celo mainnet, prepare transaction with Divvi integration if needed
+        if (dataSuffix) {
+          // For first-time users with Divvi integration
+          console.log("Sending Celo transaction with Divvi integration");
+          
+          // Create a transaction object
+          const txRequest = {
+            to: contractAddress,
+            data: finalData,
+            gasLimit: gasLimit.mul(2), // Double the gas limit for Celo
+          };
+          
+          // Send the transaction using the signer
+          tx = await signer.sendTransaction(txRequest);
+        } else {
+          // For returning users, use standard contract call
+          tx = await contract.addScore(pushups, squats, {
+            gasLimit: gasLimit.mul(2), // Double the gas limit for Celo
+            // No value parameter - the standardized contract doesn't require a fee
+          });
+        }
       } catch (error) {
         console.error("Celo transaction failed:", error);
         // Try with higher gas limit and legacy transaction format
-        tx = await contract.addScore(pushups, squats, {
-          gasLimit: gasLimit.mul(3), // Triple the gas limit
-          gasPrice: ethers.utils.parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
-          // No value parameter - the standardized contract doesn't require a fee
-        });
+        try {
+          // Get the contract interface to encode function data manually
+          const iface = contract.interface;
+          
+          // Encode the function call data
+          const data = iface.encodeFunctionData("addScore", [pushups, squats]);
+          
+          // Add Divvi data suffix if this is a first-time user
+          const finalData = dataSuffix ? data + dataSuffix : data;
+          
+          if (dataSuffix) {
+            // For first-time users with Divvi integration
+            console.log("Retrying Celo transaction with Divvi integration and legacy format");
+            
+            // Create a transaction object with legacy format
+            const txRequest = {
+              to: contractAddress,
+              data: finalData,
+              gasLimit: gasLimit.mul(3), // Triple the gas limit
+              gasPrice: ethers.utils.parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
+            };
+            
+            // Send the transaction using the signer
+            tx = await signer.sendTransaction(txRequest);
+          } else {
+            // For returning users, use standard contract call with legacy format
+            tx = await contract.addScore(pushups, squats, {
+              gasLimit: gasLimit.mul(3), // Triple the gas limit
+              gasPrice: ethers.utils.parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
+              // No value parameter - the standardized contract doesn't require a fee
+            });
+          }
+        } catch (retryError) {
+          console.error("Celo retry failed:", retryError);
+          throw retryError; // Re-throw the error to be caught by the outer try/catch
+        }
       }
     } else if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
       // Polygon Mainnet
@@ -352,6 +424,21 @@ export async function submitScoreDirectly(
     }
 
     console.log("Transaction receipt:", receipt);
+
+    // If this was a Celo transaction and the chain ID matches Celo (42220)
+    // Register the referral with Divvi
+    if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
+      const chainId = await provider.getNetwork().then(network => network.chainId);
+      if (chainId === 42220) { // Celo mainnet chain ID
+        try {
+          // Register the referral with Divvi
+          await registerDivviReferral(receipt.transactionHash, chainId);
+        } catch (divviError) {
+          console.error("Error registering Divvi referral:", divviError);
+          // Don't fail the transaction if Divvi registration fails
+        }
+      }
+    }
 
     return {
       success: true,
