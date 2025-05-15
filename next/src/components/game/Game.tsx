@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Spinner, LoadingScreen } from "@/components/ui";
+import useDeviceDetect from "@/hooks/useDeviceDetect";
 import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
 import { Welcome } from "@/components/game";
 import { WalletButton } from "@/components/wallet";
@@ -45,6 +46,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [, setCurrentFilter] = useState<string>("none");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
+  const { isMobile } = useDeviceDetect(); // Use our new device detection hook
 
   // Get network from context
   const { network, setNetwork } = useNetwork();
@@ -395,13 +397,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             <div
               id="canvasContainer"
               aria-label="Game Canvas"
+              className="w-full mx-auto relative border-2 border-yellow-400"
               style={{
-                width: "100%",
-                height: "480px",
-                maxWidth: "640px",
-                margin: "0 auto",
-                position: "relative",
-                border: "2px solid yellow",
+                height: isMobile ? 'auto' : '480px',
+                maxWidth: '640px',
+                aspectRatio: isMobile ? '4/3' : 'auto',
               }}
             >
               <Webcam
@@ -429,10 +429,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </div>
         </div>
 
-        <div id="controls">
+        <div id="controls" className={`${isMobile ? 'grid grid-cols-2 gap-3 mt-4' : 'flex justify-between mt-4'}`}>
           <button
             id="modeButton"
-            className={started ? "" : ""}
+            className={`py-3 px-4 text-sm sm:text-base touch-manipulation ${started ? '' : ''}`}
+            style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label={
               started ? "Current exercise mode" : "Switch exercise mode"
             }
@@ -442,6 +443,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </button>
           <button
             id="startButton"
+            className="py-3 px-4 text-sm sm:text-base touch-manipulation"
+            style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Start game"
             onClick={handleStart}
             disabled={started || showLoading || !address}
@@ -451,6 +454,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </button>
           <button
             id="stopButton"
+            className="py-3 px-4 text-sm sm:text-base touch-manipulation"
+            style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Stop game"
             onClick={handleStop}
             disabled={!started}
@@ -459,6 +464,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </button>
           <button
             id="resetButton"
+            className="py-3 px-4 text-sm sm:text-base touch-manipulation"
+            style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Reset game"
             onClick={handleReset}
             disabled={showLoading}

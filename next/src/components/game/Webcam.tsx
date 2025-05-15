@@ -1,7 +1,8 @@
 "use client";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { usePoseDetection } from "@/modules/usePoseDetection";
 import { useFaceDetection } from "@/modules/useFaceDetection";
+import useDeviceDetect from "@/hooks/useDeviceDetect";
 
 // Add type declaration for window object
 declare global {
@@ -25,6 +26,9 @@ const Webcam: React.FC<WebcamProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = usePoseDetection(canvasRef, mode, onRepCount, isActive);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const { isMobile } = useDeviceDetect();
+  const [containerHeight, setContainerHeight] = useState<number | null>(null);
 
   // Initialize face detection API but don't actually use face detection
   // This maintains API compatibility without loading heavy ML libraries
@@ -124,7 +128,26 @@ const Webcam: React.FC<WebcamProps> = ({
     };
   }, [videoRef, isActive]);
 
-  // Add a useEffect to style the canvas directly
+  // Responsive container sizing for mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        // Set container height based on aspect ratio
+        const aspectRatio = isMobile ? 4/3 : 16/9;
+        const calculatedHeight = containerWidth / aspectRatio;
+        setContainerHeight(calculatedHeight);
+      }
+    };
+    
+    // Call once on mount and whenever window resizes
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile]);
+  
+  // Style the canvas directly
   useEffect(() => {
     if (canvasRef.current) {
       // Force canvas to be visible with a border for debugging
@@ -139,20 +162,30 @@ const Webcam: React.FC<WebcamProps> = ({
   }, [canvasRef]);
 
   return (
-    <div className="relative w-full h-full" style={{ minHeight: "480px" }}>
+    <div 
+      ref={containerRef}
+      className="relative w-full" 
+      style={{ 
+        height: containerHeight ? `${containerHeight}px` : (isMobile ? 'auto' : '480px'),
+        aspectRatio: isMobile ? '4/3' : '16/9'
+      }}
+    >
       <video
         ref={videoRef}
         className="absolute top-0 left-0 w-full h-full object-cover z-0"
         muted
         playsInline
         autoPlay
-        style={{ minHeight: "480px", minWidth: "640px" }}
       />
       <canvas
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full z-10"
-        style={{ minHeight: "480px", minWidth: "640px" }}
       />
+      {isMobile && (
+        <div className="absolute bottom-4 right-4 z-20 bg-black/50 text-xs text-white px-2 py-1 rounded">
+          {mode.toUpperCase()}
+        </div>
+      )}
     </div>
   );
 };
