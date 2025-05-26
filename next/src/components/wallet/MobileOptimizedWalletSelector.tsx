@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 import { FarcasterAwareWalletButton } from "./FarcasterAwareWalletButton";
+import { WalletBrowserIndicator } from "@/components/ui";
+import useDeviceDetect from "@/hooks/useDeviceDetect";
 
 interface MobileOptimizedWalletSelectorProps {
   onClose?: () => void;
@@ -20,6 +22,7 @@ export default function MobileOptimizedWalletSelector({
   const { setWalletProvider } = useWalletProvider();
   const [isSelectingWallet, setIsSelectingWallet] = useState(false);
   const { isInMiniApp, user: farcasterUser } = useFarcasterContext();
+  const { isWalletBrowser } = useDeviceDetect();
 
   // Handle wallet type selection
   const handleWalletTypeSelected = (walletType: "signature" | "smart") => {
@@ -61,6 +64,14 @@ export default function MobileOptimizedWalletSelector({
           <p className="text-sm md:text-base text-yellow-200">
             ONCHAIN OLYMPIANS (in training)
           </p>
+
+          {/* Show wallet browser detection */}
+          {isWalletBrowser && (
+            <div className="mt-2">
+              <WalletBrowserIndicator showDetails={true} />
+            </div>
+          )}
+
           {/* Show Farcaster context if detected */}
           {isInMiniApp && farcasterUser && (
             <div className="mt-2 p-2 bg-purple-900/50 border border-purple-500 rounded-lg">

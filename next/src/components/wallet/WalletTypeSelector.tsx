@@ -17,14 +17,15 @@ interface WalletTypeSelectorProps {
 export default function WalletTypeSelector({
   onClose,
 }: WalletTypeSelectorProps) {
-  const { isMobile } = useDeviceDetect();
+  const { isMobile, isWalletBrowser } = useDeviceDetect();
 
-  // On mobile, use the mobile-optimized version
-  if (isMobile) {
+  // On mobile OR in wallet browser, use the mobile-optimized version
+  // Wallet browsers should always get the mobile experience for better UX
+  if (isMobile || isWalletBrowser) {
     return <MobileOptimizedWalletSelector onClose={onClose} />;
   }
 
-  // On desktop, use the original desktop version
+  // On desktop (non-wallet browser), use the original desktop version
   return <DesktopWalletSelector onClose={onClose} />;
 }
 

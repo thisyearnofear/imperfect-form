@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import { usePoseDetection } from "@/modules/usePoseDetection";
 import { useFaceDetection } from "@/modules/useFaceDetection";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
@@ -41,7 +41,6 @@ const Webcam: React.FC<WebcamProps> = ({
     isMobile
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [containerHeight, setContainerHeight] = useState<number | null>(null);
 
   // Initialize face detection API but don't actually use face detection
   // This maintains API compatibility without loading heavy ML libraries
@@ -178,46 +177,56 @@ const Webcam: React.FC<WebcamProps> = ({
       video.removeEventListener("canplay", handleLoadedMetadata);
       clearTimeout(playAttemptTimeout);
 
-      // Stop the video and release camera when component unmounts or isActive changes to false
+      // Enhanced camera stopping when component unmounts or isActive changes to false
       if (video.srcObject) {
         const stream = video.srcObject as MediaStream;
+        let stoppedTracks = 0;
+
         stream.getTracks().forEach((track) => {
-          track.stop();
+          if (track.readyState === "live") {
+            track.stop();
+            stoppedTracks++;
+            logger.info(`Webcam: Stopped ${track.kind} track`, {
+              trackId: track.id,
+              trackLabel: track.label,
+              trackState: track.readyState,
+            });
+          }
         });
+
         video.srcObject = null;
         video.pause();
+        video.load(); // Force video element reset
+
+        logger.info(`Webcam cleanup: Stopped ${stoppedTracks} tracks`);
       }
     };
   }, [isActive, videoRef, canvasRef, isMobile]);
 
-  // Handle window resize for desktop
+  // Handle window resize for desktop - simplified since we now fill parent
   useEffect(() => {
     // Skip for mobile
     if (isMobile || typeof window === "undefined") return;
-    const handleResize = () => {
+
+    // Log dimensions to help with debugging
+    const logDimensions = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
-        // Set container height based on aspect ratio
-        const aspectRatio = isMobile ? 4 / 3 : 16 / 9; // Use 4:3 for mobile, 16:9 for desktop
-        const calculatedHeight = containerWidth / aspectRatio;
-        setContainerHeight(calculatedHeight);
-
-        // Log dimensions to help with debugging
+        const containerHeight = containerRef.current.offsetHeight;
         logger.info(
-          `Container resized: ${containerWidth}x${calculatedHeight}`,
+          `Desktop container dimensions: ${containerWidth}x${containerHeight}`,
           {
             mobile: isMobile,
-            aspectRatio: aspectRatio,
           }
         );
       }
     };
 
     // Call once on mount and whenever window resizes
-    handleResize();
-    window.addEventListener("resize", handleResize);
+    logDimensions();
+    window.addEventListener("resize", logDimensions);
 
-    return () => window.removeEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", logDimensions);
   }, [isMobile]);
 
   // Log when component mounts to help with debugging
@@ -267,9 +276,9 @@ const Webcam: React.FC<WebcamProps> = ({
               minHeight: "300px",
             }
           : {
-              // Desktop: Use fixed dimensions
-              height: containerHeight ? `${containerHeight}px` : "480px",
-              aspectRatio: "16/9",
+              // Desktop: Use fixed dimensions to match screen container
+              width: "100%",
+              height: "480px",
             }),
         overflow: "hidden",
       }}
@@ -286,7 +295,10 @@ const Webcam: React.FC<WebcamProps> = ({
                 backgroundColor: "#000", // Black background for letterboxing if needed
               }
             : {
-                objectFit: "cover", // Desktop can crop to fill
+                objectFit: "cover", // Desktop: crop to fill container completely
+                transform: "scaleX(-1)", // Mirror video on desktop too for consistency
+                width: "100%",
+                height: "100%",
               }),
         }}
         muted
@@ -297,10 +309,8 @@ const Webcam: React.FC<WebcamProps> = ({
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full z-10"
         style={{
-          // Mobile-specific canvas optimizations
-          ...(isMobile && {
-            transform: "scaleX(-1)", // Mirror canvas to match video
-          }),
+          // Mirror canvas to match video on both mobile and desktop
+          transform: "scaleX(-1)",
         }}
       />
       {isMobile && (

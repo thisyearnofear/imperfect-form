@@ -6,3 +6,4 @@ export { default as LoadingScreen } from './LoadingScreen';
 export { default as Navigation } from './Navigation';
 export { default as Spinner } from './Spinner';
 export { default as VisuallyHidden } from './VisuallyHidden';
+export { default as WalletBrowserIndicator } from './WalletBrowserIndicator';

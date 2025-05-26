@@ -27,7 +27,8 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
     "Any issues: RESET & START again",
     "Tested on Brave (fast), Chrome (med) & Safari (slow)",
     "Chrome: enable hardware acceleration in settings",
-    "Mobile: open inside wallet browser for onchain powers",
+    "Mobile: open inside wallet browser for seamless transactions",
+    "Wallet browsers get optimized mobile interface automatically",
   ];
 
   useEffect(() => {

@@ -1,8 +1,16 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { Spinner, LoadingScreen } from "@/components/ui";
+import {
+  Spinner,
+  LoadingScreen,
+  WalletBrowserIndicator,
+} from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
+import {
+  cameraManager,
+  stopAllCameras as stopAllCamerasUtil,
+} from "@/utils/cameraManager";
 import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
 import { Welcome } from "@/components/game";
 import { WalletButton } from "@/components/wallet";
@@ -48,7 +56,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [, setCurrentFilter] = useState<string>("none");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
-  const { isMobile } = useDeviceDetect(); // Use our new device detection hook
+  const { isMobile, isWalletBrowser } = useDeviceDetect(); // Use our enhanced device detection hook
 
   // Safe state for viewport dimensions
   const [viewportDimensions, setViewportDimensions] = useState({
@@ -241,44 +249,40 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     };
   }, [started]);
 
-  // Function to aggressively stop all cameras
+  // Enhanced function to aggressively stop all cameras using the camera manager
   const stopAllCameras = useCallback(() => {
-    // Method 1: Stop all video tracks from video elements
-    const videoElements = document.getElementsByTagName("video");
-    if (videoElements.length > 0) {
-      for (let i = 0; i < videoElements.length; i++) {
-        const video = videoElements[i];
-        if (video.srcObject) {
-          const stream = video.srcObject as MediaStream;
-          const tracks = stream.getTracks();
-          tracks.forEach((track) => {
-            track.stop();
-            console.log("Stopped track:", track.kind, track.id);
-          });
-          video.srcObject = null;
-          video.pause();
-        }
-      }
-    }
+    console.log("🛑 Stopping all cameras - using enhanced camera manager");
 
-    // Method 2: Stop all media tracks from all devices
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then((stream) => {
-        stream.getTracks().forEach((track) => {
-          track.stop();
-          console.log("Stopped additional track:", track.kind, track.id);
-        });
-      })
-      .catch(() => console.log("No additional media tracks to stop"));
+    // Use the enhanced camera manager for comprehensive cleanup
+    const stoppedTracks = stopAllCamerasUtil();
 
-    // Method 3: Cancel any animation frames that might be running
+    // Additional cleanup methods
+    // Cancel any animation frames that might be running
     if (window.requestAnimationFrame) {
       const highestId = window.requestAnimationFrame(() => {});
       for (let i = 0; i < highestId; i++) {
         window.cancelAnimationFrame(i);
       }
+      console.log("🎬 Cancelled animation frames up to ID:", highestId);
     }
+
+    // Force garbage collection if available (development only)
+    if (process.env.NODE_ENV === "development" && "gc" in window) {
+      try {
+        (window as typeof window & { gc?: () => void }).gc?.();
+        console.log("🗑️ Forced garbage collection");
+      } catch {
+        console.log("Garbage collection not available");
+      }
+    }
+
+    // Log camera status after cleanup
+    const status = cameraManager.getCameraStatus();
+    console.log("📊 Camera status after cleanup:", status);
+
+    console.log(
+      `🎯 Camera cleanup complete. Stopped ${stoppedTracks} video tracks.`
+    );
   }, []);
 
   const handleStop = useCallback(() => {
@@ -371,6 +375,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
         {/* Wallet connection centered at the top */}
         <div id="wallet-connection" className="wallet-connection">
+          {/* Show wallet browser indicator if detected */}
+          {isWalletBrowser && (
+            <div className="mb-2">
+              <WalletBrowserIndicator />
+            </div>
+          )}
+
           <div className={address ? "wallet-connected" : "wallet-prompt"}>
             <WalletButton />
             {address && (
@@ -477,16 +488,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                   </div>
                 </div>
               ) : (
-                // Desktop layout remains unchanged
+                // Desktop layout - use relative positioning to fit in screen container
                 <div
                   id="canvasContainer"
                   aria-label="Game Canvas"
-                  className="w-full mx-auto relative border-2 border-yellow-400"
-                  style={{
-                    height: "480px",
-                    maxWidth: "640px",
-                    aspectRatio: "auto",
-                  }}
+                  className="w-full h-full relative"
                 >
                   <LazyWebcam
                     mode={mode}
