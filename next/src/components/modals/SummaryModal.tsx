@@ -54,6 +54,27 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [showDirectSubmit, setShowDirectSubmit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Debug logging for mobile wallet issues
+  React.useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("SummaryModal Debug Info:", {
+        network: networkType,
+        walletProvider,
+        addressFromProps: address,
+        userAddressFromContext: userAddress,
+        effectiveAddress,
+        isOpen,
+      });
+    }
+  }, [
+    networkType,
+    walletProvider,
+    address,
+    userAddress,
+    effectiveAddress,
+    isOpen,
+  ]);
+
   // Function to handle ThirdWeb submission for Polygon network
   const handleThirdwebSubmission = async () => {
     if (!effectiveAddress) {
@@ -352,13 +373,13 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             </p>
             <div className="flex flex-col items-center space-y-4">
               {/* Enhanced Farcaster integration */}
-              <FarcasterShare 
-                reps={repCount} 
-                exerciseMode={mode} 
+              <FarcasterShare
+                reps={repCount}
+                exerciseMode={mode}
                 timeSpent={formatExerciseTime(120 - timeLeft)} // Calculate elapsed time: 120 seconds (2 min) - timeLeft
                 network={networkType} // Pass the direct network type (polygon, base, celo, monad)
               />
-              
+
               {/* Twitter sharing */}
               <button
                 className="twitter-button transition-all transform hover:scale-105"

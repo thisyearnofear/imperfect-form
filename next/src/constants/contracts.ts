@@ -16,7 +16,7 @@ export const MONAD_CONTRACT_ADDRESS =
 
 export const CELO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_CELO ||
-  "0x74Bafd1bDB5d087a2dE2941a50C27D93406A75af"; // Celo Mainnet contract (standardized with charity fee)
+  "0xB0cbC7325EbC744CcB14211CA74C5a764928F273"; // Celo Mainnet contract (standardized)
 
 // Full ABI for the standardized FitnessLeaderboard contracts
 // This is the base ABI that works for most networks

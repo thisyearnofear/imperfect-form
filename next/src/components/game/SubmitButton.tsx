@@ -9,6 +9,8 @@ import { Spinner } from "@/components/ui";
 import {
   POLYGON_CONTRACT_ADDRESS,
   BASE_CONTRACT_ADDRESS,
+  MONAD_CONTRACT_ADDRESS,
+  CELO_CONTRACT_ADDRESS,
   fitnessLeaderboardABI,
 } from "@/constants/contracts";
 import {
@@ -53,13 +55,30 @@ export default function SubmitButton({
   }, [thirdwebAddress, wagmiAccount?.address, network]);
 
   // Get the address based on which network is active
-  // Since we're not directly importing useAddress, just use the thirdwebAddress prop
+  // For ThirdWeb networks (Polygon, Monad, Celo), use thirdwebAddress
+  // For Base network, use wagmiAccount address
   const address =
-    network === "polygon" ? thirdwebAddress : wagmiAccount?.address;
+    network === "polygon" || network === "monad" || network === "celo"
+      ? thirdwebAddress
+      : wagmiAccount?.address;
 
   // Get contract address based on the active network
-  const contractAddress =
-    network === "polygon" ? POLYGON_CONTRACT_ADDRESS : BASE_CONTRACT_ADDRESS;
+  const getContractAddress = () => {
+    switch (network) {
+      case "polygon":
+        return POLYGON_CONTRACT_ADDRESS;
+      case "monad":
+        return MONAD_CONTRACT_ADDRESS;
+      case "celo":
+        return CELO_CONTRACT_ADDRESS;
+      case "base":
+        return BASE_CONTRACT_ADDRESS;
+      default:
+        return BASE_CONTRACT_ADDRESS;
+    }
+  };
+
+  const contractAddress = getContractAddress();
 
   // Wagmi hooks for Base network transactions
   const {
@@ -71,7 +90,13 @@ export default function SubmitButton({
 
   // Function to check if the user's wallet matches the selected network
   const walletMatchesNetwork = (): boolean => {
-    if (network === "polygon" && thirdwebAddress) return true;
+    // ThirdWeb networks (Polygon, Monad, Celo) should use thirdwebAddress
+    if (
+      (network === "polygon" || network === "monad" || network === "celo") &&
+      thirdwebAddress
+    )
+      return true;
+    // Base network should use wagmiAccount
     if (network === "base" && wagmiAccount?.address) return true;
     return false;
   };
@@ -84,10 +109,16 @@ export default function SubmitButton({
 
     // Check if the user's wallet matches the selected network
     if (!walletMatchesNetwork()) {
+      const networkName =
+        network === "polygon"
+          ? "Polygon"
+          : network === "monad"
+          ? "Monad"
+          : network === "celo"
+          ? "Celo"
+          : "Base";
       toast.error(
-        `Your connected wallet doesn't match the selected ${
-          network === "polygon" ? "Polygon" : "Base"
-        } network`
+        `Your connected wallet doesn't match the selected ${networkName} network`
       );
       return;
     }
@@ -149,8 +180,11 @@ export default function SubmitButton({
 
         // Success is handled in the useEffect below
         return;
-      } else if (thirdwebAddress && network === "polygon") {
-        // For Polygon network with ThirdWeb wallet, use direct contract interaction
+      } else if (
+        thirdwebAddress &&
+        (network === "polygon" || network === "monad" || network === "celo")
+      ) {
+        // For ThirdWeb networks (Polygon, Monad, Celo) with ThirdWeb wallet, use direct contract interaction
         const result = await submitScoreDirectly(
           contractAddress,
           pushups,
@@ -168,14 +202,41 @@ export default function SubmitButton({
         // Store transaction hash for social sharing
         if (typeof window !== "undefined") {
           window.transactionHash = txHash;
-          window.selectedNetworkName = "Polygon Mainnet";
+
+          // Set network name based on the actual network
+          const networkName =
+            network === "polygon"
+              ? "Polygon Mainnet"
+              : network === "monad"
+              ? "Monad Testnet"
+              : network === "celo"
+              ? "Celo Mainnet"
+              : "Unknown";
+          window.selectedNetworkName = networkName;
+
           // Also save which network was used to localStorage for consistency
-          localStorage.setItem("selectedNetwork", "polygon");
-          localStorage.setItem("selectedChain", "amoy"); // Keep as "amoy" for backward compatibility
+          localStorage.setItem("selectedNetwork", network);
+          localStorage.setItem(
+            "selectedChain",
+            network === "polygon" ? "polygon" : network
+          );
         }
 
-        // Show success message
-        const explorerUrl = `https://polygonscan.com/tx/${txHash}`;
+        // Show success message with appropriate explorer URL
+        const getExplorerUrl = (txHash: string) => {
+          switch (network) {
+            case "polygon":
+              return `https://polygonscan.com/tx/${txHash}`;
+            case "monad":
+              return `https://testnet.monadexplorer.com/tx/${txHash}`;
+            case "celo":
+              return `https://explorer.celo.org/tx/${txHash}`;
+            default:
+              return `#`;
+          }
+        };
+
+        const explorerUrl = getExplorerUrl(txHash);
 
         toast.success(
           <div>
@@ -292,7 +353,7 @@ export default function SubmitButton({
       {isLoading || isPending ? (
         <>
           <span className="mr-3 text-xl font-bold">
-            SUBMITTING TO {network === "polygon" ? "POLYGON" : "BASE"}...
+            SUBMITTING TO {network?.toUpperCase()}...
           </span>
           <Spinner />
         </>
@@ -300,7 +361,7 @@ export default function SubmitButton({
         <span className="text-xl font-bold">🔥 CONFIRM SUBMISSION 🔥</span>
       ) : (
         <span className="text-xl font-bold">
-          🏆 SUBMIT TO {network === "polygon" ? "POLYGON" : "BASE"} 🏆
+          🏆 SUBMIT TO {network?.toUpperCase()} 🏆
         </span>
       )}
     </button>

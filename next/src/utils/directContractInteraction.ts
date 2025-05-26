@@ -144,6 +144,18 @@ export async function submitScoreDirectly(
 
       console.log(`Using window.ethereum provider for ${networkName} network`);
 
+      // Debug mobile wallet browser detection
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Mobile wallet debug info:", {
+          userAgent: navigator.userAgent,
+          isMetaMask: window.ethereum?.isMetaMask,
+          isCoinbaseWallet: window.ethereum?.isCoinbaseWallet,
+          isTrust: window.ethereum?.isTrust,
+          networkName,
+          contractAddress,
+        });
+      }
+
       // Create a provider without custom options first
       provider = new ethers.providers.Web3Provider(window.ethereum);
 
@@ -154,9 +166,21 @@ export async function submitScoreDirectly(
       const network = await provider.getNetwork();
       console.log("Current network:", network);
 
+      // Debug network detection for mobile wallets
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Network detection debug:", {
+          chainId: network.chainId,
+          name: network.name,
+          expectedNetwork: networkName,
+          contractAddress,
+        });
+      }
+
       // Get the signer
       signer = provider.getSigner();
       userAddress = await signer.getAddress();
+
+      console.log("Signer address obtained:", userAddress);
     }
 
     // Determine which ABI to use based on the contract address
@@ -244,11 +268,11 @@ export async function submitScoreDirectly(
     } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
       // Celo Mainnet
       console.log("Using Celo mainnet specific transaction parameters");
-      
+
       // Check if this is a first-time user for Divvi integration
       const isFirstTime = await isFirstTimeUser(contractAddress, userAddress);
       console.log("Is first-time Celo user:", isFirstTime);
-      
+
       // If first-time user, show enhanced features prompt and prepare Divvi integration
       let dataSuffix = "";
       if (isFirstTime) {
@@ -258,29 +282,29 @@ export async function submitScoreDirectly(
           console.log("Added Divvi data suffix for first-time user");
         }
       }
-      
+
       try {
         // Get the contract interface to encode function data manually
         const iface = contract.interface;
-        
+
         // Encode the function call data
         const data = iface.encodeFunctionData("addScore", [pushups, squats]);
-        
+
         // Add Divvi data suffix if this is a first-time user
         const finalData = dataSuffix ? data + dataSuffix : data;
-        
+
         // For Celo mainnet, prepare transaction with Divvi integration if needed
         if (dataSuffix) {
           // For first-time users with Divvi integration
           console.log("Sending Celo transaction with Divvi integration");
-          
+
           // Create a transaction object
           const txRequest = {
             to: contractAddress,
             data: finalData,
             gasLimit: gasLimit.mul(2), // Double the gas limit for Celo
           };
-          
+
           // Send the transaction using the signer
           tx = await signer.sendTransaction(txRequest);
         } else {
@@ -296,17 +320,17 @@ export async function submitScoreDirectly(
         try {
           // Get the contract interface to encode function data manually
           const iface = contract.interface;
-          
+
           // Encode the function call data
           const data = iface.encodeFunctionData("addScore", [pushups, squats]);
-          
+
           // Add Divvi data suffix if this is a first-time user
           const finalData = dataSuffix ? data + dataSuffix : data;
-          
+
           if (dataSuffix) {
             // For first-time users with Divvi integration
             console.log("Retrying Celo transaction with Divvi integration and legacy format");
-            
+
             // Create a transaction object with legacy format
             const txRequest = {
               to: contractAddress,
@@ -314,7 +338,7 @@ export async function submitScoreDirectly(
               gasLimit: gasLimit.mul(3), // Triple the gas limit
               gasPrice: ethers.utils.parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
             };
-            
+
             // Send the transaction using the signer
             tx = await signer.sendTransaction(txRequest);
           } else {

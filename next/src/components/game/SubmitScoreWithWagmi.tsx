@@ -320,15 +320,54 @@ export default function SubmitScoreWithWagmi({
     try {
       // For ThirdWeb networks (Polygon, Monad, Celo), we should use the ThirdWeb wallet via directContractInteraction
       if (isThirdwebNetwork) {
-        // Show error message - we should be using ThirdWeb for these networks
-        toast.error(
-          `Please switch to Signature Wallet for ${network
-            ?.charAt(0)
-            .toUpperCase()}${network?.slice(1)} network transactions`,
-          {
-            id: "submit-score",
-          }
+        // Import the direct contract interaction function
+        const { submitScoreDirectly } = await import(
+          "@/utils/directContractInteraction"
         );
+
+        // Get the appropriate contract address based on the network
+        let contractAddress = POLYGON_CONTRACT_ADDRESS;
+        if (network === "monad") {
+          contractAddress = MONAD_CONTRACT_ADDRESS;
+        } else if (network === "celo") {
+          contractAddress = CELO_CONTRACT_ADDRESS;
+        }
+
+        // Show loading toast
+        toast.loading("Preparing transaction with wallet...", {
+          id: "submit-score",
+        });
+
+        // Use direct contract interaction for ThirdWeb networks
+        const result = await submitScoreDirectly(
+          contractAddress,
+          pushups,
+          squats,
+          false, // not Base network
+          address
+        );
+
+        if (result.success) {
+          toast.success("Score submitted successfully!", {
+            id: "submit-score",
+          });
+
+          // Store transaction hash for social sharing
+          if (typeof window !== "undefined" && result.transactionHash) {
+            window.transactionHash = result.transactionHash;
+            window.selectedNetworkName =
+              network === "polygon"
+                ? "Polygon Mainnet"
+                : network === "monad"
+                ? "Monad Testnet"
+                : network === "celo"
+                ? "Celo Mainnet"
+                : "Unknown";
+          }
+        } else {
+          throw new Error(result.error || "Transaction failed");
+        }
+
         setIsLoading(false);
         setConfirmStep(false);
         return;
