@@ -20,7 +20,8 @@ export function usePoseDetection(
   canvasRef: RefObject<HTMLCanvasElement | null>,
   mode: ExerciseMode = "pushups",
   onRepCount: (count: number) => void = () => {},
-  isActive: boolean = true
+  isActive: boolean = true,
+  isMobile: boolean = false
 ): RefObject<HTMLVideoElement | null> {
   const videoRef = useRef<HTMLVideoElement>(null);
   const repState = useRef<"up" | "down" | "middle">("middle");
@@ -29,66 +30,6 @@ export function usePoseDetection(
   const detectorRef = useRef<PoseDetector | null>(null);
   const requestRef = useRef<number>(0);
   const streamRef = useRef<MediaStream | null>(null);
-
-  // This function is defined but not used in the current implementation
-  // It's kept for reference and potential future use
-  // const drawSkeleton = (ctx: CanvasRenderingContext2D, keypoints: any[]) => {
-  //   // Function to draw the connections between joints
-  //   ctx.strokeStyle = "#00FF00";
-  //   ctx.lineWidth = 2;
-
-  //   // Torso
-  //   drawConnection(ctx, keypoints, "left_shoulder", "right_shoulder");
-  //   drawConnection(ctx, keypoints, "left_shoulder", "left_hip");
-  //   drawConnection(ctx, keypoints, "right_shoulder", "right_hip");
-  //   drawConnection(ctx, keypoints, "left_hip", "right_hip");
-
-  //   // Arms
-  //   drawConnection(ctx, keypoints, "left_shoulder", "left_elbow");
-  //   drawConnection(ctx, keypoints, "left_elbow", "left_wrist");
-  //   drawConnection(ctx, keypoints, "right_shoulder", "right_elbow");
-  //   drawConnection(ctx, keypoints, "right_elbow", "right_wrist");
-
-  //   // Legs
-  //   drawConnection(ctx, keypoints, "left_hip", "left_knee");
-  //   drawConnection(ctx, keypoints, "left_knee", "left_ankle");
-  //   drawConnection(ctx, keypoints, "right_hip", "right_knee");
-  //   drawConnection(ctx, keypoints, "right_knee", "right_ankle");
-
-  //   // Draw each joint
-  //   keypoints.forEach((keypoint) => {
-  //     if (keypoint.score > 0.3) {
-  //       ctx.beginPath();
-  //       ctx.arc(keypoint.x, keypoint.y, 5, 0, 2 * Math.PI);
-  //       ctx.fillStyle = "#FF0000";
-  //       ctx.fill();
-  //     }
-  //   });
-  // };
-
-  // This function is defined but not used in the current implementation
-  // It's kept for reference and potential future use
-  // const drawConnection = (
-  //   ctx: CanvasRenderingContext2D,
-  //   keypoints: any[],
-  //   from: string,
-  //   to: string
-  // ) => {
-  //   const fromKeypoint = keypoints.find((kp) => kp.name === from);
-  //   const toKeypoint = keypoints.find((kp) => kp.name === to);
-
-  //   if (
-  //     fromKeypoint &&
-  //     toKeypoint &&
-  //     fromKeypoint.score > 0.3 &&
-  //     toKeypoint.score > 0.3
-  //   ) {
-  //     ctx.beginPath();
-  //     ctx.moveTo(fromKeypoint.x, fromKeypoint.y);
-  //     ctx.lineTo(toKeypoint.x, toKeypoint.y);
-  //     ctx.stroke();
-  //   }
-  // };
 
   function calculateAngle(a: Keypoint, b: Keypoint, c: Keypoint) {
     if (!a || !b || !c) return 0;
@@ -242,50 +183,89 @@ export function usePoseDetection(
       if (!ctx) return;
 
       try {
-        // Initialize camera
-        streamRef.current = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480 }
-        });
-
-        video.srcObject = streamRef.current;
-
         // Initialize TensorFlow.js with the best available backend
+        // Pass isMobile flag to apply device-specific optimizations
         try {
-          const backend = await initializeTensorFlow();
+          const backend = await initializeTensorFlow(isMobile);
           console.log('TensorFlow.js initialized with backend:', backend);
         } catch (tfError) {
           console.error('Failed to initialize TensorFlow:', tfError);
         }
 
-        // Don't try to play the video here - we'll handle that in the Webcam component
-        // This avoids the "play interrupted by load request" error
+        // Initialize camera with appropriate resolution
+        // Use lower resolution on mobile for better performance
+        const constraints = {
+          video: {
+            width: isMobile ? 480 : 640,
+            height: isMobile ? 360 : 480
+          }
+        };
 
-        // Set canvas dimensions to match video
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        console.log("Set canvas dimensions:", canvas.width, canvas.height);
+        streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = streamRef.current;
+
+        // Set canvas dimensions to match video with mobile optimization
+        if (isMobile) {
+          // On mobile, use the actual display size to avoid scaling issues
+          const rect = canvas.getBoundingClientRect();
+          canvas.width = rect.width * window.devicePixelRatio;
+          canvas.height = rect.height * window.devicePixelRatio;
+          console.log("Set mobile canvas dimensions:", canvas.width, canvas.height, "DPR:", window.devicePixelRatio);
+        } else {
+          // Desktop uses video dimensions directly
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          console.log("Set desktop canvas dimensions:", canvas.width, canvas.height);
+        }
 
         // Force canvas to be visible with a border for debugging
-        canvas.style.border = "3px solid red";
+        const borderColor = isMobile ? "3px solid green" : "3px solid red";
+        canvas.style.border = borderColor; // Different color for mobile/desktop for debugging
         canvas.style.position = "absolute";
         canvas.style.top = "0";
         canvas.style.left = "0";
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
         canvas.style.zIndex = "10";
 
-        // Initialize the TensorFlow.js pose detection model
-        const poseDetectionModule = await import("@tensorflow-models/pose-detection");
+        // Import pose detection models dynamically to reduce initial load time
+        try {
+          const poseDetection = await import('@tensorflow-models/pose-detection');
 
-        if (!isMountedRef.current) return;
+          // Use a simpler configuration for mobile to ensure compatibility
+          if (isMobile) {
+            // On mobile: use the most reliable and lightweight settings
+            detectorRef.current = await poseDetection.createDetector(
+              poseDetection.SupportedModels.MoveNet,
+              {
+                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+                enableSmoothing: true,
+                minPoseScore: 0.2,
+              }
+            );
+          } else {
+            // On desktop: use the original high-quality settings
+            detectorRef.current = await poseDetection.createDetector(
+              poseDetection.SupportedModels.MoveNet,
+              {
+                modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
+                enableSmoothing: true,
+                minPoseScore: 0.25,
+                multiPoseMaxDimension: 512,
+                enableTracking: true
+              }
+            );
+          }
 
-        // Create MoveNet detector
-        detectorRef.current = await poseDetectionModule.createDetector(
-          poseDetectionModule.SupportedModels.MoveNet,
-          { modelType: poseDetectionModule.movenet.modelType.SINGLEPOSE_LIGHTNING }
-        );
+          console.log('Pose detector initialized successfully for', isMobile ? 'mobile' : 'desktop');
+        } catch (modelError) {
+          console.error('Error initializing pose detection model:', modelError);
+        }
 
         // Detection loop with throttling
+        // Use more aggressive throttling on mobile for better performance
         let lastDetectionTime = 0;
-        const detectionInterval = 100; // Limit to 10 detections per second
+        const detectionInterval = isMobile ? 120 : 100; // More throttling on mobile
 
         const detectFrame = async (timestamp: number) => {
           if (!isMountedRef.current || !detectorRef.current || !ctx || !video) return;
@@ -295,9 +275,31 @@ export function usePoseDetection(
             lastDetectionTime = timestamp;
 
             try {
+              // Ensure canvas has valid dimensions before drawing
+              if (canvas.width === 0 || canvas.height === 0) {
+                // Set fallback dimensions if canvas is zero-sized
+                const fallbackWidth = video.videoWidth || video.clientWidth || 320;
+                const fallbackHeight = video.videoHeight || video.clientHeight || 240;
+
+                if (fallbackWidth > 0 && fallbackHeight > 0) {
+                  canvas.width = fallbackWidth;
+                  canvas.height = fallbackHeight;
+                  console.log('Fixed zero-sized canvas', { width: fallbackWidth, height: fallbackHeight });
+                } else {
+                  // Last resort fallback to prevent texture size error
+                  canvas.width = 320;
+                  canvas.height = 240;
+                  console.log('Using emergency fallback canvas size: 320x240');
+                }
+              }
+
               // Clear canvas and draw video frame first for better UX
               ctx.clearRect(0, 0, canvas.width, canvas.height);
-              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+              // Only try to draw if dimensions are valid
+              if (canvas.width > 0 && canvas.height > 0) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              }
 
               // Detect poses
               const poses = await detectorRef.current.estimatePoses(video);
@@ -309,7 +311,7 @@ export function usePoseDetection(
                 drawSkeleton(ctx, keypoints);
 
                 // Draw exercise state information
-                drawExerciseState(ctx, canvas.width, canvas.height);
+                drawExerciseState(ctx, canvas.width);
 
                 // Check for rep completion
                 if (mode === 'pushups' ? detectPushupCallback(keypoints) : detectSquatCallback(keypoints)) {
@@ -319,7 +321,7 @@ export function usePoseDetection(
                 }
               } else {
                 // Even if no pose is detected, still show the exercise state
-                drawExerciseState(ctx, canvas.width, canvas.height);
+                drawExerciseState(ctx, canvas.width);
               }
             } catch (error) {
               console.error('Error during pose detection:', error);
@@ -335,49 +337,8 @@ export function usePoseDetection(
       }
     };
 
-    // This function is defined but not used in the current implementation
-    // function getKeypointColor(name: string): string {
-    //   // Group keypoints by color for better visualization
-    //   if (name.includes('shoulder') || name.includes('hip')) {
-    //     return '#ff0000'; // Red for core points
-    //   } else if (name.includes('elbow') || name.includes('wrist') || name.includes('hand')) {
-    //     return '#00ff00'; // Green for arm points
-    //   } else if (name.includes('knee') || name.includes('ankle') || name.includes('foot')) {
-    //     return '#0000ff'; // Blue for leg points
-    //   } else if (name.includes('eye') || name.includes('ear') || name.includes('nose')) {
-    //     return '#ffff00'; // Yellow for face points
-    //   }
-    //   return '#ffffff'; // White for other points
-    // }
-
-    // This function is defined but not used in the current implementation
-    // function drawKeypoint(ctx: CanvasRenderingContext2D, keypoint: any, color: string) {
-    //   const { x, y } = keypoint;
-
-    //   ctx.beginPath();
-    //   ctx.arc(x, y, 5, 0, 2 * Math.PI);
-    //   ctx.fillStyle = color;
-    //   ctx.fill();
-    //   ctx.strokeStyle = '#000000';
-    //   ctx.lineWidth = 2;
-    //   ctx.stroke();
-    // }
-
     function drawSkeleton(ctx: CanvasRenderingContext2D, keypoints: Keypoint[]) {
       const confidenceThreshold = 0.3;
-
-      // Define connections between keypoints for a skeleton
-      // This array is defined but not directly used in the current implementation
-      // const connections = [
-      //   ['nose', 'left_eye'], ['nose', 'right_eye'],
-      //   ['left_eye', 'left_ear'], ['right_eye', 'right_ear'],
-      //   ['left_shoulder', 'right_shoulder'], ['left_shoulder', 'left_elbow'],
-      //   ['right_shoulder', 'right_elbow'], ['left_elbow', 'left_wrist'],
-      //   ['right_elbow', 'right_wrist'], ['left_shoulder', 'left_hip'],
-      //   ['right_shoulder', 'right_hip'], ['left_hip', 'right_hip'],
-      //   ['left_hip', 'left_knee'], ['right_hip', 'right_knee'],
-      //   ['left_knee', 'left_ankle'], ['right_knee', 'right_ankle']
-      // ];
 
       // Create a map for faster keypoint lookup
       const keypointMap = keypoints.reduce((map, kp) => {
@@ -387,11 +348,20 @@ export function usePoseDetection(
         return map;
       }, {} as Record<string, Keypoint>);
 
-      // Draw the connections with extremely thick lines and very strong glow effect
-      ctx.lineWidth = mode === 'squats' ? 20 : 18; // Super thick lines for maximum visibility
+      // Mobile-specific scaling for graphics
+      const scaleFactor = isMobile ? window.devicePixelRatio : 1;
 
-      // Add very strong glow effect
-      ctx.shadowBlur = 30;
+      // Draw the connections with device-appropriate thickness
+      if (isMobile) {
+        // On mobile, scale down the thickness but keep visibility
+        ctx.lineWidth = (mode === 'squats' ? 12 : 10) * scaleFactor;
+        ctx.shadowBlur = 15 * scaleFactor;
+      } else {
+        // Desktop keeps the original thick, gamified look
+        ctx.lineWidth = mode === 'squats' ? 20 : 18;
+        ctx.shadowBlur = 30;
+      }
+
       ctx.shadowColor = mode === 'squats' ? '#00ffff' : '#00ff00'; // Brighter colors
 
       // Group connections by body part for better visualization
@@ -423,19 +393,53 @@ export function usePoseDetection(
         ['right_eye', 'right_ear']
       ];
 
-      // Draw legs with emphasis for squats
+      // Helper function to draw connection groups
+      function drawConnectionGroup(connectionGroup: string[][], color: string, lineWidth: number) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+
+        connectionGroup.forEach(([p1Name, p2Name]) => {
+          const p1 = keypointMap[p1Name];
+          const p2 = keypointMap[p2Name];
+
+          if (p1 && p2 && p1.score && p2.score && p1.score > confidenceThreshold && p2.score > confidenceThreshold) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        });
+      }
+
+      // Draw legs with emphasis for squats - mobile-aware scaling
       if (mode === 'squats') {
-        // Draw legs first and with more emphasis
-        drawConnectionGroup(legConnections, '#ffff00', 6); // Yellow, thicker lines for legs in squat mode
-        drawConnectionGroup(torsoConnections, '#00ff00', 4); // Green for torso
-        drawConnectionGroup(armConnections, '#00ffff', 3); // Cyan for arms
-        drawConnectionGroup(faceConnections, '#ffffff', 2); // White for face
+        if (isMobile) {
+          // Mobile: thinner lines to not overwhelm small screen
+          drawConnectionGroup(legConnections, '#ffff00', 2 * scaleFactor); // Yellow for legs
+          drawConnectionGroup(torsoConnections, '#00ff00', 1.5 * scaleFactor); // Green for torso
+          drawConnectionGroup(armConnections, '#00ffff', 1.5 * scaleFactor); // Cyan for arms
+          drawConnectionGroup(faceConnections, '#ffffff', 1 * scaleFactor); // White for face
+        } else {
+          // Desktop: keep original thick gamified look
+          drawConnectionGroup(legConnections, '#ffff00', 6); // Yellow, thicker lines for legs in squat mode
+          drawConnectionGroup(torsoConnections, '#00ff00', 4); // Green for torso
+          drawConnectionGroup(armConnections, '#00ffff', 3); // Cyan for arms
+          drawConnectionGroup(faceConnections, '#ffffff', 2); // White for face
+        }
       } else {
-        // For pushups, emphasize arms
-        drawConnectionGroup(armConnections, '#00ff00', 5); // Green, thicker lines for arms in pushup mode
-        drawConnectionGroup(torsoConnections, '#ffff00', 4); // Yellow for torso
-        drawConnectionGroup(legConnections, '#00ffff', 3); // Cyan for legs
-        drawConnectionGroup(faceConnections, '#ffffff', 2); // White for face
+        if (isMobile) {
+          // Mobile pushups: thinner lines
+          drawConnectionGroup(armConnections, '#00ff00', 2 * scaleFactor); // Green for arms
+          drawConnectionGroup(torsoConnections, '#ffff00', 1.5 * scaleFactor); // Yellow for torso
+          drawConnectionGroup(legConnections, '#00ffff', 1.5 * scaleFactor); // Cyan for legs
+          drawConnectionGroup(faceConnections, '#ffffff', 1 * scaleFactor); // White for face
+        } else {
+          // Desktop pushups: keep original thick look
+          drawConnectionGroup(armConnections, '#00ff00', 5); // Green, thicker lines for arms in pushup mode
+          drawConnectionGroup(torsoConnections, '#ffff00', 4); // Yellow for torso
+          drawConnectionGroup(legConnections, '#00ffff', 3); // Cyan for legs
+          drawConnectionGroup(faceConnections, '#ffffff', 2); // White for face
+        }
       }
 
       // Reset shadow for keypoints
@@ -447,12 +451,20 @@ export function usePoseDetection(
           const isLegPoint = ['left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle'].includes(keypoint.name);
           const isArmPoint = ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist'].includes(keypoint.name);
 
-          // Emphasize leg points for squats, arm points for pushups - use much larger points
-          const radius = mode === 'squats' && isLegPoint ? 12 :
-                         mode === 'pushups' && isArmPoint ? 12 : 8;
+          // Emphasize leg points for squats, arm points for pushups - mobile-aware sizing
+          let radius;
+          if (isMobile) {
+            // Mobile: smaller keypoints to not overwhelm
+            radius = (mode === 'squats' && isLegPoint ? 6 :
+                     mode === 'pushups' && isArmPoint ? 6 : 4) * scaleFactor;
+          } else {
+            // Desktop: keep original large keypoints
+            radius = mode === 'squats' && isLegPoint ? 12 :
+                     mode === 'pushups' && isArmPoint ? 12 : 8;
+          }
 
-          // Add glow effect for keypoints
-          ctx.shadowBlur = 10;
+          // Add glow effect for keypoints - mobile-aware
+          ctx.shadowBlur = isMobile ? 5 * scaleFactor : 10;
 
           // Color based on body part - use brighter colors
           if (isLegPoint) {
@@ -480,36 +492,19 @@ export function usePoseDetection(
           ctx.stroke();
         }
       });
-
-      // Helper function to draw connection groups
-      function drawConnectionGroup(connectionGroup: string[][], color: string, lineWidth: number) {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = lineWidth;
-
-        connectionGroup.forEach(([p1Name, p2Name]) => {
-          const p1 = keypointMap[p1Name];
-          const p2 = keypointMap[p2Name];
-
-          if (p1 && p2 && p1.score && p2.score && p1.score > confidenceThreshold && p2.score > confidenceThreshold) {
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-          }
-        });
-      }
     }
 
-    function drawExerciseState(ctx: CanvasRenderingContext2D, width: number, height: number) {
-      // Draw rep count and current state with improved visibility
-      ctx.font = 'bold 24px sans-serif';
+    function drawExerciseState(ctx: CanvasRenderingContext2D, width: number) {
+      // Draw rep count and current state with improved visibility - mobile-aware
+      const fontSize = isMobile ? 18 : 24; // Smaller text on mobile
+      ctx.font = `bold ${fontSize}px sans-serif`;
       ctx.textAlign = 'right';
 
-      // Add shadow for better text visibility
+      // Add shadow for better text visibility - mobile-aware
       ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-      ctx.shadowBlur = 5;
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 2;
+      ctx.shadowBlur = isMobile ? 3 : 5;
+      ctx.shadowOffsetX = isMobile ? 1 : 2;
+      ctx.shadowOffsetY = isMobile ? 1 : 2;
 
       // Show exercise type with background
       const modeText = `MODE: ${mode.toUpperCase()}`;
@@ -535,71 +530,6 @@ export function usePoseDetection(
       ctx.fillStyle = stateColor;
       ctx.fillText(stateText, width - 10, 70);
 
-      // Draw visual indicator for the current state
-      if (mode === 'squats') {
-        // Draw a stick figure in squat or standing position
-        const centerX = width - 60;
-        const headY = repState.current === "down" ? height - 100 : height - 150;
-
-        // Head
-        ctx.beginPath();
-        ctx.arc(centerX, headY, 15, 0, 2 * Math.PI);
-        ctx.fillStyle = stateColor;
-        ctx.fill();
-
-        // Body
-        ctx.beginPath();
-        ctx.moveTo(centerX, headY + 15);
-        ctx.lineTo(centerX, headY + 50);
-        ctx.strokeStyle = stateColor;
-        ctx.lineWidth = 4;
-        ctx.stroke();
-
-        // Legs
-        if (repState.current === "down") {
-          // Squatting position
-          ctx.beginPath();
-          ctx.moveTo(centerX, headY + 50);
-          ctx.lineTo(centerX - 20, headY + 60);
-          ctx.lineTo(centerX - 20, headY + 80);
-          ctx.moveTo(centerX, headY + 50);
-          ctx.lineTo(centerX + 20, headY + 60);
-          ctx.lineTo(centerX + 20, headY + 80);
-          ctx.stroke();
-        } else {
-          // Standing position
-          ctx.beginPath();
-          ctx.moveTo(centerX, headY + 50);
-          ctx.lineTo(centerX - 15, headY + 100);
-          ctx.moveTo(centerX, headY + 50);
-          ctx.lineTo(centerX + 15, headY + 100);
-          ctx.stroke();
-        }
-      } else {
-        // Draw a stick figure in pushup position
-        const centerX = width - 60;
-        const centerY = height - 100;
-
-        if (repState.current === "down") {
-          // Down position
-          ctx.beginPath();
-          ctx.moveTo(centerX - 30, centerY);
-          ctx.lineTo(centerX + 30, centerY);
-          ctx.strokeStyle = stateColor;
-          ctx.lineWidth = 4;
-          ctx.stroke();
-        } else {
-          // Up position
-          ctx.beginPath();
-          ctx.moveTo(centerX - 30, centerY - 20);
-          ctx.lineTo(centerX, centerY);
-          ctx.lineTo(centerX + 30, centerY - 20);
-          ctx.strokeStyle = stateColor;
-          ctx.lineWidth = 4;
-          ctx.stroke();
-        }
-      }
-
       // Reset shadow
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 0;
@@ -622,7 +552,6 @@ export function usePoseDetection(
       if (detectorRef.current) {
         try {
           // Use optional chaining to safely call dispose if it exists
-          // Using type interface augmentation in tensorflow.d.ts to allow this
           detectorRef.current.dispose?.();
         } catch (error) {
           console.error("Error disposing detector:", error);
@@ -655,7 +584,7 @@ export function usePoseDetection(
         }
       }
     };
-  }, [canvasRef, mode, onRepCount, isActive, detectPushupCallback, detectSquatCallback]);
+  }, [canvasRef, mode, onRepCount, isActive, isMobile, detectPushupCallback, detectSquatCallback]);
 
   return videoRef;
 }

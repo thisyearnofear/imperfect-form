@@ -13,5 +13,8 @@ export { default as WalletButton } from './WalletButton';
 export { default as WalletSwitcher } from './WalletSwitcher';
 export { default as WalletTypeDetector } from './WalletTypeDetector';
 export { default as WalletTypeSelector } from './WalletTypeSelector';
+export { default as MobileOptimizedWalletSelector } from './MobileOptimizedWalletSelector';
+export { FarcasterWalletProvider, useFarcasterWallet, withFarcasterWallet } from './FarcasterWalletProvider';
+export { FarcasterAwareWalletButton, CompactFarcasterWalletButton } from './FarcasterAwareWalletButton';
 export { default as NetworkSelector } from './NetworkSelector';
 export { default as WalletNetworkSwitcher } from './NetworkSwitcher';

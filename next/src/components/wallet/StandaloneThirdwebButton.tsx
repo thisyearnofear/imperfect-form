@@ -15,6 +15,7 @@ import { getBestDisplayName } from "@/utils/web3bio";
 import Dialog from "@/components/ui/Dialog";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+import useDeviceDetect from "@/hooks/useDeviceDetect";
 
 /**
  * StandaloneThirdwebButton component
@@ -144,7 +145,7 @@ export default function StandaloneThirdwebButton() {
           isDarkMode: true,
         }}
         theme="dark"
-        modalSize="compact"
+        modalSize="wide"
         walletConnectors={[
           {
             id: "metamask",
@@ -186,6 +187,9 @@ const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent({
   const [showModal, setShowModal] = useState(false);
   const [displayName, setDisplayName] = useState<string>("");
   const [copied, setCopied] = useState(false);
+
+  // Access device detection for responsive modal sizing
+  const { isMobile } = useDeviceDetect();
 
   // Access network and wallet provider contexts
   const { network, setNetwork } = useNetwork();
@@ -466,7 +470,7 @@ const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent({
   return (
     <ConnectWallet
       theme="dark"
-      modalSize="compact"
+      modalSize={isMobile ? "compact" : "wide"}
       welcomeScreen={{
         title: "Onchain Olympics",
         subtitle: "Connect to submit your score",

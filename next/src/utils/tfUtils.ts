@@ -5,27 +5,84 @@ import '@tensorflow/tfjs-backend-webgl';
 let tfInitialized = false;
 
 /**
+ * Platform-specific TensorFlow configuration
+ */
+interface TFPlatformConfig {
+  backend: string;
+  settings?: Record<string, unknown>;
+}
+
+/**
+ * Get the best configuration for the current platform
+ * This separates mobile and desktop settings for clean optimization
+ */
+function getPlatformConfig(isMobile: boolean): TFPlatformConfig {
+  // Mobile-specific optimizations - use minimal conservative settings
+  if (isMobile) {
+    return {
+      backend: 'webgl',
+      settings: {
+        // Only use the most essential and widely-supported optimizations
+        // These are known to work on most mobile browsers
+        'WEBGL_FORCE_F16_TEXTURES': false,  // More compatible but less optimized
+        'CHECK_COMPUTATION_FOR_ERRORS': false
+      }
+    };
+  }
+
+  // Desktop can use more resources for better accuracy
+  return {
+    // Try WebGPU first on desktop, if that fails, will fall back to WebGL
+    backend: 'webgpu',
+    settings: {
+      // Default settings for desktop - can use more resources
+      'CHECK_COMPUTATION_FOR_ERRORS': true,
+      // Use higher precision on desktop
+      'WEBGL_FORCE_F16_TEXTURES': false,
+      'WEBGL_RENDER_FLOAT32_ENABLED': true,
+      'WEBGL_MAX_TEXTURE_SIZE': 4096,
+    }
+  };
+}
+
+/**
  * Initialize TensorFlow.js with the best available backend
  * This should be called before any TensorFlow operations
+ * @param isMobile Whether the app is running on a mobile device
  */
-export async function initializeTensorFlow(): Promise<string> {
+export async function initializeTensorFlow(isMobile = false): Promise<string> {
   if (tfInitialized) {
     return tf.getBackend() || 'unknown';
   }
-  
+
+  // Get the best config for the current platform
+  const platformConfig = getPlatformConfig(isMobile);
+
+  // Apply environment settings
+  if (platformConfig.settings) {
+    Object.entries(platformConfig.settings).forEach(([key, value]) => {
+      tf.env().set(key, value as boolean | number | string);
+    });
+  }
+
   try {
-    // Try WebGPU first (if available in the browser)
+    // Try the platform's preferred backend first
     try {
-      await tf.setBackend('webgpu');
+      await tf.setBackend(platformConfig.backend);
       await tf.ready();
-      console.log('TensorFlow.js initialized with WebGPU backend');
+      console.log(`TensorFlow.js initialized with ${platformConfig.backend} backend`);
       tfInitialized = true;
-      return 'webgpu';
-    } catch (webgpuError) {
-      console.warn('WebGPU initialization failed, trying WebGL:', webgpuError);
+      return platformConfig.backend;
+    } catch (primaryError) {
+      // Suppress the error for WebGPU since it's expected on many browsers
+      if (platformConfig.backend === 'webgpu') {
+        console.log('WebGPU not available, falling back to WebGL');
+      } else {
+        console.warn(`${platformConfig.backend} initialization failed, trying WebGL:`, primaryError);
+      }
     }
-    
-    // Try WebGL next
+
+    // Always fall back to WebGL which has wider support
     try {
       await tf.setBackend('webgl');
       await tf.ready();
@@ -35,8 +92,8 @@ export async function initializeTensorFlow(): Promise<string> {
     } catch (webglError) {
       console.warn('WebGL initialization failed, trying WASM:', webglError);
     }
-    
-    // Fall back to WASM
+
+    // Last resort: WASM
     await tf.setBackend('wasm');
     await tf.ready();
     console.log('TensorFlow.js initialized with WASM backend');
@@ -61,3 +118,68 @@ export function getTensorFlowBackend(): string {
 export function isTensorFlowInitialized(): boolean {
   return tfInitialized;
 }
+
+/**
+ * Utility functions for mobile-specific TensorFlow operations
+ */
+export const mobileTFUtils = {
+  /**
+   * Gets the optimal model type for the current device
+   * @param isMobile Whether the app is running on a mobile device
+   * @returns The appropriate model type to use
+   */
+  getOptimalModelType: (isMobile: boolean): string => {
+    // For mobile, use a lighter model
+    if (isMobile) {
+      return 'lightning';
+    }
+    // For desktop, use a more accurate model
+    return 'thunder';
+  },
+
+  /**
+   * Gets optimized detector configuration based on device type
+   * @param isMobile Whether the app is running on a mobile device
+   * @returns Configuration object for the pose detector
+   */
+  getDetectorConfig: (isMobile: boolean): Record<string, unknown> => {
+    if (isMobile) {
+      return {
+        modelType: 'lightning',
+        enableSmoothing: true,
+        minPoseScore: 0.15, // Lower threshold for mobile to detect poses from further away
+        multiPoseMaxDimension: 256, // Smaller dimension for better performance
+        enableTracking: true, // Enable tracking for smoother results
+        trackerType: 'boundingBox',
+        trackerConfig: {
+          maxTracks: 1, // Only track one person for better performance
+          maxAge: 10, // Frames to keep track
+          minSimilarity: 0.2, // More lenient similarity threshold for mobile
+          keypointTrackerParams: {
+            keypointConfidenceThreshold: 0.2,
+            keypointFalloff: [0.1, 0.1, 0.1, 0.1] // [head, shoulder, elbow, wrist]
+          }
+        }
+      };
+    } else {
+      // Desktop can use more accurate but computation-heavy settings
+      return {
+        modelType: 'thunder',
+        enableSmoothing: true,
+        minPoseScore: 0.25,
+        multiPoseMaxDimension: 512,
+        enableTracking: true,
+        trackerType: 'boundingBox',
+        trackerConfig: {
+          maxTracks: 2, // Can track more people on desktop
+          maxAge: 15,
+          minSimilarity: 0.4, // Higher threshold for better accuracy
+          keypointTrackerParams: {
+            keypointConfidenceThreshold: 0.3,
+            keypointFalloff: [0.05, 0.05, 0.05, 0.05] // More precise tracking
+          }
+        }
+      };
+    }
+  }
+};

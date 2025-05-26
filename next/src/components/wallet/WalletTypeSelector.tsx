@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import WalletDialog from "@/components/ui/WalletDialog";
+import useDeviceDetect from "@/hooks/useDeviceDetect";
+import MobileOptimizedWalletSelector from "./MobileOptimizedWalletSelector";
 
 interface WalletTypeSelectorProps {
   onClose?: () => void;
@@ -10,15 +12,30 @@ interface WalletTypeSelectorProps {
 
 /**
  * WalletTypeSelector component that displays a dialog for selecting a wallet type
- * This replaces the previous NetworkSelector which confused wallet types with networks
+ * Uses device detection to show appropriate UI for desktop vs mobile
  */
 export default function WalletTypeSelector({
   onClose,
 }: WalletTypeSelectorProps) {
+  const { isMobile } = useDeviceDetect();
+
+  // On mobile, use the mobile-optimized version
+  if (isMobile) {
+    return <MobileOptimizedWalletSelector onClose={onClose} />;
+  }
+
+  // On desktop, use the original desktop version
+  return <DesktopWalletSelector onClose={onClose} />;
+}
+
+/**
+ * Desktop version of the wallet selector - restored from working commit
+ */
+function DesktopWalletSelector({ onClose }: WalletTypeSelectorProps) {
   const { setWalletProvider } = useWalletProvider();
   const [isSelectingWallet, setIsSelectingWallet] = useState(false);
 
-  // Handle wallet type selection
+  // Handle wallet type selection - exact same logic as the working version
   const handleWalletTypeSelected = (walletType: "signature" | "smart") => {
     // Show loading state
     setIsSelectingWallet(true);

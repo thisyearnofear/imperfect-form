@@ -8,6 +8,7 @@ import { ThirdwebDetector } from "@/components/wallet";
 import ThirdwebQueryProvider from "./ThirdwebQueryProvider";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+import useDeviceDetect from "@/hooks/useDeviceDetect";
 
 // Define a type for the chain configuration
 interface ChainConfig {
@@ -41,6 +42,8 @@ const Game = dynamic(() => import("@/components/game/Game"), {
  * This isolates the ThirdWeb context to prevent React hook errors
  */
 export default function ThirdwebWrapper() {
+  // Get device detection for responsive modal sizing
+  const { isMobile } = useDeviceDetect();
   // Get the selected network from context
   const { network } = useNetwork();
   const [activeChain, setActiveChain] = useState<ChainConfig | null>(null);
@@ -194,7 +197,7 @@ export default function ThirdwebWrapper() {
           isDarkMode: true,
         }}
         theme="dark"
-        modalSize="compact"
+        modalSize={isMobile ? "compact" : "wide"}
         // Use wallet connectors with proper configuration for ThirdWeb v4
         walletConnectors={[
           {

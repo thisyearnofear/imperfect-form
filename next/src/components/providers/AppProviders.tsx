@@ -10,8 +10,10 @@ import {
   WalletProviderProvider,
   useWalletProvider,
 } from "@/contexts/WalletProviderContext";
+import { FarcasterWalletProvider } from "@/components/wallet/FarcasterWalletProvider";
 import { Toaster } from "react-hot-toast";
 import GlobalErrorHandler from "./GlobalErrorHandler";
+import { initRemoteLogger } from "@/utils/remoteLogger";
 
 // Props for the ConditionalProviders component
 interface ConditionalProvidersProps {
@@ -176,69 +178,82 @@ interface AppProvidersProps {
  * AppProviders component that wraps the application with all necessary providers
  */
 export default function AppProviders({ children }: AppProvidersProps) {
+  // Initialize remote logger for mobile debugging
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      initRemoteLogger({
+        enabled: true,
+        captureConsole: false, // Only capture explicit logs, not all console output
+      });
+    }
+  }, []);
+
   return (
     <NetworkProvider>
       <WalletProviderProvider>
-        <ConditionalProviders>
-          <GlobalErrorHandler />
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              style: {
-                background: "#111",
-                color: "#fcb131",
-                border: "2px solid #fcb131",
-                fontFamily: '"Press Start 2P", cursive',
-                fontSize: "12px",
-                padding: "16px",
-                maxWidth: "400px",
-                textAlign: "center",
-                boxShadow: "0 0 10px rgba(252, 177, 49, 0.5)",
-                wordBreak: "break-word",
-                whiteSpace: "pre-wrap",
-                overflowWrap: "break-word",
-              },
-              success: {
+        <FarcasterWalletProvider>
+          <ConditionalProviders>
+            <GlobalErrorHandler />
+            <Toaster
+              position="top-center"
+              toastOptions={{
                 style: {
                   background: "#111",
-                  color: "#00a651",
-                  border: "2px solid #00a651",
+                  color: "#fcb131",
+                  border: "2px solid #fcb131",
+                  fontFamily: '"Press Start 2P", cursive',
+                  fontSize: "12px",
+                  padding: "16px",
+                  maxWidth: "400px",
+                  textAlign: "center",
+                  boxShadow: "0 0 10px rgba(252, 177, 49, 0.5)",
+                  wordBreak: "break-word",
+                  whiteSpace: "pre-wrap",
+                  overflowWrap: "break-word",
                 },
-                iconTheme: {
-                  primary: "#00a651",
-                  secondary: "#111",
+                success: {
+                  style: {
+                    background: "#111",
+                    color: "#00a651",
+                    border: "2px solid #00a651",
+                  },
+                  iconTheme: {
+                    primary: "#00a651",
+                    secondary: "#111",
+                  },
+                  duration: 5000,
+                },
+                error: {
+                  style: {
+                    background: "#111",
+                    color: "#ff4500",
+                    border: "2px solid #ff4500",
+                    maxWidth: "350px",
+                  },
+                  iconTheme: {
+                    primary: "#ff4500",
+                    secondary: "#111",
+                  },
+                  duration: 7000,
+                },
+                loading: {
+                  style: {
+                    background: "#111",
+                    color: "#3498db",
+                    border: "2px solid #3498db",
+                  },
+                  iconTheme: {
+                    primary: "#3498db",
+                    secondary: "#111",
+                  },
                 },
                 duration: 5000,
-              },
-              error: {
-                style: {
-                  background: "#111",
-                  color: "#ff4500",
-                  border: "2px solid #ff4500",
-                  maxWidth: "350px",
-                },
-                iconTheme: {
-                  primary: "#ff4500",
-                  secondary: "#111",
-                },
-                duration: 7000,
-              },
-              loading: {
-                style: {
-                  background: "#111",
-                  color: "#3498db",
-                  border: "2px solid #3498db",
-                },
-                iconTheme: {
-                  primary: "#3498db",
-                  secondary: "#111",
-                },
-              },
-              duration: 5000,
-            }}
-          />
-          {children}
-        </ConditionalProviders>
+              }}
+            />
+            {/* Debug Provider removed as requested */}
+            {children}
+          </ConditionalProviders>
+        </FarcasterWalletProvider>
       </WalletProviderProvider>
     </NetworkProvider>
   );

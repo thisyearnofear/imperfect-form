@@ -6,13 +6,15 @@ import useDeviceDetect from "@/hooks/useDeviceDetect";
 import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
 import { Welcome } from "@/components/game";
 import { WalletButton } from "@/components/wallet";
+import { useFarcasterWallet } from "@/components/wallet/FarcasterWalletProvider";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useAccount as useWagmiAccount } from "wagmi";
 import toast from "react-hot-toast";
 import { Score } from "@/types";
+import { createRemoteLogger } from "@/utils/remoteLogger";
 
-// Dynamically import Webcam component to avoid SSR issues with face detection
-const Webcam = dynamic(() => import("./Webcam"), {
+// Use LazyWebcam for better performance - only loads TensorFlow when needed
+const LazyWebcam = dynamic(() => import("./LazyWebcam"), {
   ssr: false,
   loading: () => <Spinner />,
 });
@@ -48,6 +50,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const { isMobile } = useDeviceDetect(); // Use our new device detection hook
 
+  // Safe state for viewport dimensions
+  const [viewportDimensions, setViewportDimensions] = useState({
+    height: 0,
+    width: 0,
+  });
+
   // Get network from context
   const { network, setNetwork } = useNetwork();
 
@@ -55,20 +63,30 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const wagmiAccount = useWagmiAccount();
   const wagmiAddress = wagmiAccount?.address;
 
-  // Get address based on the selected network
+  // Get Farcaster wallet context
+  const farcaster = useFarcasterWallet();
+
+  // Initialize remote logger for the Game component
+  const logger = createRemoteLogger("Game");
+
+  // Get address based on the selected network and Farcaster context
   let address: string | undefined = undefined;
 
-  // For Wagmi (Base)
-  if (network === "base") {
+  // Priority 1: If in Farcaster mini app and wallet is connected, use Farcaster wallet
+  if (farcaster.isInMiniApp && farcaster.walletAddress) {
+    address = farcaster.walletAddress;
+    logger.info("Using Farcaster wallet address", { address });
+  }
+  // Priority 2: For Wagmi (Base)
+  else if (network === "base") {
     try {
       address = wagmiAddress;
     } catch {
       // Ignoring error in render cycle
     }
   }
-
-  // For ThirdWeb (Polygon, Monad, Celo), use the address passed as prop
-  if (network === "polygon" || network === "monad" || network === "celo") {
+  // Priority 3: For ThirdWeb (Polygon, Monad, Celo), use the address passed as prop
+  else if (network === "polygon" || network === "monad" || network === "celo") {
     // If thirdwebAddress is provided as a prop, use it
     if (thirdwebAddress) {
       address = thirdwebAddress;
@@ -92,6 +110,28 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       );
       setNetwork("monad");
       // No reload - just update the context
+    }
+
+    // Safely get viewport dimensions
+    if (typeof window !== "undefined") {
+      const handleResize = () => {
+        setViewportDimensions({
+          height: window.innerHeight,
+          width: window.innerWidth,
+        });
+      };
+
+      // Initial measurement
+      handleResize();
+
+      // Update on resize
+      window.addEventListener("resize", handleResize);
+      window.addEventListener("orientationchange", handleResize);
+
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        window.removeEventListener("orientationchange", handleResize);
+      };
     }
   }, [network, setNetwork]);
 
@@ -394,46 +434,107 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           )}
 
           {started && (
-            <div
-              id="canvasContainer"
-              aria-label="Game Canvas"
-              className="w-full mx-auto relative border-2 border-yellow-400"
-              style={{
-                height: isMobile ? 'auto' : '480px',
-                maxWidth: '640px',
-                aspectRatio: isMobile ? '4/3' : 'auto',
-              }}
-            >
-              <Webcam
-                mode={mode}
-                onRepCount={handleRepCount}
-                isActive={started}
-                onFilterChange={handleFilterChange}
-              />
-            </div>
+            <>
+              {/* On mobile, arrange everything in a flex column with specific heights */}
+              {isMobile ? (
+                <div
+                  className="w-full flex flex-col h-full"
+                  style={{
+                    minHeight:
+                      viewportDimensions.height > 0
+                        ? `${viewportDimensions.height * 0.85}px`
+                        : "auto",
+                  }}
+                >
+                  {/* Timer and rep counter at the top */}
+                  <div className="flex justify-between mb-2 px-2">
+                    <div className="text-xl font-bold">
+                      {formatTime(timeLeft)}
+                    </div>
+                    <div className="text-xl font-bold">{repCount}</div>
+                  </div>
+
+                  {/* Camera takes most of the available space */}
+                  <div
+                    id="canvasContainer"
+                    aria-label="Game Canvas"
+                    className="w-full mx-auto relative border-2 border-yellow-400 flex-grow"
+                    style={{
+                      flex: "1",
+                      minHeight: "50%", // Reduced from 60% to give more flexibility
+                      maxWidth: "100%",
+                      display: "flex", // Ensure proper flex behavior
+                      alignItems: "center", // Center video vertically
+                      justifyContent: "center", // Center video horizontally
+                    }}
+                  >
+                    <LazyWebcam
+                      mode={mode}
+                      onRepCount={handleRepCount}
+                      isActive={started}
+                      onFilterChange={handleFilterChange}
+                    />
+                  </div>
+                </div>
+              ) : (
+                // Desktop layout remains unchanged
+                <div
+                  id="canvasContainer"
+                  aria-label="Game Canvas"
+                  className="w-full mx-auto relative border-2 border-yellow-400"
+                  style={{
+                    height: "480px",
+                    maxWidth: "640px",
+                    aspectRatio: "auto",
+                  }}
+                >
+                  <LazyWebcam
+                    mode={mode}
+                    onRepCount={handleRepCount}
+                    isActive={started}
+                    onFilterChange={handleFilterChange}
+                  />
+                </div>
+              )}
+            </>
           )}
 
-          <div
-            className="timer"
-            style={{ display: started ? "block" : "none" }}
-            aria-live="polite"
-          >
-            {formatTime(timeLeft)}
-          </div>
-          <div
-            id="repCounterContainer"
-            className="rep-counter-container"
-            style={{ display: started ? "block" : "none" }}
-          >
-            {repCount}
-          </div>
+          {/* Desktop-only timer and counter - hidden on mobile as they're repositioned */}
+          {!isMobile && (
+            <>
+              <div
+                className="timer"
+                style={{ display: started ? "block" : "none" }}
+                aria-live="polite"
+              >
+                {formatTime(timeLeft)}
+              </div>
+              <div
+                id="repCounterContainer"
+                className="rep-counter-container"
+                style={{ display: started ? "block" : "none" }}
+              >
+                {repCount}
+              </div>
+            </>
+          )}
         </div>
 
-        <div id="controls" className={`${isMobile ? 'grid grid-cols-2 gap-3 mt-4' : 'flex justify-between mt-4'}`}>
+        <div
+          id="controls"
+          className={`${
+            isMobile
+              ? "grid grid-cols-2 gap-3 mt-2"
+              : "flex justify-between mt-4"
+          }`}
+          style={{ marginBottom: isMobile ? "8px" : "0" }}
+        >
           <button
             id="modeButton"
-            className={`py-3 px-4 text-sm sm:text-base touch-manipulation ${started ? '' : ''}`}
-            style={{ minHeight: isMobile ? '50px' : 'auto' }}
+            className={`py-3 px-4 text-sm sm:text-base touch-manipulation ${
+              started ? "" : ""
+            }`}
+            style={{ minHeight: isMobile ? "50px" : "auto" }}
             aria-label={
               started ? "Current exercise mode" : "Switch exercise mode"
             }
@@ -444,7 +545,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           <button
             id="startButton"
             className="py-3 px-4 text-sm sm:text-base touch-manipulation"
-            style={{ minHeight: isMobile ? '50px' : 'auto' }}
+            style={{ minHeight: isMobile ? "50px" : "auto" }}
             aria-label="Start game"
             onClick={handleStart}
             disabled={started || showLoading || !address}
@@ -455,7 +556,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           <button
             id="stopButton"
             className="py-3 px-4 text-sm sm:text-base touch-manipulation"
-            style={{ minHeight: isMobile ? '50px' : 'auto' }}
+            style={{ minHeight: isMobile ? "50px" : "auto" }}
             aria-label="Stop game"
             onClick={handleStop}
             disabled={!started}
@@ -465,13 +566,52 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           <button
             id="resetButton"
             className="py-3 px-4 text-sm sm:text-base touch-manipulation"
-            style={{ minHeight: isMobile ? '50px' : 'auto' }}
+            style={{ minHeight: isMobile ? "50px" : "auto" }}
             aria-label="Reset game"
             onClick={handleReset}
             disabled={showLoading}
           >
             RESET
           </button>
+
+          {/* Debug button - only visible on mobile devices */}
+          {isMobile && (
+            <button
+              id="debugButton"
+              className="col-span-2 py-2 px-3 mt-2 text-xs sm:text-sm touch-manipulation bg-gray-800 text-gray-300 opacity-70"
+              style={{ minHeight: isMobile ? "40px" : "auto" }}
+              aria-label="Send diagnostic info"
+              onClick={() => {
+                // Send diagnostic info to server console
+                logger.info("Mobile diagnostic info", {
+                  game: {
+                    mode,
+                    started,
+                    repCount,
+                    timeLeft,
+                  },
+                  webcam: {
+                    active: started,
+                  },
+                  device: {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    pixelRatio: window.devicePixelRatio,
+                    orientation: window.screen?.orientation?.type || "unknown",
+                    userAgent: navigator.userAgent,
+                  },
+                  components: {
+                    modelReady:
+                      typeof window !== "undefined" && "_poseModel" in window,
+                    tfReady: typeof window !== "undefined" && "tf" in window,
+                  },
+                });
+                toast.success("Diagnostic info sent!");
+              }}
+            >
+              SEND DIAGNOSTICS
+            </button>
+          )}
         </div>
       </div>
       <SummaryModal

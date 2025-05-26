@@ -13,6 +13,7 @@
   "dependencies": {
     "@coinbase/onchainkit": "^0.38.13",
     "@divvi/referral-sdk": "^1.0.0",
+    "@farcaster/frame-sdk": "^0.0.28",
     "@mediapipe/camera_utils": "^0.3.1675466862",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/pose": "^0.5.1675469404",
