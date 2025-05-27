@@ -63,13 +63,23 @@ export function useFarcasterContext(): FarcasterContext {
 
   // Initialize Farcaster SDK and detect mini app context
   useEffect(() => {
+    let mounted = true;
+    let initializationAttempted = false;
+
     const initializeFarcaster = async () => {
+      // Prevent multiple initialization attempts
+      if (initializationAttempted) return;
+      initializationAttempted = true;
+
       try {
+        if (!mounted) return;
         setIsLoading(true);
         setError(null);
 
         // Check if we're in a Farcaster mini app context
         const isInFrame = await detectFarcasterMiniApp();
+        if (!mounted) return;
+
         setIsInMiniApp(isInFrame);
 
         if (isInFrame) {
@@ -77,6 +87,8 @@ export function useFarcasterContext(): FarcasterContext {
 
           // Dynamically import the Farcaster Mini App SDK
           const { sdk } = await import('@farcaster/frame-sdk');
+          if (!mounted) return;
+
           setSdk(sdk);
 
           // Initialize the SDK
@@ -85,9 +97,16 @@ export function useFarcasterContext(): FarcasterContext {
           }
           logger.info('🎯 Farcaster Mini App SDK initialized');
 
-          // Get user context from Mini App SDK
+          // Get user context from Mini App SDK with timeout
           try {
-            const context = await sdk.context;
+            const contextPromise = sdk.context;
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Context timeout')), 5000)
+            );
+
+            const context = await Promise.race([contextPromise, timeoutPromise]);
+            if (!mounted) return;
+
             if (context?.user && context.user.fid && context.user.username && context.user.displayName && context.user.pfpUrl) {
               const farcasterUser: FarcasterUser = {
                 fid: context.user.fid,
@@ -115,14 +134,14 @@ export function useFarcasterContext(): FarcasterContext {
             logger.warn('Failed to get user context from Mini App SDK', contextError);
           }
 
-          // Check if wallet is already connected using Mini App SDK
+          // Check if wallet is already connected using Mini App SDK (non-blocking)
           try {
             if (sdk.wallet?.ethProvider) {
               const accounts = await sdk.wallet.ethProvider.request({
                 method: 'eth_accounts'
               }) as string[];
 
-              if (accounts && accounts.length > 0) {
+              if (mounted && accounts && accounts.length > 0) {
                 setWalletAddress(accounts[0]);
                 logger.info('🎯 Farcaster Mini App wallet already connected', {
                   address: accounts[0]
@@ -136,15 +155,22 @@ export function useFarcasterContext(): FarcasterContext {
           logger.info('Not in Farcaster mini app context');
         }
       } catch (err) {
+        if (!mounted) return;
         const errorMessage = err instanceof Error ? err.message : 'Unknown error initializing Farcaster';
         setError(errorMessage);
         logger.error('Error initializing Farcaster context', err);
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeFarcaster();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Connect wallet function using Mini App SDK

@@ -9,7 +9,7 @@ import React, {
 } from "react";
 
 // Define the network types
-export type Network = "polygon" | "base" | "monad" | "celo" | null;
+export type Network = "polygon" | "base-sepolia" | "monad" | "celo" | null;
 
 // Define the context type
 interface NetworkContextType {
@@ -44,6 +44,22 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
     return (savedNetwork as Network) || null;
   });
 
+  // Check if we're in Farcaster context
+  const isInFarcaster =
+    typeof window !== "undefined" &&
+    (/farcaster|warpcast/i.test(navigator.userAgent) ||
+      window.location.search.includes("frame=") ||
+      window.location.search.includes("farcaster") ||
+      document.referrer.includes("warpcast.com") ||
+      document.referrer.includes("farcaster.xyz"));
+
+  // Check if we're on mobile
+  const isMobile =
+    typeof window !== "undefined" &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
   // Derived state to check if a network is selected
   const isNetworkSelected = network !== null;
 
@@ -56,13 +72,15 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
       localStorage.setItem("selectedNetwork", newNetwork);
 
       // Set the appropriate chain based on the network
-      let selectedChain = "base";
+      let selectedChain = "base-sepolia";
       if (newNetwork === "polygon") {
-        selectedChain = "amoy"; // Keep as "amoy" for backward compatibility
+        selectedChain = "polygon"; // Updated to use polygon mainnet
       } else if (newNetwork === "monad") {
         selectedChain = "monad";
       } else if (newNetwork === "celo") {
         selectedChain = "celo";
+      } else if (newNetwork === "base-sepolia") {
+        selectedChain = "base-sepolia";
       }
       localStorage.setItem("selectedChain", selectedChain);
 
@@ -73,6 +91,25 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
       localStorage.removeItem("selectedChain");
     }
   };
+
+  // Initialize with default network if none is selected
+  useEffect(() => {
+    if (!network) {
+      // For Farcaster context, default to Celo (your preferred network)
+      // For desktop, default to Celo
+      // For mobile (non-Farcaster), default to Base Sepolia
+      let defaultNetwork: Network;
+      if (isInFarcaster) {
+        defaultNetwork = "celo";
+      } else if (isMobile) {
+        defaultNetwork = "base-sepolia";
+      } else {
+        defaultNetwork = "celo";
+      }
+
+      setNetwork(defaultNetwork);
+    }
+  }, [network, isInFarcaster, isMobile]);
 
   // Effect to handle network changes from other tabs/windows
   useEffect(() => {

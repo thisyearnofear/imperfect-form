@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     siteName: "Imperfect Form",
     images: [
       {
-        url: "https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60",
+        url: "https://imperfectform.fun/embed.png",
         width: 1200,
         height: 630,
         alt: "Imperfect Form - Onchain Fitness Challenge",
@@ -42,9 +42,7 @@ export const metadata: Metadata = {
     title: "Imperfect Form | Onchain Olympians",
     description:
       "Track your fitness with real-time pose detection and have fun competing onchain",
-    images: [
-      "https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60",
-    ],
+    images: ["https://imperfectform.fun/embed.png"],
   },
 };
 
@@ -75,7 +73,7 @@ export default function RootLayout({
         {/* Farcaster Mini App Frame metadata */}
         <meta
           name="fc:frame"
-          content='{"version":"next","imageUrl":"https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60","button":{"title":"🏋️ Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
+          content='{"version":"next","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"🏋️ Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
         />
 
         {/* Mini App specific metadata */}

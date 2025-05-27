@@ -134,15 +134,15 @@ export function MiniAppBanner({ className = "" }: { className?: string }) {
 
   return (
     <div
-      className={`bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-lg ${className}`}
+      className={`bg-gradient-to-r from-purple-600 to-pink-600 text-white p-3 rounded-lg ${className}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <span className="text-2xl">🎭</span>
+          <span className="text-xl">🎭</span>
           <div>
-            <div className="font-bold text-lg">Running in Farcaster</div>
+            <div className="font-bold text-base">Farcaster Mini App</div>
             {user && (
-              <div className="text-sm opacity-90">
+              <div className="text-xs opacity-90">
                 Welcome, {user.displayName}!
               </div>
             )}
@@ -151,15 +151,10 @@ export function MiniAppBanner({ className = "" }: { className?: string }) {
 
         <button
           onClick={openInBrowser}
-          className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
         >
           Open Full App
         </button>
-      </div>
-
-      <div className="mt-2 text-sm opacity-90">
-        Enjoy enhanced features like seamless wallet connection and easy
-        sharing!
       </div>
     </div>
   );

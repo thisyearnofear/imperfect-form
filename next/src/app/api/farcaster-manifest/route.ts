@@ -19,11 +19,11 @@ const manifest = {
     "description": "Track your fitness with real-time pose detection and compete onchain. Join the movement of decentralized fitness challenges and earn rewards for your workouts.",
     "primaryCategory": "health-fitness",
     "tags": ["fitness", "workout", "onchain", "pose-detection", "competition"],
-    "heroImageUrl": "https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60",
+    "heroImageUrl": "https://imperfectform.fun/embed.png",
     "tagline": "Onchain Fitness Revolution",
     "ogTitle": "Imperfect Form Fitness",
     "ogDescription": "Track your fitness with real-time pose detection and compete onchain",
-    "ogImageUrl": "https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60",
+    "ogImageUrl": "https://imperfectform.fun/embed.png",
     "requiredChains": [
       "eip155:42220",
       "eip155:137",
