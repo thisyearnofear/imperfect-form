@@ -4,6 +4,30 @@ import { createRemoteLogger } from '@/utils/remoteLogger';
 // Initialize logger for Farcaster context
 const logger = createRemoteLogger('FarcasterContext');
 
+// Type definitions for the official Mini App SDK
+interface MiniAppSDK {
+  context: {
+    user?: {
+      fid: number;
+      username: string;
+      displayName: string;
+      pfpUrl: string;
+      bio?: string;
+      followerCount?: number;
+      followingCount?: number;
+      verifications?: string[];
+    };
+  };
+  wallet: {
+    ethProvider: {
+      request: (params: { method: string; params?: unknown[] }) => Promise<unknown>;
+    };
+  };
+  actions: {
+    ready: () => Promise<void>;
+  };
+}
+
 export interface FarcasterUser {
   fid: number;
   username: string;
@@ -45,64 +69,68 @@ export function useFarcasterContext(): FarcasterContext {
         setError(null);
 
         // Check if we're in a Farcaster mini app context
-        const isInFrame = detectFarcasterMiniApp();
+        const isInFrame = await detectFarcasterMiniApp();
         setIsInMiniApp(isInFrame);
 
         if (isInFrame) {
           logger.info('Detected Farcaster mini app context');
 
-          // Dynamically import the Farcaster SDK
-          const farcasterSdkModule = await import('@farcaster/frame-sdk');
-          const farcasterSdk = farcasterSdkModule.sdk || farcasterSdkModule.default || farcasterSdkModule;
-          setSdk(farcasterSdk);
+          // Dynamically import the Farcaster Mini App SDK
+          const { sdk } = await import('@farcaster/frame-sdk');
+          setSdk(sdk);
 
           // Initialize the SDK
-          const sdkObj = farcasterSdk as Record<string, unknown>;
-          if (sdkObj.actions && typeof sdkObj.actions === 'object') {
-            const actions = sdkObj.actions as Record<string, unknown>;
-            if (typeof actions.ready === 'function') {
-              await (actions.ready as () => Promise<void>)();
-            }
+          if (sdk.actions?.ready) {
+            await sdk.actions.ready();
           }
-          logger.info('Farcaster SDK initialized');
+          logger.info('🎯 Farcaster Mini App SDK initialized');
 
-          // Get user context
-          const context = await (farcasterSdk as Record<string, unknown>).context;
-          if (context && typeof context === 'object' && 'user' in context) {
-            const contextUser = (context as Record<string, unknown>).user;
-            if (contextUser && typeof contextUser === 'object') {
-              const userObj = contextUser as Record<string, unknown>;
+          // Get user context from Mini App SDK
+          try {
+            const context = await sdk.context;
+            if (context?.user && context.user.fid && context.user.username && context.user.displayName && context.user.pfpUrl) {
               const farcasterUser: FarcasterUser = {
-                fid: userObj.fid as number,
-                username: userObj.username as string,
-                displayName: userObj.displayName as string,
-                pfpUrl: userObj.pfpUrl as string,
-                bio: userObj.bio as string | undefined,
-                followerCount: userObj.followerCount as number | undefined,
-                followingCount: userObj.followingCount as number | undefined,
-                verifications: userObj.verifications as string[] | undefined,
+                fid: context.user.fid,
+                username: context.user.username,
+                displayName: context.user.displayName,
+                pfpUrl: context.user.pfpUrl,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                bio: (context.user as any).bio,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                followerCount: (context.user as any).followerCount,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                followingCount: (context.user as any).followingCount,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                verifications: (context.user as any).verifications,
               };
               setUser(farcasterUser);
-              logger.info('Farcaster user loaded', { fid: farcasterUser.fid, username: farcasterUser.username });
+              logger.info('🎯 Farcaster Mini App user loaded', {
+                fid: farcasterUser.fid,
+                username: farcasterUser.username
+              });
+            } else {
+              logger.warn('Incomplete user data from Mini App SDK context');
             }
+          } catch (contextError) {
+            logger.warn('Failed to get user context from Mini App SDK', contextError);
           }
 
-          // Check if wallet is already connected
+          // Check if wallet is already connected using Mini App SDK
           try {
-            const walletProvider = (farcasterSdk as Record<string, unknown>).wallet;
-            if (walletProvider && typeof walletProvider === 'object' && 'ethProvider' in walletProvider) {
-              const ethProvider = (walletProvider as Record<string, unknown>).ethProvider;
-              if (ethProvider && typeof ethProvider === 'object' && 'request' in ethProvider) {
-                const requestFn = (ethProvider as Record<string, unknown>).request as (params: Record<string, unknown>) => Promise<string[]>;
-                const accounts = await requestFn({ method: 'eth_accounts' });
-                if (accounts && accounts.length > 0) {
-                  setWalletAddress(accounts[0]);
-                  logger.info('Farcaster wallet already connected', { address: accounts[0] });
-                }
+            if (sdk.wallet?.ethProvider) {
+              const accounts = await sdk.wallet.ethProvider.request({
+                method: 'eth_accounts'
+              }) as string[];
+
+              if (accounts && accounts.length > 0) {
+                setWalletAddress(accounts[0]);
+                logger.info('🎯 Farcaster Mini App wallet already connected', {
+                  address: accounts[0]
+                });
               }
             }
           } catch (walletError) {
-            logger.warn('No wallet connected in Farcaster context', walletError);
+            logger.warn('No wallet connected in Farcaster Mini App context', walletError);
           }
         } else {
           logger.info('Not in Farcaster mini app context');
@@ -119,7 +147,7 @@ export function useFarcasterContext(): FarcasterContext {
     initializeFarcaster();
   }, []);
 
-  // Connect wallet function
+  // Connect wallet function using Mini App SDK
   const connectWallet = async (): Promise<string | null> => {
     if (!sdk || !isInMiniApp) {
       logger.warn('Cannot connect wallet: not in Farcaster mini app context', {
@@ -130,48 +158,40 @@ export function useFarcasterContext(): FarcasterContext {
     }
 
     try {
-      logger.info('Requesting wallet connection in Farcaster mini app');
+      logger.info('🎯 Requesting wallet connection in Farcaster Mini App');
 
-      // Add detailed debugging
-      console.log('🎭 Farcaster SDK object:', sdk);
+      const miniAppSdk = sdk as MiniAppSDK;
 
-      const walletProvider = (sdk as Record<string, unknown>).wallet;
-      console.log('🎭 Wallet provider:', walletProvider);
+      if (miniAppSdk.wallet?.ethProvider) {
+        console.log('🎯 Requesting accounts via Mini App SDK...');
+        const accounts = await miniAppSdk.wallet.ethProvider.request({
+          method: 'eth_requestAccounts'
+        }) as string[];
 
-      if (walletProvider && typeof walletProvider === 'object' && 'ethProvider' in walletProvider) {
-        const ethProvider = (walletProvider as Record<string, unknown>).ethProvider;
-        console.log('🎭 ETH provider:', ethProvider);
+        console.log('🎯 Accounts received:', accounts);
 
-        if (ethProvider && typeof ethProvider === 'object' && 'request' in ethProvider) {
-          const requestFn = (ethProvider as Record<string, unknown>).request as (params: Record<string, unknown>) => Promise<string[]>;
-
-          console.log('🎭 Requesting accounts...');
-          const accounts = await requestFn({ method: 'eth_requestAccounts' });
-          console.log('🎭 Accounts received:', accounts);
-
-          if (accounts && accounts.length > 0) {
-            setWalletAddress(accounts[0]);
-            logger.info('Farcaster wallet connected successfully', { address: accounts[0] });
-            return accounts[0];
-          } else {
-            console.log('🎭 No accounts returned');
-          }
+        if (accounts && accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+          logger.info('🎯 Farcaster Mini App wallet connected successfully', {
+            address: accounts[0]
+          });
+          return accounts[0];
         } else {
-          console.log('🎭 ETH provider missing request method');
+          console.log('🎯 No accounts returned');
         }
       } else {
-        console.log('🎭 Wallet provider missing or invalid');
+        console.log('🎯 Mini App wallet provider not available');
       }
       return null;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect wallet';
       setError(errorMessage);
-      logger.error('Error connecting Farcaster wallet', err);
+      logger.error('Error connecting Farcaster Mini App wallet', err);
       return null;
     }
   };
 
-  // Sign message function
+  // Sign message function using Mini App SDK
   const signMessage = async (message: string): Promise<string | null> => {
     if (!sdk || !isInMiniApp || !walletAddress) {
       logger.warn('Cannot sign message: wallet not connected');
@@ -179,29 +199,26 @@ export function useFarcasterContext(): FarcasterContext {
     }
 
     try {
-      const walletProvider = (sdk as Record<string, unknown>).wallet;
-      if (walletProvider && typeof walletProvider === 'object' && 'ethProvider' in walletProvider) {
-        const ethProvider = (walletProvider as Record<string, unknown>).ethProvider;
-        if (ethProvider && typeof ethProvider === 'object' && 'request' in ethProvider) {
-          const requestFn = (ethProvider as Record<string, unknown>).request as (params: Record<string, unknown>) => Promise<string>;
-          const signature = await requestFn({
-            method: 'personal_sign',
-            params: [message, walletAddress],
-          });
-          logger.info('Message signed successfully');
-          return signature;
-        }
+      const miniAppSdk = sdk as MiniAppSDK;
+      if (miniAppSdk.wallet?.ethProvider) {
+        const signature = await miniAppSdk.wallet.ethProvider.request({
+          method: 'personal_sign',
+          params: [message, walletAddress],
+        }) as string;
+
+        logger.info('🎯 Message signed successfully via Mini App SDK');
+        return signature;
       }
       return null;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign message';
       setError(errorMessage);
-      logger.error('Error signing message', err);
+      logger.error('Error signing message via Mini App SDK', err);
       return null;
     }
   };
 
-  // Send transaction function
+  // Send transaction function using Mini App SDK
   const sendTransaction = async (to: string, value: string, data?: string): Promise<string | null> => {
     if (!sdk || !isInMiniApp || !walletAddress) {
       logger.warn('Cannot send transaction: wallet not connected');
@@ -209,29 +226,26 @@ export function useFarcasterContext(): FarcasterContext {
     }
 
     try {
-      const walletProvider = (sdk as Record<string, unknown>).wallet;
-      if (walletProvider && typeof walletProvider === 'object' && 'ethProvider' in walletProvider) {
-        const ethProvider = (walletProvider as Record<string, unknown>).ethProvider;
-        if (ethProvider && typeof ethProvider === 'object' && 'request' in ethProvider) {
-          const requestFn = (ethProvider as Record<string, unknown>).request as (params: Record<string, unknown>) => Promise<string>;
-          const txHash = await requestFn({
-            method: 'eth_sendTransaction',
-            params: [{
-              from: walletAddress,
-              to,
-              value,
-              data: data || '0x',
-            }],
-          });
-          logger.info('Transaction sent successfully', { txHash });
-          return txHash;
-        }
+      const miniAppSdk = sdk as MiniAppSDK;
+      if (miniAppSdk.wallet?.ethProvider) {
+        const txHash = await miniAppSdk.wallet.ethProvider.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: walletAddress,
+            to,
+            value,
+            data: data || '0x',
+          }],
+        }) as string;
+
+        logger.info('🎯 Transaction sent successfully via Mini App SDK', { txHash });
+        return txHash;
       }
       return null;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send transaction';
       setError(errorMessage);
-      logger.error('Error sending transaction', err);
+      logger.error('Error sending transaction via Mini App SDK', err);
       return null;
     }
   };
@@ -249,12 +263,26 @@ export function useFarcasterContext(): FarcasterContext {
 }
 
 /**
- * Detect if the app is running in a Farcaster mini app context
+ * Detect if the app is running in a Farcaster mini app context using official SDK
  */
-function detectFarcasterMiniApp(): boolean {
+async function detectFarcasterMiniApp(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
-  // Enhanced detection with more comprehensive checks
+  try {
+    // First, try the official Mini App SDK detection
+    const { sdk } = await import('@farcaster/frame-sdk');
+
+    // Check if we can get context (indicates we're in a mini app)
+    const context = await sdk.context;
+    if (context && context.user) {
+      logger.info('🎯 Detected Farcaster Mini App via official SDK (has context)');
+      return true;
+    }
+  } catch (error) {
+    logger.warn('Official Mini App SDK detection failed, falling back to manual detection', error);
+  }
+
+  // Fallback: Enhanced detection with comprehensive checks
   const detectionResults = {
     userAgent: false,
     windowProperty: false,
@@ -306,7 +334,7 @@ function detectFarcasterMiniApp(): boolean {
   const detected = Object.values(detectionResults).some(result => result);
 
   // Enhanced logging with individual detection results
-  logger.info('Farcaster mini app detection (enhanced)', {
+  logger.info('🎭 Farcaster mini app detection (fallback)', {
     detected,
     detectionResults,
     userAgent: navigator.userAgent,
@@ -319,7 +347,7 @@ function detectFarcasterMiniApp(): boolean {
 
   // Safe debugging without overrides
   if (process.env.NODE_ENV !== 'production') {
-    console.log('🎭 Farcaster Detection Debug:', {
+    console.log('🎭 Farcaster Detection Debug (fallback):', {
       detected,
       detectionResults,
       url: window.location.href,

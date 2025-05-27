@@ -22,9 +22,12 @@ const ExpandedLeaderboardModal = dynamic(
 );
 
 import { Score } from "@/types";
+import { MiniAppBanner } from "@/components/miniapp/MiniAppIndicator";
+import { useMiniApp } from "@/contexts/MiniAppContext";
 
 export default function Home() {
   const { walletProvider } = useWalletProvider();
+  const { isInMiniApp } = useMiniApp();
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
 
   const [leaderboardData, setLeaderboardData] = useState<{
@@ -64,6 +67,13 @@ export default function Home() {
 
   return (
     <>
+      {/* Mini App Banner - only show in Farcaster */}
+      {isInMiniApp && (
+        <div className="p-4">
+          <MiniAppBanner />
+        </div>
+      )}
+
       {/* Main content area with optimized stacked layout for mobile */}
       <div className="flex flex-col min-h-screen">
         {/* Game area with better padding for mobile */}
