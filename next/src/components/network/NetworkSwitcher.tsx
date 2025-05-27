@@ -45,7 +45,7 @@ export default function NetworkSwitcher({
   // Define networks
   const networks = [
     {
-      id: "base-sepolia",
+      id: "base",
       name: "Base Sepolia",
       color: "#0052FF",
       contractAddress: BASE_CONTRACT_ADDRESS,
@@ -134,7 +134,7 @@ export default function NetworkSwitcher({
           newNetwork === "polygon" ||
           newNetwork === "monad" ||
           newNetwork === "celo";
-        const isBaseNetwork = newNetwork === "base-sepolia";
+        const isBaseNetwork = newNetwork === "base";
 
         if (
           (isThirdwebNetwork && walletProvider === "smart") ||
@@ -202,7 +202,7 @@ export default function NetworkSwitcher({
         newNetwork === "polygon" ||
         newNetwork === "monad" ||
         newNetwork === "celo";
-      const isBaseNetwork = newNetwork === "base-sepolia";
+      const isBaseNetwork = newNetwork === "base";
 
       if (
         !keepModalOpen &&
@@ -279,7 +279,7 @@ export default function NetworkSwitcher({
       {/* Check if the wallet provider is compatible with the selected network */}
       {(((network === "polygon" || network === "monad" || network === "celo") &&
         walletProvider === "smart") ||
-        (network === "base-sepolia" && walletProvider === "signature")) && (
+        (network === "base" && walletProvider === "signature")) && (
         <p className="text-[9px] text-center text-orange-300 mt-1">
           ⚠️ Requires wallet switch
         </p>

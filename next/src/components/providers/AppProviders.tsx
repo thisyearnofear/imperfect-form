@@ -114,11 +114,11 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
     }
 
     // Only auto-sync when walletProvider is null and no stored provider exists
-    if (network === "base-sepolia" && walletProvider === null) {
+    if (network === "base" && walletProvider === null) {
       // Only log on client side
       if (typeof window !== "undefined") {
         console.log(
-          "Auto-setting wallet provider to 'smart' for new user with 'base-sepolia' network"
+          "Auto-setting wallet provider to 'smart' for new user with 'base' network"
         );
       }
       syncingRef.current = true;

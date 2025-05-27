@@ -465,7 +465,6 @@ export default function SubmitScoreWithWagmi({
           );
 
           // The meta field is a special property recognized by the Coinbase Wallet connector
-          // @ts-expect-error - TypeScript definitions don't include meta property
           writeContract(txOptionsWithMeta);
 
           console.log("Transaction submitted successfully!");

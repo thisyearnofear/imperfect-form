@@ -85,8 +85,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     address = farcaster.walletAddress;
     logger.info("Using Farcaster wallet address", { address });
   }
-  // Priority 2: For Wagmi (Base Sepolia)
-  else if (network === "base-sepolia") {
+  // Priority 2: For Wagmi (Base)
+  else if (network === "base") {
     try {
       address = wagmiAddress;
     } catch {
@@ -147,11 +147,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   useEffect(() => {
     // Only log in development environment to reduce production noise
     if (process.env.NODE_ENV === "development") {
-      if (network === "base-sepolia") {
-        console.log(
-          "Game: Using Wagmi address for Base Sepolia network:",
-          address
-        );
+      if (network === "base") {
+        console.log("Game: Using Wagmi address for Base network:", address);
       } else if (
         network === "polygon" ||
         network === "monad" ||

@@ -1,13 +1,12 @@
 import { http, cookieStorage, createConfig, createStorage } from "wagmi";
-import { baseSepolia, polygon, celo } from "wagmi/chains";
+import { baseSepolia, polygon, celo, type Chain } from "wagmi/chains";
 import { coinbaseWallet } from "wagmi/connectors";
 import { parseEther, toHex } from "viem";
 
 // Define Monad Testnet chain
-const monadTestnet = {
+const monadTestnet: Chain = {
   id: 10143,
   name: 'Monad Testnet',
-  network: 'monad-testnet',
   nativeCurrency: {
     decimals: 18,
     name: 'MON',
@@ -21,7 +20,7 @@ const monadTestnet = {
     default: { name: 'Monad Explorer', url: 'https://testnet.monadexplorer.com/' },
   },
   testnet: true,
-} as const;
+};
 
 // Import Farcaster connector (will be available after npm install)
 let farcasterFrame: unknown = null;
@@ -73,7 +72,7 @@ export function getWagmiConfig() {
 
   // For Farcaster context, use supported networks (Celo, Polygon, Monad Testnet)
   // For regular context, use Base Sepolia for Coinbase Smart Wallet features
-  const supportedChains = isInFarcaster
+  const supportedChains: readonly [Chain, ...Chain[]] = isInFarcaster
     ? [celo, polygon, monadTestnet]
     : [baseSepolia, polygon, celo, monadTestnet];
 
@@ -134,7 +133,7 @@ export function getWagmiConfig() {
   }
 
   return createConfig({
-    chains: supportedChains as any,
+    chains: supportedChains,
     connectors,
     storage: createStorage({
       storage: cookieStorage,

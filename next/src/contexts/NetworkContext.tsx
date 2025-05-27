@@ -9,7 +9,7 @@ import React, {
 } from "react";
 
 // Define the network types
-export type Network = "polygon" | "base-sepolia" | "monad" | "celo" | null;
+export type Network = "polygon" | "base" | "monad" | "celo" | null;
 
 // Define the context type
 interface NetworkContextType {
@@ -72,15 +72,15 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
       localStorage.setItem("selectedNetwork", newNetwork);
 
       // Set the appropriate chain based on the network
-      let selectedChain = "base-sepolia";
+      let selectedChain = "base";
       if (newNetwork === "polygon") {
         selectedChain = "polygon"; // Updated to use polygon mainnet
       } else if (newNetwork === "monad") {
         selectedChain = "monad";
       } else if (newNetwork === "celo") {
         selectedChain = "celo";
-      } else if (newNetwork === "base-sepolia") {
-        selectedChain = "base-sepolia";
+      } else if (newNetwork === "base") {
+        selectedChain = "base";
       }
       localStorage.setItem("selectedChain", selectedChain);
 
@@ -97,12 +97,12 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
     if (!network) {
       // For Farcaster context, default to Celo (your preferred network)
       // For desktop, default to Celo
-      // For mobile (non-Farcaster), default to Base Sepolia
+      // For mobile (non-Farcaster), default to Base
       let defaultNetwork: Network;
       if (isInFarcaster) {
         defaultNetwork = "celo";
       } else if (isMobile) {
-        defaultNetwork = "base-sepolia";
+        defaultNetwork = "base";
       } else {
         defaultNetwork = "celo";
       }

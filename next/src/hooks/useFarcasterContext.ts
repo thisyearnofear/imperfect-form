@@ -39,6 +39,10 @@ export interface FarcasterUser {
   verifications?: string[];
 }
 
+interface FarcasterSDKContext {
+  user?: FarcasterUser;
+}
+
 export interface FarcasterContext {
   isInMiniApp: boolean;
   user: FarcasterUser | null;
@@ -104,7 +108,7 @@ export function useFarcasterContext(): FarcasterContext {
               setTimeout(() => reject(new Error('Context timeout')), 5000)
             );
 
-            const context = await Promise.race([contextPromise, timeoutPromise]);
+            const context = await Promise.race([contextPromise, timeoutPromise]) as FarcasterSDKContext;
             if (!mounted) return;
 
             if (context?.user && context.user.fid && context.user.username && context.user.displayName && context.user.pfpUrl) {
@@ -113,14 +117,10 @@ export function useFarcasterContext(): FarcasterContext {
                 username: context.user.username,
                 displayName: context.user.displayName,
                 pfpUrl: context.user.pfpUrl,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                bio: (context.user as any).bio,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                followerCount: (context.user as any).followerCount,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                followingCount: (context.user as any).followingCount,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                verifications: (context.user as any).verifications,
+                bio: context.user.bio,
+                followerCount: context.user.followerCount,
+                followingCount: context.user.followingCount,
+                verifications: context.user.verifications,
               };
               setUser(farcasterUser);
               logger.info('🎯 Farcaster Mini App user loaded', {

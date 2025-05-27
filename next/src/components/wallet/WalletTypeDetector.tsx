@@ -44,17 +44,17 @@ export default function WalletTypeDetector() {
 
       // Only update network if it's not set (null)
       if (network === null) {
-        console.log("No network selected, setting to base-sepolia");
-        setNetwork("base-sepolia");
+        console.log("No network selected, setting to base");
+        setNetwork("base");
         // Use localStorage to ensure consistency
-        localStorage.setItem("selectedNetwork", "base-sepolia");
-        localStorage.setItem("selectedChain", "base-sepolia");
+        localStorage.setItem("selectedNetwork", "base");
+        localStorage.setItem("selectedChain", "base");
         // Notify user
-        toast.success("Connected with Coinbase wallet on Base Sepolia", {
+        toast.success("Connected with Coinbase wallet on Base", {
           id: "wallet-detection",
           duration: 2000,
         });
-      } else if (network !== "base-sepolia") {
+      } else if (network !== "base") {
         // Just log but don't override the user's selection
         console.log(
           `Wagmi wallet detected but keeping user-selected network: ${network}`

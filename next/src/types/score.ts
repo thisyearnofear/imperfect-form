@@ -1,5 +1,5 @@
 // Define the network types used in the application
-export type NetworkType = "polygon" | "base-sepolia" | "monad" | "celo";
+export type NetworkType = "polygon" | "base" | "monad" | "celo";
 
 // Define the Score interface used throughout the application
 export interface Score {
