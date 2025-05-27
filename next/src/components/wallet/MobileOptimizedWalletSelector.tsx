@@ -113,11 +113,11 @@ export default function MobileOptimizedWalletSelector({
             <h2 className="text-lg md:text-xl font-semibold text-white mb-2">
               {isInMiniApp ? "Connect Wallet" : "Choose Your Wallet Type"}
             </h2>
-            <p className="text-sm md:text-base text-gray-400">
-              {isInMiniApp
-                ? "Choose your option"
-                : "Select how you'd like to connect and play"}
-            </p>
+            {!isInMiniApp && (
+              <p className="text-sm md:text-base text-gray-400">
+                Select how you&apos;d like to connect and play
+              </p>
+            )}
           </div>
 
           {/* Farcaster Wallet Option - Always show as an option */}
@@ -143,80 +143,84 @@ export default function MobileOptimizedWalletSelector({
               className="w-full p-4 md:p-6 bg-gradient-to-r from-purple-900 to-pink-900 border border-purple-400 rounded-lg transition-all hover:from-purple-800 hover:to-pink-800 hover:border-purple-300 relative touch-manipulation"
             />
 
-            {/* Divider */}
-            <div className="flex items-center my-6">
-              <div className="flex-1 border-t border-gray-600"></div>
-              <span className="px-3 text-sm text-gray-400">
-                or choose another wallet type
-              </span>
-              <div className="flex-1 border-t border-gray-600"></div>
-            </div>
+            {/* Only show other wallet options if NOT in Farcaster mini app */}
+            {!isInMiniApp && (
+              <>
+                {/* Divider */}
+                <div className="flex items-center my-6">
+                  <div className="flex-1 border-t border-gray-600"></div>
+                  <span className="px-3 text-sm text-gray-400">
+                    or choose another wallet type
+                  </span>
+                  <div className="flex-1 border-t border-gray-600"></div>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Signature Wallet Option */}
-          <button
-            onClick={() => handleWalletTypeSelected("signature")}
-            className="w-full p-4 md:p-6 bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-500 rounded-lg transition-all hover:from-purple-800 hover:to-indigo-800 hover:border-purple-400 relative touch-manipulation"
-            disabled={isSelectingWallet}
-          >
-            <div className="flex flex-col items-center text-center">
-              <div className="font-bold text-lg md:text-xl text-white mb-2">
-                Signature Wallet
+          {/* Signature Wallet Option - Hidden in Farcaster mini app */}
+          {!isInMiniApp && (
+            <button
+              onClick={() => handleWalletTypeSelected("signature")}
+              className="w-full p-4 md:p-6 bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-500 rounded-lg transition-all hover:from-purple-800 hover:to-indigo-800 hover:border-purple-400 relative touch-manipulation"
+              disabled={isSelectingWallet}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="font-bold text-lg md:text-xl text-white mb-2">
+                  Signature Wallet
+                </div>
+                <div className="text-xs md:text-sm text-gray-300 mb-3">
+                  Connect your existing wallet
+                </div>
+                <div className="flex flex-wrap gap-1 md:gap-2 justify-center">
+                  <span className="text-xs bg-purple-800 text-white px-2 py-1 rounded">
+                    Polygon
+                  </span>
+                  <span className="text-xs bg-yellow-800 text-white px-2 py-1 rounded">
+                    Monad
+                  </span>
+                  <span className="text-xs bg-green-800 text-white px-2 py-1 rounded">
+                    Celo
+                  </span>
+                </div>
               </div>
-              <div className="text-xs md:text-sm text-gray-300 mb-3">
-                {isInMiniApp
-                  ? "External wallet"
-                  : "Connect your existing wallet"}
-              </div>
-              <div className="flex flex-wrap gap-1 md:gap-2 justify-center">
-                <span className="text-xs bg-purple-800 text-white px-2 py-1 rounded">
-                  Polygon
-                </span>
-                <span className="text-xs bg-yellow-800 text-white px-2 py-1 rounded">
-                  Monad
-                </span>
-                <span className="text-xs bg-green-800 text-white px-2 py-1 rounded">
-                  Celo
-                </span>
-              </div>
-            </div>
 
-            {isSelectingWallet && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
-              </div>
-            )}
-          </button>
-
-          {/* Smart Wallet Option */}
-          <button
-            onClick={() => handleWalletTypeSelected("smart")}
-            className="w-full p-4 md:p-6 bg-gradient-to-r from-blue-900 to-teal-900 border border-blue-500 rounded-lg transition-all hover:from-blue-800 hover:to-teal-800 hover:border-blue-400 relative touch-manipulation"
-            disabled={isSelectingWallet}
-          >
-            <div className="flex flex-col items-center text-center">
-              <div className="font-bold text-lg md:text-xl text-white mb-2">
-                Smart Wallet
-              </div>
-              <div className="text-xs md:text-sm text-gray-300 mb-3">
-                {isInMiniApp ? "Warpcast wallet" : "Create a new smart wallet"}
-              </div>
-              <div className="flex justify-center">
-                <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">
-                  Base
-                </span>
-              </div>
-              {isInMiniApp && (
-                <div className="text-xs text-yellow-400 mt-2">⚠️ Base only</div>
+              {isSelectingWallet && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+                </div>
               )}
-            </div>
+            </button>
+          )}
 
-            {isSelectingWallet && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+          {/* Smart Wallet Option - Hidden in Farcaster mini app */}
+          {!isInMiniApp && (
+            <button
+              onClick={() => handleWalletTypeSelected("smart")}
+              className="w-full p-4 md:p-6 bg-gradient-to-r from-blue-900 to-teal-900 border border-blue-500 rounded-lg transition-all hover:from-blue-800 hover:to-teal-800 hover:border-blue-400 relative touch-manipulation"
+              disabled={isSelectingWallet}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="font-bold text-lg md:text-xl text-white mb-2">
+                  Smart Wallet
+                </div>
+                <div className="text-xs md:text-sm text-gray-300 mb-3">
+                  Create a new smart wallet
+                </div>
+                <div className="flex justify-center">
+                  <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">
+                    Base
+                  </span>
+                </div>
               </div>
-            )}
-          </button>
+
+              {isSelectingWallet && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+            </button>
+          )}
 
           {/* Reset button for when users get stuck */}
           <div className="mt-6 text-center">

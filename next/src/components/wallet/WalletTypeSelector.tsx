@@ -6,6 +6,7 @@ import WalletDialog from "@/components/ui/WalletDialog";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import MobileOptimizedWalletSelector from "./MobileOptimizedWalletSelector";
 import { FarcasterAwareWalletButton } from "./FarcasterAwareWalletButton";
+import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 import { resetAllWalletState } from "@/utils/walletReset";
 import toast from "react-hot-toast";
 
@@ -38,6 +39,7 @@ export default function WalletTypeSelector({
 function DesktopWalletSelector({ onClose }: WalletTypeSelectorProps) {
   const { setWalletProvider } = useWalletProvider();
   const [isSelectingWallet, setIsSelectingWallet] = useState(false);
+  const { isInMiniApp } = useFarcasterContext();
 
   // Handle wallet type selection - exact same logic as the working version
   const handleWalletTypeSelected = (walletType: "signature" | "smart") => {
@@ -113,59 +115,64 @@ function DesktopWalletSelector({ onClose }: WalletTypeSelectorProps) {
             />
           </div>
 
-          <button
-            onClick={() => handleWalletTypeSelected("signature")}
-            className="wallet-option wallet-option-signature w-full p-4 relative bg-gradient-to-r from-purple-900 to-indigo-900 border-l-4 border-purple-500 rounded-md transition-all hover:from-purple-800 hover:to-indigo-800 hover:border-purple-400 animate-slide-up delay-100"
-            disabled={isSelectingWallet}
-          >
-            <div className="flex flex-col items-center">
-              <div className="font-bold text-lg text-white animate-shimmer">
-                Signature Wallet
-              </div>
-              <div className="flex mt-1 items-center justify-center">
-                <span className="text-[10px] bg-purple-800 text-white px-2 py-0.5 rounded">
-                  Polygon
-                </span>
-                <span className="mx-1 text-gray-500">|</span>
-                <span className="text-[10px] bg-yellow-800 text-white px-2 py-0.5 rounded">
-                  Monad
-                </span>
-                <span className="mx-1 text-gray-500">|</span>
-                <span className="text-[10px] bg-green-800 text-white px-2 py-0.5 rounded">
-                  Celo
-                </span>
-              </div>
-            </div>
+          {/* Hide other wallet options in Farcaster mini app context */}
+          {!isInMiniApp && (
+            <>
+              <button
+                onClick={() => handleWalletTypeSelected("signature")}
+                className="wallet-option wallet-option-signature w-full p-4 relative bg-gradient-to-r from-purple-900 to-indigo-900 border-l-4 border-purple-500 rounded-md transition-all hover:from-purple-800 hover:to-indigo-800 hover:border-purple-400 animate-slide-up delay-100"
+                disabled={isSelectingWallet}
+              >
+                <div className="flex flex-col items-center">
+                  <div className="font-bold text-lg text-white animate-shimmer">
+                    Signature Wallet
+                  </div>
+                  <div className="flex mt-1 items-center justify-center">
+                    <span className="text-[10px] bg-purple-800 text-white px-2 py-0.5 rounded">
+                      Polygon
+                    </span>
+                    <span className="mx-1 text-gray-500">|</span>
+                    <span className="text-[10px] bg-yellow-800 text-white px-2 py-0.5 rounded">
+                      Monad
+                    </span>
+                    <span className="mx-1 text-gray-500">|</span>
+                    <span className="text-[10px] bg-green-800 text-white px-2 py-0.5 rounded">
+                      Celo
+                    </span>
+                  </div>
+                </div>
 
-            {isSelectingWallet && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-md">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
-              </div>
-            )}
-          </button>
+                {isSelectingWallet && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+                  </div>
+                )}
+              </button>
 
-          <button
-            onClick={() => handleWalletTypeSelected("smart")}
-            className="wallet-option wallet-option-smart w-full p-4 relative bg-gradient-to-r from-blue-900 to-teal-900 border-l-4 border-blue-500 rounded-md transition-all hover:from-blue-800 hover:to-teal-800 hover:border-blue-400 animate-slide-up delay-300"
-            disabled={isSelectingWallet}
-          >
-            <div className="flex flex-col items-center">
-              <div className="font-bold text-lg text-white animate-shimmer">
-                Smart Wallet
-              </div>
-              <div className="flex mt-1 justify-center">
-                <span className="text-[10px] bg-blue-800 text-white px-1.5 py-0.5 rounded">
-                  Base
-                </span>
-              </div>
-            </div>
+              <button
+                onClick={() => handleWalletTypeSelected("smart")}
+                className="wallet-option wallet-option-smart w-full p-4 relative bg-gradient-to-r from-blue-900 to-teal-900 border-l-4 border-blue-500 rounded-md transition-all hover:from-blue-800 hover:to-teal-800 hover:border-blue-400 animate-slide-up delay-300"
+                disabled={isSelectingWallet}
+              >
+                <div className="flex flex-col items-center">
+                  <div className="font-bold text-lg text-white animate-shimmer">
+                    Smart Wallet
+                  </div>
+                  <div className="flex mt-1 justify-center">
+                    <span className="text-[10px] bg-blue-800 text-white px-1.5 py-0.5 rounded">
+                      Base
+                    </span>
+                  </div>
+                </div>
 
-            {isSelectingWallet && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-md">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-              </div>
-            )}
-          </button>
+                {isSelectingWallet && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+              </button>
+            </>
+          )}
 
           {/* Reset button for when users get stuck */}
           <div className="mt-6 text-center">
