@@ -1,7 +1,6 @@
 import { http, cookieStorage, createConfig, createStorage } from "wagmi";
 import { baseSepolia, polygon, celo, type Chain } from "wagmi/chains";
 import { coinbaseWallet } from "wagmi/connectors";
-import { parseEther, toHex } from "viem";
 
 // Define Monad Testnet chain
 const monadTestnet: Chain = {
@@ -33,19 +32,7 @@ try {
   console.warn("@farcaster/frame-wagmi-connector not installed. Farcaster wallet will not be available.");
 }
 
-// Helper function to determine if we're in Farcaster context
-function isInFarcasterContext(): boolean {
-  if (typeof window === 'undefined') return false;
 
-  // Check for Farcaster-specific indicators
-  return (
-    /farcaster|warpcast/i.test(navigator.userAgent) ||
-    window.location.search.includes('frame=') ||
-    window.location.search.includes('farcaster') ||
-    document.referrer.includes('warpcast.com') ||
-    document.referrer.includes('farcaster.xyz')
-  );
-}
 
 // Create a Wagmi config with the Coinbase Wallet connector
 export function getWagmiConfig() {
@@ -67,46 +54,21 @@ export function getWagmiConfig() {
       },
     });
   }
-  // Determine which chains to support based on context
-  const isInFarcaster = isInFarcasterContext();
+  // Always include all chains for maximum compatibility
+  const supportedChains: readonly [Chain, ...Chain[]] = [baseSepolia, polygon, celo, monadTestnet];
 
-  // For Farcaster context, use supported networks (Celo, Polygon, Monad Testnet)
-  // For regular context, use Base Sepolia for Coinbase Smart Wallet features
-  const supportedChains: readonly [Chain, ...Chain[]] = isInFarcaster
-    ? [celo, polygon, monadTestnet]
-    : [baseSepolia, polygon, celo, monadTestnet];
-
-  // Create connectors array
+  // Create connectors array - provide both EOA and Smart Wallet options
   const connectors = [
+    // Standard EOA connector (works with all wallets including Farcaster)
     coinbaseWallet({
       appName: "Imperfect Form App",
       appLogoUrl: "https://cdn-icons-png.flaticon.com/512/732/732669.png",
-      // Configure for smart wallet (subaccounts) development only when not in Farcaster
-      preference: isInFarcaster ? "eoaOnly" : {
-        keysUrl: "https://keys-dev.coinbase.com/connect", // IMPORTANT: development URL for subaccounts
-        options: "smartWalletOnly", // Only allow smart wallet connection
-      },
-      // Configure subaccounts with spend limits - this is what enables one-click transactions
-      // Only for non-Farcaster contexts
-      // @ts-expect-error - The TypeScript definitions may not include all subAccounts properties
-      subAccounts: isInFarcaster ? undefined : {
-        enableAutoSubAccounts: true, // Automatically create subaccounts
-        spendLimitsEnabled: true, // Explicitly enable spend limits
-        defaultSpendLimits: {
-          84532: [ // Base Sepolia chain ID
-            {
-              token: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // Native ETH
-              allowance: toHex(parseEther('0.01')), // 0.01 ETH limit
-              period: 86400, // 1 day in seconds
-            },
-          ],
-        },
-      },
+      preference: "eoaOnly",
     }),
   ];
 
-  // Add Farcaster connector if available and in Farcaster context
-  if (farcasterFrame && typeof farcasterFrame === 'function' && isInFarcaster) {
+  // Add Farcaster connector if available
+  if (farcasterFrame && typeof farcasterFrame === 'function') {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const connector = (farcasterFrame as () => any)();

@@ -27,7 +27,9 @@ export default function MobileOptimizedWalletSelector({
   const { isWalletBrowser } = useDeviceDetect();
 
   // Handle wallet type selection
-  const handleWalletTypeSelected = (walletType: "signature" | "smart") => {
+  const handleWalletTypeSelected = (
+    walletType: "signature" | "smart" | "farcaster"
+  ) => {
     setIsSelectingWallet(true);
 
     console.log(
