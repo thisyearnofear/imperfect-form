@@ -15,7 +15,9 @@ import { getBestDisplayName } from "@/utils/web3bio";
 import Dialog from "@/components/ui/Dialog";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { resetAllWalletState } from "@/utils/walletReset";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
+import toast from "react-hot-toast";
 
 /**
  * StandaloneThirdwebButton component
@@ -451,11 +453,18 @@ const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent({
               </button>
 
               <button
-                className="text-xs bg-red-800 text-white px-2 py-1 rounded"
+                className="text-xs bg-red-800 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
                 onClick={() => {
-                  // Navigate to dedicated wallet selection page
-                  window.location.href = "/select-wallet";
+                  toast.loading("Resetting wallet state...", { id: "reset" });
+                  resetAllWalletState();
+                  setTimeout(() => {
+                    toast.success("Wallet state reset! Redirecting...", {
+                      id: "reset",
+                    });
+                    window.location.href = "/select-wallet";
+                  }, 500);
                 }}
+                title="Reset all wallet connections and start fresh"
               >
                 Reset
               </button>
@@ -466,28 +475,47 @@ const ThirdwebButtonContent = React.memo(function ThirdwebButtonContent({
     );
   }
 
-  // If not connected, show the connect button
+  // If not connected, show the connect button with reset option
   return (
-    <ConnectWallet
-      theme="dark"
-      modalSize={isMobile ? "compact" : "wide"}
-      welcomeScreen={{
-        title: "Onchain Olympics",
-        subtitle: "Connect to submit your score",
-        img: {
-          src: "/favicon.ico",
-          width: 150,
-          height: 150,
-        },
-      }}
-      modalTitleIconUrl="/favicon.ico"
-      detailsBtn={() => <></>}
-      btnTitle="Connect Wallet"
-      className="wallet-button signature-wallet"
-      id="thirdwebConnectButton"
-      style={{
-        "--tw-bg-opacity": "1 !important",
-      }}
-    />
+    <div className="inline-flex space-x-1">
+      <ConnectWallet
+        theme="dark"
+        modalSize={isMobile ? "compact" : "wide"}
+        welcomeScreen={{
+          title: "Onchain Olympics",
+          subtitle: "Connect to submit your score",
+          img: {
+            src: "/favicon.ico",
+            width: 150,
+            height: 150,
+          },
+        }}
+        modalTitleIconUrl="/favicon.ico"
+        detailsBtn={() => <></>}
+        btnTitle="Connect Wallet"
+        className="wallet-button signature-wallet"
+        id="thirdwebConnectButton"
+        style={{
+          "--tw-bg-opacity": "1 !important",
+        }}
+      />
+
+      <button
+        className="text-xs bg-red-800 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
+        onClick={() => {
+          toast.loading("Resetting wallet state...", { id: "reset" });
+          resetAllWalletState();
+          setTimeout(() => {
+            toast.success("Wallet state reset! Redirecting...", {
+              id: "reset",
+            });
+            window.location.href = "/select-wallet";
+          }, 500);
+        }}
+        title="Reset all wallet connections and start fresh"
+      >
+        Reset
+      </button>
+    </div>
   );
 });

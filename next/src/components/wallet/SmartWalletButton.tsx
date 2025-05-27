@@ -7,7 +7,8 @@ import { getBestDisplayName } from "@/utils/web3bio";
 import Dialog from "@/components/ui/Dialog";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-
+import { resetAllWalletState } from "@/utils/walletReset";
+import toast from "react-hot-toast";
 
 /**
  * SmartWalletButton component for connecting to Smart Wallets with no-signature
@@ -313,9 +314,7 @@ export default function SmartWalletButton() {
         <div className="text-center">
           <h3 className="text-lg font-bold">{displayName}</h3>
           <div className="wallet-address-container">
-            <p className="wallet-address">
-              {shortenAddress(address || "")}
-            </p>
+            <p className="wallet-address">{shortenAddress(address || "")}</p>
             <button
               onClick={copyToClipboard}
               className="copy-button bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600"
@@ -390,10 +389,10 @@ export default function SmartWalletButton() {
             ? "Connecting..."
             : "Connect"}
         </button>
-        
+
         {/* Reset button - always visible */}
         <button
-          className="text-xs bg-red-800 text-white px-2 py-1 rounded"
+          className="text-xs bg-red-800 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
           onClick={() => {
             // First reset all connection state
             resetConnect();
@@ -407,37 +406,17 @@ export default function SmartWalletButton() {
             setIsConnected(false);
             setUserAddress(undefined);
 
-            // Clear all local storage related to wallet state
-            localStorage.removeItem("selectedWalletProvider");
-            localStorage.removeItem("selectedNetwork");
-            localStorage.removeItem("selectedChain");
-            localStorage.removeItem("connectedWallet");
-            localStorage.removeItem("wagmi.wallet");
-            localStorage.removeItem("wagmi.connected");
-            localStorage.removeItem("wagmi.store");
-            localStorage.removeItem("wagmi.account");
-            localStorage.removeItem("wagmi.chainId");
-            localStorage.removeItem("walletconnect");
-            localStorage.removeItem("WALLETCONNECT_DEEPLINK_CHOICE");
-            localStorage.removeItem("userAddress");
-            localStorage.removeItem("thirdweb.auth.token");
-            localStorage.removeItem("thirdweb.wallets");
-            
-            // VERY IMPORTANT: Remove any persisted Coinbase Wallet state
-            // These keys may vary based on Coinbase SDK version
-            Object.keys(localStorage).forEach(key => {
-              if (key.startsWith('coinbase') || 
-                  key.startsWith('walletlink') || 
-                  key.startsWith('wagmi') ||
-                  key.startsWith('cbw_') ||
-                  key.includes('wallet')) {
-                localStorage.removeItem(key);
-              }
-            });
-            
-            // Navigate to dedicated wallet selection page
-            window.location.href = "/select-wallet";
+            // Use the comprehensive reset function
+            toast.loading("Resetting wallet state...", { id: "reset" });
+            resetAllWalletState();
+            setTimeout(() => {
+              toast.success("Wallet state reset! Redirecting...", {
+                id: "reset",
+              });
+              window.location.href = "/select-wallet";
+            }, 500);
           }}
+          title="Reset all wallet connections and start fresh"
         >
           Reset
         </button>
@@ -456,7 +435,7 @@ export default function SmartWalletButton() {
           {/* Placeholder for any debug functionality */}
         </div>
       )}
-      
+
       {/* Open Coinbase Wallet link - visible and smaller */}
       <div className="mt-1 text-center">
         <button
