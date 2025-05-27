@@ -123,10 +123,67 @@ The vanilla JS implementation is kept for reference purposes only and should not
 
 - Real-time pose detection for fitness challenges
 - On-chain leaderboard integration
+- **🎭 Farcaster Mini App integration** (NEW!)
 - Social sharing (Farcaster, Twitter)
 - thirdweb wallet and SDK integration
 - REST and WebSocket APIs (optional backend)
 - Coinbase Smart Wallet integration with spend limits and sub-accounts
+
+### 🎭 Farcaster Mini App Integration
+
+Imperfect Form is now a fully-featured **Farcaster Mini App** that works seamlessly both as a standalone web application and within the Farcaster ecosystem.
+
+#### Mini App Features
+
+- **Dual Platform Support**: Works as both a web app and Farcaster Mini App
+- **Automatic Detection**: Detects when accessed via Farcaster and adapts the UI
+- **Seamless Wallet Integration**: Auto-connects to Farcaster wallet when in Mini App context
+- **Native Sharing**: Share workout achievements directly to Farcaster feed
+- **User Context**: Displays Farcaster user profile and social information
+- **Add to Apps**: Users can add the app to their Farcaster client for quick access
+- **Notifications Ready**: Infrastructure for sending workout reminders and achievements
+
+#### Technical Implementation
+
+- **Latest Standards**: Uses @farcaster/frame-sdk v0.0.51 and official Mini App specification
+- **Manifest File**: Properly configured at `/.well-known/farcaster.json`
+- **Webhook System**: Handles Mini App events (add/remove, notifications)
+- **Enhanced Components**: Mini App-aware UI components and indicators
+- **Account Association**: Cryptographically verified ownership (pending completion)
+
+#### Mini App Status
+
+- ✅ **SDK Integration**: Official Farcaster Frame SDK implemented
+- ✅ **Manifest File**: Created with proper metadata and configuration
+- ✅ **Webhook Endpoint**: Ready to handle Mini App events
+- ✅ **Enhanced UI**: Mini App-specific components and features
+- ✅ **Icon Assets**: App icons deployed to production
+- ⚠️ **Account Association**: Pending completion after production deployment verification
+- ⚠️ **Production Testing**: Requires testing in actual Farcaster environment
+
+#### Next Steps to Complete Mini App Registration
+
+1. **✅ Deploy to Production**: App and icons deployed to production
+2. **🔄 Verify Manifest**: Check that `https://imperfectform.fun/.well-known/farcaster.json` is accessible
+3. **⏳ Complete Account Association**:
+   - Visit [Warpcast Mini App Manifest Tool](https://warpcast.com/~/developers/new)
+   - Enter domain: `imperfectform.fun`
+   - Generate cryptographic signature with your Farcaster account
+   - Add the `accountAssociation` object to the manifest file
+4. **🧪 Test in Farcaster**: Share your URL in a Farcaster cast and access via Warpcast mobile app
+
+#### How to Test Mini App Features
+
+Once account association is complete:
+
+1. **Share URL**: Post `https://imperfectform.fun` in a Farcaster cast
+2. **Access via Farcaster**: Open the cast in Warpcast mobile app
+3. **Look for Mini App Features**:
+   - Mini App banner at the top
+   - Farcaster user profile display
+   - Enhanced sharing options
+   - "Add to Apps" prompt
+   - Automatic wallet connection
 
 ### Wallet Integration
 
