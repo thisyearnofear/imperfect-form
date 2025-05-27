@@ -2,12 +2,11 @@ import { NextResponse } from 'next/server';
 
 // Farcaster Mini App Manifest
 const manifest = {
-  // TODO: Add account association after generating it from Warpcast tool
-  // "accountAssociation": {
-  //   "header": "eyJmaWQiOjEyMzQsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg....",
-  //   "payload": "eyJkb21haW4iOiJpbXBlcmZlY3Rmb3JtLmZ1biJ9",
-  //   "signature": "MHg3NmRkOWVlMjE4OGEyMjliNzExZjUzOTkxYTc1NmEzMGZjNTA3NmE5..."
-  // },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjUyNTQsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg4QjAzQTJDMzY1YzI2MUFlQmU2ODQyMjREQkI2Qzk1OTJhQkNkRkIyIn0",
+    "payload": "eyJkb21haW4iOiJpbXBlcmZlY3Rmb3JtLmZ1biJ9",
+    "signature": "MHgyYWI5ZGQ1NTAxMTZlNDU5NGQ1OTQ5YTk3ZGY1YzhjNjRkNmQzZTdkNWQ2YzU3NDFiZDk2YjJkM2M1YTVhNTZmMjRkNmNmYWFmNGI5YzAxODNiOTdkNDJkMTAwM2MzMjhiMDliMmI1YmE5MTA4MjdmYWRhY2ZlMDhmMjM5NGZhMDFi"
+  },
   "frame": {
     "version": "1",
     "name": "Imperfect Form",
