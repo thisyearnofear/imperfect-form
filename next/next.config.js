@@ -15,10 +15,10 @@ const nextConfig = {
     config.optimization = {
       ...config.optimization,
       splitChunks: {
-        chunks: 'all',
+        chunks: "all",
         maxInitialRequests: 25,
         minSize: 20000,
-      }
+      },
     };
 
     return config;
@@ -43,6 +43,24 @@ const nextConfig = {
   compress: true,
   // Modern JavaScript features
   transpilePackages: [],
+  // Custom headers for .well-known directory
+  async headers() {
+    return [
+      {
+        source: "/.well-known/:path*",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/json",
+          },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

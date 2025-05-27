@@ -1,4 +1,7 @@
-{
+import { NextResponse } from 'next/server';
+
+// Farcaster Mini App Manifest
+const manifest = {
   "frame": {
     "version": "1",
     "name": "Imperfect Form",
@@ -16,11 +19,24 @@
     "ogTitle": "Imperfect Form | Onchain Olympians",
     "ogDescription": "Track your fitness with real-time pose detection and compete onchain",
     "ogImageUrl": "https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60",
-    "requiredChains": ["eip155:42220", "eip155:137", "eip155:8453"],
+    "requiredChains": [
+      "eip155:42220",
+      "eip155:137", 
+      "eip155:8453"
+    ],
     "requiredCapabilities": [
       "wallet.getEvmProvider",
       "actions.ready",
       "actions.composeCast"
     ]
   }
+};
+
+export async function GET() {
+  return NextResponse.json(manifest, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
 }
