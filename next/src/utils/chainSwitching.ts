@@ -18,7 +18,7 @@ export const chainConfigs = {
     ],
     blockExplorerUrls: ["https://polygonscan.com/"],
   },
-  base: {
+  "base-sepolia": {
     id: 84532,
     name: "Base Sepolia",
     nativeCurrency: {

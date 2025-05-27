@@ -96,8 +96,8 @@ export default function SubmitButton({
       thirdwebAddress
     )
       return true;
-    // Base network should use wagmiAccount
-    if (network === "base" && wagmiAccount?.address) return true;
+    // Base Sepolia network should use wagmiAccount
+    if (network === "base-sepolia" && wagmiAccount?.address) return true;
     return false;
   };
 
