@@ -72,24 +72,10 @@ export default function RootLayout({
         />
         <meta name="theme-color" content="#000000" />
 
-        {/* Farcaster Mini App metadata */}
-        <meta property="fc:frame" content="vNext" />
+        {/* Farcaster Mini App Frame metadata */}
         <meta
-          property="fc:frame:image"
-          content="https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60"
-        />
-        <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-        <meta property="fc:frame:button:1" content="🏋️ Start Workout" />
-        <meta property="fc:frame:button:1:action" content="link" />
-        <meta
-          property="fc:frame:button:1:target"
-          content="https://imperfectform.fun"
-        />
-        <meta property="fc:frame:button:2" content="🏆 View Leaderboard" />
-        <meta property="fc:frame:button:2:action" content="link" />
-        <meta
-          property="fc:frame:button:2:target"
-          content="https://imperfectform.fun"
+          name="fc:frame"
+          content='{"version":"next","imageUrl":"https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60","button":{"title":"🏋️ Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
         />
 
         {/* Mini App specific metadata */}

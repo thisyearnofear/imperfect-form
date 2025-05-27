@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 
 // Farcaster Mini App Manifest
 const manifest = {
+  // TODO: Add account association after generating it from Warpcast tool
+  // "accountAssociation": {
+  //   "header": "eyJmaWQiOjEyMzQsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg....",
+  //   "payload": "eyJkb21haW4iOiJpbXBlcmZlY3Rmb3JtLmZ1biJ9",
+  //   "signature": "MHg3NmRkOWVlMjE4OGEyMjliNzExZjUzOTkxYTc1NmEzMGZjNTA3NmE5..."
+  // },
   "frame": {
     "version": "1",
     "name": "Imperfect Form",
@@ -16,16 +22,16 @@ const manifest = {
     "tags": ["fitness", "workout", "onchain", "pose-detection", "competition"],
     "heroImageUrl": "https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60",
     "tagline": "Onchain Fitness Revolution",
-    "ogTitle": "Imperfect Form | Onchain Olympians",
+    "ogTitle": "Imperfect Form Fitness",
     "ogDescription": "Track your fitness with real-time pose detection and compete onchain",
     "ogImageUrl": "https://imperfectform.fun/api/frames/workout/image?reps=50&exerciseMode=squats&timeSpent=60",
     "requiredChains": [
       "eip155:42220",
-      "eip155:137", 
+      "eip155:137",
       "eip155:8453"
     ],
     "requiredCapabilities": [
-      "wallet.getEvmProvider",
+      "wallet.getEthereumProvider",
       "actions.ready",
       "actions.composeCast"
     ]
