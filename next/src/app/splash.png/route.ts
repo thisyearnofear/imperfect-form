@@ -2,19 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
-export async function GET(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
   try {
     // Try to serve the actual splash file from public directory
     const splashPath = join(process.cwd(), 'public', 'splash.png');
     const splashBuffer = await readFile(splashPath);
-    
+
     return new NextResponse(splashBuffer, {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=31536000',
       },
     });
-  } catch (error) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     // Fallback: Generate a simple SVG splash icon (200x200)
     const svg = `
       <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -24,23 +26,23 @@ export async function GET(request: NextRequest) {
             <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" />
           </linearGradient>
         </defs>
-        
+
         <!-- Background -->
         <rect width="200" height="200" fill="url(#grad)" rx="20"/>
-        
+
         <!-- Fitness icon - dumbbell -->
         <g transform="translate(100, 100)">
           <!-- Dumbbell shape -->
           <rect x="-30" y="-4" width="60" height="8" fill="white" rx="4"/>
-          
+
           <!-- Left weight -->
           <circle cx="-24" cy="0" r="12" fill="white"/>
           <rect x="-36" y="-8" width="24" height="16" fill="white" rx="4"/>
-          
+
           <!-- Right weight -->
           <circle cx="24" cy="0" r="12" fill="white"/>
           <rect x="12" y="-8" width="24" height="16" fill="white" rx="4"/>
-          
+
           <!-- Text -->
           <text x="0" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">IF</text>
         </g>

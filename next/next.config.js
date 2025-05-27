@@ -43,6 +43,17 @@ const nextConfig = {
   compress: true,
   // Modern JavaScript features
   transpilePackages: [],
+
+  // Redirects for Farcaster Mini App manifest
+  async redirects() {
+    return [
+      {
+        source: "/.well-known/farcaster.json",
+        destination: "/api/farcaster-manifest",
+        permanent: false,
+      },
+    ];
+  },
   // Custom headers for .well-known directory
   async headers() {
     return [
