@@ -123,9 +123,16 @@ export default function MobileOptimizedWalletSelector({
           {/* Farcaster Wallet Option - Always show as an option */}
           <div className="mb-4">
             <FarcasterAwareWalletButton
-              onWalletConnected={() => {
-                if (onClose) onClose();
-                // Handle navigation similar to other wallet types
+              onWalletConnected={(address, source) => {
+                console.log(
+                  `Farcaster wallet connected: ${address} (${source})`
+                );
+                // Set the wallet provider to farcaster
+                setWalletProvider("farcaster");
+                localStorage.setItem("selectedWalletProvider", "farcaster");
+                localStorage.setItem("selectedNetwork", "celo");
+
+                // Only navigate if we're on the select-wallet page
                 if (
                   typeof window !== "undefined" &&
                   window.location.pathname.includes("/select-wallet")
@@ -133,11 +140,10 @@ export default function MobileOptimizedWalletSelector({
                   console.log(
                     "Redirecting to home page after Farcaster wallet connection"
                   );
-                  window.location.href = "/";
-                } else {
+                  if (onClose) onClose();
                   setTimeout(() => {
-                    window.location.reload();
-                  }, 300);
+                    window.location.href = "/";
+                  }, 500);
                 }
               }}
               className="w-full p-4 md:p-6 bg-gradient-to-r from-purple-900 to-pink-900 border border-purple-400 rounded-lg transition-all hover:from-purple-800 hover:to-pink-800 hover:border-purple-300 relative touch-manipulation"

@@ -66,24 +66,34 @@ export function FarcasterAwareWalletButton({
     }
   }, [farcasterLoading, isConnecting, activeWalletAddress, farcasterError]);
 
-  // Notify parent component when wallet connection changes
+  // Track if we've already notified about the current connection
+  const [hasNotifiedConnection, setHasNotifiedConnection] = useState(false);
+
+  // Notify parent component when wallet connection changes (only once per connection)
   useEffect(() => {
-    if (activeWalletAddress && walletSource) {
+    if (activeWalletAddress && walletSource && !hasNotifiedConnection) {
       logger.info("Wallet connected", {
         address: activeWalletAddress,
         source: walletSource,
         isInMiniApp,
       });
       onWalletConnected?.(activeWalletAddress, walletSource);
-    } else if (!activeWalletAddress && connectionState === "idle") {
+      setHasNotifiedConnection(true);
+    } else if (
+      !activeWalletAddress &&
+      connectionState === "idle" &&
+      hasNotifiedConnection
+    ) {
       logger.info("Wallet disconnected");
       onWalletDisconnected?.();
+      setHasNotifiedConnection(false);
     }
   }, [
     activeWalletAddress,
     walletSource,
     connectionState,
     isInMiniApp,
+    hasNotifiedConnection,
     onWalletConnected,
     onWalletDisconnected,
   ]);

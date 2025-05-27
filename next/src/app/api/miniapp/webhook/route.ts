@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import NotificationManager from '@/lib/notifications';
 
 // Simple server-side logger for API routes
 const logger = {
@@ -56,28 +57,36 @@ export async function POST(request: NextRequest) {
       hasSignature: !!body.signature,
     });
 
+    // Decode the header to get user FID
+    const decodedHeader = Buffer.from(body.header, 'base64url').toString('utf-8');
+    const headerData = JSON.parse(decodedHeader);
+    const userFid = headerData.fid;
+
     // Decode the payload (base64url encoded)
     const decodedPayload = Buffer.from(body.payload, 'base64url').toString('utf-8');
     const eventData: WebhookEvent = JSON.parse(decodedPayload);
 
-    logger.info('🎭 Mini App event decoded', { event: eventData.event });
+    logger.info('🎭 Mini App event decoded', {
+      event: eventData.event,
+      userFid
+    });
 
     // Handle different event types
     switch (eventData.event) {
       case 'frame_added':
-        await handleFrameAdded(eventData);
+        await handleFrameAdded(eventData, userFid);
         break;
 
       case 'frame_removed':
-        await handleFrameRemoved(eventData);
+        await handleFrameRemoved(eventData, userFid);
         break;
 
       case 'notifications_enabled':
-        await handleNotificationsEnabled(eventData);
+        await handleNotificationsEnabled(eventData, userFid);
         break;
 
       case 'notifications_disabled':
-        await handleNotificationsDisabled(eventData);
+        await handleNotificationsDisabled(eventData, userFid);
         break;
 
       default:
@@ -96,48 +105,48 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleFrameAdded(event: FrameAddedEvent) {
+async function handleFrameAdded(event: FrameAddedEvent, userFid: number) {
   logger.info('🎭 User added Mini App', {
+    userFid,
     hasNotificationDetails: !!event.notificationDetails,
   });
 
   if (event.notificationDetails) {
     // Store notification token for this user
-    // In a real app, you'd save this to your database
     logger.info('🎭 Notification token received', {
+      userFid,
       url: event.notificationDetails.url,
       tokenLength: event.notificationDetails.token.length,
     });
 
-    // TODO: Save to database
-    // await saveNotificationToken(userFid, event.notificationDetails);
+    // Save notification token using NotificationManager
+    await NotificationManager.saveNotificationToken(userFid, event.notificationDetails);
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function handleFrameRemoved(_event: FrameRemovedEvent) {
-  logger.info('🎭 User removed Mini App');
+async function handleFrameRemoved(_event: FrameRemovedEvent, userFid: number) {
+  logger.info('🎭 User removed Mini App', { userFid });
 
-  // TODO: Remove notification tokens for this user
-  // await removeNotificationTokens(userFid);
+  // Remove notification tokens for this user
+  await NotificationManager.removeNotificationTokens(userFid);
 }
 
-async function handleNotificationsEnabled(event: NotificationsEnabledEvent) {
+async function handleNotificationsEnabled(event: NotificationsEnabledEvent, userFid: number) {
   logger.info('🎭 User enabled notifications', {
+    userFid,
     url: event.notificationDetails.url,
     tokenLength: event.notificationDetails.token.length,
   });
 
-  // TODO: Save new notification token
-  // await saveNotificationToken(userFid, event.notificationDetails);
+  // Save new notification token
+  await NotificationManager.saveNotificationToken(userFid, event.notificationDetails);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function handleNotificationsDisabled(_event: NotificationsDisabledEvent) {
-  logger.info('🎭 User disabled notifications');
+async function handleNotificationsDisabled(_event: NotificationsDisabledEvent, userFid: number) {
+  logger.info('🎭 User disabled notifications', { userFid });
 
-  // TODO: Mark notification tokens as invalid
-  // await disableNotificationTokens(userFid);
+  // Mark notification tokens as invalid
+  await NotificationManager.disableNotificationTokens(userFid);
 }
 
 // Helper function to send notifications (for future use)
