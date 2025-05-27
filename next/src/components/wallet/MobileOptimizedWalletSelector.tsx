@@ -5,7 +5,9 @@ import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 import { FarcasterAwareWalletButton } from "./FarcasterAwareWalletButton";
 import { WalletBrowserIndicator } from "@/components/ui";
+import { resetAllWalletState } from "@/utils/walletReset";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
+import toast from "react-hot-toast";
 
 interface MobileOptimizedWalletSelectorProps {
   onClose?: () => void;
@@ -110,40 +112,38 @@ export default function MobileOptimizedWalletSelector({
             </p>
           </div>
 
-          {/* Farcaster Wallet Option - Only show if in Farcaster context */}
-          {isInMiniApp && (
-            <div className="mb-4">
-              <FarcasterAwareWalletButton
-                onWalletConnected={() => {
-                  if (onClose) onClose();
-                  // Handle navigation similar to other wallet types
-                  if (
-                    typeof window !== "undefined" &&
-                    window.location.pathname.includes("/select-wallet")
-                  ) {
-                    console.log(
-                      "Redirecting to home page after Farcaster wallet connection"
-                    );
-                    window.location.href = "/";
-                  } else {
-                    setTimeout(() => {
-                      window.location.reload();
-                    }, 300);
-                  }
-                }}
-                className="w-full p-4 md:p-6 bg-gradient-to-r from-purple-900 to-pink-900 border border-purple-400 rounded-lg transition-all hover:from-purple-800 hover:to-pink-800 hover:border-purple-300 relative touch-manipulation"
-              />
+          {/* Farcaster Wallet Option - Always show as an option */}
+          <div className="mb-4">
+            <FarcasterAwareWalletButton
+              onWalletConnected={() => {
+                if (onClose) onClose();
+                // Handle navigation similar to other wallet types
+                if (
+                  typeof window !== "undefined" &&
+                  window.location.pathname.includes("/select-wallet")
+                ) {
+                  console.log(
+                    "Redirecting to home page after Farcaster wallet connection"
+                  );
+                  window.location.href = "/";
+                } else {
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 300);
+                }
+              }}
+              className="w-full p-4 md:p-6 bg-gradient-to-r from-purple-900 to-pink-900 border border-purple-400 rounded-lg transition-all hover:from-purple-800 hover:to-pink-800 hover:border-purple-300 relative touch-manipulation"
+            />
 
-              {/* Divider */}
-              <div className="flex items-center my-6">
-                <div className="flex-1 border-t border-gray-600"></div>
-                <span className="px-3 text-sm text-gray-400">
-                  or choose another wallet
-                </span>
-                <div className="flex-1 border-t border-gray-600"></div>
-              </div>
+            {/* Divider */}
+            <div className="flex items-center my-6">
+              <div className="flex-1 border-t border-gray-600"></div>
+              <span className="px-3 text-sm text-gray-400">
+                or choose another wallet type
+              </span>
+              <div className="flex-1 border-t border-gray-600"></div>
             </div>
-          )}
+          </div>
 
           {/* Signature Wallet Option */}
           <button
@@ -204,6 +204,29 @@ export default function MobileOptimizedWalletSelector({
               </div>
             )}
           </button>
+
+          {/* Reset button for when users get stuck */}
+          <div className="mt-6 text-center">
+            <button
+              className="text-xs bg-red-800 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
+              onClick={() => {
+                toast.loading("Resetting wallet state...", { id: "reset" });
+                resetAllWalletState();
+                setTimeout(() => {
+                  toast.success("Wallet state reset! Reloading...", {
+                    id: "reset",
+                  });
+                  window.location.reload();
+                }, 500);
+              }}
+              title="Reset all wallet connections and start fresh"
+            >
+              Reset Wallet State
+            </button>
+            <p className="text-xs text-gray-500 mt-1">
+              Having trouble? Reset to start fresh
+            </p>
+          </div>
         </div>
       </div>
 

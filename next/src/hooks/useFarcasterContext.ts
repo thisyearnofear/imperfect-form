@@ -50,7 +50,7 @@ export function useFarcasterContext(): FarcasterContext {
 
         if (isInFrame) {
           logger.info('Detected Farcaster mini app context');
-          
+
           // Dynamically import the Farcaster SDK
           const { sdk: farcasterSdk } = await import('@farcaster/frame-sdk');
           setSdk(farcasterSdk);
@@ -133,7 +133,7 @@ export function useFarcasterContext(): FarcasterContext {
         if (ethProvider && typeof ethProvider === 'object' && 'request' in ethProvider) {
           const requestFn = (ethProvider as Record<string, unknown>).request as (params: Record<string, unknown>) => Promise<string[]>;
           const accounts = await requestFn({ method: 'eth_requestAccounts' });
-          
+
           if (accounts && accounts.length > 0) {
             setWalletAddress(accounts[0]);
             logger.info('Farcaster wallet connected successfully', { address: accounts[0] });
@@ -233,46 +233,79 @@ export function useFarcasterContext(): FarcasterContext {
 function detectFarcasterMiniApp(): boolean {
   if (typeof window === 'undefined') return false;
 
-  // Check for Farcaster-specific indicators
-  const indicators = [
-    // Check user agent for Farcaster
-    () => /farcaster/i.test(navigator.userAgent),
-    
-    // Check for Farcaster-specific window properties
-    () => 'farcaster' in window,
-    
-    // Check for frame context in URL
-    () => window.location.search.includes('frame='),
-    
-    // Check for Farcaster referrer
-    () => document.referrer.includes('warpcast.com') || document.referrer.includes('farcaster.xyz'),
-    
-    // Check for Farcaster-specific headers (if available via JS)
-    () => {
-      try {
-        return window.location.hostname.includes('frame') || 
-               window.location.hostname.includes('farcaster');
-      } catch {
-        return false;
-      }
-    },
-  ];
+  // Enhanced detection with more comprehensive checks
+  const detectionResults = {
+    userAgent: false,
+    windowProperty: false,
+    frameParam: false,
+    referrer: false,
+    hostname: false,
+    warpcastParam: false,
+    farcasterParam: false,
+    parentOrigin: false,
+  };
 
-  const detected = indicators.some(check => {
-    try {
-      return check();
-    } catch {
-      return false;
+  // Check user agent for Farcaster/Warpcast
+  detectionResults.userAgent = /farcaster|warpcast/i.test(navigator.userAgent);
+
+  // Check for Farcaster-specific window properties
+  detectionResults.windowProperty = 'farcaster' in window;
+
+  // Check for frame context in URL parameters
+  detectionResults.frameParam = window.location.search.includes('frame=');
+
+  // Check for warpcast or farcaster in URL parameters
+  detectionResults.warpcastParam = window.location.search.includes('warpcast');
+  detectionResults.farcasterParam = window.location.search.includes('farcaster');
+
+  // Check for Farcaster referrer
+  detectionResults.referrer = document.referrer.includes('warpcast.com') ||
+                             document.referrer.includes('farcaster.xyz') ||
+                             document.referrer.includes('warpcast.xyz');
+
+  // Check hostname for frame or farcaster indicators
+  try {
+    detectionResults.hostname = window.location.hostname.includes('frame') ||
+                               window.location.hostname.includes('farcaster');
+  } catch {
+    detectionResults.hostname = false;
+  }
+
+  // Check if we're in an iframe with Farcaster parent
+  try {
+    if (window.parent !== window) {
+      // We're in an iframe, check if parent origin suggests Farcaster
+      detectionResults.parentOrigin = window.location !== window.parent.location;
     }
-  });
+  } catch {
+    // Cross-origin iframe, which is common for Farcaster frames
+    detectionResults.parentOrigin = true;
+  }
 
-  logger.info('Farcaster mini app detection', { 
+  const detected = Object.values(detectionResults).some(result => result);
+
+  // Enhanced logging with individual detection results
+  logger.info('Farcaster mini app detection (enhanced)', {
     detected,
+    detectionResults,
     userAgent: navigator.userAgent,
     referrer: document.referrer,
     hostname: window.location.hostname,
-    search: window.location.search
+    search: window.location.search,
+    href: window.location.href,
+    isIframe: window.parent !== window,
   });
+
+  // Safe debugging without overrides
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🎭 Farcaster Detection Debug:', {
+      detected,
+      detectionResults,
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      referrer: document.referrer,
+    });
+  }
 
   return detected;
 }

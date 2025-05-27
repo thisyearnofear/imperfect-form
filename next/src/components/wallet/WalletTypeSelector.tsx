@@ -5,6 +5,9 @@ import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import WalletDialog from "@/components/ui/WalletDialog";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import MobileOptimizedWalletSelector from "./MobileOptimizedWalletSelector";
+import { FarcasterAwareWalletButton } from "./FarcasterAwareWalletButton";
+import { resetAllWalletState } from "@/utils/walletReset";
+import toast from "react-hot-toast";
 
 interface WalletTypeSelectorProps {
   onClose?: () => void;
@@ -86,6 +89,30 @@ function DesktopWalletSelector({ onClose }: WalletTypeSelectorProps) {
           </h2>
         </div>
         <div className="wallet-type-selection-dialog p-3 space-y-4 mx-auto text-center">
+          {/* Farcaster Wallet Option */}
+          <div className="mb-4">
+            <FarcasterAwareWalletButton
+              onWalletConnected={() => {
+                if (onClose) onClose();
+                // Handle navigation similar to other wallet types
+                if (
+                  typeof window !== "undefined" &&
+                  window.location.pathname.includes("/select-wallet")
+                ) {
+                  console.log(
+                    "Redirecting to home page after Farcaster wallet connection"
+                  );
+                  window.location.href = "/";
+                } else {
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 300);
+                }
+              }}
+              className="w-full p-4 bg-gradient-to-r from-purple-900 to-pink-900 border border-purple-400 rounded-lg transition-all hover:from-purple-800 hover:to-pink-800 hover:border-purple-300"
+            />
+          </div>
+
           <button
             onClick={() => handleWalletTypeSelected("signature")}
             className="wallet-option wallet-option-signature w-full p-4 relative bg-gradient-to-r from-purple-900 to-indigo-900 border-l-4 border-purple-500 rounded-md transition-all hover:from-purple-800 hover:to-indigo-800 hover:border-purple-400 animate-slide-up delay-100"
@@ -139,6 +166,29 @@ function DesktopWalletSelector({ onClose }: WalletTypeSelectorProps) {
               </div>
             )}
           </button>
+
+          {/* Reset button for when users get stuck */}
+          <div className="mt-6 text-center">
+            <button
+              className="text-xs bg-red-800 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
+              onClick={() => {
+                toast.loading("Resetting wallet state...", { id: "reset" });
+                resetAllWalletState();
+                setTimeout(() => {
+                  toast.success("Wallet state reset! Reloading...", {
+                    id: "reset",
+                  });
+                  window.location.reload();
+                }, 500);
+              }}
+              title="Reset all wallet connections and start fresh"
+            >
+              Reset Wallet State
+            </button>
+            <p className="text-xs text-gray-400 mt-1">
+              Having trouble? Reset to start fresh
+            </p>
+          </div>
         </div>
       </div>
     </WalletDialog>

@@ -13,25 +13,71 @@ export const resetAllWalletState = () => {
     localStorage.removeItem('selectedNetwork');
     localStorage.removeItem('selectedChain');
     localStorage.removeItem('connectedWallet');
-    
-    // Clear Wagmi state
-    localStorage.removeItem('wagmi.wallet');
-    localStorage.removeItem('wagmi.connected');
-    localStorage.removeItem('wagmi.store');
-    localStorage.removeItem('wagmi.cachified');
-    
-    // Clear ThirdWeb state
-    localStorage.removeItem('thirdweb.auth.token');
-    localStorage.removeItem('thirdweb.wallets');
-    localStorage.removeItem('thirdweb.wallet');
-    localStorage.removeItem('thirdweb.wc.session');
-    
-    // Clear general connection state
-    localStorage.removeItem('walletconnect');
-    localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE');
-    
+    localStorage.removeItem('userAddress');
+
+    // Clear Wagmi state - be more comprehensive
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('wagmi.')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Clear ThirdWeb state - be more comprehensive
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('thirdweb.') || key.startsWith('thirdweb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Clear WalletConnect state
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('walletconnect') || key.includes('WALLETCONNECT')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Clear Coinbase wallet state
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('coinbase') ||
+          key.startsWith('walletlink') ||
+          key.startsWith('cbw_') ||
+          key.includes('coinbase')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Clear any other wallet-related state
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('wallet') ||
+          key.includes('connect') ||
+          key.includes('auth') ||
+          key.includes('signer')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Try to clear any global wallet objects
+    try {
+      // Clear ThirdWeb global state
+      if (window.thirdweb?.logout) {
+        window.thirdweb.logout();
+      }
+
+      // Clear any ethereum provider state
+      if (window.ethereum) {
+        // Some providers store state in the provider itself
+        try {
+          window.ethereum.request({ method: 'eth_accounts', params: [] });
+        } catch (e) {
+          console.warn('Could not reset ethereum provider:', e);
+        }
+      }
+    } catch (e) {
+      console.error('Error cleaning up global wallet objects:', e);
+    }
+
     // Log the reset for debugging
-    console.log('All wallet state has been reset');
+    console.log('All wallet state has been completely reset');
   }
 };
 
@@ -64,10 +110,10 @@ export const safeDisconnectFromAllProviders = async (
         }
       })
     );
-    
+
     // Additional cleanup
     resetAllWalletState();
-    
+
     // Clear any ThirdWeb or Wagmi global objects if they exist
     if (typeof window !== 'undefined') {
       try {
@@ -76,7 +122,7 @@ export const safeDisconnectFromAllProviders = async (
           console.log('Calling ThirdWeb logout directly');
           window.thirdweb.logout();
         }
-        
+
         // Try to access ethereum provider
         if (window.ethereum) {
           // Some providers offer a disconnect method, others don't
@@ -91,7 +137,7 @@ export const safeDisconnectFromAllProviders = async (
         console.error('Error cleaning up global wallet objects:', e);
       }
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error during wallet disconnection:', error);

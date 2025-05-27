@@ -3,6 +3,7 @@
 import React from "react";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { resetAllWalletState } from "@/utils/walletReset";
 import toast from "react-hot-toast";
 
 /**
@@ -62,12 +63,31 @@ export default function FallbackConnectButton() {
   };
 
   return (
-    <button
-      id="fallbackConnectButton"
-      className="wallet-button signature-wallet"
-      onClick={handleClick}
-    >
-      Connect Wallet
-    </button>
+    <div className="inline-flex space-x-1">
+      <button
+        id="fallbackConnectButton"
+        className="wallet-button signature-wallet"
+        onClick={handleClick}
+      >
+        Connect Wallet
+      </button>
+
+      <button
+        className="text-xs bg-red-800 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
+        onClick={() => {
+          toast.loading("Resetting wallet state...", { id: "reset" });
+          resetAllWalletState();
+          setTimeout(() => {
+            toast.success("Wallet state reset! Redirecting...", {
+              id: "reset",
+            });
+            window.location.href = "/select-wallet";
+          }, 500);
+        }}
+        title="Reset all wallet connections and start fresh"
+      >
+        Reset
+      </button>
+    </div>
   );
 }

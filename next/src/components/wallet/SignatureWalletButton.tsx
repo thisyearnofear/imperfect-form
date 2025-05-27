@@ -7,8 +7,10 @@ import { getBestDisplayName } from "@/utils/web3bio";
 import Dialog from "@/components/ui/Dialog";
 import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { resetAllWalletState } from "@/utils/walletReset";
 import dynamic from "next/dynamic";
 import ThirdwebQueryProvider from "./ThirdwebQueryProvider";
+import toast from "react-hot-toast";
 
 // Import the fallback button for when ThirdwebProvider is not available
 const FallbackConnectButton = dynamic(() => import("./FallbackConnectButton"), {
@@ -99,8 +101,13 @@ export default function SignatureWalletButton() {
       }
 
       // Only set default network if no network is selected
-      if (!network || (network !== "polygon" && network !== "monad" && network !== "celo")) {
-        console.log("SignatureWalletButton: Setting default network to 'polygon'");
+      if (
+        !network ||
+        (network !== "polygon" && network !== "monad" && network !== "celo")
+      ) {
+        console.log(
+          "SignatureWalletButton: Setting default network to 'polygon'"
+        );
         setNetwork("polygon");
       }
 
@@ -247,23 +254,29 @@ export default function SignatureWalletButton() {
               </span>
             )}
           </div>
-          
+
           <div className="flex justify-center space-x-1 mt-1">
             <button
               onClick={() => setNetwork("polygon")}
-              className={`${network === "polygon" ? "bg-purple-800" : "bg-purple-900/30"} text-[10px] px-1.5 py-0.5 rounded`}
+              className={`${
+                network === "polygon" ? "bg-purple-800" : "bg-purple-900/30"
+              } text-[10px] px-1.5 py-0.5 rounded`}
             >
               Polygon
             </button>
             <button
               onClick={() => setNetwork("monad")}
-              className={`${network === "monad" ? "bg-yellow-800" : "bg-yellow-900/30"} text-[10px] px-1.5 py-0.5 rounded`}
+              className={`${
+                network === "monad" ? "bg-yellow-800" : "bg-yellow-900/30"
+              } text-[10px] px-1.5 py-0.5 rounded`}
             >
               Monad
             </button>
             <button
               onClick={() => setNetwork("celo")}
-              className={`${network === "celo" ? "bg-green-800" : "bg-green-900/30"} text-[10px] px-1.5 py-0.5 rounded`}
+              className={`${
+                network === "celo" ? "bg-green-800" : "bg-green-900/30"
+              } text-[10px] px-1.5 py-0.5 rounded`}
             >
               Celo
             </button>
@@ -353,36 +366,18 @@ export default function SignatureWalletButton() {
             ]}
           />
           <button
-            className="text-xs bg-red-800 text-white px-2 py-1 rounded"
+            className="text-xs bg-red-800 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
             onClick={() => {
-              // Reset all wallet state
-              if (typeof window !== "undefined") {
-                localStorage.removeItem("selectedWalletProvider");
-                localStorage.removeItem("selectedNetwork");
-                localStorage.removeItem("selectedChain");
-                localStorage.removeItem("userAddress");
-                localStorage.removeItem("thirdweb.auth.token");
-                localStorage.removeItem("thirdweb.wallets");
-                
-                // Clear other wallet-related storage
-                localStorage.removeItem("walletconnect");
-                localStorage.removeItem("WALLETCONNECT_DEEPLINK_CHOICE");
-                
-                // Clear any potential Coinbase wallet state
-                Object.keys(localStorage).forEach(key => {
-                  if (key.startsWith('coinbase') || 
-                      key.startsWith('walletlink') || 
-                      key.startsWith('wagmi') ||
-                      key.startsWith('cbw_') ||
-                      key.includes('wallet')) {
-                    localStorage.removeItem(key);
-                  }
+              toast.loading("Resetting wallet state...", { id: "reset" });
+              resetAllWalletState();
+              setTimeout(() => {
+                toast.success("Wallet state reset! Redirecting...", {
+                  id: "reset",
                 });
-                
-                // Navigate to dedicated wallet selection page
                 window.location.href = "/select-wallet";
-              }
+              }, 500);
             }}
+            title="Reset all wallet connections and start fresh"
           >
             Reset
           </button>
