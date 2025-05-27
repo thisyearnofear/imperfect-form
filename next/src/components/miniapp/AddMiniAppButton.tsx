@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useMiniApp } from '@/contexts/MiniAppContext';
-import { createRemoteLogger } from '@/utils/remoteLogger';
+import React, { useState } from "react";
+import { useMiniApp } from "@/contexts/MiniAppContext";
+import { createRemoteLogger } from "@/utils/remoteLogger";
 
-const logger = createRemoteLogger('AddMiniAppButton');
+const logger = createRemoteLogger("AddMiniAppButton");
 
 interface AddMiniAppButtonProps {
   className?: string;
-  variant?: 'primary' | 'secondary' | 'compact';
+  variant?: "primary" | "secondary" | "compact";
   showAfterWorkout?: boolean;
 }
 
-export function AddMiniAppButton({ 
-  className = "", 
-  variant = 'primary',
-  showAfterWorkout = false 
+export function AddMiniAppButton({
+  className = "",
+  variant = "primary",
+  showAfterWorkout = false,
 }: AddMiniAppButtonProps) {
   const { isInMiniApp, addMiniApp, user } = useMiniApp();
   const [isAdding, setIsAdding] = useState(false);
@@ -23,19 +23,19 @@ export function AddMiniAppButton({
 
   const handleAddMiniApp = async () => {
     setIsAdding(true);
-    
+
     try {
       const success = await addMiniApp();
-      
+
       if (success) {
-        logger.info('🎯 Add Mini App prompt shown successfully');
+        logger.info("🎯 Add Mini App prompt shown successfully");
         // Hide the button after successful prompt
         setShowPrompt(false);
       } else {
-        logger.warn('Failed to show Add Mini App prompt');
+        logger.warn("Failed to show Add Mini App prompt");
       }
     } catch (error) {
-      logger.error('Error showing Add Mini App prompt', error);
+      logger.error("Error showing Add Mini App prompt", error);
     } finally {
       setIsAdding(false);
     }
@@ -47,14 +47,15 @@ export function AddMiniAppButton({
   }
 
   const getButtonStyles = () => {
-    const baseStyles = "flex items-center space-x-2 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
-    
+    const baseStyles =
+      "flex items-center space-x-2 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+
     switch (variant) {
-      case 'primary':
+      case "primary":
         return `${baseStyles} bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg text-lg`;
-      case 'secondary':
+      case "secondary":
         return `${baseStyles} bg-purple-900/30 border border-purple-500/50 hover:bg-purple-800/40 text-purple-200 px-4 py-2 rounded-lg`;
-      case 'compact':
+      case "compact":
         return `${baseStyles} bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm`;
       default:
         return baseStyles;
@@ -72,7 +73,7 @@ export function AddMiniAppButton({
     }
 
     switch (variant) {
-      case 'compact':
+      case "compact":
         return (
           <>
             <span>⭐</span>
@@ -92,9 +93,9 @@ export function AddMiniAppButton({
   return (
     <div className={`flex flex-col items-center space-y-2 ${className}`}>
       {/* User context */}
-      {user && variant === 'primary' && (
+      {user && variant === "primary" && (
         <div className="text-center text-sm text-purple-300">
-          <span>Hey @{user.username}! 👋</span>
+          <span>GM @{user.username}</span>
         </div>
       )}
 
@@ -108,14 +109,14 @@ export function AddMiniAppButton({
       </button>
 
       {/* Description */}
-      {variant === 'primary' && (
+      {variant === "primary" && (
         <div className="text-center text-xs text-gray-400 max-w-xs">
-          Add Imperfect Form to your Farcaster apps for quick access and workout notifications!
+          Quick access + notifications
         </div>
       )}
 
       {/* Dismiss option */}
-      {variant !== 'compact' && (
+      {variant !== "compact" && (
         <button
           onClick={() => setShowPrompt(false)}
           className="text-xs text-gray-500 hover:text-gray-400 underline"
@@ -135,7 +136,7 @@ export function useAddMiniAppPrompt() {
   const showAfterWorkout = () => {
     if (isInMiniApp) {
       setShouldShow(true);
-      logger.info('🎯 Triggering Add Mini App prompt after workout');
+      logger.info("🎯 Triggering Add Mini App prompt after workout");
     }
   };
 
@@ -151,12 +152,12 @@ export function useAddMiniAppPrompt() {
 }
 
 // Floating Add Mini App prompt for strategic placement
-export function FloatingAddMiniAppPrompt({ 
-  show, 
-  onDismiss 
-}: { 
-  show: boolean; 
-  onDismiss: () => void; 
+export function FloatingAddMiniAppPrompt({
+  show,
+  onDismiss,
+}: {
+  show: boolean;
+  onDismiss: () => void;
 }) {
   const { isInMiniApp } = useMiniApp();
 
@@ -179,13 +180,13 @@ export function FloatingAddMiniAppPrompt({
             ✕
           </button>
         </div>
-        
+
         <div className="text-sm text-purple-200 mb-3">
-          Add Imperfect Form to your Farcaster apps for quick access and notifications!
+          Quick access + notifications
         </div>
-        
-        <AddMiniAppButton 
-          variant="secondary" 
+
+        <AddMiniAppButton
+          variant="secondary"
           showAfterWorkout={true}
           className="w-full"
         />

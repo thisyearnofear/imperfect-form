@@ -90,6 +90,21 @@ function ConditionalProviders({ children }: ConditionalProvidersProps) {
     // Skip if already syncing to prevent update loops
     if (syncingRef.current) return;
 
+    // Check if we're in Farcaster context to avoid conflicts
+    const isInFarcaster =
+      typeof window !== "undefined" &&
+      (/farcaster|warpcast/i.test(navigator.userAgent) ||
+        window.location.search.includes("frame=") ||
+        window.location.search.includes("farcaster") ||
+        document.referrer.includes("warpcast.com") ||
+        document.referrer.includes("farcaster.xyz"));
+
+    // Skip auto-detection in Farcaster context to avoid conflicts
+    if (isInFarcaster) {
+      console.log("AppProviders: Skipping auto-detection in Farcaster context");
+      return;
+    }
+
     // Skip if values haven't changed to prevent unnecessary re-renders
     if (
       prevValuesRef.current.network === network &&

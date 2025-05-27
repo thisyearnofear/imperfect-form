@@ -38,6 +38,16 @@ export default function MobileOptimizedWalletSelector({
 
     // Set wallet provider in localStorage directly
     localStorage.setItem("selectedWalletProvider", walletType);
+
+    // Set default network based on wallet type
+    if (walletType === "signature") {
+      localStorage.setItem("selectedNetwork", "polygon");
+    } else if (walletType === "smart") {
+      localStorage.setItem("selectedNetwork", "base");
+    } else if (walletType === "farcaster") {
+      localStorage.setItem("selectedNetwork", "celo");
+    }
+
     setWalletProvider(walletType);
 
     // Close dialog if callback provided
@@ -80,10 +90,8 @@ export default function MobileOptimizedWalletSelector({
           {isInMiniApp && farcasterUser && (
             <div className="mt-2 p-2 bg-purple-900/50 border border-purple-500 rounded-lg">
               <p className="text-xs text-purple-200">
-                🎭 Welcome {farcasterUser.displayName || farcasterUser.username}
-                !
+                GM {farcasterUser.displayName || farcasterUser.username}
               </p>
-              <p className="text-xs text-purple-300">Playing via Farcaster</p>
             </div>
           )}
         </div>
@@ -103,13 +111,11 @@ export default function MobileOptimizedWalletSelector({
         <div className="space-y-4 max-w-sm md:max-w-md mx-auto w-full">
           <div className="text-center mb-6">
             <h2 className="text-lg md:text-xl font-semibold text-white mb-2">
-              {isInMiniApp
-                ? "Connect Your Farcaster Wallet"
-                : "Choose Your Wallet Type"}
+              {isInMiniApp ? "Connect Wallet" : "Choose Your Wallet Type"}
             </h2>
             <p className="text-sm md:text-base text-gray-400">
               {isInMiniApp
-                ? "Use your connected Farcaster wallet or choose another option"
+                ? "Choose your option"
                 : "Select how you'd like to connect and play"}
             </p>
           </div>
@@ -158,7 +164,9 @@ export default function MobileOptimizedWalletSelector({
                 Signature Wallet
               </div>
               <div className="text-xs md:text-sm text-gray-300 mb-3">
-                Connect your existing wallet
+                {isInMiniApp
+                  ? "External wallet"
+                  : "Connect your existing wallet"}
               </div>
               <div className="flex flex-wrap gap-1 md:gap-2 justify-center">
                 <span className="text-xs bg-purple-800 text-white px-2 py-1 rounded">
@@ -191,13 +199,16 @@ export default function MobileOptimizedWalletSelector({
                 Smart Wallet
               </div>
               <div className="text-xs md:text-sm text-gray-300 mb-3">
-                Create a new smart wallet
+                {isInMiniApp ? "Warpcast wallet" : "Create a new smart wallet"}
               </div>
               <div className="flex justify-center">
                 <span className="text-xs bg-blue-800 text-white px-2 py-1 rounded">
                   Base
                 </span>
               </div>
+              {isInMiniApp && (
+                <div className="text-xs text-yellow-400 mt-2">⚠️ Base only</div>
+              )}
             </div>
 
             {isSelectingWallet && (

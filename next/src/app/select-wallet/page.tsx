@@ -15,31 +15,38 @@ export default function WalletSelectionPage() {
         document.referrer.includes("warpcast.com") ||
         document.referrer.includes("farcaster.xyz");
 
-      if (!isInFarcaster) {
-        // Only clear wallet state if NOT in Farcaster context
-        localStorage.removeItem("selectedWalletProvider");
-        localStorage.removeItem("selectedNetwork");
-        localStorage.removeItem("selectedChain");
-        localStorage.removeItem("connectedWallet");
-        localStorage.removeItem("wagmi.wallet");
-        localStorage.removeItem("wagmi.connected");
-        localStorage.removeItem("wagmi.store");
-        localStorage.removeItem("wagmi.account");
-        localStorage.removeItem("wagmi.chainId");
-        localStorage.removeItem("walletconnect");
-        localStorage.removeItem("WALLETCONNECT_DEEPLINK_CHOICE");
-        localStorage.removeItem("userAddress");
-        localStorage.removeItem("thirdweb.auth.token");
-        localStorage.removeItem("thirdweb.wallets");
+      // Check if we have a stored wallet provider
+      const storedWalletProvider = localStorage.getItem(
+        "selectedWalletProvider"
+      );
 
-        console.log(
-          "Wallet selection page: All wallet state cleared (non-Farcaster)"
-        );
-      } else {
+      // If we're in Farcaster context OR we have a wallet provider set to "farcaster", preserve state
+      if (isInFarcaster || storedWalletProvider === "farcaster") {
         console.log(
           "Wallet selection page: Preserving state in Farcaster context"
         );
+        return;
       }
+
+      // Only clear wallet state if NOT in Farcaster context and not using Farcaster wallet
+      localStorage.removeItem("selectedWalletProvider");
+      localStorage.removeItem("selectedNetwork");
+      localStorage.removeItem("selectedChain");
+      localStorage.removeItem("connectedWallet");
+      localStorage.removeItem("wagmi.wallet");
+      localStorage.removeItem("wagmi.connected");
+      localStorage.removeItem("wagmi.store");
+      localStorage.removeItem("wagmi.account");
+      localStorage.removeItem("wagmi.chainId");
+      localStorage.removeItem("walletconnect");
+      localStorage.removeItem("WALLETCONNECT_DEEPLINK_CHOICE");
+      localStorage.removeItem("userAddress");
+      localStorage.removeItem("thirdweb.auth.token");
+      localStorage.removeItem("thirdweb.wallets");
+
+      console.log(
+        "Wallet selection page: All wallet state cleared (non-Farcaster)"
+      );
     }
   }, []);
 

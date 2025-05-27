@@ -58,9 +58,7 @@ export function MiniAppIndicator({
             height={20}
             className="rounded-full"
           />
-          <span className="text-xs text-purple-300">
-            Welcome, @{user.username}!
-          </span>
+          <span className="text-xs text-purple-300">GM @{user.username}</span>
         </div>
       )}
 
@@ -142,9 +140,7 @@ export function MiniAppBanner({ className = "" }: { className?: string }) {
           <div>
             <div className="font-bold text-base">Farcaster Mini App</div>
             {user && (
-              <div className="text-xs opacity-90">
-                Welcome, {user.displayName}!
-              </div>
+              <div className="text-xs opacity-90">GM {user.displayName}</div>
             )}
           </div>
         </div>
@@ -153,7 +149,7 @@ export function MiniAppBanner({ className = "" }: { className?: string }) {
           onClick={openInBrowser}
           className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
         >
-          Open Full App
+          Full App
         </button>
       </div>
     </div>

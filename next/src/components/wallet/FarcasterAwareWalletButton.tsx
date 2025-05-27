@@ -251,18 +251,33 @@ export function FarcasterAwareWalletButton({
 
       default:
         return (
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col items-center space-y-1">
+            <div className="flex items-center space-x-2">
+              {isInMiniApp && (
+                <Image
+                  src="/assets/farcaster.svg"
+                  alt="Farcaster"
+                  width={20}
+                  height={20}
+                />
+              )}
+              <span className="font-bold text-lg">
+                {isInMiniApp ? "Farcaster Wallet" : "Connect Wallet"}
+              </span>
+            </div>
             {isInMiniApp && (
-              <Image
-                src="/assets/farcaster.svg"
-                alt="Farcaster"
-                width={20}
-                height={20}
-              />
+              <div className="flex flex-wrap gap-1 justify-center mt-1">
+                <span className="text-xs bg-purple-800 text-white px-2 py-1 rounded">
+                  Polygon
+                </span>
+                <span className="text-xs bg-yellow-800 text-white px-2 py-1 rounded">
+                  Monad
+                </span>
+                <span className="text-xs bg-green-800 text-white px-2 py-1 rounded">
+                  Celo
+                </span>
+              </div>
             )}
-            <span>
-              {isInMiniApp ? "Connect Farcaster Wallet" : "Connect Wallet"}
-            </span>
           </div>
         );
     }
