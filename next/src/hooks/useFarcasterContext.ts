@@ -52,7 +52,8 @@ export function useFarcasterContext(): FarcasterContext {
           logger.info('Detected Farcaster mini app context');
 
           // Dynamically import the Farcaster SDK
-          const { sdk: farcasterSdk } = await import('@farcaster/frame-sdk');
+          const farcasterSdkModule = await import('@farcaster/frame-sdk');
+          const farcasterSdk = farcasterSdkModule.sdk || farcasterSdkModule.default || farcasterSdkModule;
           setSdk(farcasterSdk);
 
           // Initialize the SDK
@@ -121,25 +122,45 @@ export function useFarcasterContext(): FarcasterContext {
   // Connect wallet function
   const connectWallet = async (): Promise<string | null> => {
     if (!sdk || !isInMiniApp) {
-      logger.warn('Cannot connect wallet: not in Farcaster mini app context');
+      logger.warn('Cannot connect wallet: not in Farcaster mini app context', {
+        hasSdk: !!sdk,
+        isInMiniApp,
+      });
       return null;
     }
 
     try {
       logger.info('Requesting wallet connection in Farcaster mini app');
+
+      // Add detailed debugging
+      console.log('🎭 Farcaster SDK object:', sdk);
+
       const walletProvider = (sdk as Record<string, unknown>).wallet;
+      console.log('🎭 Wallet provider:', walletProvider);
+
       if (walletProvider && typeof walletProvider === 'object' && 'ethProvider' in walletProvider) {
         const ethProvider = (walletProvider as Record<string, unknown>).ethProvider;
+        console.log('🎭 ETH provider:', ethProvider);
+
         if (ethProvider && typeof ethProvider === 'object' && 'request' in ethProvider) {
           const requestFn = (ethProvider as Record<string, unknown>).request as (params: Record<string, unknown>) => Promise<string[]>;
+
+          console.log('🎭 Requesting accounts...');
           const accounts = await requestFn({ method: 'eth_requestAccounts' });
+          console.log('🎭 Accounts received:', accounts);
 
           if (accounts && accounts.length > 0) {
             setWalletAddress(accounts[0]);
             logger.info('Farcaster wallet connected successfully', { address: accounts[0] });
             return accounts[0];
+          } else {
+            console.log('🎭 No accounts returned');
           }
+        } else {
+          console.log('🎭 ETH provider missing request method');
         }
+      } else {
+        console.log('🎭 Wallet provider missing or invalid');
       }
       return null;
     } catch (err) {

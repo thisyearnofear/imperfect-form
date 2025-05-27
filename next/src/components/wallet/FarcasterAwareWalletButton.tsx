@@ -91,24 +91,83 @@ export function FarcasterAwareWalletButton({
     try {
       setConnectionState("connecting");
 
-      if (isInMiniApp) {
-        // In Farcaster mini app: prioritize Farcaster wallet
-        logger.info("Attempting Farcaster wallet connection in mini app");
-        const farcasterAddress = await connectFarcasterWallet();
+      // First, try to find the Farcaster connector in Wagmi connectors
+      const farcasterConnector = connectors.find(
+        (connector) =>
+          connector.id === "farcasterFrame" ||
+          connector.name.toLowerCase().includes("farcaster")
+      );
 
-        if (farcasterAddress) {
-          logger.info("Farcaster wallet connected successfully", {
-            address: farcasterAddress,
-          });
-          return;
-        } else {
-          logger.warn(
-            "Farcaster wallet connection failed, falling back to external wallet"
-          );
+      if (farcasterConnector && isInMiniApp) {
+        // Use the official Farcaster Wagmi connector
+        logger.info(
+          "Attempting Farcaster wallet connection via Wagmi connector"
+        );
+
+        try {
+          connect({ connector: farcasterConnector });
+          return; // Let Wagmi handle the connection state
+        } catch (farcasterError) {
+          logger.error("Farcaster Wagmi connector failed", farcasterError);
         }
       }
 
-      // Fallback to external wallet connection
+      // Fallback: Try the manual Farcaster SDK approach if in mini app
+      if (isInMiniApp) {
+        logger.info(
+          "Attempting Farcaster wallet connection via SDK (fallback)"
+        );
+
+        // Add timeout to prevent hanging (reduced to 8 seconds)
+        const timeoutPromise = new Promise<null>((_, reject) => {
+          setTimeout(
+            () =>
+              reject(
+                new Error("Farcaster wallet connection timeout after 8 seconds")
+              ),
+            8000
+          );
+        });
+
+        try {
+          const farcasterAddress = await Promise.race([
+            connectFarcasterWallet(),
+            timeoutPromise,
+          ]);
+
+          if (farcasterAddress) {
+            logger.info("Farcaster wallet connected successfully via SDK", {
+              address: farcasterAddress,
+            });
+            setConnectionState("connected");
+            return;
+          } else {
+            logger.warn(
+              "Farcaster wallet connection returned null - this may indicate the user rejected the connection"
+            );
+            throw new Error("Farcaster wallet connection returned null");
+          }
+        } catch (timeoutError) {
+          logger.error(
+            "Farcaster wallet connection timeout or error",
+            timeoutError
+          );
+          // Don't continue to fallback if it's a timeout - let user try again
+          if (
+            timeoutError instanceof Error &&
+            timeoutError.message.includes("timeout")
+          ) {
+            setConnectionState("error");
+            return;
+          }
+        }
+
+        logger.warn(
+          "Farcaster wallet connection failed, falling back to external wallet"
+        );
+      }
+
+      // Final fallback to external wallet connection
       const injectedConnector = connectors.find(
         (connector) => connector.type === "injected"
       );
@@ -302,7 +361,7 @@ export function CompactFarcasterWalletButton({
       <button
         onClick={handleConnect}
         className={`
-          flex items-center space-x-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 
+          flex items-center space-x-2 px-3 py-2 bg-purple-600 hover:bg-purple-700
           text-white rounded-lg text-sm font-medium transition-colors
           ${className}
         `}
