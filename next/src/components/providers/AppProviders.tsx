@@ -22,6 +22,7 @@ import {
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 import { useFarcasterContext } from "@/hooks/useFarcasterContext";
+import { switchFarcasterChain } from "@/utils/farcasterMiniApp";
 
 // Define Monad Testnet
 const monadTestnet: Chain = {
@@ -48,9 +49,9 @@ const monadTestnet: Chain = {
 // All supported chains
 const supportedChains = [baseSepolia, polygon, celo, monadTestnet];
 
-// Universal Wagmi config - ONE CONFIG TO RULE THEM ALL
+// Universal Wagmi config - ONE CONFIG TO RULE THEM ALL - CELO first as default
 const wagmiConfig = createConfig({
-  chains: [baseSepolia, polygon, celo, monadTestnet],
+  chains: [celo, polygon, baseSepolia, monadTestnet],
   connectors: [
     // Primary: Coinbase Wallet (works on all chains)
     coinbaseWallet({
@@ -326,7 +327,30 @@ function UniversalWalletProvider({ children }: { children: ReactNode }) {
     console.log("Attempting to switch from", chainId, "to", targetChainId);
 
     try {
-      // First try to switch directly
+      // If in Farcaster Mini App, try Farcaster chain switching first
+      if (farcasterContext.isInMiniApp && farcasterContext.walletAddress) {
+        console.log("🎯 Attempting Farcaster wallet chain switch...");
+        const farcasterSuccess = await switchFarcasterChain(targetChainId);
+
+        if (farcasterSuccess) {
+          const chainName = supportedChains.find(
+            (c) => c.id === targetChainId
+          )?.name;
+          toast.success(`Switched to ${chainName} (Farcaster wallet)`);
+          localStorage.setItem(
+            "userPreferredChainId",
+            targetChainId.toString()
+          );
+          console.log("🎯 Farcaster chain switch successful:", targetChainId);
+          return;
+        } else {
+          console.log(
+            "🎯 Farcaster chain switch failed, falling back to Wagmi..."
+          );
+        }
+      }
+
+      // Fallback to regular Wagmi chain switching
       const result = await switchChain({ chainId: targetChainId });
       console.log("Switch chain result:", result);
 
@@ -481,7 +505,7 @@ export function useNetwork() {
       case monadTestnet.id:
         return "monad";
       default:
-        return isInFarcaster ? "celo" : "base";
+        return "celo"; // Default to CELO for all contexts
     }
   };
 

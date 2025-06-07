@@ -54,8 +54,8 @@ export function getWagmiConfig() {
       },
     });
   }
-  // Always include all chains for maximum compatibility
-  const supportedChains: readonly [Chain, ...Chain[]] = [baseSepolia, polygon, celo, monadTestnet];
+  // Always include all chains for maximum compatibility - CELO first as default
+  const supportedChains: readonly [Chain, ...Chain[]] = [celo, polygon, baseSepolia, monadTestnet];
 
   // Create connectors array - provide both EOA and Smart Wallet options
   const connectors = [

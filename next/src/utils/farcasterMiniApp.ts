@@ -151,3 +151,66 @@ export async function getEthereumProvider(): Promise<unknown> {
   logger.warn('🎯 No Ethereum provider found');
   return null;
 }
+
+/**
+ * Get supported chains in Farcaster Mini App
+ * Returns CAIP-2 identifiers like "eip155:42220" for Celo
+ */
+export async function getFarcasterSupportedChains(): Promise<string[]> {
+  try {
+    const { sdk } = await import('@farcaster/frame-sdk');
+
+    if (sdk.getChains) {
+      const chains = await sdk.getChains();
+      logger.info('🎯 Farcaster supported chains:', chains);
+      return chains;
+    }
+  } catch (error) {
+    logger.warn('🎯 Failed to get Farcaster supported chains:', error);
+  }
+
+  return [];
+}
+
+/**
+ * Switch chain in Farcaster Mini App context
+ * Uses the Farcaster wallet's native chain switching
+ */
+export async function switchFarcasterChain(chainId: number): Promise<boolean> {
+  try {
+    const { sdk } = await import('@farcaster/frame-sdk');
+
+    if (!sdk.wallet?.ethProvider) {
+      logger.warn('🎯 Farcaster wallet provider not available');
+      return false;
+    }
+
+    // Check if the chain is supported
+    const supportedChains = await getFarcasterSupportedChains();
+    const caipChainId = `eip155:${chainId}`;
+
+    if (!supportedChains.includes(caipChainId)) {
+      logger.warn('🎯 Chain not supported by Farcaster wallet', {
+        chainId,
+        caipChainId,
+        supportedChains
+      });
+      return false;
+    }
+
+    // Use the provider to switch chains
+    const provider = sdk.wallet.ethProvider as { request: (args: { method: string; params: unknown[] }) => Promise<unknown> };
+
+    await provider.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: `0x${chainId.toString(16)}` }],
+    });
+
+    logger.info('🎯 Successfully switched Farcaster wallet to chain:', chainId);
+    return true;
+
+  } catch (error) {
+    logger.warn('🎯 Failed to switch Farcaster wallet chain:', error);
+    return false;
+  }
+}

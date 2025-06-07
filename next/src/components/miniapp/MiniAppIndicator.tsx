@@ -48,24 +48,8 @@ export function CompactMiniAppIndicator({
   );
 }
 
-// Banner version for subtle display
-export function MiniAppBanner({ className = "" }: { className?: string }) {
-  const { isInMiniApp, user } = useMiniApp();
-
-  if (!isInMiniApp) {
-    return null;
-  }
-
-  return (
-    <div
-      className={`flex items-center justify-center py-1 px-3 bg-purple-900/30 border-b border-purple-500/30 ${className}`}
-    >
-      <div className="flex items-center space-x-2">
-        <span className="text-sm">🎭</span>
-        <span className="text-xs text-purple-300 font-medium">
-          {user ? `Mini App • GM ${user.displayName}` : "Farcaster Mini App"}
-        </span>
-      </div>
-    </div>
-  );
+// Banner version for subtle display - hidden as users don't need to see this
+export function MiniAppBanner() {
+  // Always return null - users don't need to see "Farcaster Mini App" banner
+  return null;
 }
