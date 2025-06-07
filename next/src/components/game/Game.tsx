@@ -1,11 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
-import {
-  Spinner,
-  LoadingScreen,
-  WalletBrowserIndicator,
-} from "@/components/ui";
+import { Spinner, LoadingScreen } from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import {
   cameraManager,
@@ -55,7 +51,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [, setCurrentFilter] = useState<string>("none");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
-  const { isMobile, isWalletBrowser } = useDeviceDetect(); // Use our enhanced device detection hook
+  const { isMobile } = useDeviceDetect(); // Use our enhanced device detection hook
 
   // Safe state for viewport dimensions
   const [viewportDimensions, setViewportDimensions] = useState({
@@ -299,15 +295,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
         {/* Wallet connection centered at the top */}
         <div id="wallet-connection" className="wallet-connection">
-          {/* Show wallet browser indicator if detected */}
-          {isWalletBrowser && (
-            <div className="mb-2">
-              <WalletBrowserIndicator />
-            </div>
-          )}
-
           <div className={finalAddress ? "wallet-connected" : "wallet-prompt"}>
-            <UniversalConnectButton 
+            <UniversalConnectButton
               size="md"
               showProfileWhenConnected={true}
               onConnected={(address) => {

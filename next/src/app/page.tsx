@@ -31,10 +31,11 @@ import { MiniAppBanner } from "@/components/miniapp/MiniAppIndicator";
 
 export default function Home() {
   const { isConnected, isReady } = useUniversalWallet();
-  const { isInMiniApp } = useMiniApp();
+  const { isInMiniApp, isLoading: miniAppLoading } = useMiniApp();
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [showFirstTimePrompt, setShowFirstTimePrompt] = useState(false);
+  const [uiReady, setUiReady] = useState(false);
 
   const [leaderboardData, setLeaderboardData] = useState<{
     pushups: Score[];
@@ -60,9 +61,41 @@ export default function Home() {
     setHasMounted(true);
   }, []);
 
+  // Call Farcaster ready() when UI is loaded
+  useEffect(() => {
+    if (hasMounted && !miniAppLoading && (isReady || isInMiniApp)) {
+      // UI is ready, call Farcaster ready() if in Mini App
+      if (isInMiniApp) {
+        // Call ready directly via SDK
+        import("@farcaster/frame-sdk")
+          .then(({ sdk }) => {
+            if (sdk.actions?.ready) {
+              sdk.actions
+                .ready()
+                .then(() => {
+                  console.log("🎯 Farcaster ready() called successfully");
+                  setUiReady(true);
+                })
+                .catch((err) => {
+                  console.warn("Farcaster ready() failed:", err);
+                  setUiReady(true); // Continue anyway
+                });
+            } else {
+              setUiReady(true);
+            }
+          })
+          .catch(() => {
+            setUiReady(true); // Continue anyway
+          });
+      } else {
+        setUiReady(true);
+      }
+    }
+  }, [hasMounted, miniAppLoading, isReady, isInMiniApp]);
+
   // Show first-time Mini App prompt
   useEffect(() => {
-    if (isInMiniApp && hasMounted) {
+    if (isInMiniApp && hasMounted && uiReady) {
       const hasSeenPrompt = localStorage.getItem("miniapp-first-visit-seen");
       if (!hasSeenPrompt) {
         // Show prompt after a short delay to let the app load
@@ -71,16 +104,21 @@ export default function Home() {
         }, 3000);
       }
     }
-  }, [isInMiniApp, hasMounted]);
+  }, [isInMiniApp, hasMounted, uiReady]);
 
-  // Loading state
-  if (!hasMounted || !isReady) {
+  // Loading state - be more lenient for Mini Apps
+  const shouldShowLoading =
+    !hasMounted ||
+    (miniAppLoading && isInMiniApp) ||
+    (!isInMiniApp && !isReady);
+
+  if (shouldShowLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
           <Spinner />
           <p className="text-yellow-400 font-bold animate-pulse">
-            LOADING IMPERFECT FORM...
+            {isInMiniApp ? "LOADING MINI APP..." : "LOADING IMPERFECT FORM..."}
           </p>
         </div>
       </div>

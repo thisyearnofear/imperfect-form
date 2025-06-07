@@ -71,18 +71,8 @@ export function MiniAppProvider({ children }: MiniAppProviderProps) {
         const { sdk } = await import("@farcaster/frame-sdk");
         setMiniAppSDK(sdk);
 
-        // Initialize SDK and call ready when UI is loaded
-        if (sdk.actions?.ready) {
-          // Wait a bit for the UI to render, then call ready to hide splash screen
-          setTimeout(async () => {
-            try {
-              await sdk.actions.ready();
-              logger.info("🎯 Mini App splash screen dismissed");
-            } catch (err) {
-              logger.error("Failed to dismiss splash screen", err);
-            }
-          }, 1000); // Wait 1 second for UI to load
-        }
+        // Note: SDK ready() is called in useFarcasterContext, so we don't call it again here
+        // to avoid conflicts. The splash screen dismissal is handled there.
 
         logger.info("🎯 Mini App SDK initialized successfully");
       } catch (err) {

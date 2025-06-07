@@ -69,6 +69,9 @@ export function useFarcasterWallet(): FarcasterContext {
         logger.warn("sendTransaction called outside of Farcaster context");
         return null;
       },
+      callReady: async () => {
+        logger.warn("callReady called outside of Farcaster context");
+      },
     };
   }
 
