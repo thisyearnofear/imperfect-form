@@ -92,7 +92,7 @@ export default function Home() {
           setUiReady(true); // Continue anyway
         });
     }
-  }, [hasMounted]); // Only depend on mounting, not Mini App detection
+  }, [hasMounted, isInMiniApp, miniAppLoading]); // Include all dependencies used in the effect
 
   // Show first-time Mini App prompt
   useEffect(() => {

@@ -491,7 +491,7 @@ export function useWalletProvider() {
 }
 
 export function useNetwork() {
-  const { chainId, isInFarcaster } = useUniversalWallet();
+  const { chainId } = useUniversalWallet();
 
   // Map chain IDs to network names for backward compatibility
   const getNetworkName = (id: number | undefined) => {
