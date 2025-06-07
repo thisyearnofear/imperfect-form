@@ -71,8 +71,7 @@ export function MiniAppProvider({ children }: MiniAppProviderProps) {
         const { sdk } = await import("@farcaster/frame-sdk");
         setMiniAppSDK(sdk);
 
-        // Note: SDK ready() is called in useFarcasterContext, so we don't call it again here
-        // to avoid conflicts. The splash screen dismissal is handled there.
+        // Note: SDK ready() is called in the main page component to dismiss splash screen
 
         logger.info("🎯 Mini App SDK initialized successfully");
       } catch (err) {

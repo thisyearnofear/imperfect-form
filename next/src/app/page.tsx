@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui";
 import { useUniversalWallet } from "@/components/providers/AppProviders";
 import { useMiniApp } from "@/contexts/MiniAppContext";
 import { NotificationSignup } from "@/components/miniapp/NotificationSignup";
+import { callFarcasterReady } from "@/utils/farcasterMiniApp";
 
 const GameWrapper = dynamic(() => import("@/components/game/GameWrapper"), {
   ssr: false,
@@ -30,7 +31,7 @@ import { Score } from "@/types";
 import { MiniAppBanner } from "@/components/miniapp/MiniAppIndicator";
 
 export default function Home() {
-  const { isConnected, isReady } = useUniversalWallet();
+  const { isConnected } = useUniversalWallet();
   const { isInMiniApp, isLoading: miniAppLoading } = useMiniApp();
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
@@ -61,37 +62,25 @@ export default function Home() {
     setHasMounted(true);
   }, []);
 
-  // Call Farcaster ready() when UI is loaded
+  // Call Farcaster ready() as soon as possible when in Mini App
+  // IMPORTANT: This is the ONLY place where ready() should be called!
+  // Do NOT add ready() calls elsewhere to avoid conflicts and splash screen issues
   useEffect(() => {
-    if (hasMounted && !miniAppLoading && (isReady || isInMiniApp)) {
-      // UI is ready, call Farcaster ready() if in Mini App
-      if (isInMiniApp) {
-        // Call ready directly via SDK
-        import("@farcaster/frame-sdk")
-          .then(({ sdk }) => {
-            if (sdk.actions?.ready) {
-              sdk.actions
-                .ready()
-                .then(() => {
-                  console.log("🎯 Farcaster ready() called successfully");
-                  setUiReady(true);
-                })
-                .catch((err) => {
-                  console.warn("Farcaster ready() failed:", err);
-                  setUiReady(true); // Continue anyway
-                });
-            } else {
-              setUiReady(true);
-            }
-          })
-          .catch(() => {
-            setUiReady(true); // Continue anyway
-          });
-      } else {
-        setUiReady(true);
-      }
+    if (hasMounted && isInMiniApp) {
+      // Call ready() immediately when we detect Mini App context
+      // Don't wait for wallet connections or other complex state
+      callFarcasterReady()
+        .then(() => {
+          setUiReady(true);
+        })
+        .catch(() => {
+          setUiReady(true); // Continue anyway
+        });
+    } else if (!isInMiniApp && hasMounted) {
+      // Not in Mini App, set UI ready immediately
+      setUiReady(true);
     }
-  }, [hasMounted, miniAppLoading, isReady, isInMiniApp]);
+  }, [hasMounted, isInMiniApp]); // Simplified dependencies
 
   // Show first-time Mini App prompt
   useEffect(() => {
@@ -106,11 +95,8 @@ export default function Home() {
     }
   }, [isInMiniApp, hasMounted, uiReady]);
 
-  // Loading state - be more lenient for Mini Apps
-  const shouldShowLoading =
-    !hasMounted ||
-    (miniAppLoading && isInMiniApp) ||
-    (!isInMiniApp && !isReady);
+  // Loading state - simplified for faster Mini App loading
+  const shouldShowLoading = !hasMounted || (isInMiniApp && miniAppLoading);
 
   if (shouldShowLoading) {
     return (

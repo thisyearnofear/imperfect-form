@@ -52,7 +52,6 @@ export interface FarcasterContext {
   connectWallet: () => Promise<string | null>;
   signMessage: (message: string) => Promise<string | null>;
   sendTransaction: (to: string, value: string, data?: string) => Promise<string | null>;
-  callReady: () => Promise<void>;
 }
 
 /**
@@ -96,9 +95,8 @@ export function useFarcasterContext(): FarcasterContext {
 
           setSdk(sdk);
 
-          // Store SDK for later ready() call - don't call ready() here yet
-          // According to Farcaster docs, ready() should be called when UI is fully loaded
-          logger.info('🎯 Farcaster Mini App SDK loaded, ready() will be called when UI is ready');
+          // Store SDK - ready() is called in the main page component
+          logger.info('🎯 Farcaster Mini App SDK loaded successfully');
 
           // Get user context from Mini App SDK with timeout
           try {
@@ -172,28 +170,7 @@ export function useFarcasterContext(): FarcasterContext {
     };
   }, []);
 
-  // Call ready() when UI is fully loaded - according to Farcaster docs
-  const callReady = async (): Promise<void> => {
-    if (!sdk || !isInMiniApp) {
-      return;
-    }
 
-    try {
-      const sdkTyped = sdk as MiniAppSDK;
-      if (sdkTyped.actions?.ready) {
-        await Promise.race([
-          sdkTyped.actions.ready(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('SDK ready timeout')), 10000)
-          )
-        ]);
-        logger.info('🎯 Farcaster Mini App ready() called successfully');
-      }
-    } catch (readyError) {
-      logger.warn('SDK ready failed or timed out, continuing anyway', readyError);
-      // Continue even if ready() fails - the app should still work
-    }
-  };
 
   // Connect wallet function using Mini App SDK
   const connectWallet = async (): Promise<string | null> => {
@@ -307,7 +284,6 @@ export function useFarcasterContext(): FarcasterContext {
     connectWallet,
     signMessage,
     sendTransaction,
-    callReady,
   };
 }
 
