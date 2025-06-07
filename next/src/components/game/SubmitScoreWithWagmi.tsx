@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/ui";
-import { useNetwork as useNetworkContext } from "@/contexts/NetworkContext";
+import { useUniversalWallet } from "@/components/providers/AppProviders";
 import {
   useAccount,
   useWriteContract,
@@ -46,7 +46,20 @@ export default function SubmitScoreWithWagmi({
   const [confirmStep, setConfirmStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { address: wagmiAddress } = useAccount();
-  const { network } = useNetworkContext();
+  const { chainId } = useUniversalWallet();
+  
+  // Map chainId to network name for backward compatibility
+  const getNetworkFromChainId = (id: number | undefined) => {
+    switch (id) {
+      case 84532: return 'base';
+      case 137: return 'polygon';
+      case 42220: return 'celo';
+      case 10143: return 'monad';
+      default: return 'base';
+    }
+  };
+
+  const network = getNetworkFromChainId(chainId);
   // Create type-safe network variables
   const isPolygonNetwork = network === "polygon";
   const isMonadNetwork = network === "monad";

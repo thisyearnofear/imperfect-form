@@ -9,8 +9,7 @@ import {
   CELO_CONTRACT_ADDRESS,
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
-import { useNetwork } from "@/contexts/NetworkContext";
-import { useWalletProvider } from "@/contexts/WalletProviderContext";
+import { useWalletProvider } from "@/components/wallet/LegacyStubs";
 import {
   switchChain,
   WalletProviderType,
@@ -36,8 +35,7 @@ export default function NetworkSwitcher({
   // Get Wagmi chain switcher
   const { switchChainAsync } = useSwitchChain();
 
-  // Network context
-  const { setNetwork: setGlobalNetwork } = useNetwork();
+  // Network context - universal system handles global state
 
   // Wallet provider context
   const { walletProvider, isConnected } = useWalletProvider();
@@ -102,9 +100,6 @@ export default function NetworkSwitcher({
 
       // Update UI immediately
       setNetwork(newNetwork);
-
-      // Update global network context
-      setGlobalNetwork(newNetwork);
 
       // Notify parent component
       if (onNetworkChange) {
@@ -223,14 +218,13 @@ export default function NetworkSwitcher({
 
       // Revert UI state on error
       setNetwork(currentNetwork);
-      setGlobalNetwork(currentNetwork);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="network-switcher">
+    <div className="network-switcher relative z-[2000]">
       <div className="flex items-center justify-center space-x-2">
         {networks.map((net) => (
           <button
@@ -263,13 +257,7 @@ export default function NetworkSwitcher({
             }
             disabled={isLoading}
           >
-            {net.id === "polygon"
-              ? "Polygon"
-              : net.id === "monad"
-              ? "Monad"
-              : net.id === "celo"
-              ? "Celo"
-              : "Base"}
+            {net.name}
             {network === net.id && " ✓"}
             {isLoading && net.id !== network && "..."}
           </button>

@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useContext, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ConnectWallet as ThirdwebConnectWallet } from "@thirdweb-dev/react";
 import { shortenAddress } from "@/utils/formatters";
-import { ChainContext } from "@/components/providers/Providers";
 import { Dialog } from "@/components/ui";
 import { getBestDisplayName } from "@/utils/web3bio";
-import { useWalletProvider } from "@/contexts/WalletProviderContext";
+import { useWalletProvider } from "@/components/wallet/LegacyStubs";
 import { useAccount, useDisconnect as useWagmiDisconnect } from "wagmi";
-import ThirdwebQueryProvider from "./ThirdwebQueryProvider";
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -165,7 +163,7 @@ const SafeThirdwebWrapper = ({
 }) => {
   // Only render children if we're using signature wallet type
   if (walletProvider === "signature") {
-    return <ThirdwebQueryProvider>{children}</ThirdwebQueryProvider>;
+    return <>{children}</>;
   }
   return null;
 };
@@ -237,8 +235,7 @@ const ConnectWalletButton: React.FC = () => {
   const disconnect =
     walletProvider === "signature" ? thirdwebData.disconnect : wagmiDisconnect;
 
-  // Chain context is available but not used in this component
-  useContext(ChainContext);
+  // Legacy chain context removed - universal system handles this
   const [showModal, setShowModal] = useState(false);
   const [displayName, setDisplayName] = useState<string>("");
 
@@ -294,48 +291,46 @@ const ConnectWalletButton: React.FC = () => {
 
       <div id="connectWalletContainer">
         {walletProvider === "signature" ? (
-          <ThirdwebQueryProvider>
-            <ThirdwebConnectWallet
-              theme="dark"
-              modalSize="compact"
-              welcomeScreen={{
-                title: "Onchain Olympics",
-                subtitle: "Connect to submit your score",
-                img: {
-                  src: "/favicon.ico", // Next.js App Router will serve the favicon from /src/app/favicon.ico
-                  width: 150,
-                  height: 150,
-                },
-              }}
-              modalTitleIconUrl="/favicon.ico" // Next.js App Router will serve the favicon from /src/app/favicon.ico
-              detailsBtn={() => <></>}
-              btnTitle="Connect Wallet"
-              className="wallet-button"
-              style={{
-                // Override any transparency in the ThirdwebConnectWallet modal
-                "--tw-bg-opacity": "1 !important",
-              }}
-              // Use wallet connectors with proper configuration for ThirdWeb v4
-              walletConnectors={[
-                {
-                  id: "metamask",
-                  recommended: true,
-                },
-                {
-                  id: "walletConnect",
-                  recommended: false,
-                },
-                {
-                  id: "coinbase",
-                  recommended: false,
-                },
-                {
-                  id: "injected",
-                  recommended: false,
-                },
-              ]}
-            />
-          </ThirdwebQueryProvider>
+          <ThirdwebConnectWallet
+            theme="dark"
+            modalSize="compact"
+            welcomeScreen={{
+              title: "Onchain Olympics",
+              subtitle: "Connect to submit your score",
+              img: {
+                src: "/favicon.ico", // Next.js App Router will serve the favicon from /src/app/favicon.ico
+                width: 150,
+                height: 150,
+              },
+            }}
+            modalTitleIconUrl="/favicon.ico" // Next.js App Router will serve the favicon from /src/app/favicon.ico
+            detailsBtn={() => <></>}
+            btnTitle="Connect Wallet"
+            className="wallet-button"
+            style={{
+              // Override any transparency in the ThirdwebConnectWallet modal
+              "--tw-bg-opacity": "1 !important",
+            }}
+            // Use wallet connectors with proper configuration for ThirdWeb v4
+            walletConnectors={[
+              {
+                id: "metamask",
+                recommended: true,
+              },
+              {
+                id: "walletConnect",
+                recommended: false,
+              },
+              {
+                id: "coinbase",
+                recommended: false,
+              },
+              {
+                id: "injected",
+                recommended: false,
+              },
+            ]}
+          />
         ) : (
           <button
             className="wallet-button"

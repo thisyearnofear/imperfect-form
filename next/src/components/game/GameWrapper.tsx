@@ -1,123 +1,119 @@
 "use client";
 
 import React from "react";
-import { useNetwork } from "@/contexts/NetworkContext";
+import { useUniversalWallet } from "@/components/providers/AppProviders";
+import UniversalConnectButton from "@/components/wallet/UniversalConnectButton";
 import { Game } from "@/components/game";
-import { WalletTypeSelector, WalletTypeDetector } from "@/components/wallet";
-import { useAccount } from "wagmi";
-import dynamic from "next/dynamic";
-
-// Dynamically import ThirdwebProvider to prevent dialog errors
-const ThirdwebGame = dynamic(
-  () => import("@/components/wallet").then((mod) => mod.ThirdwebWrapper),
-  { ssr: false }
-);
+import { Spinner } from "@/components/ui";
 
 /**
- * GameWrapper component that conditionally renders the Game component
- * based on the selected network, or shows the network selector if no network is selected
+ * Simplified GameWrapper - No more complex network/wallet selection
+ * Just connect and play! Works everywhere: desktop, mobile, Farcaster
  */
 export default function GameWrapper() {
-  const { isNetworkSelected, network, setNetwork } = useNetwork();
+  const { isConnected, address, isReady, isInFarcaster, farcasterUser } =
+    useUniversalWallet();
 
-  // Detect wagmi wallet connection
-  const wagmiAccount = useAccount();
-
-  // Check URL parameters first (outside of effect)
-  const showSelectorFromURL = React.useMemo(() => {
-    // Only run on client side
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const showSelector = params.get("showSelector");
-
-      // Clear the parameter from URL without refreshing
-      if (showSelector === "true") {
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-        console.log(
-          "GameWrapper: Detected showSelector URL parameter, forcing selector display"
-        );
-        return true;
-      }
-    }
-    return false;
-  }, []);
-
-  // Log wallet detection but don't auto-change network
-  React.useEffect(() => {
-    // If URL parameter was detected, don't auto-detect
-    if (showSelectorFromURL) {
-      return;
-    }
-
-    if (wagmiAccount.address) {
-      console.log(
-        "Wagmi wallet detected in GameWrapper with address:",
-        wagmiAccount.address
-      );
-
-      // Check if we have a chain ID that indicates Monad testnet
-      const chainId = localStorage.getItem("lastChainId");
-
-      // Only set network if not already set, preserving user choice
-      if (!network) {
-        if (chainId === "10143") {
-          console.log(
-            "Detected Monad testnet from chain ID, setting network to monad"
-          );
-          localStorage.setItem("selectedNetwork", "monad");
-          localStorage.setItem("selectedChain", "monad");
-          // Add timestamp to force UI updates
-          localStorage.setItem("lastNetworkChange", Date.now().toString());
-        } else {
-          console.log("No network selected, defaulting to base");
-          localStorage.setItem("selectedNetwork", "base");
-          localStorage.setItem("selectedChain", "base");
-          // Add timestamp to force UI updates
-          localStorage.setItem("lastNetworkChange", Date.now().toString());
-        }
-      }
-    }
-  }, [wagmiAccount.address, network, showSelectorFromURL]);
-
-  // Check for Monad chain ID and force the correct network
-  // This hook must be called unconditionally
-  React.useEffect(() => {
-    // Only run the check if we're not showing the selector
-    if (!(showSelectorFromURL || !isNetworkSelected)) {
-      const chainId = localStorage.getItem("lastChainId");
-      if (chainId === "10143" && network !== "monad") {
-        console.log(
-          "GameWrapper: Detected Monad testnet chain ID, forcing network to monad"
-        );
-        // Update context through NetworkContext instead of direct localStorage manipulation
-        setNetwork("monad");
-      }
-    }
-  }, [network, showSelectorFromURL, isNetworkSelected, setNetwork]);
-
-  // If URL parameter is present or no network is selected, show the wallet type selector
-  if (showSelectorFromURL || !isNetworkSelected) {
-    return <WalletTypeSelector />;
-  }
-
-  // Conditionally render the appropriate game component based on the network
-  if (network === "polygon" || network === "monad" || network === "celo") {
-    console.log(`GameWrapper: Rendering ThirdwebGame for ${network} network`);
+  // Loading state
+  if (!isReady) {
     return (
-      <>
-        <WalletTypeDetector />
-        <ThirdwebGame />
-      </>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Spinner />
+          <p className="text-yellow-400 font-bold animate-pulse">
+            INITIALIZING IMPERFECT FORM...
+          </p>
+        </div>
+      </div>
     );
   }
 
-  // For Base network or any other network, render the Game component directly
-  console.log("GameWrapper: Rendering Game directly for Base network");
+  // Connection required state
+  if (!isConnected || !address) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+        <div className="text-center space-y-8 max-w-md mx-auto">
+          {/* App Title */}
+          <div className="space-y-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-yellow-400 title-animation">
+              IMPERFECT FORM
+            </h1>
+            <h2 className="text-lg md:text-xl text-yellow-200 subtitle-animation">
+              ONCHAIN OLYMPIANS (in training)
+            </h2>
+          </div>
+
+          {/* Context-aware welcome message */}
+          <div className="space-y-4">
+            {isInFarcaster && farcasterUser ? (
+              <div className="p-4 bg-purple-900/50 border border-purple-500 rounded-lg">
+                <p className="text-purple-200 text-sm">
+                  GM {farcasterUser.displayName || farcasterUser.username}!
+                  Ready to get your reps in onchain?
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-300 text-lg">Ready to rock ?</p>
+            )}
+
+            <div className="space-y-2 text-gray-400 text-sm">
+              <p>🏋️ Real-time pose detection</p>
+              <p>🏆 Onchain leaderboards</p>
+              <p>🎯 Pushups & Squats challenges</p>
+            </div>
+          </div>
+
+          {/* Universal Connect Button */}
+          <div className="animate-fade-in">
+            <UniversalConnectButton
+              size="lg"
+              className="w-full"
+              showProfileWhenConnected={false}
+              onConnected={(address) => {
+                console.log(
+                  "GameWrapper: User connected with address:",
+                  address
+                );
+              }}
+            />
+          </div>
+
+          {/* Footer */}
+          <div className="text-xs text-gray-500 space-y-1">
+            <p>Base • Polygon • Celo • Monad</p>
+            <p>
+              Built by{" "}
+              <a
+                href="https://warpcast.com/papa"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-yellow-400 hover:text-yellow-300 transition-colors"
+              >
+                PAPA
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Connected state - render the game
   return (
-    <>
-      <WalletTypeDetector />
-      <Game />
-    </>
+    <div className="min-h-screen bg-black">
+      {/* Farcaster Mini App indicator - moved from header */}
+      {isInFarcaster && (
+        <div className="p-2 text-center">
+          <span className="text-xs bg-purple-900 text-purple-200 px-2 py-1 rounded border border-purple-500">
+            Farcaster Mini App
+          </span>
+        </div>
+      )}
+
+      {/* Game Component - pass address for scoring */}
+      <main>
+        <Game thirdwebAddress={address} />
+      </main>
+    </div>
   );
 }

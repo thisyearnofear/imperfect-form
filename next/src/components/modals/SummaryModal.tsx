@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { Dialog } from "@/components/ui";
-import { useNetwork } from "@/contexts/NetworkContext";
-import { useWalletProvider } from "@/contexts/WalletProviderContext";
+import { useUniversalWallet } from "@/components/providers/AppProviders";
 import { ConnectWallet } from "@/components/wallet";
 import { FarcasterShare } from "@/components/social";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
@@ -42,14 +41,26 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   mode = "pushups",
   address,
 }) => {
-  const { network } = useNetwork();
-  const { walletProvider, userAddress } = useWalletProvider();
+  const { address: walletAddress, chainId } = useUniversalWallet();
+  
+  // Map chainId to network name for backward compatibility
+  const getNetworkFromChainId = (id: number | undefined) => {
+    switch (id) {
+      case 84532: return 'base';
+      case 137: return 'polygon';
+      case 42220: return 'celo';
+      case 10143: return 'monad';
+      default: return 'base';
+    }
+  };
+
+  const network = getNetworkFromChainId(chainId);
 
   // Type assertion to help TypeScript understand the network type
   const networkType = network as "polygon" | "base" | "monad" | "celo";
 
-  // Use the address from props if provided, otherwise fall back to userAddress from context
-  const effectiveAddress = address || userAddress;
+  // Use the address from props if provided, otherwise fall back to wallet address from context
+  const effectiveAddress = address || walletAddress;
   const [useSpendLimits, setUseSpendLimits] = useState(false);
   const [showDirectSubmit, setShowDirectSubmit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,18 +70,16 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     if (process.env.NODE_ENV !== "production") {
       console.log("SummaryModal Debug Info:", {
         network: networkType,
-        walletProvider,
         addressFromProps: address,
-        userAddressFromContext: userAddress,
+        walletAddress,
         effectiveAddress,
         isOpen,
       });
     }
   }, [
     networkType,
-    walletProvider,
     address,
-    userAddress,
+    walletAddress,
     effectiveAddress,
     isOpen,
   ]);
@@ -266,7 +275,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         ) : (
           <div className="space-y-4">
             {/* Smart Wallet submission options */}
-            {walletProvider === "smart" &&
+            {chainId === 84532 &&
               networkType === "base" &&
               !showDirectSubmit && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-center">
@@ -303,7 +312,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               )}
 
             {/* One-click info when using spend limits */}
-            {walletProvider === "smart" &&
+            {chainId === 84532 &&
               networkType === "base" &&
               showDirectSubmit &&
               useSpendLimits && (
@@ -315,8 +324,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               )}
 
             {/* Submit Score component */}
-            {(!walletProvider ||
-              walletProvider !== "smart" ||
+            {(chainId !== 84532 ||
               networkType !== "base" ||
               showDirectSubmit) && (
               <div className="rounded-md p-3">

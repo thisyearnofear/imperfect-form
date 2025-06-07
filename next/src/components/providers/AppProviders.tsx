@@ -1,278 +1,515 @@
 "use client";
 
-import React, { ReactNode, useEffect, useRef } from "react";
+import React, {
+  ReactNode,
+  useEffect,
+  useState,
+  createContext,
+  useContext,
+} from "react";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { baseSepolia } from "wagmi/chains";
-import { getWagmiConfig } from "@/utils/walletConfig";
-import { NetworkProvider, useNetwork } from "@/contexts/NetworkContext";
+import { createConfig, http, cookieStorage, createStorage } from "wagmi";
+import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
+import { baseSepolia, polygon, celo, type Chain } from "wagmi/chains";
 import {
-  WalletProviderProvider,
-  useWalletProvider,
-} from "@/contexts/WalletProviderContext";
-import { FarcasterWalletProvider } from "@/components/wallet/FarcasterWalletProvider";
-import { MiniAppProvider } from "@/contexts/MiniAppContext";
+  useConnect,
+  useDisconnect,
+  useAccount,
+  useChainId,
+  useSwitchChain,
+} from "wagmi";
 import { Toaster } from "react-hot-toast";
-import GlobalErrorHandler from "./GlobalErrorHandler";
-import { initRemoteLogger } from "@/utils/remoteLogger";
+import toast from "react-hot-toast";
 
-// Props for the ConditionalProviders component
-interface ConditionalProvidersProps {
-  children: ReactNode;
+// Define Monad Testnet
+const monadTestnet: Chain = {
+  id: 10143,
+  name: "Monad Testnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "MON",
+    symbol: "MON",
+  },
+  rpcUrls: {
+    public: { http: ["https://testnet-rpc.monad.xyz/"] },
+    default: { http: ["https://testnet-rpc.monad.xyz/"] },
+  },
+  blockExplorers: {
+    default: {
+      name: "Monad Explorer",
+      url: "https://testnet.monadexplorer.com/",
+    },
+  },
+  testnet: true,
+};
+
+// All supported chains
+const supportedChains = [baseSepolia, polygon, celo, monadTestnet];
+
+// Universal Wagmi config - ONE CONFIG TO RULE THEM ALL
+const wagmiConfig = createConfig({
+  chains: [baseSepolia, polygon, celo, monadTestnet],
+  connectors: [
+    // Primary: Coinbase Wallet (works on all chains)
+    coinbaseWallet({
+      appName: "Imperfect Form",
+      appLogoUrl: "https://imperfectform.fun/icon-192x192.png",
+      preference: "all", // Supports both EOA and Smart Wallet
+      enableMobileWalletLink: true,
+    }),
+
+    // Fallback: Injected wallets
+    injected({
+      shimDisconnect: true,
+    }),
+
+    // Mobile: WalletConnect
+    walletConnect({
+      projectId:
+        process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+        "2b1d8e5a5c1e4c8a9b1e3d4a5b6c7d8e",
+      metadata: {
+        name: "Imperfect Form",
+        description: "Onchain fitness challenges",
+        url: "https://imperfectform.fun",
+        icons: ["https://imperfectform.fun/icon-192x192.png"],
+      },
+      showQrModal: false, // Prevent auto-popup on page load
+    }),
+  ],
+  storage: createStorage({
+    storage: cookieStorage,
+  }),
+  ssr: true,
+  transports: {
+    [baseSepolia.id]: http(),
+    [polygon.id]: http(
+      "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
+    ),
+    [celo.id]: http(),
+    [monadTestnet.id]: http(),
+  },
+});
+
+// Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
+
+// Universal Wallet Context
+interface UniversalWalletContextType {
+  // Connection state
+  isConnected: boolean;
+  address: string | undefined;
+  chainId: number | undefined;
+  isConnecting: boolean;
+
+  // User info
+  displayName: string | undefined;
+  isInFarcaster: boolean;
+  farcasterUser: {
+    displayName?: string;
+    username?: string;
+    pfpUrl?: string;
+  } | null;
+
+  // Actions
+  connect: () => Promise<void>;
+  disconnect: () => void;
+  switchToOptimalChain: (chainId: number) => Promise<void>;
+
+  // UI state
+  isReady: boolean;
 }
 
-// ConditionalProviders component that renders the appropriate provider based on the selected network
-function ConditionalProviders({ children }: ConditionalProvidersProps) {
-  const { network } = useNetwork();
-  const { walletProvider, setWalletProvider } = useWalletProvider();
+const UniversalWalletContext = createContext<
+  UniversalWalletContextType | undefined
+>(undefined);
 
-  // Use useMemo instead of useState to prevent unnecessary re-renders
-  const queryClient = React.useMemo(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: false,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
-            staleTime: Infinity,
-            // Disable automatic refetching
-            refetchInterval: false,
-            // Disable background fetching
-            refetchIntervalInBackground: false,
-          },
-        },
-      }),
-    []
-  );
+// Farcaster detection and integration
+function useFarcasterIntegration() {
+  const [isInFarcaster, setIsInFarcaster] = useState(false);
+  const [farcasterUser, setFarcasterUser] = useState<{
+    displayName?: string;
+    username?: string;
+    pfpUrl?: string;
+  } | null>(null);
 
-  // Get the Wagmi config from walletConfig.ts
-  // Use useMemo to prevent unnecessary re-renders
-  const wagmiConfig = React.useMemo(() => getWagmiConfig(), []);
-
-  // Only log once on initial render to prevent flooding and render loops
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Use a debugging flag to avoid excessive logging
-      const debugMode = false;
-      if (debugMode) {
-        console.log("Base Sepolia Chain ID:", baseSepolia.id);
-        console.log("AppProviders: Wagmi configuration", {
-          network,
-          walletProvider,
-        });
+    if (typeof window === "undefined") return;
+
+    // Detect Farcaster context
+    const isFarcaster =
+      /farcaster|warpcast/i.test(navigator.userAgent) ||
+      window.location.search.includes("frame=") ||
+      window.location.search.includes("farcaster") ||
+      document.referrer.includes("warpcast.com") ||
+      document.referrer.includes("farcaster.xyz");
+
+    setIsInFarcaster(isFarcaster);
+
+    // Try to get Farcaster user info
+    if (isFarcaster) {
+      try {
+        // Check for Farcaster SDK
+        const farcasterSDK = (
+          window as {
+            farcaster?: {
+              user?: {
+                displayName?: string;
+                username?: string;
+                pfpUrl?: string;
+              };
+            };
+          }
+        ).farcaster;
+        if (farcasterSDK?.user) {
+          setFarcasterUser(farcasterSDK.user);
+        }
+      } catch (error) {
+        console.log("Farcaster SDK not available:", error);
       }
     }
-  }, [network, walletProvider]); // Only re-run if these specific props change
+  }, []);
 
-  // Always use WagmiProvider + QueryClientProvider regardless of network
-  // ThirdwebProvider will be added at the GameWrapper level when needed
+  return { isInFarcaster, farcasterUser };
+}
 
-  // Reference to track if we've already synced to prevent loops
-  const syncingRef = useRef(false);
+// Universal Wallet Provider Component
+function UniversalWalletProvider({ children }: { children: ReactNode }) {
+  const { connect, connectors, isPending: isConnecting } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
 
-  // Use a callback ref to store the previous network and walletProvider values
-  const prevValuesRef = useRef({ network, walletProvider });
+  const { isInFarcaster, farcasterUser } = useFarcasterIntegration();
+  const [isReady, setIsReady] = useState(false);
+  const [displayName, setDisplayName] = useState<string | undefined>();
 
-  // Use a stable callback to prevent unnecessary re-renders
-  const syncWalletProvider = React.useCallback(() => {
-    // Check URL parameters first
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("showSelector") === "true") {
-        console.log(
-          "AppProviders: showSelector URL parameter found, skipping auto-sync"
-        );
-        return;
-      }
-    }
-
-    // Skip if already syncing to prevent update loops
-    if (syncingRef.current) return;
-
-    // Check if we're in Farcaster context to avoid conflicts
-    const isInFarcaster =
-      typeof window !== "undefined" &&
-      (/farcaster|warpcast/i.test(navigator.userAgent) ||
-        window.location.search.includes("frame=") ||
-        window.location.search.includes("farcaster") ||
-        document.referrer.includes("warpcast.com") ||
-        document.referrer.includes("farcaster.xyz"));
-
-    // Skip auto-detection in Farcaster context to avoid conflicts
-    if (isInFarcaster) {
-      console.log("AppProviders: Skipping auto-detection in Farcaster context");
-      return;
-    }
-
-    // Skip if values haven't changed to prevent unnecessary re-renders
-    if (
-      prevValuesRef.current.network === network &&
-      prevValuesRef.current.walletProvider === walletProvider
-    ) {
-      return;
-    }
-
-    // Update the previous values
-    prevValuesRef.current = { network, walletProvider };
-
-    // Check if we have a wallet provider from localStorage
-    const storedWalletProvider = localStorage.getItem("selectedWalletProvider");
-
-    // If we have a stored wallet provider, respect it and don't auto-sync
-    if (storedWalletProvider) {
-      console.log(
-        "AppProviders: Found stored wallet provider:",
-        storedWalletProvider
-      );
-      return;
-    }
-
-    // Only auto-sync when walletProvider is null and no stored provider exists
-    if (network === "base" && walletProvider === null) {
-      // Only log on client side
-      if (typeof window !== "undefined") {
-        console.log(
-          "Auto-setting wallet provider to 'smart' for new user with 'base' network"
-        );
-      }
-      syncingRef.current = true;
-      setWalletProvider("smart");
-      // Reset syncing flag after a delay
-      setTimeout(() => {
-        syncingRef.current = false;
-      }, 1000);
-    } else if (
-      (network === "polygon" || network === "monad" || network === "celo") &&
-      walletProvider === null
-    ) {
-      // Only log on client side
-      if (typeof window !== "undefined") {
-        console.log(
-          `Auto-setting wallet provider to 'signature' for new user with '${network}' network`
-        );
-      }
-      syncingRef.current = true;
-      setWalletProvider("signature");
-      // Reset syncing flag after a delay
-      setTimeout(() => {
-        syncingRef.current = false;
-      }, 1000);
-    }
-  }, [network, walletProvider, setWalletProvider]);
-
-  // Use effect to call the stable callback
+  // Initialize
   useEffect(() => {
-    // Give URL parameter check higher priority
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("showSelector") === "true") {
-        // Clear the URL parameter without refreshing
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-        // Skip auto-sync completely when showing selector
-        return;
+    setIsReady(true);
+  }, []);
+
+  // Update display name
+  useEffect(() => {
+    if (address) {
+      if (farcasterUser?.displayName) {
+        setDisplayName(farcasterUser.displayName);
+      } else {
+        setDisplayName(`${address.slice(0, 6)}...${address.slice(-4)}`);
       }
+    } else {
+      setDisplayName(undefined);
+    }
+  }, [address, farcasterUser]);
+
+  // Smart connection function - respects user preferences
+  const handleConnect = async () => {
+    try {
+      // Auto-select best connector based on context
+      let targetConnector;
+
+      if (isInFarcaster) {
+        // In Farcaster, prefer injected if available
+        targetConnector =
+          connectors.find((c) => c.id === "injected") || connectors[0];
+        toast.loading(
+          `GM ${farcasterUser?.displayName || "Anon"}! Connecting...`,
+          { id: "connect" }
+        );
+      } else if (
+        (
+          window as unknown as {
+            ethereum?: { isMetaMask?: boolean; isCoinbaseWallet?: boolean };
+          }
+        ).ethereum?.isMetaMask ||
+        (
+          window as unknown as {
+            ethereum?: { isMetaMask?: boolean; isCoinbaseWallet?: boolean };
+          }
+        ).ethereum?.isCoinbaseWallet
+      ) {
+        // If in wallet browser, use injected
+        targetConnector =
+          connectors.find((c) => c.id === "injected") || connectors[0];
+        toast.loading("Opening wallet...", { id: "connect" });
+      } else {
+        // Desktop: prefer Coinbase Wallet
+        targetConnector =
+          connectors.find((c) => c.id === "coinbaseWallet") || connectors[0];
+        toast.loading("Connecting wallet...", { id: "connect" });
+      }
+
+      await connect({ connector: targetConnector });
+      toast.success("Wallet connected!", { id: "connect" });
+
+      // After connection, respect user's preferred chain if they have one
+      setTimeout(() => {
+        const userPreferredChainId = localStorage.getItem(
+          "userPreferredChainId"
+        );
+        if (userPreferredChainId) {
+          const preferredId = parseInt(userPreferredChainId);
+          console.log(
+            "User preferred chain:",
+            preferredId,
+            "Current chain:",
+            chainId
+          );
+          if (preferredId !== chainId) {
+            console.log(`Switching to user preferred chain: ${preferredId}`);
+            switchToChain(preferredId);
+          }
+        }
+      }, 3000); // Give more time for initial connection to settle
+    } catch (error) {
+      console.error("Connection failed:", error);
+      toast.error("Connection failed. Please try again.", { id: "connect" });
+    }
+  };
+
+  // Manual chain switching - respects user choice
+  const switchToChain = async (targetChainId: number) => {
+    if (chainId === targetChainId) {
+      console.log("Already on target chain:", targetChainId);
+      return;
     }
 
-    syncWalletProvider();
-  }, [syncWalletProvider]);
+    console.log("Attempting to switch from", chainId, "to", targetChainId);
+
+    try {
+      // First try to switch directly
+      const result = await switchChain({ chainId: targetChainId });
+      console.log("Switch chain result:", result);
+
+      const chainName = supportedChains.find(
+        (c) => c.id === targetChainId
+      )?.name;
+      toast.success(`Switched to ${chainName}`);
+
+      // Store user preference
+      localStorage.setItem("userPreferredChainId", targetChainId.toString());
+      console.log("Stored user preference:", targetChainId);
+    } catch (error: unknown) {
+      console.error("Chain switch failed:", error);
+
+      // If chain not found (error 4902), try to add it first
+      if ((error as { code?: number })?.code === 4902) {
+        try {
+          await addChainToWallet(targetChainId);
+          // Then try switching again
+          await switchChain({ chainId: targetChainId });
+          const chainName = supportedChains.find(
+            (c) => c.id === targetChainId
+          )?.name;
+          toast.success(`Added and switched to ${chainName}`);
+          localStorage.setItem(
+            "userPreferredChainId",
+            targetChainId.toString()
+          );
+        } catch (addError: unknown) {
+          console.error("Failed to add chain:", addError);
+          toast.error(
+            "Failed to add network to wallet. Please add it manually."
+          );
+        }
+      } else if ((error as { code?: number })?.code === -32002) {
+        toast.error("Wallet request pending. Please check your wallet.");
+      } else {
+        toast.error(
+          `Failed to switch network: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    }
+  };
+
+  // Helper function to add chain to wallet
+  const addChainToWallet = async (chainId: number) => {
+    const chain = supportedChains.find((c) => c.id === chainId);
+    if (!chain) throw new Error("Unsupported chain");
+
+    if (typeof window === "undefined" || !window.ethereum) {
+      throw new Error("No wallet provider found");
+    }
+
+    const chainParams = {
+      chainId: `0x${chainId.toString(16)}`,
+      chainName: chain.name,
+      nativeCurrency: chain.nativeCurrency,
+      rpcUrls: [chain.rpcUrls.default.http[0]],
+      blockExplorerUrls: chain.blockExplorers
+        ? [chain.blockExplorers.default.url]
+        : undefined,
+    };
+
+    await window.ethereum.request({
+      method: "wallet_addEthereumChain",
+      params: [chainParams],
+    });
+  };
+
+  // Store user's chain preference
+  useEffect(() => {
+    if (isConnected && chainId) {
+      // Store the user's selected chain for future sessions
+      localStorage.setItem("userPreferredChainId", chainId.toString());
+    }
+  }, [isConnected, chainId]);
+
+  const contextValue: UniversalWalletContextType = {
+    isConnected,
+    address,
+    chainId,
+    isConnecting,
+    displayName,
+    isInFarcaster,
+    farcasterUser,
+    connect: handleConnect,
+    disconnect,
+    switchToOptimalChain: switchToChain,
+    isReady,
+  };
 
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </WagmiProvider>
+    <UniversalWalletContext.Provider value={contextValue}>
+      {children}
+    </UniversalWalletContext.Provider>
   );
 }
 
-// Props for the AppProviders component
+// Hook to use the universal wallet
+export function useUniversalWallet(): UniversalWalletContextType {
+  const context = useContext(UniversalWalletContext);
+  if (context === undefined) {
+    throw new Error("useUniversalWallet must be used within AppProviders");
+  }
+  return context;
+}
+
+// Backward compatibility hooks (so we don't break existing components)
+export function useWalletProvider() {
+  const { isConnected, address } = useUniversalWallet();
+  return {
+    walletProvider: isConnected ? "universal" : null,
+    isConnected,
+    userAddress: address,
+    // Legacy methods that do nothing
+    setWalletProvider: () => {},
+    resetAll: () => {},
+    disconnect: () => {},
+    setIsConnected: () => {},
+    setUserAddress: () => {},
+    changeWalletProvider: () => {},
+    isWalletProviderSelected: isConnected,
+  };
+}
+
+export function useNetwork() {
+  const { chainId, isInFarcaster } = useUniversalWallet();
+
+  // Map chain IDs to network names for backward compatibility
+  const getNetworkName = (id: number | undefined) => {
+    switch (id) {
+      case baseSepolia.id:
+        return "base";
+      case polygon.id:
+        return "polygon";
+      case celo.id:
+        return "celo";
+      case monadTestnet.id:
+        return "monad";
+      default:
+        return isInFarcaster ? "celo" : "base";
+    }
+  };
+
+  return {
+    network: getNetworkName(chainId),
+    setNetwork: () => {}, // Legacy - auto-handled now
+    isNetworkSelected: true, // Always true now
+  };
+}
+
+// Main App Providers component
 interface AppProvidersProps {
   children: ReactNode;
 }
 
-/**
- * AppProviders component that wraps the application with all necessary providers
- */
 export default function AppProviders({ children }: AppProvidersProps) {
-  // Initialize remote logger for mobile debugging
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      initRemoteLogger({
-        enabled: true,
-        captureConsole: false, // Only capture explicit logs, not all console output
-      });
-    }
-  }, []);
-
   return (
-    <NetworkProvider>
-      <WalletProviderProvider>
-        <FarcasterWalletProvider>
-          <MiniAppProvider>
-            <ConditionalProviders>
-              <GlobalErrorHandler />
-              <Toaster
-                position="top-center"
-                toastOptions={{
-                  style: {
-                    background: "#111",
-                    color: "#fcb131",
-                    border: "2px solid #fcb131",
-                    fontFamily: '"Press Start 2P", cursive',
-                    fontSize: "12px",
-                    padding: "16px",
-                    maxWidth: "400px",
-                    textAlign: "center",
-                    boxShadow: "0 0 10px rgba(252, 177, 49, 0.5)",
-                    wordBreak: "break-word",
-                    whiteSpace: "pre-wrap",
-                    overflowWrap: "break-word",
-                  },
-                  success: {
-                    style: {
-                      background: "#111",
-                      color: "#00a651",
-                      border: "2px solid #00a651",
-                    },
-                    iconTheme: {
-                      primary: "#00a651",
-                      secondary: "#111",
-                    },
-                    duration: 5000,
-                  },
-                  error: {
-                    style: {
-                      background: "#111",
-                      color: "#ff4500",
-                      border: "2px solid #ff4500",
-                      maxWidth: "350px",
-                    },
-                    iconTheme: {
-                      primary: "#ff4500",
-                      secondary: "#111",
-                    },
-                    duration: 7000,
-                  },
-                  loading: {
-                    style: {
-                      background: "#111",
-                      color: "#3498db",
-                      border: "2px solid #3498db",
-                    },
-                    iconTheme: {
-                      primary: "#3498db",
-                      secondary: "#111",
-                    },
-                  },
-                  duration: 5000,
-                }}
-              />
-              {/* Debug Provider removed as requested */}
-              {children}
-            </ConditionalProviders>
-          </MiniAppProvider>
-        </FarcasterWalletProvider>
-      </WalletProviderProvider>
-    </NetworkProvider>
+    // @ts-expect-error - Wagmi type issue with multiple chains
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <UniversalWalletProvider>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: "#111",
+                color: "#fcb131",
+                border: "2px solid #fcb131",
+                fontFamily: '"Press Start 2P", cursive',
+                fontSize: "12px",
+                padding: "16px",
+                maxWidth: "400px",
+                textAlign: "center",
+                boxShadow: "0 0 10px rgba(252, 177, 49, 0.5)",
+                wordBreak: "break-word",
+                whiteSpace: "pre-wrap",
+                overflowWrap: "break-word",
+              },
+              success: {
+                style: {
+                  background: "#111",
+                  color: "#00a651",
+                  border: "2px solid #00a651",
+                },
+                iconTheme: {
+                  primary: "#00a651",
+                  secondary: "#111",
+                },
+                duration: 3000,
+              },
+              error: {
+                style: {
+                  background: "#111",
+                  color: "#ff4500",
+                  border: "2px solid #ff4500",
+                },
+                iconTheme: {
+                  primary: "#ff4500",
+                  secondary: "#111",
+                },
+                duration: 5000,
+              },
+              loading: {
+                style: {
+                  background: "#111",
+                  color: "#3498db",
+                  border: "2px solid #3498db",
+                },
+                iconTheme: {
+                  primary: "#3498db",
+                  secondary: "#111",
+                },
+              },
+              duration: 3000,
+            }}
+          />
+          {children}
+        </UniversalWalletProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }

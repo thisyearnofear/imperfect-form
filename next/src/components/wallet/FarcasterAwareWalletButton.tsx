@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useFarcasterWallet } from "./FarcasterWalletProvider";
 import { useConnect, useAccount, useDisconnect } from "wagmi";
-import { useWalletProvider } from "@/contexts/WalletProviderContext";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 
 // Initialize logger for Farcaster-aware wallet button
@@ -39,7 +38,6 @@ export function FarcasterAwareWalletButton({
   const { connect, connectors, isPending: isConnecting } = useConnect();
   const { address: wagmiAddress, isConnected: isWagmiConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { setWalletProvider } = useWalletProvider();
 
   const [connectionState, setConnectionState] = useState<
     "idle" | "connecting" | "connected" | "error"
@@ -151,8 +149,6 @@ export function FarcasterAwareWalletButton({
             logger.info("Farcaster wallet connected successfully via SDK", {
               address: farcasterAddress,
             });
-            // Set wallet provider to farcaster when connected
-            setWalletProvider("farcaster");
             setConnectionState("connected");
             return;
           } else {

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useNetwork } from "@/contexts/NetworkContext";
+import { useSwitchChain } from "wagmi";
+import { polygon, baseSepolia } from "wagmi/chains";
 import { Dialog } from "@/components/ui";
 import Image from "next/image";
 import {
@@ -18,7 +19,7 @@ interface ChainSelectorProps {
  * This is different from WalletTypeSelector which chooses the wallet connection type
  */
 export default function ChainSelector({ onClose }: ChainSelectorProps) {
-  const { setNetwork } = useNetwork();
+  const { switchChain } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle chain selection
@@ -26,15 +27,18 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
     setIsLoading(true);
 
     try {
-      // Update local storage and context
+      // Update local storage
       localStorage.setItem("selectedNetwork", selectedNetwork);
       localStorage.setItem(
         "selectedChain",
         selectedNetwork === "polygon" ? "amoy" : "base" // Keep as "amoy" for backward compatibility
       );
 
-      // Update context
-      setNetwork(selectedNetwork);
+      // Switch chain using Wagmi
+      const targetChain = selectedNetwork === "polygon" ? polygon : baseSepolia;
+      if (switchChain) {
+        switchChain({ chainId: targetChain.id });
+      }
 
       // Close dialog
       if (onClose) onClose();

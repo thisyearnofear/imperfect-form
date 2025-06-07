@@ -89,26 +89,35 @@ export default function RootLayout({
         />
         <meta name="fc:miniapp:url" content="https://imperfectform.fun" />
 
-        {/* Dynamic CSS loading script */}
+        {/* Dynamic CSS loading script - client-side only */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Only load network styles when needed
-              function loadNetworkCSS() {
-                if (
-                  localStorage.getItem('selectedNetwork') === 'monad' ||
-                  localStorage.getItem('selectedNetwork') === 'celo' ||
-                  localStorage.getItem('selectedWalletProvider') === 'signature'
-                ) {
-                  const link = document.createElement('link');
-                  link.rel = 'stylesheet';
-                  link.href = '/network-elements.css';
-                  document.head.appendChild(link);
+              // Only load network styles when needed - client-side only
+              if (typeof window !== 'undefined') {
+                function loadNetworkCSS() {
+                  try {
+                    if (
+                      localStorage.getItem('selectedNetwork') === 'monad' ||
+                      localStorage.getItem('selectedNetwork') === 'celo' ||
+                      localStorage.getItem('selectedWalletProvider') === 'signature'
+                    ) {
+                      const link = document.createElement('link');
+                      link.rel = 'stylesheet';
+                      link.href = '/network-elements.css';
+                      document.head.appendChild(link);
+                    }
+                  } catch (e) {
+                    // Silently fail if localStorage is not available
+                  }
+                }
+                // Load after DOM is ready
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', loadNetworkCSS);
+                } else {
+                  loadNetworkCSS();
                 }
               }
-              // Try to load immediately but also after DOM content loaded
-              loadNetworkCSS();
-              document.addEventListener('DOMContentLoaded', loadNetworkCSS);
             `,
           }}
         />

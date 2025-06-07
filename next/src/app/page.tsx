@@ -3,16 +3,20 @@
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Spinner } from "@/components/ui";
-import { useWalletProvider } from "@/contexts/WalletProviderContext";
+import { useUniversalWallet } from "@/components/providers/AppProviders";
+import { useMiniApp } from "@/contexts/MiniAppContext";
 
 const GameWrapper = dynamic(() => import("@/components/game/GameWrapper"), {
   ssr: false,
   loading: () => <Spinner />,
 });
+
+// Use existing leaderboard component
 const Leaderboard = dynamic(() => import("@/components/game/Leaderboard"), {
   ssr: false,
   loading: () => <Spinner />,
 });
+
 const ExpandedLeaderboardModal = dynamic(
   () => import("@/components/modals/ExpandedLeaderboardModal"),
   {
@@ -23,12 +27,12 @@ const ExpandedLeaderboardModal = dynamic(
 
 import { Score } from "@/types";
 import { MiniAppBanner } from "@/components/miniapp/MiniAppIndicator";
-import { useMiniApp } from "@/contexts/MiniAppContext";
 
 export default function Home() {
-  const { walletProvider } = useWalletProvider();
+  const { isConnected, isReady } = useUniversalWallet();
   const { isInMiniApp } = useMiniApp();
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
 
   const [leaderboardData, setLeaderboardData] = useState<{
     pushups: Score[];
@@ -49,21 +53,24 @@ export default function Home() {
     setShowExpandedLeaderboard(true);
   };
 
-  // Track initial load to apply animations only after first render
-  const [hasLoaded, setHasLoaded] = useState(false);
-  // Track if component has mounted to prevent hydration mismatch
-  const [hasMounted, setHasMounted] = useState(false);
-
+  // Prevent hydration mismatch
   useEffect(() => {
-    // Set hasLoaded after initial render to enable animations
-    setHasLoaded(true);
-    // Set hasMounted to prevent hydration mismatch
     setHasMounted(true);
   }, []);
 
-  // Check if wallet has been selected (for mobile leaderboard visibility)
-  // Only check after component has mounted to prevent hydration mismatch
-  const hasWalletSelected = hasMounted && walletProvider !== null;
+  // Loading state
+  if (!hasMounted || !isReady) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Spinner />
+          <p className="text-yellow-400 font-bold animate-pulse">
+            LOADING IMPERFECT FORM...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -78,11 +85,7 @@ export default function Home() {
       <div className="flex flex-col min-h-screen">
         {/* Game area with better padding for mobile */}
         <div className="relative z-10 flex-grow pb-8 md:pb-24 px-2 md:px-4">
-          <div
-            className={`transition-opacity duration-300 ${
-              hasLoaded ? "opacity-100" : "opacity-0"
-            }`}
-          >
+          <div className="transition-opacity duration-300 opacity-100">
             <GameWrapper />
           </div>
         </div>
@@ -102,8 +105,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Mobile: Leaderboard - only show after wallet selection */}
-        {hasWalletSelected && (
+        {/* Mobile: Leaderboard - only show after wallet connection */}
+        {isConnected && (
           <div className="md:hidden mt-12 px-4 animate-fade-in pb-10">
             <div className="bg-black/80 p-4 rounded-lg border border-gray-800">
               <h3 className="text-center text-yellow-400 text-sm mb-3 font-bold">

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { WalletButton } from "@/components/wallet";
+import { UniversalConnectButton } from "@/components/wallet";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -41,7 +41,7 @@ export default function Navigation() {
         </div>
         
         <div>
-          <WalletButton />
+          <UniversalConnectButton size="sm" showProfileWhenConnected={true} />
         </div>
       </div>
     </nav>

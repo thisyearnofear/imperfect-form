@@ -13,10 +13,9 @@ import {
 } from "@/utils/cameraManager";
 import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
 import { Welcome } from "@/components/game";
-import { WalletButton } from "@/components/wallet";
-import { useFarcasterWallet } from "@/components/wallet/FarcasterWalletProvider";
-import { useNetwork } from "@/contexts/NetworkContext";
-import { useAccount as useWagmiAccount } from "wagmi";
+import { UniversalConnectButton } from "@/components/wallet";
+import { useUniversalWallet } from "@/components/providers/AppProviders";
+
 import toast from "react-hot-toast";
 import { Score } from "@/types";
 import { createRemoteLogger } from "@/utils/remoteLogger";
@@ -64,62 +63,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     width: 0,
   });
 
-  // Get network from context
-  const { network, setNetwork } = useNetwork();
-
-  // For Wagmi (Base), we can always call this hook
-  const wagmiAccount = useWagmiAccount();
-  const wagmiAddress = wagmiAccount?.address;
-
-  // Get Farcaster wallet context
-  const farcaster = useFarcasterWallet();
+  // Get universal wallet context
+  const { address } = useUniversalWallet();
 
   // Initialize remote logger for the Game component
   const logger = createRemoteLogger("Game");
 
-  // Get address based on the selected network and Farcaster context
-  let address: string | undefined = undefined;
+  // Use the universal address - no more complex network-specific logic needed!
+  const finalAddress = address || thirdwebAddress;
 
-  // Priority 1: If in Farcaster mini app and wallet is connected, use Farcaster wallet
-  if (farcaster.isInMiniApp && farcaster.walletAddress) {
-    address = farcaster.walletAddress;
-    logger.info("Using Farcaster wallet address", { address });
-  }
-  // Priority 2: For Wagmi (Base)
-  else if (network === "base") {
-    try {
-      address = wagmiAddress;
-    } catch {
-      // Ignoring error in render cycle
-    }
-  }
-  // Priority 3: For ThirdWeb (Polygon, Monad, Celo), use the address passed as prop
-  else if (network === "polygon" || network === "monad" || network === "celo") {
-    // If thirdwebAddress is provided as a prop, use it
-    if (thirdwebAddress) {
-      address = thirdwebAddress;
-    }
-    // Otherwise, check localStorage for a stored address
-    else {
-      const storedAddress = localStorage.getItem("userAddress");
-      if (storedAddress) {
-        address = storedAddress;
-      }
-    }
-  }
-
-  // Check for chain ID and force the correct network
+  // Simplified viewport dimensions effect
   useEffect(() => {
-    // Check if we have a chain ID that indicates Monad testnet
-    const chainId = localStorage.getItem("lastChainId");
-    if (chainId === "10143" && network !== "monad") {
-      console.log(
-        "Game: Detected Monad testnet chain ID, forcing network to monad"
-      );
-      setNetwork("monad");
-      // No reload - just update the context
-    }
-
     // Safely get viewport dimensions
     if (typeof window !== "undefined") {
       const handleResize = () => {
@@ -141,52 +95,22 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         window.removeEventListener("orientationchange", handleResize);
       };
     }
-  }, [network, setNetwork]);
+  }, []);
 
-  // Move all logging to a useEffect to prevent excessive re-renders
+  // Log address changes for debugging
   useEffect(() => {
     // Only log in development environment to reduce production noise
     if (process.env.NODE_ENV === "development") {
-      if (network === "base") {
-        console.log("Game: Using Wagmi address for Base network:", address);
-      } else if (
-        network === "polygon" ||
-        network === "monad" ||
-        network === "celo"
-      ) {
-        if (thirdwebAddress) {
-          console.log(
-            `Game: Using ThirdWeb address from prop for ${network} network:`,
-            address
-          );
-        } else if (address) {
-          console.log(
-            `Game: Using ThirdWeb address from localStorage for ${network} network:`,
-            address
-          );
-        } else {
-          console.log(
-            `Game: No ThirdWeb address available for ${network} network`
-          );
-        }
-      }
-
-      // Log the final address being used
-      console.log(
-        "Game: Final address being used:",
-        address,
-        "Network:",
-        network
-      );
+      console.log("Game: Using universal wallet address:", finalAddress);
     }
-  }, [address, network, thirdwebAddress]); // Only re-run when these values change
+  }, [finalAddress]);
 
   // Store the address in localStorage for persistence
   useEffect(() => {
-    if (address) {
-      localStorage.setItem("userAddress", address);
+    if (finalAddress) {
+      localStorage.setItem("userAddress", finalAddress);
     }
-  }, [address]);
+  }, [finalAddress]);
 
   // Leaderboard data for the expanded modal
   // Using the shared Score type from @/types
@@ -291,10 +215,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setShowTutorial(false);
 
     // Log the address state before showing the summary
-    console.log("Game: handleStop called with address:", address);
+    console.log("Game: handleStop called with address:", finalAddress);
 
     // Only show summary if we have an address
-    if (address) {
+    if (finalAddress) {
       setShowSummary(true);
     } else {
       // If no address, show a toast message
@@ -304,7 +228,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Force camera to stop by accessing the video tracks and stopping them
     stopAllCameras();
-  }, [stopAllCameras, address]);
+  }, [stopAllCameras, finalAddress]);
 
   // Update the ref whenever handleStop changes
   useEffect(() => {
@@ -382,20 +306,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             </div>
           )}
 
-          <div className={address ? "wallet-connected" : "wallet-prompt"}>
-            <WalletButton />
-            {address && (
-              <button
-                className="reset-wallet-button"
-                onClick={() => {
-                  // Navigate to dedicated wallet selection page
-                  window.location.href = "/select-wallet";
-                }}
-                title="Reset wallet connection"
-              >
-                Reset Wallet
-              </button>
-            )}
+          <div className={finalAddress ? "wallet-connected" : "wallet-prompt"}>
+            <UniversalConnectButton 
+              size="md"
+              showProfileWhenConnected={true}
+              onConnected={(address) => {
+                console.log("Game: Wallet connected with address:", address);
+              }}
+            />
           </div>
         </div>
 
@@ -554,8 +472,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             style={{ minHeight: isMobile ? "50px" : "auto" }}
             aria-label="Start game"
             onClick={handleStart}
-            disabled={started || showLoading || !address}
-            title={!address ? "Connect wallet to start" : "Start game"}
+            disabled={started || showLoading || !finalAddress}
+            title={!finalAddress ? "Connect wallet to start" : "Start game"}
           >
             START
           </button>
@@ -626,7 +544,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         repCount={repCount}
         timeLeft={timeLeft}
         mode={mode}
-        address={address}
+        address={finalAddress}
       />
 
       {/* Expanded Leaderboard Modal */}

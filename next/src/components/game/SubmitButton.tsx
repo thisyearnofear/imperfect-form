@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { useNetwork } from "@/contexts/NetworkContext";
+import { useUniversalWallet } from "@/components/providers/AppProviders";
 import { useAccount as useWagmiAccount, useWriteContract } from "wagmi";
 
 import { Spinner } from "@/components/ui";
@@ -32,25 +32,31 @@ export default function SubmitButton({
   const [isLoading, setIsLoading] = useState(false);
   const [confirmStep, setConfirmStep] = useState(false);
 
-  // Get network from context
-  const { network } = useNetwork();
+  // Get chain info from universal wallet
+  const { chainId } = useUniversalWallet();
+
+  // Map chainId to network name for backward compatibility
+  const getNetworkFromChainId = (id: number | undefined) => {
+    switch (id) {
+      case 84532: return 'base';
+      case 137: return 'polygon';
+      case 42220: return 'celo';
+      case 10143: return 'monad';
+      default: return 'base';
+    }
+  };
+
+  const network = getNetworkFromChainId(chainId);
 
   // For Wagmi (Base), we can always call this hook
   const wagmiAccount = useWagmiAccount();
 
-  // Log wallet and network state but don't force changes
+  // Log wallet and network state
   useEffect(() => {
-    // Just log the current state without forcing changes
     if (thirdwebAddress) {
-      console.log(`ThirdWeb wallet is connected with network: ${network}`);
-
-      // Store the wallet type in localStorage for persistence
-      localStorage.setItem("selectedWalletProvider", "signature");
+      console.log(`Using ThirdWeb address with network: ${network}`);
     } else if (wagmiAccount?.address) {
-      console.log(`Wagmi wallet is connected with network: ${network}`);
-
-      // Store the wallet type in localStorage for persistence
-      localStorage.setItem("selectedWalletProvider", "smart");
+      console.log(`Using Wagmi address with network: ${network}`);
     }
   }, [thirdwebAddress, wagmiAccount?.address, network]);
 
