@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/ui";
-import { useUniversalWallet } from "@/components/providers";
+import { usePlatform } from "@/contexts/PlatformContext";
 import {
   useAccount,
   useWriteContract,
@@ -46,7 +46,8 @@ export default function SubmitScoreWithWagmi({
   const [confirmStep, setConfirmStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { address: wagmiAddress } = useAccount();
-  const { chainId } = useUniversalWallet();
+  const { wallet } = usePlatform();
+  const { chainId } = wallet;
 
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {

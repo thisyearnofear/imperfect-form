@@ -10,7 +10,7 @@ import {
 import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
 import { Welcome } from "@/components/game";
 import { UniversalConnectButton } from "@/components/wallet";
-import { useUniversalWallet } from "@/components/providers";
+import { usePlatform } from "@/contexts/PlatformContext";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";
@@ -60,7 +60,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   });
 
   // Get universal wallet context
-  const { address } = useUniversalWallet();
+  const { wallet } = usePlatform();
+  const { address } = wallet;
 
   // Initialize remote logger for the Game component
   const logger = createRemoteLogger("Game");

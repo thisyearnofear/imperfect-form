@@ -33,7 +33,7 @@ const monadTestnet: Chain = {
 
 // Optimized Wagmi config - CELO first as default for better mobile/Farcaster UX
 const wagmiConfig = createConfig({
-  chains: [celo, polygon, baseSepolia, monadTestnet] as const,
+  chains: [celo, polygon, baseSepolia, monadTestnet],
   connectors: [
     // Primary: Coinbase Wallet (works on all chains, supports Smart Wallet)
     coinbaseWallet({
@@ -159,15 +159,21 @@ interface AppProvidersProps {
 export default function SimplifiedAppProviders({
   children,
 }: AppProvidersProps) {
+  // @ts-expect-error - Wagmi config type inference issue with multiple chains
+  const WagmiProviderComponent = WagmiProvider as React.ComponentType<{
+    config: typeof wagmiConfig;
+    children: React.ReactNode;
+  }>;
+
   return (
-    <WagmiProvider config={wagmiConfig as any}>
+    <WagmiProviderComponent config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <PlatformProvider>
           <Toaster {...toastConfig} />
           {children}
         </PlatformProvider>
       </QueryClientProvider>
-    </WagmiProvider>
+    </WagmiProviderComponent>
   );
 }
 

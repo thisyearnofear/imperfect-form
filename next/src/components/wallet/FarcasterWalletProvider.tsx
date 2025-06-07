@@ -23,28 +23,31 @@ export function FarcasterWalletProvider({
 }: FarcasterWalletProviderProps) {
   const { platform, user, wallet, actions, isReady, error } = usePlatform();
 
-  // Convert to legacy interface
-  const farcasterContext: FarcasterContext = {
-    isInMiniApp: platform === "farcaster",
-    user: user,
-    walletAddress: platform === "farcaster" ? wallet.address : null,
-    chainId: platform === "farcaster" ? wallet.chainId : null,
-    isLoading: !isReady,
-    error,
-    connectWallet: async () => {
-      const success = await actions.connect();
-      return success ? wallet.address : null;
-    },
-    signMessage: async (message: string) => {
-      console.warn("signMessage not implemented in new context");
-      return null;
-    },
-    sendTransaction: async (to: string, value: string, data?: string) => {
-      console.warn("sendTransaction not implemented in new context");
-      return null;
-    },
-    switchChain: actions.switchChain,
-  };
+  // Convert to legacy interface using useMemo to prevent recreation on every render
+  const farcasterContext: FarcasterContext = React.useMemo(
+    () => ({
+      isInMiniApp: platform === "farcaster",
+      user: user,
+      walletAddress: platform === "farcaster" ? wallet.address : null,
+      chainId: platform === "farcaster" ? wallet.chainId : null,
+      isLoading: !isReady,
+      error,
+      connectWallet: async () => {
+        const success = await actions.connect();
+        return success ? wallet.address : null;
+      },
+      signMessage: async () => {
+        console.warn("signMessage not implemented in new context");
+        return null;
+      },
+      sendTransaction: async () => {
+        console.warn("sendTransaction not implemented in new context");
+        return null;
+      },
+      switchChain: actions.switchChain,
+    }),
+    [platform, user, wallet.address, wallet.chainId, isReady, error, actions]
+  );
 
   // Log provider initialization
   React.useEffect(() => {

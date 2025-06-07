@@ -224,18 +224,26 @@ export function FarcasterAwareWalletButton({
         return (
           <div className="flex flex-col items-center space-y-1">
             <div className="flex items-center space-x-2">
-              {walletSource === "farcaster" && user && (
+              {walletSource === "farcaster" &&
+              user &&
+              typeof user === "object" &&
+              user !== null &&
+              "pfpUrl" in user &&
+              "displayName" in user &&
+              "username" in user ? (
                 <div className="flex items-center space-x-2">
                   <Image
-                    src={user.pfpUrl}
-                    alt={user.displayName}
+                    src={(user as { pfpUrl: string }).pfpUrl}
+                    alt={(user as { displayName: string }).displayName}
                     width={24}
                     height={24}
                     className="rounded-full"
                   />
-                  <span className="text-sm font-medium">@{user.username}</span>
+                  <span className="text-sm font-medium">
+                    @{(user as { username: string }).username}
+                  </span>
                 </div>
-              )}
+              ) : null}
               <span className="text-sm">
                 {activeWalletAddress?.slice(0, 6)}...
                 {activeWalletAddress?.slice(-4)}
@@ -360,15 +368,20 @@ export function CompactFarcasterWalletButton({
   if (activeWalletAddress) {
     return (
       <div className={`flex items-center space-x-2 p-2 ${className}`}>
-        {walletSource === "farcaster" && user && (
+        {walletSource === "farcaster" &&
+        user &&
+        typeof user === "object" &&
+        user !== null &&
+        "pfpUrl" in user &&
+        "displayName" in user ? (
           <Image
-            src={user.pfpUrl}
-            alt={user.displayName}
+            src={(user as { pfpUrl: string }).pfpUrl}
+            alt={(user as { displayName: string }).displayName}
             width={24}
             height={24}
             className="rounded-full"
           />
-        )}
+        ) : null}
         <span className="text-sm font-medium">
           {activeWalletAddress.slice(0, 6)}...{activeWalletAddress.slice(-4)}
         </span>

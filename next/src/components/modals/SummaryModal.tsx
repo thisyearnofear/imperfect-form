@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { Dialog } from "@/components/ui";
-import { useUniversalWallet, usePlatform } from "@/components/providers";
+import { usePlatform } from "@/contexts/PlatformContext";
+import { useMiniApp } from "@/components/providers";
 import { ConnectWallet } from "@/components/wallet";
 import { FarcasterShare } from "@/components/social";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
@@ -14,7 +15,6 @@ import {
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
 import { AddMiniAppButton } from "@/components/miniapp/AddMiniAppButton";
-import { useMiniApp } from "@/components/providers";
 
 // Initialize window properties if they don't exist
 if (typeof window !== "undefined") {
@@ -43,9 +43,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   mode = "pushups",
   address,
 }) => {
-  const { address: walletAddress, chainId } = useUniversalWallet();
-  const { isInMiniApp } = useMiniApp();
   const { platform, wallet } = usePlatform();
+  const { address: walletAddress, chainId } = wallet;
+  const { isInMiniApp } = useMiniApp();
 
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {
@@ -74,21 +74,30 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [showDirectSubmit, setShowDirectSubmit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Function to get the actual ethereum provider
-  const getEthereumProvider = () => {
+  // Function to get the actual ethereum provider from unified context
+  const getEthereumProvider = async () => {
     if (platform === "farcaster") {
-      // For Farcaster, try to get the SDK provider
-      const farcasterSDK = (window as any).sdk;
-      if (farcasterSDK?.wallet?.ethProvider) {
-        console.log("Using Farcaster SDK ethereum provider");
-        return farcasterSDK.wallet.ethProvider;
+      // For Farcaster, use the provider from the unified context
+      try {
+        const { sdk } = await import("@farcaster/frame-sdk");
+        if (sdk.wallet?.ethProvider) {
+          console.log(
+            "Using Farcaster SDK ethereum provider from unified context"
+          );
+          return sdk.wallet.ethProvider;
+        }
+      } catch (error) {
+        console.warn("Failed to get Farcaster SDK provider:", error);
       }
     }
 
     // Fallback to window.ethereum
-    if (typeof window !== "undefined" && (window as any).ethereum) {
+    if (
+      typeof window !== "undefined" &&
+      (window as unknown as { ethereum?: unknown }).ethereum
+    ) {
       console.log("Using window.ethereum provider");
-      return (window as any).ethereum;
+      return (window as unknown as { ethereum: unknown }).ethereum;
     }
 
     console.warn("No ethereum provider found");
@@ -106,6 +115,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         isOpen,
         platform,
         walletProvider: wallet.provider,
+        walletIsConnected: wallet.isConnected,
+        walletChainId: wallet.chainId,
+        isInMiniApp,
       });
     }
   }, [
@@ -116,6 +128,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     isOpen,
     platform,
     wallet.provider,
+    wallet.isConnected,
+    wallet.chainId,
+    isInMiniApp,
   ]);
 
   // Function to handle ThirdWeb submission for Polygon network
@@ -165,7 +180,16 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       }
 
       // Get the ethereum provider from the unified context
-      const ethereumProvider = getEthereumProvider();
+      const ethereumProvider = await getEthereumProvider();
+
+      console.log("SummaryModal submission debug:", {
+        platform,
+        effectiveAddress,
+        networkType,
+        contractAddress,
+        hasEthereumProvider: !!ethereumProvider,
+        providerType: ethereumProvider?.constructor?.name || "unknown",
+      });
 
       // Use direct contract interaction for ThirdWeb
       const result = await submitScoreDirectly(
@@ -446,22 +470,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               >
                 Twitter
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* Add Mini App prompt - show after successful workout in Farcaster */}
-        {isInMiniApp && repCount > 0 && (
-          <div className="border-t border-gray-700 pt-4">
-            <div className="text-center space-y-3">
-              <p className="text-sm text-purple-300 font-medium">
-                🎯 Great workout! Save this app for quick access
-              </p>
-              <AddMiniAppButton
-                variant="secondary"
-                showAfterWorkout={true}
-                className="w-full"
-              />
             </div>
           </div>
         )}

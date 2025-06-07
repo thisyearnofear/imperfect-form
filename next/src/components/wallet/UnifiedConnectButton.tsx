@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePlatform, useWallet, usePlatformFeatures } from "@/contexts/PlatformContext";
+import {
+  usePlatform,
+  useWallet,
+  usePlatformFeatures,
+} from "@/contexts/PlatformContext";
 import { Spinner } from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import { getBestDisplayName } from "@/utils/web3bio";
@@ -25,12 +29,15 @@ export default function UnifiedConnectButton({
   showProfileWhenConnected = true,
 }: UnifiedConnectButtonProps) {
   const { platform, user, isReady } = usePlatform();
-  const { isConnected, address, chainId, isConnecting, connect, disconnect } = useWallet();
-  const { canSwitchChains, defaultChain, preferredChains } = usePlatformFeatures();
-  
+  const { isConnected, address, chainId, isConnecting, connect, disconnect } =
+    useWallet();
+  const { canSwitchChains, preferredChains } = usePlatformFeatures();
+
   const { isMobile } = useDeviceDetect();
   const hasMounted = useClientOnly();
-  const [resolvedDisplayName, setResolvedDisplayName] = useState<string | undefined>();
+  const [resolvedDisplayName, setResolvedDisplayName] = useState<
+    string | undefined
+  >();
   const [showNetworkSwitcher, setShowNetworkSwitcher] = useState(false);
 
   // Get network name from chainId
@@ -50,7 +57,9 @@ export default function UnifiedConnectButton({
   };
 
   const networkName = getNetworkName(chainId);
-  const isOnPreferredChain = chainId ? preferredChains.includes(chainId) : false;
+  const isOnPreferredChain = chainId
+    ? preferredChains.includes(chainId)
+    : false;
 
   // Resolve display name
   useEffect(() => {
@@ -69,7 +78,9 @@ export default function UnifiedConnectButton({
 
         // Try to resolve ENS/other names
         const resolved = await getBestDisplayName(address);
-        setResolvedDisplayName(resolved || `${address.slice(0, 6)}...${address.slice(-4)}`);
+        setResolvedDisplayName(
+          resolved || `${address.slice(0, 6)}...${address.slice(-4)}`
+        );
       } catch {
         setResolvedDisplayName(`${address.slice(0, 6)}...${address.slice(-4)}`);
       }
@@ -125,7 +136,9 @@ export default function UnifiedConnectButton({
   // Don't render until mounted to prevent hydration issues
   if (!hasMounted || !isReady) {
     return (
-      <div className={`${sizeClasses[size]} ${className} bg-gray-300 animate-pulse rounded-lg`}>
+      <div
+        className={`${sizeClasses[size]} ${className} bg-gray-300 animate-pulse rounded-lg`}
+      >
         <div className="w-24 h-6 bg-gray-400 rounded"></div>
       </div>
     );
@@ -161,21 +174,28 @@ export default function UnifiedConnectButton({
             {platform === "pwa" && (
               <div className="w-2 h-2 bg-orange-300 rounded-full"></div>
             )}
-            
+
             <span className="truncate max-w-32">
-              {resolvedDisplayName || `${address.slice(0, 6)}...${address.slice(-4)}`}
+              {resolvedDisplayName ||
+                `${address.slice(0, 6)}...${address.slice(-4)}`}
             </span>
           </div>
 
           {/* Network indicator */}
           <div className="flex items-center space-x-1">
-            <div className={`w-2 h-2 rounded-full ${
-              chainId === 42220 ? "bg-green-400" :
-              chainId === 137 ? "bg-purple-400" :
-              chainId === 84532 ? "bg-blue-400" :
-              chainId === 10143 ? "bg-yellow-400" :
-              "bg-gray-400"
-            }`}></div>
+            <div
+              className={`w-2 h-2 rounded-full ${
+                chainId === 42220
+                  ? "bg-green-400"
+                  : chainId === 137
+                  ? "bg-purple-400"
+                  : chainId === 84532
+                  ? "bg-blue-400"
+                  : chainId === 10143
+                  ? "bg-yellow-400"
+                  : "bg-gray-400"
+              }`}
+            ></div>
             {!isMobile && (
               <span className="text-xs opacity-75">{networkName}</span>
             )}
@@ -189,7 +209,7 @@ export default function UnifiedConnectButton({
               <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-2">
                 Switch Network
               </div>
-              
+
               {preferredChains.map((chain) => (
                 <button
                   key={chain}
@@ -201,23 +221,35 @@ export default function UnifiedConnectButton({
                     w-full text-left px-3 py-2 rounded-md text-sm
                     hover:bg-gray-100 dark:hover:bg-gray-700
                     flex items-center space-x-2
-                    ${chainId === chain ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : ""}
+                    ${
+                      chainId === chain
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                        : ""
+                    }
                   `}
                 >
-                  <div className={`w-2 h-2 rounded-full ${
-                    chain === 42220 ? "bg-green-400" :
-                    chain === 137 ? "bg-purple-400" :
-                    chain === 84532 ? "bg-blue-400" :
-                    chain === 10143 ? "bg-yellow-400" :
-                    "bg-gray-400"
-                  }`}></div>
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      chain === 42220
+                        ? "bg-green-400"
+                        : chain === 137
+                        ? "bg-purple-400"
+                        : chain === 84532
+                        ? "bg-blue-400"
+                        : chain === 10143
+                        ? "bg-yellow-400"
+                        : "bg-gray-400"
+                    }`}
+                  ></div>
                   <span>{getNetworkName(chain)}</span>
-                  {chainId === chain && <span className="ml-auto text-xs">✓</span>}
+                  {chainId === chain && (
+                    <span className="ml-auto text-xs">✓</span>
+                  )}
                 </button>
               ))}
-              
+
               <hr className="my-2 border-gray-200 dark:border-gray-700" />
-              
+
               <button
                 onClick={handleDisconnect}
                 className="w-full text-left px-3 py-2 rounded-md text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -259,7 +291,7 @@ export default function UnifiedConnectButton({
           {platform === "mobile" && <span>📱</span>}
           {platform === "desktop" && <span>💻</span>}
           {platform === "pwa" && <span>🚀</span>}
-          
+
           <span>
             Connect {platform === "farcaster" ? "Farcaster" : "Wallet"}
           </span>

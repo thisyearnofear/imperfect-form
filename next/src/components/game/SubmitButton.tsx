@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { useUniversalWallet } from "@/components/providers";
+import { usePlatform } from "@/contexts/PlatformContext";
 import { useAccount as useWagmiAccount, useWriteContract } from "wagmi";
 
 import { Spinner } from "@/components/ui";
@@ -33,7 +33,8 @@ export default function SubmitButton({
   const [confirmStep, setConfirmStep] = useState(false);
 
   // Get chain info from universal wallet
-  const { chainId } = useUniversalWallet();
+  const { wallet } = usePlatform();
+  const { chainId } = wallet;
 
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {

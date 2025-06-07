@@ -62,7 +62,7 @@ export async function submitScoreDirectly(
   isBaseNetwork: boolean = false,
   connectedAddress?: string, // Pass the connected address from the React component
   skipSubAccountCheck: boolean = false, // Flag to skip sub-account check for direct submission
-  providedEthereumProvider?: any // Optional provider from unified context
+  providedEthereumProvider?: unknown // Optional provider from unified context
 ): Promise<{
   success: boolean;
   transactionHash?: string;
@@ -192,7 +192,7 @@ export async function submitScoreDirectly(
 
         // Fallback 1: Try to get chainId from provider directly
         try {
-          const providerWithRequest = ethereumProvider as any;
+          const providerWithRequest = ethereumProvider as { request?: (params: { method: string }) => Promise<string> };
           if (providerWithRequest && typeof providerWithRequest.request === 'function') {
             const chainId = await providerWithRequest.request({ method: 'eth_chainId' });
             const chainIdNumber = parseInt(chainId, 16);
@@ -210,7 +210,7 @@ export async function submitScoreDirectly(
 
           // Fallback 2: Try window.ethereum directly
           try {
-            const windowEthereum = (window as any).ethereum;
+            const windowEthereum = (window as unknown as { ethereum?: { request?: (params: { method: string }) => Promise<string> } }).ethereum;
             if (windowEthereum && typeof windowEthereum.request === 'function') {
               const chainId = await windowEthereum.request({ method: 'eth_chainId' });
               const chainIdNumber = parseInt(chainId, 16);

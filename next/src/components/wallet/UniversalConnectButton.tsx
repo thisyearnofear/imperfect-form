@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useUniversalWallet } from "@/components/providers";
+import { usePlatform } from "@/contexts/PlatformContext";
 import { Spinner } from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import { getBestDisplayName } from "@/utils/web3bio";
@@ -24,19 +24,14 @@ export default function UniversalConnectButton({
   size = "md",
   showProfileWhenConnected = true,
 }: UniversalConnectButtonProps) {
-  const {
-    isConnected,
-    address,
-    displayName,
-    isConnecting,
-    isInFarcaster,
-    farcasterUser,
-    connect,
-    disconnect,
-    switchToOptimalChain,
-    isReady,
-    chainId,
-  } = useUniversalWallet();
+  const { platform, user, wallet, actions, isReady } = usePlatform();
+  const { isConnected, address, chainId, isConnecting } = wallet;
+  const isInFarcaster = platform === "farcaster";
+  const farcasterUser = user;
+  const displayName =
+    user?.displayName ||
+    (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : undefined);
+  const { connect, disconnect, switchChain: switchToOptimalChain } = actions;
 
   const { isMobile, isWalletBrowser } = useDeviceDetect();
   const hasMounted = useClientOnly();

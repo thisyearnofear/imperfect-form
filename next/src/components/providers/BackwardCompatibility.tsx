@@ -6,15 +6,11 @@
  * while we gradually migrate to the new PlatformContext
  */
 
-import {
-  usePlatform,
-  useWallet,
-  usePlatformFeatures,
-} from "@/contexts/PlatformContext";
+import { usePlatform } from "@/contexts/PlatformContext";
 
 // Legacy useUniversalWallet hook
 export function useUniversalWallet() {
-  const { platform, user, wallet, features, actions, isReady } = usePlatform();
+  const { platform, user, wallet, actions, isReady } = usePlatform();
 
   return {
     // Connection state
@@ -77,12 +73,12 @@ export function useFarcasterContext() {
       const success = await actions.connect();
       return success ? wallet.address : null;
     },
-    signMessage: async (message: string) => {
+    signMessage: async () => {
       // TODO: Implement if needed
       console.warn("signMessage not implemented in compatibility layer");
       return null;
     },
-    sendTransaction: async (to: string, value: string, data?: string) => {
+    sendTransaction: async () => {
       // TODO: Implement if needed
       console.warn("sendTransaction not implemented in compatibility layer");
       return null;
@@ -161,7 +157,7 @@ export type { PlatformContextType as UniversalWalletContextType } from "@/contex
 // Legacy type exports
 export interface FarcasterContext {
   isInMiniApp: boolean;
-  user: any;
+  user: unknown;
   walletAddress: string | null;
   chainId: number | null;
   isLoading: boolean;

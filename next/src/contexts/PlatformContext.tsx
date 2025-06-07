@@ -163,7 +163,7 @@ interface FarcasterSDK {
         method: string;
         params?: unknown[];
       }) => Promise<unknown>;
-      on?: (event: string, handler: (data: any) => void) => void;
+      on?: (event: string, handler: (data: unknown) => void) => void;
     };
   };
   actions: {
@@ -267,13 +267,14 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     };
 
     initializePlatform();
-  }, [platform]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platform]); // features and wallet are derived from platform, so platform is sufficient
 
   // Initialize Farcaster SDK
   const initializeFarcaster = async () => {
     try {
       const { sdk } = await import("@farcaster/frame-sdk");
-      setFarcasterSDK(sdk as any); // Type assertion for SDK compatibility
+      setFarcasterSDK(sdk as unknown as FarcasterSDK); // Type assertion for SDK compatibility
 
       // Get user context
       try {
@@ -288,13 +289,31 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
       // Initialize wallet if available
       if (sdk.wallet?.ethProvider) {
         try {
-          // Get existing accounts
-          const accounts = (await sdk.wallet.ethProvider.request({
+          // Get existing accounts first
+          let accounts = (await sdk.wallet.ethProvider.request({
             method: "eth_accounts",
           })) as string[];
 
+          // If no accounts are connected, try to request accounts (auto-connect in mini app)
+          if (!accounts || accounts.length === 0) {
+            logger.info(
+              "No accounts found, attempting to request accounts in Farcaster mini app"
+            );
+            try {
+              accounts = (await sdk.wallet.ethProvider.request({
+                method: "eth_requestAccounts",
+              })) as string[];
+            } catch (requestError) {
+              logger.warn(
+                "Failed to request accounts, wallet may not be available",
+                requestError
+              );
+            }
+          }
+
           if (accounts && accounts.length > 0) {
             setFarcasterWallet((prev) => ({ ...prev, address: accounts[0] }));
+            logger.info("Farcaster wallet address set:", accounts[0]);
 
             // Get chain ID
             const hexChainId = (await sdk.wallet.ethProvider.request({
@@ -302,6 +321,9 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
             })) as string;
             const chainId = parseInt(hexChainId, 16);
             setFarcasterWallet((prev) => ({ ...prev, chainId }));
+            logger.info("Farcaster wallet chain ID set:", chainId);
+          } else {
+            logger.warn("No Farcaster wallet accounts available");
           }
 
           // Set up chain change listener
@@ -311,8 +333,10 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
             logger.info("Farcaster wallet chain changed", newChainId);
           });
         } catch (walletError) {
-          logger.warn("Failed to initialize Farcaster wallet", walletError);
+          logger.error("Failed to initialize Farcaster wallet", walletError);
         }
+      } else {
+        logger.warn("Farcaster SDK wallet provider not available");
       }
 
       logger.info("Farcaster SDK initialized successfully");

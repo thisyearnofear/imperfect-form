@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useUniversalWallet } from "@/components/providers";
+import { usePlatform } from "@/contexts/PlatformContext";
 import UniversalConnectButton from "@/components/wallet/UniversalConnectButton";
 import { Game } from "@/components/game";
 import { Spinner } from "@/components/ui";
@@ -11,8 +11,10 @@ import { Spinner } from "@/components/ui";
  * Just connect and play! Works everywhere: desktop, mobile, Farcaster
  */
 export default function GameWrapper() {
-  const { isConnected, address, isReady, isInFarcaster, farcasterUser } =
-    useUniversalWallet();
+  const { platform, user, wallet, isReady } = usePlatform();
+  const { isConnected, address } = wallet;
+  const isInFarcaster = platform === "farcaster";
+  const farcasterUser = user;
 
   // Loading state
   if (!isReady) {
