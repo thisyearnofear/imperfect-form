@@ -9,7 +9,7 @@ import {
   CELO_CONTRACT_ADDRESS,
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
-import { useWalletProvider } from "@/components/wallet/LegacyStubs";
+import { useWalletProvider } from "@/components/providers";
 import {
   switchChain,
   WalletProviderType,

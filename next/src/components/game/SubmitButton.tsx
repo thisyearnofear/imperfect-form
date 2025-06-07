@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { useUniversalWallet } from "@/components/providers/AppProviders";
+import { useUniversalWallet } from "@/components/providers";
 import { useAccount as useWagmiAccount, useWriteContract } from "wagmi";
 
 import { Spinner } from "@/components/ui";
@@ -51,7 +51,7 @@ export default function SubmitButton({
     }
   };
 
-  const network = getNetworkFromChainId(chainId);
+  const network = getNetworkFromChainId(chainId || undefined);
 
   // For Wagmi (Base), we can always call this hook
   const wagmiAccount = useWagmiAccount();

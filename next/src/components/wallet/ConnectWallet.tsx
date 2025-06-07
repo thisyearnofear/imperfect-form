@@ -5,7 +5,7 @@ import { ConnectWallet as ThirdwebConnectWallet } from "@thirdweb-dev/react";
 import { shortenAddress } from "@/utils/formatters";
 import { Dialog } from "@/components/ui";
 import { getBestDisplayName } from "@/utils/web3bio";
-import { useWalletProvider } from "@/components/wallet/LegacyStubs";
+import { useWalletProvider } from "@/components/providers";
 import { useAccount, useDisconnect as useWagmiDisconnect } from "wagmi";
 
 interface WalletModalProps {

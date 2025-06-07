@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/ui";
-import { useUniversalWallet } from "@/components/providers/AppProviders";
+import { useUniversalWallet } from "@/components/providers";
 import {
   useAccount,
   useWriteContract,
@@ -60,11 +60,12 @@ export default function SubmitScoreWithWagmi({
       case 10143:
         return "monad";
       default:
-        return "celo"; // Default to CELO instead of Base
+        // Default to CELO for Farcaster context, as it's the preferred chain
+        return "celo";
     }
   };
 
-  const network = getNetworkFromChainId(chainId);
+  const network = getNetworkFromChainId(chainId || undefined);
   // Create type-safe network variables
   const isPolygonNetwork = network === "polygon";
   const isMonadNetwork = network === "monad";
@@ -568,6 +569,16 @@ export default function SubmitScoreWithWagmi({
                   <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
                   Polygon Mainnet • Signature Wallet
                 </>
+              ) : isCeloNetwork ? (
+                <>
+                  <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
+                  Celo Mainnet • Farcaster Wallet
+                </>
+              ) : isMonadNetwork ? (
+                <>
+                  <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
+                  Monad Testnet • Signature Wallet
+                </>
               ) : (
                 <>
                   <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
@@ -591,6 +602,16 @@ export default function SubmitScoreWithWagmi({
                 <>
                   <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
                   Polygon Mainnet • Signature Wallet
+                </>
+              ) : isCeloNetwork ? (
+                <>
+                  <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
+                  Celo Mainnet • Farcaster Wallet
+                </>
+              ) : isMonadNetwork ? (
+                <>
+                  <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
+                  Monad Testnet • Signature Wallet
                 </>
               ) : (
                 <>

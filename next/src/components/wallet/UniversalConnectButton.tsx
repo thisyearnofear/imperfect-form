@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useUniversalWallet } from "@/components/providers/AppProviders";
+import { useUniversalWallet } from "@/components/providers";
 import { Spinner } from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import { getBestDisplayName } from "@/utils/web3bio";
@@ -61,7 +61,7 @@ export default function UniversalConnectButton({
     }
   };
 
-  const networkName = getNetworkName(chainId);
+  const networkName = getNetworkName(chainId || undefined);
 
   // Debug chainId changes
   useEffect(() => {

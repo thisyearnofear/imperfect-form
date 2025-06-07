@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useUniversalWallet } from "@/components/providers/AppProviders";
+import { useUniversalWallet } from "@/components/providers";
 import UniversalConnectButton from "@/components/wallet/UniversalConnectButton";
 import { Game } from "@/components/game";
 import { Spinner } from "@/components/ui";

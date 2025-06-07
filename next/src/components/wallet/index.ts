@@ -15,6 +15,5 @@ export {
   FallbackConnectButton,
   ConnectWallet,
   ThirdwebWrapper,
-  useWalletProvider,
-  useNetwork,
+  // Note: useWalletProvider and useNetwork are now available from @/components/providers
 } from './LegacyStubs';

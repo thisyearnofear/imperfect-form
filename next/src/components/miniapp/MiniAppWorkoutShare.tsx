@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { useMiniApp } from "@/contexts/MiniAppContext";
+import { useMiniApp } from "@/components/providers";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 
 const logger = createRemoteLogger("MiniAppWorkoutShare");
@@ -64,8 +64,8 @@ export function MiniAppWorkoutShare({
       {user && (
         <div className="flex items-center space-x-2 text-sm text-purple-300">
           <Image
-            src={user.pfpUrl}
-            alt={user.displayName}
+            src={user.pfpUrl || "/default-avatar.png"}
+            alt={user.displayName || "User"}
             width={24}
             height={24}
             className="rounded-full"

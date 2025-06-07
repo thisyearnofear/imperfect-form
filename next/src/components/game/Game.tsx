@@ -10,7 +10,7 @@ import {
 import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
 import { Welcome } from "@/components/game";
 import { UniversalConnectButton } from "@/components/wallet";
-import { useUniversalWallet } from "@/components/providers/AppProviders";
+import { useUniversalWallet } from "@/components/providers";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";

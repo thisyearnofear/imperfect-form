@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useMiniApp } from "@/contexts/MiniAppContext";
+import { useMiniApp } from "@/components/providers";
 import { AddMiniAppButton } from "./AddMiniAppButton";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 

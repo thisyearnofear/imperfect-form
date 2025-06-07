@@ -46,8 +46,8 @@ export const metadata: Metadata = {
   },
 };
 
-// Using static client component import for AppProviders
-import { AppProviders } from "@/components/providers";
+// Using simplified providers for better performance and DRY architecture
+import SimplifiedAppProviders from "@/components/providers/SimplifiedAppProviders";
 
 export default function RootLayout({
   children,
@@ -159,7 +159,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${pressStart2P.className} antialiased`}>
-        <AppProviders>{children}</AppProviders>
+        <SimplifiedAppProviders>{children}</SimplifiedAppProviders>
       </body>
     </html>
   );

@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Spinner } from "@/components/ui";
-import { useUniversalWallet } from "@/components/providers/AppProviders";
-import { useMiniApp } from "@/contexts/MiniAppContext";
+import { useUniversalWallet, useMiniApp } from "@/components/providers";
 import { NotificationSignup } from "@/components/miniapp/NotificationSignup";
 import {
   callFarcasterReady,

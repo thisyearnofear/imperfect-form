@@ -1,4 +1,8 @@
-// Export provider related components
-export { default as AppProviders } from './AppProviders';
-// Legacy Providers removed - use AppProviders instead
-export { default as Providers } from './AppProviders';
+// Export the new simplified providers
+export { default as SimplifiedAppProviders } from "./SimplifiedAppProviders";
+export { default } from "./SimplifiedAppProviders";
+
+// Backward compatibility exports
+export { default as AppProviders } from "./SimplifiedAppProviders";
+export { default as Providers } from "./SimplifiedAppProviders";
+export * from "./BackwardCompatibility";

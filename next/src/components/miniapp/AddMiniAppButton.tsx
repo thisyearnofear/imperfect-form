@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useMiniApp } from "@/contexts/MiniAppContext";
+import { useMiniApp } from "@/components/providers";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 
 const logger = createRemoteLogger("AddMiniAppButton");

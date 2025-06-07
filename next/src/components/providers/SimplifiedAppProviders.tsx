@@ -1,0 +1,209 @@
+"use client";
+
+import React, { ReactNode } from "react";
+import { WagmiProvider } from "wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createConfig, http, cookieStorage, createStorage } from "wagmi";
+import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
+import { baseSepolia, polygon, celo, type Chain } from "wagmi/chains";
+import { Toaster } from "react-hot-toast";
+import { PlatformProvider } from "@/contexts/PlatformContext";
+
+// Define Monad Testnet
+const monadTestnet: Chain = {
+  id: 10143,
+  name: "Monad Testnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "MON",
+    symbol: "MON",
+  },
+  rpcUrls: {
+    public: { http: ["https://testnet-rpc.monad.xyz/"] },
+    default: { http: ["https://testnet-rpc.monad.xyz/"] },
+  },
+  blockExplorers: {
+    default: {
+      name: "Monad Explorer",
+      url: "https://testnet.monadexplorer.com/",
+    },
+  },
+  testnet: true,
+};
+
+// Optimized Wagmi config - CELO first as default for better mobile/Farcaster UX
+const wagmiConfig = createConfig({
+  chains: [celo, polygon, baseSepolia, monadTestnet] as const,
+  connectors: [
+    // Primary: Coinbase Wallet (works on all chains, supports Smart Wallet)
+    coinbaseWallet({
+      appName: "Imperfect Form",
+      appLogoUrl: "https://imperfectform.fun/icon-192x192.png",
+      preference: "all", // Supports both EOA and Smart Wallet
+      enableMobileWalletLink: true,
+    }),
+
+    // Fallback: Injected wallets (MetaMask, etc.)
+    injected({
+      shimDisconnect: true,
+    }),
+
+    // Mobile: WalletConnect
+    walletConnect({
+      projectId:
+        process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+        "2b1d8e5a5c1e4c8a9b1e3d4a5b6c7d8e",
+      metadata: {
+        name: "Imperfect Form",
+        description: "Onchain fitness challenges",
+        url: "https://imperfectform.fun",
+        icons: ["https://imperfectform.fun/icon-192x192.png"],
+      },
+      showQrModal: false, // Prevent auto-popup on page load
+    }),
+  ],
+  storage: createStorage({
+    storage: cookieStorage,
+  }),
+  ssr: true,
+  transports: {
+    [baseSepolia.id]: http(),
+    [polygon.id]: http(
+      "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
+    ),
+    [celo.id]: http(),
+    [monadTestnet.id]: http(),
+  },
+});
+
+// Optimized Query client with better defaults
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 30000, // 30 seconds
+      gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
+
+// Toast configuration optimized for all platforms
+const toastConfig = {
+  position: "top-center" as const,
+  toastOptions: {
+    style: {
+      background: "#111",
+      color: "#fcb131",
+      border: "2px solid #fcb131",
+      fontFamily: '"Press Start 2P", cursive',
+      fontSize: "12px",
+      padding: "16px",
+      maxWidth: "400px",
+      textAlign: "center" as const,
+      boxShadow: "0 0 10px rgba(252, 177, 49, 0.5)",
+      wordBreak: "break-word" as const,
+      whiteSpace: "pre-wrap" as const,
+      overflowWrap: "break-word" as const,
+    },
+    success: {
+      style: {
+        background: "#111",
+        color: "#00a651",
+        border: "2px solid #00a651",
+      },
+      iconTheme: {
+        primary: "#00a651",
+        secondary: "#111",
+      },
+      duration: 3000,
+    },
+    error: {
+      style: {
+        background: "#111",
+        color: "#ff4500",
+        border: "2px solid #ff4500",
+      },
+      iconTheme: {
+        primary: "#ff4500",
+        secondary: "#111",
+      },
+      duration: 5000,
+    },
+    loading: {
+      style: {
+        background: "#111",
+        color: "#3498db",
+        border: "2px solid #3498db",
+      },
+      iconTheme: {
+        primary: "#3498db",
+        secondary: "#111",
+      },
+    },
+    duration: 3000,
+  },
+};
+
+interface AppProvidersProps {
+  children: ReactNode;
+}
+
+/**
+ * Simplified App Providers using unified PlatformContext
+ * This replaces the complex multi-context architecture with a single, clean provider
+ */
+export default function SimplifiedAppProviders({
+  children,
+}: AppProvidersProps) {
+  return (
+    <WagmiProvider config={wagmiConfig as any}>
+      <QueryClientProvider client={queryClient}>
+        <PlatformProvider>
+          <Toaster {...toastConfig} />
+          {children}
+        </PlatformProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
+}
+
+// Export the config for external use if needed
+export { wagmiConfig, queryClient };
+
+// Backward compatibility exports
+export { usePlatform as useUniversalWallet } from "@/contexts/PlatformContext";
+export { useWallet as useWalletProvider } from "@/contexts/PlatformContext";
+
+// Legacy network hook for backward compatibility
+export function useNetwork() {
+  const { wallet } = usePlatform();
+
+  // Map chain IDs to network names for backward compatibility
+  const getNetworkName = (id: number | null) => {
+    switch (id) {
+      case 84532:
+        return "base";
+      case 137:
+        return "polygon";
+      case 42220:
+        return "celo";
+      case 10143:
+        return "monad";
+      default:
+        return "celo"; // Default to CELO for all contexts
+    }
+  };
+
+  return {
+    network: getNetworkName(wallet.chainId),
+    setNetwork: () => {}, // Legacy - auto-handled now
+    isNetworkSelected: true, // Always true now
+  };
+}
+
+// Import the platform context hook
+import { usePlatform } from "@/contexts/PlatformContext";

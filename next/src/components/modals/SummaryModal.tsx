@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Dialog } from "@/components/ui";
-import { useUniversalWallet } from "@/components/providers/AppProviders";
+import { useUniversalWallet, usePlatform } from "@/components/providers";
 import { ConnectWallet } from "@/components/wallet";
 import { FarcasterShare } from "@/components/social";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
@@ -14,7 +14,7 @@ import {
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
 import { AddMiniAppButton } from "@/components/miniapp/AddMiniAppButton";
-import { useMiniApp } from "@/contexts/MiniAppContext";
+import { useMiniApp } from "@/components/providers";
 
 // Initialize window properties if they don't exist
 if (typeof window !== "undefined") {
@@ -45,6 +45,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 }) => {
   const { address: walletAddress, chainId } = useUniversalWallet();
   const { isInMiniApp } = useMiniApp();
+  const { platform, wallet } = usePlatform();
 
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {
@@ -62,7 +63,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     }
   };
 
-  const network = getNetworkFromChainId(chainId);
+  const network = getNetworkFromChainId(chainId || undefined);
 
   // Type assertion to help TypeScript understand the network type
   const networkType = network as "polygon" | "base" | "monad" | "celo";
@@ -73,6 +74,27 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [showDirectSubmit, setShowDirectSubmit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Function to get the actual ethereum provider
+  const getEthereumProvider = () => {
+    if (platform === "farcaster") {
+      // For Farcaster, try to get the SDK provider
+      const farcasterSDK = (window as any).sdk;
+      if (farcasterSDK?.wallet?.ethProvider) {
+        console.log("Using Farcaster SDK ethereum provider");
+        return farcasterSDK.wallet.ethProvider;
+      }
+    }
+
+    // Fallback to window.ethereum
+    if (typeof window !== "undefined" && (window as any).ethereum) {
+      console.log("Using window.ethereum provider");
+      return (window as any).ethereum;
+    }
+
+    console.warn("No ethereum provider found");
+    return null;
+  };
+
   // Debug logging for mobile wallet issues
   React.useEffect(() => {
     if (process.env.NODE_ENV !== "production") {
@@ -82,9 +104,19 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         walletAddress,
         effectiveAddress,
         isOpen,
+        platform,
+        walletProvider: wallet.provider,
       });
     }
-  }, [networkType, address, walletAddress, effectiveAddress, isOpen]);
+  }, [
+    networkType,
+    address,
+    walletAddress,
+    effectiveAddress,
+    isOpen,
+    platform,
+    wallet.provider,
+  ]);
 
   // Function to handle ThirdWeb submission for Polygon network
   const handleThirdwebSubmission = async () => {
@@ -132,13 +164,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         contractAddress = CELO_CONTRACT_ADDRESS;
       }
 
+      // Get the ethereum provider from the unified context
+      const ethereumProvider = getEthereumProvider();
+
       // Use direct contract interaction for ThirdWeb
       const result = await submitScoreDirectly(
         contractAddress,
         pushups,
         squats,
         false, // not Base network
-        effectiveAddress
+        effectiveAddress,
+        false, // skipSubAccountCheck
+        ethereumProvider // Pass the provider from unified context
       );
 
       if (result.success) {

@@ -8,7 +8,9 @@
     "build": "next build",
     "build:no-lint": "next build --no-lint",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migration:scan": "node scripts/find-migration-targets.js",
+    "migration:help": "echo 'Run npm run migration:scan to find files that need migration. See src/contexts/MIGRATION_GUIDE.md for details.'"
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.38.13",

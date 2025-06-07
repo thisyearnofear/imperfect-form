@@ -61,7 +61,8 @@ export async function submitScoreDirectly(
   squats: number,
   isBaseNetwork: boolean = false,
   connectedAddress?: string, // Pass the connected address from the React component
-  skipSubAccountCheck: boolean = false // Flag to skip sub-account check for direct submission
+  skipSubAccountCheck: boolean = false, // Flag to skip sub-account check for direct submission
+  providedEthereumProvider?: any // Optional provider from unified context
 ): Promise<{
   success: boolean;
   transactionHash?: string;
@@ -124,7 +125,16 @@ export async function submitScoreDirectly(
       }
     } else {
       // For ThirdWeb-compatible networks (Polygon/Monad/Celo), use appropriate provider
-      const ethereumProvider = await getEthereumProvider();
+      let ethereumProvider = providedEthereumProvider;
+
+      // If no provider was provided, fall back to the old method
+      if (!ethereumProvider) {
+        console.log("No provider provided, falling back to getEthereumProvider()");
+        ethereumProvider = await getEthereumProvider();
+      } else {
+        console.log("Using provided ethereum provider from unified context");
+      }
+
       if (!ethereumProvider) {
         return {
           success: false,
@@ -173,8 +183,66 @@ export async function submitScoreDirectly(
       provider.pollingInterval = 15000; // 15 seconds
 
       // Request the user to switch to the correct network if needed
-      const network = await provider.getNetwork();
-      console.log("Current network:", network);
+      let network;
+      try {
+        network = await provider.getNetwork();
+        console.log("Current network:", network);
+      } catch (networkError) {
+        console.warn("Failed to get network, attempting alternative detection:", networkError);
+
+        // Fallback 1: Try to get chainId from provider directly
+        try {
+          const providerWithRequest = ethereumProvider as any;
+          if (providerWithRequest && typeof providerWithRequest.request === 'function') {
+            const chainId = await providerWithRequest.request({ method: 'eth_chainId' });
+            const chainIdNumber = parseInt(chainId, 16);
+            console.log("Detected chainId from provider request:", chainIdNumber);
+
+            network = {
+              chainId: chainIdNumber,
+              name: `Chain ${chainIdNumber}`,
+            };
+          } else {
+            throw new Error("Provider request method not available");
+          }
+        } catch (chainIdError) {
+          console.warn("Provider request failed, trying window.ethereum:", chainIdError);
+
+          // Fallback 2: Try window.ethereum directly
+          try {
+            const windowEthereum = (window as any).ethereum;
+            if (windowEthereum && typeof windowEthereum.request === 'function') {
+              const chainId = await windowEthereum.request({ method: 'eth_chainId' });
+              const chainIdNumber = parseInt(chainId, 16);
+              console.log("Detected chainId from window.ethereum:", chainIdNumber);
+
+              network = {
+                chainId: chainIdNumber,
+                name: `Chain ${chainIdNumber}`,
+              };
+            } else {
+              throw new Error("window.ethereum not available");
+            }
+          } catch (windowError) {
+            console.error("All network detection methods failed:", windowError);
+
+            // Fallback 3: Use contract address to infer network
+            console.warn("Using contract address to infer network");
+            if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
+              network = { chainId: 137, name: "Polygon Mainnet" };
+            } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
+              network = { chainId: 42220, name: "Celo Mainnet" };
+            } else if (contractAddress === "0x653d41Fba630381aA44d8598a4b35Ce257924d65") {
+              network = { chainId: 10143, name: "Monad Testnet" };
+            } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
+              network = { chainId: 84532, name: "Base Sepolia" };
+            } else {
+              throw new Error("Could not detect network. Please ensure your wallet is connected and try again.");
+            }
+            console.log("Inferred network from contract address:", network);
+          }
+        }
+      }
 
       // Debug network detection for mobile wallets
       if (process.env.NODE_ENV !== "production") {
@@ -187,10 +255,14 @@ export async function submitScoreDirectly(
       }
 
       // Get the signer
-      signer = provider.getSigner();
-      userAddress = await signer.getAddress();
-
-      console.log("Signer address obtained:", userAddress);
+      try {
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        console.log("Signer address obtained:", userAddress);
+      } catch (signerError) {
+        console.error("Failed to get signer:", signerError);
+        throw new Error("Could not access wallet. Please ensure your wallet is connected and unlocked.");
+      }
     }
 
     // Determine which ABI to use based on the contract address

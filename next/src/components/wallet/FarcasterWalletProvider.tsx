@@ -1,10 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode } from "react";
-import {
-  useFarcasterContext,
-  FarcasterContext,
-} from "@/hooks/useFarcasterContext";
+import { usePlatform } from "@/contexts/PlatformContext";
+import { FarcasterContext } from "@/components/providers";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 
 // Initialize logger for Farcaster wallet provider
@@ -23,7 +21,30 @@ interface FarcasterWalletProviderProps {
 export function FarcasterWalletProvider({
   children,
 }: FarcasterWalletProviderProps) {
-  const farcasterContext = useFarcasterContext();
+  const { platform, user, wallet, actions, isReady, error } = usePlatform();
+
+  // Convert to legacy interface
+  const farcasterContext: FarcasterContext = {
+    isInMiniApp: platform === "farcaster",
+    user: user,
+    walletAddress: platform === "farcaster" ? wallet.address : null,
+    chainId: platform === "farcaster" ? wallet.chainId : null,
+    isLoading: !isReady,
+    error,
+    connectWallet: async () => {
+      const success = await actions.connect();
+      return success ? wallet.address : null;
+    },
+    signMessage: async (message: string) => {
+      console.warn("signMessage not implemented in new context");
+      return null;
+    },
+    sendTransaction: async (to: string, value: string, data?: string) => {
+      console.warn("sendTransaction not implemented in new context");
+      return null;
+    },
+    switchChain: actions.switchChain,
+  };
 
   // Log provider initialization
   React.useEffect(() => {
@@ -55,6 +76,7 @@ export function useFarcasterWallet(): FarcasterContext {
       isInMiniApp: false,
       user: null,
       walletAddress: null,
+      chainId: null,
       isLoading: false,
       error: null,
       connectWallet: async () => {
@@ -68,6 +90,10 @@ export function useFarcasterWallet(): FarcasterContext {
       sendTransaction: async () => {
         logger.warn("sendTransaction called outside of Farcaster context");
         return null;
+      },
+      switchChain: async () => {
+        logger.warn("switchChain called outside of Farcaster context");
+        return false;
       },
     };
   }

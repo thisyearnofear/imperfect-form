@@ -6,18 +6,13 @@ import UniversalConnectButton from "./UniversalConnectButton";
 // Legacy stubs to prevent import errors from old components
 // All of these redirect to the new universal system
 
-export const useWalletProvider = () => ({
-  walletProvider: "universal",
-  setWalletProvider: () => {},
-  isWalletProviderSelected: true,
-  isConnected: false,
-  setIsConnected: () => {},
-  disconnect: () => {},
-  resetAll: () => {},
-  userAddress: undefined,
-  setUserAddress: () => {},
-  changeWalletProvider: () => {},
-});
+// Import from the new unified context
+import { useWalletProvider as useNewWalletProvider } from "@/components/providers";
+
+export const useWalletProvider = () => {
+  // Use the new context but maintain legacy interface
+  return useNewWalletProvider();
+};
 
 export const useNetwork = () => ({
   network: "base",

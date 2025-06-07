@@ -9,7 +9,14 @@ import toast from 'react-hot-toast';
 
 // Constants for Divvi integration
 const DIVVI_CONSUMER_ID = '0x55A5705453Ee82c742274154136Fce8149597058' as `0x${string}`;
-const DIVVI_PROVIDERS: `0x${string}`[] = []; // Add providers if needed in the future
+
+// Provider addresses from signed up campaigns:
+// - Proof of Impact Season 0 (CELO rewards)
+// - Scout Game ($DEV rewards)
+const DIVVI_PROVIDERS: `0x${string}`[] = [
+  '0x0423189886d7966f0dd7e7d256898daeee625dca', // Campaign provider 1
+  '0xc95876688026be9d6fa7a7c33328bd013effa2bb', // Campaign provider 2
+];
 
 /**
  * Check if a user has already been registered with Divvi
