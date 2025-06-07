@@ -6,7 +6,10 @@ import { Spinner } from "@/components/ui";
 import { useUniversalWallet } from "@/components/providers/AppProviders";
 import { useMiniApp } from "@/contexts/MiniAppContext";
 import { NotificationSignup } from "@/components/miniapp/NotificationSignup";
-import { callFarcasterReady } from "@/utils/farcasterMiniApp";
+import {
+  callFarcasterReady,
+  debugFarcasterContext,
+} from "@/utils/farcasterMiniApp";
 
 const GameWrapper = dynamic(() => import("@/components/game/GameWrapper"), {
   ssr: false,
@@ -66,21 +69,30 @@ export default function Home() {
   // IMPORTANT: This is the ONLY place where ready() should be called!
   // Do NOT add ready() calls elsewhere to avoid conflicts and splash screen issues
   useEffect(() => {
-    if (hasMounted && isInMiniApp) {
-      // Call ready() immediately when we detect Mini App context
-      // Don't wait for wallet connections or other complex state
+    if (hasMounted) {
+      console.log(
+        "🎯 Page mounted, isInMiniApp:",
+        isInMiniApp,
+        "miniAppLoading:",
+        miniAppLoading
+      );
+
+      // Debug Farcaster context
+      debugFarcasterContext();
+
+      // Try calling ready() regardless of detection - it's safe to call even if not in Mini App
+      // The SDK will handle it gracefully if we're not in the right context
       callFarcasterReady()
         .then(() => {
+          console.log("🎯 Ready() completed successfully");
           setUiReady(true);
         })
         .catch(() => {
+          console.log("🎯 Ready() failed or not needed, continuing anyway");
           setUiReady(true); // Continue anyway
         });
-    } else if (!isInMiniApp && hasMounted) {
-      // Not in Mini App, set UI ready immediately
-      setUiReady(true);
     }
-  }, [hasMounted, isInMiniApp]); // Simplified dependencies
+  }, [hasMounted]); // Only depend on mounting, not Mini App detection
 
   // Show first-time Mini App prompt
   useEffect(() => {

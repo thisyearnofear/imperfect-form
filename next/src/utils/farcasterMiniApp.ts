@@ -19,17 +19,24 @@ const logger = createRemoteLogger('FarcasterMiniApp');
  */
 export async function callFarcasterReady(): Promise<void> {
   try {
+    logger.info('🎯 Attempting to call Farcaster ready()...');
+
     // Dynamically import the Farcaster SDK
     const { sdk } = await import('@farcaster/frame-sdk');
+    logger.info('🎯 Farcaster SDK imported successfully');
 
     if (sdk.actions?.ready) {
+      logger.info('🎯 SDK ready() method available, calling now...');
       await sdk.actions.ready();
       logger.info('🎯 Farcaster ready() called successfully - splash screen dismissed');
     } else {
-      logger.warn('Farcaster SDK ready() not available');
+      logger.warn('🎯 Farcaster SDK ready() not available', {
+        hasActions: !!sdk.actions,
+        sdkKeys: Object.keys(sdk)
+      });
     }
   } catch (error) {
-    logger.warn('Failed to call Farcaster ready():', error);
+    logger.warn('🎯 Failed to call Farcaster ready():', error);
     // Don't throw - the app should continue even if ready() fails
   }
 }
@@ -76,11 +83,41 @@ export async function callFarcasterReadyWithOptions(
 export function isFarcasterMiniApp(): boolean {
   if (typeof window === 'undefined') return false;
 
-  // Check for common Farcaster Mini App indicators
-  return !!(
-    window.parent !== window || // In iframe
-    window.location !== window.parent.location || // Different location
-    document.referrer.includes('farcaster') || // Referred from Farcaster
-    window.navigator.userAgent.includes('Farcaster') // Farcaster user agent
-  );
+  const checks = {
+    iframe: window.parent !== window,
+    differentLocation: window.location !== window.parent.location,
+    referrer: document.referrer.includes('farcaster') || document.referrer.includes('warpcast'),
+    userAgent: window.navigator.userAgent.includes('Farcaster') || window.navigator.userAgent.includes('Warpcast'),
+    url: window.location.href.includes('farcaster') || window.location.href.includes('warpcast')
+  };
+
+  const result = Object.values(checks).some(check => check);
+
+  logger.info('🎯 Simple Farcaster detection', {
+    result,
+    checks,
+    userAgent: navigator.userAgent,
+    referrer: document.referrer,
+    href: window.location.href
+  });
+
+  return result;
+}
+
+/**
+ * Debug function to log all detection info
+ */
+export function debugFarcasterContext(): void {
+  if (typeof window === 'undefined') return;
+
+  console.log('🎯 Farcaster Debug Info:', {
+    userAgent: navigator.userAgent,
+    referrer: document.referrer,
+    href: window.location.href,
+    search: window.location.search,
+    hostname: window.location.hostname,
+    isIframe: window.parent !== window,
+    hasParentDifference: window.location !== window.parent.location,
+    simpleDetection: isFarcasterMiniApp()
+  });
 }
