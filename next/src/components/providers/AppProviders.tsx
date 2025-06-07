@@ -21,6 +21,7 @@ import {
 } from "wagmi";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
+import { useFarcasterContext } from "@/hooks/useFarcasterContext";
 
 // Define Monad Testnet
 const monadTestnet: Chain = {
@@ -186,13 +187,27 @@ function useFarcasterIntegration() {
 function UniversalWalletProvider({ children }: { children: ReactNode }) {
   const { connect, connectors, isPending: isConnecting } = useConnect();
   const { disconnect } = useDisconnect();
-  const { address, isConnected } = useAccount();
+  const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
 
   const { isInFarcaster, farcasterUser } = useFarcasterIntegration();
+
+  // Integrate Farcaster wallet
+  const farcasterContext = useFarcasterContext();
+
   const [isReady, setIsReady] = useState(false);
   const [displayName, setDisplayName] = useState<string | undefined>();
+
+  // Unified wallet state - prioritize Farcaster wallet when in Mini App
+  const isConnected = farcasterContext.isInMiniApp
+    ? !!farcasterContext.walletAddress || wagmiConnected
+    : wagmiConnected;
+
+  const address =
+    farcasterContext.isInMiniApp && farcasterContext.walletAddress
+      ? farcasterContext.walletAddress
+      : wagmiAddress;
 
   // Initialize
   useEffect(() => {
@@ -215,6 +230,30 @@ function UniversalWalletProvider({ children }: { children: ReactNode }) {
   // Smart connection function - respects user preferences
   const handleConnect = async () => {
     try {
+      // If in Farcaster Mini App, use Farcaster wallet first
+      if (farcasterContext.isInMiniApp) {
+        toast.loading(
+          `GM ${
+            farcasterContext.user?.displayName || "Anon"
+          }! Connecting Farcaster wallet...`,
+          { id: "connect" }
+        );
+
+        console.log("🎯 Attempting Farcaster wallet connection...");
+        const farcasterAddress = await farcasterContext.connectWallet();
+
+        if (farcasterAddress) {
+          toast.success("Farcaster wallet connected!", { id: "connect" });
+          console.log("🎯 Farcaster wallet connected:", farcasterAddress);
+          return;
+        } else {
+          console.log(
+            "🎯 Farcaster wallet connection failed, falling back to Wagmi..."
+          );
+          toast.loading("Trying alternative connection...", { id: "connect" });
+        }
+      }
+
       // Auto-select best connector based on context
       let targetConnector;
 
@@ -367,16 +406,28 @@ function UniversalWalletProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected, chainId]);
 
+  // Enhanced disconnect that handles both Farcaster and Wagmi
+  const handleDisconnect = () => {
+    // Always disconnect Wagmi
+    disconnect();
+
+    // Note: Farcaster wallet doesn't have a disconnect method in the SDK
+    // The wallet connection persists in the Mini App context
+    if (farcasterContext.isInMiniApp) {
+      toast.success("Disconnected from wallet");
+    }
+  };
+
   const contextValue: UniversalWalletContextType = {
     isConnected,
     address,
     chainId,
-    isConnecting,
+    isConnecting: isConnecting || farcasterContext.isLoading,
     displayName,
-    isInFarcaster,
-    farcasterUser,
+    isInFarcaster: farcasterContext.isInMiniApp || isInFarcaster,
+    farcasterUser: farcasterContext.user || farcasterUser,
     connect: handleConnect,
-    disconnect,
+    disconnect: handleDisconnect,
     switchToOptimalChain: switchToChain,
     isReady,
   };
