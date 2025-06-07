@@ -10,6 +10,7 @@ import {
 } from "viem";
 import { baseSepolia } from "viem/chains";
 import toast from "react-hot-toast";
+import { getEthereumProvider } from "./farcasterMiniApp";
 
 // Constants for the spend permission manager
 const SPEND_PERMISSION_MANAGER_ADDRESS =
@@ -111,16 +112,16 @@ export function getPublicClient() {
   });
 }
 
-// Get a wallet client using the browser's provider
+// Get a wallet client using the appropriate provider (Farcaster or window.ethereum)
 export async function getWalletClient() {
-  const provider = window.ethereum as EthereumProvider | undefined;
+  const provider = await getEthereumProvider();
   if (!provider) {
     throw new Error("No Ethereum provider found");
   }
 
   return createWalletClient({
     chain: baseSepolia,
-    transport: custom(provider),
+    transport: custom(provider as EthereumProvider),
   });
 }
 

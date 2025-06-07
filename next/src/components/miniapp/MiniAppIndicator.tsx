@@ -4,91 +4,17 @@ import React from "react";
 import Image from "next/image";
 import { useMiniApp } from "@/contexts/MiniAppContext";
 
+// Keeping interface for backward compatibility but not using it
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface MiniAppIndicatorProps {
   className?: string;
   showFullFeatures?: boolean;
 }
 
-export function MiniAppIndicator({
-  className = "",
-  showFullFeatures = false,
-}: MiniAppIndicatorProps) {
-  const {
-    isInMiniApp,
-    user,
-    canSendNotifications,
-    canAccessWallet,
-    canShareContent,
-    openInBrowser,
-  } = useMiniApp();
-
-  if (!isInMiniApp) {
-    return null;
-  }
-
-  return (
-    <div
-      className={`bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-500/30 rounded-lg p-3 ${className}`}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
-          <span className="text-lg">🎭</span>
-          <span className="text-sm font-bold text-purple-200">
-            Farcaster Mini App
-          </span>
-        </div>
-
-        {/* Open in browser button */}
-        <button
-          onClick={openInBrowser}
-          className="text-xs bg-purple-700 hover:bg-purple-600 text-white px-2 py-1 rounded transition-colors"
-        >
-          Open Full App
-        </button>
-      </div>
-
-      {/* User info */}
-      {user && (
-        <div className="flex items-center space-x-2 mb-2">
-          <Image
-            src={user.pfpUrl}
-            alt={user.displayName}
-            width={20}
-            height={20}
-            className="rounded-full"
-          />
-          <span className="text-xs text-purple-300">GM @{user.username}</span>
-        </div>
-      )}
-
-      {/* Features indicator */}
-      {showFullFeatures && (
-        <div className="flex flex-wrap gap-1 text-xs">
-          {canAccessWallet && (
-            <span className="bg-green-800/50 text-green-300 px-2 py-1 rounded">
-              🔗 Wallet Connected
-            </span>
-          )}
-          {canShareContent && (
-            <span className="bg-blue-800/50 text-blue-300 px-2 py-1 rounded">
-              📤 Can Share
-            </span>
-          )}
-          {canSendNotifications && (
-            <span className="bg-yellow-800/50 text-yellow-300 px-2 py-1 rounded">
-              🔔 Notifications
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Mini description */}
-      <div className="text-xs text-gray-400 mt-2">
-        Enhanced experience in Farcaster
-      </div>
-    </div>
-  );
+export function MiniAppIndicator() {
+  // Always return null - users don't need to see "Farcaster Mini App" header
+  // This component is kept for backward compatibility but hidden from users
+  return null;
 }
 
 // Compact version for header/nav use

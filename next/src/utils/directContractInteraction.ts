@@ -7,6 +7,7 @@ import {
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
 import { isFirstTimeDivviUser, getDivviDataSuffix, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
+import { getEthereumProvider } from "./farcasterMiniApp";
 
 /**
  * Helper function to check if the current provider is Coinbase Wallet
@@ -122,12 +123,13 @@ export async function submitScoreDirectly(
         };
       }
     } else {
-      // For ThirdWeb-compatible networks (Polygon/Monad/Celo), use window.ethereum
-      if (!window.ethereum) {
+      // For ThirdWeb-compatible networks (Polygon/Monad/Celo), use appropriate provider
+      const ethereumProvider = await getEthereumProvider();
+      if (!ethereumProvider) {
         return {
           success: false,
           error:
-            "No Ethereum provider found. Please install a wallet extension.",
+            "No Ethereum provider found. Please connect your wallet.",
         };
       }
 
@@ -146,18 +148,26 @@ export async function submitScoreDirectly(
 
       // Debug mobile wallet browser detection
       if (process.env.NODE_ENV !== "production") {
+        const providerInfo = ethereumProvider as {
+          isMetaMask?: boolean;
+          isCoinbaseWallet?: boolean;
+          isTrust?: boolean;
+          constructor?: { name?: string };
+        };
+
         console.log("Mobile wallet debug info:", {
           userAgent: navigator.userAgent,
-          isMetaMask: window.ethereum?.isMetaMask,
-          isCoinbaseWallet: window.ethereum?.isCoinbaseWallet,
-          isTrust: window.ethereum?.isTrust,
+          isMetaMask: providerInfo?.isMetaMask,
+          isCoinbaseWallet: providerInfo?.isCoinbaseWallet,
+          isTrust: providerInfo?.isTrust,
           networkName,
           contractAddress,
+          providerType: providerInfo?.constructor?.name || 'unknown'
         });
       }
 
-      // Create a provider without custom options first
-      provider = new ethers.providers.Web3Provider(window.ethereum);
+      // Create a provider using the appropriate Ethereum provider (Farcaster or window.ethereum)
+      provider = new ethers.providers.Web3Provider(ethereumProvider);
 
       // Set the polling interval and timeout separately
       provider.pollingInterval = 15000; // 15 seconds

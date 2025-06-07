@@ -316,17 +316,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           {!showWelcome && !started && (
             <div id="instructions" style={{ display: "flex" }}>
               <p>
-                a) Press <span className="button-text start">START</span> to
-                begin
+                a) <span className="button-text start">START</span> = begin
               </p>
               <p>
-                b) Press <span className="button-text stop">STOP</span> to end
+                b) <span className="button-text stop">STOP</span> = end
               </p>
               <p>
-                c) Press <span className="button-text reset">RESET</span> to
-                start again
+                c) <span className="button-text reset">RESET</span> = restart
               </p>
-              <p>d) Try your best, have fun!</p>
+              <p>d) Have fun!</p>
               <p className="built-by">
                 Built by{" "}
                 <a
