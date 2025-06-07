@@ -13,6 +13,8 @@ import {
   CELO_CONTRACT_ADDRESS,
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
+import { AddMiniAppButton } from "@/components/miniapp/AddMiniAppButton";
+import { useMiniApp } from "@/contexts/MiniAppContext";
 
 // Initialize window properties if they don't exist
 if (typeof window !== "undefined") {
@@ -42,15 +44,21 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   address,
 }) => {
   const { address: walletAddress, chainId } = useUniversalWallet();
-  
+  const { isInMiniApp } = useMiniApp();
+
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {
     switch (id) {
-      case 84532: return 'base';
-      case 137: return 'polygon';
-      case 42220: return 'celo';
-      case 10143: return 'monad';
-      default: return 'base';
+      case 84532:
+        return "base";
+      case 137:
+        return "polygon";
+      case 42220:
+        return "celo";
+      case 10143:
+        return "monad";
+      default:
+        return "base";
     }
   };
 
@@ -76,13 +84,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         isOpen,
       });
     }
-  }, [
-    networkType,
-    address,
-    walletAddress,
-    effectiveAddress,
-    isOpen,
-  ]);
+  }, [networkType, address, walletAddress, effectiveAddress, isOpen]);
 
   // Function to handle ThirdWeb submission for Polygon network
   const handleThirdwebSubmission = async () => {
@@ -407,6 +409,38 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               >
                 Twitter
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Add Mini App prompt - show after successful workout in Farcaster */}
+        {isInMiniApp && repCount > 0 && (
+          <div className="border-t border-gray-700 pt-4">
+            <div className="text-center space-y-3">
+              <p className="text-sm text-purple-300 font-medium">
+                🎯 Great workout! Save this app for quick access
+              </p>
+              <AddMiniAppButton
+                variant="secondary"
+                showAfterWorkout={true}
+                className="w-full"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Add Mini App prompt - show after successful workout in Farcaster */}
+        {isInMiniApp && repCount > 0 && (
+          <div className="border-t border-gray-700 pt-4">
+            <div className="text-center space-y-3">
+              <p className="text-sm text-purple-300 font-medium">
+                🎯 Great workout! Save this app for quick access
+              </p>
+              <AddMiniAppButton
+                variant="secondary"
+                showAfterWorkout={true}
+                className="w-full"
+              />
             </div>
           </div>
         )}

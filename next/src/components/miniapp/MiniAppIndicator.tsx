@@ -122,9 +122,9 @@ export function CompactMiniAppIndicator({
   );
 }
 
-// Banner version for prominent display
+// Banner version for subtle display
 export function MiniAppBanner({ className = "" }: { className?: string }) {
-  const { isInMiniApp, user, openInBrowser } = useMiniApp();
+  const { isInMiniApp, user } = useMiniApp();
 
   if (!isInMiniApp) {
     return null;
@@ -132,25 +132,13 @@ export function MiniAppBanner({ className = "" }: { className?: string }) {
 
   return (
     <div
-      className={`bg-gradient-to-r from-purple-600 to-pink-600 text-white p-3 rounded-lg ${className}`}
+      className={`flex items-center justify-center py-1 px-3 bg-purple-900/30 border-b border-purple-500/30 ${className}`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <span className="text-xl">🎭</span>
-          <div>
-            <div className="font-bold text-base">Farcaster Mini App</div>
-            {user && (
-              <div className="text-xs opacity-90">GM {user.displayName}</div>
-            )}
-          </div>
-        </div>
-
-        <button
-          onClick={openInBrowser}
-          className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-        >
-          Full App
-        </button>
+      <div className="flex items-center space-x-2">
+        <span className="text-sm">🎭</span>
+        <span className="text-xs text-purple-300 font-medium">
+          {user ? `Mini App • GM ${user.displayName}` : "Farcaster Mini App"}
+        </span>
       </div>
     </div>
   );

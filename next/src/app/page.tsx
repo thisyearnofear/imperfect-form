@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Spinner } from "@/components/ui";
 import { useUniversalWallet } from "@/components/providers/AppProviders";
 import { useMiniApp } from "@/contexts/MiniAppContext";
+import { NotificationSignup } from "@/components/miniapp/NotificationSignup";
 
 const GameWrapper = dynamic(() => import("@/components/game/GameWrapper"), {
   ssr: false,
@@ -33,6 +34,7 @@ export default function Home() {
   const { isInMiniApp } = useMiniApp();
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [showFirstTimePrompt, setShowFirstTimePrompt] = useState(false);
 
   const [leaderboardData, setLeaderboardData] = useState<{
     pushups: Score[];
@@ -57,6 +59,19 @@ export default function Home() {
   useEffect(() => {
     setHasMounted(true);
   }, []);
+
+  // Show first-time Mini App prompt
+  useEffect(() => {
+    if (isInMiniApp && hasMounted) {
+      const hasSeenPrompt = localStorage.getItem("miniapp-first-visit-seen");
+      if (!hasSeenPrompt) {
+        // Show prompt after a short delay to let the app load
+        setTimeout(() => {
+          setShowFirstTimePrompt(true);
+        }, 3000);
+      }
+    }
+  }, [isInMiniApp, hasMounted]);
 
   // Loading state
   if (!hasMounted || !isReady) {
@@ -131,6 +146,18 @@ export default function Home() {
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
       />
+
+      {/* First-time Mini App user prompt */}
+      {showFirstTimePrompt && (
+        <NotificationSignup
+          variant="floating"
+          trigger="first_visit"
+          onSignupComplete={() => {
+            setShowFirstTimePrompt(false);
+            localStorage.setItem("miniapp-first-visit-seen", "true");
+          }}
+        />
+      )}
     </>
   );
 }

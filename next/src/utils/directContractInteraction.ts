@@ -6,7 +6,7 @@ import {
   baseLeaderboardABI
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
-import { isFirstTimeUser, getDivviDataSuffix, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
+import { isFirstTimeDivviUser, getDivviDataSuffix, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
 
 /**
  * Helper function to check if the current provider is Coinbase Wallet
@@ -243,6 +243,7 @@ export async function submitScoreDirectly(
     // Send transaction with explicit gas limit
     // Use different transaction parameters based on the network
     let tx;
+    let shouldRegisterWithDivvi = false; // Track if we should register with Divvi after transaction
 
     // Network-specific transaction parameters
     if (contractAddress === "0x653d41Fba630381aA44d8598a4b35Ce257924d65") {
@@ -269,17 +270,18 @@ export async function submitScoreDirectly(
       // Celo Mainnet
       console.log("Using Celo mainnet specific transaction parameters");
 
-      // Check if this is a first-time user for Divvi integration
-      const isFirstTime = await isFirstTimeUser(contractAddress, userAddress);
-      console.log("Is first-time Celo user:", isFirstTime);
+      // Check if this is a first-time Divvi user (42220 is Celo mainnet)
+      const isFirstTimeDivvi = await isFirstTimeDivviUser(userAddress, 42220);
+      console.log("Is first-time Divvi user on Celo:", isFirstTimeDivvi);
 
-      // If first-time user, show enhanced features prompt and prepare Divvi integration
+      // If first-time Divvi user, show enhanced features prompt and prepare Divvi integration
       let dataSuffix = "";
-      if (isFirstTime) {
+      if (isFirstTimeDivvi) {
         const userAccepted = await showEnhancedFeaturesPrompt();
         if (userAccepted) {
           dataSuffix = getDivviDataSuffix();
-          console.log("Added Divvi data suffix for first-time user");
+          shouldRegisterWithDivvi = true;
+          console.log("Added Divvi data suffix for first-time user registration");
         }
       }
 
@@ -357,20 +359,73 @@ export async function submitScoreDirectly(
     } else if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
       // Polygon Mainnet
       console.log("Using Polygon mainnet specific transaction parameters");
+
+      // Check if this is a first-time Divvi user (137 is Polygon mainnet)
+      const isFirstTimeDivvi = await isFirstTimeDivviUser(userAddress, 137);
+      console.log("Is first-time Divvi user on Polygon:", isFirstTimeDivvi);
+
+      // If first-time Divvi user, show enhanced features prompt and prepare Divvi integration
+      let dataSuffix = "";
+      if (isFirstTimeDivvi) {
+        const userAccepted = await showEnhancedFeaturesPrompt();
+        if (userAccepted) {
+          dataSuffix = getDivviDataSuffix();
+          shouldRegisterWithDivvi = true;
+          console.log("Added Divvi data suffix for first-time user registration on Polygon");
+        }
+      }
+
       try {
-        // For Polygon mainnet, use EIP-1559 transaction
-        tx = await contract.addScore(pushups, squats, {
-          gasLimit: gasLimit.mul(2), // Double the gas limit for Polygon
-          maxPriorityFeePerGas: ethers.utils.parseUnits("30", "gwei"), // Higher priority fee for Polygon
-          maxFeePerGas: ethers.utils.parseUnits("100", "gwei"), // Higher max fee for Polygon
-        });
+        if (dataSuffix) {
+          // For first-time users with Divvi integration
+          console.log("Sending Polygon transaction with Divvi integration");
+
+          // Get the contract interface to encode function data manually
+          const iface = contract.interface;
+          const data = iface.encodeFunctionData("addScore", [pushups, squats]);
+          const finalData = data + dataSuffix;
+
+          // Create a transaction object with EIP-1559
+          const txRequest = {
+            to: contractAddress,
+            data: finalData,
+            gasLimit: gasLimit.mul(2),
+            maxPriorityFeePerGas: ethers.utils.parseUnits("30", "gwei"),
+            maxFeePerGas: ethers.utils.parseUnits("100", "gwei"),
+          };
+
+          tx = await signer.sendTransaction(txRequest);
+        } else {
+          // For returning users, use standard contract call
+          tx = await contract.addScore(pushups, squats, {
+            gasLimit: gasLimit.mul(2), // Double the gas limit for Polygon
+            maxPriorityFeePerGas: ethers.utils.parseUnits("30", "gwei"), // Higher priority fee for Polygon
+            maxFeePerGas: ethers.utils.parseUnits("100", "gwei"), // Higher max fee for Polygon
+          });
+        }
       } catch (error) {
         console.error("Polygon transaction failed:", error);
         // Fall back to legacy transaction format
-        tx = await contract.addScore(pushups, squats, {
-          gasLimit: gasLimit.mul(3), // Triple the gas limit
-          gasPrice: ethers.utils.parseUnits("50", "gwei"), // Higher gas price for Polygon
-        });
+        if (dataSuffix) {
+          // Retry with legacy format for Divvi users
+          const iface = contract.interface;
+          const data = iface.encodeFunctionData("addScore", [pushups, squats]);
+          const finalData = data + dataSuffix;
+
+          const txRequest = {
+            to: contractAddress,
+            data: finalData,
+            gasLimit: gasLimit.mul(3),
+            gasPrice: ethers.utils.parseUnits("50", "gwei"),
+          };
+
+          tx = await signer.sendTransaction(txRequest);
+        } else {
+          tx = await contract.addScore(pushups, squats, {
+            gasLimit: gasLimit.mul(3), // Triple the gas limit
+            gasPrice: ethers.utils.parseUnits("50", "gwei"), // Higher gas price for Polygon
+          });
+        }
       }
     } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
       // Base Sepolia
@@ -449,14 +504,18 @@ export async function submitScoreDirectly(
 
     console.log("Transaction receipt:", receipt);
 
-    // If this was a Celo transaction and the chain ID matches Celo (42220)
-    // Register the referral with Divvi
-    if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
+    // If this transaction included Divvi integration, register with Divvi
+    if (shouldRegisterWithDivvi) {
       const chainId = await provider.getNetwork().then(network => network.chainId);
-      if (chainId === 42220) { // Celo mainnet chain ID
+
+      // Register for both Celo and Polygon
+      if (
+        (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273" && chainId === 42220) || // Celo mainnet
+        (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888" && chainId === 137)    // Polygon mainnet
+      ) {
         try {
           // Register the referral with Divvi
-          await registerDivviReferral(receipt.transactionHash, chainId);
+          await registerDivviReferral(receipt.transactionHash, chainId, userAddress);
         } catch (divviError) {
           console.error("Error registering Divvi referral:", divviError);
           // Don't fail the transaction if Divvi registration fails

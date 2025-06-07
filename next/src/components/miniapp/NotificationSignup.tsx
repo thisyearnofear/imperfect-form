@@ -18,6 +18,7 @@ export function NotificationSignup({
   className = "",
   variant = "card",
   trigger = "manual",
+  onSignupComplete,
 }: NotificationSignupProps) {
   const { isInMiniApp, user } = useMiniApp();
   const [showSignup, setShowSignup] = useState(false);
@@ -56,6 +57,7 @@ export function NotificationSignup({
   const handleDismiss = () => {
     setShowSignup(false);
     handleSignupShown();
+    onSignupComplete?.();
     logger.info("🔔 Notification signup dismissed", {
       trigger,
       user: user?.username,

@@ -1,5 +1,4 @@
 import { getDataSuffix, submitReferral } from '@divvi/referral-sdk';
-import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 
 /**
@@ -13,43 +12,51 @@ const DIVVI_CONSUMER_ID = '0x55A5705453Ee82c742274154136Fce8149597058' as `0x${s
 const DIVVI_PROVIDERS: `0x${string}`[] = []; // Add providers if needed in the future
 
 /**
- * Check if a user is a first-time user (has never submitted a transaction before)
- * @param contractAddress The address of the contract
+ * Check if a user has already been registered with Divvi
  * @param userAddress The address of the user
- * @returns Promise resolving to true if the user is a first-time user
+ * @param chainId The chain ID to check
+ * @returns Promise resolving to true if the user has NOT been registered with Divvi yet
  */
-export async function isFirstTimeUser(
-  contractAddress: string,
-  userAddress: string
+export async function isFirstTimeDivviUser(
+  userAddress: string,
+  chainId: number
 ): Promise<boolean> {
   try {
-    if (!window.ethereum) {
-      console.error("No Ethereum provider found");
+    // Create a unique key for this user and chain combination
+    const storageKey = `divvi_registered_${userAddress.toLowerCase()}_${chainId}`;
+
+    // Check localStorage to see if this user has been registered before
+    const hasBeenRegistered = localStorage.getItem(storageKey) === 'true';
+
+    if (hasBeenRegistered) {
+      console.log(`User ${userAddress} has already been registered with Divvi on chain ${chainId}`);
       return false;
     }
 
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    
-    // Create a contract instance with minimal ABI to check user participation
-    const minimalABI = [
-      "function getUserScores(address user) view returns (uint256, uint256, uint256)"
-    ];
-    
-    const contract = new ethers.Contract(
-      contractAddress,
-      minimalABI,
-      provider
-    );
-
-    // Try to get user scores - if they exist, user has participated before
-    const [totalScore, , ] = await contract.getUserScores(userAddress);
-    
-    // If totalScore is 0, they might be a first-time user (they've never submitted)
-    return totalScore.eq(0);
-  } catch (error) {
-    // If there's an error (like the function doesn't exist), assume it's a first-time user
-    console.log("Error checking if first-time user, assuming first time:", error);
+    console.log(`User ${userAddress} is a first-time Divvi user on chain ${chainId}`);
     return true;
+  } catch (error) {
+    console.error("Error checking Divvi registration status:", error);
+    // If there's an error, assume they haven't been registered to be safe
+    return true;
+  }
+}
+
+/**
+ * Mark a user as registered with Divvi
+ * @param userAddress The address of the user
+ * @param chainId The chain ID where they were registered
+ */
+export function markUserAsRegisteredWithDivvi(
+  userAddress: string,
+  chainId: number
+): void {
+  try {
+    const storageKey = `divvi_registered_${userAddress.toLowerCase()}_${chainId}`;
+    localStorage.setItem(storageKey, 'true');
+    console.log(`Marked user ${userAddress} as registered with Divvi on chain ${chainId}`);
+  } catch (error) {
+    console.error("Error marking user as registered with Divvi:", error);
   }
 }
 
@@ -69,22 +76,30 @@ export function getDivviDataSuffix(): string {
  * Registers a completed transaction with Divvi to track the referral
  * @param txHash The hash of the completed transaction
  * @param chainId The chain ID where the transaction was submitted
+ * @param userAddress The address of the user to mark as registered
  */
-export async function registerDivviReferral(txHash: string, chainId: number): Promise<void> {
+export async function registerDivviReferral(
+  txHash: string,
+  chainId: number,
+  userAddress: string
+): Promise<void> {
   try {
     console.log("Registering Divvi referral for transaction:", txHash, "on chain:", chainId);
-    
+
     // Submit the referral to Divvi
     // Ensure txHash is prefixed with 0x
     const formattedTxHash = txHash.startsWith('0x') ? txHash as `0x${string}` : `0x${txHash}` as `0x${string}`;
-    
+
     await submitReferral({
       txHash: formattedTxHash,
       chainId,
     });
-    
+
+    // Mark this user as registered with Divvi so we don't register them again
+    markUserAsRegisteredWithDivvi(userAddress, chainId);
+
     console.log("Successfully registered Divvi referral");
-    toast.success("Enhanced features activated!", { duration: 5000 });
+    toast.success("Registration complete! 🎉", { duration: 3000 });
   } catch (error) {
     console.error("Failed to register Divvi referral:", error);
     // Don't show an error toast as this is not critical for the user experience
@@ -92,29 +107,27 @@ export async function registerDivviReferral(txHash: string, chainId: number): Pr
 }
 
 /**
- * Shows a modal or notification to the user explaining the enhanced features
- * they'll get by signing up
+ * Shows a brief notification about first-time registration
  * @returns Promise resolving to true if the user accepts
  */
 export function showEnhancedFeaturesPrompt(): Promise<boolean> {
   return new Promise((resolve) => {
-    // Show a toast notification about the enhanced features
+    // Show a brief, honest notification
     toast.success(
-      "You're about to unlock enhanced features on Imperfect Form! Your first transaction will register you for special features and rewards.",
+      "First workout submission - registering your participation! 🎯",
       {
-        duration: 7000,
+        duration: 3000,
         position: "top-center",
         style: {
           borderRadius: '10px',
           background: '#333',
           color: '#fff',
-          maxWidth: '500px',
+          maxWidth: '400px',
         },
       }
     );
-    
+
     // Automatically resolve to true after a short delay
-    // In a real implementation, you might want a proper modal with accept/decline buttons
-    setTimeout(() => resolve(true), 3000);
+    setTimeout(() => resolve(true), 1500);
   });
 }
