@@ -38,11 +38,16 @@ export default function SubmitButton({
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {
     switch (id) {
-      case 84532: return 'base';
-      case 137: return 'polygon';
-      case 42220: return 'celo';
-      case 10143: return 'monad';
-      default: return 'base';
+      case 84532:
+        return "base";
+      case 137:
+        return "polygon";
+      case 42220:
+        return "celo";
+      case 10143:
+        return "monad";
+      default:
+        return "celo"; // Default to CELO instead of Base
     }
   };
 

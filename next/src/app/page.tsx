@@ -31,7 +31,6 @@ const ExpandedLeaderboardModal = dynamic(
 );
 
 import { Score } from "@/types";
-import { MiniAppBanner } from "@/components/miniapp/MiniAppIndicator";
 
 export default function Home() {
   const { isConnected } = useUniversalWallet();
@@ -125,12 +124,7 @@ export default function Home() {
 
   return (
     <>
-      {/* Mini App Banner - only show in Farcaster */}
-      {isInMiniApp && (
-        <div className="p-4">
-          <MiniAppBanner />
-        </div>
-      )}
+      {/* Mini App Banner - hidden as users don't need to see it */}
 
       {/* Main content area with optimized stacked layout for mobile */}
       <div className="flex flex-col min-h-screen">
