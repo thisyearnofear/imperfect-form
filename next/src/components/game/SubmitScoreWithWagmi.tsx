@@ -23,6 +23,7 @@ import {
 import {
   getFarcasterTransactionTimeouts,
   getFarcasterTimeoutMessages,
+  isFarcasterMiniApp,
 } from "@/utils/farcasterMiniApp";
 
 // Verify the ABI and contract address are valid
@@ -359,7 +360,7 @@ export default function SubmitScoreWithWagmi({
 
       toast.success(
         <div>
-          Score submitted successfully! <br />
+          Score submitted! Check the leaderboard 🏆 <br />
           <a
             href={explorerUrl}
             target="_blank"
@@ -453,8 +454,9 @@ export default function SubmitScoreWithWagmi({
     }
 
     try {
+      // For Farcaster mini apps, always use direct contract interaction for better transaction handling
       // For ThirdWeb networks (Polygon, Monad, Celo), we should use the ThirdWeb wallet via directContractInteraction
-      if (isThirdwebNetwork) {
+      if (isThirdwebNetwork || isFarcasterMiniApp()) {
         // Import the direct contract interaction function
         const { submitScoreDirectly } = await import(
           "@/utils/directContractInteraction"
@@ -466,6 +468,8 @@ export default function SubmitScoreWithWagmi({
           contractAddress = MONAD_CONTRACT_ADDRESS;
         } else if (network === "celo") {
           contractAddress = CELO_CONTRACT_ADDRESS;
+        } else if (network === "base") {
+          contractAddress = BASE_CONTRACT_ADDRESS;
         }
 
         // Show loading toast
@@ -473,19 +477,22 @@ export default function SubmitScoreWithWagmi({
           id: "submit-score",
         });
 
-        // Use direct contract interaction for ThirdWeb networks
+        // Use direct contract interaction for ThirdWeb networks and Farcaster mini apps
         const result = await submitScoreDirectly(
           contractAddress,
           pushups,
           squats,
-          false, // not Base network
+          network === "base", // true if Base network
           address
         );
 
         if (result.success) {
-          toast.success("Score submitted successfully!", {
-            id: "submit-score",
-          });
+          toast.success(
+            "Score now onchain! A little less imperfect than yesterday! 💪",
+            {
+              id: "submit-score",
+            }
+          );
 
           // Store transaction hash for social sharing
           if (typeof window !== "undefined" && result.transactionHash) {
@@ -497,6 +504,8 @@ export default function SubmitScoreWithWagmi({
                 ? "Monad Testnet"
                 : network === "celo"
                 ? "Celo Mainnet"
+                : network === "base"
+                ? "Base Sepolia"
                 : "Unknown";
           }
         } else {

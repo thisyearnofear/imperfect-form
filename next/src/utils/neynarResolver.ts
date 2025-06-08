@@ -48,6 +48,12 @@ export async function resolveFarcasterProfile(address: string): Promise<Farcaste
         profileCache[address] = null;
         return null;
       }
+      if (response.status === 401) {
+        // API key not configured - fail silently
+        logger.warn('🎭 Neynar API key not configured in production');
+        profileCache[address] = null;
+        return null;
+      }
       throw new Error(`Neynar API error: ${response.status}`);
     }
 
