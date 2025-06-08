@@ -290,16 +290,15 @@ export default function SubmitScoreWithWagmi({
     }
   }, [txHash, isConfirmed, receiptError]);
 
-  // Handle receipt errors and timeouts with Farcaster-optimized messaging
+  // Handle receipt errors and timeouts with enhanced verification
   useEffect(() => {
     if (receiptError && txHash) {
       console.warn("Transaction receipt error:", receiptError);
 
-      const timeouts = getFarcasterTransactionTimeouts();
       const messages = getFarcasterTimeoutMessages();
 
-      // Don't immediately show error - the transaction might still be processing
-      // Instead, show a message that we're still checking
+      // CRITICAL FIX: Don't show red error messages during processing
+      // Instead, show encouraging messages and use external verification
       toast.loading(
         <div>
           {messages.third} <br />
@@ -315,31 +314,78 @@ export default function SubmitScoreWithWagmi({
         { id: "submit-score", duration: 15000 }
       );
 
-      // Set a longer timeout to eventually reset the UI if transaction truly failed
-      setTimeout(() => {
-        if (!isConfirmed) {
-          console.log(
-            "Transaction still not confirmed after extended wait, resetting UI"
+      // Enhanced verification using external APIs
+      const verifyTransactionStatus = async () => {
+        try {
+          // Import the verification utility dynamically to avoid SSR issues
+          const { verifyTransaction, getNetworkKeyFromChainId } = await import(
+            "@/utils/transactionVerification"
           );
-          setConfirmStep(false);
-          setIsLoading(false);
 
-          toast.error(
-            <div>
-              {messages.error} <br />
-              <a
-                href={`https://sepolia-explorer.base.org/tx/${txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: "underline", color: "inherit" }}
-              >
-                View on explorer
-              </a>
-            </div>,
-            { id: "submit-score", duration: 10000 }
-          );
+          const networkKey = getNetworkKeyFromChainId(84532); // Base Sepolia
+          const status = await verifyTransaction(txHash, networkKey, {
+            maxRetries: 2,
+            retryDelay: 3000,
+          });
+
+          if (status.status === "success") {
+            console.log("✅ External verification: Transaction successful!");
+            toast.success(
+              "Score now onchain! A little less imperfect than yesterday! 💪",
+              {
+                id: "submit-score",
+                duration: 5000,
+              }
+            );
+            setConfirmStep(false);
+            setIsLoading(false);
+            return;
+          } else if (status.status === "failed") {
+            console.log("❌ External verification: Transaction failed");
+            // Only now show an actual error
+            toast.error("Transaction failed on-chain. Please try again.", {
+              id: "submit-score",
+              duration: 8000,
+            });
+            setConfirmStep(false);
+            setIsLoading(false);
+            return;
+          }
+        } catch (verificationError) {
+          console.warn("External verification failed:", verificationError);
         }
-      }, timeouts.finalTimeout - timeouts.receiptTimeout); // Wait additional time before giving up
+
+        // If verification is inconclusive, show helpful message but don't treat as error
+        setTimeout(() => {
+          if (!isConfirmed) {
+            console.log(
+              "Transaction status unclear after extended verification"
+            );
+            setConfirmStep(false);
+            setIsLoading(false);
+
+            // Show helpful message instead of error
+            toast.loading(
+              <div>
+                Your transaction might still be processing! Check the explorer
+                to verify: <br />
+                <a
+                  href={`https://sepolia-explorer.base.org/tx/${txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: "underline", color: "inherit" }}
+                >
+                  View on explorer
+                </a>
+              </div>,
+              { id: "submit-score", duration: 12000 }
+            );
+          }
+        }, 10000); // Wait 10 seconds before showing this message
+      };
+
+      // Start verification after a short delay
+      setTimeout(verifyTransactionStatus, 5000);
     }
   }, [receiptError, txHash, isConfirmed]);
 

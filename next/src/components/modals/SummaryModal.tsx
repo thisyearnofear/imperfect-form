@@ -166,7 +166,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       const pushups = mode === "pushups" ? repCount : 0;
       const squats = mode === "squats" ? repCount : 0;
 
-      toast.loading("Preparing transaction with ThirdWeb wallet...", {
+      toast.loading("Preparing transaction...", {
         id: "submit-score",
       });
 

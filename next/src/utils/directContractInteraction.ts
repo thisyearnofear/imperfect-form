@@ -8,6 +8,11 @@ import {
 import toast from "react-hot-toast";
 import { isFirstTimeDivviUser, getDivviDataSuffix, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
 import { getEthereumProvider, getFarcasterTransactionTimeouts, getFarcasterTimeoutMessages } from "./farcasterMiniApp";
+import {
+  monitorTransaction,
+  getNetworkKeyFromChainId,
+  type TransactionStatus
+} from "./transactionVerification";
 
 /**
  * Helper function to check if the current provider is Coinbase Wallet
@@ -561,146 +566,114 @@ export async function submitScoreDirectly(
     });
     console.log("Transaction hash:", tx.hash);
 
-    // Wait for transaction to be mined with enhanced timeout handling for Farcaster
+    // Enhanced transaction monitoring with multiple verification methods
     let receipt;
 
-    // Get Farcaster-optimized timeout settings and messages
-    const timeouts = getFarcasterTransactionTimeouts();
-    const messages = getFarcasterTimeoutMessages();
+    // Determine the network key for verification
+    const chainId = await provider.getNetwork().then(network => network.chainId);
+    const networkKey = getNetworkKeyFromChainId(chainId);
 
-    // Progressive timeout messaging optimized for Farcaster mini apps
-    const timeout1 = setTimeout(() => {
-      toast.loading(
-        messages.first,
-        { id: "submit-score", duration: 8000 }
-      );
-    }, timeouts.firstMessage);
+    console.log(`🔍 Starting enhanced transaction monitoring for ${networkKey} network...`);
 
-    const timeout2 = setTimeout(() => {
-      toast.loading(
-        messages.second,
-        { id: "submit-score", duration: 10000 }
-      );
-    }, timeouts.secondMessage);
-
-    const timeout3 = setTimeout(() => {
-      toast.loading(
-        messages.third,
-        { id: "submit-score", duration: 15000 }
-      );
-    }, timeouts.thirdMessage);
-
+    // Use the new enhanced monitoring system
     try {
-      // Create a promise that waits for the transaction with extended timeout
-      const receiptPromise = tx.wait();
+      const monitoringResult = await monitorTransaction(tx.hash, networkKey, {
+        onStatusUpdate: (status: TransactionStatus, message: string) => {
+          console.log(`Transaction status update: ${status.status} - ${message}`);
 
-      // Wait for the transaction with extended timeout for Farcaster
-      receipt = await receiptPromise;
-
-      // Clear all timeouts if we got the receipt
-      clearTimeout(timeout1);
-      clearTimeout(timeout2);
-      clearTimeout(timeout3);
-    } catch (error) {
-      console.error("Error waiting for transaction receipt:", error);
-
-      // Clear any pending timeouts
-      clearTimeout(timeout1);
-      clearTimeout(timeout2);
-      clearTimeout(timeout3);
-
-      // CRITICAL FIX: Implement fallback success detection for Farcaster mini apps
-      // The transaction might have succeeded even if tx.wait() failed
-      console.log("🔄 tx.wait() timed out, but transaction might still be processing...");
-
-      // Show user-friendly message that we're still checking
-      toast.loading("Transaction is taking longer than expected, but we're still checking... 🔍", {
-        id: "submit-score",
-        duration: 8000
+          // Only show loading messages for pending status, never error messages during processing
+          if (status.status === 'pending') {
+            toast.loading(message, { id: "submit-score", duration: 8000 });
+          } else if (status.status === 'success') {
+            toast.success("Score now onchain! A little less imperfect than yesterday! 💪", {
+              id: "submit-score",
+              duration: 5000
+            });
+          }
+          // Note: We don't show error toasts here - only at the very end if truly failed
+        },
+        maxWaitTime: 120000, // 2 minutes
+        checkInterval: 3000, // Check every 3 seconds
       });
 
-      try {
-        // Wait a bit for the transaction to potentially be mined
-        await new Promise(resolve => setTimeout(resolve, 5000));
+      if (monitoringResult.status === 'success') {
+        // Create a mock receipt object for compatibility
+        receipt = {
+          transactionHash: tx.hash,
+          status: 1,
+          blockNumber: monitoringResult.blockNumber || 0,
+          gasUsed: ethers.BigNumber.from(monitoringResult.gasUsed || '0'),
+        };
+      } else if (monitoringResult.status === 'failed') {
+        throw new Error("Transaction failed on-chain");
+      } else {
+        // Still pending after timeout - but don't treat as failure yet
+        console.log("⏳ Transaction still pending after monitoring timeout, trying fallback...");
 
-        // Try to get the transaction receipt directly from the provider
+        // Try one more direct check
         const fallbackReceipt = await provider.getTransactionReceipt(tx.hash);
-
         if (fallbackReceipt && fallbackReceipt.status === 1) {
-          console.log("✅ Fallback check: Transaction was successful!", fallbackReceipt);
           receipt = fallbackReceipt;
-
-          // Show success message immediately
-          toast.loading("Score submitted! Check the leaderboard 🏆", {
+          toast.success("Score submitted! Check the leaderboard 🏆", {
             id: "submit-score",
-            duration: 3000
+            duration: 5000
           });
-        } else if (fallbackReceipt && fallbackReceipt.status === 0) {
-          console.log("❌ Fallback check: Transaction failed on-chain");
-          throw new Error("Transaction failed on-chain");
         } else {
-          console.log("⏳ Fallback check: Transaction still pending, trying extended wait...");
-
-          // Show extended checking message
-          toast.loading("Still checking... Your transaction is being extra careful! 🐢", {
-            id: "submit-score",
-            duration: 10000
-          });
-
-          // Try one more time with a longer wait
-          let attempts = 0;
-          const maxAttempts = 12; // 12 attempts = 60 seconds total
-
-          while (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-            attempts++;
-
-            const extendedReceipt = await provider.getTransactionReceipt(tx.hash);
-            if (extendedReceipt) {
-              if (extendedReceipt.status === 1) {
-                console.log(`✅ Extended check (attempt ${attempts}): Transaction successful!`);
-                receipt = extendedReceipt;
-
-                // Show success message
-                toast.loading("Score now onchain! A little less imperfect than yesterday! 💪", {
-                  id: "submit-score",
-                  duration: 3000
-                });
-                break;
-              } else {
-                console.log(`❌ Extended check (attempt ${attempts}): Transaction failed`);
-                throw new Error("Transaction failed on-chain after extended wait");
-              }
-            }
-
-            console.log(`⏳ Extended check (attempt ${attempts}): Still waiting...`);
-
-            // Show progress to user every few attempts
-            if (attempts === 4) {
-              toast.loading("Your transaction is really taking its time... but we're not giving up! ⏰", {
-                id: "submit-score",
-                duration: 8000
-              });
-            } else if (attempts === 8) {
-              toast.loading("Almost there... your transaction is just being super thorough! 🔬", {
-                id: "submit-score",
-                duration: 8000
-              });
-            }
-          }
-
-          // If we get here, we've exhausted all attempts
-          if (!receipt) {
-            const messages = getFarcasterTimeoutMessages();
-            throw new Error(`${messages.error} Transaction hash: ${tx.hash}`);
-          }
+          // Transaction is truly taking too long - but don't show error, show helpful message
+          throw new Error("Transaction is taking longer than expected. Please check the explorer to verify if your score was submitted.");
         }
-      } catch (fallbackError) {
-        console.error("Fallback transaction check also failed:", fallbackError);
+      }
+    } catch (monitoringError) {
+      console.error("Enhanced monitoring failed, falling back to traditional method:", monitoringError);
 
-        // Only now do we show an actual error - but make it helpful
-        const messages = getFarcasterTimeoutMessages();
-        throw new Error(`${messages.error} Transaction hash: ${tx.hash}`);
+      // Fallback to the original tx.wait() method with enhanced error handling
+
+      // Traditional fallback method
+      const timeouts = getFarcasterTransactionTimeouts();
+      const messages = getFarcasterTimeoutMessages();
+
+      // Progressive timeout messaging as fallback
+      const timeout1 = setTimeout(() => {
+        toast.loading(messages.first, { id: "submit-score", duration: 8000 });
+      }, timeouts.firstMessage);
+
+      const timeout2 = setTimeout(() => {
+        toast.loading(messages.second, { id: "submit-score", duration: 10000 });
+      }, timeouts.secondMessage);
+
+      try {
+        receipt = await tx.wait();
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+
+        toast.success("Score submitted! Check the leaderboard 🏆", {
+          id: "submit-score",
+          duration: 5000
+        });
+      } catch (fallbackError) {
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+
+        console.error("Traditional fallback also failed:", fallbackError);
+
+        // Final attempt with direct provider check
+        try {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          const finalReceipt = await provider.getTransactionReceipt(tx.hash);
+
+          if (finalReceipt && finalReceipt.status === 1) {
+            receipt = finalReceipt;
+            toast.success("Score now onchain! A little less imperfect than yesterday! 💪", {
+              id: "submit-score",
+              duration: 5000
+            });
+          } else {
+            throw new Error("Transaction verification failed after all attempts");
+          }
+        } catch (finalError) {
+          console.error("All verification methods failed:", finalError);
+          throw new Error("Good things take time! ⏳ Your transaction might still be processing. Check the explorer to verify if your score was submitted.");
+        }
       }
     }
 
