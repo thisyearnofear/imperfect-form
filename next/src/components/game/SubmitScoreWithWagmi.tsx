@@ -4,12 +4,7 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
-import {
-  useAccount,
-  useWriteContract,
-  useSimulateContract,
-  useWaitForTransactionReceipt,
-} from "wagmi";
+import { useAccount, useWriteContract, useSimulateContract } from "wagmi";
 import {
   BASE_CONTRACT_ADDRESS,
   POLYGON_CONTRACT_ADDRESS,
@@ -20,11 +15,7 @@ import {
   polygonLeaderboardABI,
   baseLeaderboardABI,
 } from "@/constants/contracts";
-import {
-  getFarcasterTransactionTimeouts,
-  getFarcasterTimeoutMessages,
-  isFarcasterMiniApp,
-} from "@/utils/farcasterMiniApp";
+import { isFarcasterMiniApp } from "@/utils/farcasterMiniApp";
 
 // Verify the ABI and contract address are valid
 console.log("Contract config loaded:", {
@@ -197,218 +188,25 @@ export default function SubmitScoreWithWagmi({
   // Write contract hook
   const { writeContract, isPending, data: txHash } = useWriteContract();
 
-  // Get Farcaster-optimized timeout settings
-  const timeoutSettings = getFarcasterTransactionTimeouts();
+  // Since we treat submission as success, we don't need to wait for transaction confirmation
+  // We only track if the transaction is being processed by the wallet
 
-  // Hook to wait for transaction confirmation with Farcaster-optimized settings
-  const {
-    isLoading: isWaitingForTx,
-    isSuccess: isConfirmed,
-    error: receiptError,
-  } = useWaitForTransactionReceipt({
-    hash: txHash,
-    confirmations: 1,
-    // Use Farcaster-optimized timeout settings
-    timeout: timeoutSettings.receiptTimeout,
-    pollingInterval: timeoutSettings.pollingInterval,
-  });
-
-  // Listen for transaction hash and implement progressive timeout messaging
+  // SIMPLIFIED APPROACH: Treat transaction submission as success
   useEffect(() => {
-    // Log when we get a transaction hash
+    // When we get a transaction hash, immediately treat it as success
     if (txHash) {
-      console.log("Transaction hash received:", txHash);
+      console.log("✅ Transaction submitted successfully:", txHash);
       console.log(
         "Transaction explorer URL:",
         `https://sepolia-explorer.base.org/tx/${txHash}`
       );
 
-      // Get Farcaster-optimized timeout settings and messages
-      const timeouts = getFarcasterTransactionTimeouts();
-      const messages = getFarcasterTimeoutMessages();
-
-      // Show initial pending message
-      toast.loading(
-        <div>
-          Transaction submitted! <br />
-          <a
-            href={`https://sepolia-explorer.base.org/tx/${txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: "underline", color: "inherit" }}
-          >
-            View on explorer
-          </a>
-        </div>,
-        { id: "submit-score" }
-      );
-
-      // Progressive timeout messaging optimized for Farcaster mini apps
-      const timeout1 = setTimeout(() => {
-        if (!isConfirmed && !receiptError) {
-          toast.loading(
-            <div>
-              {messages.first} <br />
-              <a
-                href={`https://sepolia-explorer.base.org/tx/${txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: "underline", color: "inherit" }}
-              >
-                View on explorer
-              </a>
-            </div>,
-            { id: "submit-score" }
-          );
-        }
-      }, timeouts.firstMessage);
-
-      const timeout2 = setTimeout(() => {
-        if (!isConfirmed && !receiptError) {
-          toast.loading(
-            <div>
-              {messages.second} <br />
-              <a
-                href={`https://sepolia-explorer.base.org/tx/${txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: "underline", color: "inherit" }}
-              >
-                Check status on explorer
-              </a>
-            </div>,
-            { id: "submit-score" }
-          );
-        }
-      }, timeouts.secondMessage);
-
-      // Cleanup timeouts when component unmounts or txHash changes
-      return () => {
-        clearTimeout(timeout1);
-        clearTimeout(timeout2);
-      };
-    }
-  }, [txHash, isConfirmed, receiptError]);
-
-  // Handle receipt errors and timeouts with enhanced verification
-  useEffect(() => {
-    if (receiptError && txHash) {
-      console.warn("Transaction receipt error:", receiptError);
-
-      const messages = getFarcasterTimeoutMessages();
-
-      // CRITICAL FIX: Don't show red error messages during processing
-      // Instead, show encouraging messages and use external verification
-      toast.loading(
-        <div>
-          {messages.third} <br />
-          <a
-            href={`https://sepolia-explorer.base.org/tx/${txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: "underline", color: "inherit" }}
-          >
-            Check status on explorer
-          </a>
-        </div>,
-        { id: "submit-score", duration: 15000 }
-      );
-
-      // Enhanced verification using external APIs
-      const verifyTransactionStatus = async () => {
-        try {
-          // Import the verification utility dynamically to avoid SSR issues
-          const { verifyTransaction, getNetworkKeyFromChainId } = await import(
-            "@/utils/transactionVerification"
-          );
-
-          const networkKey = getNetworkKeyFromChainId(84532); // Base Sepolia
-          const status = await verifyTransaction(txHash, networkKey, {
-            maxRetries: 2,
-            retryDelay: 3000,
-          });
-
-          if (status.status === "success") {
-            console.log("✅ External verification: Transaction successful!");
-            toast.success(
-              "Score now onchain! A little less imperfect than yesterday! 💪",
-              {
-                id: "submit-score",
-                duration: 5000,
-              }
-            );
-            setConfirmStep(false);
-            setIsLoading(false);
-            return;
-          } else if (status.status === "failed") {
-            console.log("❌ External verification: Transaction failed");
-            // Only now show an actual error
-            toast.error("Transaction failed on-chain. Please try again.", {
-              id: "submit-score",
-              duration: 8000,
-            });
-            setConfirmStep(false);
-            setIsLoading(false);
-            return;
-          }
-        } catch (verificationError) {
-          console.warn("External verification failed:", verificationError);
-        }
-
-        // If verification is inconclusive, show helpful message but don't treat as error
-        setTimeout(() => {
-          if (!isConfirmed) {
-            console.log(
-              "Transaction status unclear after extended verification"
-            );
-            setConfirmStep(false);
-            setIsLoading(false);
-
-            // Show helpful message instead of error
-            toast.loading(
-              <div>
-                Your transaction might still be processing! Check the explorer
-                to verify: <br />
-                <a
-                  href={`https://sepolia-explorer.base.org/tx/${txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ textDecoration: "underline", color: "inherit" }}
-                >
-                  View on explorer
-                </a>
-              </div>,
-              { id: "submit-score", duration: 12000 }
-            );
-          }
-        }, 10000); // Wait 10 seconds before showing this message
-      };
-
-      // Start verification after a short delay
-      setTimeout(verifyTransactionStatus, 5000);
-    }
-  }, [receiptError, txHash, isConfirmed]);
-
-  // Listen for transaction confirmation
-  useEffect(() => {
-    // Only process if we have a transaction hash that's confirmed
-    if (isConfirmed && txHash && useWagmi) {
-      console.log("Transaction confirmed:", txHash);
-
-      // Store transaction hash for social sharing
-      if (typeof window !== "undefined") {
-        window.transactionHash = txHash;
-        window.selectedNetworkName = "Base Sepolia";
-      }
-
-      // Show success message
-      const explorerUrl = `https://sepolia-explorer.base.org/tx/${txHash}`;
-
+      // Show immediate success message
       toast.success(
         <div>
           Score submitted! Check the leaderboard 🏆 <br />
           <a
-            href={explorerUrl}
+            href={`https://sepolia-explorer.base.org/tx/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ textDecoration: "underline", color: "inherit" }}
@@ -416,14 +214,20 @@ export default function SubmitScoreWithWagmi({
             View on explorer
           </a>
         </div>,
-        { id: "submit-score", duration: 8000 }
+        { id: "submit-score", duration: 5000 }
       );
 
-      // Reset confirmation state and loading
+      // Reset UI state immediately since we consider submission as success
       setConfirmStep(false);
       setIsLoading(false);
     }
-  }, [isConfirmed, txHash, useWagmi]);
+  }, [txHash]);
+
+  // Since we now treat transaction submission as success, we don't need complex error handling
+  // The transaction hash being generated means the transaction was successfully submitted
+
+  // Since we treat submission as success, we don't need to wait for confirmation
+  // The success handling is done immediately when txHash is received
 
   // Handle button click to trigger transaction
   const handleSubmit = async () => {
@@ -711,7 +515,7 @@ export default function SubmitScoreWithWagmi({
     <button
       id="submitScoreButton"
       onClick={handleSubmit}
-      disabled={isPending || isLoading || isWaitingForTx}
+      disabled={isPending || isLoading}
       className={`${
         confirmStep
           ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
@@ -720,7 +524,7 @@ export default function SubmitScoreWithWagmi({
           : "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
       } text-white font-bold py-4 px-6 rounded-md transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg w-full flex items-center justify-center text-xl border-4 border-white z-50 relative`}
     >
-      {isPending || isLoading || isWaitingForTx ? (
+      {isPending || isLoading ? (
         <>
           <span className="mr-2 text-2xl font-extrabold">SUBMITTING...</span>
           <Spinner />

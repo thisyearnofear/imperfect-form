@@ -317,7 +317,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 }`}
               >
                 {networkType === "polygon"
-                  ? "Polygon Amoy"
+                  ? "Polygon"
                   : networkType === "monad"
                   ? "Monad Testnet"
                   : networkType === "celo"
