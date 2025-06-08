@@ -7,7 +7,7 @@ import {
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
 import { isFirstTimeDivviUser, getDivviDataSuffix, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
-import { getEthereumProvider } from "./farcasterMiniApp";
+import { getEthereumProvider, getFarcasterTransactionTimeouts, getFarcasterTimeoutMessages } from "./farcasterMiniApp";
 
 /**
  * Helper function to check if the current provider is Coinbase Wallet
@@ -179,8 +179,13 @@ export async function submitScoreDirectly(
       // Create a provider using the appropriate Ethereum provider (Farcaster or window.ethereum)
       provider = new ethers.providers.Web3Provider(ethereumProvider);
 
-      // Set the polling interval and timeout separately
-      provider.pollingInterval = 15000; // 15 seconds
+      // Optimize provider settings for Farcaster mini apps
+      provider.pollingInterval = 5000; // 5 seconds for faster updates in Farcaster
+
+      // Set connection timeout for better error handling
+      if (provider._network) {
+        provider._network.ensAddress = undefined; // Disable ENS to avoid timeouts
+      }
 
       // Request the user to switch to the correct network if needed
       let network;
@@ -556,32 +561,66 @@ export async function submitScoreDirectly(
     });
     console.log("Transaction hash:", tx.hash);
 
-    // Wait for transaction to be mined
+    // Wait for transaction to be mined with enhanced timeout handling for Farcaster
     let receipt;
     try {
-      // First, set a shorter timeout for UI feedback
+      // Create a promise that waits for the transaction with extended timeout
       const receiptPromise = tx.wait();
 
-      // Show a message after 15 seconds to let the user know it's still processing
-      const timeoutId = setTimeout(() => {
+      // Get Farcaster-optimized timeout settings and messages
+      const timeouts = getFarcasterTransactionTimeouts();
+      const messages = getFarcasterTimeoutMessages();
+
+      // Progressive timeout messaging optimized for Farcaster mini apps
+      const timeout1 = setTimeout(() => {
         toast.loading(
-          "Transaction submitted but taking longer than expected to confirm. It will continue processing in the background.",
+          messages.first,
+          { id: "submit-score", duration: 8000 }
+        );
+      }, timeouts.firstMessage);
+
+      const timeout2 = setTimeout(() => {
+        toast.loading(
+          messages.second,
           { id: "submit-score", duration: 10000 }
         );
-      }, 15000);
+      }, timeouts.secondMessage);
 
-      // Wait for the transaction with a longer timeout
+      const timeout3 = setTimeout(() => {
+        toast.loading(
+          messages.third,
+          { id: "submit-score", duration: 15000 }
+        );
+      }, timeouts.thirdMessage);
+
+      // Wait for the transaction with extended timeout for Farcaster
       receipt = await receiptPromise;
 
-      // Clear the timeout if we got the receipt
-      clearTimeout(timeoutId);
+      // Clear all timeouts if we got the receipt
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+      clearTimeout(timeout3);
     } catch (error) {
       console.error("Error waiting for transaction receipt:", error);
-      // Even if waiting for receipt fails, the transaction might still be processing
-      throw new Error(
-        "Transaction was submitted but confirmation timed out. It may still complete in the background. Transaction hash: " +
-          tx.hash
-      );
+
+      // Get Farcaster-optimized error messages
+      const messages = getFarcasterTimeoutMessages();
+
+      // Check if this is a timeout error specifically
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (errorMessage.includes("timeout") || errorMessage.includes("TIMEOUT")) {
+        // For timeout errors, provide a Farcaster-optimized message
+        throw new Error(
+          `${messages.error} Transaction hash: ${tx.hash}`
+        );
+      } else {
+        // For other errors, use the original message
+        throw new Error(
+          "Transaction was submitted but confirmation failed. It may still complete in the background. Transaction hash: " +
+            tx.hash
+        );
+      }
     }
 
     console.log("Transaction receipt:", receipt);
@@ -673,7 +712,7 @@ export async function submitScoreDirectly(
       return {
         success: false,
         error:
-          "Network is slow or unresponsive. Please try again later or switch to a different network.",
+          "Your transaction is taking the scenic route! 🚗💨 Please check the explorer to see if your score made it through.",
       };
     } else if (
       err.message &&
@@ -682,7 +721,19 @@ export async function submitScoreDirectly(
       return {
         success: false,
         error:
-          "Transaction is taking too long to confirm. It may still complete in the background.",
+          "Your transaction is playing hard to get! 😅 Check the explorer to verify if your score was submitted.",
+      };
+    } else if (
+      err.message &&
+      (err.message.includes("taking longer than expected") ||
+       err.message.includes("brewing") ||
+       err.message.includes("cooking") ||
+       err.message.includes("scenic route"))
+    ) {
+      return {
+        success: false,
+        error:
+          "Good things take time! ⏳ Your transaction might still be processing. Check the explorer to verify if your score was submitted.",
       };
     } else if (
       err.message &&

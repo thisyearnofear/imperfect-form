@@ -20,6 +20,10 @@ import {
   polygonLeaderboardABI,
   baseLeaderboardABI,
 } from "@/constants/contracts";
+import {
+  getFarcasterTransactionTimeouts,
+  getFarcasterTimeoutMessages,
+} from "@/utils/farcasterMiniApp";
 
 // Verify the ABI and contract address are valid
 console.log("Contract config loaded:", {
@@ -192,14 +196,23 @@ export default function SubmitScoreWithWagmi({
   // Write contract hook
   const { writeContract, isPending, data: txHash } = useWriteContract();
 
-  // Hook to wait for transaction confirmation
-  const { isLoading: isWaitingForTx, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash: txHash,
-      confirmations: 1,
-    });
+  // Get Farcaster-optimized timeout settings
+  const timeoutSettings = getFarcasterTransactionTimeouts();
 
-  // Listen for transaction hash
+  // Hook to wait for transaction confirmation with Farcaster-optimized settings
+  const {
+    isLoading: isWaitingForTx,
+    isSuccess: isConfirmed,
+    error: receiptError,
+  } = useWaitForTransactionReceipt({
+    hash: txHash,
+    confirmations: 1,
+    // Use Farcaster-optimized timeout settings
+    timeout: timeoutSettings.receiptTimeout,
+    pollingInterval: timeoutSettings.pollingInterval,
+  });
+
+  // Listen for transaction hash and implement progressive timeout messaging
   useEffect(() => {
     // Log when we get a transaction hash
     if (txHash) {
@@ -209,7 +222,11 @@ export default function SubmitScoreWithWagmi({
         `https://sepolia-explorer.base.org/tx/${txHash}`
       );
 
-      // Show pending message
+      // Get Farcaster-optimized timeout settings and messages
+      const timeouts = getFarcasterTransactionTimeouts();
+      const messages = getFarcasterTimeoutMessages();
+
+      // Show initial pending message
       toast.loading(
         <div>
           Transaction submitted! <br />
@@ -224,8 +241,106 @@ export default function SubmitScoreWithWagmi({
         </div>,
         { id: "submit-score" }
       );
+
+      // Progressive timeout messaging optimized for Farcaster mini apps
+      const timeout1 = setTimeout(() => {
+        if (!isConfirmed && !receiptError) {
+          toast.loading(
+            <div>
+              {messages.first} <br />
+              <a
+                href={`https://sepolia-explorer.base.org/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "underline", color: "inherit" }}
+              >
+                View on explorer
+              </a>
+            </div>,
+            { id: "submit-score" }
+          );
+        }
+      }, timeouts.firstMessage);
+
+      const timeout2 = setTimeout(() => {
+        if (!isConfirmed && !receiptError) {
+          toast.loading(
+            <div>
+              {messages.second} <br />
+              <a
+                href={`https://sepolia-explorer.base.org/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "underline", color: "inherit" }}
+              >
+                Check status on explorer
+              </a>
+            </div>,
+            { id: "submit-score" }
+          );
+        }
+      }, timeouts.secondMessage);
+
+      // Cleanup timeouts when component unmounts or txHash changes
+      return () => {
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+      };
     }
-  }, [txHash]);
+  }, [txHash, isConfirmed, receiptError]);
+
+  // Handle receipt errors and timeouts with Farcaster-optimized messaging
+  useEffect(() => {
+    if (receiptError && txHash) {
+      console.warn("Transaction receipt error:", receiptError);
+
+      const timeouts = getFarcasterTransactionTimeouts();
+      const messages = getFarcasterTimeoutMessages();
+
+      // Don't immediately show error - the transaction might still be processing
+      // Instead, show a message that we're still checking
+      toast.loading(
+        <div>
+          {messages.third} <br />
+          <a
+            href={`https://sepolia-explorer.base.org/tx/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "underline", color: "inherit" }}
+          >
+            Check status on explorer
+          </a>
+        </div>,
+        { id: "submit-score", duration: 15000 }
+      );
+
+      // Set a longer timeout to eventually reset the UI if transaction truly failed
+      setTimeout(() => {
+        if (!isConfirmed) {
+          console.log(
+            "Transaction still not confirmed after extended wait, resetting UI"
+          );
+          setConfirmStep(false);
+          setIsLoading(false);
+
+          toast.error(
+            <div>
+              {messages.error} <br />
+              <a
+                href={`https://sepolia-explorer.base.org/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "underline", color: "inherit" }}
+              >
+                View on explorer
+              </a>
+            </div>,
+            { id: "submit-score", duration: 10000 }
+          );
+        }
+      }, timeouts.finalTimeout - timeouts.receiptTimeout); // Wait additional time before giving up
+    }
+  }, [receiptError, txHash, isConfirmed]);
 
   // Listen for transaction confirmation
   useEffect(() => {

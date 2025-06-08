@@ -214,3 +214,75 @@ export async function switchFarcasterChain(chainId: number): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Get optimized transaction timeout settings for Farcaster mini apps
+ * Provides more generous timeouts and better user feedback for mini app environments
+ */
+export function getFarcasterTransactionTimeouts() {
+  const isFarcaster = isFarcasterMiniApp();
+
+  return {
+    // Wagmi useWaitForTransactionReceipt timeout
+    receiptTimeout: isFarcaster ? 60000 : 30000, // 60s for Farcaster, 30s for web
+
+    // Polling interval for transaction status
+    pollingInterval: isFarcaster ? 2000 : 4000, // 2s for Farcaster, 4s for web
+
+    // Progressive timeout messages
+    firstMessage: isFarcaster ? 8000 : 15000, // Show first message after 8s/15s
+    secondMessage: isFarcaster ? 15000 : 30000, // Show second message after 15s/30s
+    thirdMessage: isFarcaster ? 30000 : 60000, // Show third message after 30s/60s
+
+    // Final timeout before giving up
+    finalTimeout: isFarcaster ? 90000 : 120000, // 90s for Farcaster, 120s for web
+  };
+}
+
+/**
+ * Get user-friendly timeout messages with encouraging one-liners
+ */
+export function getFarcasterTimeoutMessages() {
+  const isFarcaster = isFarcasterMiniApp();
+
+  if (isFarcaster) {
+    // Add some variety with random fun messages
+    const firstMessages = [
+      "Good things take time... ⏳ Your transaction is brewing!",
+      "Rome wasn't built in a day... 🏛️ Neither is your score!",
+      "Patience, young grasshopper... 🦗 Your transaction is processing!"
+    ];
+
+    const secondMessages = [
+      "Still cooking your score submission... 🍳 Almost ready!",
+      "Your transaction is doing some heavy lifting... 💪 Hang tight!",
+      "Quality over speed! 🎯 Your transaction is being extra careful!"
+    ];
+
+    const thirdMessages = [
+      "Your transaction is taking the scenic route, but it's still on its way! 🚗💨",
+      "Slow and steady wins the race! 🐢 Your transaction is almost there!",
+      "Your transaction is being a perfectionist... 🎨 It wants to get it just right!"
+    ];
+
+    const errorMessages = [
+      "Your transaction is playing hard to get, but don't worry - it's probably just being thorough! Check the explorer to see if it made it through.",
+      "Looks like your transaction took a coffee break! ☕ Check the explorer to see if it finished the job.",
+      "Your transaction might be stuck in traffic, but it's probably still moving! 🚦 Check the explorer for updates."
+    ];
+
+    return {
+      first: firstMessages[Math.floor(Math.random() * firstMessages.length)],
+      second: secondMessages[Math.floor(Math.random() * secondMessages.length)],
+      third: thirdMessages[Math.floor(Math.random() * thirdMessages.length)],
+      error: errorMessages[Math.floor(Math.random() * errorMessages.length)]
+    };
+  } else {
+    return {
+      first: "Patience is a virtue... ⏳ Your transaction is processing!",
+      second: "Still working on it... 🔧 Network might be busy!",
+      third: "Your transaction is taking its sweet time, but it's still processing in the background.",
+      error: "Transaction confirmation is taking longer than expected. Please check the explorer to verify the status."
+    };
+  }
+}
