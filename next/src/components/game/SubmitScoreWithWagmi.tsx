@@ -337,11 +337,10 @@ export default function SubmitScoreWithWagmi({
         );
 
         if (result.success) {
-          toast.success(
-            "Score now onchain! A little less imperfect than yesterday! 💪",
-            {
-              id: "submit-score",
-            }
+          // Don't show duplicate success toast - directContractInteraction already shows one
+          console.log(
+            "✅ Direct contract interaction succeeded:",
+            result.transactionHash
           );
 
           // Store transaction hash for social sharing
@@ -362,6 +361,7 @@ export default function SubmitScoreWithWagmi({
           throw new Error(result.error || "Transaction failed");
         }
 
+        // CRITICAL FIX: Reset loading state immediately for Farcaster
         setIsLoading(false);
         setConfirmStep(false);
         return;

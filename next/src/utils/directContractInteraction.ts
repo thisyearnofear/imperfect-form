@@ -747,8 +747,7 @@ export async function canUserSubmit(
       const network = await provider.getNetwork();
       console.log("Checking submission eligibility on network:", network);
 
-      // For all supported networks, bypass the cooldown check due to potential contract issues
-      // This ensures users can submit scores on all networks without cooldown restrictions
+      // Check cooldown for supported networks
       if (
         network.chainId === 137 || // Polygon Mainnet
         network.chainId === 10143 || // Monad Testnet
@@ -756,8 +755,11 @@ export async function canUserSubmit(
         network.chainId === 84532 // Base Sepolia
       ) {
         console.log(
-          `On network ${network.name} (${network.chainId}), bypassing cooldown check to ensure consistent experience`
+          `On network ${network.name} (${network.chainId}), checking cooldown period`
         );
+        // Continue to actual cooldown check below
+      } else {
+        console.log("Unsupported network, allowing submission");
         return { canSubmit: true };
       }
     }
