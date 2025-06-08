@@ -304,9 +304,9 @@ export default function SubmitScoreWithWagmi({
     }
 
     try {
-      // For Farcaster mini apps, always use direct contract interaction for better transaction handling
-      // For ThirdWeb networks (Polygon, Monad, Celo), we should use the ThirdWeb wallet via directContractInteraction
-      if (isThirdwebNetwork || isFarcasterMiniApp()) {
+      // For ThirdWeb networks (Polygon, Monad, Celo), use direct contract interaction
+      // For Farcaster mini apps and Base network, we use Wagmi with proper connectors
+      if (isThirdwebNetwork && !isFarcasterMiniApp()) {
         // Import the direct contract interaction function
         const { submitScoreDirectly } = await import(
           "@/utils/directContractInteraction"
@@ -318,8 +318,6 @@ export default function SubmitScoreWithWagmi({
           contractAddress = MONAD_CONTRACT_ADDRESS;
         } else if (network === "celo") {
           contractAddress = CELO_CONTRACT_ADDRESS;
-        } else if (network === "base") {
-          contractAddress = BASE_CONTRACT_ADDRESS;
         }
 
         // Show loading toast
@@ -327,12 +325,12 @@ export default function SubmitScoreWithWagmi({
           id: "submit-score",
         });
 
-        // Use direct contract interaction for ThirdWeb networks and Farcaster mini apps
+        // Use direct contract interaction for ThirdWeb networks only
         const result = await submitScoreDirectly(
           contractAddress,
           pushups,
           squats,
-          network === "base", // true if Base network
+          false, // Not Base network in this path
           address
         );
 
@@ -367,7 +365,7 @@ export default function SubmitScoreWithWagmi({
         return;
       }
 
-      // For Base network, use Wagmi
+      // For Base network and Farcaster mini apps, use Wagmi with appropriate connectors
       if (process.env.NODE_ENV !== "production") {
         console.log("Submitting transaction via Wagmi:", {
           address: contractAddress,

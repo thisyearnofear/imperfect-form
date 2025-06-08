@@ -349,24 +349,53 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   // Actions implementation
   const connect = useCallback(async (): Promise<boolean> => {
     try {
-      if (platform === "farcaster" && farcasterSDK?.wallet?.ethProvider) {
-        // Try Farcaster wallet first
-        const accounts = (await farcasterSDK.wallet.ethProvider.request({
-          method: "eth_requestAccounts",
-        })) as string[];
+      if (platform === "farcaster" && farcasterSDK?.wallet) {
+        // Try Farcaster wallet first using the new API
+        let provider = null;
 
-        if (accounts && accounts.length > 0) {
-          setFarcasterWallet((prev) => ({ ...prev, address: accounts[0] }));
+        // Use the new getEthereumProvider() method (with type assertion for new API)
+        const walletWithNewAPI = farcasterSDK.wallet as {
+          getEthereumProvider?: () => Promise<unknown>;
+        };
+        if (walletWithNewAPI.getEthereumProvider) {
+          try {
+            provider = await walletWithNewAPI.getEthereumProvider();
+          } catch (error) {
+            logger.warn("Failed to get provider via new API:", error);
+          }
+        }
 
-          // Get chain ID
-          const hexChainId = (await farcasterSDK.wallet.ethProvider.request({
-            method: "eth_chainId",
-          })) as string;
-          const chainId = parseInt(hexChainId, 16);
-          setFarcasterWallet((prev) => ({ ...prev, chainId }));
+        // Fallback to legacy API
+        if (!provider && farcasterSDK.wallet.ethProvider) {
+          provider = farcasterSDK.wallet.ethProvider;
+        }
 
-          toast.success("Farcaster wallet connected!");
-          return true;
+        if (provider && typeof provider === "object" && "request" in provider) {
+          const accounts = (await (
+            provider as {
+              request: (args: { method: string }) => Promise<string[]>;
+            }
+          ).request({
+            method: "eth_requestAccounts",
+          })) as string[];
+
+          if (accounts && accounts.length > 0) {
+            setFarcasterWallet((prev) => ({ ...prev, address: accounts[0] }));
+
+            // Get chain ID
+            const hexChainId = (await (
+              provider as {
+                request: (args: { method: string }) => Promise<string>;
+              }
+            ).request({
+              method: "eth_chainId",
+            })) as string;
+            const chainId = parseInt(hexChainId, 16);
+            setFarcasterWallet((prev) => ({ ...prev, chainId }));
+
+            toast.success("Farcaster wallet connected!");
+            return true;
+          }
         }
       }
 

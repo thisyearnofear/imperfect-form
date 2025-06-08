@@ -103,15 +103,6 @@ export default function GameWrapper() {
   // Connected state - render the game
   return (
     <div className="min-h-screen bg-black">
-      {/* Farcaster Mini App indicator - moved from header */}
-      {isInFarcaster && (
-        <div className="p-2 text-center">
-          <span className="text-xs bg-purple-900 text-purple-200 px-2 py-1 rounded border border-purple-500">
-            Farcaster Mini App
-          </span>
-        </div>
-      )}
-
       {/* Game Component - pass address for scoring */}
       <main>
         <Game thirdwebAddress={address} />

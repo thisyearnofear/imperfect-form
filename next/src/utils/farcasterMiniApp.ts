@@ -125,20 +125,31 @@ export function debugFarcasterContext(): void {
 /**
  * Get the appropriate Ethereum provider - either Farcaster Mini App or window.ethereum
  * This is crucial for score submission to work in Mini Apps
+ * Updated to use the latest Farcaster SDK API
  */
 export async function getEthereumProvider(): Promise<unknown> {
   if (typeof window === 'undefined') return null;
 
   try {
-    // First, try to get Farcaster Mini App provider
+    // First, try to get Farcaster Mini App provider using the new API
     const { sdk } = await import('@farcaster/frame-sdk');
 
+    // Use the new getEthereumProvider() method instead of direct ethProvider access
+    if (sdk.wallet?.getEthereumProvider) {
+      const provider = await sdk.wallet.getEthereumProvider();
+      if (provider) {
+        logger.info('🎯 Using Farcaster Mini App Ethereum provider (new API)');
+        return provider;
+      }
+    }
+
+    // Fallback to old API for backward compatibility
     if (sdk.wallet?.ethProvider) {
-      logger.info('🎯 Using Farcaster Mini App Ethereum provider');
+      logger.info('🎯 Using Farcaster Mini App Ethereum provider (legacy API)');
       return sdk.wallet.ethProvider;
     }
-  } catch {
-    logger.warn('🎯 Farcaster SDK not available, falling back to window.ethereum');
+  } catch (error) {
+    logger.warn('🎯 Farcaster SDK not available, falling back to window.ethereum:', error);
   }
 
   // Fallback to window.ethereum

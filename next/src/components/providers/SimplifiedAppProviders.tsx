@@ -6,6 +6,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createConfig, http, cookieStorage, createStorage } from "wagmi";
 import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
 import { baseSepolia, polygon, celo, type Chain } from "wagmi/chains";
+
+// Import Farcaster connector
+let farcasterFrame: (() => unknown) | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const farcasterConnector = require("@farcaster/frame-wagmi-connector");
+  farcasterFrame = farcasterConnector.farcasterFrame;
+} catch {
+  console.warn("@farcaster/frame-wagmi-connector not available");
+}
 import { Toaster } from "react-hot-toast";
 import { PlatformProvider } from "@/contexts/PlatformContext";
 
@@ -31,10 +41,9 @@ const monadTestnet: Chain = {
   testnet: true,
 };
 
-// Optimized Wagmi config - CELO first as default for better mobile/Farcaster UX
-const wagmiConfig = createConfig({
-  chains: [celo, polygon, baseSepolia, monadTestnet],
-  connectors: [
+// Create connectors array with Farcaster support
+const createConnectors = () => {
+  const connectors = [
     // Primary: Coinbase Wallet (works on all chains, supports Smart Wallet)
     coinbaseWallet({
       appName: "Imperfect Form",
@@ -61,7 +70,27 @@ const wagmiConfig = createConfig({
       },
       showQrModal: false, // Prevent auto-popup on page load
     }),
-  ],
+  ];
+
+  // Add Farcaster connector if available
+  if (farcasterFrame && typeof farcasterFrame === "function") {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const connector = (farcasterFrame as () => any)();
+      connectors.unshift(connector); // Add at beginning for priority in Farcaster context
+      console.log("✅ Farcaster connector added to Wagmi config");
+    } catch (err) {
+      console.warn("Failed to initialize Farcaster connector:", err);
+    }
+  }
+
+  return connectors;
+};
+
+// Optimized Wagmi config - CELO first as default for better mobile/Farcaster UX
+const wagmiConfig = createConfig({
+  chains: [celo, polygon, baseSepolia, monadTestnet],
+  connectors: createConnectors(),
   storage: createStorage({
     storage: cookieStorage,
   }),
@@ -159,7 +188,6 @@ interface AppProvidersProps {
 export default function SimplifiedAppProviders({
   children,
 }: AppProvidersProps) {
-  // @ts-expect-error - Wagmi config type inference issue with multiple chains
   const WagmiProviderComponent = WagmiProvider as React.ComponentType<{
     config: typeof wagmiConfig;
     children: React.ReactNode;
