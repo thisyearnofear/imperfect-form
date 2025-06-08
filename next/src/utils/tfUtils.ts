@@ -9,6 +9,7 @@ let tfInitialized = false;
  */
 interface TFPlatformConfig {
   backend: string;
+  fallbackBackend?: string;
   settings?: Record<string, unknown>;
 }
 
@@ -31,9 +32,10 @@ function getPlatformConfig(isMobile: boolean): TFPlatformConfig {
   }
 
   // Desktop can use more resources for better accuracy
+  // Use WebGL as default for stability, WebGPU as fallback if WebGL fails
   return {
-    // Try WebGPU first on desktop, if that fails, will fall back to WebGL
-    backend: 'webgpu',
+    backend: 'webgl',
+    fallbackBackend: 'webgpu',
     settings: {
       // Default settings for desktop - can use more resources
       'CHECK_COMPUTATION_FOR_ERRORS': true,
@@ -74,11 +76,25 @@ export async function initializeTensorFlow(isMobile = false): Promise<string> {
       tfInitialized = true;
       return platformConfig.backend;
     } catch (primaryError) {
-      // Suppress the error for WebGPU since it's expected on many browsers
-      if (platformConfig.backend === 'webgpu') {
-        console.log('WebGPU not available, falling back to WebGL');
-      } else {
-        console.warn(`${platformConfig.backend} initialization failed, trying WebGL:`, primaryError);
+      console.warn(`${platformConfig.backend} initialization failed:`, primaryError);
+
+      // Try fallback backend if available
+      if (platformConfig.fallbackBackend) {
+        try {
+          // Dynamically import WebGPU if it's the fallback
+          if (platformConfig.fallbackBackend === 'webgpu') {
+            await import('@tensorflow/tfjs-backend-webgpu');
+            console.log('WebGPU backend loaded as fallback');
+          }
+
+          await tf.setBackend(platformConfig.fallbackBackend);
+          await tf.ready();
+          console.log(`TensorFlow.js initialized with fallback ${platformConfig.fallbackBackend} backend`);
+          tfInitialized = true;
+          return platformConfig.fallbackBackend;
+        } catch (fallbackError) {
+          console.warn(`Fallback ${platformConfig.fallbackBackend} also failed:`, fallbackError);
+        }
       }
     }
 

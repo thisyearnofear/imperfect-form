@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Dialog } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { UniversalConnectButton } from "@/components/wallet";
-import { FarcasterShare } from "@/components/social";
+import FarcasterShare from "@/components/social/FarcasterShare";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
 import { submitScoreDirectly } from "@/utils/directContractInteraction";
 import {
@@ -42,7 +42,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   mode = "pushups",
   address,
 }) => {
-  const { platform, wallet } = usePlatform();
+  const { platform, wallet, user } = usePlatform();
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === "farcaster";
 
@@ -294,9 +294,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Record Your Score"
-      description={`${getMedalEmoji()} You completed ${repCount} ${mode} in ${
+      description={`${getMedalEmoji()} You aced ${repCount} ${mode} in ${
         120 - timeLeft
-      } seconds!`}
+      } secs!`}
       preventClose={false}
     >
       <div className="space-y-6">
@@ -435,12 +435,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
         )}
 
-        {/* Social sharing buttons */}
+        {/* Social sharing buttons - Enhanced for mini app context */}
         {window.transactionHash && (
           <div className="border-t border-gray-700 pt-4">
-            <p className="text-xs text-center text-gray-400 mb-2">
-              Share your achievement:
-            </p>
             <div className="flex flex-col items-center space-y-4">
               {/* Enhanced Farcaster integration */}
               <FarcasterShare
@@ -448,27 +445,31 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 exerciseMode={mode}
                 timeSpent={formatExerciseTime(120 - timeLeft)} // Calculate elapsed time: 120 seconds (2 min) - timeLeft
                 network={networkType} // Pass the direct network type (polygon, base, celo, monad)
+                isInMiniApp={isInMiniApp}
+                user={user}
               />
 
-              {/* Twitter sharing */}
-              <button
-                className="twitter-button transition-all transform hover:scale-105"
-                onClick={() => {
-                  const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
-                  const url = `https://imperfect-form.vercel.app?ref=twitter`;
-                  const hashtags = ["OnchainOlympics", "FitnessOnchain"];
-                  window.open(
-                    `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                      text
-                    )}&url=${encodeURIComponent(url)}&hashtags=${hashtags.join(
-                      ","
-                    )}`,
-                    "_blank"
-                  );
-                }}
-              >
-                Twitter
-              </button>
+              {/* Twitter sharing - only show outside mini app context */}
+              {!isInMiniApp && (
+                <button
+                  className="twitter-button transition-all transform hover:scale-105"
+                  onClick={() => {
+                    const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
+                    const url = `https://imperfect-form.vercel.app?ref=twitter`;
+                    const hashtags = ["OnchainOlympics", "FitnessOnchain"];
+                    window.open(
+                      `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                        text
+                      )}&url=${encodeURIComponent(
+                        url
+                      )}&hashtags=${hashtags.join(",")}`,
+                      "_blank"
+                    );
+                  }}
+                >
+                  Twitter
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -18,6 +18,7 @@ try {
 }
 import { Toaster } from "react-hot-toast";
 import { PlatformProvider } from "@/contexts/PlatformContext";
+import { NeynarAuthProvider } from "@/contexts/NeynarAuthContext";
 
 // Define Monad Testnet
 const monadTestnet: Chain = {
@@ -193,12 +194,17 @@ export default function SimplifiedAppProviders({
     children: React.ReactNode;
   }>;
 
+  // Get Neynar client ID from environment
+  const neynarClientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || "";
+
   return (
     <WagmiProviderComponent config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <PlatformProvider>
-          <Toaster {...toastConfig} />
-          {children}
+          <NeynarAuthProvider clientId={neynarClientId}>
+            <Toaster {...toastConfig} />
+            {children}
+          </NeynarAuthProvider>
         </PlatformProvider>
       </QueryClientProvider>
     </WagmiProviderComponent>

@@ -311,7 +311,7 @@ export function usePoseDetection(
                 drawSkeleton(ctx, keypoints);
 
                 // Draw exercise state information
-                drawExerciseState(ctx, canvas.width);
+                drawExerciseState(ctx);
 
                 // Check for rep completion
                 if (mode === 'pushups' ? detectPushupCallback(keypoints) : detectSquatCallback(keypoints)) {
@@ -321,7 +321,7 @@ export function usePoseDetection(
                 }
               } else {
                 // Even if no pose is detected, still show the exercise state
-                drawExerciseState(ctx, canvas.width);
+                drawExerciseState(ctx);
               }
             } catch (error) {
               console.error('Error during pose detection:', error);
@@ -494,22 +494,28 @@ export function usePoseDetection(
       });
     }
 
-    function drawExerciseState(ctx: CanvasRenderingContext2D, width: number) {
+    function drawExerciseState(ctx: CanvasRenderingContext2D) {
+      // Save the current canvas state
+      ctx.save();
+
+      // Apply horizontal flip to un-mirror the text
+      ctx.scale(-1, 1);
+
       // Draw rep count and current state with improved visibility - mobile-aware
       const fontSize = isMobile ? 18 : 24; // Smaller text on mobile
       ctx.font = `bold ${fontSize}px sans-serif`;
-      ctx.textAlign = 'right';
+      ctx.textAlign = 'right'; // Use right align since we're flipped
 
       // Add shadow for better text visibility - mobile-aware
       ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
       ctx.shadowBlur = isMobile ? 3 : 5;
-      ctx.shadowOffsetX = isMobile ? 1 : 2;
+      ctx.shadowOffsetX = isMobile ? -1 : -2; // Flip shadow offset
       ctx.shadowOffsetY = isMobile ? 1 : 2;
 
-      // Show exercise type with background
+      // Show exercise type with background - positioned on left (but flipped)
       const modeText = `MODE: ${mode.toUpperCase()}`;
       ctx.fillStyle = '#fcb131';
-      ctx.fillText(modeText, width - 10, 30);
+      ctx.fillText(modeText, -10, 30); // Negative position due to flip
 
       // Show position state with visual indicator
       let stateText = '';
@@ -526,14 +532,17 @@ export function usePoseDetection(
         stateColor = '#ffffff'; // White
       }
 
-      // Draw state text
+      // Draw state text - positioned on left (but flipped)
       ctx.fillStyle = stateColor;
-      ctx.fillText(stateText, width - 10, 70);
+      ctx.fillText(stateText, -10, 70); // Negative position due to flip
 
       // Reset shadow
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
+
+      // Restore the canvas state
+      ctx.restore();
     }
 
     initPoseDetection();
