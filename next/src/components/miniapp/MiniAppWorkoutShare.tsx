@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { useMiniApp } from "@/components/providers";
+import { usePlatform, usePlatformFeatures } from "@/contexts/PlatformContext";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 
 const logger = createRemoteLogger("MiniAppWorkoutShare");
@@ -22,7 +22,10 @@ export function MiniAppWorkoutShare({
   onShareComplete,
   className = "",
 }: MiniAppWorkoutShareProps) {
-  const { isInMiniApp, canShareContent, shareWorkout, user } = useMiniApp();
+  const { platform, user } = usePlatform();
+  const { canShare, share } = usePlatformFeatures();
+  const isInMiniApp = platform === "farcaster";
+  const canShareContent = canShare;
   const [isSharing, setIsSharing] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
 
@@ -36,7 +39,12 @@ export function MiniAppWorkoutShare({
     setShareSuccess(false);
 
     try {
-      const success = await shareWorkout(reps, exerciseMode, timeSpent);
+      // Create workout share content
+      const shareContent = {
+        text: `Just completed ${reps} ${exerciseMode} in ${timeSpent} on Imperfect Form! 🏋️‍♂️`,
+        url: "https://imperfectform.fun",
+      };
+      const success = await share(shareContent);
 
       if (success) {
         setShareSuccess(true);
@@ -128,7 +136,10 @@ export function CompactMiniAppShare({
   onShareComplete,
   className = "",
 }: MiniAppWorkoutShareProps) {
-  const { isInMiniApp, canShareContent, shareWorkout } = useMiniApp();
+  const { platform } = usePlatform();
+  const { canShare, share } = usePlatformFeatures();
+  const isInMiniApp = platform === "farcaster";
+  const canShareContent = canShare;
   const [isSharing, setIsSharing] = useState(false);
 
   const handleShare = async () => {
@@ -136,7 +147,11 @@ export function CompactMiniAppShare({
 
     setIsSharing(true);
     try {
-      const success = await shareWorkout(reps, exerciseMode, timeSpent);
+      const shareContent = {
+        text: `Just completed ${reps} ${exerciseMode} in ${timeSpent} on Imperfect Form! 🏋️‍♂️`,
+        url: "https://imperfectform.fun",
+      };
+      const success = await share(shareContent);
       if (success) {
         onShareComplete?.();
       }

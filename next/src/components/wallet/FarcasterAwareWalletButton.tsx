@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { useFarcasterWallet } from "./FarcasterWalletProvider";
-import { useConnect, useAccount, useDisconnect } from "wagmi";
+import { usePlatform } from "@/contexts/PlatformContext";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 
 // Initialize logger for Farcaster-aware wallet button
@@ -20,49 +19,39 @@ interface FarcasterAwareWalletButtonProps {
 
 /**
  * Smart wallet button that prioritizes Farcaster wallet when in mini app context
+ * Now simplified to use the unified PlatformContext
  */
 export function FarcasterAwareWalletButton({
   className = "",
   onWalletConnected,
   onWalletDisconnected,
 }: FarcasterAwareWalletButtonProps) {
-  const {
-    isInMiniApp,
-    user,
-    walletAddress: farcasterWalletAddress,
-    isLoading: farcasterLoading,
-    error: farcasterError,
-    connectWallet: connectFarcasterWallet,
-  } = useFarcasterWallet();
-
-  const { connect, connectors, isPending: isConnecting } = useConnect();
-  const { address: wagmiAddress, isConnected: isWagmiConnected } = useAccount();
-  const { disconnect } = useDisconnect();
+  const { platform, user, wallet, actions, error } = usePlatform();
+  const { address, isConnecting } = wallet;
+  const { connect, disconnect } = actions;
+  const isInMiniApp = platform === "farcaster";
 
   const [connectionState, setConnectionState] = useState<
     "idle" | "connecting" | "connected" | "error"
   >("idle");
 
   // Determine the active wallet address and source
-  const activeWalletAddress = farcasterWalletAddress || wagmiAddress;
-  const walletSource: "farcaster" | "external" | null = farcasterWalletAddress
-    ? "farcaster"
-    : wagmiAddress
-    ? "external"
-    : null;
+  const activeWalletAddress = address;
+  const walletSource: "farcaster" | "external" | null =
+    platform === "farcaster" ? "farcaster" : address ? "external" : null;
 
   // Update connection state based on wallet status
   useEffect(() => {
-    if (farcasterLoading || isConnecting) {
+    if (isConnecting) {
       setConnectionState("connecting");
     } else if (activeWalletAddress) {
       setConnectionState("connected");
-    } else if (farcasterError) {
+    } else if (error) {
       setConnectionState("error");
     } else {
       setConnectionState("idle");
     }
-  }, [farcasterLoading, isConnecting, activeWalletAddress, farcasterError]);
+  }, [isConnecting, activeWalletAddress, error]);
 
   // Track if we've already notified about the current connection
   const [hasNotifiedConnection, setHasNotifiedConnection] = useState(false);
@@ -96,100 +85,18 @@ export function FarcasterAwareWalletButton({
     onWalletDisconnected,
   ]);
 
-  // Handle wallet connection
+  // Handle wallet connection - simplified with unified context
   const handleConnect = async () => {
     try {
       setConnectionState("connecting");
+      logger.info("Attempting wallet connection", { platform, isInMiniApp });
 
-      // First, try to find the Farcaster connector in Wagmi connectors
-      const farcasterConnector = connectors.find(
-        (connector) =>
-          connector.id === "farcasterFrame" ||
-          connector.name.toLowerCase().includes("farcaster")
-      );
-
-      if (farcasterConnector && isInMiniApp) {
-        // Use the official Farcaster Wagmi connector
-        logger.info(
-          "Attempting Farcaster wallet connection via Wagmi connector"
-        );
-
-        try {
-          connect({ connector: farcasterConnector });
-          return; // Let Wagmi handle the connection state
-        } catch (farcasterError) {
-          logger.error("Farcaster Wagmi connector failed", farcasterError);
-        }
-      }
-
-      // Fallback: Try the manual Farcaster SDK approach if in mini app
-      if (isInMiniApp) {
-        logger.info(
-          "Attempting Farcaster wallet connection via SDK (fallback)"
-        );
-
-        // Add timeout to prevent hanging (reduced to 8 seconds)
-        const timeoutPromise = new Promise<null>((_, reject) => {
-          setTimeout(
-            () =>
-              reject(
-                new Error("Farcaster wallet connection timeout after 8 seconds")
-              ),
-            8000
-          );
-        });
-
-        try {
-          const farcasterAddress = await Promise.race([
-            connectFarcasterWallet(),
-            timeoutPromise,
-          ]);
-
-          if (farcasterAddress) {
-            logger.info("Farcaster wallet connected successfully via SDK", {
-              address: farcasterAddress,
-            });
-            setConnectionState("connected");
-            return;
-          } else {
-            logger.warn(
-              "Farcaster wallet connection returned null - this may indicate the user rejected the connection"
-            );
-            throw new Error("Farcaster wallet connection returned null");
-          }
-        } catch (timeoutError) {
-          logger.error(
-            "Farcaster wallet connection timeout or error",
-            timeoutError
-          );
-          // Don't continue to fallback if it's a timeout - let user try again
-          if (
-            timeoutError instanceof Error &&
-            timeoutError.message.includes("timeout")
-          ) {
-            setConnectionState("error");
-            return;
-          }
-        }
-
-        logger.warn(
-          "Farcaster wallet connection failed, falling back to external wallet"
-        );
-      }
-
-      // Final fallback to external wallet connection
-      const injectedConnector = connectors.find(
-        (connector) => connector.type === "injected"
-      );
-
-      if (injectedConnector) {
-        logger.info("Connecting external wallet", {
-          connectorType: injectedConnector.type,
-          connectorName: injectedConnector.name,
-        });
-        connect({ connector: injectedConnector });
+      const success = await connect();
+      if (success) {
+        logger.info("Wallet connected successfully", { address, platform });
       } else {
-        throw new Error("No wallet connector available");
+        logger.warn("Wallet connection failed");
+        setConnectionState("error");
       }
     } catch (error) {
       logger.error("Wallet connection failed", error);
@@ -197,15 +104,10 @@ export function FarcasterAwareWalletButton({
     }
   };
 
-  // Handle wallet disconnection
-  const handleDisconnect = () => {
+  // Handle wallet disconnection - simplified with unified context
+  const handleDisconnect = async () => {
     logger.info("Disconnecting wallet", { source: walletSource });
-
-    if (isWagmiConnected) {
-      disconnect();
-    }
-
-    // Note: Farcaster wallet disconnection is handled by the mini app itself
+    await disconnect();
     setConnectionState("idle");
   };
 
@@ -327,37 +229,29 @@ export function FarcasterAwareWalletButton({
 
 /**
  * Compact version of the Farcaster-aware wallet button for mobile
+ * Now simplified to use the unified PlatformContext
  */
 export function CompactFarcasterWalletButton({
   className = "",
   onWalletConnected,
 }: Pick<FarcasterAwareWalletButtonProps, "className" | "onWalletConnected">) {
-  const {
-    isInMiniApp,
-    user,
-    walletAddress: farcasterWalletAddress,
-    isLoading: farcasterLoading,
-    connectWallet: connectFarcasterWallet,
-  } = useFarcasterWallet();
+  const { platform, user, wallet, actions } = usePlatform();
+  const { address, isConnecting } = wallet;
+  const { connect } = actions;
+  const isInMiniApp = platform === "farcaster";
 
-  const { address: wagmiAddress } = useAccount();
-  const activeWalletAddress = farcasterWalletAddress || wagmiAddress;
-  const walletSource: "farcaster" | "external" | null = farcasterWalletAddress
-    ? "farcaster"
-    : wagmiAddress
-    ? "external"
-    : null;
+  const activeWalletAddress = address;
+  const walletSource: "farcaster" | "external" | null =
+    platform === "farcaster" ? "farcaster" : address ? "external" : null;
 
   const handleConnect = async () => {
-    if (isInMiniApp) {
-      const address = await connectFarcasterWallet();
-      if (address) {
-        onWalletConnected?.(address, "farcaster");
-      }
+    const success = await connect();
+    if (success && address) {
+      onWalletConnected?.(address, walletSource || "external");
     }
   };
 
-  if (farcasterLoading) {
+  if (isConnecting) {
     return (
       <div className={`flex items-center justify-center p-2 ${className}`}>
         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>

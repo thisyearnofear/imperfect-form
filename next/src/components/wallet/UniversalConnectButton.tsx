@@ -31,7 +31,7 @@ export default function UniversalConnectButton({
   const displayName =
     user?.displayName ||
     (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : undefined);
-  const { connect, disconnect, switchChain: switchToOptimalChain } = actions;
+  const { connect, disconnect, switchChain } = actions;
 
   const { isMobile, isWalletBrowser } = useDeviceDetect();
   const hasMounted = useClientOnly();
@@ -80,7 +80,7 @@ export default function UniversalConnectButton({
     console.log("UniversalConnectButton: Switching to chain", targetChainId);
     setShowNetworkSwitcher(false);
     try {
-      await switchToOptimalChain(targetChainId);
+      await switchChain(targetChainId);
       console.log("UniversalConnectButton: Switch completed");
     } catch (error) {
       console.error("UniversalConnectButton: Switch failed", error);

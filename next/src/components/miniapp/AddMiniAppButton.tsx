@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useMiniApp } from "@/components/providers";
+import { usePlatform, usePlatformFeatures } from "@/contexts/PlatformContext";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 
 const logger = createRemoteLogger("AddMiniAppButton");
@@ -17,7 +17,9 @@ export function AddMiniAppButton({
   variant = "primary",
   showAfterWorkout = false,
 }: AddMiniAppButtonProps) {
-  const { isInMiniApp, addMiniApp, user } = useMiniApp();
+  const { platform, user } = usePlatform();
+  const { addToHome } = usePlatformFeatures();
+  const isInMiniApp = platform === "farcaster";
   const [isAdding, setIsAdding] = useState(false);
   const [showPrompt, setShowPrompt] = useState(showAfterWorkout);
 
@@ -25,7 +27,7 @@ export function AddMiniAppButton({
     setIsAdding(true);
 
     try {
-      const success = await addMiniApp();
+      const success = await addToHome();
 
       if (success) {
         logger.info("🎯 Add Mini App prompt shown successfully");
@@ -130,7 +132,8 @@ export function AddMiniAppButton({
 
 // Hook to show add prompt after workout completion
 export function useAddMiniAppPrompt() {
-  const { isInMiniApp } = useMiniApp();
+  const { platform } = usePlatform();
+  const isInMiniApp = platform === "farcaster";
   const [shouldShow, setShouldShow] = useState(false);
 
   const showAfterWorkout = () => {
@@ -159,7 +162,8 @@ export function FloatingAddMiniAppPrompt({
   show: boolean;
   onDismiss: () => void;
 }) {
-  const { isInMiniApp } = useMiniApp();
+  const { platform } = usePlatform();
+  const isInMiniApp = platform === "farcaster";
 
   if (!isInMiniApp || !show) {
     return null;

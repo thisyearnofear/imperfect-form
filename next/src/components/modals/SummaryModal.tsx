@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { Dialog } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
-import { useMiniApp } from "@/components/providers";
-import { ConnectWallet } from "@/components/wallet";
+import { UniversalConnectButton } from "@/components/wallet";
 import { FarcasterShare } from "@/components/social";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
 import { submitScoreDirectly } from "@/utils/directContractInteraction";
@@ -45,7 +44,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 }) => {
   const { platform, wallet } = usePlatform();
   const { address: walletAddress, chainId } = wallet;
-  const { isInMiniApp } = useMiniApp();
+  const isInMiniApp = platform === "farcaster";
 
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {
@@ -333,7 +332,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         {!effectiveAddress ? (
           <div className="text-center py-2">
             <p className="mb-2 text-sm">Connect your wallet to submit:</p>
-            <ConnectWallet />
+            <UniversalConnectButton size="lg" />
           </div>
         ) : (
           <div className="space-y-4">

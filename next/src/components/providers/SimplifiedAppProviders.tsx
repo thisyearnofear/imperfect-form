@@ -183,33 +183,3 @@ export { wagmiConfig, queryClient };
 // Backward compatibility exports
 export { usePlatform as useUniversalWallet } from "@/contexts/PlatformContext";
 export { useWallet as useWalletProvider } from "@/contexts/PlatformContext";
-
-// Legacy network hook for backward compatibility
-export function useNetwork() {
-  const { wallet } = usePlatform();
-
-  // Map chain IDs to network names for backward compatibility
-  const getNetworkName = (id: number | null) => {
-    switch (id) {
-      case 84532:
-        return "base";
-      case 137:
-        return "polygon";
-      case 42220:
-        return "celo";
-      case 10143:
-        return "monad";
-      default:
-        return "celo"; // Default to CELO for all contexts
-    }
-  };
-
-  return {
-    network: getNetworkName(wallet.chainId),
-    setNetwork: () => {}, // Legacy - auto-handled now
-    isNetworkSelected: true, // Always true now
-  };
-}
-
-// Import the platform context hook
-import { usePlatform } from "@/contexts/PlatformContext";

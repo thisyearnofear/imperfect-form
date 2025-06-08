@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Spinner } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
-import { useMiniApp } from "@/components/providers";
 import { NotificationSignup } from "@/components/miniapp/NotificationSignup";
 import {
   callFarcasterReady,
@@ -33,9 +32,10 @@ const ExpandedLeaderboardModal = dynamic(
 import { Score } from "@/types";
 
 export default function Home() {
-  const { wallet } = usePlatform();
+  const { platform, wallet } = usePlatform();
   const { isConnected } = wallet;
-  const { isInMiniApp, isLoading: miniAppLoading } = useMiniApp();
+  const isInMiniApp = platform === "farcaster";
+  const miniAppLoading = false; // No longer needed with unified context
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [showFirstTimePrompt, setShowFirstTimePrompt] = useState(false);

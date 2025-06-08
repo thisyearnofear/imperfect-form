@@ -5,4 +5,10 @@ export { default } from "./SimplifiedAppProviders";
 // Backward compatibility exports
 export { default as AppProviders } from "./SimplifiedAppProviders";
 export { default as Providers } from "./SimplifiedAppProviders";
-export * from "./BackwardCompatibility";
+
+// Re-export the new hooks for components that want to migrate
+export {
+  usePlatform,
+  useWallet,
+  usePlatformFeatures,
+} from "@/contexts/PlatformContext";

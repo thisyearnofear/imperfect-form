@@ -7,18 +7,53 @@ import UniversalConnectButton from "./UniversalConnectButton";
 // All of these redirect to the new universal system
 
 // Import from the new unified context
-import { useWalletProvider as useNewWalletProvider } from "@/components/providers";
+import { usePlatform } from "@/contexts/PlatformContext";
 
 export const useWalletProvider = () => {
   // Use the new context but maintain legacy interface
-  return useNewWalletProvider();
+  const { wallet } = usePlatform();
+
+  return {
+    walletProvider:
+      wallet.provider || (wallet.isConnected ? "universal" : null),
+    isConnected: wallet.isConnected,
+    userAddress: wallet.address,
+    // Legacy methods that do nothing (for compatibility)
+    setWalletProvider: () => {},
+    resetAll: () => {},
+    disconnect: () => {},
+    setIsConnected: () => {},
+    setUserAddress: () => {},
+    changeWalletProvider: () => {},
+    isWalletProviderSelected: wallet.isConnected,
+  };
 };
 
-export const useNetwork = () => ({
-  network: "base",
-  setNetwork: () => {},
-  isNetworkSelected: true,
-});
+export const useNetwork = () => {
+  const { wallet } = usePlatform();
+
+  // Map chain IDs to network names for backward compatibility
+  const getNetworkName = (id: number | null) => {
+    switch (id) {
+      case 84532:
+        return "base";
+      case 137:
+        return "polygon";
+      case 42220:
+        return "celo";
+      case 10143:
+        return "monad";
+      default:
+        return "celo"; // Default to CELO for all contexts
+    }
+  };
+
+  return {
+    network: getNetworkName(wallet.chainId),
+    setNetwork: () => {}, // Legacy - auto-handled now
+    isNetworkSelected: true, // Always true now
+  };
+};
 
 // Stub components that redirect to universal system
 export const WalletButton = () => (

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useMiniApp } from "@/components/providers";
+import { usePlatform } from "@/contexts/PlatformContext";
 import { AddMiniAppButton } from "./AddMiniAppButton";
 import { createRemoteLogger } from "@/utils/remoteLogger";
 
@@ -20,7 +20,8 @@ export function NotificationSignup({
   trigger = "manual",
   onSignupComplete,
 }: NotificationSignupProps) {
-  const { isInMiniApp, user } = useMiniApp();
+  const { platform, user } = usePlatform();
+  const isInMiniApp = platform === "farcaster";
   const [showSignup, setShowSignup] = useState(false);
 
   // Check if we should show the signup based on trigger
@@ -176,7 +177,8 @@ export function NotificationSignup({
 
 // Hook to trigger notification signup after workout
 export function useNotificationSignup() {
-  const { isInMiniApp } = useMiniApp();
+  const { platform } = usePlatform();
+  const isInMiniApp = platform === "farcaster";
   const [shouldShowWorkoutSignup, setShouldShowWorkoutSignup] = useState(false);
 
   const triggerWorkoutSignup = () => {
