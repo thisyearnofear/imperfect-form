@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import "@/styles/leaderboard.css";
 import { ethers } from "ethers";
 import {
@@ -15,6 +16,10 @@ import {
 } from "@/constants/contracts";
 import { shortenAddress } from "@/utils/formatters";
 import { getDisplayName } from "@/utils/ensResolver";
+import {
+  batchResolveFarcasterProfiles,
+  type FarcasterProfile,
+} from "@/utils/neynarResolver";
 import {
   POLYGON_FALLBACK_RPCS,
   BASE_FALLBACK_RPCS,
@@ -59,6 +64,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   const [displayNames, setDisplayNames] = useState<Record<string, string>>(
     initialDisplayNames || {}
   );
+  const [farcasterProfiles, setFarcasterProfiles] = useState<
+    Record<string, FarcasterProfile | null>
+  >({});
 
   // We'll use ethers.js directly instead of ThirdWeb hooks
   // This avoids React hook issues when switching between wallet modes
@@ -306,6 +314,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           setPushupLeaderboard(parsedData.pushups);
           setSquatLeaderboard(parsedData.squats);
           setDisplayNames(parsedData.displayNames);
+          // Restore Farcaster profiles if available in cache
+          if (parsedData.farcasterProfiles) {
+            setFarcasterProfiles(parsedData.farcasterProfiles);
+          }
           setIsLoading(false);
 
           // Only log in development
@@ -519,20 +531,37 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       setPushupLeaderboard(sortedPushups);
       setSquatLeaderboard(sortedSquats);
 
-      // Resolve ENS names for all unique addresses
-      const uniqueAddresses = new Set([
-        ...sortedPushups.map((entry) => entry.user),
-        ...sortedSquats.map((entry) => entry.user),
-      ]);
+      // Resolve Farcaster profiles and ENS names for all unique addresses
+      const uniqueAddresses = Array.from(
+        new Set([
+          ...sortedPushups.map((entry) => entry.user),
+          ...sortedSquats.map((entry) => entry.user),
+        ])
+      );
 
+      // Batch resolve Farcaster profiles first (more efficient)
+      const farcasterProfilesMap = await batchResolveFarcasterProfiles(
+        uniqueAddresses
+      );
+      setFarcasterProfiles(Object.fromEntries(farcasterProfilesMap));
+
+      // Build display names with Farcaster priority
       const names: Record<string, string> = {};
 
       for (const address of uniqueAddresses) {
-        try {
-          const displayName = await getDisplayName(address);
-          names[address] = displayName;
-        } catch {
-          names[address] = shortenAddress(address);
+        const farcasterProfile = farcasterProfilesMap.get(address);
+
+        if (farcasterProfile) {
+          // Use Farcaster username with @ prefix
+          names[address] = `@${farcasterProfile.username}`;
+        } else {
+          // Fallback to ENS resolution
+          try {
+            const displayName = await getDisplayName(address);
+            names[address] = displayName;
+          } catch {
+            names[address] = shortenAddress(address);
+          }
         }
       }
 
@@ -544,6 +573,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           pushups: sortedPushups,
           squats: sortedSquats,
           displayNames: names,
+          farcasterProfiles: Object.fromEntries(farcasterProfilesMap),
         };
         localStorage.setItem("leaderboardCache", JSON.stringify(cacheData));
         localStorage.setItem(
@@ -700,7 +730,33 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               >
                 <td>{i + 1}</td>
                 <td>
-                  {displayNames[entry.user] || shortenAddress(entry.user)}
+                  <div className="flex items-center space-x-2">
+                    {farcasterProfiles[entry.user]?.pfpUrl && (
+                      <Image
+                        src={farcasterProfiles[entry.user]?.pfpUrl || ""}
+                        alt="Profile"
+                        width={24}
+                        height={24}
+                        className="w-6 h-6 rounded-full"
+                        onError={(e) => {
+                          // Hide image if it fails to load
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
+                    <span
+                      className={
+                        farcasterProfiles[entry.user]
+                          ? "text-purple-600 font-medium"
+                          : ""
+                      }
+                    >
+                      {displayNames[entry.user] || shortenAddress(entry.user)}
+                    </span>
+                    {farcasterProfiles[entry.user] && (
+                      <span className="text-xs text-purple-500">🎭</span>
+                    )}
+                  </div>
                 </td>
                 <td>{entry.score}</td>
                 <td>
@@ -748,7 +804,33 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               >
                 <td>{i + 1}</td>
                 <td>
-                  {displayNames[entry.user] || shortenAddress(entry.user)}
+                  <div className="flex items-center space-x-2">
+                    {farcasterProfiles[entry.user]?.pfpUrl && (
+                      <Image
+                        src={farcasterProfiles[entry.user]?.pfpUrl || ""}
+                        alt="Profile"
+                        width={24}
+                        height={24}
+                        className="w-6 h-6 rounded-full"
+                        onError={(e) => {
+                          // Hide image if it fails to load
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
+                    <span
+                      className={
+                        farcasterProfiles[entry.user]
+                          ? "text-purple-600 font-medium"
+                          : ""
+                      }
+                    >
+                      {displayNames[entry.user] || shortenAddress(entry.user)}
+                    </span>
+                    {farcasterProfiles[entry.user] && (
+                      <span className="text-xs text-purple-500">🎭</span>
+                    )}
+                  </div>
                 </td>
                 <td>{entry.score}</td>
                 <td>
