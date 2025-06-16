@@ -19,6 +19,12 @@ interface WebcamProps {
   onRepCount?: (count: number) => void;
   isActive?: boolean;
   onFilterChange?: (filterName: string) => void;
+  onPoseStateChange?: (state: {
+    hasCamera: boolean;
+    hasPoseDetection: boolean;
+    poseDetected: boolean;
+    isLoading: boolean;
+  }) => void;
 }
 
 // Initialize logger for the Webcam component
@@ -29,6 +35,7 @@ const Webcam: React.FC<WebcamProps> = ({
   onRepCount = () => {},
   isActive = true,
   onFilterChange = () => {},
+  onPoseStateChange,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Pass isMobile flag to usePoseDetection for mobile-specific optimizations
@@ -38,7 +45,8 @@ const Webcam: React.FC<WebcamProps> = ({
     mode,
     onRepCount,
     isActive,
-    isMobile
+    isMobile,
+    onPoseStateChange
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
 

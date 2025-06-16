@@ -9,6 +9,7 @@ import {
 } from "@/utils/cameraManager";
 import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
 import { Welcome } from "@/components/game";
+import PoseDetectionGuidance from "./PoseDetectionGuidance";
 import { UniversalConnectButton } from "@/components/wallet";
 import { usePlatform } from "@/contexts/PlatformContext";
 
@@ -49,6 +50,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   // Filter state is managed but currently only 'none' is used
   const [, setCurrentFilter] = useState<string>("none");
+
+  // Pose detection guidance state
+  const [showPoseGuidance, setShowPoseGuidance] = useState(false);
+  const [poseState, setPoseState] = useState({
+    hasCamera: false,
+    hasPoseDetection: false,
+    poseDetected: false,
+    isLoading: false,
+  });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const { isMobile } = useDeviceDetect(); // Use our enhanced device detection hook
@@ -151,8 +161,25 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       if (count === 1 && started && !timerRef.current) {
         startTimer();
       }
+
+      // Track workout progress
+      if (count > 0 && user?.fid) {
+        fetch("/api/analytics/engagement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fid: user.fid,
+            eventType: "workout_completed",
+            metadata: {
+              reps: count,
+              exerciseMode: mode,
+              duration: 120 - timeLeft, // seconds elapsed
+            },
+          }),
+        }).catch((err) => console.warn("Failed to track workout:", err));
+      }
     },
-    [started]
+    [started, mode, timeLeft, user?.fid]
   );
 
   useEffect(() => {
@@ -279,6 +306,29 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setCurrentFilter(filterName);
   };
 
+  // Handle pose detection state changes
+  const handlePoseStateChange = useCallback(
+    (newState: {
+      hasCamera: boolean;
+      hasPoseDetection: boolean;
+      poseDetected: boolean;
+      isLoading: boolean;
+    }) => {
+      setPoseState(newState);
+
+      // Show guidance when camera starts but pose isn't detected yet
+      if (started && newState.hasCamera && !newState.poseDetected) {
+        setShowPoseGuidance(true);
+      }
+
+      // Hide guidance when pose is detected
+      if (newState.poseDetected) {
+        setShowPoseGuidance(false);
+      }
+    },
+    [started]
+  );
+
   return (
     <>
       <div id="game-container">
@@ -390,6 +440,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                       onRepCount={handleRepCount}
                       isActive={started}
                       onFilterChange={handleFilterChange}
+                      onPoseStateChange={handlePoseStateChange}
                     />
                   </div>
                 </div>
@@ -405,6 +456,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                     onRepCount={handleRepCount}
                     isActive={started}
                     onFilterChange={handleFilterChange}
+                    onPoseStateChange={handlePoseStateChange}
                   />
                 </div>
               )}
@@ -487,43 +539,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </button>
 
           {/* Debug button - only visible on mobile devices */}
-          {isMobile && (
-            <button
-              id="debugButton"
-              className="col-span-2 py-2 px-3 mt-2 text-xs sm:text-sm touch-manipulation bg-gray-800 text-gray-300 opacity-70"
-              style={{ minHeight: isMobile ? "40px" : "auto" }}
-              aria-label="Send diagnostic info"
-              onClick={() => {
-                // Send diagnostic info to server console
-                logger.info("Mobile diagnostic info", {
-                  game: {
-                    mode,
-                    started,
-                    repCount,
-                    timeLeft,
-                  },
-                  webcam: {
-                    active: started,
-                  },
-                  device: {
-                    width: window.innerWidth,
-                    height: window.innerHeight,
-                    pixelRatio: window.devicePixelRatio,
-                    orientation: window.screen?.orientation?.type || "unknown",
-                    userAgent: navigator.userAgent,
-                  },
-                  components: {
-                    modelReady:
-                      typeof window !== "undefined" && "_poseModel" in window,
-                    tfReady: typeof window !== "undefined" && "tf" in window,
-                  },
-                });
-                toast.success("Diagnostic info sent!");
-              }}
-            >
-              SEND DIAGNOSTICS
-            </button>
-          )}
         </div>
       </div>
       <SummaryModal
@@ -533,6 +548,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         timeLeft={timeLeft}
         mode={mode}
         address={finalAddress}
+      />
+
+      {/* Pose Detection Guidance Modal */}
+      <PoseDetectionGuidance
+        isVisible={showPoseGuidance}
+        hasCamera={poseState.hasCamera}
+        hasPoseDetection={poseState.hasPoseDetection}
+        poseDetected={poseState.poseDetected}
+        onDismiss={() => setShowPoseGuidance(false)}
       />
 
       {/* Expanded Leaderboard Modal */}

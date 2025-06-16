@@ -32,7 +32,7 @@ const ExpandedLeaderboardModal = dynamic(
 import { Score } from "@/types";
 
 export default function Home() {
-  const { platform, wallet } = usePlatform();
+  const { platform, wallet, user } = usePlatform();
   const { isConnected } = wallet;
   const isInMiniApp = platform === "farcaster";
   const miniAppLoading = false; // No longer needed with unified context
@@ -77,6 +77,26 @@ export default function Home() {
         miniAppLoading
       );
 
+      // Track app launch
+      if (user?.fid) {
+        fetch("/api/analytics/engagement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fid: user.fid,
+            eventType: "app_launched",
+            metadata: {
+              platform: platform,
+              isInMiniApp: isInMiniApp,
+              userAgent:
+                typeof window !== "undefined"
+                  ? window.navigator.userAgent
+                  : "unknown",
+            },
+          }),
+        }).catch((err) => console.warn("Failed to track app launch:", err));
+      }
+
       // Debug Farcaster context
       debugFarcasterContext();
 
@@ -92,7 +112,7 @@ export default function Home() {
           setUiReady(true); // Continue anyway
         });
     }
-  }, [hasMounted, isInMiniApp, miniAppLoading]); // Include all dependencies used in the effect
+  }, [hasMounted, isInMiniApp, miniAppLoading, user?.fid, platform]); // Include all dependencies used in the effect
 
   // Show first-time Mini App prompt
   useEffect(() => {

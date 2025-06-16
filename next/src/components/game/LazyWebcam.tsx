@@ -8,6 +8,12 @@ interface LazyWebcamProps {
   onRepCount?: (count: number) => void;
   isActive?: boolean;
   onFilterChange?: (filterName: string) => void;
+  onPoseStateChange?: (state: {
+    hasCamera: boolean;
+    hasPoseDetection: boolean;
+    poseDetected: boolean;
+    isLoading: boolean;
+  }) => void;
 }
 
 /**

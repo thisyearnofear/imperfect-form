@@ -45,11 +45,11 @@ const monadTestnet: Chain = {
 // Create connectors array with Farcaster support
 const createConnectors = () => {
   const connectors = [
-    // Primary: Coinbase Wallet (works on all chains, supports Smart Wallet)
+    // Primary: Coinbase Wallet (works on all chains)
     coinbaseWallet({
       appName: "Imperfect Form",
       appLogoUrl: "https://imperfectform.fun/icon-192x192.png",
-      preference: "all", // Supports both EOA and Smart Wallet
+      preference: "eoaOnly", // Use standard EOA wallets for consistency
       enableMobileWalletLink: true,
     }),
 

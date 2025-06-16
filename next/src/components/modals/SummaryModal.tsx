@@ -69,8 +69,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   // Use the address from props if provided, otherwise fall back to wallet address from context
   const effectiveAddress = address || walletAddress;
-  const [useSpendLimits, setUseSpendLimits] = useState(false);
-  const [showDirectSubmit, setShowDirectSubmit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Function to get the actual ethereum provider from unified context
@@ -336,102 +334,48 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Smart Wallet submission options */}
-            {chainId === 84532 &&
-              networkType === "base" &&
-              !showDirectSubmit && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-center">
-                  <h3 className="font-bold mb-2 text-blue-800">
-                    Submission Options
-                  </h3>
-                  <div className="flex gap-3 justify-center">
-                    <button
-                      onClick={() => {
-                        setShowDirectSubmit(true);
-                        setUseSpendLimits(false);
-                      }}
-                      className="px-4 py-3 rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700 flex-1 flex flex-col items-center"
-                    >
-                      <span className="font-bold">Standard</span>
-                      <span className="text-xs text-blue-200">
-                        Sign each transaction
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowDirectSubmit(true);
-                        setUseSpendLimits(true);
-                      }}
-                      className="px-4 py-3 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700 flex-1 flex flex-col items-center"
-                    >
-                      <span className="font-bold">One-Click</span>
-                      <span className="text-xs text-green-200">
-                        No signatures needed
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-            {/* One-click info when using spend limits */}
-            {chainId === 84532 &&
-              networkType === "base" &&
-              showDirectSubmit &&
-              useSpendLimits && (
-                <div className="mb-2 p-2 bg-green-100 rounded-md">
-                  <p className="text-xs text-green-800 text-center">
-                    One-click submission is ready! No signatures needed.
-                  </p>
-                </div>
-              )}
-
             {/* Submit Score component */}
-            {(chainId !== 84532 ||
-              networkType !== "base" ||
-              showDirectSubmit) && (
-              <div className="rounded-md p-3">
-                <h3 className="text-center font-bold mb-2 text-white">
-                  Submit Your Score
-                </h3>
+            <div className="rounded-md p-3">
+              <h3 className="text-center font-bold mb-2 text-white">
+                Submit Your Score
+              </h3>
 
-                {/* Use different submission methods based on network */}
-                {networkType === "polygon" ||
-                networkType === "monad" ||
-                networkType === "celo" ? (
-                  <button
-                    id="submitScoreButton"
-                    onClick={handleThirdwebSubmission}
-                    disabled={isSubmitting}
-                    className={`text-white font-bold py-3 px-4 rounded-md w-full flex items-center justify-center transition-all transform hover:scale-[1.02] ${
-                      networkType === "polygon"
-                        ? "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 shadow-[0_0_10px_rgba(168,85,247,0.3)]"
-                        : networkType === "monad"
-                        ? "bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 shadow-[0_0_10px_rgba(250,204,21,0.3)]"
-                        : networkType === "celo"
-                        ? "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 shadow-[0_0_10px_rgba(74,222,128,0.3)]"
-                        : "bg-gradient-to-r from-blue-600 to-cyan-700 hover:from-blue-500 hover:to-cyan-600 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
-                    }`}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <span className="mr-2">Submitting...</span>
-                        <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
-                      </>
-                    ) : (
-                      <span className="font-bold">Submit Score</span>
-                    )}
-                  </button>
-                ) : (
-                  <SubmitScoreWithWagmi
-                    score={repCount}
-                    exerciseType={mode}
-                    forceDirectSubmission={true}
-                    walletAddress={effectiveAddress}
-                    useSpendLimits={useSpendLimits} // Pass the flag to control transaction flow
-                  />
-                )}
-              </div>
-            )}
+              {/* Use different submission methods based on network */}
+              {networkType === "polygon" ||
+              networkType === "monad" ||
+              networkType === "celo" ? (
+                <button
+                  id="submitScoreButton"
+                  onClick={handleThirdwebSubmission}
+                  disabled={isSubmitting}
+                  className={`text-white font-bold py-3 px-4 rounded-md w-full flex items-center justify-center transition-all transform hover:scale-[1.02] ${
+                    networkType === "polygon"
+                      ? "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 shadow-[0_0_10px_rgba(168,85,247,0.3)]"
+                      : networkType === "monad"
+                      ? "bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 shadow-[0_0_10px_rgba(250,204,21,0.3)]"
+                      : networkType === "celo"
+                      ? "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 shadow-[0_0_10px_rgba(74,222,128,0.3)]"
+                      : "bg-gradient-to-r from-blue-600 to-cyan-700 hover:from-blue-500 hover:to-cyan-600 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="mr-2">Submitting...</span>
+                      <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+                    </>
+                  ) : (
+                    <span className="font-bold">Submit Score</span>
+                  )}
+                </button>
+              ) : (
+                <SubmitScoreWithWagmi
+                  score={repCount}
+                  exerciseType={mode}
+                  forceDirectSubmission={true}
+                  walletAddress={effectiveAddress}
+                />
+              )}
+            </div>
           </div>
         )}
 
@@ -474,7 +418,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
         )}
 
-        {/* Add Mini App prompt - show after successful workout in Farcaster */}
+        {/* Add Mini App prompt - show after successful workout in Farcaster only */}
         {isInMiniApp && repCount > 0 && (
           <div className="border-t border-gray-700 pt-4">
             <div className="text-center space-y-3">

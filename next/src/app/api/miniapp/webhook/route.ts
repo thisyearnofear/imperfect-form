@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import NotificationManager from '@/lib/notifications';
+import EngagementTracker from '@/lib/engagementTracker';
 
 // Simple server-side logger for API routes
 const logger = {
@@ -111,6 +112,16 @@ async function handleFrameAdded(event: FrameAddedEvent, userFid: number) {
     hasNotificationDetails: !!event.notificationDetails,
   });
 
+  // Track engagement event
+  await EngagementTracker.trackEvent({
+    fid: userFid,
+    eventType: 'mini_app_added',
+    timestamp: new Date(),
+    metadata: {
+      hasNotifications: !!event.notificationDetails,
+    },
+  });
+
   if (event.notificationDetails) {
     // Store notification token for this user
     logger.info('🎭 Notification token received', {
@@ -121,11 +132,30 @@ async function handleFrameAdded(event: FrameAddedEvent, userFid: number) {
 
     // Save notification token using NotificationManager
     await NotificationManager.saveNotificationToken(userFid, event.notificationDetails);
+
+    // Track notification enablement
+    await EngagementTracker.trackEvent({
+      fid: userFid,
+      eventType: 'notifications_enabled',
+      timestamp: new Date(),
+      metadata: {
+        source: 'mini_app_added',
+        url: event.notificationDetails.url,
+      },
+    });
   }
 }
 
 async function handleFrameRemoved(_event: FrameRemovedEvent, userFid: number) {
   logger.info('🎭 User removed Mini App', { userFid });
+
+  // Track engagement event
+  await EngagementTracker.trackEvent({
+    fid: userFid,
+    eventType: 'mini_app_removed',
+    timestamp: new Date(),
+    metadata: {},
+  });
 
   // Remove notification tokens for this user
   await NotificationManager.removeNotificationTokens(userFid);
@@ -138,12 +168,31 @@ async function handleNotificationsEnabled(event: NotificationsEnabledEvent, user
     tokenLength: event.notificationDetails.token.length,
   });
 
+  // Track engagement event
+  await EngagementTracker.trackEvent({
+    fid: userFid,
+    eventType: 'notifications_enabled',
+    timestamp: new Date(),
+    metadata: {
+      source: 'user_settings',
+      url: event.notificationDetails.url,
+    },
+  });
+
   // Save new notification token
   await NotificationManager.saveNotificationToken(userFid, event.notificationDetails);
 }
 
 async function handleNotificationsDisabled(_event: NotificationsDisabledEvent, userFid: number) {
   logger.info('🎭 User disabled notifications', { userFid });
+
+  // Track engagement event
+  await EngagementTracker.trackEvent({
+    fid: userFid,
+    eventType: 'notifications_disabled',
+    timestamp: new Date(),
+    metadata: {},
+  });
 
   // Mark notification tokens as invalid
   await NotificationManager.disableNotificationTokens(userFid);

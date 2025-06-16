@@ -17,18 +17,18 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
   const [instructionOpacity, setInstructionOpacity] = useState(1);
 
   const loadingInstructions = [
-    "Position the camera so full body is visible",
-    "Ensure fantastic lighting - important",
-    "PUSH: Hands shoulder-width apart, back straight",
-    "PUSH: Lower body to inch from ground, extend arms fully",
-    "SQUAT: Stand with feet shoulder-width apart",
-    "Maintain a steady pace throughout",
-    "Stretch while you wait?",
-    "Any issues: RESET & START again",
-    "Tested on Brave (fast), Chrome (med) & Safari (slow)",
-    "Chrome: enable hardware acceleration in settings",
-    "Mobile: open inside wallet browser for seamless transactions",
-    "Wallet browsers get optimized mobile interface automatically",
+    "📹 Setting up your camera...",
+    "🤖 Loading AI pose detection...",
+    "💡 Position camera to show your full body",
+    "☀️ Ensure good lighting - very important!",
+    "🏋️ PUSHUPS: Hands shoulder-width apart, back straight",
+    "⬇️ PUSHUPS: Lower body to inch from ground, extend arms fully",
+    "🦵 SQUATS: Stand with feet shoulder-width apart",
+    "⚡ Maintain a steady pace throughout",
+    "🧘 Stretch while you wait?",
+    "🔄 Any issues: RESET & START again",
+    "🌐 Works best on Chrome with hardware acceleration",
+    "📱 Mobile: use wallet browser for best experience",
   ];
 
   useEffect(() => {

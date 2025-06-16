@@ -32,8 +32,10 @@ const manifest = {
     "requiredCapabilities": [
       "wallet.getEthereumProvider",
       "actions.ready",
-      "actions.composeCast"
-    ]
+      "actions.composeCast",
+      "actions.addMiniApp"
+    ],
+    "webhookUrl": "https://imperfectform.fun/api/miniapp/webhook"
   }
 };
 

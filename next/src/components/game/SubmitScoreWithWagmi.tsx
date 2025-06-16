@@ -28,7 +28,6 @@ interface SubmitScoreProps {
   exerciseType?: "pushups" | "squats";
   forceDirectSubmission?: boolean;
   walletAddress?: string; // Add wallet address prop
-  useSpendLimits?: boolean; // Add useSpendLimits prop to control transaction flow
 }
 
 // Component that handles score submission using Wagmi for direct contract interactions
@@ -37,12 +36,11 @@ export default function SubmitScoreWithWagmi({
   exerciseType,
   forceDirectSubmission = false,
   walletAddress,
-  useSpendLimits = false, // Default to false for backwards compatibility
 }: SubmitScoreProps) {
   const [confirmStep, setConfirmStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { address: wagmiAddress } = useAccount();
-  const { wallet } = usePlatform();
+  const { wallet, user } = usePlatform();
   const { chainId } = wallet;
 
   // Map chainId to network name for backward compatibility
@@ -86,7 +84,6 @@ export default function SubmitScoreWithWagmi({
       useWagmi,
       contractAddress: BASE_CONTRACT_ADDRESS,
       forceDirectSubmissionProp: forceDirectSubmission,
-      useSpendLimits, // Log whether we're using spend limits
     });
   }
 
@@ -217,11 +214,31 @@ export default function SubmitScoreWithWagmi({
         { id: "submit-score", duration: 5000 }
       );
 
+      // Track successful score submission
+      if (user?.fid) {
+        fetch("/api/analytics/engagement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fid: user.fid,
+            eventType: "score_submitted",
+            metadata: {
+              score: score || 0,
+              exerciseType: exerciseType || "pushups",
+              chain: "base",
+              transactionHash: txHash,
+            },
+          }),
+        }).catch((err) =>
+          console.warn("Failed to track score submission:", err)
+        );
+      }
+
       // Reset UI state immediately since we consider submission as success
       setConfirmStep(false);
       setIsLoading(false);
     }
-  }, [txHash]);
+  }, [txHash, score, exerciseType]);
 
   // Since we now treat transaction submission as success, we don't need complex error handling
   // The transaction hash being generated means the transaction was successfully submitted
@@ -413,81 +430,16 @@ export default function SubmitScoreWithWagmi({
         throw new Error("Could not find addScore function in ABI");
       }
 
-      // Execute the contract write with explicit parameters
-      // When useSpendLimits is true, the transaction will use the subaccount with preapproved spend limits
-      if (useSpendLimits) {
-        console.log("Using subaccount with spend limits for transaction");
-        toast.loading("Submitting with one-click approval...", {
-          id: "submit-score",
-        });
-
-        try {
-          // Create a special transaction metadata object for the Coinbase Wallet
-          // This is how transactions need to be formatted to use subaccounts with spend limits
-          // Based on Coinbase Wallet SDK documentation and examples
-          const txOptions = {
-            address: formattedContractAddress,
-            abi: contractABI, // Use the network-specific ABI
-            functionName: "addScore",
-            args: [pushupsBI, squatsBI],
-            chainId: 84532,
-            gas: BigInt(500000),
-          };
-
-          // The key to making subaccount transactions work is to use the 'meta' field
-          // that gets passed through to the Coinbase Wallet SDK
-          const txOptionsWithMeta = {
-            ...txOptions,
-            // This is the format expected by the Coinbase SDK for subaccounts
-            meta: {
-              // Signal to use a subaccount with pre-approved spend limits
-              useSubAccount: true,
-              // Coinbase Wallet will look for these special properties
-              type: "SUBACCOUNT_SPEND_LIMIT_TX",
-              // Label with network information
-              networkLabel: "Base Sepolia",
-            },
-          };
-
-          console.log(
-            "Transaction with subaccount meta:",
-            JSON.stringify(txOptionsWithMeta, (_, v) =>
-              typeof v === "bigint" ? v.toString() : v
-            )
-          );
-
-          // The meta field is a special property recognized by the Coinbase Wallet connector
-          writeContract(txOptionsWithMeta);
-
-          console.log("Transaction submitted successfully!");
-        } catch (error) {
-          console.error("Error submitting transaction with subaccount:", error);
-          toast.error(
-            "Failed to submit with one-click. Falling back to standard transaction."
-          );
-
-          // Fall back to standard transaction if one-click fails
-          writeContract({
-            address: formattedContractAddress,
-            abi: contractABI, // Use the network-specific ABI
-            functionName: "addScore",
-            args: [pushupsBI, squatsBI],
-            chainId: 84532,
-            gas: BigInt(500000),
-          });
-        }
-      } else {
-        // Standard transaction flow requiring signature
-        console.log("Using standard transaction flow (requires signature)");
-        writeContract({
-          address: formattedContractAddress,
-          abi: contractABI, // Use the network-specific ABI
-          functionName: "addScore",
-          args: [pushupsBI, squatsBI],
-          chainId: 84532,
-          gas: BigInt(500000),
-        });
-      }
+      // Standard transaction flow - same as all other chains
+      console.log("Using standard transaction flow");
+      writeContract({
+        address: formattedContractAddress,
+        abi: contractABI, // Use the network-specific ABI
+        functionName: "addScore",
+        args: [pushupsBI, squatsBI],
+        chainId: 84532,
+        gas: BigInt(500000),
+      });
 
       if (process.env.NODE_ENV !== "production") {
         console.log(
@@ -555,7 +507,7 @@ export default function SubmitScoreWithWagmi({
               ) : (
                 <>
                   <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
-                  Base Sepolia • Smart Wallet
+                  Base Sepolia • Standard Wallet
                 </>
               )}
             </span>
@@ -589,7 +541,7 @@ export default function SubmitScoreWithWagmi({
               ) : (
                 <>
                   <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
-                  Base Sepolia • Smart Wallet
+                  Base Sepolia • Standard Wallet
                 </>
               )}
             </span>

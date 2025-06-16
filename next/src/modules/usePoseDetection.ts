@@ -21,7 +21,13 @@ export function usePoseDetection(
   mode: ExerciseMode = "pushups",
   onRepCount: (count: number) => void = () => {},
   isActive: boolean = true,
-  isMobile: boolean = false
+  isMobile: boolean = false,
+  onStateChange?: (state: {
+    hasCamera: boolean;
+    hasPoseDetection: boolean;
+    poseDetected: boolean;
+    isLoading: boolean;
+  }) => void
 ): RefObject<HTMLVideoElement | null> {
   const videoRef = useRef<HTMLVideoElement>(null);
   const repState = useRef<"up" | "down" | "middle">("middle");
@@ -30,6 +36,13 @@ export function usePoseDetection(
   const detectorRef = useRef<PoseDetector | null>(null);
   const requestRef = useRef<number>(0);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // State tracking for guidance
+  const [hasCamera, setHasCamera] = useState(false);
+  const [hasPoseDetection, setHasPoseDetection] = useState(false);
+  const [poseDetected, setPoseDetected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const lastPoseDetectedTime = useRef(0);
 
   function calculateAngle(a: Keypoint, b: Keypoint, c: Keypoint) {
     if (!a || !b || !c) return 0;
@@ -153,6 +166,18 @@ export function usePoseDetection(
   const detectPushupCallback = useCallback(detectPushup, []);
   const detectSquatCallback = useCallback(detectSquat, []);
 
+  // Notify parent component of state changes
+  useEffect(() => {
+    if (onStateChange) {
+      onStateChange({
+        hasCamera,
+        hasPoseDetection,
+        poseDetected,
+        isLoading,
+      });
+    }
+  }, [hasCamera, hasPoseDetection, poseDetected, isLoading, onStateChange]);
+
   useEffect(() => {
     if (!isActive) return;
 
@@ -182,6 +207,8 @@ export function usePoseDetection(
 
       if (!ctx) return;
 
+      setIsLoading(true);
+
       try {
         // Initialize TensorFlow.js with the best available backend
         // Pass isMobile flag to apply device-specific optimizations
@@ -203,6 +230,7 @@ export function usePoseDetection(
 
         streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = streamRef.current;
+        setHasCamera(true);
 
         // Set canvas dimensions to match video with mobile optimization
         if (isMobile) {
@@ -258,8 +286,11 @@ export function usePoseDetection(
           }
 
           console.log('Pose detector initialized successfully for', isMobile ? 'mobile' : 'desktop');
+          setHasPoseDetection(true);
+          setIsLoading(false);
         } catch (modelError) {
           console.error('Error initializing pose detection model:', modelError);
+          setIsLoading(false);
         }
 
         // Detection loop with throttling
@@ -307,6 +338,13 @@ export function usePoseDetection(
               if (poses.length > 0) {
                 const keypoints = poses[0].keypoints.map((kp: Keypoint) => ({ ...kp }));
 
+                // Update pose detection state
+                const currentTime = Date.now();
+                lastPoseDetectedTime.current = currentTime;
+                if (!poseDetected) {
+                  setPoseDetected(true);
+                }
+
                 // Draw skeleton with improved visibility
                 drawSkeleton(ctx, keypoints);
 
@@ -320,6 +358,12 @@ export function usePoseDetection(
                   onRepCount(count);
                 }
               } else {
+                // Check if we should mark pose as not detected (after 2 seconds of no detection)
+                const currentTime = Date.now();
+                if (poseDetected && currentTime - lastPoseDetectedTime.current > 2000) {
+                  setPoseDetected(false);
+                }
+
                 // Even if no pose is detected, still show the exercise state
                 drawExerciseState(ctx);
               }
