@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "yarn build",
+  "buildCommand": "yarn run build:no-lint",
   "installCommand": "yarn install",
   "outputDirectory": ".next"
 }

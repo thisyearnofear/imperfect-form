@@ -194,50 +194,12 @@ The application supports two main wallet integration approaches:
    - Traditional EOA wallet integration
    - Used for Polygon Mainnet
 
-2. **Coinbase Smart Wallet** (for Base network)
-   - Account abstraction wallet with advanced features
-   - Used for Base Sepolia testnet
-   - Supports spend limits and sub-accounts
+2. **Coinbase Wallet** (for Base network)
 
-### Coinbase Smart Wallet Features
-
-#### Spend Limits
-
-The application implements Coinbase Smart Wallet's spend limits feature, which allows users to:
-
-1. Set up a spending allowance for the application
-2. Submit transactions without signing each time (gasless experience)
-3. Manage and revoke permissions
-
-Implementation details:
-
-- Located in `next/src/components/wallet/SetupSpendLimits.tsx`
-- Uses the Coinbase Wallet connector from Wagmi
-- Requires the `smartWalletOnly` preference in wallet configuration
-
-#### Sub-Accounts
-
-The application also supports Coinbase Smart Wallet's sub-accounts feature, which allows users to:
-
-1. Create and manage multiple accounts under a single wallet
-2. Switch between accounts for different purposes
-3. View all sub-accounts and their balances
-
-Implementation details:
-
-- Located in `next/src/pages/smart-account-setup.tsx` and related components
-- Uses the Coinbase Wallet provider's `getSubAccounts()` method
-- Requires proper detection of Coinbase Wallet capabilities
+   - Standard EOA wallet for Base Sepolia testnet
+   - Consistent experience across all chains
 
 ### Known Issues and Troubleshooting
-
-#### Coinbase Smart Wallet Integration
-
-1. **Sub-Account Detection**: The Coinbase Wallet provider's `getSubAccounts()` method may not be consistently available or may return inconsistent results. Check for the existence of this method before calling it.
-
-2. **Spend Limits Setup**: The spend limits feature requires the wallet to be in smart wallet mode. Ensure the `preference` option is set to `smartWalletOnly` in the wallet connector configuration.
-
-3. **Provider Detection**: When multiple wallet providers are installed (e.g., MetaMask and Coinbase Wallet), detection can be tricky. Use the `providers` array to find the Coinbase Wallet provider.
 
 #### Performance Optimization
 

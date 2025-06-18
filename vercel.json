@@ -5,7 +5,8 @@
       "src": "next/package.json",
       "use": "@vercel/next",
       "config": {
-        "buildCommand": "npm run build:no-lint"
+        "installCommand": "yarn install",
+        "buildCommand": "yarn run build:no-lint"
       }
     }
   ],
