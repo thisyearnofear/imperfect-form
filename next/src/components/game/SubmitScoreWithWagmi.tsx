@@ -15,7 +15,7 @@ import {
   polygonLeaderboardABI,
   baseLeaderboardABI,
 } from "@/constants/contracts";
-import { isFarcasterMiniApp } from "@/utils/farcasterMiniApp";
+// Removed unused import: isFarcasterMiniApp
 
 // Verify the ABI and contract address are valid
 console.log("Contract config loaded:", {
@@ -67,14 +67,13 @@ export default function SubmitScoreWithWagmi({
   const isCeloNetwork = network === "celo";
   const isBaseNetwork = network === "base";
 
-  // Check if this is a ThirdWeb network (Polygon, Monad, or Celo)
-  const isThirdwebNetwork = isPolygonNetwork || isMonadNetwork || isCeloNetwork;
+  // Removed unused variable: isThirdwebNetwork (now using Wagmi for all chains)
 
   // Use the wallet address prop if provided, otherwise fall back to the wagmi address
   const address = walletAddress || wagmiAddress;
 
-  // Only use wagmi hooks if we're on Base with a connected wallet
-  const useWagmi = isBaseNetwork && Boolean(address);
+  // Use wagmi hooks for all chains with a connected wallet
+  const useWagmi = Boolean(address);
 
   // Reduce console log verbosity
   if (process.env.NODE_ENV !== "production") {
@@ -321,82 +320,11 @@ export default function SubmitScoreWithWagmi({
     }
 
     try {
-      // For ThirdWeb networks (Polygon, Monad, Celo), use direct contract interaction
-      // For Farcaster mini apps and Base network, we use Wagmi with proper connectors
-      if (isThirdwebNetwork && !isFarcasterMiniApp()) {
-        // Import the direct contract interaction function
-        const { submitScoreDirectly } = await import(
-          "@/utils/directContractInteraction"
-        );
+      // SIMPLIFIED APPROACH: Use Wagmi for all chains
+      // This is more reliable and consistent across all networks
+      console.log("Using Wagmi for transaction submission on", network);
 
-        // Get the appropriate contract address based on the network
-        let contractAddress = POLYGON_CONTRACT_ADDRESS;
-        if (network === "monad") {
-          contractAddress = MONAD_CONTRACT_ADDRESS;
-        } else if (network === "celo") {
-          contractAddress = CELO_CONTRACT_ADDRESS;
-        }
-
-        // Show loading toast
-        toast.loading("Preparing transaction with wallet...", {
-          id: "submit-score",
-        });
-
-        // Use direct contract interaction for ThirdWeb networks only
-        const result = await submitScoreDirectly(
-          contractAddress,
-          pushups,
-          squats,
-          false, // Not Base network in this path
-          address,
-          false, // skipSubAccountCheck
-          undefined // providedEthereumProvider - let it use the fallback
-        );
-
-        if (result.success) {
-          // Don't show duplicate success toast - directContractInteraction already shows one
-          console.log(
-            "✅ Direct contract interaction succeeded:",
-            result.transactionHash
-          );
-
-          // Store transaction hash for social sharing
-          if (typeof window !== "undefined" && result.transactionHash) {
-            window.transactionHash = result.transactionHash;
-            window.selectedNetworkName =
-              network === "polygon"
-                ? "Polygon Mainnet"
-                : network === "monad"
-                ? "Monad Testnet"
-                : network === "celo"
-                ? "Celo Mainnet"
-                : network === "base"
-                ? "Base Sepolia"
-                : "Unknown";
-          }
-        } else {
-          // Check if direct contract interaction suggests using Wagmi as fallback
-          if (result.processingType === "wagmi") {
-            console.log(
-              "Direct contract interaction failed, falling back to Wagmi"
-            );
-            // Don't return here - let it fall through to the Wagmi section below
-            // Continue to the Wagmi section without resetting loading state
-          } else {
-            throw new Error(result.error || "Transaction failed");
-          }
-        }
-
-        // Only reset loading state and return if direct contract interaction succeeded
-        if (result.success) {
-          // CRITICAL FIX: Reset loading state immediately for Farcaster
-          setIsLoading(false);
-          setConfirmStep(false);
-          return;
-        }
-      }
-
-      // For Base network and Farcaster mini apps, use Wagmi with appropriate connectors
+      // Use Wagmi for all networks - more reliable and consistent
       if (process.env.NODE_ENV !== "production") {
         console.log("Submitting transaction via Wagmi:", {
           address: contractAddress,
