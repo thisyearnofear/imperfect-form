@@ -348,7 +348,9 @@ export default function SubmitScoreWithWagmi({
           pushups,
           squats,
           false, // Not Base network in this path
-          address
+          address,
+          false, // skipSubAccountCheck
+          undefined // providedEthereumProvider - let it use the fallback
         );
 
         if (result.success) {
@@ -373,13 +375,25 @@ export default function SubmitScoreWithWagmi({
                 : "Unknown";
           }
         } else {
-          throw new Error(result.error || "Transaction failed");
+          // Check if direct contract interaction suggests using Wagmi as fallback
+          if (result.processingType === "wagmi") {
+            console.log(
+              "Direct contract interaction failed, falling back to Wagmi"
+            );
+            // Don't return here - let it fall through to the Wagmi section below
+            // Continue to the Wagmi section without resetting loading state
+          } else {
+            throw new Error(result.error || "Transaction failed");
+          }
         }
 
-        // CRITICAL FIX: Reset loading state immediately for Farcaster
-        setIsLoading(false);
-        setConfirmStep(false);
-        return;
+        // Only reset loading state and return if direct contract interaction succeeded
+        if (result.success) {
+          // CRITICAL FIX: Reset loading state immediately for Farcaster
+          setIsLoading(false);
+          setConfirmStep(false);
+          return;
+        }
       }
 
       // For Base network and Farcaster mini apps, use Wagmi with appropriate connectors
@@ -397,13 +411,26 @@ export default function SubmitScoreWithWagmi({
         id: "submit-score",
       });
 
+      // Get the appropriate chain ID based on the network
+      const currentChainId =
+        chainId ||
+        (isBaseNetwork
+          ? 84532
+          : isPolygonNetwork
+          ? 137
+          : isCeloNetwork
+          ? 42220
+          : isMonadNetwork
+          ? 10143
+          : 84532);
+
       // Create a transaction object with the correct format
       const txRequest = {
         address: formattedContractAddress,
         abi: contractABI, // Use the network-specific ABI
         functionName: "addScore",
         args: [pushupsBI, squatsBI],
-        chainId: 84532, // Explicitly set Base Sepolia chain ID
+        chainId: currentChainId, // Use the current network's chain ID
       };
 
       if (process.env.NODE_ENV !== "production") {
@@ -435,7 +462,7 @@ export default function SubmitScoreWithWagmi({
         abi: contractABI, // Use the network-specific ABI
         functionName: "addScore",
         args: [pushupsBI, squatsBI],
-        chainId: 84532, // Explicitly set Base Sepolia chain ID
+        chainId: currentChainId, // Use the current network's chain ID
       });
 
       if (process.env.NODE_ENV !== "production") {

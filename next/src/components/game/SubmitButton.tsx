@@ -202,7 +202,9 @@ export default function SubmitButton({
           pushups,
           squats,
           false, // not Base network
-          thirdwebAddress // pass ThirdWeb address as the connectedAddress parameter
+          thirdwebAddress, // pass ThirdWeb address as the connectedAddress parameter
+          false, // skipSubAccountCheck
+          undefined // providedEthereumProvider - let it use the fallback
         );
 
         if (!result.success) {

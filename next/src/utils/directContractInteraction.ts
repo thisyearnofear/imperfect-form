@@ -136,10 +136,11 @@ export async function submitScoreDirectly(
       }
 
       if (!ethereumProvider) {
+        console.log("No Ethereum provider found, suggesting fallback to Wagmi");
         return {
           success: false,
-          error:
-            "No Ethereum provider found. Please connect your wallet.",
+          processingType: "wagmi",
+          error: "No provider available - use Wagmi fallback",
         };
       }
 
