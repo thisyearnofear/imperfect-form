@@ -5,7 +5,7 @@ import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createConfig, http, cookieStorage, createStorage } from "wagmi";
 import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
-import { baseSepolia, polygon, celo, type Chain } from "wagmi/chains";
+import { base, polygon, celo, type Chain } from "wagmi/chains";
 
 // Import Farcaster connector
 let farcasterFrame: (() => unknown) | null = null;
@@ -110,15 +110,15 @@ const createConnectors = () => {
 
 // Optimized Wagmi config - CELO first as default for better mobile/Farcaster UX
 const wagmiConfig = createConfig({
-  chains: [celo, polygon, baseSepolia, monadTestnet],
+  chains: [celo, polygon, base, monadTestnet],
   connectors: createConnectors(),
   storage: createStorage({
     storage: cookieStorage,
   }),
   ssr: true,
   transports: {
-    [baseSepolia.id]: http(
-      "https://base-sepolia.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
+    [base.id]: http(
+      "https://base-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
     ),
     [polygon.id]: http(
       "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"

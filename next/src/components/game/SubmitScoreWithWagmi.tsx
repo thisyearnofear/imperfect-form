@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
 import toast from "react-hot-toast";
 import { Spinner } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { useAccount, useWriteContract, useSimulateContract } from "wagmi";
+import { isFirstTimeDivviUser, registerDivviReferral, showEnhancedFeaturesPrompt } from "@/utils/divviIntegration";
 import {
   BASE_CONTRACT_ADDRESS,
   POLYGON_CONTRACT_ADDRESS,
@@ -43,21 +45,15 @@ export default function SubmitScoreWithWagmi({
   const { wallet, user } = usePlatform();
   const { chainId } = wallet;
 
-  // Map chainId to network name for backward compatibility
+  // Map chainId to network name using centralized config
   const getNetworkFromChainId = (id: number | undefined) => {
-    switch (id) {
-      case 84532:
-        return "base";
-      case 137:
-        return "polygon";
-      case 42220:
-        return "celo";
-      case 10143:
-        return "monad";
-      default:
-        // Default to CELO for Farcaster context, as it's the preferred chain
-        return "celo";
+    if (!id) return "celo"; // Default to CELO for Farcaster context
+    for (const [key, config] of Object.entries(chainConfigs)) {
+      if (config.id === id) {
+        return key;
+      }
     }
+    return "celo"; // Default to CELO if unknown
   };
 
   const network = getNetworkFromChainId(chainId || undefined);
@@ -144,17 +140,25 @@ export default function SubmitScoreWithWagmi({
       // Verify contract address is in correct 0x format
       // Get the appropriate contract address based on the network
       let selectedContractAddress = BASE_CONTRACT_ADDRESS;
-      let chainInfo = "Base Sepolia (84532)";
+      let chainInfo = `${chainConfigs[SupportedChain.BASE].name} (${
+        chainConfigs[SupportedChain.BASE].id
+      })`;
 
       if (isPolygonNetwork) {
         selectedContractAddress = POLYGON_CONTRACT_ADDRESS;
-        chainInfo = "Polygon Mainnet (137)";
+        chainInfo = `${chainConfigs[SupportedChain.POLYGON].name} (${
+          chainConfigs[SupportedChain.POLYGON].id
+        })`;
       } else if (isMonadNetwork) {
         selectedContractAddress = MONAD_CONTRACT_ADDRESS;
-        chainInfo = "Monad Testnet (10143)";
+        chainInfo = `${chainConfigs[SupportedChain.MONAD].name} (${
+          chainConfigs[SupportedChain.MONAD].id
+        })`;
       } else if (isCeloNetwork) {
         selectedContractAddress = CELO_CONTRACT_ADDRESS;
-        chainInfo = "Celo Mainnet (42220)";
+        chainInfo = `${chainConfigs[SupportedChain.CELO].name} (${
+          chainConfigs[SupportedChain.CELO].id
+        })`;
       }
 
       const formattedSelectedContractAddress =
@@ -182,7 +186,24 @@ export default function SubmitScoreWithWagmi({
   ]);
 
   // Write contract hook
-  const { writeContract, isPending, data: txHash } = useWriteContract();
+  const {
+    writeContract,
+    isPending,
+    data: txHash,
+    error: writeError,
+  } = useWriteContract();
+
+  // Debug the write contract states
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("WriteContract states:", {
+        isPending,
+        txHash,
+        writeError: writeError?.message,
+        network,
+      });
+    }
+  }, [isPending, txHash, writeError, network]);
 
   // Since we treat submission as success, we don't need to wait for transaction confirmation
   // We only track if the transaction is being processed by the wallet
@@ -191,19 +212,54 @@ export default function SubmitScoreWithWagmi({
   useEffect(() => {
     // When we get a transaction hash, immediately treat it as success
     if (txHash) {
+      // Handle Divvi registration for first-time users
+      const handleDivviRegistration = async () => {
+        if (!address) return;
+
+        // Get the current chain ID for Divvi registration
+        const currentChainId = chainId || 
+          (isBaseNetwork ? 8453 :
+           isPolygonNetwork ? 137 :
+           isCeloNetwork ? 42220 :
+           isMonadNetwork ? 10143 : 8453);
+
+        // Only register for supported networks (Polygon, Celo, Base)
+        if (currentChainId === 137 || currentChainId === 42220 || currentChainId === 8453) {
+          try {
+            const isFirstTime = await isFirstTimeDivviUser(address, currentChainId);
+            if (isFirstTime) {
+              console.log(`First-time Divvi user detected on chain ${currentChainId}, registering referral`);
+              await registerDivviReferral(txHash, currentChainId, address);
+            }
+          } catch (divviError) {
+            console.error("Error with Divvi registration:", divviError);
+            // Don't fail the transaction if Divvi registration fails
+          }
+        }
+      };
+
+      handleDivviRegistration();
       // Get the correct explorer URL based on the current network
-      let explorerUrl = `https://sepolia-explorer.base.org/tx/${txHash}`; // Default to Base Sepolia
-      let networkName = "Base Sepolia";
+      let explorerUrl =
+        chainConfigs[SupportedChain.BASE].blockExplorerUrls[0] +
+        `/tx/${txHash}`; // Default to Base Mainnet
+      let networkName = chainConfigs[SupportedChain.BASE].name;
 
       if (isPolygonNetwork) {
-        explorerUrl = `https://polygonscan.com/tx/${txHash}`;
-        networkName = "Polygon";
+        explorerUrl =
+          chainConfigs[SupportedChain.POLYGON].blockExplorerUrls[0] +
+          `/tx/${txHash}`;
+        networkName = chainConfigs[SupportedChain.POLYGON].name;
       } else if (isCeloNetwork) {
-        explorerUrl = `https://explorer.celo.org/mainnet/tx/${txHash}`;
-        networkName = "Celo";
+        explorerUrl =
+          chainConfigs[SupportedChain.CELO].blockExplorerUrls[0] +
+          `/tx/${txHash}`;
+        networkName = chainConfigs[SupportedChain.CELO].name;
       } else if (isMonadNetwork) {
-        explorerUrl = `https://testnet.monadexplorer.com/tx/${txHash}`;
-        networkName = "Monad";
+        explorerUrl =
+          chainConfigs[SupportedChain.MONAD].blockExplorerUrls[0] +
+          `/tx/${txHash}`;
+        networkName = chainConfigs[SupportedChain.MONAD].name;
       }
 
       console.log("✅ Transaction submitted successfully:", txHash);
@@ -265,6 +321,9 @@ export default function SubmitScoreWithWagmi({
     isPolygonNetwork,
     isCeloNetwork,
     isMonadNetwork,
+    isBaseNetwork,
+    address,
+    chainId,
   ]);
 
   // Since we now treat transaction submission as success, we don't need complex error handling
@@ -287,6 +346,27 @@ export default function SubmitScoreWithWagmi({
         "Cannot submit a score of zero. Please complete some exercises first!"
       );
       return;
+    }
+
+    // Check for first-time Divvi user and show prompt if needed
+    const currentChainId = chainId || 
+      (isBaseNetwork ? 8453 :
+       isPolygonNetwork ? 137 :
+       isCeloNetwork ? 42220 :
+       isMonadNetwork ? 10143 : 8453);
+
+    // Only check for supported networks (Polygon, Celo, Base)
+    if (currentChainId === 137 || currentChainId === 42220 || currentChainId === 8453) {
+      try {
+        const isFirstTime = await isFirstTimeDivviUser(address, currentChainId);
+        if (isFirstTime) {
+          console.log(`First-time Divvi user detected on chain ${currentChainId}`);
+          await showEnhancedFeaturesPrompt();
+        }
+      } catch (divviError) {
+        console.error("Error checking Divvi status:", divviError);
+        // Continue with transaction even if Divvi check fails
+      }
     }
 
     // When forcing direct submission, we bypass confirmation
@@ -371,14 +451,14 @@ export default function SubmitScoreWithWagmi({
       const currentChainId =
         chainId ||
         (isBaseNetwork
-          ? 84532
+          ? chainConfigs[SupportedChain.BASE].id
           : isPolygonNetwork
-          ? 137
+          ? chainConfigs[SupportedChain.POLYGON].id
           : isCeloNetwork
-          ? 42220
+          ? chainConfigs[SupportedChain.CELO].id
           : isMonadNetwork
-          ? 10143
-          : 84532);
+          ? chainConfigs[SupportedChain.MONAD].id
+          : chainConfigs[SupportedChain.BASE].id); // Default to Base Mainnet
 
       // Create a transaction object with the correct format
       const txRequest = {
@@ -413,18 +493,24 @@ export default function SubmitScoreWithWagmi({
 
       // Standard transaction flow - same as all other chains
       console.log("Using standard transaction flow");
-      writeContract({
-        address: formattedContractAddress,
-        abi: contractABI, // Use the network-specific ABI
-        functionName: "addScore",
-        args: [pushupsBI, squatsBI],
-        chainId: currentChainId, // Use the current network's chain ID
-      });
 
-      if (process.env.NODE_ENV !== "production") {
-        console.log(
-          "writeContract call completed - transaction sent to wallet"
-        );
+      try {
+        writeContract({
+          address: formattedContractAddress,
+          abi: contractABI, // Use the network-specific ABI
+          functionName: "addScore",
+          args: [pushupsBI, squatsBI],
+          chainId: currentChainId, // Use the current network's chain ID
+        });
+
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            "writeContract call completed - transaction sent to wallet"
+          );
+        }
+      } catch (writeError) {
+        console.error("Error in writeContract call:", writeError);
+        throw writeError;
       }
 
       // Toast will be updated in the success effect
@@ -472,22 +558,22 @@ export default function SubmitScoreWithWagmi({
               {isPolygonNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
-                  Polygon Mainnet
+                  {chainConfigs[SupportedChain.POLYGON].name}
                 </>
               ) : isCeloNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                  Celo Mainnet
+                  {chainConfigs[SupportedChain.CELO].name}
                 </>
               ) : isMonadNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                  Monad Testnet
+                  {chainConfigs[SupportedChain.MONAD].name}
                 </>
               ) : (
                 <>
                   <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
-                  Base Sepolia
+                  {chainConfigs[SupportedChain.BASE].name}
                 </>
               )}
             </span>
@@ -506,22 +592,22 @@ export default function SubmitScoreWithWagmi({
               {isPolygonNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
-                  Polygon Mainnet
+                  {chainConfigs[SupportedChain.POLYGON].name}
                 </>
               ) : isCeloNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                  Celo Mainnet
+                  {chainConfigs[SupportedChain.CELO].name}
                 </>
               ) : isMonadNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                  Monad Testnet
+                  {chainConfigs[SupportedChain.MONAD].name}
                 </>
               ) : (
                 <>
                   <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
-                  Base Sepolia
+                  {chainConfigs[SupportedChain.BASE].name}
                 </>
               )}
             </span>

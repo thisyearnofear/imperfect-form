@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useSwitchChain } from "wagmi";
-import { polygon, baseSepolia } from "wagmi/chains";
+import { polygon, base } from "wagmi/chains";
 import { Dialog } from "@/components/ui";
 import Image from "next/image";
 import {
@@ -35,7 +35,7 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
       );
 
       // Switch chain using Wagmi
-      const targetChain = selectedNetwork === "polygon" ? polygon : baseSepolia;
+      const targetChain = selectedNetwork === "polygon" ? polygon : base;
       if (switchChain) {
         switchChain({ chainId: targetChain.id });
       }
@@ -106,10 +106,10 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
               onError={() => true}
               unoptimized
             />
-            Base Sepolia
+            Base Mainnet
           </span>
           <span className="text-xs bg-white text-blue-700 px-2 py-1 rounded font-bold">
-            Testnet
+            Mainnet
           </span>
         </button>
 
@@ -120,7 +120,7 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
             {POLYGON_CONTRACT_ADDRESS.slice(-4)}
           </p>
           <p>
-            Base Sepolia: {BASE_CONTRACT_ADDRESS.slice(0, 6)}...
+            Base Mainnet: {BASE_CONTRACT_ADDRESS.slice(0, 6)}...
             {BASE_CONTRACT_ADDRESS.slice(-4)}
           </p>
         </div>

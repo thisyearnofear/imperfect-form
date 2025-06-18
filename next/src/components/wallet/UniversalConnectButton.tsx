@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { Spinner } from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
@@ -40,20 +41,15 @@ export default function UniversalConnectButton({
   >();
   const [showNetworkSwitcher, setShowNetworkSwitcher] = useState(false);
 
-  // Get network name from chainId
+  // Get network name from chainId using centralized config
   const getNetworkName = (id: number | undefined) => {
-    switch (id) {
-      case 84532:
-        return "Base Sepolia";
-      case 137:
-        return "Polygon";
-      case 42220:
-        return "Celo";
-      case 10143:
-        return "Monad Testnet";
-      default:
-        return "Unknown";
+    if (!id) return "Unknown";
+    for (const [, config] of Object.entries(chainConfigs)) {
+      if (config.id === id) {
+        return config.name;
+      }
     }
+    return "Unknown";
   };
 
   const networkName = getNetworkName(chainId || undefined);
@@ -70,12 +66,28 @@ export default function UniversalConnectButton({
     }
   }, [chainId, networkName]);
 
-  // Available networks for switching
+  // Available networks for switching using centralized config
   const networks = [
-    { id: 84532, name: "Base Sepolia", color: "blue" },
-    { id: 137, name: "Polygon", color: "purple" },
-    { id: 42220, name: "Celo", color: "green" },
-    { id: 10143, name: "Monad Testnet", color: "yellow" },
+    {
+      id: chainConfigs[SupportedChain.BASE].id,
+      name: chainConfigs[SupportedChain.BASE].name,
+      color: "blue",
+    },
+    {
+      id: chainConfigs[SupportedChain.POLYGON].id,
+      name: chainConfigs[SupportedChain.POLYGON].name,
+      color: "purple",
+    },
+    {
+      id: chainConfigs[SupportedChain.CELO].id,
+      name: chainConfigs[SupportedChain.CELO].name,
+      color: "green",
+    },
+    {
+      id: chainConfigs[SupportedChain.MONAD].id,
+      name: chainConfigs[SupportedChain.MONAD].name,
+      color: "yellow",
+    },
   ];
 
   const handleNetworkSwitch = async (targetChainId: number) => {

@@ -35,31 +35,29 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
     () => ({
       initial: [
         "📹 Setting up your camera...",
-        "💡 Position camera to show your full body",
-        "☀️ Ensure good lighting - very important!",
-        "🌐 Works best on browsers with hardware acceleration",
-        "📱 Mobile: use wallet browser for best experience",
+        "💡 Show full body",
+        "☀️ Ensure good lighting!",
+        "📱 Mobile: use wallet browser",
       ],
       camera: [
         "📹 Camera access granted! Setting up...",
         "🎯 Make sure your full body is visible",
         "💡 Good lighting makes a huge difference",
-        "📐 Stand about 6 feet from camera",
       ],
       ai: [
-        "🤖 Loading AI pose detection...",
-        "🧠 Initializing neural networks...",
+        "🤖 Loading pose detection...",
+        "🧠 Initializing...",
         "⚡ This may take 10-30 seconds...",
-        "🏋️ PUSHUPS: Hands shoulder-width apart, back straight",
-        "⬇️ PUSHUPS: Lower body to inch from ground, extend arms fully",
+        "🏋️ PUSHUPS: Hands shoulder-width apart",
+        "⬇️ PUSHUPS: Extend arms fully",
         "🦵 SQUATS: Stand with feet shoulder-width apart",
-        "🧘 Perfect time to stretch while you wait!",
+        "🧘 Stretch while you wait!",
       ],
       positioning: [
-        "🎯 AI loaded! Position yourself in frame",
-        "👤 Stand where your full body is visible",
+        "🎯 Position yourself in frame",
+        "👤 Stand with full body visible",
         "💡 Adjust lighting if skeleton isn't appearing",
-        "🔄 Try moving closer or further from camera",
+        "🔄 Try move closer or further from camera",
         "⚡ Maintain a steady pace throughout",
       ],
       ready: [
@@ -215,7 +213,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
           <h2 className={phaseInfo.color}>
             {currentPhase === "initial" && "Loading..."}
             {currentPhase === "camera" && "Setting up camera..."}
-            {currentPhase === "ai" && "Loading AI pose detection..."}
+            {currentPhase === "ai" && "Loading pose detection..."}
             {currentPhase === "positioning" && "Position yourself in frame..."}
             {currentPhase === "ready" && "Ready to start!"}
           </h2>

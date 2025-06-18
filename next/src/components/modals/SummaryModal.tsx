@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
 import { Dialog } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { UniversalConnectButton } from "@/components/wallet";
@@ -41,20 +42,15 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === "farcaster";
 
-  // Map chainId to network name for backward compatibility
+  // Map chainId to network name using centralized config
   const getNetworkFromChainId = (id: number | undefined) => {
-    switch (id) {
-      case 84532:
-        return "base";
-      case 137:
-        return "polygon";
-      case 42220:
-        return "celo";
-      case 10143:
-        return "monad";
-      default:
-        return "base";
+    if (!id) return "base"; // Default to base if unknown
+    for (const [key, config] of Object.entries(chainConfigs)) {
+      if (config.id === id) {
+        return key;
+      }
     }
+    return "base"; // Default to base if unknown
   };
 
   const network = getNetworkFromChainId(chainId || undefined);
@@ -161,12 +157,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 }`}
               >
                 {networkType === "polygon"
-                  ? "Polygon"
+                  ? chainConfigs[SupportedChain.POLYGON].name
                   : networkType === "monad"
-                  ? "Monad Testnet"
+                  ? chainConfigs[SupportedChain.MONAD].name
                   : networkType === "celo"
-                  ? "Celo Mainnet"
-                  : "Base Sepolia"}
+                  ? chainConfigs[SupportedChain.CELO].name
+                  : chainConfigs[SupportedChain.BASE].name}
               </span>
             </p>
           </div>

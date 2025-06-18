@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
 import {
   usePlatform,
   useWallet,
@@ -40,20 +41,15 @@ export default function UnifiedConnectButton({
   >();
   const [showNetworkSwitcher, setShowNetworkSwitcher] = useState(false);
 
-  // Get network name from chainId
+  // Get network name from chainId using centralized config
   const getNetworkName = (id: number | null) => {
-    switch (id) {
-      case 84532:
-        return "Base Sepolia";
-      case 137:
-        return "Polygon";
-      case 42220:
-        return "Celo";
-      case 10143:
-        return "Monad Testnet";
-      default:
-        return "Unknown";
+    if (!id) return "Unknown";
+    for (const [, config] of Object.entries(chainConfigs)) {
+      if (config.id === id) {
+        return config.name;
+      }
     }
+    return "Unknown";
   };
 
   const networkName = getNetworkName(chainId);
@@ -185,13 +181,13 @@ export default function UnifiedConnectButton({
           <div className="flex items-center space-x-1">
             <div
               className={`w-2 h-2 rounded-full ${
-                chainId === 42220
+                chainId === chainConfigs[SupportedChain.CELO].id
                   ? "bg-green-400"
-                  : chainId === 137
+                  : chainId === chainConfigs[SupportedChain.POLYGON].id
                   ? "bg-purple-400"
-                  : chainId === 84532
+                  : chainId === chainConfigs[SupportedChain.BASE].id
                   ? "bg-blue-400"
-                  : chainId === 10143
+                  : chainId === chainConfigs[SupportedChain.MONAD].id
                   ? "bg-yellow-400"
                   : "bg-gray-400"
               }`}
@@ -230,13 +226,13 @@ export default function UnifiedConnectButton({
                 >
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      chain === 42220
+                      chain === chainConfigs[SupportedChain.CELO].id
                         ? "bg-green-400"
-                        : chain === 137
+                        : chain === chainConfigs[SupportedChain.POLYGON].id
                         ? "bg-purple-400"
-                        : chain === 84532
+                        : chain === chainConfigs[SupportedChain.BASE].id
                         ? "bg-blue-400"
-                        : chain === 10143
+                        : chain === chainConfigs[SupportedChain.MONAD].id
                         ? "bg-yellow-400"
                         : "bg-gray-400"
                     }`}

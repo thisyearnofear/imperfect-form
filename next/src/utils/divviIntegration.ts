@@ -21,7 +21,7 @@ const DIVVI_PROVIDERS: `0x${string}`[] = [
 /**
  * Check if a user has already been registered with Divvi
  * @param userAddress The address of the user
- * @param chainId The chain ID to check
+ * @param chainId The chain ID to check (137: Polygon, 42220: Celo, 8453: Base)
  * @returns Promise resolving to true if the user has NOT been registered with Divvi yet
  */
 export async function isFirstTimeDivviUser(
@@ -91,7 +91,7 @@ export async function registerDivviReferral(
   userAddress: string
 ): Promise<void> {
   try {
-    console.log("Registering Divvi referral for transaction:", txHash, "on chain:", chainId);
+    console.log("Registering Divvi referral for transaction:", txHash, "on chain:", chainId, "(137: Polygon, 42220: Celo, 8453: Base)");
 
     // Submit the referral to Divvi
     // Ensure txHash is prefixed with 0x

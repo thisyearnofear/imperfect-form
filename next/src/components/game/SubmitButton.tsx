@@ -17,6 +17,7 @@ import {
   submitScoreDirectly,
   canUserSubmit,
 } from "@/utils/directContractInteraction";
+import { isFirstTimeDivviUser, registerDivviReferral, showEnhancedFeaturesPrompt } from "@/utils/divviIntegration";
 
 interface SubmitButtonProps {
   score?: number;
@@ -39,7 +40,7 @@ export default function SubmitButton({
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {
     switch (id) {
-      case 84532:
+      case 8453:
         return "base";
       case 137:
         return "polygon";
@@ -182,6 +183,18 @@ export default function SubmitButton({
 
       // Make sure we're submitting to the right network based on connected wallet
       if (wagmiAccount?.address && network === "base") {
+        // Check for first-time Divvi user on Base network (chainId 8453)
+        try {
+          const isFirstTime = await isFirstTimeDivviUser(address, 8453);
+          if (isFirstTime) {
+            console.log("First-time Divvi user detected on Base network");
+            await showEnhancedFeaturesPrompt();
+          }
+        } catch (divviError) {
+          console.error("Error checking Divvi status for Base:", divviError);
+          // Continue with transaction even if Divvi check fails
+        }
+
         // For Base network with Wagmi wallet, use writeContract
         writeContract({
           address: contractAddress as `0x${string}`,
@@ -299,17 +312,35 @@ export default function SubmitButton({
   // Handle Wagmi transaction result
   useEffect(() => {
     if (isSuccess && wagmiTxHash && network === "base") {
+      // Handle Divvi registration for first-time users on Base
+      const handleBaseDivviRegistration = async () => {
+        if (!address) return;
+
+        try {
+          const isFirstTime = await isFirstTimeDivviUser(address, 8453); // Base mainnet chainId
+          if (isFirstTime) {
+            console.log("Registering first-time Divvi user on Base network");
+            await registerDivviReferral(wagmiTxHash, 8453, address);
+          }
+        } catch (divviError) {
+          console.error("Error with Divvi registration on Base:", divviError);
+          // Don't fail the transaction if Divvi registration fails
+        }
+      };
+
+      handleBaseDivviRegistration();
+
       // Store transaction hash for social sharing
       if (typeof window !== "undefined") {
         window.transactionHash = wagmiTxHash;
-        window.selectedNetworkName = "Base Sepolia";
+        window.selectedNetworkName = "Base Mainnet";
         // Also save which network was used to localStorage for consistency
         localStorage.setItem("selectedNetwork", "base");
         localStorage.setItem("selectedChain", "base");
       }
 
       // Show success message
-      const explorerUrl = `https://sepolia-explorer.base.org/tx/${wagmiTxHash}`;
+      const explorerUrl = `https://basescan.org/tx/${wagmiTxHash}`;
 
       toast.success(
         <div>
@@ -338,7 +369,7 @@ export default function SubmitButton({
       setIsLoading(false);
       setConfirmStep(false);
     }
-  }, [isSuccess, wagmiTxHash, network]);
+  }, [isSuccess, wagmiTxHash, network, address]);
 
   return (
     <button

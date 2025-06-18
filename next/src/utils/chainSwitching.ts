@@ -19,18 +19,18 @@ export const chainConfigs = {
     blockExplorerUrls: ["https://polygonscan.com/"],
   },
   base: {
-    id: 84532,
-    name: "Base Sepolia",
+    id: 8453,
+    name: "Base Mainnet",
     nativeCurrency: {
       name: "ETH",
       symbol: "ETH",
       decimals: 18,
     },
     rpcUrls: [
-      "https://base-sepolia.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-      "https://sepolia.base.org",
+      "https://base-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
+      "https://mainnet.base.org",
     ],
-    blockExplorerUrls: ["https://sepolia-explorer.base.org/"],
+    blockExplorerUrls: ["https://basescan.org/"],
   },
   monad: {
     id: 10143,

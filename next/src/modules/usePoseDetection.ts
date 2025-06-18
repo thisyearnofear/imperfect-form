@@ -637,7 +637,7 @@ export function usePoseDetection(
         }
       }
     };
-  }, [canvasRef, mode, onRepCount, isActive, isMobile, detectPushupCallback, detectSquatCallback]);
+  }, [canvasRef, mode, onRepCount, isActive, isMobile, detectPushupCallback, detectSquatCallback, poseDetected]);
 
   return videoRef;
 }

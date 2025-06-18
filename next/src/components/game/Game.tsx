@@ -337,7 +337,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         setShowPoseGuidance(false);
       }
     },
-    [] // Remove 'started' from dependencies since we can access it directly
+    [started] // Add 'started' to dependencies as required by ESLint
   );
 
   // Memoize the webcam component to prevent re-renders when timer updates

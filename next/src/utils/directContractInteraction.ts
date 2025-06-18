@@ -240,8 +240,8 @@ export async function submitScoreDirectly(
               network = { chainId: 42220, name: "Celo Mainnet" };
             } else if (contractAddress === "0x653d41Fba630381aA44d8598a4b35Ce257924d65") {
               network = { chainId: 10143, name: "Monad Testnet" };
-            } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
-              network = { chainId: 84532, name: "Base Sepolia" };
+            } else if (contractAddress === "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B") {
+              network = { chainId: 8453, name: "Base Mainnet" };
             } else {
               throw new Error("Could not detect network. Please ensure your wallet is connected and try again.");
             }
@@ -281,8 +281,8 @@ export async function submitScoreDirectly(
     } else if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
       // Polygon Mainnet
       contractABI = polygonLeaderboardABI;
-    } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
-      // Base Sepolia
+    } else if (contractAddress === "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B") {
+      // Base Mainnet
       contractABI = baseLeaderboardABI;
     } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
       // Celo Mainnet
@@ -515,23 +515,76 @@ export async function submitScoreDirectly(
           });
         }
       }
-    } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
-      // Base Sepolia
-      console.log("Using Base Sepolia specific transaction parameters");
+    } else if (contractAddress === "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B") {
+      // Base Mainnet
+      console.log("Using Base Mainnet specific transaction parameters");
+
+      // Check if this is a first-time Divvi user (8453 is Base mainnet)
+      const isFirstTimeDivvi = await isFirstTimeDivviUser(userAddress, 8453);
+      console.log("Is first-time Divvi user on Base:", isFirstTimeDivvi);
+
+      // If first-time Divvi user, show enhanced features prompt and prepare Divvi integration
+      let dataSuffix = "";
+      if (isFirstTimeDivvi) {
+        const userAccepted = await showEnhancedFeaturesPrompt();
+        if (userAccepted) {
+          dataSuffix = getDivviDataSuffix();
+          shouldRegisterWithDivvi = true;
+          console.log("Added Divvi data suffix for first-time user registration on Base");
+        }
+      }
+
       try {
-        // For Base Sepolia, use EIP-1559 transaction
-        tx = await contract.addScore(pushups, squats, {
-          gasLimit: gasLimit.mul(2), // Double the gas limit for Base
-          maxPriorityFeePerGas: ethers.utils.parseUnits("2", "gwei"), // Priority fee for Base
-          maxFeePerGas: ethers.utils.parseUnits("50", "gwei"), // Max fee for Base
-        });
+        if (dataSuffix) {
+          // For first-time users with Divvi integration
+          console.log("Sending Base transaction with Divvi integration");
+
+          // Get the contract interface to encode function data manually
+          const iface = contract.interface;
+          const data = iface.encodeFunctionData("addScore", [pushups, squats]);
+          const finalData = data + dataSuffix;
+
+          // Create a transaction object with EIP-1559
+          const txRequest = {
+            to: contractAddress,
+            data: finalData,
+            gasLimit: gasLimit.mul(2),
+            maxPriorityFeePerGas: ethers.utils.parseUnits("0.1", "gwei"),
+            maxFeePerGas: ethers.utils.parseUnits("10", "gwei"),
+          };
+
+          tx = await signer.sendTransaction(txRequest);
+        } else {
+          // For returning users, use standard contract call
+          tx = await contract.addScore(pushups, squats, {
+            gasLimit: gasLimit.mul(2), // Double the gas limit for Base
+            maxPriorityFeePerGas: ethers.utils.parseUnits("0.1", "gwei"), // Lower priority fee for mainnet
+            maxFeePerGas: ethers.utils.parseUnits("10", "gwei"), // Lower max fee for mainnet
+          });
+        }
       } catch (error) {
-        console.error("Base transaction failed:", error);
+        console.error("Base Mainnet transaction failed:", error);
         // Fall back to legacy transaction format
-        tx = await contract.addScore(pushups, squats, {
-          gasLimit: gasLimit.mul(3), // Triple the gas limit
-          gasPrice: ethers.utils.parseUnits("30", "gwei"), // Gas price for Base
-        });
+        if (dataSuffix) {
+          // Retry with legacy format for Divvi users
+          const iface = contract.interface;
+          const data = iface.encodeFunctionData("addScore", [pushups, squats]);
+          const finalData = data + dataSuffix;
+
+          const txRequest = {
+            to: contractAddress,
+            data: finalData,
+            gasLimit: gasLimit.mul(3),
+            gasPrice: ethers.utils.parseUnits("5", "gwei"),
+          };
+
+          tx = await signer.sendTransaction(txRequest);
+        } else {
+          tx = await contract.addScore(pushups, squats, {
+            gasLimit: gasLimit.mul(3), // Triple the gas limit
+            gasPrice: ethers.utils.parseUnits("5", "gwei"), // Lower gas price for mainnet
+          });
+        }
       }
     } else {
       // Generic fallback for any other networks
@@ -581,10 +634,11 @@ export async function submitScoreDirectly(
     if (shouldRegisterWithDivvi) {
       const chainId = await provider.getNetwork().then(network => network.chainId);
 
-      // Register for both Celo and Polygon
+      // Register for Celo, Polygon, and Base
       if (
         (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273" && chainId === 42220) || // Celo mainnet
-        (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888" && chainId === 137)    // Polygon mainnet
+        (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888" && chainId === 137) ||   // Polygon mainnet
+        (contractAddress === "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B" && chainId === 8453)     // Base mainnet
       ) {
         try {
           // Register the referral with Divvi
@@ -753,7 +807,7 @@ export async function canUserSubmit(
         network.chainId === 137 || // Polygon Mainnet
         network.chainId === 10143 || // Monad Testnet
         network.chainId === 42220 || // Celo Mainnet
-        network.chainId === 84532 // Base Sepolia
+        network.chainId === 8453 // Base Mainnet
       ) {
         console.log(
           `On network ${network.name} (${network.chainId}), checking cooldown period`
@@ -775,8 +829,8 @@ export async function canUserSubmit(
     } else if (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888") {
       // Polygon Mainnet
       contractABI = polygonLeaderboardABI;
-    } else if (contractAddress === "0xFcC01405967676Be7418123c77C2acF254Dc7137") {
-      // Base Sepolia
+    } else if (contractAddress === "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B") {
+      // Base Mainnet
       contractABI = baseLeaderboardABI;
     } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
       // Celo Mainnet

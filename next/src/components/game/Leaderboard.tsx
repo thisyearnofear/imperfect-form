@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
 import Image from "next/image";
 import "@/styles/leaderboard.css";
 import { ethers } from "ethers";
@@ -106,15 +107,33 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             );
           }
 
-          // Simplified network detection with caching for performance
+          // Simplified network detection with caching for performance using centralized config
           const networkMap: Record<string, { name: string; chainId: number }> =
             {
-              polygon: { name: "polygon", chainId: 137 },
-              matic: { name: "polygon", chainId: 137 },
-              base: { name: "base-sepolia", chainId: 84532 },
-              sepolia: { name: "base-sepolia", chainId: 84532 },
-              monad: { name: "monad-testnet", chainId: 10143 },
-              celo: { name: "celo-mainnet", chainId: 42220 },
+              polygon: {
+                name: "polygon",
+                chainId: chainConfigs[SupportedChain.POLYGON].id,
+              },
+              matic: {
+                name: "polygon",
+                chainId: chainConfigs[SupportedChain.POLYGON].id,
+              },
+              base: {
+                name: "base",
+                chainId: chainConfigs[SupportedChain.BASE].id,
+              },
+              sepolia: {
+                name: "base",
+                chainId: chainConfigs[SupportedChain.BASE].id,
+              },
+              monad: {
+                name: "monad",
+                chainId: chainConfigs[SupportedChain.MONAD].id,
+              },
+              celo: {
+                name: "celo",
+                chainId: chainConfigs[SupportedChain.CELO].id,
+              },
             };
 
           // Find the network info by looking for keywords in the URL

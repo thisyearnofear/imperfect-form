@@ -9,15 +9,15 @@ export async function POST(req: NextRequest) {
     const channelMap: Record<string, { channelId: string, displayName: string }> = {
       'polygon': {
         channelId: 'polygon', 
-        displayName: 'Polygon Mainnet'
+        displayName: 'Polygon'
       },
       'base': {
         channelId: 'base-builds', 
-        displayName: 'Base Sepolia'
+        displayName: 'Base'
       },
       'celo': {
         channelId: 'celo', 
-        displayName: 'Celo Mainnet'
+        displayName: 'Celo'
       },
       'monad': {
         channelId: 'monad', 

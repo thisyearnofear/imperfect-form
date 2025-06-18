@@ -7,7 +7,7 @@ export const POLYGON_CONTRACT_ADDRESS =
 export const BASE_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_BASE ||
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT ||
-  "0xFcC01405967676Be7418123c77C2acF254Dc7137"; // Base Sepolia contract (standardized)
+  "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B"; // Base Mainnet contract (based on proven Celo template)
 
 // Standardized contract addresses for all networks
 export const MONAD_CONTRACT_ADDRESS =
@@ -185,8 +185,9 @@ export const polygonLeaderboardABI = [
   }
 ];
 
-// Base-specific ABI with nonpayable addScore function
+// Base Mainnet ABI - based on proven Celo template (no ReentrancyGuard)
 export const baseLeaderboardABI = [
+  // Use the same proven ABI as Celo for maximum reliability
   ...fitnessLeaderboardABI.filter(item => item.name !== "addScore"),
   {
     inputs: [
@@ -195,7 +196,22 @@ export const baseLeaderboardABI = [
     ],
     name: "addScore",
     outputs: [],
-    stateMutability: "nonpayable", // Nonpayable for Base contract
+    stateMutability: "nonpayable", // Simple nonpayable like Celo
+    type: "function"
+  },
+  // Add Base-specific functions
+  {
+    inputs: [],
+    name: "isBaseMainnet",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "pure",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "getDeployedChainId",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
     type: "function"
   }
 ];

@@ -9,12 +9,11 @@ export const POLYGON_FALLBACK_RPCS = [
   "https://rpc-mainnet.matic.network",
 ];
 
-// Fallback RPC URLs for Base Sepolia testnet
+// Fallback RPC URLs for Base Mainnet
 export const BASE_FALLBACK_RPCS = [
-  "https://base-sepolia.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-  "https://base-sepolia-rpc.publicnode.com",
-  "https://public.stackup.sh/api/v1/node/base-sepolia",
-  "https://sepolia.base.org",
+  "https://base-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
+  "https://mainnet.base.org",
+  "https://base-rpc.publicnode.com",
 ];
 
 // Fallback RPC URLs for Monad Testnet

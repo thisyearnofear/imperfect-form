@@ -19,71 +19,77 @@ interface PoseLoadingOverlayProps {
  * Overlay component that shows loading messages on top of the video feed
  * while pose detection is initializing
  */
-export default function PoseLoadingOverlay({ 
-  poseState, 
+export default function PoseLoadingOverlay({
+  poseState,
   isVisible,
-  className = ""
+  className = "",
 }: PoseLoadingOverlayProps) {
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState(0);
   const [instructionOpacity, setInstructionOpacity] = useState(1);
-  const [currentPhase, setCurrentPhase] = useState<'initial' | 'camera' | 'ai' | 'positioning' | 'ready'>('initial');
+  const [currentPhase, setCurrentPhase] = useState<
+    "initial" | "camera" | "ai" | "positioning" | "ready"
+  >("initial");
 
   // Enhanced loading instructions organized by phase
-  const loadingInstructions = useMemo(() => ({
-    initial: [
-      "📹 Starting camera...",
-      "💡 Position camera to show your full body",
-      "☀️ Ensure good lighting - very important!",
-    ],
-    camera: [
-      "📹 Camera ready! Setting up AI...",
-      "🎯 Make sure your full body is visible",
-      "💡 Good lighting makes a huge difference",
-    ],
-    ai: [
-      "🤖 Loading AI pose detection...",
-      "🧠 Initializing neural networks...",
-      "⚡ This may take 10-30 seconds...",
-      "🏋️ PUSHUPS: Hands shoulder-width apart, back straight",
-      "⬇️ PUSHUPS: Lower body to inch from ground, extend arms fully",
-      "🦵 SQUATS: Stand with feet shoulder-width apart",
-      "🧘 Perfect time to stretch while you wait!",
-    ],
-    positioning: [
-      "🎯 AI loaded! Position yourself in frame",
-      "👤 Stand where your full body is visible",
-      "💡 Adjust lighting if skeleton isn't appearing",
-      "🔄 Try moving closer or further from camera",
-    ],
-    ready: [
-      "✅ All systems ready!",
-      "🏆 Time to get those reps in!",
-      "🔥 Let's make it count!",
-    ],
-  }), []);
+  const loadingInstructions = useMemo(
+    () => ({
+      initial: [
+        "📹 Starting camera...",
+        "💡 Position camera to show your full body",
+        "☀️ Ensure good lighting - very important!",
+      ],
+      camera: [
+        "📹 Camera ready! Setting up AI...",
+        "🎯 Make sure your full body is visible",
+        "💡 Good lighting makes a huge difference",
+      ],
+      ai: [
+        "🤖 Loading pose detection...",
+        "🧠 Initializing...",
+        "⚡ This may take 10-30 seconds...",
+        "🏋️ PUSHUPS: Hands shoulder-width apart",
+        "⬇️ PUSHUPS: Extend arms fully",
+        "🦵 SQUATS: Stand with feet shoulder-width apart",
+        "🧘 Stretch while you wait!",
+      ],
+      positioning: [
+        "🎯 Position yourself in frame",
+        "👤 Stand where full body is visible",
+        "💡 Adjust lighting if skeleton doesn't appear",
+        "🔄 Try moving closer or further from camera",
+      ],
+      ready: [
+        "✅ All systems ready!",
+        "🏆 Time to get those reps in!",
+        "🔥 Let's make it count!",
+      ],
+    }),
+    []
+  );
 
   // Update phase based on pose detection state
   useEffect(() => {
     if (!isVisible) return;
 
     if (!poseState.hasCamera) {
-      setCurrentPhase('initial');
+      setCurrentPhase("initial");
     } else if (poseState.hasCamera && !poseState.hasPoseDetection) {
-      setCurrentPhase('camera');
+      setCurrentPhase("camera");
       // After camera is ready, move to AI loading phase
-      setTimeout(() => setCurrentPhase('ai'), 1000);
+      setTimeout(() => setCurrentPhase("ai"), 1000);
     } else if (poseState.hasPoseDetection && !poseState.poseDetected) {
-      setCurrentPhase('positioning');
+      setCurrentPhase("positioning");
     } else if (poseState.poseDetected) {
-      setCurrentPhase('ready');
+      setCurrentPhase("ready");
     }
   }, [poseState, isVisible]);
 
   useEffect(() => {
     if (!isVisible) return;
 
-    const currentInstructions = loadingInstructions[currentPhase] || loadingInstructions.initial;
-    
+    const currentInstructions =
+      loadingInstructions[currentPhase] || loadingInstructions.initial;
+
     // Cycle through instructions for current phase
     const cycleInterval = setInterval(() => {
       setInstructionOpacity(0);
@@ -112,24 +118,47 @@ export default function PoseLoadingOverlay({
   // Get phase-specific styling and content
   const getPhaseInfo = () => {
     switch (currentPhase) {
-      case 'camera':
-        return { color: 'text-blue-400', bgColor: 'bg-blue-900/80', icon: '📹' };
-      case 'ai':
-        return { color: 'text-purple-400', bgColor: 'bg-purple-900/80', icon: '🤖' };
-      case 'positioning':
-        return { color: 'text-green-400', bgColor: 'bg-green-900/80', icon: '🎯' };
-      case 'ready':
-        return { color: 'text-yellow-400', bgColor: 'bg-yellow-900/80', icon: '✅' };
+      case "camera":
+        return {
+          color: "text-blue-400",
+          bgColor: "bg-blue-900/80",
+          icon: "📹",
+        };
+      case "ai":
+        return {
+          color: "text-purple-400",
+          bgColor: "bg-purple-900/80",
+          icon: "🤖",
+        };
+      case "positioning":
+        return {
+          color: "text-green-400",
+          bgColor: "bg-green-900/80",
+          icon: "🎯",
+        };
+      case "ready":
+        return {
+          color: "text-yellow-400",
+          bgColor: "bg-yellow-900/80",
+          icon: "✅",
+        };
       default:
-        return { color: 'text-gray-400', bgColor: 'bg-gray-900/80', icon: '⚡' };
+        return {
+          color: "text-gray-400",
+          bgColor: "bg-gray-900/80",
+          icon: "⚡",
+        };
     }
   };
 
   const phaseInfo = getPhaseInfo();
-  const currentInstructions = loadingInstructions[currentPhase] || loadingInstructions.initial;
+  const currentInstructions =
+    loadingInstructions[currentPhase] || loadingInstructions.initial;
 
   return (
-    <div className={`absolute inset-0 flex flex-col items-center justify-center z-10 ${phaseInfo.bgColor} ${className}`}>
+    <div
+      className={`absolute inset-0 flex flex-col items-center justify-center z-10 ${phaseInfo.bgColor} ${className}`}
+    >
       {/* Progress indicator */}
       <ProgressIndicator phase={currentPhase} className="mb-4" />
 
@@ -143,18 +172,21 @@ export default function PoseLoadingOverlay({
       {/* Phase title */}
       <div className="mb-4">
         <h2 className={`text-xl font-bold ${phaseInfo.color} text-center`}>
-          {currentPhase === 'initial' && 'Starting Camera...'}
-          {currentPhase === 'camera' && 'Camera Ready!'}
-          {currentPhase === 'ai' && 'Loading AI Pose Detection...'}
-          {currentPhase === 'positioning' && 'Position Yourself in Frame...'}
-          {currentPhase === 'ready' && 'Ready to Start!'}
+          {currentPhase === "initial" && "Starting Camera..."}
+          {currentPhase === "camera" && "Camera Ready!"}
+          {currentPhase === "ai" && "Loading Pose Detection..."}
+          {currentPhase === "positioning" && "Position Yourself in Frame..."}
+          {currentPhase === "ready" && "Ready to Start!"}
         </h2>
       </div>
 
       {/* Progress bar for AI loading phase */}
-      {currentPhase === 'ai' && (
+      {currentPhase === "ai" && (
         <div className="w-64 bg-gray-700 rounded-full h-2 mb-4">
-          <div className="bg-purple-400 h-2 rounded-full animate-pulse" style={{ width: '70%' }}></div>
+          <div
+            className="bg-purple-400 h-2 rounded-full animate-pulse"
+            style={{ width: "70%" }}
+          ></div>
         </div>
       )}
 
@@ -176,7 +208,7 @@ export default function PoseLoadingOverlay({
           <p className="mt-1">🎯 Faster on newer devices with good internet</p>
         </div>
       )}
-      
+
       {currentPhase === "positioning" && (
         <div className="mt-4 text-sm text-gray-400 text-center max-w-sm">
           <p>
