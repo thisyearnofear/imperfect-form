@@ -117,7 +117,9 @@ const wagmiConfig = createConfig({
   }),
   ssr: true,
   transports: {
-    [baseSepolia.id]: http(),
+    [baseSepolia.id]: http(
+      "https://base-sepolia.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
+    ),
     [polygon.id]: http(
       "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
     ),

@@ -191,18 +191,30 @@ export default function SubmitScoreWithWagmi({
   useEffect(() => {
     // When we get a transaction hash, immediately treat it as success
     if (txHash) {
-      console.log("✅ Transaction submitted successfully:", txHash);
-      console.log(
-        "Transaction explorer URL:",
-        `https://sepolia-explorer.base.org/tx/${txHash}`
-      );
+      // Get the correct explorer URL based on the current network
+      let explorerUrl = `https://sepolia-explorer.base.org/tx/${txHash}`; // Default to Base Sepolia
+      let networkName = "Base Sepolia";
 
-      // Show immediate success message
+      if (isPolygonNetwork) {
+        explorerUrl = `https://polygonscan.com/tx/${txHash}`;
+        networkName = "Polygon";
+      } else if (isCeloNetwork) {
+        explorerUrl = `https://explorer.celo.org/mainnet/tx/${txHash}`;
+        networkName = "Celo";
+      } else if (isMonadNetwork) {
+        explorerUrl = `https://testnet.monadexplorer.com/tx/${txHash}`;
+        networkName = "Monad";
+      }
+
+      console.log("✅ Transaction submitted successfully:", txHash);
+      console.log("Transaction explorer URL:", explorerUrl);
+
+      // Show immediate success message with correct explorer
       toast.success(
         <div>
-          Score submitted! Check the leaderboard 🏆 <br />
+          Score submitted on {networkName}! Check the leaderboard 🏆 <br />
           <a
-            href={`https://sepolia-explorer.base.org/tx/${txHash}`}
+            href={explorerUrl}
             target="_blank"
             rel="noopener noreferrer"
             style={{ textDecoration: "underline", color: "inherit" }}
@@ -215,6 +227,14 @@ export default function SubmitScoreWithWagmi({
 
       // Track successful score submission
       if (user?.fid) {
+        const chainName = isPolygonNetwork
+          ? "polygon"
+          : isCeloNetwork
+          ? "celo"
+          : isMonadNetwork
+          ? "monad"
+          : "base";
+
         fetch("/api/analytics/engagement", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -224,7 +244,7 @@ export default function SubmitScoreWithWagmi({
             metadata: {
               score: score || 0,
               exerciseType: exerciseType || "pushups",
-              chain: "base",
+              chain: chainName,
               transactionHash: txHash,
             },
           }),
@@ -237,7 +257,15 @@ export default function SubmitScoreWithWagmi({
       setConfirmStep(false);
       setIsLoading(false);
     }
-  }, [txHash, score, exerciseType, user?.fid]);
+  }, [
+    txHash,
+    score,
+    exerciseType,
+    user?.fid,
+    isPolygonNetwork,
+    isCeloNetwork,
+    isMonadNetwork,
+  ]);
 
   // Since we now treat transaction submission as success, we don't need complex error handling
   // The transaction hash being generated means the transaction was successfully submitted
