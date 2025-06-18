@@ -389,7 +389,6 @@ export default function SubmitScoreWithWagmi({
           formattedAddress: formattedContractAddress,
           function: "addScore",
           args: [pushups, squats],
-          chainId: 84532,
         });
       }
 
@@ -404,8 +403,6 @@ export default function SubmitScoreWithWagmi({
         abi: contractABI, // Use the network-specific ABI
         functionName: "addScore",
         args: [pushupsBI, squatsBI],
-        chainId: 84532, // Explicitly set Base Sepolia chain ID
-        gas: BigInt(500000), // Set a high gas limit to ensure transaction goes through
       };
 
       if (process.env.NODE_ENV !== "production") {
@@ -437,8 +434,6 @@ export default function SubmitScoreWithWagmi({
         abi: contractABI, // Use the network-specific ABI
         functionName: "addScore",
         args: [pushupsBI, squatsBI],
-        chainId: 84532,
-        gas: BigInt(500000),
       });
 
       if (process.env.NODE_ENV !== "production") {

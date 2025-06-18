@@ -122,7 +122,13 @@ const getWagmiConfig = () => {
       }),
       ssr: true,
       transports: {
-        [baseSepolia.id]: http(),
+        [baseSepolia.id]: http(
+          "https://base-sepolia.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
+          {
+            retryCount: 3,
+            retryDelay: 1000,
+          }
+        ),
         [polygon.id]: http(
           "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
         ),
