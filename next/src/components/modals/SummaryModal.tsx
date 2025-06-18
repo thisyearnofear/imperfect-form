@@ -1,18 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Dialog } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { UniversalConnectButton } from "@/components/wallet";
 import FarcasterShare from "@/components/social/FarcasterShare";
 import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
-import { submitScoreDirectly } from "@/utils/directContractInteraction";
-import {
-  POLYGON_CONTRACT_ADDRESS,
-  MONAD_CONTRACT_ADDRESS,
-  CELO_CONTRACT_ADDRESS,
-} from "@/constants/contracts";
-import toast from "react-hot-toast";
+// Removed unused imports - now using unified Wagmi submission
+// Removed unused toast import
 import { AddMiniAppButton } from "@/components/miniapp/AddMiniAppButton";
 
 // Initialize window properties if they don't exist
@@ -69,37 +64,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   // Use the address from props if provided, otherwise fall back to wallet address from context
   const effectiveAddress = address || walletAddress;
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Removed unused isSubmitting state - now using unified Wagmi submission
 
-  // Function to get the actual ethereum provider from unified context
-  const getEthereumProvider = async () => {
-    if (platform === "farcaster") {
-      // For Farcaster, use the provider from the unified context
-      try {
-        const { sdk } = await import("@farcaster/frame-sdk");
-        if (sdk.wallet?.ethProvider) {
-          console.log(
-            "Using Farcaster SDK ethereum provider from unified context"
-          );
-          return sdk.wallet.ethProvider;
-        }
-      } catch (error) {
-        console.warn("Failed to get Farcaster SDK provider:", error);
-      }
-    }
-
-    // Fallback to window.ethereum
-    if (
-      typeof window !== "undefined" &&
-      (window as unknown as { ethereum?: unknown }).ethereum
-    ) {
-      console.log("Using window.ethereum provider");
-      return (window as unknown as { ethereum: unknown }).ethereum;
-    }
-
-    console.warn("No ethereum provider found");
-    return null;
-  };
+  // Removed unused getEthereumProvider function - now using unified Wagmi submission
 
   // Debug logging for mobile wallet issues
   React.useEffect(() => {
@@ -130,128 +97,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     isInMiniApp,
   ]);
 
-  // Function to handle ThirdWeb submission for Polygon network
-  const handleThirdwebSubmission = async () => {
-    if (!effectiveAddress) {
-      toast.error("Please connect your wallet first");
-      return;
-    }
-
-    // Check if score is zero - prevent submission of zero scores
-    if (repCount === 0) {
-      toast.error(
-        "Cannot submit a score of zero. Please complete some exercises first!"
-      );
-      return;
-    }
-
-    // Only proceed if we're on a network supported by ThirdWeb
-    if (
-      networkType !== "polygon" &&
-      networkType !== "monad" &&
-      networkType !== "celo"
-    ) {
-      toast.error(
-        "ThirdWeb wallet can only be used with Polygon, Monad, or Celo networks"
-      );
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Determine pushups or squats based on mode
-      const pushups = mode === "pushups" ? repCount : 0;
-      const squats = mode === "squats" ? repCount : 0;
-
-      toast.loading("Preparing transaction...", {
-        id: "submit-score",
-      });
-
-      // Get the appropriate contract address based on the network
-      let contractAddress = POLYGON_CONTRACT_ADDRESS;
-      if (networkType === "monad") {
-        contractAddress = MONAD_CONTRACT_ADDRESS;
-      } else if (networkType === "celo") {
-        contractAddress = CELO_CONTRACT_ADDRESS;
-      }
-
-      // Get the ethereum provider from the unified context
-      const ethereumProvider = await getEthereumProvider();
-
-      console.log("SummaryModal submission debug:", {
-        platform,
-        effectiveAddress,
-        networkType,
-        contractAddress,
-        hasEthereumProvider: !!ethereumProvider,
-        providerType: ethereumProvider?.constructor?.name || "unknown",
-      });
-
-      // Use direct contract interaction for ThirdWeb
-      const result = await submitScoreDirectly(
-        contractAddress,
-        pushups,
-        squats,
-        false, // not Base network
-        effectiveAddress,
-        false, // skipSubAccountCheck
-        ethereumProvider // Pass the provider from unified context
-      );
-
-      if (result.success) {
-        // Store transaction hash for social sharing
-        if (typeof window !== "undefined" && result.transactionHash) {
-          window.transactionHash = result.transactionHash;
-
-          // Set the appropriate network name
-          if (networkType === "polygon") {
-            window.selectedNetworkName = "Polygon Amoy";
-          } else if (networkType === "monad") {
-            window.selectedNetworkName = "Monad Testnet";
-          } else if (networkType === "celo") {
-            window.selectedNetworkName = "Celo Mainnet";
-          }
-        }
-
-        // Get the appropriate explorer URL based on the network
-        let explorerUrl;
-        if (networkType === "polygon") {
-          explorerUrl = `https://polygonscan.com/tx/${result.transactionHash}`;
-        } else if (networkType === "monad") {
-          explorerUrl = `https://testnet.monadexplorer.com/tx/${result.transactionHash}`;
-        } else if (networkType === "celo") {
-          explorerUrl = `https://explorer.celo.org/mainnet/tx/${result.transactionHash}`;
-        }
-
-        toast.success(
-          <div>
-            Score submitted successfully! <br />
-            <a
-              href={explorerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ textDecoration: "underline", color: "inherit" }}
-            >
-              View on explorer
-            </a>
-          </div>,
-          { id: "submit-score", duration: 8000 }
-        );
-      } else {
-        toast.error(result.error || "Failed to submit score", {
-          id: "submit-score",
-        });
-      }
-    } catch (error) {
-      console.error("Error submitting with ThirdWeb:", error);
-      toast.error("Error submitting transaction. Please try again.", {
-        id: "submit-score",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // Removed handleThirdwebSubmission - now using unified Wagmi submission
 
   // Network switching is no longer supported in the summary modal
   // This prevents wallet compatibility issues
@@ -340,41 +186,13 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 Submit Your Score
               </h3>
 
-              {/* Use different submission methods based on network */}
-              {networkType === "polygon" ||
-              networkType === "monad" ||
-              networkType === "celo" ? (
-                <button
-                  id="submitScoreButton"
-                  onClick={handleThirdwebSubmission}
-                  disabled={isSubmitting}
-                  className={`text-white font-bold py-3 px-4 rounded-md w-full flex items-center justify-center transition-all transform hover:scale-[1.02] ${
-                    networkType === "polygon"
-                      ? "bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 shadow-[0_0_10px_rgba(168,85,247,0.3)]"
-                      : networkType === "monad"
-                      ? "bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 shadow-[0_0_10px_rgba(250,204,21,0.3)]"
-                      : networkType === "celo"
-                      ? "bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 shadow-[0_0_10px_rgba(74,222,128,0.3)]"
-                      : "bg-gradient-to-r from-blue-600 to-cyan-700 hover:from-blue-500 hover:to-cyan-600 shadow-[0_0_10px_rgba(59,130,246,0.3)]"
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="mr-2">Submitting...</span>
-                      <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
-                    </>
-                  ) : (
-                    <span className="font-bold">Submit Score</span>
-                  )}
-                </button>
-              ) : (
-                <SubmitScoreWithWagmi
-                  score={repCount}
-                  exerciseType={mode}
-                  forceDirectSubmission={true}
-                  walletAddress={effectiveAddress}
-                />
-              )}
+              {/* Use unified Wagmi-based submission for all networks */}
+              <SubmitScoreWithWagmi
+                score={repCount}
+                exerciseType={mode}
+                forceDirectSubmission={true}
+                walletAddress={effectiveAddress}
+              />
             </div>
           </div>
         )}

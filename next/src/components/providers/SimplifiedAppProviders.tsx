@@ -42,23 +42,12 @@ const monadTestnet: Chain = {
   testnet: true,
 };
 
-// Create connectors array with Farcaster support
-const createConnectors = () => {
+// Create connectors array with Farcaster support - singleton to prevent multiple WalletConnect inits
+let connectorsCache: ReturnType<typeof createConnectorsInternal> | null = null;
+
+const createConnectorsInternal = () => {
   const connectors = [
-    // Primary: Coinbase Wallet (works on all chains)
-    coinbaseWallet({
-      appName: "Imperfect Form",
-      appLogoUrl: "https://imperfectform.fun/icon-192x192.png",
-      preference: "eoaOnly", // Use standard EOA wallets for consistency
-      enableMobileWalletLink: true,
-    }),
-
-    // Fallback: Injected wallets (MetaMask, etc.)
-    injected({
-      shimDisconnect: true,
-    }),
-
-    // Mobile: WalletConnect
+    // Primary: WalletConnect (best for web, supports mobile wallets via QR)
     walletConnect({
       projectId:
         process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
@@ -66,10 +55,32 @@ const createConnectors = () => {
       metadata: {
         name: "Imperfect Form",
         description: "Onchain fitness challenges",
-        url: "https://imperfectform.fun",
-        icons: ["https://imperfectform.fun/icon-192x192.png"],
+        url:
+          typeof window !== "undefined"
+            ? window.location.origin
+            : process.env.NEXT_PUBLIC_BASE_URL || "https://imperfectform.fun",
+        icons: [
+          `${
+            typeof window !== "undefined"
+              ? window.location.origin
+              : process.env.NEXT_PUBLIC_BASE_URL || "https://imperfectform.fun"
+          }/icon-192x192.png`,
+        ],
       },
-      showQrModal: false, // Prevent auto-popup on page load
+      showQrModal: true, // Enable QR modal for web users to connect mobile wallets
+    }),
+
+    // Secondary: Injected wallets (MetaMask, etc.)
+    injected({
+      shimDisconnect: true,
+    }),
+
+    // Tertiary: Coinbase Wallet (fallback)
+    coinbaseWallet({
+      appName: "Imperfect Form",
+      appLogoUrl: "https://imperfectform.fun/icon-192x192.png",
+      preference: "eoaOnly", // Use standard EOA wallets for consistency
+      enableMobileWalletLink: true,
     }),
   ];
 
@@ -79,7 +90,9 @@ const createConnectors = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const connector = (farcasterFrame as () => any)();
       connectors.unshift(connector); // Add at beginning for priority in Farcaster context
-      console.log("✅ Farcaster connector added to Wagmi config");
+      if (process.env.NODE_ENV === "development") {
+        console.log("✅ Farcaster connector added to Wagmi config");
+      }
     } catch (err) {
       console.warn("Failed to initialize Farcaster connector:", err);
     }
@@ -88,23 +101,40 @@ const createConnectors = () => {
   return connectors;
 };
 
+const createConnectors = () => {
+  if (!connectorsCache) {
+    connectorsCache = createConnectorsInternal();
+  }
+  return connectorsCache;
+};
+
 // Optimized Wagmi config - CELO first as default for better mobile/Farcaster UX
-const wagmiConfig = createConfig({
-  chains: [celo, polygon, baseSepolia, monadTestnet],
-  connectors: createConnectors(),
-  storage: createStorage({
-    storage: cookieStorage,
-  }),
-  ssr: true,
-  transports: {
-    [baseSepolia.id]: http(),
-    [polygon.id]: http(
-      "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
-    ),
-    [celo.id]: http(),
-    [monadTestnet.id]: http(),
-  },
-});
+// Singleton to prevent multiple WalletConnect initializations
+let wagmiConfigCache: ReturnType<typeof createConfig> | null = null;
+
+const getWagmiConfig = () => {
+  if (!wagmiConfigCache) {
+    wagmiConfigCache = createConfig({
+      chains: [celo, polygon, baseSepolia, monadTestnet],
+      connectors: createConnectors(),
+      storage: createStorage({
+        storage: cookieStorage,
+      }),
+      ssr: true,
+      transports: {
+        [baseSepolia.id]: http(),
+        [polygon.id]: http(
+          "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
+        ),
+        [celo.id]: http(),
+        [monadTestnet.id]: http(),
+      },
+    });
+  }
+  return wagmiConfigCache;
+};
+
+const wagmiConfig = getWagmiConfig();
 
 // Optimized Query client with better defaults
 const queryClient = new QueryClient({

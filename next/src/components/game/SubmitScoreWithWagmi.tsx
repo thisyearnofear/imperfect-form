@@ -238,7 +238,7 @@ export default function SubmitScoreWithWagmi({
       setConfirmStep(false);
       setIsLoading(false);
     }
-  }, [txHash, score, exerciseType]);
+  }, [txHash, score, exerciseType, user?.fid]);
 
   // Since we now treat transaction submission as success, we don't need complex error handling
   // The transaction hash being generated means the transaction was successfully submitted
@@ -492,22 +492,22 @@ export default function SubmitScoreWithWagmi({
               {isPolygonNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
-                  Polygon Mainnet • Signature Wallet
+                  Polygon Mainnet
                 </>
               ) : isCeloNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                  Celo Mainnet • Farcaster Wallet
+                  Celo Mainnet
                 </>
               ) : isMonadNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                  Monad Testnet • Signature Wallet
+                  Monad Testnet
                 </>
               ) : (
                 <>
                   <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
-                  Base Sepolia • Standard Wallet
+                  Base Sepolia
                 </>
               )}
             </span>
@@ -526,22 +526,22 @@ export default function SubmitScoreWithWagmi({
               {isPolygonNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-purple-400 rounded-full mr-1"></span>
-                  Polygon Mainnet • Signature Wallet
+                  Polygon Mainnet
                 </>
               ) : isCeloNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                  Celo Mainnet • Farcaster Wallet
+                  Celo Mainnet
                 </>
               ) : isMonadNetwork ? (
                 <>
                   <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-                  Monad Testnet • Signature Wallet
+                  Monad Testnet
                 </>
               ) : (
                 <>
                   <span className="inline-block w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
-                  Base Sepolia • Standard Wallet
+                  Base Sepolia
                 </>
               )}
             </span>

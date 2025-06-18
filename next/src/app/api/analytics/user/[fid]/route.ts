@@ -20,7 +20,7 @@ function isAuthorized(request: NextRequest): boolean {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fid: string } }
+  { params }: { params: Promise<{ fid: string }> }
 ) {
   try {
     if (!isAuthorized(request)) {
@@ -30,7 +30,8 @@ export async function GET(
       );
     }
 
-    const fid = parseInt(params.fid);
+    const resolvedParams = await params;
+    const fid = parseInt(resolvedParams.fid);
     
     if (isNaN(fid)) {
       return NextResponse.json(

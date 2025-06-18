@@ -58,14 +58,16 @@ export default function UniversalConnectButton({
 
   const networkName = getNetworkName(chainId || undefined);
 
-  // Debug chainId changes
+  // Debug chainId changes (only in development)
   useEffect(() => {
-    console.log(
-      "UniversalConnectButton: ChainId changed to",
-      chainId,
-      "Network:",
-      networkName
-    );
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        "UniversalConnectButton: ChainId changed to",
+        chainId,
+        "Network:",
+        networkName
+      );
+    }
   }, [chainId, networkName]);
 
   // Available networks for switching
@@ -254,10 +256,35 @@ export default function UniversalConnectButton({
     );
   }
 
+  // Handle connect with debug logging
+  const handleConnect = async () => {
+    console.log("🔗 UniversalConnectButton: Connect clicked", {
+      platform,
+      isConnected,
+      isConnecting,
+      isReady,
+    });
+    try {
+      const result = await connect();
+      console.log("🔗 UniversalConnectButton: Connect result", result);
+
+      if (result) {
+        // Wait a moment for state to update, then trigger callback
+        setTimeout(() => {
+          if (address && onConnected) {
+            onConnected(address);
+          }
+        }, 500);
+      }
+    } catch (error) {
+      console.error("🔗 UniversalConnectButton: Connect error", error);
+    }
+  };
+
   // Connection Button - maintaining your existing beautiful styling
   return (
     <button
-      onClick={connect}
+      onClick={handleConnect}
       disabled={isConnecting}
       className={`
         relative overflow-hidden font-bold rounded-lg transition-all duration-300

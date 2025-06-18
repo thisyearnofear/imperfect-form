@@ -1,7 +1,13 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import dynamic from "next/dynamic";
-import { Spinner, LoadingScreen } from "@/components/ui";
+import { Spinner, LoadingScreen, PoseLoadingOverlay } from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import {
   cameraManager,
@@ -15,7 +21,6 @@ import { usePlatform } from "@/contexts/PlatformContext";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";
-import { createRemoteLogger } from "@/utils/remoteLogger";
 
 // Use LazyWebcam for better performance - only loads TensorFlow when needed
 const LazyWebcam = dynamic(() => import("./LazyWebcam"), {
@@ -61,6 +66,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
+  const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
   const { isMobile } = useDeviceDetect(); // Use our enhanced device detection hook
 
   // Safe state for viewport dimensions
@@ -70,11 +76,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   });
 
   // Get universal wallet context
-  const { wallet } = usePlatform();
+  const { wallet, user } = usePlatform();
   const { address } = wallet;
-
-  // Initialize remote logger for the Game component
-  const logger = createRemoteLogger("Game");
 
   // Use the universal address - no more complex network-specific logic needed!
   const finalAddress = address || thirdwebAddress;
@@ -134,20 +137,23 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       .padStart(2, "0")}`;
   };
 
+  // Moved memoized webcam after handler functions are defined
+
   // Function to start the timer
   const startTimer = () => {
     if (timerRef.current) return; // Don't start if already running
 
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
+        const newTime = prev <= 1 ? 0 : prev - 1;
+        timeLeftRef.current = newTime; // Update ref to keep it in sync
+        if (newTime <= 0) {
           // Use the ref to call the latest version of handleStop
           if (handleStopRef.current) {
             handleStopRef.current();
           }
-          return 0;
         }
-        return prev - 1;
+        return newTime;
       });
     }, 1000);
   };
@@ -173,14 +179,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             metadata: {
               reps: count,
               exerciseMode: mode,
-              duration: 120 - timeLeft, // seconds elapsed
+              duration: 120 - timeLeftRef.current, // Use ref instead of state to avoid re-renders
             },
           }),
         }).catch((err) => console.warn("Failed to track workout:", err));
       }
     },
-    [started, mode, timeLeft, user?.fid]
+    [started, mode, user?.fid] // Remove timeLeft from dependencies
   );
+
+  // Keep timeLeftRef in sync with timeLeft state
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
 
   useEffect(() => {
     if (started) {
@@ -301,10 +312,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   };
 
   // Handle filter change from Webcam component
-  const handleFilterChange = (filterName: string) => {
+  const handleFilterChange = useCallback((filterName: string) => {
     console.log("Game component received filter change:", filterName);
     setCurrentFilter(filterName);
-  };
+  }, []);
 
   // Handle pose detection state changes
   const handlePoseStateChange = useCallback(
@@ -326,7 +337,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         setShowPoseGuidance(false);
       }
     },
-    [started]
+    [] // Remove 'started' from dependencies since we can access it directly
+  );
+
+  // Memoize the webcam component to prevent re-renders when timer updates
+  const memoizedWebcam = useMemo(
+    () => (
+      <LazyWebcam
+        mode={mode}
+        onRepCount={handleRepCount}
+        isActive={started}
+        onFilterChange={handleFilterChange}
+        onPoseStateChange={handlePoseStateChange}
+      />
+    ),
+    [mode, handleRepCount, started, handleFilterChange, handlePoseStateChange]
   );
 
   return (
@@ -435,12 +460,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                       justifyContent: "center", // Center video horizontally
                     }}
                   >
-                    <LazyWebcam
-                      mode={mode}
-                      onRepCount={handleRepCount}
-                      isActive={started}
-                      onFilterChange={handleFilterChange}
-                      onPoseStateChange={handlePoseStateChange}
+                    {memoizedWebcam}
+
+                    {/* Pose loading overlay - shows on top of video while pose detection initializes */}
+                    <PoseLoadingOverlay
+                      poseState={poseState}
+                      isVisible={started && !poseState.poseDetected}
                     />
                   </div>
                 </div>
@@ -451,12 +476,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                   aria-label="Game Canvas"
                   className="w-full h-full relative"
                 >
-                  <LazyWebcam
-                    mode={mode}
-                    onRepCount={handleRepCount}
-                    isActive={started}
-                    onFilterChange={handleFilterChange}
-                    onPoseStateChange={handlePoseStateChange}
+                  {memoizedWebcam}
+
+                  {/* Pose loading overlay - shows on top of video while pose detection initializes */}
+                  <PoseLoadingOverlay
+                    poseState={poseState}
+                    isVisible={started && !poseState.poseDetected}
                   />
                 </div>
               )}

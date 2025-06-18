@@ -34,8 +34,7 @@ const manifest = {
       "actions.ready",
       "actions.composeCast",
       "actions.addMiniApp"
-    ],
-    "webhookUrl": "https://imperfectform.fun/api/miniapp/webhook"
+    ]
   }
 };
 

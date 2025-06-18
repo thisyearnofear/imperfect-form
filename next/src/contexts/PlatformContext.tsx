@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import {
@@ -223,27 +224,48 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   };
 
   // Unified wallet state
-  const wallet: WalletState = {
-    isConnected:
-      platform === "farcaster"
-        ? !!farcasterWallet.address || isWagmiConnected
-        : isWagmiConnected,
-    address:
-      platform === "farcaster" && farcasterWallet.address
-        ? farcasterWallet.address
-        : wagmiAddress || null,
-    chainId:
-      platform === "farcaster" && farcasterWallet.chainId
-        ? farcasterWallet.chainId
-        : wagmiChainId || null,
-    provider:
-      platform === "farcaster" && farcasterWallet.address
-        ? "farcaster"
-        : isWagmiConnected
-        ? "wagmi"
-        : null,
-    isConnecting: isWagmiConnecting,
-  };
+  const wallet: WalletState = useMemo(
+    () => ({
+      isConnected:
+        platform === "farcaster"
+          ? !!farcasterWallet.address || isWagmiConnected
+          : isWagmiConnected,
+      address:
+        platform === "farcaster" && farcasterWallet.address
+          ? farcasterWallet.address
+          : wagmiAddress || null,
+      chainId:
+        platform === "farcaster" && farcasterWallet.chainId
+          ? farcasterWallet.chainId
+          : wagmiChainId || null,
+      provider:
+        platform === "farcaster" && farcasterWallet.address
+          ? "farcaster"
+          : isWagmiConnected
+          ? "wagmi"
+          : null,
+      isConnecting: isWagmiConnecting,
+    }),
+    [
+      platform,
+      farcasterWallet,
+      isWagmiConnected,
+      wagmiAddress,
+      wagmiChainId,
+      isWagmiConnecting,
+    ]
+  );
+
+  // Debug wallet state changes
+  useEffect(() => {
+    console.log("🔗 Wallet state updated:", {
+      platform,
+      isWagmiConnected,
+      wagmiAddress,
+      farcasterWallet,
+      finalWalletState: wallet,
+    });
+  }, [platform, isWagmiConnected, wagmiAddress, farcasterWallet, wallet]);
 
   // Initialize platform-specific features
   useEffect(() => {
@@ -256,7 +278,13 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         }
 
         setIsReady(true);
-        logger.info(`Platform initialized: ${platform}`, { features, wallet });
+        if (process.env.NODE_ENV === "development") {
+          logger.info(`Platform initialized: ${platform}`, {
+            features,
+            wallet,
+            availableConnectors: connectors.map((c) => c.id),
+          });
+        }
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Platform initialization failed";
@@ -270,73 +298,53 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform]); // features and wallet are derived from platform, so platform is sufficient
 
-  // Initialize Farcaster SDK
+  // Initialize Farcaster SDK with auto-connect
   const initializeFarcaster = async () => {
     try {
       const { sdk } = await import("@farcaster/frame-sdk");
-      setFarcasterSDK(sdk as unknown as FarcasterSDK); // Type assertion for SDK compatibility
+      setFarcasterSDK(sdk as unknown as FarcasterSDK);
 
-      // Get user context
+      // Get user context first
       try {
         const context = await sdk.context;
         if (context?.user) {
           setUser(context.user);
+          logger.info("Farcaster user context loaded:", context.user);
         }
       } catch (contextError) {
         logger.warn("Failed to get Farcaster user context", contextError);
       }
 
-      // Initialize wallet if available
-      if (sdk.wallet?.ethProvider) {
-        try {
-          // Get existing accounts first
-          let accounts = (await sdk.wallet.ethProvider.request({
-            method: "eth_accounts",
-          })) as string[];
+      // Initialize wallet provider for Farcaster mini app
+      // Note: Auto-connection is now handled by the Wagmi connector
+      try {
+        let provider = null;
 
-          // If no accounts are connected, try to request accounts (auto-connect in mini app)
-          if (!accounts || accounts.length === 0) {
-            logger.info(
-              "No accounts found, attempting to request accounts in Farcaster mini app"
-            );
-            try {
-              accounts = (await sdk.wallet.ethProvider.request({
-                method: "eth_requestAccounts",
-              })) as string[];
-            } catch (requestError) {
-              logger.warn(
-                "Failed to request accounts, wallet may not be available",
-                requestError
-              );
-            }
+        // Try new getEthereumProvider() method first
+        if (sdk.wallet?.getEthereumProvider) {
+          try {
+            provider = await sdk.wallet.getEthereumProvider();
+            logger.info("Farcaster wallet provider obtained via new API");
+          } catch (error) {
+            logger.warn("Failed to get provider via new API:", error);
           }
-
-          if (accounts && accounts.length > 0) {
-            setFarcasterWallet((prev) => ({ ...prev, address: accounts[0] }));
-            logger.info("Farcaster wallet address set:", accounts[0]);
-
-            // Get chain ID
-            const hexChainId = (await sdk.wallet.ethProvider.request({
-              method: "eth_chainId",
-            })) as string;
-            const chainId = parseInt(hexChainId, 16);
-            setFarcasterWallet((prev) => ({ ...prev, chainId }));
-            logger.info("Farcaster wallet chain ID set:", chainId);
-          } else {
-            logger.warn("No Farcaster wallet accounts available");
-          }
-
-          // Set up chain change listener
-          sdk.wallet.ethProvider.on?.("chainChanged", (chainId: string) => {
-            const newChainId = parseInt(chainId, 16);
-            setFarcasterWallet((prev) => ({ ...prev, chainId: newChainId }));
-            logger.info("Farcaster wallet chain changed", newChainId);
-          });
-        } catch (walletError) {
-          logger.error("Failed to initialize Farcaster wallet", walletError);
         }
-      } else {
-        logger.warn("Farcaster SDK wallet provider not available");
+
+        // Fallback to legacy ethProvider
+        if (!provider && sdk.wallet?.ethProvider) {
+          provider = sdk.wallet.ethProvider;
+          logger.info("Farcaster wallet provider obtained via legacy API");
+        }
+
+        if (provider) {
+          logger.info(
+            "Farcaster wallet provider available - connection will be handled by Wagmi connector"
+          );
+        } else {
+          logger.warn("Farcaster wallet provider not available");
+        }
+      } catch (error) {
+        logger.error("Error initializing Farcaster wallet:", error);
       }
 
       logger.info("Farcaster SDK initialized successfully");
@@ -346,76 +354,129 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     }
   };
 
-  // Actions implementation
+  // Actions implementation - simplified based on latest Farcaster docs
   const connect = useCallback(async (): Promise<boolean> => {
+    console.log("🔗 PlatformContext: Connect called", {
+      platform,
+      isWagmiConnected,
+      wagmiAddress,
+      connectors: connectors.map((c) => ({
+        id: c.id,
+        name: c.name,
+        type: c.type,
+      })),
+    });
+
+    // If already connected, return true
+    if (isWagmiConnected && wagmiAddress) {
+      console.log("🔗 Already connected via Wagmi");
+      return true;
+    }
+
     try {
-      if (platform === "farcaster" && farcasterSDK?.wallet) {
-        // Try Farcaster wallet first using the new API
-        let provider = null;
+      // Get appropriate connectors based on platform
+      let targetConnectors = connectors;
 
-        // Use the new getEthereumProvider() method (with type assertion for new API)
-        const walletWithNewAPI = farcasterSDK.wallet as {
-          getEthereumProvider?: () => Promise<unknown>;
-        };
-        if (walletWithNewAPI.getEthereumProvider) {
-          try {
-            provider = await walletWithNewAPI.getEthereumProvider();
-          } catch (error) {
-            logger.warn("Failed to get provider via new API:", error);
-          }
+      if (platform === "farcaster") {
+        // In Farcaster, prioritize the Farcaster connector (auto-connects if user has wallet)
+        const farcasterConnector = connectors.find(
+          (c) => c.id === "farcasterFrame" || c.id === "farcaster"
+        );
+        if (farcasterConnector) {
+          targetConnectors = [
+            farcasterConnector,
+            ...connectors.filter(
+              (c) => c.id !== "farcasterFrame" && c.id !== "farcaster"
+            ),
+          ];
         }
+      } else {
+        // For web/desktop, exclude Farcaster connector and prioritize: WalletConnect > Injected > Coinbase
+        const webConnectors = connectors.filter(
+          (c) => c.id !== "farcasterFrame" && c.id !== "farcaster"
+        );
 
-        // Fallback to legacy API
-        if (!provider && farcasterSDK.wallet.ethProvider) {
-          provider = farcasterSDK.wallet.ethProvider;
-        }
+        // Reorder for web preference: WalletConnect first, then Injected, then Coinbase
+        const walletConnect = webConnectors.find(
+          (c) => c.id === "walletConnect"
+        );
+        const injected = webConnectors.find((c) => c.id === "injected");
+        const coinbase = webConnectors.find((c) => c.id === "coinbaseWallet");
+        const others = webConnectors.filter(
+          (c) =>
+            c.id !== "walletConnect" &&
+            c.id !== "injected" &&
+            c.id !== "coinbaseWallet"
+        );
 
-        if (provider && typeof provider === "object" && "request" in provider) {
-          const accounts = (await (
-            provider as {
-              request: (args: { method: string }) => Promise<string[]>;
-            }
-          ).request({
-            method: "eth_requestAccounts",
-          })) as string[];
+        targetConnectors = [
+          ...(walletConnect ? [walletConnect] : []),
+          ...(injected ? [injected] : []),
+          ...(coinbase ? [coinbase] : []),
+          ...others,
+        ];
 
-          if (accounts && accounts.length > 0) {
-            setFarcasterWallet((prev) => ({ ...prev, address: accounts[0] }));
-
-            // Get chain ID
-            const hexChainId = (await (
-              provider as {
-                request: (args: { method: string }) => Promise<string>;
-              }
-            ).request({
-              method: "eth_chainId",
-            })) as string;
-            const chainId = parseInt(hexChainId, 16);
-            setFarcasterWallet((prev) => ({ ...prev, chainId }));
-
-            toast.success("Farcaster wallet connected!");
-            return true;
+        console.log(
+          "🔗 Reordered connectors for web/desktop platform (WalletConnect > Injected > Coinbase)",
+          {
+            originalCount: connectors.length,
+            filteredCount: targetConnectors.length,
+            order: targetConnectors.map((c) => c.id),
+            excluded: connectors
+              .filter((c) => c.id === "farcasterFrame" || c.id === "farcaster")
+              .map((c) => c.id),
           }
+        );
+      }
+
+      console.log("🔗 Target connectors:", {
+        platform,
+        connectors: targetConnectors.map((c) => ({ id: c.id, name: c.name })),
+      });
+
+      // Try each connector
+      for (const connector of targetConnectors) {
+        try {
+          console.log(`🔗 Attempting connection with ${connector.id}...`);
+
+          await wagmiConnect({ connector });
+
+          // Wait for state to update
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          console.log("🔗 Connection attempt completed:", {
+            connectorId: connector.id,
+            isWagmiConnected,
+            wagmiAddress,
+          });
+
+          // The Wagmi connector handles the actual connection state
+          // Success will be reflected in the wallet state via useAccount hook
+          toast.success("Wallet connected!");
+          return true;
+        } catch (error) {
+          console.warn(`🔗 Connection failed with ${connector.id}:`, error);
+
+          // For Farcaster connector, this might be expected if user doesn't have wallet
+          if (connector.id === "farcasterFrame") {
+            console.log(
+              "🔗 Farcaster connector failed - user may not have wallet connected"
+            );
+          }
+
+          // Continue to next connector
+          continue;
         }
       }
 
-      // Fallback to Wagmi
-      const targetConnector =
-        connectors.find((c) =>
-          platform === "desktop"
-            ? c.id === "coinbaseWallet"
-            : c.id === "injected"
-        ) || connectors[0];
-
-      await wagmiConnect({ connector: targetConnector });
-      toast.success("Wallet connected!");
-      return true;
+      // If we get here, all connectors failed
+      throw new Error("All wallet connectors failed to connect");
     } catch (err) {
-      logger.error("Connection failed", err);
+      console.error("🔗 Connection failed:", err);
       toast.error("Connection failed. Please try again.");
       return false;
     }
-  }, [platform, farcasterSDK, connectors, wagmiConnect]);
+  }, [platform, connectors, wagmiConnect, isWagmiConnected, wagmiAddress]);
 
   const disconnect = useCallback(() => {
     wagmiDisconnect();

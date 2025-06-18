@@ -1,30 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { EngagementAnalytics } from '@/lib/engagementTracker';
+import React, { useState, useEffect, useCallback } from "react";
+import { EngagementAnalytics } from "@/lib/engagementTracker";
 
 interface EngagementDashboardProps {
   apiKey?: string;
 }
 
-export default function EngagementDashboard({ apiKey }: EngagementDashboardProps) {
+export default function EngagementDashboard({
+  apiKey,
+}: EngagementDashboardProps) {
   const [analytics, setAnalytics] = useState<EngagementAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setRefreshing(true);
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
-      
+
       if (apiKey) {
-        headers['Authorization'] = `Bearer ${apiKey}`;
+        headers["Authorization"] = `Bearer ${apiKey}`;
       }
 
-      const response = await fetch('/api/analytics/engagement', {
+      const response = await fetch("/api/analytics/engagement", {
         headers,
       });
 
@@ -36,43 +38,45 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
       setAnalytics(data.data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [apiKey]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [apiKey]);
+  }, [apiKey, fetchAnalytics]);
 
   const exportData = async () => {
     try {
       const headers: Record<string, string> = {};
       if (apiKey) {
-        headers['Authorization'] = `Bearer ${apiKey}`;
+        headers["Authorization"] = `Bearer ${apiKey}`;
       }
 
-      const response = await fetch('/api/analytics/export', {
+      const response = await fetch("/api/analytics/export", {
         headers,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to export data');
+        throw new Error("Failed to export data");
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `engagement-data-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `engagement-data-${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      console.error('Export failed:', err);
+      console.error("Export failed:", err);
     }
   };
 
@@ -118,14 +122,16 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">📊 Engagement Analytics</h2>
+        <h2 className="text-2xl font-bold text-white">
+          📊 Engagement Analytics
+        </h2>
         <div className="flex space-x-2">
           <button
             onClick={fetchAnalytics}
             disabled={refreshing}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded transition-colors"
           >
-            {refreshing ? '🔄' : '↻'} Refresh
+            {refreshing ? "🔄" : "↻"} Refresh
           </button>
           <button
             onClick={exportData}
@@ -140,22 +146,30 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gray-800 p-4 rounded-lg">
           <h3 className="text-gray-400 text-sm font-medium">Total Users</h3>
-          <p className="text-2xl font-bold text-white">{analytics.totalUsers}</p>
+          <p className="text-2xl font-bold text-white">
+            {analytics.totalUsers}
+          </p>
         </div>
-        
+
         <div className="bg-gray-800 p-4 rounded-lg">
           <h3 className="text-gray-400 text-sm font-medium">Daily Active</h3>
-          <p className="text-2xl font-bold text-green-400">{analytics.activeUsers.daily}</p>
+          <p className="text-2xl font-bold text-green-400">
+            {analytics.activeUsers.daily}
+          </p>
         </div>
-        
+
         <div className="bg-gray-800 p-4 rounded-lg">
           <h3 className="text-gray-400 text-sm font-medium">Weekly Active</h3>
-          <p className="text-2xl font-bold text-blue-400">{analytics.activeUsers.weekly}</p>
+          <p className="text-2xl font-bold text-blue-400">
+            {analytics.activeUsers.weekly}
+          </p>
         </div>
-        
+
         <div className="bg-gray-800 p-4 rounded-lg">
           <h3 className="text-gray-400 text-sm font-medium">Monthly Active</h3>
-          <p className="text-2xl font-bold text-purple-400">{analytics.activeUsers.monthly}</p>
+          <p className="text-2xl font-bold text-purple-400">
+            {analytics.activeUsers.monthly}
+          </p>
         </div>
       </div>
 
@@ -190,11 +204,15 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-400">Added Users:</span>
-              <span className="text-green-400 font-medium">{analytics.miniApp.addedUsers}</span>
+              <span className="text-green-400 font-medium">
+                {analytics.miniApp.addedUsers}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Removed Users:</span>
-              <span className="text-red-400 font-medium">{analytics.miniApp.removedUsers}</span>
+              <span className="text-red-400 font-medium">
+                {analytics.miniApp.removedUsers}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Addition Rate:</span>
@@ -233,15 +251,21 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
         </div>
 
         <div className="bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-lg font-bold text-white mb-4">🔔 Notifications</h3>
+          <h3 className="text-lg font-bold text-white mb-4">
+            🔔 Notifications
+          </h3>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-400">Enabled:</span>
-              <span className="text-green-400 font-medium">{analytics.notifications.enabledUsers}</span>
+              <span className="text-green-400 font-medium">
+                {analytics.notifications.enabledUsers}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Disabled:</span>
-              <span className="text-red-400 font-medium">{analytics.notifications.disabledUsers}</span>
+              <span className="text-red-400 font-medium">
+                {analytics.notifications.disabledUsers}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Enable Rate:</span>
@@ -259,12 +283,17 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
           <h3 className="text-lg font-bold text-white mb-4">⛓️ Top Chains</h3>
           <div className="space-y-2">
             {analytics.topChains.map((chain, index) => (
-              <div key={chain.chain} className="flex justify-between items-center">
+              <div
+                key={chain.chain}
+                className="flex justify-between items-center"
+              >
                 <span className="text-gray-400 capitalize">
                   #{index + 1} {chain.chain}
                 </span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-white font-medium">{chain.users} users</span>
+                  <span className="text-white font-medium">
+                    {chain.users} users
+                  </span>
                   <span className="text-gray-500 text-sm">
                     ({chain.percentage.toFixed(1)}%)
                   </span>

@@ -3,6 +3,7 @@
 import React from "react";
 import { usePlatform } from "@/contexts/PlatformContext";
 import UniversalConnectButton from "@/components/wallet/UniversalConnectButton";
+import AuthDebugPanel from "@/components/debug/AuthDebugPanel";
 import { Game } from "@/components/game";
 import { Spinner } from "@/components/ui";
 
@@ -16,6 +17,15 @@ export default function GameWrapper() {
   const isInFarcaster = platform === "farcaster";
   const farcasterUser = user;
 
+  // Debug wallet state
+  console.log("🎮 GameWrapper wallet state:", {
+    isConnected,
+    address,
+    platform,
+    walletProvider: wallet.provider,
+    fullWallet: wallet,
+  });
+
   // Loading state
   if (!isReady) {
     return (
@@ -23,8 +33,15 @@ export default function GameWrapper() {
         <div className="text-center space-y-4">
           <Spinner />
           <p className="text-yellow-400 font-bold animate-pulse">
-            INITIALIZING IMPERFECT FORM...
+            {platform === "farcaster"
+              ? "CONNECTING TO FARCASTER..."
+              : "INITIALIZING IMPERFECT FORM..."}
           </p>
+          {platform === "farcaster" && (
+            <p className="text-gray-400 text-sm">
+              Auto-connecting your wallet...
+            </p>
+          )}
         </div>
       </div>
     );
@@ -53,9 +70,17 @@ export default function GameWrapper() {
                   GM {farcasterUser.displayName || farcasterUser.username}!
                   Ready to get your reps in onchain?
                 </p>
+                <p className="text-purple-300 text-xs mt-2">
+                  Connect your wallet to start playing
+                </p>
               </div>
             ) : (
-              <p className="text-gray-300 text-lg">Ready to rock ?</p>
+              <div className="space-y-2">
+                <p className="text-gray-300 text-lg">Ready to rock?</p>
+                <p className="text-gray-400 text-sm">
+                  Connect your wallet to start your onchain fitness journey
+                </p>
+              </div>
             )}
 
             <div className="space-y-2 text-gray-400 text-sm">
@@ -107,6 +132,9 @@ export default function GameWrapper() {
       <main>
         <Game thirdwebAddress={address} />
       </main>
+
+      {/* Debug panel for development */}
+      <AuthDebugPanel />
     </div>
   );
 }
