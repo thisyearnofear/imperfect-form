@@ -109,38 +109,22 @@ const createConnectors = () => {
 };
 
 // Optimized Wagmi config - CELO first as default for better mobile/Farcaster UX
-// Singleton to prevent multiple WalletConnect initializations
-let wagmiConfigCache: ReturnType<typeof createConfig> | null = null;
-
-const getWagmiConfig = () => {
-  if (!wagmiConfigCache) {
-    wagmiConfigCache = createConfig({
-      chains: [celo, polygon, baseSepolia, monadTestnet],
-      connectors: createConnectors(),
-      storage: createStorage({
-        storage: cookieStorage,
-      }),
-      ssr: true,
-      transports: {
-        [baseSepolia.id]: http(
-          "https://base-sepolia.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-          {
-            retryCount: 3,
-            retryDelay: 1000,
-          }
-        ),
-        [polygon.id]: http(
-          "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
-        ),
-        [celo.id]: http(),
-        [monadTestnet.id]: http(),
-      },
-    });
-  }
-  return wagmiConfigCache;
-};
-
-const wagmiConfig = getWagmiConfig();
+const wagmiConfig = createConfig({
+  chains: [celo, polygon, baseSepolia, monadTestnet],
+  connectors: createConnectors(),
+  storage: createStorage({
+    storage: cookieStorage,
+  }),
+  ssr: true,
+  transports: {
+    [baseSepolia.id]: http(),
+    [polygon.id]: http(
+      "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B"
+    ),
+    [celo.id]: http(),
+    [monadTestnet.id]: http(),
+  },
+});
 
 // Optimized Query client with better defaults
 const queryClient = new QueryClient({

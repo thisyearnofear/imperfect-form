@@ -27,17 +27,17 @@ export function AddMiniAppButton({
     setIsAdding(true);
 
     try {
-      const success = await addToHome();
+      // Farcaster handles everything - UI, prompts, success/failure states
+      // We just need to call the SDK action
+      await addToHome();
 
-      if (success) {
-        logger.info("🎯 Add Mini App prompt shown successfully");
-        // Hide the button after successful prompt
-        setShowPrompt(false);
-      } else {
-        logger.warn("Failed to show Add Mini App prompt");
-      }
+      logger.info("🎯 Add Mini App action called - Farcaster handles the rest");
+
+      // Hide the button after calling the action since Farcaster handles the UI
+      setShowPrompt(false);
     } catch (error) {
-      logger.error("Error showing Add Mini App prompt", error);
+      logger.error("Error calling Add Mini App action", error);
+      // Don't show error UI - Farcaster handles user feedback
     } finally {
       setIsAdding(false);
     }

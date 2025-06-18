@@ -551,7 +551,10 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   const addToHome = useCallback(async (): Promise<boolean> => {
     try {
       if (platform === "farcaster" && farcasterSDK?.actions?.addMiniApp) {
+        // Simply call the SDK action - Farcaster handles everything else
+        // No need to return success/failure as Farcaster manages the user experience
         await farcasterSDK.actions.addMiniApp();
+        logger.info("🎯 Farcaster addMiniApp action called successfully");
         return true;
       }
 
@@ -560,7 +563,16 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
       toast("Add to home screen from your browser menu");
       return false;
     } catch (err) {
+      // Log the error but don't show user feedback - Farcaster handles that
       logger.error("Add to home failed", err);
+
+      // Check if it's a user rejection (expected behavior)
+      if (err instanceof Error && err.message.includes("RejectedByUser")) {
+        logger.info("🎯 User rejected adding Mini App - this is normal");
+        return false;
+      }
+
+      // For other errors, still let Farcaster handle user feedback
       return false;
     }
   }, [platform, farcasterSDK]);

@@ -403,6 +403,7 @@ export default function SubmitScoreWithWagmi({
         abi: contractABI, // Use the network-specific ABI
         functionName: "addScore",
         args: [pushupsBI, squatsBI],
+        chainId: 84532, // Explicitly set Base Sepolia chain ID
       };
 
       if (process.env.NODE_ENV !== "production") {
@@ -434,6 +435,7 @@ export default function SubmitScoreWithWagmi({
         abi: contractABI, // Use the network-specific ABI
         functionName: "addScore",
         args: [pushupsBI, squatsBI],
+        chainId: 84532, // Explicitly set Base Sepolia chain ID
       });
 
       if (process.env.NODE_ENV !== "production") {
