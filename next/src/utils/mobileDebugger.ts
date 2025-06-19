@@ -58,8 +58,8 @@ export function initMobileDebugger(options: {
   window._debugLogs = [];
   window._debuggingEnabled = startEnabled;
 
-  // Load persisted logs if enabled
-  if (persistLogs) {
+  // Load persisted logs if enabled (client-side only)
+  if (persistLogs && typeof window !== "undefined") {
     try {
       const savedLogs = localStorage.getItem('_mobileDebugLogs');
       if (savedLogs) {
@@ -122,8 +122,8 @@ export function initMobileDebugger(options: {
       window._debugLogs = window._debugLogs.slice(0, maxLogs);
     }
 
-    // Persist logs if enabled
-    if (persistLogs) {
+    // Persist logs if enabled (client-side only)
+    if (persistLogs && typeof window !== "undefined") {
       try {
         localStorage.setItem('_mobileDebugLogs', JSON.stringify(window._debugLogs));
       } catch {
@@ -185,7 +185,7 @@ export function initMobileDebugger(options: {
 
   window.clearDebugLogs = () => {
     window._debugLogs = [];
-    if (persistLogs) {
+    if (persistLogs && typeof window !== "undefined") {
       try {
         localStorage.removeItem('_mobileDebugLogs');
       } catch {

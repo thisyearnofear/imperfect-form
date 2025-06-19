@@ -27,12 +27,14 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
     setIsLoading(true);
 
     try {
-      // Update local storage
-      localStorage.setItem("selectedNetwork", selectedNetwork);
-      localStorage.setItem(
-        "selectedChain",
-        selectedNetwork === "polygon" ? "amoy" : "base" // Keep as "amoy" for backward compatibility
-      );
+      // Update local storage (client-side only)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("selectedNetwork", selectedNetwork);
+        localStorage.setItem(
+          "selectedChain",
+          selectedNetwork === "polygon" ? "amoy" : "base" // Keep as "amoy" for backward compatibility
+        );
+      }
 
       // Switch chain using Wagmi
       const targetChain = selectedNetwork === "polygon" ? polygon : base;

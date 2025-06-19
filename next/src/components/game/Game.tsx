@@ -115,9 +115,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     }
   }, [finalAddress]);
 
-  // Store the address in localStorage for persistence
+  // Store the address in localStorage for persistence (client-side only)
   useEffect(() => {
-    if (finalAddress) {
+    if (finalAddress && typeof window !== "undefined") {
       localStorage.setItem("userAddress", finalAddress);
     }
   }, [finalAddress]);
@@ -215,23 +215,25 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     // Use the enhanced camera manager for comprehensive cleanup
     const stoppedTracks = stopAllCamerasUtil();
 
-    // Additional cleanup methods
-    // Cancel any animation frames that might be running
-    if (window.requestAnimationFrame) {
-      const highestId = window.requestAnimationFrame(() => {});
-      for (let i = 0; i < highestId; i++) {
-        window.cancelAnimationFrame(i);
+    // Additional cleanup methods (client-side only)
+    if (typeof window !== "undefined") {
+      // Cancel any animation frames that might be running
+      if (window.requestAnimationFrame) {
+        const highestId = window.requestAnimationFrame(() => {});
+        for (let i = 0; i < highestId; i++) {
+          window.cancelAnimationFrame(i);
+        }
+        console.log("🎬 Cancelled animation frames up to ID:", highestId);
       }
-      console.log("🎬 Cancelled animation frames up to ID:", highestId);
-    }
 
-    // Force garbage collection if available (development only)
-    if (process.env.NODE_ENV === "development" && "gc" in window) {
-      try {
-        (window as typeof window & { gc?: () => void }).gc?.();
-        console.log("🗑️ Forced garbage collection");
-      } catch {
-        console.log("Garbage collection not available");
+      // Force garbage collection if available (development only)
+      if (process.env.NODE_ENV === "development" && "gc" in window) {
+        try {
+          (window as typeof window & { gc?: () => void }).gc?.();
+          console.log("🗑️ Forced garbage collection");
+        } catch {
+          console.log("Garbage collection not available");
+        }
       }
     }
 

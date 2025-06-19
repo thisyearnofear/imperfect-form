@@ -127,32 +127,38 @@ const PLATFORM_CONFIGS: Record<Platform, Partial<PlatformFeatures>> = {
 // Context creation
 const PlatformContext = createContext<PlatformContextType | null>(null);
 
-// Platform detection utilities
+// Platform detection utilities with proper SSR handling
 const detectPlatform = (): Platform => {
+  // Always return desktop during SSR to prevent hydration mismatches
   if (typeof window === "undefined") return "desktop";
 
-  // Check for Farcaster Mini App
-  const isFarcaster =
-    /farcaster|warpcast/i.test(navigator.userAgent) ||
-    window.location.search.includes("frame=") ||
-    window.location.search.includes("farcaster") ||
-    document.referrer.includes("warpcast.com") ||
-    document.referrer.includes("farcaster.xyz");
+  try {
+    // Check for Farcaster Mini App
+    const isFarcaster =
+      /farcaster|warpcast/i.test(navigator.userAgent) ||
+      window.location.search.includes("frame=") ||
+      window.location.search.includes("farcaster") ||
+      document.referrer.includes("warpcast.com") ||
+      document.referrer.includes("farcaster.xyz");
 
-  if (isFarcaster) return "farcaster";
+    if (isFarcaster) return "farcaster";
 
-  // Check for PWA
-  const isPWA = window.matchMedia("(display-mode: standalone)").matches;
-  if (isPWA) return "pwa";
+    // Check for PWA
+    const isPWA = window.matchMedia("(display-mode: standalone)").matches;
+    if (isPWA) return "pwa";
 
-  // Check for mobile
-  const isMobile =
-    /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-  if (isMobile) return "mobile";
+    // Check for mobile
+    const isMobile =
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+    if (isMobile) return "mobile";
 
-  return "desktop";
+    return "desktop";
+  } catch (error) {
+    console.warn("Error detecting platform:", error);
+    return "desktop";
+  }
 };
 
 // Farcaster SDK types
@@ -186,10 +192,11 @@ interface PlatformProviderProps {
 }
 
 export function PlatformProvider({ children }: PlatformProviderProps) {
-  // Platform detection
-  const [platform] = useState<Platform>(() => detectPlatform());
+  // Platform detection with client-side initialization
+  const [platform, setPlatform] = useState<Platform>("desktop");
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   // User state
   const [user, setUser] = useState<PlatformUser | null>(null);
@@ -267,8 +274,16 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     });
   }, [platform, isWagmiConnected, wagmiAddress, farcasterWallet, wallet]);
 
+  // Client-side initialization
+  useEffect(() => {
+    setIsClient(true);
+    setPlatform(detectPlatform());
+  }, []);
+
   // Initialize platform-specific features
   useEffect(() => {
+    if (!isClient) return;
+
     const initializePlatform = async () => {
       try {
         setError(null);
@@ -296,10 +311,12 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
 
     initializePlatform();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [platform]); // features and wallet are derived from platform, so platform is sufficient
+  }, [isClient, platform]); // features and wallet are derived from platform, so platform is sufficient
 
-  // Initialize Farcaster SDK with auto-connect
+  // Initialize Farcaster SDK with auto-connect (client-side only)
   const initializeFarcaster = async () => {
+    if (typeof window === "undefined") return;
+    
     try {
       const { sdk } = await import("@farcaster/frame-sdk");
       setFarcasterSDK(sdk as unknown as FarcasterSDK);
@@ -439,6 +456,38 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         try {
           console.log(`🔗 Attempting connection with ${connector.id}...`);
 
+          // Special handling for WalletConnect to prevent session conflicts
+          if (connector.id === "walletConnect") {
+            // Clear any existing WalletConnect sessions before connecting
+            try {
+              const allKeys = Object.keys(localStorage);
+              const wcKeys = allKeys.filter(key => 
+                key.startsWith('wc@2:') || 
+                key.startsWith('walletconnect') ||
+                key.includes('walletconnect') ||
+                key.includes('wc_') ||
+                key.includes('reown') ||
+                key.includes('w3m')
+              );
+              wcKeys.forEach(key => localStorage.removeItem(key));
+              
+              // Also clear sessionStorage
+              const sessionKeys = Object.keys(sessionStorage).filter(key => 
+                key.startsWith('wc@2:') || 
+                key.startsWith('walletconnect') ||
+                key.includes('walletconnect') ||
+                key.includes('wc_') ||
+                key.includes('reown') ||
+                key.includes('w3m')
+              );
+              sessionKeys.forEach(key => sessionStorage.removeItem(key));
+              
+              console.log(`🧹 Cleared ${wcKeys.length + sessionKeys.length} WalletConnect sessions before new connection`);
+            } catch (cleanupError) {
+              console.warn('WalletConnect pre-connection cleanup failed:', cleanupError);
+            }
+          }
+
           await wagmiConnect({ connector });
 
           // Wait for state to update
@@ -456,6 +505,45 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
           return true;
         } catch (error) {
           console.warn(`🔗 Connection failed with ${connector.id}:`, error);
+
+          // Special handling for WalletConnect errors
+          if (connector.id === "walletConnect") {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            if (errorMessage.includes("No matching key") || 
+                errorMessage.includes("Pending session not found") ||
+                errorMessage.includes("proposal") ||
+                errorMessage.includes("topic")) {
+              console.log("🔗 WalletConnect session error - performing comprehensive cleanup");
+              // Comprehensive cleanup and continue to next connector
+              try {
+                const allKeys = Object.keys(localStorage);
+                const wcKeys = allKeys.filter(key => 
+                  key.startsWith('wc@2:') || 
+                  key.startsWith('walletconnect') ||
+                  key.includes('walletconnect') ||
+                  key.includes('wc_') ||
+                  key.includes('reown') ||
+                  key.includes('w3m')
+                );
+                wcKeys.forEach(key => localStorage.removeItem(key));
+                
+                // Clear sessionStorage too
+                const sessionKeys = Object.keys(sessionStorage).filter(key => 
+                  key.startsWith('wc@2:') || 
+                  key.startsWith('walletconnect') ||
+                  key.includes('walletconnect') ||
+                  key.includes('wc_') ||
+                  key.includes('reown') ||
+                  key.includes('w3m')
+                );
+                sessionKeys.forEach(key => sessionStorage.removeItem(key));
+                
+                console.log(`🧹 Cleaned up ${wcKeys.length + sessionKeys.length} WalletConnect entries after error`);
+              } catch (cleanupError) {
+                console.warn('WalletConnect error cleanup failed:', cleanupError);
+              }
+            }
+          }
 
           // For Farcaster connector, this might be expected if user doesn't have wallet
           if (connector.id === "farcasterFrame") {
@@ -479,6 +567,52 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   }, [platform, connectors, wagmiConnect, isWagmiConnected, wagmiAddress]);
 
   const disconnect = useCallback(() => {
+    // Comprehensive WalletConnect cleanup on disconnect
+    if (typeof window !== "undefined") {
+      try {
+        // Clear all WalletConnect related storage
+        const allKeys = Object.keys(localStorage);
+        const wcKeys = allKeys.filter(key => 
+          key.startsWith('wc@2:') || 
+          key.startsWith('walletconnect') ||
+          key.includes('walletconnect') ||
+          key.includes('wc_') ||
+          key.includes('reown') ||
+          key.includes('w3m')
+        );
+        
+        wcKeys.forEach(key => {
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {
+            console.warn(`Failed to remove WalletConnect key ${key}:`, e);
+          }
+        });
+        
+        // Clear sessionStorage as well
+        const sessionKeys = Object.keys(sessionStorage).filter(key => 
+          key.startsWith('wc@2:') || 
+          key.startsWith('walletconnect') ||
+          key.includes('walletconnect') ||
+          key.includes('wc_') ||
+          key.includes('reown') ||
+          key.includes('w3m')
+        );
+        
+        sessionKeys.forEach(key => {
+          try {
+            sessionStorage.removeItem(key);
+          } catch (e) {
+            console.warn(`Failed to remove WalletConnect sessionStorage key ${key}:`, e);
+          }
+        });
+        
+        console.log(`🧹 WalletConnect sessions cleaned up on disconnect (${wcKeys.length + sessionKeys.length} entries)`);
+      } catch (error) {
+        console.warn('WalletConnect cleanup on disconnect failed:', error);
+      }
+    }
+
     wagmiDisconnect();
     if (platform === "farcaster") {
       setFarcasterWallet({ address: null, chainId: null });

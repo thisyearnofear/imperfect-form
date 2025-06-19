@@ -72,213 +72,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   // We'll use ethers.js directly instead of ThirdWeb hooks
   // This avoids React hook issues when switching between wallet modes
 
-  // Function to fetch data using fallback RPC URLs with improved error handling
-  const fetchWithFallbackRpcs = async (
-    contract: ethers.Contract | null,
-    contractAddress: string,
-    fallbackRpcUrls: string[],
-    networkName: string
-  ) => {
-    // Only log in development mode
-    const isDev = process.env.NODE_ENV === "development";
+  // Circuit breaker for failed networks
+  const [networkRetryCount, setNetworkRetryCount] = useState<Record<string, number>>({});
 
-    if (isDev) console.log(`Fetching data for ${networkName}`);
 
-    // Try using ThirdWeb contract first
-    try {
-      if (contract) {
-        const data = await contract.call("getLeaderboard");
-        return data || [];
-      }
-    } catch {
-      // Silent fail and continue to fallback RPCs
-    }
-
-    // If ThirdWeb fails, try fallback RPC URLs with ethers.js
-    for (const rpcUrl of fallbackRpcUrls) {
-      // Add exponential backoff retry logic
-      const MAX_RETRIES = 2;
-      for (let retry = 0; retry <= MAX_RETRIES; retry++) {
-        try {
-          if (retry > 0) {
-            // Exponential backoff - wait longer between each retry
-            await new Promise((resolve) =>
-              setTimeout(resolve, 1000 * Math.pow(2, retry))
-            );
-          }
-
-          // Simplified network detection with caching for performance using centralized config
-          const networkMap: Record<string, { name: string; chainId: number }> =
-            {
-              polygon: {
-                name: "polygon",
-                chainId: chainConfigs[SupportedChain.POLYGON].id,
-              },
-              matic: {
-                name: "polygon",
-                chainId: chainConfigs[SupportedChain.POLYGON].id,
-              },
-              base: {
-                name: "base",
-                chainId: chainConfigs[SupportedChain.BASE].id,
-              },
-              sepolia: {
-                name: "base",
-                chainId: chainConfigs[SupportedChain.BASE].id,
-              },
-              monad: {
-                name: "monad",
-                chainId: chainConfigs[SupportedChain.MONAD].id,
-              },
-              celo: {
-                name: "celo",
-                chainId: chainConfigs[SupportedChain.CELO].id,
-              },
-            };
-
-          // Find the network info by looking for keywords in the URL
-          const networkKey = Object.keys(networkMap).find((key) =>
-            rpcUrl.toLowerCase().includes(key.toLowerCase())
-          );
-
-          const networkInfo = networkKey
-            ? networkMap[networkKey]
-            : { name: "unknown", chainId: 1 };
-
-          // Create provider with correct network info and options
-          const provider = new ethers.providers.StaticJsonRpcProvider(
-            rpcUrl,
-            networkInfo
-          );
-
-          // Set a custom timeout for the provider connection
-          const TIMEOUT_MS = 15000; // 15 seconds
-
-          try {
-            // Set a timeout for getting the network
-            const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(
-                () => reject(new Error(`RPC timeout for ${rpcUrl}`)),
-                TIMEOUT_MS
-              )
-            );
-
-            // Race between provider connection and timeout
-            await Promise.race([provider.ready, timeoutPromise]);
-
-            // Verify the provider is connected to the expected network
-            await provider.getNetwork();
-          } catch (timeoutError) {
-            throw timeoutError;
-          }
-
-          // Determine which ABI to use based on the contract address and network
-          let contractABI = fitnessLeaderboardABI;
-
-          // Use network-specific ABIs based on contract address
-          if (contractAddress === MONAD_CONTRACT_ADDRESS) {
-            contractABI = monadLeaderboardABI;
-          } else if (contractAddress === POLYGON_CONTRACT_ADDRESS) {
-            contractABI = polygonLeaderboardABI;
-          } else if (contractAddress === BASE_CONTRACT_ADDRESS) {
-            contractABI = baseLeaderboardABI;
-          }
-
-          const contractInstance = new ethers.Contract(
-            contractAddress,
-            contractABI,
-            provider
-          );
-
-          // Check if the contract exists at the address
-          try {
-            const code = await provider.getCode(contractAddress);
-            if (code === "0x") {
-              console.warn(
-                `No contract found at ${contractAddress} on ${networkName}`
-              );
-              throw new Error(`No contract found at address`);
-            }
-          } catch (codeError) {
-            console.error(
-              `Error checking contract code at ${contractAddress}:`,
-              codeError
-            );
-            throw codeError;
-          }
-
-          console.log(
-            `Calling getLeaderboard() on ${networkName} contract at ${contractAddress}`
-          );
-
-          try {
-            const data = await contractInstance.getLeaderboard();
-            console.log(
-              `Successfully retrieved ${data.length} entries from ${networkName}`
-            );
-            return data || [];
-          } catch (callError) {
-            console.error(
-              `Error calling getLeaderboard on ${networkName}:`,
-              callError
-            );
-            throw callError;
-          }
-        } catch (error) {
-          // Provide more detailed error logging
-          const err = error as {
-            code?: string;
-            reason?: string;
-            message?: string;
-            error?: { message?: string; code?: string; reason?: string };
-          };
-
-          // Extract error details, handling different error formats
-          const errorCode =
-            err.code || (err.error && err.error.code) || "UNKNOWN";
-          const errorReason =
-            err.reason || (err.error && err.error.reason) || "";
-          const errorMessage =
-            err.message || (err.error && err.error.message) || "Unknown error";
-
-          if (errorCode === "CALL_EXCEPTION") {
-            console.error(
-              `Contract call exception for ${rpcUrl} (${networkName}):`,
-              errorReason || errorMessage || "No reason provided"
-            );
-          } else if (errorCode === "TIMEOUT") {
-            console.error(`Timeout error for ${rpcUrl} (${networkName})`);
-          } else if (errorCode === "NETWORK_ERROR") {
-            console.error(
-              `Network error for ${rpcUrl} (${networkName}):`,
-              errorMessage
-            );
-          } else {
-            console.error(
-              `Error fetching data from ${rpcUrl} (${networkName}):`,
-              err
-            );
-          }
-
-          // If we've reached max retries, continue to the next RPC URL
-          if (retry === MAX_RETRIES) {
-            console.warn(
-              `Max retries reached for ${rpcUrl} (${networkName}), trying next RPC URL`
-            );
-            break;
-          }
-
-          // Otherwise, we'll retry this RPC URL
-        }
-      }
-    }
-
-    // Return empty array if all attempts fail
-    console.warn(
-      `All RPC URLs failed for ${networkName}, returning empty array`
-    );
-    return [];
-  };
 
   // Helper function to verify contract addresses
   const verifyContractAddresses = () => {
@@ -313,15 +110,244 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
   // Define fetchLeaderboardData using useCallback to avoid dependency issues
   const fetchLeaderboardData = React.useCallback(async () => {
+    // Function to fetch data using fallback RPC URLs with improved error handling
+    const fetchWithFallbackRpcs = async (
+      contract: ethers.Contract | null,
+      contractAddress: string,
+      fallbackRpcUrls: string[],
+      networkName: string
+    ) => {
+      // Only log in development mode
+      const isDev = process.env.NODE_ENV === "development";
+
+      if (isDev) console.log(`Fetching data for ${networkName}`);
+
+      // Circuit breaker: if network has failed too many times, skip it
+      const currentRetryCount = networkRetryCount[networkName] || 0;
+      const MAX_NETWORK_FAILURES = 3;
+      
+      if (currentRetryCount >= MAX_NETWORK_FAILURES) {
+        console.warn(`⚡ Circuit breaker: Skipping ${networkName} due to repeated failures`);
+        return [];
+      }
+
+      // Try using ThirdWeb contract first
+      try {
+        if (contract) {
+          const data = await contract.call("getLeaderboard");
+          // Reset retry count on success
+          setNetworkRetryCount(prev => ({ ...prev, [networkName]: 0 }));
+          return data || [];
+        }
+      } catch {
+        // Silent fail and continue to fallback RPCs
+      }
+
+      // If ThirdWeb fails, try fallback RPC URLs with ethers.js
+      for (const rpcUrl of fallbackRpcUrls) {
+        // Add exponential backoff retry logic
+        const MAX_RETRIES = 1; // Reduced from 2 to 1 to prevent spam
+        for (let retry = 0; retry <= MAX_RETRIES; retry++) {
+          try {
+            if (retry > 0) {
+              // Exponential backoff - wait longer between each retry
+              await new Promise((resolve) =>
+                setTimeout(resolve, 1000 * Math.pow(2, retry))
+              );
+            }
+
+            // Simplified network detection with caching for performance using centralized config
+            const networkMap: Record<string, { name: string; chainId: number }> =
+              {
+                polygon: {
+                  name: "polygon",
+                  chainId: chainConfigs[SupportedChain.POLYGON].id,
+                },
+                matic: {
+                  name: "polygon",
+                  chainId: chainConfigs[SupportedChain.POLYGON].id,
+                },
+                base: {
+                  name: "base",
+                  chainId: chainConfigs[SupportedChain.BASE].id,
+                },
+                sepolia: {
+                  name: "base",
+                  chainId: chainConfigs[SupportedChain.BASE].id,
+                },
+                monad: {
+                  name: "monad",
+                  chainId: chainConfigs[SupportedChain.MONAD].id,
+                },
+                celo: {
+                  name: "celo",
+                  chainId: chainConfigs[SupportedChain.CELO].id,
+                },
+              };
+
+            // Find the network info by looking for keywords in the URL
+            const networkKey = Object.keys(networkMap).find((key) =>
+              rpcUrl.toLowerCase().includes(key.toLowerCase())
+            );
+
+            const networkInfo = networkKey
+              ? networkMap[networkKey]
+              : { name: "unknown", chainId: 1 };
+
+            // Create provider with correct network info and options
+            const provider = new ethers.providers.StaticJsonRpcProvider(
+              rpcUrl,
+              networkInfo
+            );
+
+            // Set a custom timeout for the provider connection
+            const TIMEOUT_MS = 15000; // 15 seconds
+
+            try {
+              // Set a timeout for getting the network
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(
+                  () => reject(new Error(`RPC timeout for ${rpcUrl}`)),
+                  TIMEOUT_MS
+                )
+              );
+
+              // Race between provider connection and timeout
+              await Promise.race([provider.ready, timeoutPromise]);
+
+              // Verify the provider is connected to the expected network
+              await provider.getNetwork();
+            } catch (timeoutError) {
+              throw timeoutError;
+            }
+
+            // Determine which ABI to use based on the contract address and network
+            let contractABI = fitnessLeaderboardABI;
+
+            // Use network-specific ABIs based on contract address
+            if (contractAddress === MONAD_CONTRACT_ADDRESS) {
+              contractABI = monadLeaderboardABI;
+            } else if (contractAddress === POLYGON_CONTRACT_ADDRESS) {
+              contractABI = polygonLeaderboardABI;
+            } else if (contractAddress === BASE_CONTRACT_ADDRESS) {
+              contractABI = baseLeaderboardABI;
+            }
+
+            const contractInstance = new ethers.Contract(
+              contractAddress,
+              contractABI,
+              provider
+            );
+
+            // Check if the contract exists at the address
+            try {
+              const code = await provider.getCode(contractAddress);
+              if (code === "0x") {
+                console.warn(
+                  `No contract found at ${contractAddress} on ${networkName}`
+                );
+                throw new Error(`No contract found at address`);
+              }
+            } catch (codeError) {
+              console.error(
+                `Error checking contract code at ${contractAddress}:`,
+                codeError
+              );
+              throw codeError;
+            }
+
+            console.log(
+              `Calling getLeaderboard() on ${networkName} contract at ${contractAddress}`
+            );
+
+            try {
+              const data = await contractInstance.getLeaderboard();
+              console.log(
+                `Successfully retrieved ${data.length} entries from ${networkName}`
+              );
+              return data || [];
+            } catch (callError) {
+              console.error(
+                `Error calling getLeaderboard on ${networkName}:`,
+                callError
+              );
+              throw callError;
+            }
+          } catch (error) {
+            // Provide more detailed error logging
+            const err = error as {
+              code?: string;
+              reason?: string;
+              message?: string;
+              error?: { message?: string; code?: string; reason?: string };
+            };
+
+            // Extract error details, handling different error formats
+            const errorCode =
+              err.code || (err.error && err.error.code) || "UNKNOWN";
+            const errorReason =
+              err.reason || (err.error && err.error.reason) || "";
+            const errorMessage =
+              err.message || (err.error && err.error.message) || "Unknown error";
+
+            if (errorCode === "CALL_EXCEPTION") {
+              console.error(
+                `Contract call exception for ${rpcUrl} (${networkName}):`,
+                errorReason || errorMessage || "No reason provided"
+              );
+            } else if (errorCode === "TIMEOUT") {
+              console.error(`Timeout error for ${rpcUrl} (${networkName})`);
+            } else if (errorCode === "NETWORK_ERROR") {
+              console.error(
+                `Network error for ${rpcUrl} (${networkName}):`,
+                errorMessage
+              );
+            } else {
+              console.error(
+                `Error fetching data from ${rpcUrl} (${networkName}):`,
+                err
+              );
+            }
+
+            // If we've reached max retries, continue to the next RPC URL
+            if (retry === MAX_RETRIES) {
+              console.warn(
+                `Max retries reached for ${rpcUrl} (${networkName}), trying next RPC URL`
+              );
+              break;
+            }
+
+            // Otherwise, we'll retry this RPC URL
+          }
+        }
+      }
+
+      // Increment failure count for this network
+      setNetworkRetryCount(prev => ({ 
+        ...prev, 
+        [networkName]: (prev[networkName] || 0) + 1 
+      }));
+
+      // Return empty array if all attempts fail
+      console.warn(
+        `All RPC URLs failed for ${networkName}, returning empty array. Failure count: ${currentRetryCount + 1}`
+      );
+      return [];
+    };
     setIsLoading(true);
 
     // Verify contract addresses
     verifyContractAddresses();
 
-    // Check if we have cached data and it's less than 5 minutes old
-    const cachedData = localStorage.getItem("leaderboardCache");
-    const cacheTimestamp = localStorage.getItem("leaderboardCacheTimestamp");
+    // Check if we have cached data and it's less than 5 minutes old (client-side only)
+    let cachedData = null;
+    let cacheTimestamp = null;
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    if (typeof window !== "undefined") {
+      cachedData = localStorage.getItem("leaderboardCache");
+      cacheTimestamp = localStorage.getItem("leaderboardCacheTimestamp");
+    }
 
     if (cachedData && cacheTimestamp) {
       const cacheAge = Date.now() - parseInt(cacheTimestamp);
@@ -586,26 +612,28 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
       setDisplayNames(names);
 
-      // Cache the leaderboard data
-      try {
-        const cacheData = {
-          pushups: sortedPushups,
-          squats: sortedSquats,
-          displayNames: names,
-          farcasterProfiles: Object.fromEntries(farcasterProfilesMap),
-        };
-        localStorage.setItem("leaderboardCache", JSON.stringify(cacheData));
-        localStorage.setItem(
-          "leaderboardCacheTimestamp",
-          Date.now().toString()
-        );
+      // Cache the leaderboard data (client-side only)
+      if (typeof window !== "undefined") {
+        try {
+          const cacheData = {
+            pushups: sortedPushups,
+            squats: sortedSquats,
+            displayNames: names,
+            farcasterProfiles: Object.fromEntries(farcasterProfilesMap),
+          };
+          localStorage.setItem("leaderboardCache", JSON.stringify(cacheData));
+          localStorage.setItem(
+            "leaderboardCacheTimestamp",
+            Date.now().toString()
+          );
 
-        // Only log in development
-        if (process.env.NODE_ENV === "development") {
-          console.log("Cached leaderboard data");
+          // Only log in development
+          if (process.env.NODE_ENV === "development") {
+            console.log("Cached leaderboard data");
+          }
+        } catch (cacheError) {
+          console.error("Error caching leaderboard data:", cacheError);
         }
-      } catch (cacheError) {
-        console.error("Error caching leaderboard data:", cacheError);
       }
     } catch (error) {
       console.error("Error fetching leaderboard data:", error);
@@ -613,7 +641,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [networkRetryCount]);
 
   // Fetch leaderboard data on component mount
   useEffect(() => {
@@ -623,9 +651,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       return;
     }
 
-    // Clear the cache to ensure we get fresh data after contract updates
-    localStorage.removeItem("leaderboardCache");
-    localStorage.removeItem("leaderboardCacheTimestamp");
+    // Clear the cache to ensure we get fresh data after contract updates (client-side only)
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("leaderboardCache");
+      localStorage.removeItem("leaderboardCacheTimestamp");
+    }
 
     fetchLeaderboardData();
   }, [
@@ -685,9 +715,11 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           id="clearCacheButton"
           className="load-button"
           onClick={() => {
-            // Clear cache and reload
-            localStorage.removeItem("leaderboardCache");
-            localStorage.removeItem("leaderboardCacheTimestamp");
+            // Clear cache and reload (client-side only)
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("leaderboardCache");
+              localStorage.removeItem("leaderboardCacheTimestamp");
+            }
             setIsLoading(true);
             fetchLeaderboardData();
             toast.success("Cache cleared, reloading data");
@@ -699,6 +731,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           id="forceReloadButton"
           className="load-button"
           onClick={() => {
+            if (typeof window === "undefined") return;
+            
             // Force reload by clearing all caches
             localStorage.removeItem("leaderboardCache");
             localStorage.removeItem("leaderboardCacheTimestamp");

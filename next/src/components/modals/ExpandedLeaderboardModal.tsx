@@ -41,7 +41,11 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
         </div>
 
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              window.location.reload();
+            }
+          }}
           className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-3 py-2 rounded-full text-lg font-bold hover:scale-110 transition-transform duration-200 shadow-lg"
           title="Refresh leaderboard"
         >

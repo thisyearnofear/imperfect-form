@@ -241,12 +241,14 @@ export default function SubmitButton({
               : "Unknown";
           window.selectedNetworkName = networkName;
 
-          // Also save which network was used to localStorage for consistency
-          localStorage.setItem("selectedNetwork", network);
-          localStorage.setItem(
-            "selectedChain",
-            network === "polygon" ? "polygon" : network
-          );
+          // Also save which network was used to localStorage for consistency (client-side only)
+          if (typeof window !== "undefined") {
+            localStorage.setItem("selectedNetwork", network);
+            localStorage.setItem(
+              "selectedChain",
+              network === "polygon" ? "polygon" : network
+            );
+          }
         }
 
         // Show success message with appropriate explorer URL
@@ -334,9 +336,11 @@ export default function SubmitButton({
       if (typeof window !== "undefined") {
         window.transactionHash = wagmiTxHash;
         window.selectedNetworkName = "Base Mainnet";
-        // Also save which network was used to localStorage for consistency
-        localStorage.setItem("selectedNetwork", "base");
-        localStorage.setItem("selectedChain", "base");
+        // Also save which network was used to localStorage for consistency (client-side only)
+        if (typeof window !== "undefined") {
+          localStorage.setItem("selectedNetwork", "base");
+          localStorage.setItem("selectedChain", "base");
+        }
       }
 
       // Show success message

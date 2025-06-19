@@ -11,15 +11,20 @@ import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
 // Removed unused toast import
 import { AddMiniAppButton } from "@/components/miniapp/AddMiniAppButton";
 
-// Initialize window properties if they don't exist
-if (typeof window !== "undefined") {
-  if (window.transactionHash === undefined) {
-    window.transactionHash = "";
+// Initialize window properties if they don't exist (client-side only)
+const initializeWindowProperties = () => {
+  if (typeof window !== "undefined") {
+    if (window.transactionHash === undefined) {
+      window.transactionHash = "";
+    }
+    if (window.selectedNetworkName === undefined) {
+      window.selectedNetworkName = "";
+    }
   }
-  if (window.selectedNetworkName === undefined) {
-    window.selectedNetworkName = "";
-  }
-}
+};
+
+// Call initialization
+initializeWindowProperties();
 
 export interface SummaryModalProps {
   isOpen: boolean;
@@ -194,7 +199,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         )}
 
         {/* Social sharing buttons - Enhanced for mini app context */}
-        {window.transactionHash && (
+        {typeof window !== "undefined" && window.transactionHash && (
           <div className="border-t border-gray-700 pt-4">
             <div className="flex flex-col items-center space-y-4">
               {/* Enhanced Farcaster integration */}

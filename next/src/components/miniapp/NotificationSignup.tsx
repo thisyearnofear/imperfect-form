@@ -29,7 +29,7 @@ export function NotificationSignup({
     if (!isInMiniApp) return;
 
     const storageKey = `notification-signup-shown-${trigger}`;
-    const hasShown = localStorage.getItem(storageKey) === "true";
+    const hasShown = typeof window !== "undefined" ? localStorage.getItem(storageKey) === "true" : false;
 
     switch (trigger) {
       case "first_visit":
@@ -47,8 +47,10 @@ export function NotificationSignup({
   }, [isInMiniApp, trigger]);
 
   const handleSignupShown = () => {
-    const storageKey = `notification-signup-shown-${trigger}`;
-    localStorage.setItem(storageKey, "true");
+    if (typeof window !== "undefined") {
+      const storageKey = `notification-signup-shown-${trigger}`;
+      localStorage.setItem(storageKey, "true");
+    }
     logger.info("🔔 Notification signup shown", {
       trigger,
       user: user?.username,
