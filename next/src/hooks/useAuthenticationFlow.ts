@@ -112,18 +112,21 @@ export function useAuthenticationFlow() {
   }, [isReady, wallet, platformError, isAutoConnecting, platform]);
 
   // Manual connect function for web apps
-  const connect = useCallback(async (): Promise<boolean> => {
+  const connect = useCallback(async (connectorId?: string): Promise<boolean> => {
     if (authState === "authenticating") return false;
 
     setAuthState("authenticating");
     setAuthError(null);
 
     try {
-      const success = await actions.connect();
+      // Pass the connectorId to the platform context
+      const success = await actions.connect(connectorId);
       
-      if (!success) {
+      if (!success && authState !== 'authenticated') {
+        // If connection fails and we are not already authenticated, revert to unauthenticated state.
+        // This handles cases where the user closes the wallet selection modal without connecting.
         setAuthState("unauthenticated");
-        setAuthError("Connection failed. Please try again.");
+        setAuthError("Connection was not completed.");
       }
       
       return success;

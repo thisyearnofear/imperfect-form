@@ -15,6 +15,7 @@ import {
   useConnect,
   useDisconnect,
   useSwitchChain,
+  type Connector,
 } from "wagmi";
 import toast from "react-hot-toast";
 import { createRemoteLogger } from "@/utils/remoteLogger";
@@ -52,7 +53,7 @@ export interface PlatformFeatures {
 }
 
 export interface PlatformActions {
-  connect: () => Promise<boolean>;
+  connect: (connectorId?: string) => Promise<boolean>;
   disconnect: () => void;
   switchChain: (chainId: number) => Promise<boolean>;
   share: (content: ShareContent) => Promise<boolean>;
@@ -316,7 +317,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   // Initialize Farcaster SDK with auto-connect (client-side only)
   const initializeFarcaster = async () => {
     if (typeof window === "undefined") return;
-    
+
     try {
       const { sdk } = await import("@farcaster/frame-sdk");
       setFarcasterSDK(sdk as unknown as FarcasterSDK);
@@ -372,199 +373,206 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   };
 
   // Actions implementation - simplified based on latest Farcaster docs
-  const connect = useCallback(async (): Promise<boolean> => {
-    console.log("🔗 PlatformContext: Connect called", {
-      platform,
-      isWagmiConnected,
-      wagmiAddress,
-      connectors: connectors.map((c) => ({
-        id: c.id,
-        name: c.name,
-        type: c.type,
-      })),
-    });
-
-    // If already connected, return true
-    if (isWagmiConnected && wagmiAddress) {
-      console.log("🔗 Already connected via Wagmi");
-      return true;
-    }
-
-    try {
-      // Get appropriate connectors based on platform
-      let targetConnectors = connectors;
-
-      if (platform === "farcaster") {
-        // In Farcaster, prioritize the Farcaster connector (auto-connects if user has wallet)
-        const farcasterConnector = connectors.find(
-          (c) => c.id === "farcasterFrame" || c.id === "farcaster"
-        );
-        if (farcasterConnector) {
-          targetConnectors = [
-            farcasterConnector,
-            ...connectors.filter(
-              (c) => c.id !== "farcasterFrame" && c.id !== "farcaster"
-            ),
-          ];
-        }
-      } else {
-        // For web/desktop, exclude Farcaster connector and prioritize: WalletConnect > Injected > Coinbase
-        const webConnectors = connectors.filter(
-          (c) => c.id !== "farcasterFrame" && c.id !== "farcaster"
-        );
-
-        // Reorder for web preference: WalletConnect first, then Injected, then Coinbase
-        const walletConnect = webConnectors.find(
-          (c) => c.id === "walletConnect"
-        );
-        const injected = webConnectors.find((c) => c.id === "injected");
-        const coinbase = webConnectors.find((c) => c.id === "coinbaseWallet");
-        const others = webConnectors.filter(
-          (c) =>
-            c.id !== "walletConnect" &&
-            c.id !== "injected" &&
-            c.id !== "coinbaseWallet"
-        );
-
-        targetConnectors = [
-          ...(walletConnect ? [walletConnect] : []),
-          ...(injected ? [injected] : []),
-          ...(coinbase ? [coinbase] : []),
-          ...others,
-        ];
-
-        console.log(
-          "🔗 Reordered connectors for web/desktop platform (WalletConnect > Injected > Coinbase)",
-          {
-            originalCount: connectors.length,
-            filteredCount: targetConnectors.length,
-            order: targetConnectors.map((c) => c.id),
-            excluded: connectors
-              .filter((c) => c.id === "farcasterFrame" || c.id === "farcaster")
-              .map((c) => c.id),
-          }
-        );
-      }
-
-      console.log("🔗 Target connectors:", {
+  const connect = useCallback(
+    async (connectorId?: string): Promise<boolean> => {
+      console.log("🔗 PlatformContext: Connect called", {
         platform,
-        connectors: targetConnectors.map((c) => ({ id: c.id, name: c.name })),
+        connectorId,
+        isWagmiConnected,
+        wagmiAddress,
+        connectors: connectors.map((c) => ({
+          id: c.id,
+          name: c.name,
+          type: c.type,
+        })),
       });
 
-      // Try each connector
-      for (const connector of targetConnectors) {
-        try {
-          console.log(`🔗 Attempting connection with ${connector.id}...`);
-
-          // Special handling for WalletConnect to prevent session conflicts
-          if (connector.id === "walletConnect") {
-            // Clear any existing WalletConnect sessions before connecting
-            try {
-              const allKeys = Object.keys(localStorage);
-              const wcKeys = allKeys.filter(key => 
-                key.startsWith('wc@2:') || 
-                key.startsWith('walletconnect') ||
-                key.includes('walletconnect') ||
-                key.includes('wc_') ||
-                key.includes('reown') ||
-                key.includes('w3m')
-              );
-              wcKeys.forEach(key => localStorage.removeItem(key));
-              
-              // Also clear sessionStorage
-              const sessionKeys = Object.keys(sessionStorage).filter(key => 
-                key.startsWith('wc@2:') || 
-                key.startsWith('walletconnect') ||
-                key.includes('walletconnect') ||
-                key.includes('wc_') ||
-                key.includes('reown') ||
-                key.includes('w3m')
-              );
-              sessionKeys.forEach(key => sessionStorage.removeItem(key));
-              
-              console.log(`🧹 Cleared ${wcKeys.length + sessionKeys.length} WalletConnect sessions before new connection`);
-            } catch (cleanupError) {
-              console.warn('WalletConnect pre-connection cleanup failed:', cleanupError);
-            }
-          }
-
-          await wagmiConnect({ connector });
-
-          // Wait for state to update
-          await new Promise((resolve) => setTimeout(resolve, 500));
-
-          console.log("🔗 Connection attempt completed:", {
-            connectorId: connector.id,
-            isWagmiConnected,
-            wagmiAddress,
-          });
-
-          // The Wagmi connector handles the actual connection state
-          // Success will be reflected in the wallet state via useAccount hook
-          toast.success("Wallet connected!");
-          return true;
-        } catch (error) {
-          console.warn(`🔗 Connection failed with ${connector.id}:`, error);
-
-          // Special handling for WalletConnect errors
-          if (connector.id === "walletConnect") {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            if (errorMessage.includes("No matching key") || 
-                errorMessage.includes("Pending session not found") ||
-                errorMessage.includes("proposal") ||
-                errorMessage.includes("topic")) {
-              console.log("🔗 WalletConnect session error - performing comprehensive cleanup");
-              // Comprehensive cleanup and continue to next connector
-              try {
-                const allKeys = Object.keys(localStorage);
-                const wcKeys = allKeys.filter(key => 
-                  key.startsWith('wc@2:') || 
-                  key.startsWith('walletconnect') ||
-                  key.includes('walletconnect') ||
-                  key.includes('wc_') ||
-                  key.includes('reown') ||
-                  key.includes('w3m')
-                );
-                wcKeys.forEach(key => localStorage.removeItem(key));
-                
-                // Clear sessionStorage too
-                const sessionKeys = Object.keys(sessionStorage).filter(key => 
-                  key.startsWith('wc@2:') || 
-                  key.startsWith('walletconnect') ||
-                  key.includes('walletconnect') ||
-                  key.includes('wc_') ||
-                  key.includes('reown') ||
-                  key.includes('w3m')
-                );
-                sessionKeys.forEach(key => sessionStorage.removeItem(key));
-                
-                console.log(`🧹 Cleaned up ${wcKeys.length + sessionKeys.length} WalletConnect entries after error`);
-              } catch (cleanupError) {
-                console.warn('WalletConnect error cleanup failed:', cleanupError);
-              }
-            }
-          }
-
-          // For Farcaster connector, this might be expected if user doesn't have wallet
-          if (connector.id === "farcasterFrame") {
-            console.log(
-              "🔗 Farcaster connector failed - user may not have wallet connected"
-            );
-          }
-
-          // Continue to next connector
-          continue;
-        }
+      // If already connected, return true
+      if (isWagmiConnected && wagmiAddress) {
+        console.log("🔗 Already connected via Wagmi");
+        return true;
       }
 
-      // If we get here, all connectors failed
-      throw new Error("All wallet connectors failed to connect");
-    } catch (err) {
-      console.error("🔗 Connection failed:", err);
-      toast.error("Connection failed. Please try again.");
-      return false;
-    }
-  }, [platform, connectors, wagmiConnect, isWagmiConnected, wagmiAddress]);
+      try {
+        let targetConnectors: Connector[] = [];
+
+        // If a specific connector is requested, use it
+        if (connectorId) {
+          const specificConnector = connectors.find(
+            (c) => c.id === connectorId
+          );
+          if (specificConnector) {
+            targetConnectors = [specificConnector];
+          } else {
+            logger.error(`Connector with id "${connectorId}" not found.`);
+            toast.error(`Connector with id "${connectorId}" not found.`);
+            return false;
+          }
+        } else if (platform === "farcaster") {
+          // Farcaster auto-connect logic (no connectorId provided)
+          const farcasterConnector = connectors.find(
+            (c) => c.id === "farcasterFrame" || c.id === "farcaster"
+          );
+          if (farcasterConnector) {
+            targetConnectors = [farcasterConnector];
+          }
+        }
+        // If no connectorId is provided for a non-farcaster platform,
+        // we should do nothing, as the user now needs to select a wallet from a modal.
+        // The loop below will simply not run if targetConnectors is empty.
+
+        console.log("🔗 Target connectors:", {
+          platform,
+          connectors: targetConnectors.map((c) => ({ id: c.id, name: c.name })),
+        });
+
+        // Try each connector
+        for (const connector of targetConnectors) {
+          try {
+            console.log(`🔗 Attempting connection with ${connector.id}...`);
+
+            // Special handling for WalletConnect to prevent session conflicts
+            if (connector.id === "walletConnect") {
+              // Clear any existing WalletConnect sessions before connecting
+              try {
+                const allKeys = Object.keys(localStorage);
+                const wcKeys = allKeys.filter(
+                  (key) =>
+                    key.startsWith("wc@2:") ||
+                    key.startsWith("walletconnect") ||
+                    key.includes("walletconnect") ||
+                    key.includes("wc_") ||
+                    key.includes("reown") ||
+                    key.includes("w3m")
+                );
+                wcKeys.forEach((key) => localStorage.removeItem(key));
+
+                // Also clear sessionStorage
+                const sessionKeys = Object.keys(sessionStorage).filter(
+                  (key) =>
+                    key.startsWith("wc@2:") ||
+                    key.startsWith("walletconnect") ||
+                    key.includes("walletconnect") ||
+                    key.includes("wc_") ||
+                    key.includes("reown") ||
+                    key.includes("w3m")
+                );
+                sessionKeys.forEach((key) => sessionStorage.removeItem(key));
+
+                console.log(
+                  `🧹 Cleared ${
+                    wcKeys.length + sessionKeys.length
+                  } WalletConnect sessions before new connection`
+                );
+              } catch (cleanupError) {
+                console.warn(
+                  "WalletConnect pre-connection cleanup failed:",
+                  cleanupError
+                );
+              }
+            }
+
+            await wagmiConnect({ connector });
+
+            // Wait for state to update
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            console.log("🔗 Connection attempt completed:", {
+              connectorId: connector.id,
+              isWagmiConnected,
+              wagmiAddress,
+            });
+
+            // The Wagmi connector handles the actual connection state
+            // Success will be reflected in the wallet state via useAccount hook
+            toast.success("Wallet connected!");
+            return true;
+          } catch (error) {
+            console.warn(`🔗 Connection failed with ${connector.id}:`, error);
+
+            // Special handling for WalletConnect errors
+            if (connector.id === "walletConnect") {
+              const errorMessage =
+                error instanceof Error ? error.message : String(error);
+              if (
+                errorMessage.includes("No matching key") ||
+                errorMessage.includes("Pending session not found") ||
+                errorMessage.includes("proposal") ||
+                errorMessage.includes("topic")
+              ) {
+                console.log(
+                  "🔗 WalletConnect session error - performing comprehensive cleanup"
+                );
+                // Comprehensive cleanup and continue to next connector
+                try {
+                  const allKeys = Object.keys(localStorage);
+                  const wcKeys = allKeys.filter(
+                    (key) =>
+                      key.startsWith("wc@2:") ||
+                      key.startsWith("walletconnect") ||
+                      key.includes("walletconnect") ||
+                      key.includes("wc_") ||
+                      key.includes("reown") ||
+                      key.includes("w3m")
+                  );
+                  wcKeys.forEach((key) => localStorage.removeItem(key));
+
+                  // Clear sessionStorage too
+                  const sessionKeys = Object.keys(sessionStorage).filter(
+                    (key) =>
+                      key.startsWith("wc@2:") ||
+                      key.startsWith("walletconnect") ||
+                      key.includes("walletconnect") ||
+                      key.includes("wc_") ||
+                      key.includes("reown") ||
+                      key.includes("w3m")
+                  );
+                  sessionKeys.forEach((key) => sessionStorage.removeItem(key));
+
+                  console.log(
+                    `🧹 Cleaned up ${
+                      wcKeys.length + sessionKeys.length
+                    } WalletConnect entries after error`
+                  );
+                } catch (cleanupError) {
+                  console.warn(
+                    "WalletConnect error cleanup failed:",
+                    cleanupError
+                  );
+                }
+              }
+            }
+
+            // For Farcaster connector, this might be expected if user doesn't have wallet
+            if (connector.id === "farcasterFrame") {
+              console.log(
+                "🔗 Farcaster connector failed - user may not have wallet connected"
+              );
+            }
+
+            // Continue to next connector
+            continue;
+          }
+        }
+
+        // If we get here, and we had a target connector, it failed.
+        if (targetConnectors.length > 0) {
+          throw new Error(
+            `Wallet connector ${targetConnectors[0].id} failed to connect.`
+          );
+        }
+
+        // If we had no target connectors to begin with, it's not an error.
+        // It just means we are waiting for user interaction.
+        return false;
+      } catch (err) {
+        console.error("🔗 Connection failed:", err);
+        toast.error("Connection failed. Please try again.");
+        return false;
+      }
+    },
+    [platform, connectors, wagmiConnect, isWagmiConnected, wagmiAddress]
+  );
 
   const disconnect = useCallback(() => {
     // Comprehensive WalletConnect cleanup on disconnect
@@ -572,44 +580,53 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
       try {
         // Clear all WalletConnect related storage
         const allKeys = Object.keys(localStorage);
-        const wcKeys = allKeys.filter(key => 
-          key.startsWith('wc@2:') || 
-          key.startsWith('walletconnect') ||
-          key.includes('walletconnect') ||
-          key.includes('wc_') ||
-          key.includes('reown') ||
-          key.includes('w3m')
+        const wcKeys = allKeys.filter(
+          (key) =>
+            key.startsWith("wc@2:") ||
+            key.startsWith("walletconnect") ||
+            key.includes("walletconnect") ||
+            key.includes("wc_") ||
+            key.includes("reown") ||
+            key.includes("w3m")
         );
-        
-        wcKeys.forEach(key => {
+
+        wcKeys.forEach((key) => {
           try {
             localStorage.removeItem(key);
           } catch (e) {
             console.warn(`Failed to remove WalletConnect key ${key}:`, e);
           }
         });
-        
+
         // Clear sessionStorage as well
-        const sessionKeys = Object.keys(sessionStorage).filter(key => 
-          key.startsWith('wc@2:') || 
-          key.startsWith('walletconnect') ||
-          key.includes('walletconnect') ||
-          key.includes('wc_') ||
-          key.includes('reown') ||
-          key.includes('w3m')
+        const sessionKeys = Object.keys(sessionStorage).filter(
+          (key) =>
+            key.startsWith("wc@2:") ||
+            key.startsWith("walletconnect") ||
+            key.includes("walletconnect") ||
+            key.includes("wc_") ||
+            key.includes("reown") ||
+            key.includes("w3m")
         );
-        
-        sessionKeys.forEach(key => {
+
+        sessionKeys.forEach((key) => {
           try {
             sessionStorage.removeItem(key);
           } catch (e) {
-            console.warn(`Failed to remove WalletConnect sessionStorage key ${key}:`, e);
+            console.warn(
+              `Failed to remove WalletConnect sessionStorage key ${key}:`,
+              e
+            );
           }
         });
-        
-        console.log(`🧹 WalletConnect sessions cleaned up on disconnect (${wcKeys.length + sessionKeys.length} entries)`);
+
+        console.log(
+          `🧹 WalletConnect sessions cleaned up on disconnect (${
+            wcKeys.length + sessionKeys.length
+          } entries)`
+        );
       } catch (error) {
-        console.warn('WalletConnect cleanup on disconnect failed:', error);
+        console.warn("WalletConnect cleanup on disconnect failed:", error);
       }
     }
 
