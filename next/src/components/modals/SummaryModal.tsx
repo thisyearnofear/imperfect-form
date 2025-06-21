@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
 import { Dialog } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
@@ -46,6 +46,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const { platform, wallet, user } = usePlatform();
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === "farcaster";
+  const [submissionStatus, setSubmissionStatus] = useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
 
   // Map chainId to network name using centralized config
   const getNetworkFromChainId = (id: number | undefined) => {
@@ -182,18 +185,27 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         ) : (
           <div className="space-y-4">
             {/* Submit Score component */}
-            <div className="rounded-md p-3">
-              <h3 className="text-center font-bold mb-2 text-white">
-                Submit Your Score
-              </h3>
-
+            <div className="rounded-md p-3 text-center">
               {/* Use unified Wagmi-based submission for all networks */}
               <SubmitScoreWithWagmi
                 score={repCount}
                 exerciseType={mode}
                 forceDirectSubmission={true}
                 walletAddress={effectiveAddress}
+                setSubmissionStatus={setSubmissionStatus}
               />
+              {/* Persistent feedback message */}
+              {submissionStatus === "submitting" && (
+                <p className="text-sm text-yellow-400 mt-3 animate-pulse">
+                  Please confirm in your wallet and wait for the transaction to
+                  be processed...
+                </p>
+              )}
+              {submissionStatus === "error" && (
+                <p className="text-sm text-red-400 mt-3">
+                  Submission failed. Please try again.
+                </p>
+              )}
             </div>
           </div>
         )}

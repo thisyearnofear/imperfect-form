@@ -1,7 +1,17 @@
 // No need to import ThirdwebSDK anymore as we're using a custom interface
 import toast from "react-hot-toast";
+import {
+  POLYGON_CONTRACT_ADDRESS,
+  BASE_CONTRACT_ADDRESS,
+  MONAD_CONTRACT_ADDRESS,
+  CELO_CONTRACT_ADDRESS,
+  polygonLeaderboardABI,
+  baseLeaderboardABI,
+  monadLeaderboardABI,
+  fitnessLeaderboardABI,
+} from "@/constants/contracts";
 
-// Configuration for each supported chain
+// Configuration for each supported chain, now including contract details
 export const chainConfigs = {
   polygon: {
     id: 137,
@@ -17,6 +27,8 @@ export const chainConfigs = {
       "https://rpc-mainnet.matic.network",
     ],
     blockExplorerUrls: ["https://polygonscan.com/"],
+    contractAddress: POLYGON_CONTRACT_ADDRESS,
+    abi: polygonLeaderboardABI,
   },
   base: {
     id: 8453,
@@ -31,6 +43,8 @@ export const chainConfigs = {
       "https://mainnet.base.org",
     ],
     blockExplorerUrls: ["https://basescan.org/"],
+    contractAddress: BASE_CONTRACT_ADDRESS,
+    abi: baseLeaderboardABI,
   },
   monad: {
     id: 10143,
@@ -40,10 +54,10 @@ export const chainConfigs = {
       symbol: "MON",
       decimals: 18,
     },
-    rpcUrls: [
-      "https://testnet-rpc.monad.xyz/",
-    ],
+    rpcUrls: ["https://testnet-rpc.monad.xyz/"],
     blockExplorerUrls: ["https://testnet.monadexplorer.com/"],
+    contractAddress: MONAD_CONTRACT_ADDRESS,
+    abi: monadLeaderboardABI,
   },
   celo: {
     id: 42220,
@@ -53,11 +67,10 @@ export const chainConfigs = {
       symbol: "CELO",
       decimals: 18,
     },
-    rpcUrls: [
-      "https://forno.celo.org",
-      "https://rpc.ankr.com/celo",
-    ],
+    rpcUrls: ["https://forno.celo.org", "https://rpc.ankr.com/celo"],
     blockExplorerUrls: ["https://explorer.celo.org/"],
+    contractAddress: CELO_CONTRACT_ADDRESS,
+    abi: fitnessLeaderboardABI, // Celo uses the base fitness ABI
   },
 };
 
