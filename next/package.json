@@ -71,6 +71,11 @@
   },
   "overrides": {
     "@coinbase/wallet-sdk": "canary",
-    "@farcaster/frame-sdk": "^0.0.60"
+    "@farcaster/frame-sdk": "^0.0.60",
+    "@walletconnect/ethereum-provider": "2.11.1",
+    "@walletconnect/modal": "2.6.2",
+    "@walletconnect/sign-client": "2.11.1",
+    "@walletconnect/types": "2.11.1",
+    "@walletconnect/universal-provider": "2.11.1"
   }
 }

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
-import WalletSelectorModal from "@/components/modals/WalletSelectorModal";
 import {
   usePlatform,
   useWallet,
@@ -41,8 +40,6 @@ export default function UnifiedConnectButton({
     string | undefined
   >();
   const [showNetworkSwitcher, setShowNetworkSwitcher] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   // Get network name from chainId using centralized config
   const getNetworkName = (id: number | null) => {
     if (!id) return "Unknown";
@@ -96,7 +93,7 @@ export default function UnifiedConnectButton({
 
   // Handle connection
   const handleConnect = () => {
-    setIsModalOpen(true);
+    connect();
   };
 
   // Handle disconnect
@@ -260,11 +257,10 @@ export default function UnifiedConnectButton({
 
   // Connection state
   return (
-    <>
-      <button
-        onClick={handleConnect}
-        disabled={isConnecting}
-        className={`
+    <button
+      onClick={handleConnect}
+      disabled={isConnecting}
+      className={`
         ${sizeClasses[size]}
         ${getPlatformStyles()}
         ${className}
@@ -274,30 +270,25 @@ export default function UnifiedConnectButton({
         flex items-center justify-center space-x-2
         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
       `}
-      >
-        {isConnecting ? (
-          <>
-            <Spinner />
-            <span>Connecting...</span>
-          </>
-        ) : (
-          <>
-            {/* Platform-specific icon */}
-            {platform === "farcaster" && <span>🎯</span>}
-            {platform === "mobile" && <span>📱</span>}
-            {platform === "desktop" && <span>💻</span>}
-            {platform === "pwa" && <span>🚀</span>}
+    >
+      {isConnecting ? (
+        <>
+          <Spinner />
+          <span>Connecting...</span>
+        </>
+      ) : (
+        <>
+          {/* Platform-specific icon */}
+          {platform === "farcaster" && <span>🎯</span>}
+          {platform === "mobile" && <span>📱</span>}
+          {platform === "desktop" && <span>💻</span>}
+          {platform === "pwa" && <span>🚀</span>}
 
-            <span>
-              Connect {platform === "farcaster" ? "Farcaster" : "Wallet"}
-            </span>
-          </>
-        )}
-      </button>
-      <WalletSelectorModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-    </>
+          <span>
+            Connect {platform === "farcaster" ? "Farcaster" : "Wallet"}
+          </span>
+        </>
+      )}
+    </button>
   );
 }
