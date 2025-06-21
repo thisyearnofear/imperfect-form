@@ -2,29 +2,22 @@
 
 import React from "react";
 import { useConnect } from "wagmi";
-import { useWallet } from "@/contexts/PlatformContext";
+import { useWallet, useWalletSelector } from "@/contexts/PlatformContext";
 import AccessibleDialog from "@/components/ui/AccessibleDialog";
 import { Spinner } from "@/components/ui";
-
-interface WalletSelectorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
 
 // A more specific type for the connectors array from useConnect
 type Connector = ReturnType<typeof useConnect>["connectors"][number];
 
-const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
+const WalletSelectorModal: React.FC = () => {
   const { connectors } = useConnect();
   const { connect, isConnecting } = useWallet();
+  const { isOpen, setOpen } = useWalletSelector();
 
   const handleConnect = async (connector: Connector) => {
     const success = await connect(connector.id);
     if (success) {
-      onClose(); // Close modal on successful connection
+      setOpen(false); // Close modal on successful connection
     }
     // Errors are handled and toasted within the PlatformContext
   };
@@ -37,7 +30,7 @@ const WalletSelectorModal: React.FC<WalletSelectorModalProps> = ({
   return (
     <AccessibleDialog
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => setOpen(false)}
       title="Connect Wallet"
       description="Choose your preferred wallet provider to continue"
     >

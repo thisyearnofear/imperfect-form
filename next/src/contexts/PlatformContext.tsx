@@ -87,6 +87,10 @@ export interface PlatformContextType {
 
   // Error state
   error: string | null;
+
+  // Wallet selector modal state
+  isWalletSelectorOpen: boolean;
+  setWalletSelectorOpen: (isOpen: boolean) => void;
 }
 
 // Platform configurations
@@ -198,6 +202,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isWalletSelectorOpen, setWalletSelectorOpen] = useState(false);
 
   // User state
   const [user, setUser] = useState<PlatformUser | null>(null);
@@ -418,8 +423,12 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
           }
         }
         // If no connectorId is provided for a non-farcaster platform,
-        // we should do nothing, as the user now needs to select a wallet from a modal.
-        // The loop below will simply not run if targetConnectors is empty.
+        // open the wallet selector modal.
+        else {
+          console.log("🔗 No connector ID, opening wallet selector modal");
+          setWalletSelectorOpen(true);
+          return false; // Indicate that connection is deferred to the modal
+        }
 
         console.log("🔗 Target connectors:", {
           platform,
@@ -771,6 +780,8 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     features,
     actions,
     error,
+    isWalletSelectorOpen,
+    setWalletSelectorOpen,
   };
 
   return (
@@ -807,5 +818,14 @@ export function usePlatformFeatures() {
     share: actions.share,
     addToHome: actions.addToHome,
     sendNotification: actions.sendNotification,
+  };
+}
+
+// Hook for wallet selector modal
+export function useWalletSelector() {
+  const { isWalletSelectorOpen, setWalletSelectorOpen } = usePlatform();
+  return {
+    isOpen: isWalletSelectorOpen,
+    setOpen: setWalletSelectorOpen,
   };
 }

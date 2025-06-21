@@ -9,6 +9,7 @@ import { base, polygon, celo, type Chain } from "wagmi/chains";
 import { Toaster } from "react-hot-toast";
 import { PlatformProvider } from "@/contexts/PlatformContext";
 import { NeynarAuthProvider } from "@/contexts/NeynarAuthContext";
+import WalletSelectorModal from "@/components/modals/WalletSelectorModal";
 import { Spinner } from "@/components/ui";
 
 // Define Monad Testnet
@@ -36,73 +37,82 @@ const monadTestnet: Chain = {
 // Comprehensive WalletConnect session cleanup utility
 const cleanupWalletConnectSessions = () => {
   if (typeof window === "undefined") return;
-  
+
   try {
     // Clear all WalletConnect related localStorage keys
     const allKeys = Object.keys(localStorage);
-    const wcKeys = allKeys.filter(key => 
-      key.startsWith('wc@2:') || 
-      key.startsWith('walletconnect') ||
-      key.includes('walletconnect') ||
-      key.includes('wc_') ||
-      key.includes('WALLETCONNECT') ||
-      key.startsWith('@walletconnect') ||
-      key.includes('reown') ||
-      key.includes('w3m')
+    const wcKeys = allKeys.filter(
+      (key) =>
+        key.startsWith("wc@2:") ||
+        key.startsWith("walletconnect") ||
+        key.includes("walletconnect") ||
+        key.includes("wc_") ||
+        key.includes("WALLETCONNECT") ||
+        key.startsWith("@walletconnect") ||
+        key.includes("reown") ||
+        key.includes("w3m")
     );
-    
-    wcKeys.forEach(key => {
+
+    wcKeys.forEach((key) => {
       try {
         localStorage.removeItem(key);
       } catch (e) {
         console.warn(`Failed to remove WalletConnect key ${key}:`, e);
       }
     });
-    
+
     // Clear sessionStorage as well
     try {
-      const sessionKeys = Object.keys(sessionStorage).filter(key => 
-        key.startsWith('wc@2:') || 
-        key.startsWith('walletconnect') ||
-        key.includes('walletconnect') ||
-        key.includes('wc_') ||
-        key.includes('reown') ||
-        key.includes('w3m')
+      const sessionKeys = Object.keys(sessionStorage).filter(
+        (key) =>
+          key.startsWith("wc@2:") ||
+          key.startsWith("walletconnect") ||
+          key.includes("walletconnect") ||
+          key.includes("wc_") ||
+          key.includes("reown") ||
+          key.includes("w3m")
       );
-      
-      sessionKeys.forEach(key => {
+
+      sessionKeys.forEach((key) => {
         try {
           sessionStorage.removeItem(key);
         } catch (e) {
-          console.warn(`Failed to remove WalletConnect sessionStorage key ${key}:`, e);
+          console.warn(
+            `Failed to remove WalletConnect sessionStorage key ${key}:`,
+            e
+          );
         }
       });
     } catch (e) {
-      console.warn('Failed to access sessionStorage for cleanup:', e);
+      console.warn("Failed to access sessionStorage for cleanup:", e);
     }
-    
+
     // Clear IndexedDB WalletConnect data
     if (window.indexedDB) {
       try {
         // Clear multiple possible database names
-        const dbNames = ['walletconnect', 'wc', 'reown', 'w3m'];
-        dbNames.forEach(dbName => {
+        const dbNames = ["walletconnect", "wc", "reown", "w3m"];
+        dbNames.forEach((dbName) => {
           try {
             const deleteReq = indexedDB.deleteDatabase(dbName);
-            deleteReq.onsuccess = () => console.log(`${dbName} IndexedDB cleared`);
-            deleteReq.onerror = () => console.warn(`Failed to clear ${dbName} IndexedDB`);
+            deleteReq.onsuccess = () =>
+              console.log(`${dbName} IndexedDB cleared`);
+            deleteReq.onerror = () =>
+              console.warn(`Failed to clear ${dbName} IndexedDB`);
           } catch (e) {
             console.warn(`Failed to delete ${dbName} database:`, e);
           }
         });
       } catch (e) {
-        console.warn('Failed to access IndexedDB for cleanup:', e);
+        console.warn("Failed to access IndexedDB for cleanup:", e);
       }
     }
-    
-    console.log(`🧹 WalletConnect session cleanup completed (${wcKeys.length} keys removed)`);
+
+    console.log(
+      `🧹 WalletConnect session cleanup completed (${wcKeys.length} keys removed)`
+    );
   } catch (error) {
-    console.warn('WalletConnect cleanup failed:', error);
+    console.warn("WalletConnect cleanup failed:", error);
   }
 };
 
@@ -131,14 +141,14 @@ const createConnectors = async () => {
       showQrModal: true,
       // Add options to prevent session conflicts and improve reliability
       qrModalOptions: {
-        themeMode: 'dark',
+        themeMode: "dark",
         themeVariables: {
-          '--wcm-z-index': '2000'
-        }
+          "--wcm-z-index": "2000",
+        },
       },
       // Add these options to prevent stale sessions
       disableProviderPing: false,
-      relayUrl: 'wss://relay.walletconnect.com',
+      relayUrl: "wss://relay.walletconnect.com",
     }),
 
     // Secondary: Injected wallets (MetaMask, etc.)
@@ -158,7 +168,10 @@ const createConnectors = async () => {
   // Add Farcaster connector if available (client-side only)
   try {
     const farcasterConnector = await import("@farcaster/frame-wagmi-connector");
-    if (farcasterConnector?.farcasterFrame && typeof farcasterConnector.farcasterFrame === "function") {
+    if (
+      farcasterConnector?.farcasterFrame &&
+      typeof farcasterConnector.farcasterFrame === "function"
+    ) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const connector = farcasterConnector.farcasterFrame() as any;
       connectors.unshift(connector);
@@ -280,22 +293,24 @@ export default function SimplifiedAppProviders({
   children,
 }: AppProvidersProps) {
   const [isClient, setIsClient] = useState(false);
-  const [wagmiConfig, setWagmiConfig] = useState<Awaited<ReturnType<typeof createWagmiConfig>> | null>(null);
+  const [wagmiConfig, setWagmiConfig] = useState<Awaited<
+    ReturnType<typeof createWagmiConfig>
+  > | null>(null);
 
   // Initialize on client side only
   useEffect(() => {
     setIsClient(true);
-    
+
     // Clean up any stale sessions on app load
     if (typeof window !== "undefined") {
       // Always clean WalletConnect sessions on app load to prevent stale session errors
       try {
         cleanupWalletConnectSessions();
       } catch (error) {
-        console.warn('Failed to clean stale WalletConnect sessions:', error);
+        console.warn("Failed to clean stale WalletConnect sessions:", error);
       }
     }
-    
+
     createWagmiConfig().then((config) => {
       setWagmiConfig(config);
     });
@@ -330,6 +345,7 @@ export default function SimplifiedAppProviders({
           <NeynarAuthProvider clientId={neynarClientId}>
             <Toaster {...toastConfig} />
             {children}
+            <WalletSelectorModal />
           </NeynarAuthProvider>
         </PlatformProvider>
       </QueryClientProvider>

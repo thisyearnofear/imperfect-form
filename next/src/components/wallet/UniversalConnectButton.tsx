@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
-import { usePlatform } from "@/contexts/PlatformContext";
+import { usePlatform, useWalletSelector } from "@/contexts/PlatformContext";
 import { Spinner } from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import { getBestDisplayName } from "@/utils/web3bio";
@@ -33,6 +33,7 @@ export default function UniversalConnectButton({
     user?.displayName ||
     (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : undefined);
   const { connect, disconnect, switchChain } = actions;
+  const { setOpen: setWalletSelectorOpen } = useWalletSelector();
 
   const { isMobile, isWalletBrowser } = useDeviceDetect();
   const hasMounted = useClientOnly();
@@ -277,17 +278,9 @@ export default function UniversalConnectButton({
       isReady,
     });
     try {
-      const result = await connect();
-      console.log("🔗 UniversalConnectButton: Connect result", result);
-
-      if (result) {
-        // Wait a moment for state to update, then trigger callback
-        setTimeout(() => {
-          if (address && onConnected) {
-            onConnected(address);
-          }
-        }, 500);
-      }
+      // On desktop/mobile, this will now open the wallet selector modal
+      // The `connect` function in the context handles the logic.
+      await connect();
     } catch (error) {
       console.error("🔗 UniversalConnectButton: Connect error", error);
     }
