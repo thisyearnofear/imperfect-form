@@ -1,27 +1,12 @@
 # Imperfect Form
 
-A web app for on-chain fitness challenges with real-time pose detection, leaderboards, and social sharing.
+A web app for on-chain fitness challenges with real-time pose detection, leaderboards, and social sharing. Live on CELO, BASE, POLYGON and MONAD testnet.
 
 ---
 
 ## 🚀 Project Structure
 
-This repository contains two implementations of the Imperfect Form application:
-
-1. **Next.js Implementation** (active production version)
-2. **Vanilla JS Implementation** (legacy reference only - not for production use)
-
-### Next.js Implementation
-
-The Next.js implementation is located in the `next/` directory and represents the modern, scalable version of the application with improved architecture and features. This is the only version that should be used for production and active development.
-
-### Vanilla JS Implementation
-
-The original implementation using vanilla JavaScript is preserved in the root and `vanillaJS/` directories for reference purposes only. This code is not actively maintained and should not be built or deployed.
-
----
-
-## Project Structure
+This repository contains the production **Next.js** implementation of Imperfect Form. All development and deployment is based on this version.
 
 ```
 imperfect-form/
@@ -39,34 +24,12 @@ imperfect-form/
 │   │   ├── styles/          # CSS/SCSS modules
 │   │   └── types/           # TypeScript type definitions
 │   └── contracts/           # Smart contract files
-├── vanillaJS/               # Original vanilla JS implementation
-│   ├── package.json
-│   ├── webpack.config.js
-│   ├── server.js
-│   ├── socketServer.js
-│   ├── assets/              # Static assets for vanilla JS version
-│   └── src/                 # Source code for vanilla JS version
-├── backend/                 # Backend services (used by both implementations)
+├── backend/                 # Backend services (optional)
 │   ├── server.js
 │   ├── socketServer.js
 │   └── utils/
 └── .env                     # Environment variables
 ```
-
----
-
-## Migration Steps
-
-1. **Create a new Next.js app** (TypeScript recommended)
-2. **Move and refactor UI logic** into React components in `src/components/`
-3. **Implement pages** in `src/pages/` (e.g., Home, Leaderboard)
-4. **Integrate thirdweb**: Add wallet provider, ConnectButton, and SDK logic in `src/thirdweb/`
-5. **Move business logic** (pose detection, leaderboard, etc.) into `src/modules/`
-6. **Move static assets** to `public/`
-7. **Migrate backend** (if needed) to `backend/` or use Next.js API routes
-8. **Update styles** to use CSS modules or styled-components
-9. **Test and optimize** for performance and scalability
-10. **Update deployment configs** (Vercel, etc.)
 
 ---
 
@@ -93,37 +56,13 @@ npm run dev
 npm run build
 ```
 
-### TypeScript and ESLint Configuration
-
-The Next.js implementation uses TypeScript and ESLint for code quality and type safety. When building the project, you may encounter TypeScript or ESLint errors that need to be fixed before the build can complete.
-
-Common issues and solutions:
-
-1. **React Hooks Rules**: Ensure hooks are called at the top level of components and not inside conditionals. Use wrapper components when needed to isolate hook usage.
-
-2. **Window Interface Extensions**: When extending the global `Window` interface, be careful about conflicts with existing definitions. Check `src/types/window.d.ts` for current definitions.
-
-3. **Wallet Provider Configuration**: The wallet connectors (ThirdWeb, Coinbase Wallet) have specific configuration requirements. Some properties like `checkCrossOriginOpenerPolicy` may not be supported in newer versions.
-
-4. **Conditional Hook Calls**: If you need to use hooks conditionally, create separate components that use the hooks unconditionally and conditionally render those components instead.
-
-5. **Dependency Arrays**: Always include all dependencies in useEffect and useCallback dependency arrays to prevent stale closures and unnecessary re-renders.
-
-### Legacy Vanilla JS Implementation (Reference Only)
-
-The vanilla JS implementation is kept for reference purposes only and should not be used for production. The code in the root and `vanillaJS/` directories is not actively maintained.
-
-### Configuration
-
-- Copy `.env.example` to `.env` and fill in the required API keys and environment variables
-
 ---
 
 ## Features
 
 - Real-time pose detection for fitness challenges
 - On-chain leaderboard integration
-- **🎭 Farcaster Mini App integration** (NEW!)
+- **🎭 Farcaster Mini App integration** (LIVE!)
 - Social sharing (Farcaster, Twitter)
 - thirdweb wallet and SDK integration
 - REST and WebSocket APIs (optional backend)
@@ -131,86 +70,38 @@ The vanilla JS implementation is kept for reference purposes only and should not
 
 ### 🎭 Farcaster Mini App Integration
 
-Imperfect Form is now a fully-featured **Farcaster Mini App** that works seamlessly both as a standalone web application and within the Farcaster ecosystem.
+Imperfect Form is a fully-featured **Farcaster Mini App**—live and deployed. It works seamlessly as both a standalone web application and within the Farcaster ecosystem.
 
-#### Mini App Features
+#### Mini App Highlights
 
-- **Dual Platform Support**: Works as both a web app and Farcaster Mini App
-- **Automatic Detection**: Detects when accessed via Farcaster and adapts the UI
-- **Seamless Wallet Integration**: Auto-connects to Farcaster wallet when in Mini App context
-- **Native Sharing**: Share workout achievements directly to Farcaster feed
-- **User Context**: Displays Farcaster user profile and social information
-- **Add to Apps**: Users can add the app to their Farcaster client for quick access
-- **Notifications Ready**: Infrastructure for sending workout reminders and achievements
+- **Dual Platform**: Web app and Farcaster Mini App
+- **Automatic Detection**: UI adapts when accessed via Farcaster
+- **Seamless Wallet Integration**: Auto-connects to Farcaster wallet in Mini App context
+- **Native Sharing**: Share achievements to Farcaster feed
+- **User Context**: Displays Farcaster user profile and social info
+- **Add to Apps**: Quick access from Farcaster client
+- **Notifications Ready**: Workout reminders and achievements
 
-#### Technical Implementation
+#### Technical Details
 
-- **Latest Standards**: Uses @farcaster/frame-sdk v0.0.51 and official Mini App specification
-- **Manifest File**: Properly configured at `/.well-known/farcaster.json`
-- **Webhook System**: Handles Mini App events (add/remove, notifications)
-- **Enhanced Components**: Mini App-aware UI components and indicators
-- **Account Association**: Cryptographically verified ownership (pending completion)
-
-#### Mini App Status
-
-- ✅ **SDK Integration**: Official Farcaster Frame SDK implemented
-- ✅ **Manifest File**: Created with proper metadata and configuration
-- ✅ **Webhook Endpoint**: Ready to handle Mini App events
-- ✅ **Enhanced UI**: Mini App-specific components and features
-- ✅ **Icon Assets**: App icons deployed to production
-- ⚠️ **Account Association**: Pending completion after production deployment verification
-- ⚠️ **Production Testing**: Requires testing in actual Farcaster environment
-
-#### Next Steps to Complete Mini App Registration
-
-1. **✅ Deploy to Production**: App and icons deployed to production
-2. **🔄 Verify Manifest**: Check that `https://imperfectform.fun/.well-known/farcaster.json` is accessible
-3. **⏳ Complete Account Association**:
-   - Visit [Warpcast Mini App Manifest Tool](https://warpcast.com/~/developers/new)
-   - Enter domain: `imperfectform.fun`
-   - Generate cryptographic signature with your Farcaster account
-   - Add the `accountAssociation` object to the manifest file
-4. **🧪 Test in Farcaster**: Share your URL in a Farcaster cast and access via Warpcast mobile app
+- Uses @farcaster/frame-sdk v0.0.51 and official Mini App spec
+- Manifest at `/.well-known/farcaster.json`
+- Webhook system for Mini App events
+- Mini App-aware UI components
+- Account association and cryptographic verification complete
 
 #### How to Test Mini App Features
 
-Once account association is complete:
-
 1. **Share URL**: Post `https://imperfectform.fun` in a Farcaster cast
 2. **Access via Farcaster**: Open the cast in Warpcast mobile app
-3. **Look for Mini App Features**:
-   - Mini App banner at the top
-   - Farcaster user profile display
-   - Enhanced sharing options
-   - "Add to Apps" prompt
-   - Automatic wallet connection
+3. **Look for Mini App Features**: Mini App banner, user profile, sharing, "Add to Apps", and automatic wallet connection
 
-### Wallet Integration
+---
 
-The application supports two main wallet integration approaches:
+## Wallet Integration
 
-1. **ThirdWeb Signature Wallet** (for Polygon network)
-
-   - Traditional EOA wallet integration
-   - Used for Polygon Mainnet
-
-2. **Coinbase Wallet** (for Base network)
-
-   - Standard EOA wallet for Base Sepolia testnet
-   - Consistent experience across all chains
-
-### Known Issues and Troubleshooting
-
-#### Performance Optimization
-
-The application may experience performance issues, especially with the TensorFlow.js and MediaPipe pose detection. Consider these optimization strategies:
-
-1. **Lazy Loading**: Use dynamic imports with Next.js to load heavy components only when needed
-2. **Server Components**: Convert appropriate components to React Server Components
-3. **Webpack Optimization**: Configure webpack to optimize bundle size
-4. **TensorFlow.js Optimization**: Use the WebGL backend and consider model quantization
-5. **Caching**: Implement caching for API responses and blockchain data
-6. **Build Optimization**: Use production builds with proper minification and tree-shaking
+- **ThirdWeb Signature Wallet** (Polygon)
+- **Coinbase Wallet** (Base)
 
 ---
 
