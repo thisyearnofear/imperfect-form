@@ -1,0 +1,86 @@
+/* Root CSS variables for each chain */
+body[data-chain="base"] {
+  --accent: #0052ff;
+  --accent-light: #3b82f6;
+  --ambient-shape: #0052ff;
+}
+body[data-chain="polygon"] {
+  --accent: #8247e5;
+  --ambient-shape: #8247e5;
+}
+body[data-chain="celo"] {
+  --accent: #10b981;
+  --accent2: #eab308;
+  --ambient-shape: #10b981;
+}
+body[data-chain="monad"] {
+  --accent: #555;
+  --ambient-shape: #555;
+}
+
+/* Ambient container */
+.chain-ambient {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: visible;
+  top: 0; left: 0;
+}
+
+/* Example keyframes for each chain */
+@keyframes float-hexagon {
+  0% { transform: translateY(0) scale(1) rotate(0deg);}
+  100% { transform: translateY(-60px) scale(1.07) rotate(10deg);}
+}
+@keyframes float-square {
+  0% { transform: translateY(0) scale(1);}
+  100% { transform: translateY(60px) scale(1.13);}
+}
+@keyframes float-circle {
+  0% { transform: scale(1) translateX(0);}
+  100% { transform: scale(1.05) translateX(40px);}
+}
+@keyframes float-diamond {
+  0% { transform: translateY(0) scale(1) rotate(0deg);}
+  100% { transform: translateY(-50px) scale(0.95) rotate(20deg);}
+}
+
+/* Shape utility classes */
+.hexagon, .square, .circle, .diamond {
+  width: 80px; height: 80px;
+  opacity: 0.12;
+  position: absolute;
+  filter: blur(2px);
+  background: var(--ambient-shape, #0052ff);
+  animation-duration: 20s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-direction: alternate;
+}
+
+.hexagon {
+  clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%);
+  animation-name: float-hexagon;
+}
+.square {
+  border-radius: 12px;
+  animation-name: float-square;
+}
+.circle {
+  border-radius: 50%;
+  animation-name: float-circle;
+}
+.diamond {
+  transform: rotate(45deg);
+  animation-name: float-diamond;
+}
+
+/* Example extra: use accent-light for highlight overlays */
+.hexagon-accent {
+  background: var(--accent-light, var(--ambient-shape, #0052ff));
+}
+
+/* (Optional: further effects or new shapes can be added per chain) */

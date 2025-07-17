@@ -1,0 +1,7 @@
+{
+  // ...rest of package.json...
+  "dependencies": {
+    // ...other dependencies...
+    "react-joyride": "^2.5.1"
+  }
+}

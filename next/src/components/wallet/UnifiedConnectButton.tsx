@@ -102,11 +102,11 @@ export default function UnifiedConnectButton({
     setShowNetworkSwitcher(false);
   };
 
-  // Size classes
+  // Size classes (add responsive mobile-first)
   const sizeClasses = {
-    sm: "px-3 py-2 text-sm",
-    md: "px-4 py-3 text-base",
-    lg: "px-6 py-4 text-lg",
+    sm: "py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl",
+    md: "py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl",
+    lg: "py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl",
   };
 
   // Platform-specific styling
@@ -274,7 +274,8 @@ export default function UnifiedConnectButton({
       {isConnecting ? (
         <>
           <Spinner />
-          <span>Connecting...</span>
+          <span className="sm:hidden">Connecting...</span>
+          <span className="hidden sm:inline">Connecting...</span>
         </>
       ) : (
         <>
@@ -284,7 +285,11 @@ export default function UnifiedConnectButton({
           {platform === "desktop" && <span>💻</span>}
           {platform === "pwa" && <span>🚀</span>}
 
-          <span>
+          {/* Responsive connect text */}
+          <span className="sm:hidden">
+            Connect
+          </span>
+          <span className="hidden sm:inline">
             Connect {platform === "farcaster" ? "Farcaster" : "Wallet"}
           </span>
         </>

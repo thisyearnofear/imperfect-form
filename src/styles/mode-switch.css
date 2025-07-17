@@ -1,0 +1,40 @@
+.imf-mode-switch {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  background: #18181b;
+  min-height: 48px;
+  min-width: 200px;
+  padding: 2px;
+  gap: 2px;
+  margin: 8px 0;
+}
+
+.imf-mode-segment {
+  flex: 1 1 0;
+  min-width: 96px;
+  min-height: 44px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #fff;
+  font-family: 'PressStart2P', monospace;
+  font-size: 1rem;
+  border-radius: 999px;
+  padding: 0 8px;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.imf-mode-segment.selected {
+  background: var(--accent);
+  color: #fff;
+  font-weight: bold;
+}
+
+.imf-mode-segment:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -15,9 +15,61 @@
   background-color: #222;
   color: white;
   font-family: "Press Start 2P", cursive;
-  font-size: 0.8rem;
+  font-size: 0.875rem; /* 14px base */
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 640px) {
+  .network-option {
+    font-size: 1rem; /* 16px on sm+ */
+  }
+}
+
+.network-option span,
+.network-option .truncate {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.network-option-polygon {
+  border-color: #8247e5;
+}
+
+.network-option-polygon:hover {
+  background-color: rgba(130, 71, 229, 0.2);
+}
+
+.network-option-base {
+  border-color: #0052ff;
+}
+
+.network-option-base:hover {
+  background-color: rgba(0, 82, 255, 0.2);
+}
+
+/* Monad Network */
+.network-option-monad {
+  border-color: #222;
+  background-color: rgba(30,30,30,0.85);
+}
+.network-option-monad:hover {
+  background-color: rgba(45,45,45,0.9);
+}
+
+/* Celo Network */
+.network-option-celo {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+}
+.network-option-celo:hover {
+  background-color: rgba(16,185,129,0.2);
 }
 
 .network-option:hover {

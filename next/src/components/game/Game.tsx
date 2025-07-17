@@ -18,6 +18,8 @@ import { Welcome } from "@/components/game";
 import PoseDetectionGuidance from "./PoseDetectionGuidance";
 import { UniversalConnectButton } from "@/components/wallet";
 import { usePlatform } from "@/contexts/PlatformContext";
+import ModeSwitch from "./ModeSwitch";
+import IntroDialog from "@/components/auth/IntroDialog";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";
@@ -55,6 +57,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   // Filter state is managed but currently only 'none' is used
   const [, setCurrentFilter] = useState<string>("none");
+  // Intro dialog state
+  const [showIntroDialog, setShowIntroDialog] = useState(() => {
+    if (typeof window !== "undefined") {
+      const skip = localStorage.getItem("skipIntroDialog");
+      return !finalAddress && skip !== "1";
+    }
+    return false;
+  });
 
   // Pose detection guidance state
   const [showPoseGuidance, setShowPoseGuidance] = useState(false);
@@ -520,19 +530,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           }`}
           style={{ marginBottom: isMobile ? "8px" : "0" }}
         >
-          <button
-            id="modeButton"
-            className={`py-3 px-4 text-sm sm:text-base touch-manipulation ${
-              started ? "" : ""
-            }`}
-            style={{ minHeight: isMobile ? "50px" : "auto" }}
-            aria-label={
-              started ? "Current exercise mode" : "Switch exercise mode"
-            }
-            onClick={handleModeChange}
-          >
-            {`MODE: ${mode.toUpperCase()}`}
-          </button>
+          <ModeSwitch
+            value={mode}
+            disabled={started}
+            onChange={setMode}
+          />
           <button
             id="startButton"
             className="py-3 px-4 text-sm sm:text-base touch-manipulation"
@@ -564,10 +566,30 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           >
             RESET
           </button>
-
-          {/* Debug button - only visible on mobile devices */}
         </div>
       </div>
+      {showIntroDialog && (
+        <IntroDialog
+          isOpen={showIntroDialog}
+          onClose={() => setShowIntroDialog(false)}
+          onFarcaster={() => {
+            // Placeholder: Open farcaster auth, then hide dialog
+            window.open('/api/auth/farcaster', '_self');
+            setShowIntroDialog(false);
+          }}
+          onWallet={() => {
+            // Placeholder: Simulate connect, then hide dialog
+            setShowIntroDialog(false);
+          }}
+          onSkip={() => {
+            if (typeof window !== "undefined") {
+              localStorage.setItem("skipIntroDialog", "1");
+            }
+            setShowIntroDialog(false);
+          }}
+        />
+      )}
+
       <SummaryModal
         isOpen={showSummary}
         onClose={() => setShowSummary(false)}

@@ -386,8 +386,8 @@ export default function SubmitButton({
             ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
             : "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
         }
-        text-white font-bold py-4 px-6 rounded-md transition-all duration-300 transform hover:scale-105
-        shadow-lg hover:shadow-xl w-full flex items-center justify-center text-xl border-2 border-white
+        text-white font-bold py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl rounded-md transition-all duration-300 transform hover:scale-105
+        shadow-lg hover:shadow-xl w-full flex items-center justify-center border-2 border-white
         min-h-16 relative z-50
       `}
       style={{
@@ -401,17 +401,31 @@ export default function SubmitButton({
     >
       {isLoading || isPending ? (
         <>
-          <span className="mr-3 text-xl font-bold">
+          {/* Responsive loading label */}
+          <span className="mr-2 font-bold sm:hidden">
+            Submitting...
+          </span>
+          <span className="mr-3 font-bold hidden sm:inline-block">
             SUBMITTING TO {network?.toUpperCase()}...
           </span>
           <Spinner />
         </>
       ) : confirmStep ? (
-        <span className="text-xl font-bold">🔥 CONFIRM SUBMISSION 🔥</span>
+        <>
+          {/* Responsive confirm label */}
+          <span className="font-bold sm:hidden">Confirm</span>
+          <span className="font-bold hidden sm:inline-block">
+            🔥 CONFIRM SUBMISSION 🔥
+          </span>
+        </>
       ) : (
-        <span className="text-xl font-bold">
-          🏆 SUBMIT TO {network?.toUpperCase()} 🏆
-        </span>
+        <>
+          {/* Responsive idle label */}
+          <span className="font-bold sm:hidden">Submit</span>
+          <span className="font-bold hidden sm:inline-block">
+            🏆 SUBMIT TO {network?.toUpperCase()} 🏆
+          </span>
+        </>
       )}
     </button>
   );
