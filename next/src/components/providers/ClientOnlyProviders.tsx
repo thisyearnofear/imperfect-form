@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Spinner } from "@/components/ui";
 import SimplifiedAppProviders from "./SimplifiedAppProviders";
+import { ChainThemeProvider } from "@/contexts/ChainThemeContext";
+import ChainAmbient from "@/components/theme/ChainAmbient";
 
 interface ClientOnlyProvidersProps {
   children: React.ReactNode;
@@ -34,8 +36,11 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
   }
 
   return (
-    <SimplifiedAppProviders>
-      {children}
-    </SimplifiedAppProviders>
+    <ChainThemeProvider>
+      <ChainAmbient />
+      <SimplifiedAppProviders>
+        {children}
+      </SimplifiedAppProviders>
+    </ChainThemeProvider>
   );
 }
