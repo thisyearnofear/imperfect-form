@@ -195,3 +195,30 @@
     font-size: 14px;
   }
 }
+
+/* --- Extra Mobile Optimization for <=480px --- */
+@media (max-width: 480px) {
+  /* Hide the 4th column (network) in header & body */
+  #leaderboardTable th:nth-child(4),
+  #leaderboardTable td:nth-child(4) {
+    display: none !important;
+  }
+
+  .leaderboard-container {
+    padding: 10px !important;
+  }
+
+  .leaderboard-container th,
+  .leaderboard-container td {
+    font-size: 12px !important;
+    padding: 6px 4px !important;
+  }
+
+  /* Truncate long names (addresses) in 2nd column */
+  #leaderboardTable td:nth-child(2) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;
+  }
+}
