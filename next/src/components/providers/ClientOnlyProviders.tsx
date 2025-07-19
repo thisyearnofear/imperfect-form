@@ -6,7 +6,7 @@ import { Spinner } from "@/components/ui";
 import SimplifiedAppProviders from "./SimplifiedAppProviders";
 import { ChainThemeProvider } from "@/contexts/ChainThemeContext";
 import ChainAmbient from "@/components/theme/ChainAmbient";
-import { OnboardingProvider, useOnboarding } from "@/components/onboarding/OnboardingProvider";
+import { OnboardingProvider, useOnboarding } from "@/contexts/OnboardingContext";
 
 interface ClientOnlyProvidersProps {
   children: React.ReactNode;

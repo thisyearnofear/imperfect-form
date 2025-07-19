@@ -54,7 +54,7 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
       }
 
       // Switch chain using Wagmi or custom object
-      let targetChain: any;
+      let targetChain: typeof polygon | typeof base | typeof celo | typeof monad;
       if (selectedNetwork === "polygon") targetChain = polygon;
       else if (selectedNetwork === "base") targetChain = base;
       else if (selectedNetwork === "celo") targetChain = celo;
