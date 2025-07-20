@@ -1554,7 +1554,7 @@ export const CHAIN_THEMES: Record<ChainId, ChainTheme> = {
 export { baseTheme, celoTheme, polygonTheme, monadTheme };
 
 // Default theme
-export const DEFAULT_THEME = baseTheme;
+export const DEFAULT_THEME = celoTheme;
 
 // Theme validation helper
 export const isValidChainId = (id: string): id is ChainId => {

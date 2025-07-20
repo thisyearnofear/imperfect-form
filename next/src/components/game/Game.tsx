@@ -21,7 +21,6 @@ import { usePlatform } from "@/contexts/PlatformContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import ModeSwitch from "./ModeSwitch";
 import IntroDialog from "@/components/auth/IntroDialog";
-import ThemeIndicator from "@/components/theme/ThemeIndicator";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";
@@ -364,14 +363,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   return (
     <>
-      {/* Theme indicator in top-right corner for visual feedback */}
-      <ThemeIndicator 
-        position="top-right" 
-        compact={true} 
-        showColors={true}
-        interactive={false}
-        className="opacity-75 hover:opacity-100"
-      />
       
       <div id="game-container">
         <div id="banner">
