@@ -530,10 +530,10 @@ const celoTheme: ChainTheme = {
     accentLight: '#ffff8d',
     accentDark: '#f57f17',
     
-    // Background colors - Pure black for maximum contrast
-    background: '#000000',
-    backgroundLight: '#1a1a1a',
-    backgroundDark: '#000000',
+    // Background colors - Bright yellow for Celo
+    background: '#ffeb3b',
+    backgroundLight: '#fff176',
+    backgroundDark: '#fbc02d',
     
     // Surface colors - Dark with yellow accents
     surface: '#1a1a1a',

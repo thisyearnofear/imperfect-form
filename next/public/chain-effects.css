@@ -16,11 +16,11 @@ body[data-chain="polygon"] {
 }
 
 body[data-chain="celo"] {
-  --accent: #10b981;
-  --accent2: #eab308;
-  --ambient-shape: #10b981;
-  --ambient-secondary: #059669;
-  --ambient-tertiary: #34d399;
+  --accent: #ffeb3b;
+  --accent2: #fff176;
+  --ambient-shape: #ffeb3b;
+  --ambient-secondary: #fbc02d;
+  --ambient-tertiary: #fff176;
 }
 
 body[data-chain="monad"] {
