@@ -515,30 +515,30 @@ const celoTheme: ChainTheme = {
   description: 'Warm, organic, and community-focused design with yellow and green accents',
   
   palette: {
-    // Primary colors - Celo yellow
-    primary: '#eab308',
+    // Primary colors - Enhanced Celo yellow
+    primary: '#f59e0b',
     primaryLight: '#fbbf24',
-    primaryDark: '#a16207',
+    primaryDark: '#d97706',
     
     // Secondary colors - Celo green
     secondary: '#10b981',
     secondaryLight: '#34d399',
     secondaryDark: '#059669',
     
-    // Accent colors - Bright yellow highlights
+    // Accent colors - Brighter yellow highlights
     accent: '#fde047',
-    accentLight: '#fef08a',
-    accentDark: '#ca8a04',
+    accentLight: '#fef3c7',
+    accentDark: '#f59e0b',
     
-    // Background colors - Warm dark tones
-    background: '#1a1a00',
-    backgroundLight: '#2d2d00',
-    backgroundDark: '#0d0d00',
+    // Background colors - Warmer, less muddy tones
+    background: '#2a2200',
+    backgroundLight: '#3d3300',
+    backgroundDark: '#1a1600',
     
     // Surface colors
-    surface: '#404000',
-    surfaceLight: '#595900',
-    surfaceDark: '#262600',
+    surface: '#4a4000',
+    surfaceLight: '#665500',
+    surfaceDark: '#332b00',
     
     // Text colors
     text: '#ffffff',
@@ -553,14 +553,14 @@ const celoTheme: ChainTheme = {
     
     // Interactive states
     hover: '#fbbf24',
-    active: '#a16207',
-    focus: '#eab308',
+    active: '#d97706',
+    focus: '#f59e0b',
     disabled: '#78716c',
     
     // Gradients
-    gradientPrimary: 'linear-gradient(135deg, #eab308 0%, #fbbf24 100%)',
+    gradientPrimary: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
     gradientSecondary: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-    gradientAccent: 'linear-gradient(135deg, #fde047 0%, #fef08a 100%)',
+    gradientAccent: 'linear-gradient(135deg, #fde047 0%, #fef3c7 100%)',
   },
   
   typography: commonTypography,
@@ -580,27 +580,27 @@ const celoTheme: ChainTheme = {
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
     lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
     xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-    glow: '0 0 20px rgba(234, 179, 8, 0.4)',
-    colored: '0 4px 14px 0 rgba(234, 179, 8, 0.3)',
+    glow: '0 0 20px rgba(245, 158, 11, 0.4)',
+    colored: '0 4px 14px 0 rgba(245, 158, 11, 0.3)',
   },
   
   components: {
     button: {
       variants: {
         primary: {
-          background: '#eab308',
-          color: '#1a1a00',
-          border: '2px solid #eab308',
+          background: '#f59e0b',
+          color: '#1a1600',
+          border: '2px solid #f59e0b',
           hover: {
             background: '#fbbf24',
-            color: '#1a1a00',
+            color: '#1a1600',
             border: '2px solid #fbbf24',
             transform: 'translateY(-2px) scale(1.02)',
           },
           active: {
-            background: '#a16207',
+            background: '#d97706',
             color: '#ffffff',
-            border: '2px solid #a16207',
+            border: '2px solid #d97706',
             transform: 'translateY(0) scale(1)',
           },
           disabled: {
@@ -635,18 +635,18 @@ const celoTheme: ChainTheme = {
         },
         accent: {
           background: '#fde047',
-          color: '#1a1a00',
+          color: '#1a1600',
           border: '2px solid #fde047',
           hover: {
-            background: '#fef08a',
-            color: '#1a1a00',
-            border: '2px solid #fef08a',
+            background: '#fef3c7',
+            color: '#1a1600',
+            border: '2px solid #fef3c7',
             transform: 'translateY(-2px) scale(1.02)',
           },
           active: {
-            background: '#ca8a04',
+            background: '#f59e0b',
             color: '#ffffff',
-            border: '2px solid #ca8a04',
+            border: '2px solid #f59e0b',
             transform: 'translateY(0) scale(1)',
           },
           disabled: {
@@ -661,15 +661,15 @@ const celoTheme: ChainTheme = {
           color: '#fef3c7',
           border: '2px solid transparent',
           hover: {
-            background: 'rgba(234, 179, 8, 0.1)',
+            background: 'rgba(245, 158, 11, 0.1)',
             color: '#fbbf24',
-            border: '2px solid rgba(234, 179, 8, 0.3)',
+            border: '2px solid rgba(245, 158, 11, 0.3)',
             transform: 'translateY(-1px)',
           },
           active: {
-            background: 'rgba(234, 179, 8, 0.2)',
-            color: '#eab308',
-            border: '2px solid rgba(234, 179, 8, 0.5)',
+            background: 'rgba(245, 158, 11, 0.2)',
+            color: '#f59e0b',
+            border: '2px solid rgba(245, 158, 11, 0.5)',
             transform: 'translateY(0)',
           },
           disabled: {
@@ -754,22 +754,22 @@ const celoTheme: ChainTheme = {
       },
     },
     card: {
-      background: '#404000',
-      border: '2px solid #eab308',
+      background: '#4a4000',
+      border: '2px solid #f59e0b',
       borderRadius: '1rem',
-      shadow: '0 4px 14px 0 rgba(234, 179, 8, 0.3)',
+      shadow: '0 4px 14px 0 rgba(245, 158, 11, 0.3)',
       padding: '1.5rem',
       hover: {
-        background: '#595900',
+        background: '#665500',
         border: '2px solid #fbbf24',
-        shadow: '0 8px 25px 0 rgba(234, 179, 8, 0.4)',
+        shadow: '0 8px 25px 0 rgba(245, 158, 11, 0.4)',
         transform: 'translateY(-4px) rotate(0.5deg)',
       },
     },
     modal: {
-      backdrop: 'rgba(26, 26, 0, 0.8)',
-      background: '#1a1a00',
-      border: '2px solid #eab308',
+      backdrop: 'rgba(26, 22, 0, 0.8)',
+      background: '#2a2200',
+      border: '2px solid #f59e0b',
       borderRadius: '1rem',
       shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
       padding: '2rem',
@@ -787,15 +787,15 @@ const celoTheme: ChainTheme = {
       },
     },
     input: {
-      background: '#2d2d00',
+      background: '#3d3300',
       border: '2px solid #78716c',
       borderRadius: '0.75rem',
       color: '#ffffff',
       placeholder: '#d4d4aa',
       focus: {
-        background: '#404000',
-        border: '2px solid #eab308',
-        shadow: '0 0 0 3px rgba(234, 179, 8, 0.1)',
+        background: '#4a4000',
+        border: '2px solid #f59e0b',
+        shadow: '0 0 0 3px rgba(245, 158, 11, 0.1)',
       },
       error: {
         border: '2px solid #ef4444',
@@ -823,7 +823,7 @@ const celoTheme: ChainTheme = {
       timing: 'ease-in-out',
       variations: ['float-circle'],
     },
-    colors: ['#eab308', '#10b981', '#fde047'],
+    colors: ['#f59e0b', '#10b981', '#fde047'],
   },
   
   animations: {
@@ -850,7 +850,7 @@ const celoTheme: ChainTheme = {
   },
   
   metadata: {
-    brandColor: '#eab308',
+    brandColor: '#f59e0b',
     logoUrl: '/celo-logo.svg',
     networkType: 'mainnet',
     chainId: 42220,
