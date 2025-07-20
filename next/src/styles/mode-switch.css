@@ -1,8 +1,9 @@
+/* ModeSwitch Component Styles */
 .imf-mode-switch {
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 2px solid var(--accent);
+  border: 2px solid var(--accent, #0052ff);
   border-radius: 999px;
   background: #18181b;
   min-height: 48px;
@@ -10,6 +11,7 @@
   padding: 2px;
   gap: 2px;
   margin: 8px 0;
+  transition: border-color 0.3s ease;
 }
 
 .imf-mode-segment {
@@ -24,17 +26,103 @@
   font-size: 1rem;
   border-radius: 999px;
   padding: 0 8px;
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.15s ease;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.imf-mode-segment:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.imf-mode-segment:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .imf-mode-segment.selected {
-  background: var(--accent);
+  background: var(--accent, #0052ff);
   color: #fff;
   font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 82, 255, 0.3);
 }
 
 .imf-mode-segment:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+}
+
+.imf-mode-segment:focus-visible {
+  outline: 2px solid var(--accent, #0052ff);
+  outline-offset: 2px;
+}
+
+/* Chain-specific enhancements */
+body[data-chain="base"] .imf-mode-switch {
+  box-shadow: 0 0 20px rgba(0, 82, 255, 0.2);
+}
+
+body[data-chain="polygon"] .imf-mode-switch {
+  box-shadow: 0 0 20px rgba(130, 71, 229, 0.2);
+}
+
+body[data-chain="celo"] .imf-mode-switch {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+body[data-chain="monad"] .imf-mode-switch {
+  box-shadow: 0 0 20px rgba(85, 85, 85, 0.2);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .imf-mode-switch {
+    min-width: 180px;
+    min-height: 44px;
+  }
+  
+  .imf-mode-segment {
+    min-width: 86px;
+    min-height: 40px;
+    font-size: 0.9rem;
+    padding: 0 6px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .imf-mode-segment:hover:not(:disabled) {
+    background: transparent;
+    transform: none;
+  }
+  
+  .imf-mode-segment:active:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .imf-mode-switch {
+    border-width: 3px;
+  }
+  
+  .imf-mode-segment.selected {
+    border: 2px solid #fff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .imf-mode-segment {
+    transition: none;
+  }
+  
+  .imf-mode-segment:hover:not(:disabled),
+  .imf-mode-segment:active:not(:disabled) {
+    transform: none;
+  }
 }

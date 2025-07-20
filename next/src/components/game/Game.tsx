@@ -18,6 +18,7 @@ import { Welcome } from "@/components/game";
 import PoseDetectionGuidance from "./PoseDetectionGuidance";
 import { UniversalConnectButton } from "@/components/wallet";
 import { usePlatform } from "@/contexts/PlatformContext";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import ModeSwitch from "./ModeSwitch";
 import IntroDialog from "@/components/auth/IntroDialog";
 
@@ -45,6 +46,16 @@ interface GameProps {
 }
 
 const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
+  // Get universal wallet context first
+  const { wallet, user } = usePlatform();
+  const { address } = wallet;
+  
+  // Get onboarding context
+  const { setShouldShowTour } = useOnboarding();
+
+  // Use the universal address - no more complex network-specific logic needed!
+  const finalAddress = address || thirdwebAddress;
+
   const [showWelcome, setShowWelcome] = useState(true);
   // Tutorial state is managed but not displayed in current UI
   const [, setShowTutorial] = useState(true);
@@ -57,7 +68,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   // Filter state is managed but currently only 'none' is used
   const [, setCurrentFilter] = useState<string>("none");
-  // Intro dialog state
+  // Intro dialog state - now finalAddress is available
   const [showIntroDialog, setShowIntroDialog] = useState(() => {
     if (typeof window !== "undefined") {
       const skip = localStorage.getItem("skipIntroDialog");
@@ -84,13 +95,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     height: 0,
     width: 0,
   });
-
-  // Get universal wallet context
-  const { wallet, user } = usePlatform();
-  const { address } = wallet;
-
-  // Use the universal address - no more complex network-specific logic needed!
-  const finalAddress = address || thirdwebAddress;
 
   // Simplified viewport dimensions effect
   useEffect(() => {
@@ -570,22 +574,39 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       </div>
       {showIntroDialog && (
         <IntroDialog
-          isOpen={showIntroDialog}
-          onClose={() => setShowIntroDialog(false)}
+          open={showIntroDialog}
+          onOpenChange={(open) => {
+            setShowIntroDialog(open);
+            if (!open) {
+              // Trigger tour after intro dialog is closed
+              setTimeout(() => setShouldShowTour(true), 500);
+            }
+          }}
           onFarcaster={() => {
             // Placeholder: Open farcaster auth, then hide dialog
             window.open('/api/auth/farcaster', '_self');
             setShowIntroDialog(false);
+            // Trigger tour after auth flow
+            setTimeout(() => setShouldShowTour(true), 1000);
           }}
           onWallet={() => {
             // Placeholder: Simulate connect, then hide dialog
             setShowIntroDialog(false);
+            // Trigger tour after wallet connection
+            setTimeout(() => setShouldShowTour(true), 500);
           }}
           onSkip={() => {
             if (typeof window !== "undefined") {
               localStorage.setItem("skipIntroDialog", "1");
+              // Dispatch storage event to update onboarding context
+              window.dispatchEvent(new StorageEvent("storage", {
+                key: "skipIntroDialog",
+                newValue: "1"
+              }));
             }
             setShowIntroDialog(false);
+            // Trigger tour after skip
+            setTimeout(() => setShouldShowTour(true), 500);
           }}
         />
       )}

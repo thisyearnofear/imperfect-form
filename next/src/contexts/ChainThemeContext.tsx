@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode, useCallback } from "react";
 
-type ChainId = "base" | "polygon" | "celo" | "monad";
+// Types
+export type ChainId = "base" | "polygon" | "celo" | "monad";
 
-interface ChainTheme {
+export interface ChainTheme {
   id: ChainId;
   name: string;
   palette: {
@@ -12,87 +13,180 @@ interface ChainTheme {
   };
 }
 
-const CHAIN_THEMES: Record<ChainId, ChainTheme> = {
-  base:    { id: "base", name: "Base",    palette: { accent: "#0052ff", accentLight: "#3b82f6" }},
-  polygon: { id: "polygon", name: "Polygon", palette: { accent: "#8247e5" }},
-  celo:    { id: "celo", name: "Celo",    palette: { accent: "#10b981", accent2: "#eab308" }},
-  monad:   { id: "monad", name: "Monad",   palette: { accent: "#555" }},
-};
-
 interface ChainThemeContextValue {
   currentChain: ChainTheme;
   setChain: (id: ChainId) => void;
   palette: ChainTheme["palette"];
+  isLoading: boolean;
 }
+
+// Constants
+const CHAIN_THEMES: Record<ChainId, ChainTheme> = {
+  base: { 
+    id: "base", 
+    name: "Base", 
+    palette: { 
+      accent: "#0052ff", 
+      accentLight: "#3b82f6" 
+    }
+  },
+  polygon: { 
+    id: "polygon", 
+    name: "Polygon", 
+    palette: { 
+      accent: "#8247e5" 
+    }
+  },
+  celo: { 
+    id: "celo", 
+    name: "Celo", 
+    palette: { 
+      accent: "#10b981", 
+      accent2: "#eab308" 
+    }
+  },
+  monad: { 
+    id: "monad", 
+    name: "Monad", 
+    palette: { 
+      accent: "#555" 
+    }
+  },
+};
 
 const DEFAULT_CHAIN: ChainId = "base";
 const LOCAL_STORAGE_KEY = "selectedNetwork";
+const CHAIN_EFFECTS_CSS_ID = "chain-effects-css";
 
+// Context
 const ChainThemeContext = createContext<ChainThemeContextValue | undefined>(undefined);
 
+// Custom hook
 export const useChainTheme = () => {
-  const ctx = useContext(ChainThemeContext);
-  if (!ctx) throw new Error("useChainTheme must be used within ChainThemeProvider");
-  return ctx;
+  const context = useContext(ChainThemeContext);
+  if (!context) {
+    throw new Error("useChainTheme must be used within ChainThemeProvider");
+  }
+  return context;
 };
 
-function readChainFromStorage(): ChainId {
+// Utility functions
+const isValidChainId = (id: string): id is ChainId => {
+  return id in CHAIN_THEMES;
+};
+
+const readChainFromStorage = (): ChainId => {
   if (typeof window === "undefined") return DEFAULT_CHAIN;
-  const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-  if (stored && stored in CHAIN_THEMES) return stored as ChainId;
-  return DEFAULT_CHAIN;
-}
-
-function injectChainEffectsCSS() {
-  if (typeof document === "undefined") return;
-  const id = "chain-effects-css";
-  if (!document.getElementById(id)) {
-    const link = document.createElement("link");
-    link.id = id;
-    link.rel = "stylesheet";
-    link.href = "/chain-effects.css";
-    document.head.appendChild(link);
+  
+  try {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored && isValidChainId(stored)) {
+      return stored;
+    }
+  } catch (error) {
+    console.warn("Failed to read chain from localStorage:", error);
   }
-}
+  
+  return DEFAULT_CHAIN;
+};
 
-export const ChainThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [chainId, setChainId] = useState<ChainId>(readChainFromStorage());
+const writeChainToStorage = (chainId: ChainId): void => {
+  if (typeof window === "undefined") return;
+  
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, chainId);
+  } catch (error) {
+    console.warn("Failed to write chain to localStorage:", error);
+  }
+};
 
+const injectChainEffectsCSS = (): void => {
+  if (typeof document === "undefined") return;
+  
+  // Check if CSS is already injected
+  if (document.getElementById(CHAIN_EFFECTS_CSS_ID)) return;
+  
+  const link = document.createElement("link");
+  link.id = CHAIN_EFFECTS_CSS_ID;
+  link.rel = "stylesheet";
+  link.href = "/chain-effects.css";
+  link.onload = () => console.debug("Chain effects CSS loaded");
+  link.onerror = () => console.warn("Failed to load chain effects CSS");
+  
+  document.head.appendChild(link);
+};
+
+const updateBodyAttribute = (chainId: ChainId): void => {
+  if (typeof document === "undefined") return;
+  document.body.setAttribute("data-chain", chainId);
+};
+
+// Provider component
+export const ChainThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [chainId, setChainId] = useState<ChainId>(DEFAULT_CHAIN);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Initialize chain from storage
   useEffect(() => {
+    const storedChain = readChainFromStorage();
+    setChainId(storedChain);
+    updateBodyAttribute(storedChain);
     injectChainEffectsCSS();
-    document.body.setAttribute("data-chain", chainId);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === LOCAL_STORAGE_KEY && e.newValue && e.newValue in CHAIN_THEMES) {
-        setChainId(e.newValue as ChainId);
+    setIsHydrated(true);
+    setIsLoading(false);
+  }, []);
+
+  // Listen for storage changes (cross-tab synchronization)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === LOCAL_STORAGE_KEY && e.newValue && isValidChainId(e.newValue)) {
+        setChainId(e.newValue);
+        updateBodyAttribute(e.newValue);
       }
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [chainId]);
 
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // Update body attribute when chain changes
   useEffect(() => {
-    const interval = setInterval(() => {
-      const stored = readChainFromStorage();
-      if (stored !== chainId) setChainId(stored);
-    }, 1000);
-    return () => clearInterval(interval);
+    updateBodyAttribute(chainId);
   }, [chainId]);
 
-  const setChain = (id: ChainId) => {
+  // Memoized chain setter
+  const setChain = useCallback((id: ChainId) => {
+    if (id === chainId) return; // Prevent unnecessary updates
+    
     setChainId(id);
-    localStorage.setItem(LOCAL_STORAGE_KEY, id);
-    document.body.setAttribute("data-chain", id);
-  };
+    writeChainToStorage(id);
+    updateBodyAttribute(id);
+  }, [chainId]);
 
-  const value = useMemo(() => ({
+  // Memoized context value
+  const contextValue = useMemo(() => ({
     currentChain: CHAIN_THEMES[chainId],
     setChain,
     palette: CHAIN_THEMES[chainId].palette,
-  }), [chainId]);
+    isLoading,
+  }), [chainId, setChain, isLoading]);
+
+  // Prevent hydration mismatch by not rendering until client-side hydration is complete
+  if (!isHydrated) {
+    return (
+      <ChainThemeContext.Provider value={contextValue}>
+        <div style={{ opacity: 0 }}>{children}</div>
+      </ChainThemeContext.Provider>
+    );
+  }
 
   return (
-    <ChainThemeContext.Provider value={value}>
+    <ChainThemeContext.Provider value={contextValue}>
       {children}
     </ChainThemeContext.Provider>
   );
 };
+
+// Export chain themes for external use
+export { CHAIN_THEMES };

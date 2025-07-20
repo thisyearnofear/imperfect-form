@@ -1,0 +1,189 @@
+/* Chain-specific CSS Custom Properties */
+body[data-chain="base"] {
+  --accent: #0052ff;
+  --accent-light: #3b82f6;
+  --ambient-shape: #0052ff;
+}
+
+body[data-chain="polygon"] {
+  --accent: #8247e5;
+  --ambient-shape: #8247e5;
+}
+
+body[data-chain="celo"] {
+  --accent: #10b981;
+  --accent2: #eab308;
+  --ambient-shape: #10b981;
+}
+
+body[data-chain="monad"] {
+  --accent: #555;
+  --ambient-shape: #555;
+}
+
+/* Ambient Background Container */
+.chain-ambient {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+}
+
+/* Animation Keyframes */
+@keyframes float-hexagon {
+  0% { 
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.18;
+  }
+  100% { 
+    transform: translateY(-60px) scale(1.07) rotate(10deg);
+    opacity: 0.12;
+  }
+}
+
+@keyframes float-square {
+  0% { 
+    transform: translateY(0) scale(1);
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.16;
+  }
+  100% { 
+    transform: translateY(60px) scale(1.13);
+    opacity: 0.12;
+  }
+}
+
+@keyframes float-circle {
+  0% { 
+    transform: scale(1) translateX(0);
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.15;
+  }
+  100% { 
+    transform: scale(1.05) translateX(40px);
+    opacity: 0.12;
+  }
+}
+
+@keyframes float-diamond {
+  0% { 
+    transform: translateY(0) scale(1) rotate(45deg);
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.14;
+  }
+  100% { 
+    transform: translateY(-50px) scale(0.95) rotate(65deg);
+    opacity: 0.12;
+  }
+}
+
+/* Base Shape Styles */
+.hexagon, .square, .circle, .diamond {
+  width: 80px;
+  height: 80px;
+  opacity: 0.12;
+  position: absolute;
+  filter: blur(2px);
+  background: var(--ambient-shape, #0052ff);
+  animation-duration: 20s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-direction: alternate;
+  will-change: transform, opacity;
+}
+
+/* Shape-specific Styles */
+.hexagon {
+  clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%);
+  animation-name: float-hexagon;
+}
+
+.square {
+  border-radius: 12px;
+  animation-name: float-square;
+}
+
+.circle {
+  border-radius: 50%;
+  animation-name: float-circle;
+}
+
+.diamond {
+  transform: rotate(45deg);
+  animation-name: float-diamond;
+}
+
+/* Chain-specific Shape Variations */
+body[data-chain="base"] .square {
+  background: linear-gradient(45deg, var(--accent), var(--accent-light));
+}
+
+body[data-chain="base"] .circle {
+  background: radial-gradient(circle, var(--accent-light), var(--accent));
+}
+
+body[data-chain="polygon"] .hexagon {
+  background: linear-gradient(60deg, var(--ambient-shape), rgba(130, 71, 229, 0.8));
+}
+
+body[data-chain="celo"] .circle {
+  background: linear-gradient(45deg, var(--accent), var(--accent2));
+}
+
+body[data-chain="monad"] .diamond {
+  background: linear-gradient(45deg, var(--ambient-shape), rgba(85, 85, 85, 0.8));
+}
+
+/* Performance Optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .hexagon, .square, .circle, .diamond {
+    animation: none;
+    opacity: 0.08;
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .hexagon, .square, .circle, .diamond {
+    width: 60px;
+    height: 60px;
+    filter: blur(1.5px);
+    animation-duration: 25s;
+  }
+}
+
+/* High Performance Mode */
+@media (prefers-reduced-data: reduce) {
+  .chain-ambient {
+    display: none;
+  }
+}
+
+/* Dark Mode Adjustments */
+@media (prefers-color-scheme: dark) {
+  .hexagon, .square, .circle, .diamond {
+    opacity: 0.10;
+  }
+}
+
+/* Light Mode Adjustments */
+@media (prefers-color-scheme: light) {
+  .hexagon, .square, .circle, .diamond {
+    opacity: 0.08;
+    filter: blur(3px);
+  }
+}

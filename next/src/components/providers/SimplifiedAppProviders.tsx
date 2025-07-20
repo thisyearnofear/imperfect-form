@@ -9,6 +9,7 @@ import { base, polygon, celo, type Chain } from "wagmi/chains";
 import { Toaster } from "react-hot-toast";
 import { PlatformProvider } from "@/contexts/PlatformContext";
 import { NeynarAuthProvider } from "@/contexts/NeynarAuthContext";
+import { ChainThemeProvider } from "@/contexts/ChainThemeContext";
 import WalletSelectorModal from "@/components/modals/WalletSelectorModal";
 import { Spinner } from "@/components/ui";
 
@@ -341,13 +342,15 @@ export default function SimplifiedAppProviders({
   return (
     <WagmiProviderComponent config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <PlatformProvider>
-          <NeynarAuthProvider clientId={neynarClientId}>
-            <Toaster {...toastConfig} />
-            {children}
-            <WalletSelectorModal />
-          </NeynarAuthProvider>
-        </PlatformProvider>
+        <ChainThemeProvider>
+          <PlatformProvider>
+            <NeynarAuthProvider clientId={neynarClientId}>
+              <Toaster {...toastConfig} />
+              {children}
+              <WalletSelectorModal />
+            </NeynarAuthProvider>
+          </PlatformProvider>
+        </ChainThemeProvider>
       </QueryClientProvider>
     </WagmiProviderComponent>
   );

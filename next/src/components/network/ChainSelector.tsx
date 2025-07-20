@@ -55,12 +55,22 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
 
       // Switch chain using Wagmi or custom object
       let targetChain: typeof polygon | typeof base | typeof celo | typeof monad;
-      if (selectedNetwork === "polygon") targetChain = polygon;
-      else if (selectedNetwork === "base") targetChain = base;
-      else if (selectedNetwork === "celo") targetChain = celo;
-      else if (selectedNetwork === "monad") targetChain = monad;
+      
+      if (selectedNetwork === "polygon") {
+        targetChain = polygon;
+      } else if (selectedNetwork === "base") {
+        targetChain = base;
+      } else if (selectedNetwork === "celo") {
+        targetChain = celo;
+      } else if (selectedNetwork === "monad") {
+        targetChain = monad;
+      } else {
+        // This should never happen due to the function parameter type, but satisfies TypeScript
+        console.error("Unknown network selected:", selectedNetwork);
+        return;
+      }
 
-      if (switchChain && targetChain) {
+      if (switchChain) {
         switchChain({ chainId: targetChain.id });
       }
 

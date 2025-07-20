@@ -15,7 +15,8 @@ import {
 export const chainConfigs = {
   polygon: {
     id: 137,
-    name: "Polygon Mainnet",
+    name: "Polygon",
+    fullName: "Polygon Mainnet", // Keep full name for technical contexts
     nativeCurrency: {
       name: "MATIC",
       symbol: "MATIC",
@@ -32,7 +33,8 @@ export const chainConfigs = {
   },
   base: {
     id: 8453,
-    name: "Base Mainnet",
+    name: "Base",
+    fullName: "Base Mainnet", // Keep full name for technical contexts
     nativeCurrency: {
       name: "ETH",
       symbol: "ETH",
@@ -48,7 +50,8 @@ export const chainConfigs = {
   },
   monad: {
     id: 10143,
-    name: "Monad Testnet",
+    name: "Monad",
+    fullName: "Monad Testnet", // Keep full name for technical contexts
     nativeCurrency: {
       name: "MON",
       symbol: "MON",
@@ -61,7 +64,8 @@ export const chainConfigs = {
   },
   celo: {
     id: 42220,
-    name: "Celo Mainnet",
+    name: "Celo",
+    fullName: "Celo Mainnet", // Keep full name for technical contexts
     nativeCurrency: {
       name: "CELO",
       symbol: "CELO",
@@ -164,7 +168,7 @@ export async function switchThirdwebChain(
               params: [
                 {
                   chainId: hexChainId,
-                  chainName: config.name,
+                  chainName: config.fullName || config.name,
                   nativeCurrency: config.nativeCurrency,
                   rpcUrls: config.rpcUrls,
                   blockExplorerUrls: config.blockExplorerUrls,
