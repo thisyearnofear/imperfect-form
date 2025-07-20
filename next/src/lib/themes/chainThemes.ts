@@ -515,30 +515,30 @@ const celoTheme: ChainTheme = {
   description: 'Warm, organic, and community-focused design with yellow and green accents',
   
   palette: {
-    // Primary colors - Enhanced Celo yellow
-    primary: '#f59e0b',
-    primaryLight: '#fbbf24',
-    primaryDark: '#d97706',
+    // Primary colors - Bright, distinctive yellow
+    primary: '#ffeb3b',
+    primaryLight: '#fff176',
+    primaryDark: '#fbc02d',
     
     // Secondary colors - Celo green
-    secondary: '#10b981',
-    secondaryLight: '#34d399',
-    secondaryDark: '#059669',
+    secondary: '#4caf50',
+    secondaryLight: '#81c784',
+    secondaryDark: '#388e3c',
     
-    // Accent colors - Brighter yellow highlights
-    accent: '#fde047',
-    accentLight: '#fef3c7',
-    accentDark: '#f59e0b',
+    // Accent colors - Electric yellow highlights
+    accent: '#ffff00',
+    accentLight: '#ffff8d',
+    accentDark: '#f57f17',
     
-    // Background colors - Warmer, less muddy tones
-    background: '#2a2200',
-    backgroundLight: '#3d3300',
-    backgroundDark: '#1a1600',
+    // Background colors - Pure black for maximum contrast
+    background: '#000000',
+    backgroundLight: '#1a1a1a',
+    backgroundDark: '#000000',
     
-    // Surface colors
-    surface: '#4a4000',
-    surfaceLight: '#665500',
-    surfaceDark: '#332b00',
+    // Surface colors - Dark with yellow accents
+    surface: '#1a1a1a',
+    surfaceLight: '#2d2d2d',
+    surfaceDark: '#0d0d0d',
     
     // Text colors
     text: '#ffffff',
@@ -552,15 +552,15 @@ const celoTheme: ChainTheme = {
     info: '#eab308',
     
     // Interactive states
-    hover: '#fbbf24',
-    active: '#d97706',
-    focus: '#f59e0b',
-    disabled: '#78716c',
+    hover: '#fff176',
+    active: '#fbc02d',
+    focus: '#ffeb3b',
+    disabled: '#666666',
     
     // Gradients
-    gradientPrimary: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
-    gradientSecondary: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-    gradientAccent: 'linear-gradient(135deg, #fde047 0%, #fef3c7 100%)',
+    gradientPrimary: 'linear-gradient(135deg, #ffeb3b 0%, #fff176 100%)',
+    gradientSecondary: 'linear-gradient(135deg, #4caf50 0%, #81c784 100%)',
+    gradientAccent: 'linear-gradient(135deg, #ffff00 0%, #ffff8d 100%)',
   },
   
   typography: commonTypography,
@@ -580,27 +580,27 @@ const celoTheme: ChainTheme = {
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
     lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
     xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-    glow: '0 0 20px rgba(245, 158, 11, 0.4)',
-    colored: '0 4px 14px 0 rgba(245, 158, 11, 0.3)',
+    glow: '0 0 20px rgba(255, 235, 59, 0.6)',
+    colored: '0 4px 14px 0 rgba(255, 235, 59, 0.4)',
   },
   
   components: {
     button: {
       variants: {
         primary: {
-          background: '#f59e0b',
-          color: '#1a1600',
-          border: '2px solid #f59e0b',
+          background: '#ffeb3b',
+          color: '#000000',
+          border: '2px solid #ffeb3b',
           hover: {
-            background: '#fbbf24',
-            color: '#1a1600',
-            border: '2px solid #fbbf24',
+            background: '#fff176',
+            color: '#000000',
+            border: '2px solid #fff176',
             transform: 'translateY(-2px) scale(1.02)',
           },
           active: {
-            background: '#d97706',
-            color: '#ffffff',
-            border: '2px solid #d97706',
+            background: '#fbc02d',
+            color: '#000000',
+            border: '2px solid #fbc02d',
             transform: 'translateY(0) scale(1)',
           },
           disabled: {
@@ -611,19 +611,19 @@ const celoTheme: ChainTheme = {
           },
         },
         secondary: {
-          background: '#10b981',
+          background: '#4caf50',
           color: '#ffffff',
-          border: '2px solid #10b981',
+          border: '2px solid #4caf50',
           hover: {
-            background: '#34d399',
-            color: '#1a1a00',
-            border: '2px solid #34d399',
+            background: '#81c784',
+            color: '#000000',
+            border: '2px solid #81c784',
             transform: 'translateY(-2px) scale(1.02)',
           },
           active: {
-            background: '#059669',
+            background: '#388e3c',
             color: '#ffffff',
-            border: '2px solid #059669',
+            border: '2px solid #388e3c',
             transform: 'translateY(0) scale(1)',
           },
           disabled: {
@@ -634,19 +634,19 @@ const celoTheme: ChainTheme = {
           },
         },
         accent: {
-          background: '#fde047',
-          color: '#1a1600',
-          border: '2px solid #fde047',
+          background: '#ffff00',
+          color: '#000000',
+          border: '2px solid #ffff00',
           hover: {
-            background: '#fef3c7',
-            color: '#1a1600',
-            border: '2px solid #fef3c7',
+            background: '#ffff8d',
+            color: '#000000',
+            border: '2px solid #ffff8d',
             transform: 'translateY(-2px) scale(1.02)',
           },
           active: {
-            background: '#f59e0b',
+            background: '#f57f17',
             color: '#ffffff',
-            border: '2px solid #f59e0b',
+            border: '2px solid #f57f17',
             transform: 'translateY(0) scale(1)',
           },
           disabled: {
@@ -658,18 +658,18 @@ const celoTheme: ChainTheme = {
         },
         ghost: {
           background: 'transparent',
-          color: '#fef3c7',
+          color: '#ffeb3b',
           border: '2px solid transparent',
           hover: {
-            background: 'rgba(245, 158, 11, 0.1)',
-            color: '#fbbf24',
-            border: '2px solid rgba(245, 158, 11, 0.3)',
+            background: 'rgba(255, 235, 59, 0.1)',
+            color: '#fff176',
+            border: '2px solid rgba(255, 235, 59, 0.3)',
             transform: 'translateY(-1px)',
           },
           active: {
-            background: 'rgba(245, 158, 11, 0.2)',
-            color: '#f59e0b',
-            border: '2px solid rgba(245, 158, 11, 0.5)',
+            background: 'rgba(255, 235, 59, 0.2)',
+            color: '#ffeb3b',
+            border: '2px solid rgba(255, 235, 59, 0.5)',
             transform: 'translateY(0)',
           },
           disabled: {
@@ -681,24 +681,24 @@ const celoTheme: ChainTheme = {
         },
         outline: {
           background: 'transparent',
-          color: '#fef3c7',
-          border: '2px solid #78716c',
+          color: '#ffeb3b',
+          border: '2px solid #666666',
           hover: {
-            background: 'rgba(254, 243, 199, 0.1)',
+            background: 'rgba(255, 235, 59, 0.1)',
             color: '#ffffff',
-            border: '2px solid #fef3c7',
+            border: '2px solid #ffeb3b',
             transform: 'translateY(-1px)',
           },
           active: {
-            background: 'rgba(254, 243, 199, 0.2)',
+            background: 'rgba(255, 235, 59, 0.2)',
             color: '#ffffff',
             border: '2px solid #ffffff',
             transform: 'translateY(0)',
           },
           disabled: {
             background: 'transparent',
-            color: '#78716c',
-            border: '2px solid #78716c',
+            color: '#666666',
+            border: '2px solid #666666',
             opacity: 0.6,
           },
         },
@@ -754,24 +754,24 @@ const celoTheme: ChainTheme = {
       },
     },
     card: {
-      background: '#4a4000',
-      border: '2px solid #f59e0b',
+      background: '#1a1a1a',
+      border: '2px solid #ffeb3b',
       borderRadius: '1rem',
-      shadow: '0 4px 14px 0 rgba(245, 158, 11, 0.3)',
+      shadow: '0 4px 14px 0 rgba(255, 235, 59, 0.4)',
       padding: '1.5rem',
       hover: {
-        background: '#665500',
-        border: '2px solid #fbbf24',
-        shadow: '0 8px 25px 0 rgba(245, 158, 11, 0.4)',
+        background: '#2d2d2d',
+        border: '2px solid #fff176',
+        shadow: '0 8px 25px 0 rgba(255, 235, 59, 0.6)',
         transform: 'translateY(-4px) rotate(0.5deg)',
       },
     },
     modal: {
-      backdrop: 'rgba(26, 22, 0, 0.8)',
-      background: '#2a2200',
-      border: '2px solid #f59e0b',
+      backdrop: 'rgba(0, 0, 0, 0.9)',
+      background: '#000000',
+      border: '2px solid #ffeb3b',
       borderRadius: '1rem',
-      shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+      shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
       padding: '2rem',
       animations: {
         enter: {
@@ -787,15 +787,15 @@ const celoTheme: ChainTheme = {
       },
     },
     input: {
-      background: '#3d3300',
-      border: '2px solid #78716c',
+      background: '#1a1a1a',
+      border: '2px solid #666666',
       borderRadius: '0.75rem',
       color: '#ffffff',
-      placeholder: '#d4d4aa',
+      placeholder: '#cccccc',
       focus: {
-        background: '#4a4000',
-        border: '2px solid #f59e0b',
-        shadow: '0 0 0 3px rgba(245, 158, 11, 0.1)',
+        background: '#2d2d2d',
+        border: '2px solid #ffeb3b',
+        shadow: '0 0 0 3px rgba(255, 235, 59, 0.2)',
       },
       error: {
         border: '2px solid #ef4444',
@@ -823,7 +823,7 @@ const celoTheme: ChainTheme = {
       timing: 'ease-in-out',
       variations: ['float-circle'],
     },
-    colors: ['#f59e0b', '#10b981', '#fde047'],
+    colors: ['#ffeb3b', '#4caf50', '#ffff00'],
   },
   
   animations: {
@@ -850,7 +850,7 @@ const celoTheme: ChainTheme = {
   },
   
   metadata: {
-    brandColor: '#f59e0b',
+    brandColor: '#ffeb3b',
     logoUrl: '/celo-logo.svg',
     networkType: 'mainnet',
     chainId: 42220,
