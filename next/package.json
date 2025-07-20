@@ -22,6 +22,7 @@
     "@neynar/react": "^0.9.7",
     "@radix-ui/react-dialog": "^1.1.11",
     "@radix-ui/react-visually-hidden": "^1.2.0",
+    "@reactour/tour": "^3.7.0",
     "@stablelib/chacha20poly1305": "^1.0.1",
     "@stablelib/hkdf": "^1.0.1",
     "@stablelib/random": "^1.0.2",
