@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
+import { chainConfigs } from "@/utils/chainSwitching";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { Spinner } from "@/components/ui";
 import useDeviceDetect from "@/hooks/useDeviceDetect";
 import { getBestDisplayName } from "@/utils/web3bio";
 import { useClientOnly } from "@/hooks/useClientOnly";
+import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
+import { useRobustThemeSwitching } from "@/hooks/useRobustThemeSwitching";
 
 interface UniversalConnectButtonProps {
   onConnected?: (address: string) => void;
@@ -27,12 +29,20 @@ export default function UniversalConnectButton({
 }: UniversalConnectButtonProps) {
   const { platform, user, wallet, actions, isReady } = usePlatform();
   const { isConnected, address, chainId, isConnecting } = wallet;
+  const { currentTheme } = useEnhancedChainTheme();
+  const {
+    switchToChain,
+    isLoading: isThemeSwitching,
+    error: themeSwitchingError,
+    getAvailableThemes,
+    retry: retryThemeSwitch
+  } = useRobustThemeSwitching();
   const isInFarcaster = platform === "farcaster";
   const farcasterUser = user;
   const displayName =
     user?.displayName ||
     (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : undefined);
-  const { connect, disconnect, switchChain } = actions;
+  const { connect, disconnect } = actions;
 
   const { isMobile, isWalletBrowser } = useDeviceDetect();
   const hasMounted = useClientOnly();
@@ -66,38 +76,40 @@ export default function UniversalConnectButton({
     }
   }, [chainId, networkName]);
 
-  // Available networks for switching using centralized config
-  const networks = [
-    {
-      id: chainConfigs[SupportedChain.BASE].id,
-      name: chainConfigs[SupportedChain.BASE].name,
-      color: "blue",
-    },
-    {
-      id: chainConfigs[SupportedChain.POLYGON].id,
-      name: chainConfigs[SupportedChain.POLYGON].name,
-      color: "purple",
-    },
-    {
-      id: chainConfigs[SupportedChain.CELO].id,
-      name: chainConfigs[SupportedChain.CELO].name,
-      color: "green",
-    },
-    {
-      id: chainConfigs[SupportedChain.MONAD].id,
-      name: chainConfigs[SupportedChain.MONAD].name,
-      color: "yellow",
-    },
-  ];
+  // Available networks for switching using robust theme system
+  const availableThemes = getAvailableThemes();
+  const networks = availableThemes.map(theme => ({
+    id: theme.chainId,
+    name: theme.name,
+    themeId: theme.id,
+    color: {
+      'base': 'blue',
+      'polygon': 'purple', 
+      'celo': 'green',
+      'monad': 'gray'
+    }[theme.id] || 'blue',
+  }));
 
   const handleNetworkSwitch = async (targetChainId: number) => {
     console.log("UniversalConnectButton: Switching to chain", targetChainId);
     setShowNetworkSwitcher(false);
-    try {
-      await switchChain(targetChainId);
-      console.log("UniversalConnectButton: Switch completed");
-    } catch (error) {
-      console.error("UniversalConnectButton: Switch failed", error);
+    
+    // Use the robust theme switching system
+    const success = await switchToChain(targetChainId);
+    
+    if (!success) {
+      console.error("UniversalConnectButton: Network switch failed");
+      // Show retry option if there's an error
+      if (themeSwitchingError) {
+        setTimeout(() => {
+          const shouldRetry = window.confirm(
+            `Failed to switch network: ${themeSwitchingError}\n\nWould you like to retry?`
+          );
+          if (shouldRetry) {
+            retryThemeSwitch();
+          }
+        }, 1000);
+      }
     }
   };
 
@@ -217,33 +229,82 @@ export default function UniversalConnectButton({
               <div className="p-3">
                 <div className="text-xs text-gray-400 mb-3 px-1 text-center">
                   Switch Network (Current: {networkName})
+                  {currentTheme && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Theme: {currentTheme.displayName}
+                    </div>
+                  )}
                 </div>
+                
+                {/* Show theme switching error if any */}
+                {themeSwitchingError && (
+                  <div className="mb-2 p-2 bg-red-900/20 border border-red-600 rounded text-xs text-red-300">
+                    <div className="mb-1">Error: {themeSwitchingError}</div>
+                    <button
+                      onClick={() => retryThemeSwitch()}
+                      className="text-red-400 hover:text-red-300 underline"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 gap-2">
                   {networks.map((network) => (
                     <button
                       key={network.id}
                       onClick={() => handleNetworkSwitch(network.id)}
                       className={`
-                        text-left px-2 py-2 rounded text-xs transition-colors
+                        text-left px-2 py-2 rounded text-xs transition-all duration-200
                         ${
                           chainId === network.id
-                            ? "bg-green-900 text-green-300 cursor-default"
-                            : "hover:bg-gray-800 text-gray-300 hover:text-white"
+                            ? "bg-green-900 text-green-300 cursor-default border border-green-600"
+                            : isThemeSwitching
+                            ? "opacity-50 cursor-not-allowed bg-gray-800"
+                            : "hover:bg-gray-800 text-gray-300 hover:text-white hover:scale-105 hover:shadow-md"
                         }
                       `}
-                      disabled={chainId === network.id}
+                      disabled={chainId === network.id || isThemeSwitching}
                     >
                       <div className="flex items-center gap-1.5">
-                        <div
-                          className={`w-2 h-2 rounded-full bg-${network.color}-400 flex-shrink-0`}
-                        ></div>
-                        <span className="truncate text-xs">{network.name}</span>
-                        {chainId === network.id && (
-                          <span className="ml-auto text-xs">✓</span>
+                        {isThemeSwitching ? (
+                          <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse flex-shrink-0"></div>
+                        ) : (
+                          <div
+                            className={`w-2 h-2 rounded-full bg-${network.color}-400 flex-shrink-0`}
+                          ></div>
                         )}
+                        <span className="truncate text-xs">{network.name}</span>
+                        {chainId === network.id ? (
+                          <span className="ml-auto text-xs">✓</span>
+                        ) : isThemeSwitching ? (
+                          <span className="ml-auto text-xs animate-spin">⟳</span>
+                        ) : null}
                       </div>
                     </button>
                   ))}
+                </div>
+                
+                {/* Visual theme preview */}
+                <div className="mt-3 pt-2 border-t border-gray-700">
+                  <div className="text-xs text-gray-400 mb-1">Theme Preview:</div>
+                  <div className="flex gap-1">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: currentTheme.palette.primary }}
+                      title="Primary Color"
+                    ></div>
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: currentTheme.palette.secondary }}
+                      title="Secondary Color"
+                    ></div>
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: currentTheme.palette.accent }}
+                      title="Accent Color"
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>

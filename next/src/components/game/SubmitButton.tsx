@@ -18,6 +18,7 @@ import {
   canUserSubmit,
 } from "@/utils/directContractInteraction";
 import { isFirstTimeDivviUser, registerDivviReferral, showEnhancedFeaturesPrompt } from "@/utils/divviIntegration";
+import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
 
 interface SubmitButtonProps {
   score?: number;
@@ -36,6 +37,7 @@ export default function SubmitButton({
   // Get chain info from universal wallet
   const { wallet } = usePlatform();
   const { chainId } = wallet;
+  const { setTheme } = useEnhancedChainTheme();
 
   // Map chainId to network name for backward compatibility
   const getNetworkFromChainId = (id: number | undefined) => {
@@ -248,6 +250,8 @@ export default function SubmitButton({
               "selectedChain",
               network === "polygon" ? "polygon" : network
             );
+            // Update theme context
+            setTheme(network as "polygon" | "base" | "monad" | "celo");
           }
         }
 
@@ -340,6 +344,8 @@ export default function SubmitButton({
         if (typeof window !== "undefined") {
           localStorage.setItem("selectedNetwork", "base");
           localStorage.setItem("selectedChain", "base");
+          // Update theme context
+          setTheme("base");
         }
       }
 
@@ -373,7 +379,7 @@ export default function SubmitButton({
       setIsLoading(false);
       setConfirmStep(false);
     }
-  }, [isSuccess, wagmiTxHash, network, address]);
+  }, [isSuccess, wagmiTxHash, network, address, setTheme]);
 
   return (
     <button

@@ -1,0 +1,628 @@
+/**
+ * Enhanced Theme CSS System
+ * 
+ * This CSS file provides the enhanced theming system with comprehensive
+ * custom properties, component variants, and chain-specific styling.
+ */
+
+/* ===== ROOT VARIABLES ===== */
+:root {
+  /* Animation Control */
+  --animations-enabled: 1;
+  --transitions-enabled: 1;
+  --ambient-enabled: 1;
+  
+  /* Default Transition */
+  --theme-transition: all 300ms ease-in-out;
+  
+  /* Z-Index Scale */
+  --z-ambient: 0;
+  --z-content: 10;
+  --z-header: 100;
+  --z-overlay: 1000;
+  --z-modal: 2000;
+  --z-tooltip: 3000;
+}
+
+/* ===== THEME TRANSITION SYSTEM ===== */
+* {
+  transition: 
+    background-color calc(var(--transitions-enabled) * 300ms) ease-in-out,
+    border-color calc(var(--transitions-enabled) * 300ms) ease-in-out,
+    color calc(var(--transitions-enabled) * 300ms) ease-in-out,
+    box-shadow calc(var(--transitions-enabled) * 300ms) ease-in-out,
+    opacity calc(var(--transitions-enabled) * 200ms) ease-in-out;
+}
+
+/* ===== COMPONENT SYSTEM ===== */
+
+/* Button Components */
+.theme-button {
+  font-family: var(--font-family, "Press Start 2P", cursive);
+  font-weight: var(--font-weight-medium);
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  transition: var(--theme-transition);
+}
+
+.theme-button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.theme-button:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Button Variants */
+.theme-button--primary {
+  background: var(--color-primary);
+  color: var(--color-text);
+  border-color: var(--color-primary);
+}
+
+.theme-button--primary:hover:not(:disabled) {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  transform: translateY(-2px);
+}
+
+.theme-button--primary:active {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  transform: translateY(0);
+}
+
+.theme-button--secondary {
+  background: var(--color-secondary);
+  color: var(--color-text);
+  border-color: var(--color-secondary);
+}
+
+.theme-button--secondary:hover:not(:disabled) {
+  background: var(--color-secondary-light);
+  border-color: var(--color-secondary-light);
+  transform: translateY(-2px);
+}
+
+.theme-button--secondary:active {
+  background: var(--color-secondary-dark);
+  border-color: var(--color-secondary-dark);
+  transform: translateY(0);
+}
+
+.theme-button--accent {
+  background: var(--color-accent);
+  color: var(--color-background);
+  border-color: var(--color-accent);
+}
+
+.theme-button--accent:hover:not(:disabled) {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent-light);
+  transform: translateY(-2px);
+}
+
+.theme-button--accent:active {
+  background: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+  transform: translateY(0);
+}
+
+.theme-button--ghost {
+  background: transparent;
+  color: var(--color-text);
+  border-color: transparent;
+}
+
+.theme-button--ghost:hover:not(:disabled) {
+  background: var(--color-hover);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.theme-button--ghost:active {
+  background: var(--color-active);
+  border-color: var(--color-primary-dark);
+  transform: translateY(0);
+}
+
+.theme-button--outline {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-muted);
+}
+
+.theme-button--outline:hover:not(:disabled) {
+  background: var(--color-hover);
+  color: var(--color-text);
+  border-color: var(--color-text);
+  transform: translateY(-1px);
+}
+
+.theme-button--outline:active {
+  background: var(--color-active);
+  color: var(--color-text);
+  border-color: var(--color-text);
+  transform: translateY(0);
+}
+
+/* Button Sizes */
+.theme-button--xs {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+  min-height: 1.5rem;
+}
+
+.theme-button--sm {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+  min-height: 2rem;
+}
+
+.theme-button--md {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  border-radius: var(--radius-md);
+  min-height: 2.5rem;
+}
+
+.theme-button--lg {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-lg);
+  min-height: 3rem;
+}
+
+.theme-button--xl {
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  font-size: var(--font-size-xl);
+  border-radius: var(--radius-xl);
+  min-height: 3.5rem;
+}
+
+/* Card Components */
+.theme-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-colored);
+  padding: var(--spacing-lg);
+  transition: var(--theme-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-card:hover {
+  background: var(--color-surface-light);
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-4px);
+}
+
+.theme-card--interactive {
+  cursor: pointer;
+}
+
+.theme-card--flat {
+  box-shadow: none;
+  border: 1px solid var(--color-text-muted);
+}
+
+.theme-card--elevated {
+  box-shadow: var(--shadow-xl);
+}
+
+/* Modal Components */
+.theme-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--color-background);
+  backdrop-filter: blur(4px);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+}
+
+.theme-modal {
+  background: var(--color-background);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: var(--spacing-xl);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.theme-modal--sm {
+  max-width: 400px;
+}
+
+.theme-modal--md {
+  max-width: 600px;
+}
+
+.theme-modal--lg {
+  max-width: 800px;
+}
+
+.theme-modal--xl {
+  max-width: 1200px;
+}
+
+/* Input Components */
+.theme-input {
+  background: var(--color-surface);
+  border: 2px solid var(--color-text-muted);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  padding: var(--spacing-md);
+  transition: var(--theme-transition);
+  width: 100%;
+}
+
+.theme-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.theme-input:focus {
+  background: var(--color-surface-light);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus);
+  outline: none;
+}
+
+.theme-input:invalid,
+.theme-input--error {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.theme-input:disabled {
+  background: var(--color-disabled);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* Badge Components */
+.theme-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+}
+
+.theme-badge--primary {
+  background: var(--color-primary);
+  color: var(--color-text);
+}
+
+.theme-badge--secondary {
+  background: var(--color-secondary);
+  color: var(--color-text);
+}
+
+.theme-badge--success {
+  background: var(--color-success);
+  color: var(--color-text);
+}
+
+.theme-badge--warning {
+  background: var(--color-warning);
+  color: var(--color-background);
+}
+
+.theme-badge--error {
+  background: var(--color-error);
+  color: var(--color-text);
+}
+
+.theme-badge--outline {
+  background: transparent;
+  border: 1px solid var(--color-text-muted);
+  color: var(--color-text-secondary);
+}
+
+/* ===== CHAIN-SPECIFIC ENHANCEMENTS ===== */
+
+/* Base Chain Enhancements */
+body[data-chain="base"] .theme-button--primary {
+  background: var(--gradient-primary);
+  border-image: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)) 1;
+}
+
+body[data-chain="base"] .theme-button--primary:hover:not(:disabled) {
+  background: var(--gradient-primary);
+  filter: brightness(1.1);
+  box-shadow: var(--shadow-glow);
+}
+
+body[data-chain="base"] .theme-card {
+  background: linear-gradient(135deg, var(--color-surface), var(--color-surface-light));
+}
+
+/* Celo Chain Enhancements */
+body[data-chain="celo"] .theme-button {
+  border-radius: var(--radius-lg);
+}
+
+body[data-chain="celo"] .theme-button:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+}
+
+body[data-chain="celo"] .theme-card {
+  border-radius: var(--radius-xl);
+}
+
+body[data-chain="celo"] .theme-card:hover {
+  transform: translateY(-4px) rotate(0.5deg);
+}
+
+/* Polygon Chain Enhancements */
+body[data-chain="polygon"] .theme-button {
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+
+body[data-chain="polygon"] .theme-button:hover:not(:disabled) {
+  transform: translateY(-3px) skewX(-2deg);
+}
+
+body[data-chain="polygon"] .theme-button:active {
+  transform: translateY(0) skewX(0deg);
+}
+
+body[data-chain="polygon"] .theme-card {
+  border-radius: var(--radius-md);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+body[data-chain="polygon"] .theme-card:hover {
+  transform: translateY(-4px) skewX(-1deg);
+}
+
+/* Monad Chain Enhancements */
+body[data-chain="monad"] .theme-button {
+  border-radius: var(--radius-sm);
+}
+
+body[data-chain="monad"] .theme-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+body[data-chain="monad"] .theme-card {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+body[data-chain="monad"] .theme-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ===== ANIMATION SYSTEM ===== */
+
+/* Fade In Animation */
+@keyframes theme-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.theme-animate-fade-in {
+  animation: theme-fade-in calc(var(--animations-enabled) * 300ms) ease-out;
+}
+
+/* Slide Up Animation */
+@keyframes theme-slide-up {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.theme-animate-slide-up {
+  animation: theme-slide-up calc(var(--animations-enabled) * 400ms) ease-out;
+}
+
+/* Scale In Animation */
+@keyframes theme-scale-in {
+  from { 
+    opacity: 0; 
+    transform: scale(0.9); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+.theme-animate-scale-in {
+  animation: theme-scale-in calc(var(--animations-enabled) * 200ms) ease-out;
+}
+
+/* Pulse Animation */
+@keyframes theme-pulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1.05); 
+  }
+}
+
+.theme-animate-pulse {
+  animation: theme-pulse calc(var(--animations-enabled) * 2000ms) ease-in-out infinite;
+}
+
+/* Shimmer Animation */
+@keyframes theme-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.theme-animate-shimmer {
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    var(--color-primary) 50%, 
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: theme-shimmer calc(var(--animations-enabled) * 3000ms) ease-in-out infinite;
+}
+
+/* ===== ACCESSIBILITY ENHANCEMENTS ===== */
+
+/* High Contrast Mode */
+.high-contrast {
+  --color-primary: #ffffff;
+  --color-secondary: #ffffff;
+  --color-accent: #ffff00;
+  --color-background: #000000;
+  --color-surface: #000000;
+  --color-text: #ffffff;
+  --color-text-secondary: #ffffff;
+  --color-text-muted: #cccccc;
+}
+
+.high-contrast .theme-button {
+  border-width: 3px;
+}
+
+.high-contrast .theme-card {
+  border-width: 3px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animations-enabled: 0;
+    --transitions-enabled: 0;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus Visible Enhancement */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-button:focus-visible {
+    animation: theme-pulse 1s ease-in-out;
+  }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .theme-button {
+    min-height: 44px; /* Touch target size */
+  }
+  
+  .theme-modal {
+    margin: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+  
+  .theme-card {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Tablet Optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .theme-button--lg,
+  .theme-button--xl {
+    padding: var(--spacing-lg) var(--spacing-xl);
+  }
+}
+
+/* Desktop Optimizations */
+@media (min-width: 1025px) {
+  .theme-button:hover:not(:disabled) {
+    cursor: pointer;
+  }
+  
+  .theme-card--interactive:hover {
+    cursor: pointer;
+  }
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+/* Spacing Utilities */
+.theme-p-xs { padding: var(--spacing-xs); }
+.theme-p-sm { padding: var(--spacing-sm); }
+.theme-p-md { padding: var(--spacing-md); }
+.theme-p-lg { padding: var(--spacing-lg); }
+.theme-p-xl { padding: var(--spacing-xl); }
+
+.theme-m-xs { margin: var(--spacing-xs); }
+.theme-m-sm { margin: var(--spacing-sm); }
+.theme-m-md { margin: var(--spacing-md); }
+.theme-m-lg { margin: var(--spacing-lg); }
+.theme-m-xl { margin: var(--spacing-xl); }
+
+/* Text Utilities */
+.theme-text-primary { color: var(--color-primary); }
+.theme-text-secondary { color: var(--color-secondary); }
+.theme-text-accent { color: var(--color-accent); }
+.theme-text-muted { color: var(--color-text-muted); }
+.theme-text-success { color: var(--color-success); }
+.theme-text-warning { color: var(--color-warning); }
+.theme-text-error { color: var(--color-error); }
+
+/* Background Utilities */
+.theme-bg-primary { background-color: var(--color-primary); }
+.theme-bg-secondary { background-color: var(--color-secondary); }
+.theme-bg-accent { background-color: var(--color-accent); }
+.theme-bg-surface { background-color: var(--color-surface); }
+
+/* Border Utilities */
+.theme-border { border: 1px solid var(--color-text-muted); }
+.theme-border-primary { border-color: var(--color-primary); }
+.theme-border-secondary { border-color: var(--color-secondary); }
+.theme-border-accent { border-color: var(--color-accent); }
+
+/* Shadow Utilities */
+.theme-shadow-sm { box-shadow: var(--shadow-sm); }
+.theme-shadow-md { box-shadow: var(--shadow-md); }
+.theme-shadow-lg { box-shadow: var(--shadow-lg); }
+.theme-shadow-xl { box-shadow: var(--shadow-xl); }
+.theme-shadow-glow { box-shadow: var(--shadow-glow); }
+
+/* Radius Utilities */
+.theme-rounded-sm { border-radius: var(--radius-sm); }
+.theme-rounded-md { border-radius: var(--radius-md); }
+.theme-rounded-lg { border-radius: var(--radius-lg); }
+.theme-rounded-xl { border-radius: var(--radius-xl); }
+.theme-rounded-full { border-radius: var(--radius-full); }

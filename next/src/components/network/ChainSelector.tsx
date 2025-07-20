@@ -9,6 +9,7 @@ import {
   POLYGON_CONTRACT_ADDRESS,
   BASE_CONTRACT_ADDRESS,
 } from "@/constants/contracts";
+import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
 
 // Custom Monad Testnet chain object
 const monad = {
@@ -29,6 +30,7 @@ interface ChainSelectorProps {
  */
 export default function ChainSelector({ onClose }: ChainSelectorProps) {
   const { switchChain } = useSwitchChain();
+  const { setTheme } = useEnhancedChainTheme();
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle chain selection
@@ -52,6 +54,9 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
             : "celo"
         );
       }
+
+      // Update theme context immediately
+      setTheme(selectedNetwork);
 
       // Switch chain using Wagmi or custom object
       let targetChain: typeof polygon | typeof base | typeof celo | typeof monad;

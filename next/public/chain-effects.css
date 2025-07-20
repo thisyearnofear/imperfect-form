@@ -1,168 +1,254 @@
+/* Enhanced Chain-Specific Ambient Background Effects */
 /* Chain-specific CSS Custom Properties */
 body[data-chain="base"] {
   --accent: #0052ff;
   --accent-light: #3b82f6;
   --ambient-shape: #0052ff;
+  --ambient-secondary: #1e40af;
+  --ambient-tertiary: #60a5fa;
 }
 
 body[data-chain="polygon"] {
   --accent: #8247e5;
   --ambient-shape: #8247e5;
+  --ambient-secondary: #a855f7;
+  --ambient-tertiary: #c084fc;
 }
 
 body[data-chain="celo"] {
   --accent: #10b981;
   --accent2: #eab308;
   --ambient-shape: #10b981;
+  --ambient-secondary: #059669;
+  --ambient-tertiary: #34d399;
 }
 
 body[data-chain="monad"] {
   --accent: #555;
   --ambient-shape: #555;
+  --ambient-secondary: #374151;
+  --ambient-tertiary: #6b7280;
 }
 
-/* Ambient Background Container */
+/* Enhanced Ambient Background Container */
 .chain-ambient {
-  pointer-events: none;
   position: fixed;
-  inset: 0;
-  z-index: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.02) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.01) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.005) 0%, transparent 50%);
 }
 
-/* Animation Keyframes */
-@keyframes float-hexagon {
-  0% { 
-    transform: translateY(0) scale(1) rotate(0deg);
-    opacity: 0.12;
-  }
-  50% {
-    opacity: 0.18;
-  }
-  100% { 
-    transform: translateY(-60px) scale(1.07) rotate(10deg);
-    opacity: 0.12;
-  }
-}
-
-@keyframes float-square {
-  0% { 
-    transform: translateY(0) scale(1);
-    opacity: 0.12;
-  }
-  50% {
-    opacity: 0.16;
-  }
-  100% { 
-    transform: translateY(60px) scale(1.13);
-    opacity: 0.12;
-  }
-}
-
-@keyframes float-circle {
-  0% { 
-    transform: scale(1) translateX(0);
-    opacity: 0.12;
-  }
-  50% {
-    opacity: 0.15;
-  }
-  100% { 
-    transform: scale(1.05) translateX(40px);
-    opacity: 0.12;
-  }
-}
-
-@keyframes float-diamond {
-  0% { 
-    transform: translateY(0) scale(1) rotate(45deg);
-    opacity: 0.12;
-  }
-  50% {
-    opacity: 0.14;
-  }
-  100% { 
-    transform: translateY(-50px) scale(0.95) rotate(65deg);
-    opacity: 0.12;
-  }
-}
-
-/* Base Shape Styles */
-.hexagon, .square, .circle, .diamond {
+/* Enhanced Base Shape Styles */
+.chain-ambient-shape {
+  position: absolute;
   width: 80px;
   height: 80px;
-  opacity: 0.12;
-  position: absolute;
-  filter: blur(2px);
-  background: var(--ambient-shape, #0052ff);
-  animation-duration: 20s;
-  animation-iteration-count: infinite;
-  animation-timing-function: linear;
-  animation-direction: alternate;
-  will-change: transform, opacity;
+  opacity: 0.4;
+  mix-blend-mode: screen;
+  filter: blur(0.5px);
+  animation: sophisticatedFloat 25s ease-in-out infinite;
+  box-shadow: 
+    0 0 20px currentColor,
+    inset 0 0 20px rgba(255,255,255,0.1);
+  backdrop-filter: blur(1px);
+  will-change: transform, opacity, filter;
 }
 
-/* Shape-specific Styles */
-.hexagon {
-  clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%);
-  animation-name: float-hexagon;
-}
-
-.square {
+/* Enhanced Shape Types */
+.chain-ambient-shape.square {
   border-radius: 12px;
-  animation-name: float-square;
+  background: linear-gradient(135deg, 
+    var(--ambient-shape) 0%, 
+    var(--ambient-secondary) 50%, 
+    transparent 100%);
+  clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 85% 100%, 0% 100%);
 }
 
-.circle {
+.chain-ambient-shape.circle {
   border-radius: 50%;
-  animation-name: float-circle;
+  background: radial-gradient(circle at 30% 30%, 
+    var(--ambient-shape) 0%, 
+    var(--ambient-secondary) 40%, 
+    transparent 70%);
 }
 
-.diamond {
+.chain-ambient-shape.hexagon {
+  clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+  background: linear-gradient(60deg, 
+    var(--ambient-shape) 0%, 
+    var(--ambient-secondary) 60%, 
+    transparent 100%);
+}
+
+.chain-ambient-shape.diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  background: linear-gradient(45deg, 
+    var(--ambient-shape) 0%, 
+    var(--ambient-secondary) 50%, 
+    transparent 100%);
   transform: rotate(45deg);
-  animation-name: float-diamond;
 }
 
-/* Chain-specific Shape Variations */
-body[data-chain="base"] .square {
-  background: linear-gradient(45deg, var(--accent), var(--accent-light));
+/* Sophisticated Animation System */
+@keyframes sophisticatedFloat {
+  0% { 
+    transform: translateY(0px) translateX(0px) rotate(0deg) scale(1);
+    opacity: 0.4;
+    filter: blur(0.5px) hue-rotate(0deg);
+  }
+  20% { 
+    transform: translateY(-15px) translateX(10px) rotate(72deg) scale(1.1);
+    opacity: 0.6;
+    filter: blur(0.3px) hue-rotate(20deg);
+  }
+  40% { 
+    transform: translateY(-25px) translateX(-5px) rotate(144deg) scale(0.9);
+    opacity: 0.3;
+    filter: blur(0.8px) hue-rotate(40deg);
+  }
+  60% { 
+    transform: translateY(-10px) translateX(15px) rotate(216deg) scale(1.05);
+    opacity: 0.5;
+    filter: blur(0.4px) hue-rotate(60deg);
+  }
+  80% { 
+    transform: translateY(-20px) translateX(-10px) rotate(288deg) scale(0.95);
+    opacity: 0.45;
+    filter: blur(0.6px) hue-rotate(80deg);
+  }
+  100% { 
+    transform: translateY(0px) translateX(0px) rotate(360deg) scale(1);
+    opacity: 0.4;
+    filter: blur(0.5px) hue-rotate(100deg);
+  }
 }
 
-body[data-chain="base"] .circle {
-  background: radial-gradient(circle, var(--accent-light), var(--accent));
+/* Pulse Animation for Accent Shapes */
+@keyframes gentlePulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.4;
+    filter: brightness(1);
+  }
+  50% { 
+    transform: scale(1.2);
+    opacity: 0.6;
+    filter: brightness(1.3);
+  }
 }
 
-body[data-chain="polygon"] .hexagon {
-  background: linear-gradient(60deg, var(--ambient-shape), rgba(130, 71, 229, 0.8));
+/* Orbital Animation for Special Shapes */
+@keyframes orbital {
+  0% { 
+    transform: rotate(0deg) translateX(50px) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% { 
+    transform: rotate(360deg) translateX(50px) rotate(-360deg);
+    opacity: 0.3;
+  }
 }
 
-body[data-chain="celo"] .circle {
-  background: linear-gradient(45deg, var(--accent), var(--accent2));
+/* Chain-Specific Enhanced Patterns */
+body[data-chain="base"] .chain-ambient-shape.square {
+  background: linear-gradient(135deg, 
+    var(--accent) 0%, 
+    var(--accent-light) 50%, 
+    var(--ambient-tertiary) 100%);
+  animation: sophisticatedFloat 20s ease-in-out infinite;
 }
 
-body[data-chain="monad"] .diamond {
-  background: linear-gradient(45deg, var(--ambient-shape), rgba(85, 85, 85, 0.8));
+body[data-chain="base"] .chain-ambient-shape.circle {
+  background: radial-gradient(circle at 25% 25%, 
+    var(--accent-light) 0%, 
+    var(--accent) 60%, 
+    transparent 100%);
+  animation: gentlePulse 15s ease-in-out infinite;
+}
+
+body[data-chain="polygon"] .chain-ambient-shape.hexagon {
+  background: linear-gradient(60deg, 
+    var(--ambient-shape) 0%, 
+    var(--ambient-secondary) 40%, 
+    var(--ambient-tertiary) 100%);
+  animation: orbital 30s linear infinite;
+}
+
+body[data-chain="celo"] .chain-ambient-shape.circle {
+  background: linear-gradient(45deg, 
+    var(--accent) 0%, 
+    var(--accent2) 50%, 
+    var(--ambient-tertiary) 100%);
+  animation: sophisticatedFloat 18s ease-in-out infinite;
+}
+
+body[data-chain="monad"] .chain-ambient-shape.diamond {
+  background: linear-gradient(45deg, 
+    var(--ambient-shape) 0%, 
+    var(--ambient-secondary) 60%, 
+    var(--ambient-tertiary) 100%);
+  animation: orbital 25s linear infinite reverse;
+}
+
+/* Size Variations for Visual Hierarchy */
+.chain-ambient-shape:nth-child(3n) {
+  width: 60px;
+  height: 60px;
+  opacity: 0.3;
+}
+
+.chain-ambient-shape:nth-child(5n) {
+  width: 100px;
+  height: 100px;
+  opacity: 0.5;
+  animation-duration: 30s;
+}
+
+.chain-ambient-shape:nth-child(7n) {
+  width: 40px;
+  height: 40px;
+  opacity: 0.6;
+  animation-duration: 12s;
 }
 
 /* Performance Optimizations */
 @media (prefers-reduced-motion: reduce) {
-  .hexagon, .square, .circle, .diamond {
+  .chain-ambient-shape {
     animation: none;
-    opacity: 0.08;
+    opacity: 0.2;
+    transform: none;
   }
 }
 
 /* Mobile Optimizations */
 @media (max-width: 768px) {
-  .hexagon, .square, .circle, .diamond {
-    width: 60px;
-    height: 60px;
-    filter: blur(1.5px);
-    animation-duration: 25s;
+  .chain-ambient-shape {
+    width: 50px;
+    height: 50px;
+    filter: blur(1px);
+    animation-duration: 35s;
+    opacity: 0.3;
+  }
+  
+  .chain-ambient-shape:nth-child(3n) {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .chain-ambient-shape:nth-child(5n) {
+    width: 65px;
+    height: 65px;
   }
 }
 
@@ -173,17 +259,42 @@ body[data-chain="monad"] .diamond {
   }
 }
 
-/* Dark Mode Adjustments */
+/* Dark Mode Enhancements */
 @media (prefers-color-scheme: dark) {
-  .hexagon, .square, .circle, .diamond {
-    opacity: 0.10;
+  .chain-ambient-shape {
+    opacity: 0.35;
+    mix-blend-mode: screen;
+  }
+  
+  .chain-ambient {
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.01) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.005) 0%, transparent 50%);
   }
 }
 
 /* Light Mode Adjustments */
 @media (prefers-color-scheme: light) {
-  .hexagon, .square, .circle, .diamond {
-    opacity: 0.08;
-    filter: blur(3px);
+  .chain-ambient-shape {
+    opacity: 0.25;
+    filter: blur(1px);
+    mix-blend-mode: multiply;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .chain-ambient-shape {
+    opacity: 0.6;
+    filter: none;
+    mix-blend-mode: normal;
+  }
+}
+
+/* Accessibility: Respect user preferences */
+@media (prefers-reduced-transparency: reduce) {
+  .chain-ambient-shape {
+    backdrop-filter: none;
+    opacity: 0.8;
   }
 }

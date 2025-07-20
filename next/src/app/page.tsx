@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Spinner } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { NotificationSignup } from "@/components/miniapp/NotificationSignup";
+import ChainAmbient from "@/components/theme/ChainAmbient";
 import {
   callFarcasterReady,
   debugFarcasterContext,
@@ -145,6 +146,9 @@ export default function Home() {
 
   return (
     <>
+      {/* Chain-specific ambient background effects */}
+      <ChainAmbient />
+
       {/* Mini App Banner - hidden as users don't need to see it */}
 
       {/* Main content area with optimized stacked layout for mobile */}

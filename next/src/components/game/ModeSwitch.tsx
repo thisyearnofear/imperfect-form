@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { useChainTheme } from "@/contexts/ChainThemeContext";
+import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
 import "@/styles/mode-switch.css";
 
 // Types
@@ -41,7 +41,8 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(({
   id = "modeSwitch",
   className = "",
 }) => {
-  const { palette } = useChainTheme();
+  const { currentTheme } = useEnhancedChainTheme();
+  const { palette } = currentTheme;
 
   // Dynamic styles based on chain theme
   const containerStyle: React.CSSProperties = {

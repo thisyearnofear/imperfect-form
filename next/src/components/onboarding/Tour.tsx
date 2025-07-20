@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { TourProvider, useTour } from "@reactour/tour";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useChainTheme } from "@/contexts/ChainThemeContext";
+import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
 
 // Imperfect Form Philosophy Tour Steps
 const imperfectFormSteps = [
@@ -62,12 +62,10 @@ const imperfectFormSteps = [
 // Imperfect Form Tour Component with Philosophical Messaging
 function ImperfectFormTourComponent() {
   const { setIsOpen } = useTour();
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     // Thoughtful entrance delay
     const timer = setTimeout(() => {
-      setIsReady(true);
       setIsOpen(true);
     }, 500);
 
@@ -80,7 +78,8 @@ function ImperfectFormTourComponent() {
 // Main Tour Component
 export default function Tour() {
   const { markSeen } = useOnboarding();
-  const { palette } = useChainTheme();
+  const { currentTheme } = useEnhancedChainTheme();
+  const { palette } = currentTheme;
   const [showWelcome, setShowWelcome] = useState(true);
 
   // Philosophical welcome animation
@@ -102,6 +101,7 @@ export default function Tour() {
 
   // Imperfect Form Philosophy Styling
   const imperfectFormTourStyles = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     popover: (base: any) => ({
       ...base,
       "--reactour-accent": palette.accent,
@@ -116,17 +116,20 @@ export default function Tour() {
       padding: "24px",
       overflow: "hidden",
     }),
-    maskArea: (base: any) => ({ 
-      ...base, 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    maskArea: (base: any) => ({
+      ...base,
       rx: 12,
     }),
-    maskWrapper: (base: any) => ({ 
-      ...base, 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    maskWrapper: (base: any) => ({
+      ...base,
       color: "rgba(0,0,0,0.8)",
     }),
-    badge: (base: any) => ({ 
-      ...base, 
-      left: "auto", 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    badge: (base: any) => ({
+      ...base,
+      left: "auto",
       right: "-12px",
       top: "-12px",
       backgroundColor: palette.accent,
@@ -139,14 +142,16 @@ export default function Tour() {
       border: "2px solid #fff",
       boxShadow: `0 0 15px ${palette.accent}`,
     }),
-    controls: (base: any) => ({ 
-      ...base, 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    controls: (base: any) => ({
+      ...base,
       marginTop: "20px",
       gap: "12px",
     }),
-    close: (base: any) => ({ 
-      ...base, 
-      right: "8px", 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    close: (base: any) => ({
+      ...base,
+      right: "8px",
       top: "8px",
       backgroundColor: "rgba(255,255,255,0.1)",
       border: "1px solid rgba(255,255,255,0.3)",

@@ -21,6 +21,7 @@ import { usePlatform } from "@/contexts/PlatformContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import ModeSwitch from "./ModeSwitch";
 import IntroDialog from "@/components/auth/IntroDialog";
+import ThemeIndicator from "@/components/theme/ThemeIndicator";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";
@@ -315,17 +316,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     stopAllCameras();
   }, [stopAllCameras]);
 
-  const handleModeChange = () => {
-    if (!started) {
-      // If not started, switch exercise mode
-      const newMode = mode === "pushups" ? "squats" : "pushups";
-      setMode(newMode);
-    } else {
-      // When started, we only have the "none" filter option
-      // This button now just shows the current mode
-      setCurrentFilter("none");
-    }
-  };
+  // handleModeChange function removed as it's no longer used
+  // Mode switching is now handled directly by ModeSwitch component
 
   // Handle filter change from Webcam component
   const handleFilterChange = useCallback((filterName: string) => {
@@ -372,6 +364,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   return (
     <>
+      {/* Theme indicator in top-right corner for visual feedback */}
+      <ThemeIndicator 
+        position="top-right" 
+        compact={true} 
+        showColors={true}
+        interactive={false}
+        className="opacity-75 hover:opacity-100"
+      />
+      
       <div id="game-container">
         <div id="banner">
           <div className="olympic-rings" aria-label="Olympic Rings">

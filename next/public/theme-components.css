@@ -1,0 +1,881 @@
+/**
+ * Theme Components CSS
+ * 
+ * Comprehensive styling for all theme-aware React components.
+ * Uses CSS custom properties for dynamic theming and chain-specific variations.
+ */
+
+/* ==========================================================================
+   Theme Button Component
+   ========================================================================== */
+
+.theme-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  user-select: none;
+  white-space: nowrap;
+  outline: none;
+  overflow: hidden;
+}
+
+.theme-button:focus-visible {
+  outline: 2px solid var(--button-primary);
+  outline-offset: 2px;
+}
+
+.theme-button--full-width {
+  width: 100%;
+}
+
+.theme-button--loading {
+  pointer-events: none;
+}
+
+.theme-button--disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Button Sizes */
+.theme-button--xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  min-height: 1.5rem;
+}
+
+.theme-button--sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  min-height: 2rem;
+}
+
+.theme-button--md {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  min-height: 2.5rem;
+}
+
+.theme-button--lg {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  border-radius: 0.5rem;
+  min-height: 3rem;
+}
+
+.theme-button--xl {
+  padding: 1.25rem 2.5rem;
+  font-size: 1.25rem;
+  border-radius: 0.75rem;
+  min-height: 3.5rem;
+}
+
+/* Button Variants */
+.theme-button--primary {
+  background: var(--button-primary);
+  color: white;
+  border: 2px solid var(--button-primary);
+}
+
+.theme-button--primary:hover:not(.theme-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.theme-button--secondary {
+  background: transparent;
+  color: var(--button-primary);
+  border: 2px solid var(--button-primary);
+}
+
+.theme-button--secondary:hover:not(.theme-button--disabled) {
+  background: var(--button-primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.theme-button--accent {
+  background: var(--button-accent);
+  color: var(--button-primary);
+  border: 2px solid var(--button-accent);
+}
+
+.theme-button--accent:hover:not(.theme-button--disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.theme-button--ghost {
+  background: transparent;
+  color: white;
+  border: 2px solid transparent;
+}
+
+.theme-button--ghost:hover:not(.theme-button--disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.theme-button--outline {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.theme-button--outline:hover:not(.theme-button--disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Button Loading Spinner */
+.theme-button__spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Chain-specific button styles */
+.theme-button--base:hover:not(.theme-button--disabled) {
+  box-shadow: 0 0 20px rgba(0, 82, 255, 0.3);
+}
+
+.theme-button--celo:hover:not(.theme-button--disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.4);
+}
+
+.theme-button--polygon:hover:not(.theme-button--disabled) {
+  transform: translateY(-3px) skewX(-2deg);
+  box-shadow: 0 0 20px rgba(232, 121, 249, 0.4);
+}
+
+.theme-button--monad:hover:not(.theme-button--disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   Theme Card Component
+   ========================================================================== */
+
+.theme-card {
+  background: var(--card-background);
+  border: 2px solid var(--card-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--card-shadow);
+  transition: all 0.2s ease-out;
+  overflow: hidden;
+}
+
+.theme-card--hoverable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.theme-card__image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.theme-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.theme-card__header {
+  padding: 1rem 1.5rem 0;
+}
+
+.theme-card__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+}
+
+.theme-card__subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.theme-card__content {
+  padding: 1.5rem;
+}
+
+.theme-card--padding-xs .theme-card__content {
+  padding: 0.5rem;
+}
+
+.theme-card--padding-sm .theme-card__content {
+  padding: 1rem;
+}
+
+.theme-card--padding-lg .theme-card__content {
+  padding: 2rem;
+}
+
+.theme-card--padding-xl .theme-card__content {
+  padding: 2.5rem;
+}
+
+.theme-card__actions {
+  padding: 0 1.5rem 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* Chain-specific card styles */
+.theme-card--celo:hover {
+  transform: translateY(-4px) rotate(0.5deg);
+}
+
+.theme-card--polygon:hover {
+  transform: translateY(-4px) skewX(-1deg);
+}
+
+.theme-card--monad:hover {
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   Theme Input Component
+   ========================================================================== */
+
+.theme-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.theme-input__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+}
+
+.theme-input__container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.theme-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--input-background, rgba(255, 255, 255, 0.05));
+  border: 2px solid var(--input-border);
+  border-radius: 0.5rem;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.15s ease-out;
+  outline: none;
+}
+
+.theme-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.theme-input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px rgba(var(--input-focus-rgb, 0, 82, 255), 0.1);
+}
+
+.theme-input--error {
+  border-color: var(--input-error);
+}
+
+.theme-input--with-left-icon {
+  padding-left: 2.5rem;
+}
+
+.theme-input--with-right-icon {
+  padding-right: 2.5rem;
+}
+
+.theme-input__icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+
+.theme-input__icon--left {
+  left: 0.75rem;
+}
+
+.theme-input__icon--right {
+  right: 0.75rem;
+}
+
+.theme-input__error {
+  font-size: 0.875rem;
+  color: var(--input-error);
+}
+
+/* Input sizes */
+.theme-input--xs {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.theme-input--sm {
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+}
+
+.theme-input--lg {
+  padding: 1rem 1.25rem;
+  font-size: 1.125rem;
+}
+
+.theme-input--xl {
+  padding: 1.25rem 1.5rem;
+  font-size: 1.25rem;
+}
+
+/* ==========================================================================
+   Theme Badge Component
+   ========================================================================== */
+
+.theme-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--badge-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.theme-badge--dot {
+  padding-left: 0.5rem;
+}
+
+.theme-badge__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.theme-badge--secondary {
+  background: var(--badge-secondary);
+}
+
+.theme-badge--accent {
+  background: var(--badge-accent);
+  color: var(--badge-primary);
+}
+
+/* Badge sizes */
+.theme-badge--xs {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.625rem;
+}
+
+.theme-badge--sm {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.theme-badge--lg {
+  padding: 0.375rem 1rem;
+  font-size: 0.875rem;
+}
+
+.theme-badge--xl {
+  padding: 0.5rem 1.25rem;
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   Theme Modal Component
+   ========================================================================== */
+
+.theme-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.theme-modal {
+  background: var(--modal-background);
+  border: 2px solid var(--modal-border);
+  border-radius: 1rem;
+  box-shadow: var(--modal-shadow);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalEnter 0.2s ease-out;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.theme-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.theme-modal__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.theme-modal__close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.15s ease-out;
+}
+
+.theme-modal__close:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-modal__content {
+  padding: 2rem;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.theme-modal__footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* Modal sizes */
+.theme-modal--sm {
+  width: 400px;
+}
+
+.theme-modal--md {
+  width: 500px;
+}
+
+.theme-modal--lg {
+  width: 700px;
+}
+
+.theme-modal--xl {
+  width: 900px;
+}
+
+/* ==========================================================================
+   Theme Spinner Component
+   ========================================================================== */
+
+.theme-spinner {
+  display: inline-block;
+}
+
+.theme-spinner__circle {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top: 3px solid var(--spinner-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Spinner sizes */
+.theme-spinner--xs .theme-spinner__circle {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+.theme-spinner--sm .theme-spinner__circle {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-width: 2px;
+}
+
+.theme-spinner--lg .theme-spinner__circle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-width: 4px;
+}
+
+.theme-spinner--xl .theme-spinner__circle {
+  width: 3rem;
+  height: 3rem;
+  border-width: 4px;
+}
+
+.theme-spinner--secondary .theme-spinner__circle {
+  border-top-color: var(--spinner-secondary);
+}
+
+.theme-spinner--accent .theme-spinner__circle {
+  border-top-color: var(--spinner-accent);
+}
+
+/* ==========================================================================
+   Theme Tooltip Component
+   ========================================================================== */
+
+.theme-tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.theme-tooltip {
+  position: absolute;
+  z-index: 1000;
+  padding: 0.5rem 0.75rem;
+  background: var(--tooltip-background);
+  color: var(--tooltip-text);
+  border: 1px solid var(--tooltip-border);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.15s ease-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.theme-tooltip--visible {
+  opacity: 1;
+}
+
+.theme-tooltip--top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-0.5rem);
+  margin-bottom: 0.5rem;
+}
+
+.theme-tooltip--bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(0.5rem);
+  margin-top: 0.5rem;
+}
+
+.theme-tooltip--left {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(-0.5rem);
+  margin-right: 0.5rem;
+}
+
+.theme-tooltip--right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(0.5rem);
+  margin-left: 0.5rem;
+}
+
+/* ==========================================================================
+   Theme Progress Component
+   ========================================================================== */
+
+.theme-progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.theme-progress__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  text-align: right;
+}
+
+.theme-progress {
+  width: 100%;
+  height: 0.5rem;
+  background: var(--progress-background);
+  border: 1px solid var(--progress-border);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.theme-progress__fill {
+  height: 100%;
+  background: var(--progress-fill);
+  transition: width 0.3s ease-out;
+  border-radius: inherit;
+}
+
+/* Progress sizes */
+.theme-progress--xs {
+  height: 0.25rem;
+}
+
+.theme-progress--sm {
+  height: 0.375rem;
+}
+
+.theme-progress--lg {
+  height: 0.75rem;
+}
+
+.theme-progress--xl {
+  height: 1rem;
+}
+
+/* ==========================================================================
+   Chain Indicator Component
+   ========================================================================== */
+
+.chain-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--indicator-background);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.chain-indicator__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--indicator-color);
+  border-radius: 50%;
+}
+
+.chain-indicator__name {
+  color: white;
+  text-transform: capitalize;
+}
+
+/* Chain-specific indicator colors */
+.chain-indicator--base .chain-indicator__dot {
+  background: #0052ff;
+}
+
+.chain-indicator--celo .chain-indicator__dot {
+  background: #eab308;
+}
+
+.chain-indicator--polygon .chain-indicator__dot {
+  background: #e879f9;
+}
+
+.chain-indicator--monad .chain-indicator__dot {
+  background: #555555;
+}
+
+/* ==========================================================================
+   Theme Preview Component
+   ========================================================================== */
+
+.theme-preview {
+  padding: 1rem;
+  background: var(--preview-background);
+  border: 2px solid var(--preview-primary);
+  border-radius: 0.75rem;
+  color: var(--preview-text);
+}
+
+.theme-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.theme-preview__colors {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.theme-preview__color {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.theme-preview__color--primary {
+  background: var(--preview-primary);
+}
+
+.theme-preview__color--secondary {
+  background: var(--preview-secondary);
+}
+
+.theme-preview__color--accent {
+  background: var(--preview-accent);
+}
+
+.theme-preview__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.theme-preview__sample-button {
+  padding: 0.5rem 1rem;
+  background: var(--preview-primary);
+  color: var(--preview-background);
+  border-radius: 0.375rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.theme-preview__sample-card {
+  padding: 0.75rem;
+  background: var(--preview-surface);
+  border-radius: 0.5rem;
+}
+
+.theme-preview__sample-text {
+  color: var(--preview-text);
+  font-size: 0.875rem;
+}
+
+.theme-preview--compact {
+  padding: 0.75rem;
+}
+
+.theme-preview--compact .theme-preview__header {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .theme-modal {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .theme-modal__content {
+    padding: 1.5rem;
+  }
+  
+  .theme-modal__header,
+  .theme-modal__footer {
+    padding: 1rem 1.5rem;
+  }
+  
+  .theme-button--lg,
+  .theme-button--xl {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-button,
+  .theme-card,
+  .theme-input,
+  .theme-modal,
+  .theme-tooltip,
+  .theme-progress__fill,
+  .theme-spinner__circle {
+    transition: none;
+    animation: none;
+  }
+  
+  .theme-button:hover,
+  .theme-card:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .theme-button,
+  .theme-card,
+  .theme-input,
+  .theme-modal {
+    border-width: 3px;
+  }
+  
+  .theme-button:focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+  .theme-modal-overlay,
+  .theme-tooltip,
+  .theme-spinner {
+    display: none !important;
+  }
+  
+  .theme-button,
+  .theme-card,
+  .theme-input {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}
