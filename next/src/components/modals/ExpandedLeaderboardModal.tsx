@@ -175,16 +175,9 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                               ? "Monad"
                               : "Celo"
                           }
-                        >
-                          {network === "polygon"
-                            ? "P"
-                            : network === "base"
-                            ? "B"
-                            : network === "monad"
-                            ? "M"
-                            : "C"}
-                        </span>
+                        />
                       ))}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -278,20 +271,18 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                     {entry.totalScore}
                   </td>
                   <td className="px-4 py-3">
-                    {Object.keys(entry.networks)
-                      .join(" | ")
-                      .split(" | ")
-                      .map((network) => (
-                        <span
+                    <div className="flex justify-center space-x-1">
+                      {Object.keys(entry.networks).map((network) => (
+                        <div
                           key={network}
-                          className={`text-xs mr-1 ${
+                          className={`w-3 h-3 rounded-full ${
                             network === "polygon"
-                              ? "text-pink-400"
+                              ? "bg-pink-400"
                               : network === "base"
-                              ? "text-blue-400"
+                              ? "bg-blue-400"
                               : network === "monad"
-                              ? "text-black"
-                              : "text-yellow-400"
+                              ? "bg-gray-400"
+                              : "bg-yellow-400"
                           }`}
                           title={
                             network === "polygon"
@@ -302,16 +293,9 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                               ? "Monad"
                               : "Celo"
                           }
-                        >
-                          {network === "polygon"
-                            ? "P"
-                            : network === "base"
-                            ? "B"
-                            : network === "monad"
-                            ? "M"
-                            : "C"}
-                        </span>
+                        />
                       ))}
+                    </div>
                   </td>
                 </tr>
               ))}
