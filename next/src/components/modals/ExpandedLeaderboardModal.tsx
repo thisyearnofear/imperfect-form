@@ -111,7 +111,8 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
         <h3 className="text-lg font-bold mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-lg shadow-lg transform -rotate-1">
           Push-ups Champions
         </h3>
-        <div className="overflow-x-auto bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-2 rounded-lg">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-2 rounded-lg">
           <table className="min-w-full">
             <thead>
               <tr className="border-b-2 border-yellow-500">
@@ -192,6 +193,46 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {sortedPushupUsers.slice(0, 10).map((entry, i) => (
+            <div
+              key={`pushup-mobile-${entry.user}-${i}`}
+              className={`bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-3 rounded-lg cursor-pointer hover:from-yellow-500/30 hover:to-orange-500/30 transition-all ${
+                i === 0 ? "ring-2 ring-yellow-400" : i === 1 ? "ring-2 ring-gray-300" : i === 2 ? "ring-2 ring-orange-400" : ""
+              }`}
+              onClick={() => handleUserClick(entry.user, "pushups")}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <span className="text-xl font-bold">
+                    {i === 0 ? "#1" : i === 1 ? "#2" : i === 2 ? "#3" : `#${i + 1}`}
+                  </span>
+                  <div>
+                    <div className="font-bold text-white text-sm">
+                      {displayNames[entry.user] || shortenAddress(entry.user)}
+                    </div>
+                    <div className="flex space-x-1 mt-1">
+                      {Object.keys(entry.networks).map((network) => (
+                        <div
+                          key={network}
+                          className={`w-4 h-4 rounded-full ${
+                            network === "polygon" ? "bg-pink-400" : network === "base" ? "bg-blue-400" : network === "monad" ? "bg-gray-400" : "bg-yellow-400"
+                          }`}
+                          title={network === "polygon" ? "Polygon" : network === "base" ? "Base" : network === "monad" ? "Monad" : "Celo"}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-yellow-400 font-bold text-xl">
+                  {entry.totalScore}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Squats Leaderboard */}
@@ -199,7 +240,8 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
         <h3 className="text-lg font-bold mb-2 bg-gradient-to-r from-green-400 to-teal-500 text-white px-4 py-2 rounded-lg shadow-lg transform rotate-1">
           Squats Champions
         </h3>
-        <div className="overflow-x-auto bg-gradient-to-r from-green-500/20 to-teal-500/20 p-2 rounded-lg">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto bg-gradient-to-r from-green-500/20 to-teal-500/20 p-2 rounded-lg">
           <table className="min-w-full">
             <thead>
               <tr className="border-b  border-b-2 border-green-500">
@@ -277,6 +319,46 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {sortedSquatUsers.slice(0, 10).map((entry, i) => (
+            <div
+              key={`squat-mobile-${entry.user}-${i}`}
+              className={`bg-gradient-to-r from-green-500/20 to-teal-500/20 p-3 rounded-lg cursor-pointer hover:from-green-500/30 hover:to-teal-500/30 transition-all ${
+                i === 0 ? "ring-2 ring-green-400" : i === 1 ? "ring-2 ring-gray-300" : i === 2 ? "ring-2 ring-teal-400" : ""
+              }`}
+              onClick={() => handleUserClick(entry.user, "squats")}
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <span className="text-xl font-bold">
+                    {i === 0 ? "#1" : i === 1 ? "#2" : i === 2 ? "#3" : `#${i + 1}`}
+                  </span>
+                  <div>
+                    <div className="font-bold text-white text-sm">
+                      {displayNames[entry.user] || shortenAddress(entry.user)}
+                    </div>
+                    <div className="flex space-x-1 mt-1">
+                      {Object.keys(entry.networks).map((network) => (
+                        <div
+                          key={network}
+                          className={`w-4 h-4 rounded-full ${
+                            network === "polygon" ? "bg-pink-400" : network === "base" ? "bg-blue-400" : network === "monad" ? "bg-gray-400" : "bg-yellow-400"
+                          }`}
+                          title={network === "polygon" ? "Polygon" : network === "base" ? "Base" : network === "monad" ? "Monad" : "Celo"}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-green-400 font-bold text-xl">
+                  {entry.totalScore}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
