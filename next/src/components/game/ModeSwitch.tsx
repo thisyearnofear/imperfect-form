@@ -52,7 +52,7 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(({
 
   const getSegmentStyle = (isSelected: boolean): React.CSSProperties => ({
     background: isSelected ? palette.accent : "transparent",
-    color: "#fff",
+    color: isSelected ? (currentTheme.id === 'celo' ? '#000000' : '#ffffff') : (currentTheme.id === 'celo' ? '#000000' : '#ffffff'),
     fontFamily: "'PressStart2P', monospace",
   });
 

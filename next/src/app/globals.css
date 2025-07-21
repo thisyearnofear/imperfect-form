@@ -92,6 +92,20 @@ h1 {
   transition: color 300ms ease-in-out;
 }
 
+/* Celo chain specific text styling for visibility on yellow background */
+body[data-chain="celo"] h1 {
+  color: #000000;
+  text-shadow: 2px 2px #ffffff;
+}
+
+body[data-chain="celo"] {
+  color: #000000;
+}
+
+body[data-chain="celo"] .olympic-rings {
+  filter: brightness(0.7);
+}
+
 /* Game screen */
 #screen {
   position: relative;

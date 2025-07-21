@@ -540,10 +540,10 @@ const celoTheme: ChainTheme = {
     surfaceLight: '#2d2d2d',
     surfaceDark: '#0d0d0d',
     
-    // Text colors
-    text: '#ffffff',
-    textSecondary: '#fef3c7',
-    textMuted: '#d4d4aa',
+    // Text colors - Dark text for yellow background
+    text: '#000000',
+    textSecondary: '#1a1a1a',
+    textMuted: '#404040',
     
     // State colors
     success: '#10b981',

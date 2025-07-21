@@ -69,7 +69,16 @@ body[data-chain="polygon"] .imf-mode-switch {
 }
 
 body[data-chain="celo"] .imf-mode-switch {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 20px rgba(255, 235, 59, 0.4);
+  background: #1a1a1a;
+}
+
+body[data-chain="celo"] .imf-mode-segment {
+  color: #ffffff;
+}
+
+body[data-chain="celo"] .imf-mode-segment.selected {
+  color: #000000;
 }
 
 body[data-chain="monad"] .imf-mode-switch {
