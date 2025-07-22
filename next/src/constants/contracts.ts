@@ -18,6 +18,10 @@ export const CELO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_CELO ||
   "0xB0cbC7325EbC744CcB14211CA74C5a764928F273"; // Celo Mainnet contract (standardized)
 
+// Self Protocol Verified Fitness Contract (Celo Alfajores)
+export const VERIFIED_FITNESS_CONTRACT_ADDRESS = "0x18082d110113B40A24A41dF10b4b249Ee461D3eb";
+export const SELF_PROTOCOL_CONTRACT_ADDRESS = "0xc51065eCBe91E7DbA69934F37130DCA29E516189";
+
 // Full ABI for the standardized FitnessLeaderboard contracts
 // This is the base ABI that works for most networks
 export const fitnessLeaderboardABI = [
@@ -150,6 +154,109 @@ export const fitnessLeaderboardABI = [
     inputs: [],
     name: "getDeployedChainId",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  }
+];
+
+// Verified Fitness Contract ABI (Self Protocol Integration)
+export const verifiedFitnessLeaderboardABI = [
+  {
+    inputs: [],
+    name: "getLeaderboard",
+    outputs: [
+      {
+        components: [
+          { internalType: "address", name: "user", type: "address" },
+          { internalType: "uint256", name: "pushups", type: "uint256" },
+          { internalType: "uint256", name: "squats", type: "uint256" },
+          { internalType: "uint256", name: "timestamp", type: "uint256" }
+        ],
+        internalType: "struct VerifiedFitnessLeaderboard.Score[]",
+        name: "",
+        type: "tuple[]"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "baseScore", type: "uint256" },
+      { internalType: "string", name: "exerciseType", type: "string" }
+    ],
+    name: "submitScore",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "address", name: "user", type: "address" }],
+    name: "getUserStats",
+    outputs: [
+      {
+        components: [
+          { internalType: "uint256", name: "totalSubmissions", type: "uint256" },
+          { internalType: "uint256", name: "bestPushups", type: "uint256" },
+          { internalType: "uint256", name: "bestSquats", type: "uint256" },
+          { internalType: "bool", name: "isVerified", type: "bool" },
+          { internalType: "uint256", name: "verifiedAt", type: "uint256" },
+          { internalType: "uint256", name: "totalBonusEarned", type: "uint256" }
+        ],
+        internalType: "struct VerifiedFitnessLeaderboard.UserStats",
+        name: "",
+        type: "tuple"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "address", name: "user", type: "address" }],
+    name: "isUserVerified",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "getTotalUsers",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "verificationBonusPercentage",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "SUBMISSION_COOLDOWN",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "MAX_SCORE_PER_SUBMISSION",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "MINIMUM_AGE",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "SCOPE_NAME",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
     stateMutability: "view",
     type: "function"
   }

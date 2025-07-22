@@ -25,6 +25,13 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
   const [breakdownType, setBreakdownType] = useState<
     "pushups" | "squats" | null
   >(null);
+  const [progressiveDisplayNames, setProgressiveDisplayNames] =
+    useState<Record<string, string>>(displayNames);
+
+  // Progressive ENS resolution - update names as they come in
+  React.useEffect(() => {
+    setProgressiveDisplayNames(displayNames);
+  }, [displayNames]);
 
   if (!isOpen) return null;
 
@@ -68,15 +75,47 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
     setBreakdownType(null);
   };
 
+  // Network color mapping for consistency
+  const getNetworkColor = (network: string) => {
+    switch (network) {
+      case "polygon":
+        return "bg-purple-500";
+      case "base":
+        return "bg-blue-500";
+      case "monad":
+        return "bg-gray-500";
+      case "celo":
+        return "bg-[#fcb131]";
+      default:
+        return "bg-gray-400";
+    }
+  };
+
+  const getNetworkName = (network: string) => {
+    switch (network) {
+      case "polygon":
+        return "Polygon";
+      case "base":
+        return "Base";
+      case "monad":
+        return "Monad";
+      case "celo":
+        return "Celo";
+      default:
+        return network;
+    }
+  };
+
   return (
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Onchain Olympians Leaderboard"
+      title="🏆 Onchain Olympians Leaderboard 🏆"
       description="Out of difficulties grow miracles"
-      maxWidth="800px" // Wider width for the leaderboard
+      maxWidth="900px"
     >
-      <div className="flex justify-center items-center mb-4">
+      {/* Header with consistent theming */}
+      <div className="flex justify-center items-center mb-6">
         <div className="olympic-rings" aria-label="Olympic Rings">
           <div className="ring blue" />
           <div className="ring black" />
@@ -91,92 +130,85 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
               window.location.reload();
             }
           }}
-          className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-3 py-2 rounded-full text-lg font-bold hover:scale-110 transition-transform duration-200 shadow-lg"
+          className="bg-[#fcb131] hover:bg-[#f39c12] text-black px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-lg border-2 border-[#fcb131] ml-4"
           title="Refresh leaderboard"
         >
-          ↻
+          🔄 Refresh
         </button>
       </div>
 
-      <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 p-1 rounded-lg mb-6">
-        <div className="bg-black p-2 rounded-md">
-          <p className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 font-bold">
-            Compete globally and earn your place in the Onchain Olympics!
-          </p>
-        </div>
+      {/* Consistent with main leaderboard styling */}
+      <div className="bg-black/80 border-2 border-[#fcb131] rounded-lg p-4 mb-6 shadow-[0_0_20px_rgba(252,177,49,0.5)]">
+        <p className="text-[#fcb131] font-bold text-center text-lg">
+          🏆 Compete globally and earn your place in the Onchain Olympics! 🏆
+        </p>
       </div>
 
       {/* Push-ups Leaderboard */}
-      <div className="mb-6">
-        <h3 className="text-lg font-bold mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-lg shadow-lg transform -rotate-1">
-          Push-ups Champions
+      <div className="mb-8">
+        <h3 className="text-xl font-bold mb-4 text-[#fcb131] text-center border-b-2 border-[#fcb131] pb-2">
+          💪 Push-ups Champions 💪
         </h3>
+
         {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-2 rounded-lg">
+        <div className="hidden md:block overflow-x-auto bg-black/60 border border-[#fcb131]/30 rounded-lg">
           <table className="min-w-full">
             <thead>
-              <tr className="border-b-2 border-yellow-500">
-                <th className="px-4 py-3 text-yellow-400 font-bold">#</th>
-                <th className="px-4 py-3 text-yellow-400 font-bold">Athlete</th>
-                <th className="px-4 py-3 text-yellow-400 font-bold">
+              <tr className="border-b-2 border-[#fcb131]">
+                <th className="px-4 py-3 text-[#fcb131] font-bold">#</th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">Athlete</th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">
                   Total Score
                 </th>
-                <th className="px-4 py-3 text-yellow-400 font-bold">
-                  Networks
-                </th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">Networks</th>
               </tr>
             </thead>
             <tbody>
               {sortedPushupUsers.slice(0, 10).map((entry, i) => (
                 <tr
                   key={`pushup-${entry.user}-${i}`}
-                  className={`text-center border-b border-gray-700/50 last:border-none hover:bg-yellow-500/10 transition-colors cursor-pointer ${
+                  className={`text-center border-b border-[#fcb131]/20 last:border-none hover:bg-[#fcb131]/10 transition-colors cursor-pointer ${
                     i === 0
-                      ? "bg-yellow-500/30"
+                      ? "bg-[#fcb131]/20"
                       : i === 1
-                      ? "bg-yellow-500/20"
+                      ? "bg-[#fcb131]/15"
                       : i === 2
-                      ? "bg-yellow-500/10"
+                      ? "bg-[#fcb131]/10"
                       : ""
                   }`}
                   onClick={() => handleUserClick(entry.user, "pushups")}
                 >
-                  <td className="px-4 py-3 font-bold">
+                  <td
+                    className="px-4 py-3 font-bold text-[#fcb131]"
+                    style={{ color: "#fcb131" }}
+                  >
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="font-bold text-white">
-                      {displayNames[entry.user] || shortenAddress(entry.user)}
+                    <span
+                      className="font-bold text-[#fcb131]"
+                      style={{ color: "#fcb131" }}
+                    >
+                      {progressiveDisplayNames[entry.user] ||
+                        shortenAddress(entry.user)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-bold text-yellow-400">
+                  <td className="px-4 py-3 font-bold text-[#fcb131] text-lg">
                     {entry.totalScore}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-center space-x-1">
-                      {Object.keys(entry.networks).map((network) => (
-                        <div
-                          key={network}
-                          className={`w-3 h-3 rounded-full ${
-                            network === "polygon"
-                              ? "bg-pink-400"
-                              : network === "base"
-                              ? "bg-blue-400"
-                              : network === "monad"
-                              ? "bg-gray-400"
-                              : "bg-yellow-400"
-                          }`}
-                          title={
-                            network === "polygon"
-                              ? "Polygon"
-                              : network === "base"
-                              ? "Base"
-                              : network === "monad"
-                              ? "Monad"
-                              : "Celo"
-                          }
-                        />
-                      ))}
+                      {Object.entries(entry.networks).map(
+                        ([network, score]) => (
+                          <div
+                            key={network}
+                            className={`w-4 h-4 rounded-full ${getNetworkColor(
+                              network
+                            )} border border-white/20`}
+                            title={`${getNetworkName(network)}: ${score}`}
+                          />
+                        )
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -185,39 +217,54 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
           </table>
         </div>
 
-        {/* Mobile Card View */}
-        <div className="md:hidden space-y-3">
+        {/* Mobile Card View - Optimized for small screens */}
+        <div className="md:hidden space-y-2 px-1">
           {sortedPushupUsers.slice(0, 10).map((entry, i) => (
             <div
               key={`pushup-mobile-${entry.user}-${i}`}
-              className={`bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-3 rounded-lg cursor-pointer hover:from-yellow-500/30 hover:to-orange-500/30 transition-all ${
-                i === 0 ? "ring-2 ring-yellow-400" : i === 1 ? "ring-2 ring-gray-300" : i === 2 ? "ring-2 ring-orange-400" : ""
+              className={`bg-black/80 border border-[#fcb131]/50 rounded-lg p-3 cursor-pointer hover:bg-[#fcb131]/10 transition-colors ${
+                i === 0 ? "border-[#fcb131] bg-[#fcb131]/10" : ""
               }`}
               onClick={() => handleUserClick(entry.user, "pushups")}
             >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-3">
-                  <span className="text-xl font-bold">
-                    {i === 0 ? "#1" : i === 1 ? "#2" : i === 2 ? "#3" : `#${i + 1}`}
+              <div className="flex justify-between items-center w-full">
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <span
+                    className="text-lg flex-shrink-0 text-[#fcb131] font-bold"
+                    style={{ color: "#fcb131" }}
+                  >
+                    {i === 0
+                      ? "🥇"
+                      : i === 1
+                      ? "🥈"
+                      : i === 2
+                      ? "🥉"
+                      : `#${i + 1}`}
                   </span>
-                  <div>
-                    <div className="font-bold text-white text-sm">
-                      {displayNames[entry.user] || shortenAddress(entry.user)}
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className="font-bold text-[#fcb131] text-xs truncate"
+                      style={{ color: "#fcb131" }}
+                    >
+                      {progressiveDisplayNames[entry.user] ||
+                        shortenAddress(entry.user)}
                     </div>
                     <div className="flex space-x-1 mt-1">
-                      {Object.keys(entry.networks).map((network) => (
-                        <div
-                          key={network}
-                          className={`w-4 h-4 rounded-full ${
-                            network === "polygon" ? "bg-pink-400" : network === "base" ? "bg-blue-400" : network === "monad" ? "bg-gray-400" : "bg-yellow-400"
-                          }`}
-                          title={network === "polygon" ? "Polygon" : network === "base" ? "Base" : network === "monad" ? "Monad" : "Celo"}
-                        />
-                      ))}
+                      {Object.entries(entry.networks).map(
+                        ([network, score]) => (
+                          <div
+                            key={network}
+                            className={`w-2 h-2 rounded-full ${getNetworkColor(
+                              network
+                            )} flex-shrink-0`}
+                            title={`${getNetworkName(network)}: ${score}`}
+                          />
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
-                <div className="text-yellow-400 font-bold text-xl">
+                <div className="text-[#fcb131] font-bold text-lg flex-shrink-0 ml-2">
                   {entry.totalScore}
                 </div>
               </div>
@@ -227,74 +274,70 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
       </div>
 
       {/* Squats Leaderboard */}
-      <div>
-        <h3 className="text-lg font-bold mb-2 bg-gradient-to-r from-green-400 to-teal-500 text-white px-4 py-2 rounded-lg shadow-lg transform rotate-1">
-          Squats Champions
+      <div className="mb-6">
+        <h3 className="text-xl font-bold mb-4 text-[#fcb131] text-center border-b-2 border-[#fcb131] pb-2">
+          🏋️ Squats Champions 🏋️
         </h3>
+
         {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto bg-gradient-to-r from-green-500/20 to-teal-500/20 p-2 rounded-lg">
+        <div className="hidden md:block overflow-x-auto bg-black/60 border border-[#fcb131]/30 rounded-lg">
           <table className="min-w-full">
             <thead>
-              <tr className="border-b  border-b-2 border-green-500">
-                <th className="px-4 py-3 text-green-400 font-bold">#</th>
-                <th className="px-4 py-3 text-green-400 font-bold">Athlete</th>
-                <th className="px-4 py-3 text-green-400 font-bold">
+              <tr className="border-b-2 border-[#fcb131]">
+                <th className="px-4 py-3 text-[#fcb131] font-bold">#</th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">Athlete</th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">
                   Total Score
                 </th>
-                <th className="px-4 py-3 text-green-400 font-bold">Networks</th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">Networks</th>
               </tr>
             </thead>
             <tbody>
               {sortedSquatUsers.slice(0, 10).map((entry, i) => (
                 <tr
                   key={`squat-${entry.user}-${i}`}
-                  className={`text-center border-b border-gray-700/50 last:border-none hover:bg-green-500/10 transition-colors cursor-pointer ${
+                  className={`text-center border-b border-[#fcb131]/20 last:border-none hover:bg-[#fcb131]/10 transition-colors cursor-pointer ${
                     i === 0
-                      ? "bg-green-500/30"
+                      ? "bg-[#fcb131]/20"
                       : i === 1
-                      ? "bg-green-500/20"
+                      ? "bg-[#fcb131]/15"
                       : i === 2
-                      ? "bg-green-500/10"
+                      ? "bg-[#fcb131]/10"
                       : ""
                   }`}
                   onClick={() => handleUserClick(entry.user, "squats")}
                 >
-                  <td className="px-4 py-3 font-bold">
+                  <td
+                    className="px-4 py-3 font-bold text-[#fcb131]"
+                    style={{ color: "#fcb131" }}
+                  >
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="font-bold text-white">
-                      {displayNames[entry.user] || shortenAddress(entry.user)}
+                    <span
+                      className="font-bold text-[#fcb131]"
+                      style={{ color: "#fcb131" }}
+                    >
+                      {progressiveDisplayNames[entry.user] ||
+                        shortenAddress(entry.user)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-bold text-green-400">
+                  <td className="px-4 py-3 font-bold text-[#fcb131] text-lg">
                     {entry.totalScore}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-center space-x-1">
-                      {Object.keys(entry.networks).map((network) => (
-                        <div
-                          key={network}
-                          className={`w-3 h-3 rounded-full ${
-                            network === "polygon"
-                              ? "bg-pink-400"
-                              : network === "base"
-                              ? "bg-blue-400"
-                              : network === "monad"
-                              ? "bg-gray-400"
-                              : "bg-yellow-400"
-                          }`}
-                          title={
-                            network === "polygon"
-                              ? "Polygon"
-                              : network === "base"
-                              ? "Base"
-                              : network === "monad"
-                              ? "Monad"
-                              : "Celo"
-                          }
-                        />
-                      ))}
+                      {Object.entries(entry.networks).map(
+                        ([network, score]) => (
+                          <div
+                            key={network}
+                            className={`w-4 h-4 rounded-full ${getNetworkColor(
+                              network
+                            )} border border-white/20`}
+                            title={`${getNetworkName(network)}: ${score}`}
+                          />
+                        )
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -303,39 +346,54 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
           </table>
         </div>
 
-        {/* Mobile Card View */}
-        <div className="md:hidden space-y-3">
+        {/* Mobile Card View - Optimized for small screens */}
+        <div className="md:hidden space-y-2 px-1">
           {sortedSquatUsers.slice(0, 10).map((entry, i) => (
             <div
               key={`squat-mobile-${entry.user}-${i}`}
-              className={`bg-gradient-to-r from-green-500/20 to-teal-500/20 p-3 rounded-lg cursor-pointer hover:from-green-500/30 hover:to-teal-500/30 transition-all ${
-                i === 0 ? "ring-2 ring-green-400" : i === 1 ? "ring-2 ring-gray-300" : i === 2 ? "ring-2 ring-teal-400" : ""
+              className={`bg-black/80 border border-[#fcb131]/50 rounded-lg p-3 cursor-pointer hover:bg-[#fcb131]/10 transition-colors ${
+                i === 0 ? "border-[#fcb131] bg-[#fcb131]/10" : ""
               }`}
               onClick={() => handleUserClick(entry.user, "squats")}
             >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-3">
-                  <span className="text-xl font-bold">
-                    {i === 0 ? "#1" : i === 1 ? "#2" : i === 2 ? "#3" : `#${i + 1}`}
+              <div className="flex justify-between items-center w-full">
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <span
+                    className="text-lg flex-shrink-0 text-[#fcb131] font-bold"
+                    style={{ color: "#fcb131" }}
+                  >
+                    {i === 0
+                      ? "🥇"
+                      : i === 1
+                      ? "🥈"
+                      : i === 2
+                      ? "🥉"
+                      : `#${i + 1}`}
                   </span>
-                  <div>
-                    <div className="font-bold text-white text-sm">
-                      {displayNames[entry.user] || shortenAddress(entry.user)}
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className="font-bold text-[#fcb131] text-xs truncate"
+                      style={{ color: "#fcb131" }}
+                    >
+                      {progressiveDisplayNames[entry.user] ||
+                        shortenAddress(entry.user)}
                     </div>
                     <div className="flex space-x-1 mt-1">
-                      {Object.keys(entry.networks).map((network) => (
-                        <div
-                          key={network}
-                          className={`w-4 h-4 rounded-full ${
-                            network === "polygon" ? "bg-pink-400" : network === "base" ? "bg-blue-400" : network === "monad" ? "bg-gray-400" : "bg-yellow-400"
-                          }`}
-                          title={network === "polygon" ? "Polygon" : network === "base" ? "Base" : network === "monad" ? "Monad" : "Celo"}
-                        />
-                      ))}
+                      {Object.entries(entry.networks).map(
+                        ([network, score]) => (
+                          <div
+                            key={network}
+                            className={`w-2 h-2 rounded-full ${getNetworkColor(
+                              network
+                            )} flex-shrink-0`}
+                            title={`${getNetworkName(network)}: ${score}`}
+                          />
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
-                <div className="text-green-400 font-bold text-xl">
+                <div className="text-[#fcb131] font-bold text-lg flex-shrink-0 ml-2">
                   {entry.totalScore}
                 </div>
               </div>
@@ -344,58 +402,51 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
         </div>
       </div>
 
-      {/* Score Breakdown Modal */}
+      {/* User Breakdown Modal */}
       {selectedUser && breakdownType && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-white">
-                Score Breakdown for{" "}
-                {displayNames[selectedUser] || shortenAddress(selectedUser)}
-              </h3>
-              <button
-                onClick={closeBreakdown}
-                className="text-gray-400 hover:text-white text-2xl"
-              >
-                &times;
-              </button>
-            </div>
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2002]"
+          onClick={closeBreakdown}
+        >
+          <div
+            className="bg-black border-2 border-[#fcb131] rounded-lg p-6 max-w-md w-full mx-4 shadow-[0_0_25px_rgba(252,177,49,0.5)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h4 className="text-lg font-bold text-[#fcb131] mb-4 text-center">
+              {progressiveDisplayNames[selectedUser] ||
+                shortenAddress(selectedUser)}
+            </h4>
+            <p className="text-white mb-4 text-center">
+              {breakdownType === "pushups" ? "💪 Push-ups" : "🏋️ Squats"}{" "}
+              breakdown by network:
+            </p>
             <div className="space-y-2">
               {Object.entries(
                 breakdownType === "pushups"
-                  ? pushupAggregated[selectedUser].networks
-                  : squatAggregated[selectedUser].networks
+                  ? pushupAggregated[selectedUser]?.networks || {}
+                  : squatAggregated[selectedUser]?.networks || {}
               ).map(([network, score]) => (
                 <div
                   key={network}
-                  className="flex justify-between items-center p-2 bg-gray-700 rounded"
+                  className="flex justify-between items-center bg-black/40 p-2 rounded border border-[#fcb131]/20"
                 >
-                  <span
-                    className={`font-bold ${
-                      network === "polygon"
-                        ? "text-pink-400"
-                        : network === "base"
-                        ? "text-blue-400"
-                        : network === "monad"
-                        ? "text-yellow-400"
-                        : "text-green-400"
-                    }`}
-                  >
-                    {network === "polygon"
-                      ? "Polygon"
-                      : network === "base"
-                      ? "Base"
-                      : network === "monad"
-                      ? "Monad"
-                      : "Celo"}
-                  </span>
-                  <span className="text-white">{score}</span>
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className={`w-3 h-3 rounded-full ${getNetworkColor(
+                        network
+                      )}`}
+                    />
+                    <span className="text-white font-medium">
+                      {getNetworkName(network)}
+                    </span>
+                  </div>
+                  <span className="text-[#fcb131] font-bold">{score}</span>
                 </div>
               ))}
             </div>
             <button
               onClick={closeBreakdown}
-              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full"
+              className="w-full mt-4 bg-[#fcb131] hover:bg-[#f39c12] text-black font-bold py-2 px-4 rounded transition-colors"
             >
               Close
             </button>

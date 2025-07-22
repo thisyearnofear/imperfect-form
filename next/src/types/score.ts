@@ -9,7 +9,7 @@ export interface Score {
   displayName?: string;
 }
 
-// Define the contract data structure returned from blockchain
+// Define the standardized contract data structure returned from blockchain
 export interface ContractScore {
   user: string;
   pushups: number | string | {

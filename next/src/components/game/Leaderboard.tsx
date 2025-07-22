@@ -73,9 +73,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   // This avoids React hook issues when switching between wallet modes
 
   // Circuit breaker for failed networks
-  const [networkRetryCount, setNetworkRetryCount] = useState<Record<string, number>>({});
-
-
+  const [networkRetryCount, setNetworkRetryCount] = useState<
+    Record<string, number>
+  >({});
 
   // Helper function to verify contract addresses
   const verifyContractAddresses = () => {
@@ -112,7 +112,6 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   const fetchLeaderboardData = React.useCallback(async () => {
     // Function to fetch data using fallback RPC URLs with improved error handling
     const fetchWithFallbackRpcs = async (
-      contract: ethers.Contract | null,
       contractAddress: string,
       fallbackRpcUrls: string[],
       networkName: string
@@ -125,25 +124,15 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       // Circuit breaker: if network has failed too many times, skip it
       const currentRetryCount = networkRetryCount[networkName] || 0;
       const MAX_NETWORK_FAILURES = 3;
-      
+
       if (currentRetryCount >= MAX_NETWORK_FAILURES) {
-        console.warn(`⚡ Circuit breaker: Skipping ${networkName} due to repeated failures`);
+        console.warn(
+          `⚡ Circuit breaker: Skipping ${networkName} due to repeated failures`
+        );
         return [];
       }
 
-      // Try using ThirdWeb contract first
-      try {
-        if (contract) {
-          const data = await contract.call("getLeaderboard");
-          // Reset retry count on success
-          setNetworkRetryCount(prev => ({ ...prev, [networkName]: 0 }));
-          return data || [];
-        }
-      } catch {
-        // Silent fail and continue to fallback RPCs
-      }
-
-      // If ThirdWeb fails, try fallback RPC URLs with ethers.js
+      // Use direct ethers.js with fallback RPC URLs
       for (const rpcUrl of fallbackRpcUrls) {
         // Add exponential backoff retry logic
         const MAX_RETRIES = 1; // Reduced from 2 to 1 to prevent spam
@@ -157,33 +146,35 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             }
 
             // Simplified network detection with caching for performance using centralized config
-            const networkMap: Record<string, { name: string; chainId: number }> =
-              {
-                polygon: {
-                  name: "polygon",
-                  chainId: chainConfigs[SupportedChain.POLYGON].id,
-                },
-                matic: {
-                  name: "polygon",
-                  chainId: chainConfigs[SupportedChain.POLYGON].id,
-                },
-                base: {
-                  name: "base",
-                  chainId: chainConfigs[SupportedChain.BASE].id,
-                },
-                sepolia: {
-                  name: "base",
-                  chainId: chainConfigs[SupportedChain.BASE].id,
-                },
-                monad: {
-                  name: "monad",
-                  chainId: chainConfigs[SupportedChain.MONAD].id,
-                },
-                celo: {
-                  name: "celo",
-                  chainId: chainConfigs[SupportedChain.CELO].id,
-                },
-              };
+            const networkMap: Record<
+              string,
+              { name: string; chainId: number }
+            > = {
+              polygon: {
+                name: "polygon",
+                chainId: chainConfigs[SupportedChain.POLYGON].id,
+              },
+              matic: {
+                name: "polygon",
+                chainId: chainConfigs[SupportedChain.POLYGON].id,
+              },
+              base: {
+                name: "base",
+                chainId: chainConfigs[SupportedChain.BASE].id,
+              },
+              sepolia: {
+                name: "base",
+                chainId: chainConfigs[SupportedChain.BASE].id,
+              },
+              monad: {
+                name: "monad",
+                chainId: chainConfigs[SupportedChain.MONAD].id,
+              },
+              celo: {
+                name: "celo",
+                chainId: chainConfigs[SupportedChain.CELO].id,
+              },
+            };
 
             // Find the network info by looking for keywords in the URL
             const networkKey = Object.keys(networkMap).find((key) =>
@@ -195,10 +186,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               : { name: "unknown", chainId: 1 };
 
             // Create provider with correct network info and options
-            const provider = new ethers.providers.StaticJsonRpcProvider(
-              rpcUrl,
-              networkInfo
-            );
+            const provider = new ethers.JsonRpcProvider(rpcUrl, networkInfo, {
+              staticNetwork: true,
+            });
 
             // Set a custom timeout for the provider connection
             const TIMEOUT_MS = 15000; // 15 seconds
@@ -288,7 +278,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             const errorReason =
               err.reason || (err.error && err.error.reason) || "";
             const errorMessage =
-              err.message || (err.error && err.error.message) || "Unknown error";
+              err.message ||
+              (err.error && err.error.message) ||
+              "Unknown error";
 
             if (errorCode === "CALL_EXCEPTION") {
               console.error(
@@ -323,14 +315,16 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       }
 
       // Increment failure count for this network
-      setNetworkRetryCount(prev => ({ 
-        ...prev, 
-        [networkName]: (prev[networkName] || 0) + 1 
+      setNetworkRetryCount((prev) => ({
+        ...prev,
+        [networkName]: (prev[networkName] || 0) + 1,
       }));
 
       // Return empty array if all attempts fail
       console.warn(
-        `All RPC URLs failed for ${networkName}, returning empty array. Failure count: ${currentRetryCount + 1}`
+        `All RPC URLs failed for ${networkName}, returning empty array. Failure count: ${
+          currentRetryCount + 1
+        }`
       );
       return [];
     };
@@ -411,7 +405,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       // Fetch data from active networks in parallel
       const networkResults = await Promise.all(
         activeNetworks.map(({ network, address, rpcs }) =>
-          fetchWithFallbackRpcs(null, address, rpcs, network)
+          fetchWithFallbackRpcs(address, rpcs, network)
             .then((data) => ({ network, data }))
             .catch((error) => {
               console.error(`Failed to fetch data for ${network}:`, error);
@@ -471,60 +465,30 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             let pushupScore = 0;
             let squatScore = 0;
 
-            try {
-              // Handle different types of number representations
+            // Extract pushup score - handle BigNumber format
+            if (entry.pushups !== undefined) {
               if (typeof entry.pushups === "object" && entry.pushups !== null) {
-                if (
-                  entry.pushups._isBigNumber ||
-                  typeof entry.pushups.toString === "function"
-                ) {
-                  // Use toString only if it's a function
-                  if (typeof entry.pushups.toString === "function") {
-                    pushupScore = parseInt(entry.pushups.toString());
-                  }
+                if (typeof entry.pushups.toString === "function") {
+                  pushupScore = parseInt(entry.pushups.toString());
                 } else if (entry.pushups._hex) {
-                  // Handle ethers v5 BigNumber format
                   pushupScore = parseInt(entry.pushups._hex, 16);
                 }
-              } else if (typeof entry.pushups === "string") {
-                pushupScore = parseInt(entry.pushups);
-              } else if (typeof entry.pushups === "number") {
-                pushupScore = entry.pushups;
+              } else {
+                pushupScore = Number(entry.pushups);
               }
-
-              if (isNaN(pushupScore)) {
-                pushupScore = 0;
-              }
-            } catch {
-              pushupScore = 0;
             }
 
-            try {
-              // Handle different types of number representations
+            // Extract squat score - handle BigNumber format
+            if (entry.squats !== undefined) {
               if (typeof entry.squats === "object" && entry.squats !== null) {
-                if (
-                  entry.squats._isBigNumber ||
-                  typeof entry.squats.toString === "function"
-                ) {
-                  // Use toString only if it's a function
-                  if (typeof entry.squats.toString === "function") {
-                    squatScore = parseInt(entry.squats.toString());
-                  }
+                if (typeof entry.squats.toString === "function") {
+                  squatScore = parseInt(entry.squats.toString());
                 } else if (entry.squats._hex) {
-                  // Handle ethers v5 BigNumber format
                   squatScore = parseInt(entry.squats._hex, 16);
                 }
-              } else if (typeof entry.squats === "string") {
-                squatScore = parseInt(entry.squats);
-              } else if (typeof entry.squats === "number") {
-                squatScore = entry.squats;
+              } else {
+                squatScore = Number(entry.squats);
               }
-
-              if (isNaN(squatScore)) {
-                squatScore = 0;
-              }
-            } catch {
-              squatScore = 0;
             }
 
             // Only add entries with scores > 0
@@ -688,6 +652,17 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     );
   }
 
+  // Debug logging
+  if (process.env.NODE_ENV === "development") {
+    console.log("Render check:", {
+      pushupLength: pushupLeaderboard.length,
+      squatLength: squatLeaderboard.length,
+      isLoading,
+      pushupSample: pushupLeaderboard.slice(0, 2),
+      squatSample: squatLeaderboard.slice(0, 2),
+    });
+  }
+
   if (pushupLeaderboard.length === 0 && squatLeaderboard.length === 0) {
     return (
       <div className="text-center py-4">
@@ -732,7 +707,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           className="load-button"
           onClick={() => {
             if (typeof window === "undefined") return;
-            
+
             // Force reload by clearing all caches
             localStorage.removeItem("leaderboardCache");
             localStorage.removeItem("leaderboardCacheTimestamp");

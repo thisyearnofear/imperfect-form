@@ -1,4 +1,5 @@
 // Cache for ENS names to avoid repeated API calls
+import { shortenAddress } from './formatters';
 const ensCache: Record<string, string | null> = {};
 
 // Cache of pending promises to prevent duplicate API calls for the same address
@@ -54,8 +55,8 @@ export async function resolveENSName(address: string): Promise<string | null> {
           recentFailures.add(normalizedAddress);
           setTimeout(() => recentFailures.delete(normalizedAddress), FAILURE_COOLDOWN_MS);
           
-          // Only log in non-production to reduce noise
-          if (process.env.NODE_ENV !== 'production') {
+          // Only log in development to reduce noise
+          if (process.env.NODE_ENV === 'development') {
             console.log(`ENS API response not OK: ${response.status}`);
           }
           
@@ -77,8 +78,8 @@ export async function resolveENSName(address: string): Promise<string | null> {
         recentFailures.add(normalizedAddress);
         setTimeout(() => recentFailures.delete(normalizedAddress), FAILURE_COOLDOWN_MS);
         
-        // Only log in non-production to reduce noise
-        if (process.env.NODE_ENV !== 'production') {
+        // Only log in development to reduce noise
+        if (process.env.NODE_ENV === 'development') {
           console.log(`ENS API fetch error: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`);
         }
         
@@ -86,8 +87,8 @@ export async function resolveENSName(address: string): Promise<string | null> {
         return null;
       }
     } catch (error) {
-      // Only log in non-production to reduce noise
-      if (process.env.NODE_ENV !== 'production') {
+      // Only log in development to reduce noise
+      if (process.env.NODE_ENV === 'development') {
         console.log(`Error resolving ENS name for address ${normalizedAddress}:`, error);
       }
       
@@ -115,12 +116,3 @@ export async function getDisplayName(address: string): Promise<string> {
   return ensName || shortenAddress(address);
 }
 
-/**
- * Shortens an Ethereum address for display
- * @param address The full Ethereum address
- * @returns The shortened address (e.g., 0x1234...5678)
- */
-export function shortenAddress(address: string): string {
-  if (!address) return '';
-  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-}

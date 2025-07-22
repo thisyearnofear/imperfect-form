@@ -1,0 +1,121 @@
+"use client";
+
+import React, { useState } from 'react';
+import { SelfVerificationModal } from '@/components/verification';
+import { usePlatform } from '@/contexts/PlatformContext';
+import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
+import toast from 'react-hot-toast';
+
+interface VerificationIntegrationProps {
+  onVerificationComplete?: () => void;
+  className?: string;
+}
+
+/**
+ * Component that provides verification functionality after score submission
+ * Shows a prompt to verify as human with Self Protocol
+ */
+const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
+  onVerificationComplete,
+  className = "",
+}) => {
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  
+  const { wallet } = usePlatform();
+  const { currentTheme } = useEnhancedChainTheme();
+  const { address } = wallet;
+
+  const handleVerificationSuccess = () => {
+    setIsVerified(true);
+    setShowVerificationModal(false);
+    
+    toast.success("🎉 Verified as human! You now have a verified badge.", {
+      duration: 5000,
+      style: {
+        background: currentTheme.palette.surface,
+        color: currentTheme.palette.text,
+        border: `2px solid ${currentTheme.palette.accent}`,
+      },
+    });
+    
+    onVerificationComplete?.();
+  };
+
+  const handleVerificationError = (error: unknown) => {
+    console.error("Verification failed:", error);
+    setShowVerificationModal(false);
+    
+    toast.error("Verification failed. Please try again.", {
+      style: {
+        background: currentTheme.palette.surface,
+        color: currentTheme.palette.text,
+        border: `2px solid ${currentTheme.palette.error}`,
+      },
+    });
+  };
+
+  const promptForVerification = () => {
+    setShowVerificationModal(true);
+  };
+
+  if (isVerified) {
+    return (
+      <div className={`verification-success ${className}`}>
+        <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-4 rounded-lg border border-green-500/30">
+          <div className="flex items-center space-x-3">
+            <div className="text-2xl">✅</div>
+            <div>
+              <h4 className="font-bold text-green-400">Verified Human</h4>
+              <p className="text-sm text-green-300">
+                You&apos;re verified! Your scores now show with a verified badge.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Verification Prompt */}
+      <div className={`verification-prompt ${className}`}>
+        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-4 rounded-lg border border-yellow-500/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="text-2xl">🏆</div>
+              <div>
+                <h4 className="font-bold text-yellow-400">Get Verified!</h4>
+                <p className="text-sm text-yellow-300">
+                  Prove you&apos;re human and earn your verified badge
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={promptForVerification}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 text-sm"
+            >
+              Verify Now
+            </button>
+          </div>
+          
+          <div className="mt-3 text-xs text-yellow-200/80">
+            ✨ One-time verification • 🔒 Privacy-first • ⚡ Instant badge
+          </div>
+        </div>
+      </div>
+
+      {/* Verification Modal */}
+      <SelfVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onSuccess={handleVerificationSuccess}
+        onError={handleVerificationError}
+        userAddress={address || ""}
+      />
+    </>
+  );
+};
+
+export default VerificationIntegration;

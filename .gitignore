@@ -3,3 +3,23 @@ build/
 node_modules/
 .env
 .vercel
+
+# macOS system files
+.DS_Store
+
+# Environment files
+.env.local
+.env.*.local
+
+# Blockchain artifacts and cache
+artifacts/
+cache/
+deployments/
+
+# Package files
+*.tgz
+*.tar.gz
+imperfect-form-nextjs@*
+
+# Logs
+*.log

@@ -30,7 +30,10 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
   preventClose = false,
 }) => {
   return (
-    <DialogPrimitive.Root open={isOpen} onOpenChange={preventClose ? undefined : onClose}>
+    <DialogPrimitive.Root
+      open={isOpen}
+      onOpenChange={preventClose ? undefined : onClose}
+    >
       <DialogPrimitive.Portal>
         {/* Triple-layered backdrop for maximum opacity */}
         <div className="fixed inset-0 bg-black z-[1997]" />
@@ -58,7 +61,10 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
           )}
 
           {description && (
-            <DialogPrimitive.Description className="text-sm text-white mb-4">
+            <DialogPrimitive.Description
+              className="text-sm text-[#fcb131] mb-4"
+              style={{ color: "#fcb131" }}
+            >
               {description}
             </DialogPrimitive.Description>
           )}

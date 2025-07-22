@@ -8,6 +8,12 @@ import {
 import toast from "react-hot-toast";
 import { isFirstTimeDivviUser, getDivviDataSuffix, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
 import { getEthereumProvider } from "./farcasterMiniApp";
+import {
+  createTransactionOptions,
+  estimateGas,
+  parseEther,
+  parseUnits,
+} from "./ethersHelpers";
 
 /**
  * Helper function to check if the current provider is Coinbase Wallet
@@ -70,10 +76,21 @@ export async function submitScoreDirectly(
   processingType?: string;
   useSpendLimit?: boolean;
 }> {
+  // Helper function to create provider
+  function createProviderFromEthereum(ethereumProvider: unknown): ethers.BrowserProvider {
+    if (ethereumProvider && typeof ethereumProvider === 'object' && 'request' in ethereumProvider) {
+      return new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
+    } else if (typeof window !== 'undefined' && window.ethereum) {
+      return new ethers.BrowserProvider(window.ethereum);
+    } else {
+      throw new Error("No valid Ethereum provider found");
+    }
+  }
+
   try {
-    let signer;
-    let userAddress;
-    let provider;
+    let signer: ethers.Signer;
+    let userAddress: string;
+    let provider: ethers.BrowserProvider;
 
     if (isBaseNetwork) {
       // For Base network with Smart Wallet, we'll use a simplified approach
@@ -178,15 +195,9 @@ export async function submitScoreDirectly(
       }
 
       // Create a provider using the appropriate Ethereum provider (Farcaster or window.ethereum)
-      provider = new ethers.providers.Web3Provider(ethereumProvider);
+      provider = createProviderFromEthereum(ethereumProvider);
 
-      // Optimize provider settings for Farcaster mini apps
-      provider.pollingInterval = 5000; // 5 seconds for faster updates in Farcaster
-
-      // Set connection timeout for better error handling
-      if (provider._network) {
-        provider._network.ensAddress = undefined; // Disable ENS to avoid timeouts
-      }
+      // Note: In ethers v6, polling is automatically optimized
 
       // Request the user to switch to the correct network if needed
       let network;
@@ -262,7 +273,7 @@ export async function submitScoreDirectly(
 
       // Get the signer
       try {
-        signer = provider.getSigner();
+        signer = await provider.getSigner();
         userAddress = await signer.getAddress();
         console.log("Signer address obtained:", userAddress);
       } catch (signerError) {
@@ -290,11 +301,7 @@ export async function submitScoreDirectly(
     }
 
     // Create contract instance with the appropriate ABI
-    const contract = new ethers.Contract(
-      contractAddress,
-      contractABI,
-      signer
-    );
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
     // Log the contract and parameters
     console.log("Contract address:", contractAddress);
@@ -306,21 +313,11 @@ export async function submitScoreDirectly(
     toast.loading("Preparing transaction...", { id: "submit-score" });
 
     // Estimate gas with a higher gas limit to avoid failures
-    let gasEstimate;
-    try {
-      gasEstimate = await contract.estimateGas.addScore(pushups, squats, {
-        from: userAddress,
-      });
-      console.log("Gas estimation successful:", gasEstimate.toString());
-    } catch (error) {
-      console.error("Gas estimation failed:", error);
-      // If gas estimation fails, use a default high gas limit
-      gasEstimate = ethers.BigNumber.from(500000);
-      console.log("Using default gas limit:", gasEstimate.toString());
-    }
+    const gasEstimate = await estimateGas(contract, "addScore", [pushups, squats]);
+    console.log("Gas estimation:", gasEstimate.toString());
 
     // Add 50% buffer to gas estimate for testnet transactions
-    const gasLimit = gasEstimate.mul(150).div(100);
+    const gasLimit = (gasEstimate * 150n) / 100n;
     console.log("Gas limit with buffer:", gasLimit.toString());
 
     // Show toast for user to confirm transaction
@@ -333,6 +330,14 @@ export async function submitScoreDirectly(
     let tx;
     let shouldRegisterWithDivvi = false; // Track if we should register with Divvi after transaction
 
+    // Get network-specific transaction options
+    const network = await provider.getNetwork();
+    const networkId = Number(network.chainId);
+
+    // Create optimized transaction options for this network
+    const txOptions = createTransactionOptions(networkId, gasLimit);
+    console.log("Using transaction options:", txOptions);
+
     // Network-specific transaction parameters
     if (contractAddress === "0x653d41Fba630381aA44d8598a4b35Ce257924d65") {
       // Monad Testnet
@@ -340,19 +345,17 @@ export async function submitScoreDirectly(
       try {
         // For Monad testnet, use legacy transaction format with higher gas price
         // Include the submission fee (0.001 MON) required by the contract
-        tx = await contract.addScore(pushups, squats, {
-          gasLimit: gasLimit.mul(2), // Double the gas limit for Monad
-          gasPrice: ethers.utils.parseUnits("50", "gwei"), // Higher gas price for Monad
-          value: ethers.utils.parseEther("0.001"), // Send 0.001 MON as submission fee (native token)
-        });
+        tx = await contract.addScore(pushups, squats, txOptions);
       } catch (error) {
         console.error("Monad transaction failed:", error);
-        // Try with even higher gas price
-        tx = await contract.addScore(pushups, squats, {
-          gasLimit: gasLimit.mul(3), // Triple the gas limit
-          gasPrice: ethers.utils.parseUnits("100", "gwei"), // Much higher gas price
-          value: ethers.utils.parseEther("0.001"), // Send 0.001 MON as submission fee (native token)
-        });
+        // Try with even higher gas price and triple gas limit
+        const retryOptions = {
+          ...txOptions,
+          gasLimit: gasLimit * 3n,
+          gasPrice: parseUnits("100", "gwei"),
+          value: parseEther("0.001")
+        };
+        tx = await contract.addScore(pushups, squats, retryOptions);
       }
     } else if (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273") {
       // Celo Mainnet
@@ -392,7 +395,7 @@ export async function submitScoreDirectly(
           const txRequest = {
             to: contractAddress,
             data: finalData,
-            gasLimit: gasLimit.mul(2), // Double the gas limit for Celo
+            gasLimit: gasLimit * 2n, // Double the gas limit for Celo
           };
 
           // Send the transaction using the signer
@@ -400,7 +403,7 @@ export async function submitScoreDirectly(
         } else {
           // For returning users, use standard contract call
           tx = await contract.addScore(pushups, squats, {
-            gasLimit: gasLimit.mul(2), // Double the gas limit for Celo
+            gasLimit: gasLimit * 2n, // Double the gas limit for Celo
             // No value parameter - the standardized contract doesn't require a fee
           });
         }
@@ -425,8 +428,8 @@ export async function submitScoreDirectly(
             const txRequest = {
               to: contractAddress,
               data: finalData,
-              gasLimit: gasLimit.mul(3), // Triple the gas limit
-              gasPrice: ethers.utils.parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
+              gasLimit: gasLimit * 3n, // Triple the gas limit
+              gasPrice: parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
             };
 
             // Send the transaction using the signer
@@ -434,8 +437,8 @@ export async function submitScoreDirectly(
           } else {
             // For returning users, use standard contract call with legacy format
             tx = await contract.addScore(pushups, squats, {
-              gasLimit: gasLimit.mul(3), // Triple the gas limit
-              gasPrice: ethers.utils.parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
+              gasLimit: gasLimit * 3n, // Triple the gas limit
+              gasPrice: parseUnits("30", "gwei"), // Use explicit gas price for legacy tx
               // No value parameter - the standardized contract doesn't require a fee
             });
           }
@@ -477,18 +480,18 @@ export async function submitScoreDirectly(
           const txRequest = {
             to: contractAddress,
             data: finalData,
-            gasLimit: gasLimit.mul(2),
-            maxPriorityFeePerGas: ethers.utils.parseUnits("30", "gwei"),
-            maxFeePerGas: ethers.utils.parseUnits("100", "gwei"),
+            gasLimit: gasLimit * 2n,
+            maxPriorityFeePerGas: parseUnits("30", "gwei"),
+            maxFeePerGas: parseUnits("100", "gwei"),
           };
 
           tx = await signer.sendTransaction(txRequest);
         } else {
           // For returning users, use standard contract call
           tx = await contract.addScore(pushups, squats, {
-            gasLimit: gasLimit.mul(2), // Double the gas limit for Polygon
-            maxPriorityFeePerGas: ethers.utils.parseUnits("30", "gwei"), // Higher priority fee for Polygon
-            maxFeePerGas: ethers.utils.parseUnits("100", "gwei"), // Higher max fee for Polygon
+            gasLimit: gasLimit * 2n, // Double the gas limit for Polygon
+            maxPriorityFeePerGas: parseUnits("30", "gwei"), // Higher priority fee for Polygon
+            maxFeePerGas: parseUnits("100", "gwei"), // Higher max fee for Polygon
           });
         }
       } catch (error) {
@@ -503,15 +506,15 @@ export async function submitScoreDirectly(
           const txRequest = {
             to: contractAddress,
             data: finalData,
-            gasLimit: gasLimit.mul(3),
-            gasPrice: ethers.utils.parseUnits("50", "gwei"),
+            gasLimit: gasLimit * 3n,
+            gasPrice: parseUnits("50", "gwei"),
           };
 
           tx = await signer.sendTransaction(txRequest);
         } else {
           tx = await contract.addScore(pushups, squats, {
-            gasLimit: gasLimit.mul(3), // Triple the gas limit
-            gasPrice: ethers.utils.parseUnits("50", "gwei"), // Higher gas price for Polygon
+            gasLimit: gasLimit * 3n, // Triple the gas limit
+            gasPrice: parseUnits("50", "gwei"), // Higher gas price for Polygon
           });
         }
       }
@@ -548,18 +551,18 @@ export async function submitScoreDirectly(
           const txRequest = {
             to: contractAddress,
             data: finalData,
-            gasLimit: gasLimit.mul(2),
-            maxPriorityFeePerGas: ethers.utils.parseUnits("0.1", "gwei"),
-            maxFeePerGas: ethers.utils.parseUnits("10", "gwei"),
+            gasLimit: gasLimit * 2n,
+            maxPriorityFeePerGas: parseUnits("0.1", "gwei"),
+            maxFeePerGas: parseUnits("10", "gwei"),
           };
 
           tx = await signer.sendTransaction(txRequest);
         } else {
           // For returning users, use standard contract call
           tx = await contract.addScore(pushups, squats, {
-            gasLimit: gasLimit.mul(2), // Double the gas limit for Base
-            maxPriorityFeePerGas: ethers.utils.parseUnits("0.1", "gwei"), // Lower priority fee for mainnet
-            maxFeePerGas: ethers.utils.parseUnits("10", "gwei"), // Lower max fee for mainnet
+            gasLimit: gasLimit * 2n, // Double the gas limit for Base
+            maxPriorityFeePerGas: parseUnits("0.1", "gwei"), // Lower priority fee for mainnet
+            maxFeePerGas: parseUnits("10", "gwei"), // Lower max fee for mainnet
           });
         }
       } catch (error) {
@@ -574,15 +577,15 @@ export async function submitScoreDirectly(
           const txRequest = {
             to: contractAddress,
             data: finalData,
-            gasLimit: gasLimit.mul(3),
-            gasPrice: ethers.utils.parseUnits("5", "gwei"),
+            gasLimit: gasLimit * 3n,
+            gasPrice: parseUnits("5", "gwei"),
           };
 
           tx = await signer.sendTransaction(txRequest);
         } else {
           tx = await contract.addScore(pushups, squats, {
-            gasLimit: gasLimit.mul(3), // Triple the gas limit
-            gasPrice: ethers.utils.parseUnits("5", "gwei"), // Lower gas price for mainnet
+            gasLimit: gasLimit * 3n, // Triple the gas limit
+            gasPrice: parseUnits("5", "gwei"), // Lower gas price for mainnet
           });
         }
       }
@@ -592,8 +595,8 @@ export async function submitScoreDirectly(
         // Try EIP-1559 transaction (supported by most modern wallets)
         tx = await contract.addScore(pushups, squats, {
           gasLimit: gasLimit,
-          maxPriorityFeePerGas: ethers.utils.parseUnits("2", "gwei"), // Higher priority fee
-          maxFeePerGas: ethers.utils.parseUnits("50", "gwei"), // Higher max fee
+          maxPriorityFeePerGas: parseUnits("2", "gwei"), // Higher priority fee
+          maxFeePerGas: parseUnits("50", "gwei"), // Higher max fee
         });
       } catch (error) {
         console.log(
@@ -604,7 +607,7 @@ export async function submitScoreDirectly(
         // Fall back to legacy transaction format
         tx = await contract.addScore(pushups, squats, {
           gasLimit: gasLimit,
-          gasPrice: ethers.utils.parseUnits("30", "gwei"), // Higher gas price for legacy transactions
+          gasPrice: ethers.parseUnits("30", "gwei"), // Higher gas price for legacy transactions
         });
       }
     }
@@ -625,7 +628,7 @@ export async function submitScoreDirectly(
       transactionHash: tx.hash,
       status: 1,
       blockNumber: 0, // We don't need the actual block number for success
-      gasUsed: ethers.BigNumber.from('0'), // Placeholder
+      gasUsed: 0n, // Placeholder using BigInt
     };
 
     console.log("Transaction receipt:", receipt);
@@ -636,13 +639,13 @@ export async function submitScoreDirectly(
 
       // Register for Celo, Polygon, and Base
       if (
-        (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273" && chainId === 42220) || // Celo mainnet
-        (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888" && chainId === 137) ||   // Polygon mainnet
-        (contractAddress === "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B" && chainId === 8453)     // Base mainnet
+        (contractAddress === "0xB0cbC7325EbC744CcB14211CA74C5a764928F273" && Number(chainId) === 42220) || // Celo mainnet
+        (contractAddress === "0xc783d6E12560dc251F5067A62426A5f3b45b6888" && Number(chainId) === 137) ||   // Polygon mainnet
+        (contractAddress === "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B" && Number(chainId) === 8453)     // Base mainnet
       ) {
         try {
           // Register the referral with Divvi
-          await registerDivviReferral(receipt.transactionHash, chainId, userAddress);
+          await registerDivviReferral(receipt.transactionHash, Number(chainId), userAddress);
         } catch (divviError) {
           console.error("Error registering Divvi referral:", divviError);
           // Don't fail the transaction if Divvi registration fails
@@ -796,7 +799,7 @@ export async function canUserSubmit(
       }
 
       // Create a provider
-      provider = new ethers.providers.Web3Provider(window.ethereum);
+      provider = new ethers.BrowserProvider(window.ethereum);
 
       // Get the current network to check if we're on a supported network
       const network = await provider.getNetwork();
@@ -804,10 +807,10 @@ export async function canUserSubmit(
 
       // Check cooldown for supported networks
       if (
-        network.chainId === 137 || // Polygon Mainnet
-        network.chainId === 10143 || // Monad Testnet
-        network.chainId === 42220 || // Celo Mainnet
-        network.chainId === 8453 // Base Mainnet
+        Number(network.chainId) === 137 || // Polygon Mainnet
+        Number(network.chainId) === 10143 || // Monad Testnet
+        Number(network.chainId) === 42220 || // Celo Mainnet
+        Number(network.chainId) === 8453 // Base Mainnet
       ) {
         console.log(
           `On network ${network.name} (${network.chainId}), checking cooldown period`
@@ -851,8 +854,8 @@ export async function canUserSubmit(
       );
 
       return {
-        canSubmit: timeRemaining.eq(0),
-        timeRemaining: timeRemaining.toNumber(),
+        canSubmit: timeRemaining === 0n,
+        timeRemaining: Number(timeRemaining),
       };
     } catch (contractError) {
       console.error("Error calling getTimeUntilNextSubmission:", contractError);

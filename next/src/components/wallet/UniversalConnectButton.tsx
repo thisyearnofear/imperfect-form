@@ -35,7 +35,7 @@ export default function UniversalConnectButton({
     isLoading: isThemeSwitching,
     error: themeSwitchingError,
     getAvailableThemes,
-    retry: retryThemeSwitch
+    retry: retryThemeSwitch,
   } = useRobustThemeSwitching();
   const isInFarcaster = platform === "farcaster";
   const farcasterUser = user;
@@ -76,27 +76,24 @@ export default function UniversalConnectButton({
     }
   }, [chainId, networkName]);
 
-  // Available networks for switching using robust theme system
-  const availableThemes = getAvailableThemes();
-  const networks = availableThemes.map(theme => ({
-    id: theme.chainId,
-    name: theme.name,
-    themeId: theme.id,
-    color: {
-      'base': 'blue',
-      'polygon': 'purple', 
-      'celo': 'green',
-      'monad': 'gray'
-    }[theme.id] || 'blue',
-  }));
+  // Helper function to get theme colors
+  const getThemeColor = (themeId: string) => {
+    const colorMap = {
+      base: "#0052ff",
+      polygon: "#8247e5",
+      celo: "#10b981",
+      monad: "#555555",
+    };
+    return colorMap[themeId as keyof typeof colorMap] || "#fcb131";
+  };
 
   const handleNetworkSwitch = async (targetChainId: number) => {
     console.log("UniversalConnectButton: Switching to chain", targetChainId);
     setShowNetworkSwitcher(false);
-    
+
     // Use the robust theme switching system
     const success = await switchToChain(targetChainId);
-    
+
     if (!success) {
       console.error("UniversalConnectButton: Network switch failed");
       // Show retry option if there's an error
@@ -201,112 +198,89 @@ export default function UniversalConnectButton({
             )}
           </div>
 
-          {/* Network Indicator - Clickable */}
-          <div className="flex flex-col items-end relative">
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs text-green-400">Connected</span>
-            </div>
+          {/* Network Indicator - Simplified */}
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
             <button
               onClick={() => setShowNetworkSwitcher(!showNetworkSwitcher)}
-              className="text-xs text-green-300 opacity-75 hover:opacity-100 transition-opacity cursor-pointer hover:underline"
-              title={`Current: ${networkName} (ID: ${chainId}) - Click to switch`}
+              className="text-xs text-green-300 hover:text-green-200 transition-colors cursor-pointer font-medium"
+              title={`Current: ${networkName} - Click to switch networks`}
             >
-              {networkName} ↑
+              {networkName}
             </button>
           </div>
         </div>
 
-        {/* Network Switcher Dropdown - Outside profile box for better z-index */}
+        {/* Horizontal Network Switcher - Expands left and right */}
         {showNetworkSwitcher && (
           <>
-            {/* Backdrop to close dropdown */}
+            {/* Backdrop to close switcher */}
             <div
               className="fixed inset-0 z-[2100]"
               onClick={() => setShowNetworkSwitcher(false)}
             />
-            <div className="absolute bottom-full right-0 mb-2 bg-black border border-gray-700 rounded-lg shadow-xl z-[2101] min-w-[280px]">
-              <div className="p-3">
-                <div className="text-xs text-gray-400 mb-3 px-1 text-center">
-                  Switch Network (Current: {networkName})
-                  {currentTheme && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Theme: {currentTheme.displayName}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Show theme switching error if any */}
-                {themeSwitchingError && (
-                  <div className="mb-2 p-2 bg-red-900/20 border border-red-600 rounded text-xs text-red-300">
-                    <div className="mb-1">Error: {themeSwitchingError}</div>
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-[2101]">
+              <div className="flex items-center gap-2 bg-black/95 border-2 border-[#fcb131] rounded-lg p-3 shadow-[0_0_20px_rgba(252,177,49,0.5)] backdrop-blur-sm">
+                {getAvailableThemes().map((theme) => {
+                  const isCurrentTheme = currentTheme.id === theme.id;
+                  const isLoading = isThemeSwitching;
+
+                  return (
                     <button
-                      onClick={() => retryThemeSwitch()}
-                      className="text-red-400 hover:text-red-300 underline"
-                    >
-                      Retry
-                    </button>
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-2 gap-2">
-                  {networks.map((network) => (
-                    <button
-                      key={network.id}
-                      onClick={() => handleNetworkSwitch(network.id)}
+                      key={theme.id}
+                      onClick={() => handleNetworkSwitch(theme.chainId)}
+                      disabled={isCurrentTheme || isLoading}
                       className={`
-                        text-left px-2 py-2 rounded text-xs transition-all duration-200
+                        flex flex-col items-center gap-1 p-3 rounded-lg text-xs font-bold
+                        transition-all duration-200 border-2 min-w-[60px]
                         ${
-                          chainId === network.id
-                            ? "bg-green-900 text-green-300 cursor-default border border-green-600"
-                            : isThemeSwitching
-                            ? "opacity-50 cursor-not-allowed bg-gray-800"
-                            : "hover:bg-gray-800 text-gray-300 hover:text-white hover:scale-105 hover:shadow-md"
+                          isCurrentTheme
+                            ? "bg-[#fcb131]/20 border-[#fcb131] text-[#fcb131] cursor-default"
+                            : "bg-black/50 border-gray-600 text-gray-300 hover:bg-[#fcb131]/10 hover:border-[#fcb131]/50 hover:text-[#fcb131]"
                         }
+                        ${isLoading ? "opacity-50 cursor-wait" : ""}
                       `}
-                      disabled={chainId === network.id || isThemeSwitching}
+                      title={`Switch to ${theme.name}`}
                     >
-                      <div className="flex items-center gap-1.5">
-                        {isThemeSwitching ? (
-                          <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse flex-shrink-0"></div>
-                        ) : (
-                          <div
-                            className={`w-2 h-2 rounded-full bg-${network.color}-400 flex-shrink-0`}
-                          ></div>
-                        )}
-                        <span className="truncate text-xs">{network.name}</span>
-                        {chainId === network.id ? (
-                          <span className="ml-auto text-xs">✓</span>
-                        ) : isThemeSwitching ? (
-                          <span className="ml-auto text-xs animate-spin">⟳</span>
-                        ) : null}
-                      </div>
+                      <div
+                        className="w-4 h-4 rounded-full border border-white/20"
+                        style={{
+                          backgroundColor: isCurrentTheme
+                            ? currentTheme.palette.primary
+                            : getThemeColor(theme.id),
+                        }}
+                      />
+                      <span className="text-[10px] leading-tight text-center">
+                        {theme.name.split(" ")[0]}
+                      </span>
+
+                      {isCurrentTheme && (
+                        <div className="text-[#fcb131] text-xs">✓</div>
+                      )}
+
+                      {isLoading && (
+                        <div className="w-3 h-3 border border-[#fcb131] border-t-transparent rounded-full animate-spin" />
+                      )}
                     </button>
-                  ))}
-                </div>
-                
-                {/* Visual theme preview */}
-                <div className="mt-3 pt-2 border-t border-gray-700">
-                  <div className="text-xs text-gray-400 mb-1">Theme Preview:</div>
-                  <div className="flex gap-1">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: currentTheme.palette.primary }}
-                      title="Primary Color"
-                    ></div>
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: currentTheme.palette.secondary }}
-                      title="Secondary Color"
-                    ></div>
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: currentTheme.palette.accent }}
-                      title="Accent Color"
-                    ></div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
+
+              {/* Error Display */}
+              {themeSwitchingError && (
+                <div className="mt-2 p-2 bg-red-900/90 border border-red-500 rounded text-xs text-red-300 max-w-xs">
+                  <div className="font-medium mb-1">Switch Failed</div>
+                  <div className="text-red-400 text-[10px]">
+                    {themeSwitchingError}
+                  </div>
+                  <button
+                    onClick={retryThemeSwitch}
+                    className="mt-1 text-red-300 hover:text-red-200 underline text-xs"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
             </div>
           </>
         )}

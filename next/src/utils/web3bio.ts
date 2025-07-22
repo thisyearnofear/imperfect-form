@@ -1,4 +1,5 @@
 // Utility for resolving wallet addresses to social identities using web3bio API
+import { shortenAddress } from './formatters';
 
 // Cache for resolved identities to avoid repeated API calls
 const identityCache: Record<string, {
@@ -87,12 +88,3 @@ export async function getBestDisplayName(address: string): Promise<string> {
          shortenAddress(address);
 }
 
-/**
- * Shortens an Ethereum address for display
- * @param address The full Ethereum address
- * @returns The shortened address (e.g., 0x1234...5678)
- */
-export function shortenAddress(address: string): string {
-  if (!address) return '';
-  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-}
