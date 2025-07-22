@@ -51,6 +51,7 @@
     "react-hot-toast": "^2.5.2",
     "socket.io-client": "^4.8.0",
     "unfetch": "^4.2.0",
+    "unstorage": "^1.10.1",
     "viem": "^2.28.3",
     "wagmi": "^2.15.2"
   },
