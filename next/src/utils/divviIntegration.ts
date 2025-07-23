@@ -1,22 +1,41 @@
-import { getDataSuffix, submitReferral } from '@divvi/referral-sdk';
-import toast from 'react-hot-toast';
+import * as DivviSDK from '@divvi/referral-sdk';
+import { createWalletClient, custom, WalletClient } from 'viem';
+import { mainnet, polygon, base, celo } from 'viem/chains';
 
 /**
- * Divvi Integration for tracking referrals
- * This integration adds referral metadata to transactions and registers users with Divvi
- * to enable tracking and rewards for driving on-chain activity.
+ * Divvi Integration for tracking referrals and rewards
+ * Follows Divvi v2 SDK documentation for referral tracking and rewards
+ * Added features: localStorage persistence, first-time user detection
  */
 
-// Constants for Divvi integration
+// Your unique Divvi consumer identifier
 const DIVVI_CONSUMER_ID = '0x55A5705453Ee82c742274154136Fce8149597058' as `0x${string}`;
 
-// Provider addresses from signed up campaigns:
-// - Proof of Impact Season 0 (CELO rewards)
-// - Scout Game ($DEV rewards)
-const DIVVI_PROVIDERS: `0x${string}`[] = [
-  '0x0423189886d7966f0dd7e7d256898daeee625dca', // Campaign provider 1
-  '0xc95876688026be9d6fa7a7c33328bd013effa2bb', // Campaign provider 2
-];
+/**
+ * Check if a user has already been registered with Divvi
+ * @param userAddress The address of the user
+ * @param chainId The chain ID to check (137: Polygon, 42220: Celo, 8453: Base)
+ * @returns Promise resolving to true if the user has NOT been registered with Divvi yet
+ */
+/**
+ * Creates a viem wallet client for the given chain
+ * @param chainId The chain ID to create the wallet client for
+ * @returns A configured viem WalletClient
+ */
+function getWalletClient(chainId: number): WalletClient {
+  // Map chain IDs to viem chain configurations
+  const chainConfig = {
+    137: polygon,
+    42220: celo,
+    8453: base,
+    1: mainnet, // fallback
+  }[chainId] || mainnet;
+
+  return createWalletClient({
+    chain: chainConfig,
+    transport: custom(window.ethereum!),
+  });
+}
 
 /**
  * Check if a user has already been registered with Divvi
@@ -68,15 +87,77 @@ export function markUserAsRegisteredWithDivvi(
 }
 
 /**
- * Gets the data suffix for Divvi referral tracking
- * @returns The data suffix to append to transaction data
+ * Gets the Divvi referral tag for a user
+ * @param userAddress The address of the user
+ * @returns The referral tag string
  */
-export function getDivviDataSuffix(): string {
-  // Generate the data suffix for Divvi referral tracking
-  return getDataSuffix({
-    consumer: DIVVI_CONSUMER_ID,
-    providers: DIVVI_PROVIDERS,
+export function getDivviReferralTag(userAddress: string): string {
+  try {
+    return DivviSDK.getReferralTag({
+      user: userAddress as `0x${string}`,
+      consumer: DIVVI_CONSUMER_ID,
+    });
+  } catch (error) {
+    console.error("Error getting Divvi referral tag:", error);
+    return '';
+  }
+}
+
+/**
+ * Gets the referral tag and prepares transaction data for Divvi referral tracking
+ * @param userAddress The address of the user making the transaction
+ * @param originalData The original transaction data to append the referral tag to
+ * @returns The complete transaction data with referral tag appended
+ */
+export function prepareDivviTransaction(userAddress: string, originalData: string): string {
+  try {
+    // Generate the referral tag for Divvi tracking
+    const referralTag = getDivviReferralTag(userAddress);
+    
+    // Append referral tag to transaction data as per Divvi docs
+    const completeData = originalData + referralTag;
+    console.log("Prepared transaction data with Divvi referral tag");
+    return completeData;
+  } catch (error) {
+    console.error("Error preparing Divvi transaction data:", error);
+    // Return original data if there's an error to avoid breaking the transaction
+    return originalData;
+  }
+}
+
+/**
+ * Sends a transaction with Divvi referral tracking
+ * @param params Transaction parameters including to, data, and value
+ * @param chainId The chain ID where the transaction should be sent
+ * @returns Promise resolving to the transaction hash
+ */
+export async function sendDivviTransaction(
+  params: {
+    to: `0x${string}`,
+    data: string,
+    value?: bigint,
+    account?: `0x${string}`,
+  },
+  chainId: number
+): Promise<`0x${string}`> {
+  const walletClient = getWalletClient(chainId);
+  
+  // Get the sender's address if not provided
+  const [account] = !params.account ? await walletClient.getAddresses() : [params.account];
+  
+  // Add Divvi referral tag to transaction data
+  const dataWithReferral = prepareDivviTransaction(account, params.data);
+  
+  // Send transaction with referral metadata
+  const txHash = await walletClient.sendTransaction({
+    account,
+    to: params.to,
+    data: dataWithReferral as `0x${string}`,
+    value: params.value,
+    chain: walletClient.chain,
   });
+
+  return txHash;
 }
 
 /**
@@ -91,13 +172,13 @@ export async function registerDivviReferral(
   userAddress: string
 ): Promise<void> {
   try {
-    console.log("Registering Divvi referral for transaction:", txHash, "on chain:", chainId, "(137: Polygon, 42220: Celo, 8453: Base)");
+    console.log("Registering Divvi referral for transaction:", txHash, "on chain:", chainId);
 
-    // Submit the referral to Divvi
     // Ensure txHash is prefixed with 0x
     const formattedTxHash = txHash.startsWith('0x') ? txHash as `0x${string}` : `0x${txHash}` as `0x${string}`;
 
-    await submitReferral({
+    // Submit the referral to Divvi
+    await DivviSDK.submitReferral({
       txHash: formattedTxHash,
       chainId,
     });
@@ -106,7 +187,7 @@ export async function registerDivviReferral(
     markUserAsRegisteredWithDivvi(userAddress, chainId);
 
     console.log("Successfully registered Divvi referral");
-    toast.success("Registration complete! 🎉", { duration: 3000 });
+    // Note: Success message handled by calling function to avoid duplicate toasts
   } catch (error) {
     console.error("Failed to register Divvi referral:", error);
     // Don't show an error toast as this is not critical for the user experience
@@ -119,22 +200,10 @@ export async function registerDivviReferral(
  */
 export function showEnhancedFeaturesPrompt(): Promise<boolean> {
   return new Promise((resolve) => {
-    // Show a brief, honest notification
-    toast.success(
-      "First workout submission - registering your participation! 🎯",
-      {
-        duration: 3000,
-        position: "top-center",
-        style: {
-          borderRadius: '10px',
-          background: '#333',
-          color: '#fff',
-          maxWidth: '400px',
-        },
-      }
-    );
-
+    // Silent onboarding - no toast spam
+    console.log("First-time user onboarding (silent)");
+    
     // Automatically resolve to true after a short delay
-    setTimeout(() => resolve(true), 1500);
+    setTimeout(() => resolve(true), 100);
   });
 }

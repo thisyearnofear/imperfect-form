@@ -6,7 +6,7 @@ import {
   baseLeaderboardABI
 } from "@/constants/contracts";
 import toast from "react-hot-toast";
-import { isFirstTimeDivviUser, getDivviDataSuffix, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
+import { isFirstTimeDivviUser, getDivviReferralTag, registerDivviReferral, showEnhancedFeaturesPrompt } from "./divviIntegration";
 import { getEthereumProvider } from "./farcasterMiniApp";
 import {
   createTransactionOptions,
@@ -76,7 +76,7 @@ export async function submitScoreDirectly(
   processingType?: string;
   useSpendLimit?: boolean;
 }> {
-  // Helper function to create provider
+  // Helper function to create provider using ethersHelpers
   function createProviderFromEthereum(ethereumProvider: unknown): ethers.BrowserProvider {
     if (ethereumProvider && typeof ethereumProvider === 'object' && 'request' in ethereumProvider) {
       return new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
@@ -370,9 +370,9 @@ export async function submitScoreDirectly(
       if (isFirstTimeDivvi) {
         const userAccepted = await showEnhancedFeaturesPrompt();
         if (userAccepted) {
-          dataSuffix = getDivviDataSuffix();
+          dataSuffix = getDivviReferralTag(userAddress);
           shouldRegisterWithDivvi = true;
-          console.log("Added Divvi data suffix for first-time user registration");
+          console.log("Added Divvi referral tag for first-time user registration");
         }
       }
 
@@ -382,9 +382,13 @@ export async function submitScoreDirectly(
 
         // Encode the function call data
         const data = iface.encodeFunctionData("addScore", [pushups, squats]);
+        console.log("Encoded function data:", data);
+        console.log("Divvi data suffix:", dataSuffix);
 
         // Add Divvi data suffix if this is a first-time user
+        // Ensure we're properly appending the suffix to the data
         const finalData = dataSuffix ? data + dataSuffix : data;
+        console.log("Final transaction data:", finalData);
 
         // For Celo mainnet, prepare transaction with Divvi integration if needed
         if (dataSuffix) {
@@ -416,9 +420,13 @@ export async function submitScoreDirectly(
 
           // Encode the function call data
           const data = iface.encodeFunctionData("addScore", [pushups, squats]);
+          console.log("Encoded function data (retry):", data);
+          console.log("Divvi data suffix (retry):", dataSuffix);
 
           // Add Divvi data suffix if this is a first-time user
+          // Ensure we're properly appending the suffix to the data
           const finalData = dataSuffix ? data + dataSuffix : data;
+          console.log("Final transaction data (retry):", finalData);
 
           if (dataSuffix) {
             // For first-time users with Divvi integration
@@ -460,9 +468,9 @@ export async function submitScoreDirectly(
       if (isFirstTimeDivvi) {
         const userAccepted = await showEnhancedFeaturesPrompt();
         if (userAccepted) {
-          dataSuffix = getDivviDataSuffix();
+          dataSuffix = getDivviReferralTag(userAddress);
           shouldRegisterWithDivvi = true;
-          console.log("Added Divvi data suffix for first-time user registration on Polygon");
+          console.log("Added Divvi referral tag for first-time user registration on Polygon");
         }
       }
 
@@ -474,7 +482,13 @@ export async function submitScoreDirectly(
           // Get the contract interface to encode function data manually
           const iface = contract.interface;
           const data = iface.encodeFunctionData("addScore", [pushups, squats]);
-          const finalData = data + dataSuffix;
+          console.log("Encoded function data (Polygon):", data);
+          console.log("Divvi data suffix (Polygon):", dataSuffix);
+
+          // Add Divvi data suffix if this is a first-time user
+          // Ensure we're properly appending the suffix to the data
+          const finalData = dataSuffix ? data + dataSuffix : data;
+          console.log("Final transaction data (Polygon):", finalData);
 
           // Create a transaction object with EIP-1559
           const txRequest = {
@@ -501,7 +515,13 @@ export async function submitScoreDirectly(
           // Retry with legacy format for Divvi users
           const iface = contract.interface;
           const data = iface.encodeFunctionData("addScore", [pushups, squats]);
-          const finalData = data + dataSuffix;
+          console.log("Encoded function data (Polygon retry):", data);
+          console.log("Divvi data suffix (Polygon retry):", dataSuffix);
+
+          // Add Divvi data suffix if this is a first-time user
+          // Ensure we're properly appending the suffix to the data
+          const finalData = dataSuffix ? data + dataSuffix : data;
+          console.log("Final transaction data (Polygon retry):", finalData);
 
           const txRequest = {
             to: contractAddress,
@@ -531,9 +551,9 @@ export async function submitScoreDirectly(
       if (isFirstTimeDivvi) {
         const userAccepted = await showEnhancedFeaturesPrompt();
         if (userAccepted) {
-          dataSuffix = getDivviDataSuffix();
+          dataSuffix = getDivviReferralTag(userAddress);
           shouldRegisterWithDivvi = true;
-          console.log("Added Divvi data suffix for first-time user registration on Base");
+          console.log("Added Divvi referral tag for first-time user registration on Base");
         }
       }
 
@@ -545,7 +565,13 @@ export async function submitScoreDirectly(
           // Get the contract interface to encode function data manually
           const iface = contract.interface;
           const data = iface.encodeFunctionData("addScore", [pushups, squats]);
-          const finalData = data + dataSuffix;
+          console.log("Encoded function data (Base):", data);
+          console.log("Divvi data suffix (Base):", dataSuffix);
+
+          // Add Divvi data suffix if this is a first-time user
+          // Ensure we're properly appending the suffix to the data
+          const finalData = dataSuffix ? data + dataSuffix : data;
+          console.log("Final transaction data (Base):", finalData);
 
           // Create a transaction object with EIP-1559
           const txRequest = {
@@ -572,7 +598,13 @@ export async function submitScoreDirectly(
           // Retry with legacy format for Divvi users
           const iface = contract.interface;
           const data = iface.encodeFunctionData("addScore", [pushups, squats]);
-          const finalData = data + dataSuffix;
+          console.log("Encoded function data (Base retry):", data);
+          console.log("Divvi data suffix (Base retry):", dataSuffix);
+
+          // Add Divvi data suffix if this is a first-time user
+          // Ensure we're properly appending the suffix to the data
+          const finalData = dataSuffix ? data + dataSuffix : data;
+          console.log("Final transaction data (Base retry):", finalData);
 
           const txRequest = {
             to: contractAddress,
@@ -618,10 +650,8 @@ export async function submitScoreDirectly(
     console.log("✅ Transaction submitted successfully:", tx.hash);
 
     // Show immediate success message
-    toast.success("Score submitted! Check the leaderboard 🏆", {
-      id: "submit-score",
-      duration: 5000
-    });
+    // Note: Success message handled by unified submission to avoid duplicate toasts
+    console.log("Score submitted successfully via direct contract interaction");
 
     // Create a mock receipt object for compatibility with existing code
     const receipt = {

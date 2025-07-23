@@ -152,8 +152,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         {/* Network Info - Simplified */}
         <div className="border-b border-gray-700 pb-2">
           <div className="text-center">
-            <p className="text-sm">
-              Network:{" "}
+            <p className="text-sm text-white">
+              <span className="text-white font-semibold">Network:</span>{" "}
               <span
                 className={`font-bold px-2 py-0.5 rounded-full text-xs ${
                   networkType === "polygon"

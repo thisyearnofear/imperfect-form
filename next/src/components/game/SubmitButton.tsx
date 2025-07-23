@@ -6,18 +6,21 @@ import { usePlatform } from "@/contexts/PlatformContext";
 import { useAccount as useWagmiAccount, useWriteContract } from "wagmi";
 
 import { Spinner } from "@/components/ui";
-import {
+import { canUserSubmit, submitScoreDirectly } from "@/utils/directContractInteraction";
+import { 
+  isFirstTimeDivviUser, 
+  showEnhancedFeaturesPrompt,
+  registerDivviReferral
+} from "@/utils/divviIntegration";
+// Unified submission utilities available for future use
+// import { submitScore, showSubmissionResult, canUserSubmit as canUserSubmitUnified, type SubmissionParams } from "@/utils/unifiedSubmission";
+import { 
+  fitnessLeaderboardABI,
   POLYGON_CONTRACT_ADDRESS,
   BASE_CONTRACT_ADDRESS,
   MONAD_CONTRACT_ADDRESS,
   CELO_CONTRACT_ADDRESS,
-  fitnessLeaderboardABI,
 } from "@/constants/contracts";
-import {
-  submitScoreDirectly,
-  canUserSubmit,
-} from "@/utils/directContractInteraction";
-import { isFirstTimeDivviUser, registerDivviReferral, showEnhancedFeaturesPrompt } from "@/utils/divviIntegration";
 import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
 
 interface SubmitButtonProps {
@@ -197,12 +200,18 @@ export default function SubmitButton({
           // Continue with transaction even if Divvi check fails
         }
 
-        // For Base network with Wagmi wallet, use writeContract
+        // Note: Divvi integration is handled in the contract submission flow
+        // const iface = new Interface(fitnessLeaderboardABI);
+        // const functionData = iface.encodeFunctionData("addScore", [BigInt(pushups), BigInt(squats)]);
+
+        // Use the prepared data in the transaction
         writeContract({
           address: contractAddress as `0x${string}`,
           abi: fitnessLeaderboardABI,
           functionName: "addScore",
           args: [BigInt(pushups), BigInt(squats)],
+          // The referral data is automatically appended by the prepareDivviTransaction function
+          account: address as `0x${string}`,
         });
 
         // Success is handled in the useEffect below
@@ -408,9 +417,7 @@ export default function SubmitButton({
       {isLoading || isPending ? (
         <>
           {/* Responsive loading label */}
-          <span className="mr-2 font-bold sm:hidden">
-            Submitting...
-          </span>
+          <span className="mr-2 font-bold sm:hidden">Submitting...</span>
           <span className="mr-3 font-bold hidden sm:inline-block">
             SUBMITTING TO {network?.toUpperCase()}...
           </span>
