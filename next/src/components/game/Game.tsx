@@ -22,6 +22,9 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import ModeSwitch from "./ModeSwitch";
 import IntroDialog from "@/components/auth/IntroDialog";
 
+import { useFullscreen } from "../../hooks/useFullscreen";
+import FullscreenExitButton from "../ui/FullscreenExitButton";
+
 import toast from "react-hot-toast";
 import { Score } from "@/types";
 
@@ -46,6 +49,19 @@ interface GameProps {
 }
 
 const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
+  // --- Fullscreen integration ---
+  const gameRef = useRef<HTMLDivElement>(null);
+  const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen(gameRef);
+
+  const [autoFs, setAutoFs] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const pref = window.localStorage.getItem("prefAutoFullscreen");
+      setAutoFs(pref === null ? true : pref === "true");
+    }
+  }, []);
+
   // Get universal wallet context first
   const { wallet, user } = usePlatform();
   const { address } = wallet;
@@ -261,6 +277,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, []);
 
   const handleStop = useCallback(() => {
+    exitFullscreen();
     if (timerRef.current) clearInterval(timerRef.current);
     setStarted(false);
     setShowTutorial(false);
@@ -279,7 +296,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Force camera to stop by accessing the video tracks and stopping them
     stopAllCameras();
-  }, [stopAllCameras, finalAddress]);
+  }, [stopAllCameras, finalAddress, exitFullscreen]);
 
   // Update the ref whenever handleStop changes
   useEffect(() => {
@@ -287,6 +304,16 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, [handleStop]);
 
   const handleStart = () => {
+    // Detect mobile platform
+    const isMobile =
+      typeof window !== "undefined"
+        ? /Mobi|Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent)
+        : false;
+
+    if (isMobile && autoFs) {
+      enterFullscreen(); // Must be synchronous with user gesture
+    }
+
     setShowWelcome(false);
     setShowTutorial(false); // Hide tutorial when starting
     setShowLoading(true);
@@ -303,6 +330,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Removing duplicate effect
 
   const handleReset = useCallback(() => {
+    exitFullscreen();
     if (timerRef.current) clearInterval(timerRef.current);
     setRepCount(0);
     setTimeLeft(120);
@@ -313,7 +341,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Also stop the camera when resetting
     stopAllCameras();
-  }, [stopAllCameras]);
+  }, [stopAllCameras, exitFullscreen]);
 
   // handleModeChange function removed as it's no longer used
   // Mode switching is now handled directly by ModeSwitch component
@@ -364,7 +392,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   return (
     <>
       
-      <div id="game-container">
+      <div id="game-container" ref={gameRef}>
+        <FullscreenExitButton
+          isFullscreen={isFullscreen}
+          onExit={() => {
+            exitFullscreen();
+            setAutoFs(false);
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem("prefAutoFullscreen", "false");
+            }
+          }}
+        />
         <div id="banner">
           <div className="olympic-rings" aria-label="Olympic Rings">
             <div className="ring blue" />
