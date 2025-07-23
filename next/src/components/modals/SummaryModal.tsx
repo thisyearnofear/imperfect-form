@@ -10,7 +10,7 @@ import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
 // Removed unused imports - now using unified Wagmi submission
 // Removed unused toast import
 import { AddMiniAppButton } from "@/components/miniapp/AddMiniAppButton";
-import { VerifyButton } from "@/components/verification";
+import { VerificationIntegration } from "@/components/verification";
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -253,19 +253,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         {/* Verification prompt - show after successful submission */}
         {submissionStatus === "success" && (
           <div className="border-t border-gray-700 pt-4">
-            <div className="text-center space-y-3">
-              <p className="text-sm text-yellow-300 font-medium">
-                Score submitted! Want to verify you&apos;re human?
-              </p>
-              <VerifyButton
-                onVerificationStart={() => console.log("Verification started")}
-                onVerificationComplete={() => console.log("Verification completed")}
-                className="w-full"
-              />
-              <p className="text-xs text-gray-400">
-                Get a verified badge on the leaderboard!
-              </p>
-            </div>
+            <VerificationIntegration 
+              onVerificationComplete={() => {
+                console.log("User verified!");
+                // Handle success - refresh leaderboard, show badge, etc.
+              }}
+            />
           </div>
         )}
 

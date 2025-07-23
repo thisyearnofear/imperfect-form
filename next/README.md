@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Imperfect Form - Fitness App
+
+A Next.js fitness tracking application with blockchain integration and human verification.
 
 ## Getting Started
 
@@ -10,99 +12,39 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Self Protocol Integration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Human Verification**: Integrated with Self Protocol for privacy-first human verification using zero-knowledge proofs.
 
-## Learn More
+- **Status**: Live on Celo Alfajores testnet
+- **Contract**: `0xc51065eCBe91E7DbA69934F37130DCA29E516189`
+- **Trigger**: Automatic prompt after successful score submission
+- **UX**: Smart network switching from Celo Mainnet to Alfajores for verification
+- **Benefits**: Verified badge on leaderboard, one-time setup, privacy-preserving (age 16+ only)
+- **Flow**: QR code (desktop) / deep link (mobile) to Self app verification to on-chain verification status
 
-To learn more about Next.js, take a look at the following resources:
+## Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Multi-chain fitness tracking (Polygon, Base, Celo, Monad)
+- Real-time pose detection using MediaPipe
+- Blockchain-based leaderboards
+- Farcaster integration and sharing
+- Human verification with Self Protocol
+- Mobile-optimized experience
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
 
-## Deploy on Vercel
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Blockchain**: Ethers v6, Wagmi v2, Viem
+- **Verification**: Self Protocol (zero-knowledge proofs)
+- **Pose Detection**: MediaPipe, TensorFlow.js
+- **Styling**: Tailwind CSS
+- **Social**: Farcaster integration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## Farcaster Mini App Notifications
-
-This app includes a notification system for Farcaster Mini App users. Use this for special events and announcements only.
-
-### Sending Broadcast Notifications
-
-#### Via API (Recommended)
-
-```bash
-curl -X POST https://imperfectform.fun/api/notifications/send \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "custom",
-    "data": {
-      "broadcast": true,
-      "notificationId": "unique-id-here",
-      "title": "🚀 Your Title Here",
-      "body": "Your message here",
-      "targetUrl": "https://imperfectform.fun"
-    }
-  }'
-```
-
-#### Example Use Cases
-
-**New Feature Launch:**
-
-```bash
-curl -X POST https://imperfectform.fun/api/notifications/send \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "custom",
-    "data": {
-      "broadcast": true,
-      "notificationId": "feature-launch-monad",
-      "title": "🌟 Monad Network Live!",
-      "body": "Start earning rewards on Monad testnet",
-      "targetUrl": "https://imperfectform.fun?network=monad"
-    }
-  }'
-```
-
-**Special Challenge:**
-
-```bash
-curl -X POST https://imperfectform.fun/api/notifications/send \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "custom",
-    "data": {
-      "broadcast": true,
-      "notificationId": "weekend-challenge-jan-2025",
-      "title": "🔥 Weekend Challenge!",
-      "body": "Double rewards this weekend - Get moving!",
-      "targetUrl": "https://imperfectform.fun?challenge=weekend"
-    }
-  }'
-```
-
-### Check Notification Stats
-
-```bash
-curl https://imperfectform.fun/api/notifications/send
-```
-
-### Best Practices
-
-- Use unique `notificationId` to prevent duplicates
-- Keep titles under 32 characters (Farcaster limit)
-- Don't send too frequently (max once per week)
-- Use for major updates, new features, or special events only
+The app is deployed on Vercel. Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { SelfVerificationModal } from '@/components/verification';
+import NetworkSwitchPrompt from './NetworkSwitchPrompt';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
+import { chainSupportsSelfProtocol, getSelfProtocolChain } from '@/utils/chainSwitching';
 import toast from 'react-hot-toast';
 
 interface VerificationIntegrationProps {
@@ -20,11 +22,12 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   className = "",
 }) => {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showNetworkSwitch, setShowNetworkSwitch] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   
   const { wallet } = usePlatform();
   const { currentTheme } = useEnhancedChainTheme();
-  const { address } = wallet;
+  const { address, chainId } = wallet;
 
   const handleVerificationSuccess = () => {
     setIsVerified(true);
@@ -56,6 +59,18 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   };
 
   const promptForVerification = () => {
+    // Check if current network supports Self Protocol
+    if (!chainId || !chainSupportsSelfProtocol(chainId)) {
+      // Show network switch prompt first
+      setShowNetworkSwitch(true);
+    } else {
+      // Network is correct, show verification modal
+      setShowVerificationModal(true);
+    }
+  };
+
+  const handleNetworkSwitched = () => {
+    // After successful network switch, show verification modal
     setShowVerificationModal(true);
   };
 
@@ -105,6 +120,15 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Network Switch Prompt */}
+      <NetworkSwitchPrompt
+        isOpen={showNetworkSwitch}
+        onClose={() => setShowNetworkSwitch(false)}
+        onNetworkSwitched={handleNetworkSwitched}
+        targetChain={getSelfProtocolChain()}
+        reason="Self Protocol verification requires Celo Alfajores testnet to test with mock documents before mainnet deployment."
+      />
 
       {/* Verification Modal */}
       <SelfVerificationModal

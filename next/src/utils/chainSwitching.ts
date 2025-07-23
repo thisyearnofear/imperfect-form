@@ -76,6 +76,21 @@ export const chainConfigs = {
     contractAddress: CELO_CONTRACT_ADDRESS,
     abi: fitnessLeaderboardABI, // Celo uses the base fitness ABI
   },
+  celoAlfajores: {
+    id: 44787,
+    name: "Celo Testnet",
+    fullName: "Celo Alfajores Testnet",
+    nativeCurrency: {
+      name: "CELO",
+      symbol: "CELO",
+      decimals: 18,
+    },
+    rpcUrls: ["https://alfajores-forno.celo-testnet.org"],
+    blockExplorerUrls: ["https://alfajores.celoscan.io/"],
+    contractAddress: CELO_CONTRACT_ADDRESS, // Same contract for testing
+    abi: fitnessLeaderboardABI,
+    isTestnet: true, // Flag to indicate this is a testnet
+  },
 };
 
 // Enum for wallet provider types
@@ -90,6 +105,7 @@ export enum SupportedChain {
   BASE = "base",
   MONAD = "monad",
   CELO = "celo",
+  CELO_ALFAJORES = "celoAlfajores",
 }
 
 /**
@@ -257,6 +273,7 @@ export function getChainFromNetwork(network: string | null): SupportedChain | nu
   if (network === "base") return SupportedChain.BASE;
   if (network === "monad") return SupportedChain.MONAD;
   if (network === "celo") return SupportedChain.CELO;
+  if (network === "celoAlfajores") return SupportedChain.CELO_ALFAJORES;
   return null;
 }
 
@@ -266,7 +283,19 @@ export function getNetworkFromChain(chain: SupportedChain | null): string | null
   if (chain === SupportedChain.BASE) return "base";
   if (chain === SupportedChain.MONAD) return "monad";
   if (chain === SupportedChain.CELO) return "celo";
+  if (chain === SupportedChain.CELO_ALFAJORES) return "celoAlfajores";
   return null;
+}
+
+// Get the appropriate chain for Self Protocol verification
+export function getSelfProtocolChain(): SupportedChain {
+  // For now, Self Protocol is only on Celo Alfajores
+  return SupportedChain.CELO_ALFAJORES;
+}
+
+// Check if current chain supports Self Protocol verification
+export function chainSupportsSelfProtocol(chainId: number): boolean {
+  return chainId === 44787; // Celo Alfajores
 }
 
 // Extend the Window interface to include the thirdwebSDK property
