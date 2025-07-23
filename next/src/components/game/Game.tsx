@@ -304,12 +304,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, [handleStop]);
 
   const handleStart = () => {
-    // Detect mobile platform
-    const isMobile =
-      typeof window !== "undefined"
-        ? /Mobi|Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent)
-        : false;
-
+    // Use device detection hook's isMobile value
     if (isMobile && autoFs) {
       enterFullscreen(); // Must be synchronous with user gesture
     }
