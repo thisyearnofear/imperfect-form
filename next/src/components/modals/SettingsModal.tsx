@@ -23,15 +23,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={open => !open ? onClose() : undefined}>
+    <Dialog isOpen={isOpen} onClose={onClose} title="Settings">
       <div className="p-6 min-w-[260px] max-w-[340px]">
-        <h2 className="text-lg font-bold mb-4">Settings</h2>
         <div className="flex flex-col gap-6">
           <ToggleSwitch
             checked={autoFs}
             onChange={handleToggle}
             label="Start workouts in fullscreen"
           />
+          {/* Example row for orientation lock (not hooked up to logic) */}
+          {/* <ToggleSwitch
+            checked={false}
+            onChange={() => {}}
+            label="Lock orientation (beta)"
+            disabled
+          /> */}
         </div>
       </div>
     </Dialog>
