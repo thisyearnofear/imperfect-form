@@ -24,6 +24,8 @@ import IntroDialog from "@/components/auth/IntroDialog";
 
 import { useFullscreen } from "../../hooks/useFullscreen";
 import FullscreenExitButton from "../ui/FullscreenExitButton";
+import SettingsModal from "../modals/SettingsModal";
+import useOrientationLock from "../../hooks/useOrientationLock";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";
@@ -54,6 +56,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen(gameRef);
 
   const [autoFs, setAutoFs] = useState<boolean>(true);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const { lockLandscape, unlock } = useOrientationLock();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -278,6 +283,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   const handleStop = useCallback(() => {
     exitFullscreen();
+    unlock();
     if (timerRef.current) clearInterval(timerRef.current);
     setStarted(false);
     setShowTutorial(false);
@@ -308,6 +314,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     if (isMobile && autoFs) {
       enterFullscreen(); // Must be synchronous with user gesture
     }
+    if (
+      isMobile &&
+      (mode === "pushups" || mode === "squats")
+    ) {
+      lockLandscape();
+    }
 
     setShowWelcome(false);
     setShowTutorial(false); // Hide tutorial when starting
@@ -326,6 +338,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   const handleReset = useCallback(() => {
     exitFullscreen();
+    unlock();
     if (timerRef.current) clearInterval(timerRef.current);
     setRepCount(0);
     setTimeLeft(120);
@@ -336,7 +349,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Also stop the camera when resetting
     stopAllCameras();
-  }, [stopAllCameras, exitFullscreen]);
+  }, [stopAllCameras, exitFullscreen, unlock]);
 
   // handleModeChange function removed as it's no longer used
   // Mode switching is now handled directly by ModeSwitch component
@@ -388,6 +401,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     <>
       
       <div id="game-container" ref={gameRef}>
+        <button
+          aria-label="Settings"
+          className="absolute top-2 right-2 z-50 bg-white/80 rounded-full p-2 shadow hover:bg-white transition"
+          onClick={() => setShowSettings(true)}
+          type="button"
+        >
+          <span style={{ fontSize: 20 }}>⚙️</span>
+        </button>
         <FullscreenExitButton
           isFullscreen={isFullscreen}
           onExit={() => {
@@ -661,6 +682,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         displayNames={displayNames}
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        autoFs={autoFs}
+        setAutoFs={setAutoFs}
       />
     </>
   );
