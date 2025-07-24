@@ -22,6 +22,11 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import ModeSwitch from "./ModeSwitch";
 import IntroDialog from "@/components/auth/IntroDialog";
 
+import { useFullscreen } from "../../hooks/useFullscreen";
+import FullscreenExitButton from "../ui/FullscreenExitButton";
+import SettingsModal from "../modals/SettingsModal";
+import useOrientationLock from "../../hooks/useOrientationLock";
+
 import toast from "react-hot-toast";
 import { Score } from "@/types";
 
@@ -46,6 +51,22 @@ interface GameProps {
 }
 
 const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
+  // --- Fullscreen integration ---
+  const gameRef = useRef<HTMLDivElement>(null);
+  const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen(gameRef);
+
+  const [autoFs, setAutoFs] = useState<boolean>(true);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const { lockLandscape, unlock } = useOrientationLock();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const pref = window.localStorage.getItem("prefAutoFullscreen");
+      setAutoFs(pref === null ? true : pref === "true");
+    }
+  }, []);
+
   // Get universal wallet context first
   const { wallet, user } = usePlatform();
   const { address } = wallet;
@@ -261,6 +282,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, []);
 
   const handleStop = useCallback(() => {
+    exitFullscreen();
+    unlock();
     if (timerRef.current) clearInterval(timerRef.current);
     setStarted(false);
     setShowTutorial(false);
@@ -279,7 +302,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Force camera to stop by accessing the video tracks and stopping them
     stopAllCameras();
-  }, [stopAllCameras, finalAddress]);
+  }, [stopAllCameras, finalAddress, exitFullscreen]);
 
   // Update the ref whenever handleStop changes
   useEffect(() => {
@@ -287,6 +310,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, [handleStop]);
 
   const handleStart = () => {
+    // Use device detection hook's isMobile value
+    if (isMobile && autoFs) {
+      enterFullscreen(); // Must be synchronous with user gesture
+    }
+    if (
+      isMobile &&
+      (mode === "pushups" || mode === "squats")
+    ) {
+      lockLandscape();
+    }
+
     setShowWelcome(false);
     setShowTutorial(false); // Hide tutorial when starting
     setShowLoading(true);
@@ -303,6 +337,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Removing duplicate effect
 
   const handleReset = useCallback(() => {
+    exitFullscreen();
+    unlock();
     if (timerRef.current) clearInterval(timerRef.current);
     setRepCount(0);
     setTimeLeft(120);
@@ -313,7 +349,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Also stop the camera when resetting
     stopAllCameras();
-  }, [stopAllCameras]);
+  }, [stopAllCameras, exitFullscreen, unlock]);
 
   // handleModeChange function removed as it's no longer used
   // Mode switching is now handled directly by ModeSwitch component
@@ -364,7 +400,25 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   return (
     <>
       
-      <div id="game-container">
+      <div id="game-container" ref={gameRef}>
+        <button
+          aria-label="Settings"
+          className="absolute top-2 right-2 z-50 bg-white/80 rounded-full p-2 shadow hover:bg-white transition"
+          onClick={() => setShowSettings(true)}
+          type="button"
+        >
+          <span style={{ fontSize: 20 }}>⚙️</span>
+        </button>
+        <FullscreenExitButton
+          isFullscreen={isFullscreen}
+          onExit={() => {
+            exitFullscreen();
+            setAutoFs(false);
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem("prefAutoFullscreen", "false");
+            }
+          }}
+        />
         <div id="banner">
           <div className="olympic-rings" aria-label="Olympic Rings">
             <div className="ring blue" />
@@ -628,6 +682,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         displayNames={displayNames}
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        autoFs={autoFs}
+        setAutoFs={setAutoFs}
       />
     </>
   );
