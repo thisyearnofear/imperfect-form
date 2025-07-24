@@ -1,3 +1,5 @@
+import { utils } from "ethers";
+
 // Leaderboard contract addresses for all supported networks
 export const POLYGON_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_POLYGON ||
@@ -17,6 +19,53 @@ export const MONAD_CONTRACT_ADDRESS =
 export const CELO_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_CELO ||
   "0xB0cbC7325EbC744CcB14211CA74C5a764928F273"; // Celo Mainnet contract (standardized)
+
+// RPC URLs (update if needed for production/mainnet)
+export const POLYGON_RPC_URL = "https://polygon-rpc.com"; // TODO: update as needed
+export const BASE_RPC_URL = "https://mainnet.base.org";   // TODO: update as needed
+export const CELO_RPC_URL = "https://forno.celo.org";      // TODO: update as needed
+export const MONAD_RPC_URL = "https://node.monad.xyz";     // TODO: update as needed
+
+// Deploy block numbers for progress log fetches (update for mainnet deployments)
+export const POLYGON_DEPLOY_BLOCK = 0; // TODO: Update with actual deploy block
+export const BASE_DEPLOY_BLOCK = 0;    // TODO: Update with actual deploy block
+export const CELO_DEPLOY_BLOCK = 0;    // TODO: Update with actual deploy block
+export const MONAD_DEPLOY_BLOCK = 0;   // TODO: Update with actual deploy block
+
+// Event topic for ScoreSubmitted(address,uint256,uint256,string,bool,uint256)
+export const SCORE_SUBMITTED_TOPIC = utils.id(
+  "ScoreSubmitted(address,uint256,uint256,string,bool,uint256)"
+);
+
+/**
+ * Array of supported chains for user progress fetching.
+ */
+export const PROGRESS_CHAINS = [
+  {
+    name: "polygon",
+    rpcUrl: POLYGON_RPC_URL,
+    contract: POLYGON_CONTRACT_ADDRESS,
+    startBlock: POLYGON_DEPLOY_BLOCK,
+  },
+  {
+    name: "base",
+    rpcUrl: BASE_RPC_URL,
+    contract: BASE_CONTRACT_ADDRESS,
+    startBlock: BASE_DEPLOY_BLOCK,
+  },
+  {
+    name: "celo",
+    rpcUrl: CELO_RPC_URL,
+    contract: CELO_CONTRACT_ADDRESS,
+    startBlock: CELO_DEPLOY_BLOCK,
+  },
+  {
+    name: "monad",
+    rpcUrl: MONAD_RPC_URL,
+    contract: MONAD_CONTRACT_ADDRESS,
+    startBlock: MONAD_DEPLOY_BLOCK,
+  },
+];
 
 // Self Protocol Verified Fitness Contract (Celo Alfajores)
 export const VERIFIED_FITNESS_CONTRACT_ADDRESS = "0x18082d110113B40A24A41dF10b4b249Ee461D3eb";
