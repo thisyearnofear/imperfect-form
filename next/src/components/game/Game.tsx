@@ -24,8 +24,9 @@ import IntroDialog from "@/components/auth/IntroDialog";
 
 import { useFullscreen } from "../../hooks/useFullscreen";
 import FullscreenExitButton from "../ui/FullscreenExitButton";
-import SettingsModal from "../modals/SettingsModal";
+import { SplitFlapInstructions } from "../ui/SplitFlapText";
 import useOrientationLock from "../../hooks/useOrientationLock";
+import { useUserStats } from "../../hooks/useUserStats";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";
@@ -36,15 +37,12 @@ const LazyWebcam = dynamic(() => import("./LazyWebcam"), {
   loading: () => <Spinner />,
 });
 
-// No need to dynamically import ThirdWeb hooks anymore
-
 // Add type declaration for window object
 declare global {
   interface Window {
     cycleWebcamFilter?: () => string;
   }
 }
-// Webcam is now imported at the top of the file
 
 interface GameProps {
   thirdwebAddress?: string;
@@ -53,12 +51,39 @@ interface GameProps {
 const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // --- Fullscreen integration ---
   const gameRef = useRef<HTMLDivElement>(null);
-  const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen(gameRef);
+  const { isFullscreen, enterFullscreen, exitFullscreen } =
+    useFullscreen(gameRef);
 
   const [autoFs, setAutoFs] = useState<boolean>(true);
-  const [showSettings, setShowSettings] = useState(false);
+
+  const [currentMode, setCurrentMode] = useState<
+    "instructions" | "settings" | "profile"
+  >("instructions");
 
   const { lockLandscape, unlock } = useOrientationLock();
+
+  // Get universal wallet context first
+  const { wallet, user } = usePlatform();
+  const { address } = wallet;
+
+  // Get onboarding context
+  const { setShouldShowTour } = useOnboarding();
+
+  // Use the universal address - no more complex network-specific logic needed!
+  const finalAddress = address || thirdwebAddress;
+
+  // Smart default mode based on user state
+  const getDefaultMode = useCallback(():
+    | "instructions"
+    | "settings"
+    | "profile" => {
+    if (finalAddress) return "profile"; // Logged in → Show progress
+    return "instructions"; // Anonymous → Show instructions
+  }, [finalAddress]);
+
+  // Fetch user statistics from leaderboard data
+  const { formattedStats, isLoading: statsLoading } =
+    useUserStats(finalAddress);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -67,15 +92,20 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     }
   }, []);
 
-  // Get universal wallet context first
-  const { wallet, user } = usePlatform();
-  const { address } = wallet;
-  
-  // Get onboarding context
-  const { setShouldShowTour } = useOnboarding();
+  // Initialize mode based on user state
+  useEffect(() => {
+    setCurrentMode(getDefaultMode());
+  }, [getDefaultMode]);
 
-  // Use the universal address - no more complex network-specific logic needed!
-  const finalAddress = address || thirdwebAddress;
+  // Update mode when user login state changes
+  useEffect(() => {
+    const newDefaultMode = getDefaultMode();
+    if (currentMode === "instructions" && newDefaultMode === "profile") {
+      setCurrentMode("profile"); // Switch to profile when user logs in
+    } else if (currentMode === "profile" && newDefaultMode === "instructions") {
+      setCurrentMode("instructions"); // Switch to instructions when user logs out
+    }
+  }, [finalAddress, currentMode, getDefaultMode]);
 
   const [showWelcome, setShowWelcome] = useState(true);
   // Tutorial state is managed but not displayed in current UI
@@ -302,7 +332,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Force camera to stop by accessing the video tracks and stopping them
     stopAllCameras();
-  }, [stopAllCameras, finalAddress, exitFullscreen]);
+  }, [stopAllCameras, finalAddress, exitFullscreen, unlock]);
 
   // Update the ref whenever handleStop changes
   useEffect(() => {
@@ -314,10 +344,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     if (isMobile && autoFs) {
       enterFullscreen(); // Must be synchronous with user gesture
     }
-    if (
-      isMobile &&
-      (mode === "pushups" || mode === "squats")
-    ) {
+    if (isMobile && (mode === "pushups" || mode === "squats")) {
       lockLandscape();
     }
 
@@ -399,16 +426,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   return (
     <>
-      
       <div id="game-container" ref={gameRef}>
-        <button
-          aria-label="Settings"
-          className="absolute top-2 right-2 z-50 bg-white/80 rounded-full p-2 shadow hover:bg-white transition"
-          onClick={() => setShowSettings(true)}
-          type="button"
-        >
-          <span style={{ fontSize: 20 }}>⚙️</span>
-        </button>
+        {/* Top-right control buttons */}
         <FullscreenExitButton
           isFullscreen={isFullscreen}
           onExit={() => {
@@ -419,6 +438,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             }
           }}
         />
+
         <div id="banner">
           <div className="olympic-rings" aria-label="Olympic Rings">
             <div className="ring blue" />
@@ -431,12 +451,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           <h1>Imperfect Form</h1>
         </div>
 
-        {/* Wallet connection centered at the top */}
+        {/* Wallet connection - now clean without blocking elements */}
         <div id="wallet-connection" className="wallet-connection">
           <div className={finalAddress ? "wallet-connected" : "wallet-prompt"}>
             <UniversalConnectButton
               size="md"
               showProfileWhenConnected={true}
+              currentMode={currentMode}
+              onModeChange={setCurrentMode}
+              workoutStarted={started}
               onConnected={(address) => {
                 console.log("Game: Wallet connected with address:", address);
               }}
@@ -452,28 +475,27 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           )}
 
           {!showWelcome && !started && (
-            <div id="instructions" style={{ display: "flex" }}>
-              <p>
-                a) <span className="button-text start">START</span> = begin
-              </p>
-              <p>
-                b) <span className="button-text stop">STOP</span> = end
-              </p>
-              <p>
-                c) <span className="button-text reset">RESET</span> = restart
-              </p>
-              <p>d) Have fun!</p>
-              <p className="built-by">
-                Built by{" "}
-                <a
-                  href="https://warpcast.com/papa"
-                  target="_blank"
-                  className="highlight"
-                >
-                  PAPA
-                </a>
-              </p>
-            </div>
+            <SplitFlapInstructions
+              mode={currentMode}
+              onModeChange={setCurrentMode}
+              autoFs={autoFs}
+              setAutoFs={setAutoFs}
+              userStats={
+                formattedStats
+                  ? {
+                      totalSessions:
+                        parseInt(formattedStats.workouts.split(" ")[0]) || 0,
+                      bestPushups: 0, // Will be calculated from formattedStats.bestScore
+                      bestSquats: 0, // Will be calculated from formattedStats.bestScore
+                      currentStreak:
+                        parseInt(formattedStats.streak.split(" ")[0]) || 0,
+                      activeChains: [], // Not needed for display
+                    }
+                  : undefined
+              }
+              formattedStats={formattedStats}
+              isLoadingStats={statsLoading}
+            />
           )}
 
           {showLoading && (
@@ -580,11 +602,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           }`}
           style={{ marginBottom: isMobile ? "8px" : "0" }}
         >
-          <ModeSwitch
-            value={mode}
-            disabled={started}
-            onChange={setMode}
-          />
+          <ModeSwitch value={mode} disabled={started} onChange={setMode} />
           <button
             id="startButton"
             className="py-3 px-4 text-sm sm:text-base touch-manipulation"
@@ -630,7 +648,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           }}
           onFarcaster={() => {
             // Placeholder: Open farcaster auth, then hide dialog
-            window.open('/api/auth/farcaster', '_self');
+            window.open("/api/auth/farcaster", "_self");
             setShowIntroDialog(false);
             // Trigger tour after auth flow
             setTimeout(() => setShouldShowTour(true), 1000);
@@ -645,10 +663,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             if (typeof window !== "undefined") {
               localStorage.setItem("skipIntroDialog", "1");
               // Dispatch storage event to update onboarding context
-              window.dispatchEvent(new StorageEvent("storage", {
-                key: "skipIntroDialog",
-                newValue: "1"
-              }));
+              window.dispatchEvent(
+                new StorageEvent("storage", {
+                  key: "skipIntroDialog",
+                  newValue: "1",
+                })
+              );
             }
             setShowIntroDialog(false);
             // Trigger tour after skip
@@ -682,14 +702,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         displayNames={displayNames}
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
-      />
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        autoFs={autoFs}
-        setAutoFs={setAutoFs}
       />
     </>
   );

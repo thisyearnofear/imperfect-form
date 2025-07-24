@@ -15,6 +15,10 @@ interface UniversalConnectButtonProps {
   className?: string;
   size?: "sm" | "md" | "lg";
   showProfileWhenConnected?: boolean;
+  // New props for mode management
+  currentMode?: "instructions" | "settings" | "profile";
+  onModeChange?: (mode: "instructions" | "settings" | "profile") => void;
+  workoutStarted?: boolean;
 }
 
 /**
@@ -26,6 +30,9 @@ export default function UniversalConnectButton({
   className = "",
   size = "md",
   showProfileWhenConnected = true,
+  currentMode = "instructions",
+  onModeChange,
+  workoutStarted = false,
 }: UniversalConnectButtonProps) {
   const { platform, user, wallet, actions, isReady } = usePlatform();
   const { isConnected, address, chainId, isConnecting } = wallet;
@@ -188,7 +195,19 @@ export default function UniversalConnectButton({
 
           {/* User Info */}
           <div className="flex flex-col">
-            <span className="text-green-300 font-medium text-sm animate-shimmer">
+            <span
+              className="font-bold text-sm"
+              style={{
+                color: "#fcb131",
+                textShadow:
+                  "0 0 12px rgba(252, 177, 49, 0.8), 0 0 24px rgba(252, 177, 49, 0.4)",
+                background:
+                  "linear-gradient(135deg, rgba(252, 177, 49, 0.1), rgba(252, 177, 49, 0.05))",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                border: "1px solid rgba(252, 177, 49, 0.2)",
+              }}
+            >
               {resolvedDisplayName || displayName}
             </span>
             {isInFarcaster && farcasterUser?.username && (
@@ -285,12 +304,72 @@ export default function UniversalConnectButton({
           </>
         )}
 
+        {/* Profile Button */}
+        {onModeChange && (
+          <button
+            onClick={() =>
+              !workoutStarted &&
+              onModeChange(
+                currentMode === "profile" ? "instructions" : "profile"
+              )
+            }
+            disabled={workoutStarted}
+            className={`
+              px-3 py-2 rounded-lg text-sm font-bold
+              transition-all duration-200 hover:scale-105 active:scale-95
+              border
+              ${
+                workoutStarted
+                  ? "bg-gray-600 border-gray-500 text-gray-400 cursor-not-allowed opacity-50"
+                  : currentMode === "profile"
+                  ? "bg-gradient-to-r from-purple-600 to-blue-600 border-purple-400 text-white hover:from-purple-700 hover:to-blue-700 hover:border-purple-300 shadow-lg shadow-purple-500/25"
+                  : "bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-400/50 text-purple-200 hover:from-purple-600/40 hover:to-blue-600/40 hover:border-purple-300"
+              }
+            `}
+            title={
+              workoutStarted
+                ? "Profile disabled during workout"
+                : "View Profile"
+            }
+          >
+            👤
+          </button>
+        )}
+
+        {/* Settings Button */}
+        {onModeChange && (
+          <button
+            onClick={() =>
+              !workoutStarted &&
+              onModeChange(currentMode === "settings" ? "profile" : "settings")
+            }
+            disabled={workoutStarted}
+            className={`
+              px-3 py-2 rounded-lg text-sm font-bold
+              transition-all duration-200 hover:scale-105 active:scale-95
+              border
+              ${
+                workoutStarted
+                  ? "bg-gray-600 border-gray-500 text-gray-400 cursor-not-allowed opacity-50"
+                  : currentMode === "settings"
+                  ? "bg-gradient-to-r from-yellow-500 to-orange-500 border-yellow-400 text-white hover:from-yellow-600 hover:to-orange-600 hover:border-yellow-300 shadow-lg shadow-yellow-500/25"
+                  : "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-400/50 text-yellow-200 hover:from-yellow-500/40 hover:to-orange-500/40 hover:border-yellow-300"
+              }
+            `}
+            title={
+              workoutStarted ? "Settings disabled during workout" : "Settings"
+            }
+          >
+            ⚙️
+          </button>
+        )}
+
         {/* Disconnect Button - maintaining your button styling */}
         <button
           onClick={disconnect}
           className="
             bg-red-600 hover:bg-red-700 active:bg-red-800
-            text-white px-3 py-2 rounded-lg text-sm 
+            text-white px-3 py-2 rounded-lg text-sm
             transition-all duration-200 hover:scale-105 active:scale-95
             border border-red-500 hover:border-red-400
             font-bold

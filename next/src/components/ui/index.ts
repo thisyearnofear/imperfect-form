@@ -11,3 +11,4 @@ export { default as Spinner } from './Spinner';
 export { default as VisuallyHidden } from './VisuallyHidden';
 export { default as WalletBrowserIndicator } from './WalletBrowserIndicator';
 export { default as ToggleSwitch } from './ToggleSwitch';
+export { default as SplitFlapText, SplitFlapInstructions } from './SplitFlapText';

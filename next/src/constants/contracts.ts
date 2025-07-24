@@ -1,4 +1,4 @@
-import { utils } from "ethers";
+import { ethers } from "ethers";
 
 // Leaderboard contract addresses for all supported networks
 export const POLYGON_CONTRACT_ADDRESS =
@@ -33,8 +33,8 @@ export const CELO_DEPLOY_BLOCK = 0;    // TODO: Update with actual deploy block
 export const MONAD_DEPLOY_BLOCK = 0;   // TODO: Update with actual deploy block
 
 // Event topic for ScoreSubmitted(address,uint256,uint256,string,bool,uint256)
-export const SCORE_SUBMITTED_TOPIC = utils.id(
-  "ScoreSubmitted(address,uint256,uint256,string,bool,uint256)"
+export const SCORE_SUBMITTED_TOPIC = ethers.keccak256(
+  ethers.toUtf8Bytes("ScoreSubmitted(address,uint256,uint256,string,bool,uint256)")
 );
 
 /**

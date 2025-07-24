@@ -1,0 +1,203 @@
+/* Split-flap display animation inspired by Solari boards */
+
+.split-flap-text {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.split-flap-text.flipping {
+  animation: splitFlap 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+@keyframes splitFlap {
+  0% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: rotateX(-90deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: rotateX(-180deg);
+    opacity: 0.3;
+    filter: blur(1px);
+  }
+  75% {
+    transform: rotateX(-270deg);
+    opacity: 0.7;
+    filter: blur(0px);
+  }
+  100% {
+    transform: rotateX(-360deg);
+    opacity: 1;
+  }
+}
+
+/* Enhanced instructions styling for settings mode - improved contrast */
+.settings-instruction {
+  position: relative;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 0 4px;
+  background: linear-gradient(135deg, rgba(252, 177, 49, 0.15), rgba(252, 177, 49, 0.08));
+  border: 1px solid rgba(252, 177, 49, 0.3);
+  color: #fbbf24; /* Better contrast yellow */
+}
+
+.settings-instruction.clickable:hover {
+  background: linear-gradient(135deg, rgba(252, 177, 49, 0.25), rgba(252, 177, 49, 0.15));
+  border: 1px solid rgba(252, 177, 49, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(252, 177, 49, 0.3);
+}
+
+.settings-instruction.clickable:active {
+  transform: translateY(0px);
+  box-shadow: 0 1px 4px rgba(252, 177, 49, 0.2);
+}
+
+.settings-instruction .button-text {
+  color: #fbbf24; /* Bright yellow for better contrast */
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+  font-weight: 600;
+}
+
+.settings-instruction .split-flap-text {
+  color: #fbbf24; /* Bright yellow for values */
+  font-weight: 600;
+}
+
+/* Retro terminal glow effect for settings */
+.settings-instruction .button-text {
+  text-shadow: 0 0 5px currentColor;
+  animation: terminalGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes terminalGlow {
+  from {
+    text-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+  }
+  to {
+    text-shadow: 0 0 2px currentColor, 0 0 5px currentColor;
+  }
+}
+
+/* Mechanical click sound effect simulation */
+.split-flap-text.flipping::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(252, 177, 49, 0.5), transparent);
+  transform: translate(-50%, -50%);
+  animation: mechanicalLine 0.6s ease-out;
+}
+
+@keyframes mechanicalLine {
+  0% {
+    opacity: 0;
+    width: 0%;
+  }
+  50% {
+    opacity: 1;
+    width: 100%;
+  }
+  100% {
+    opacity: 0;
+    width: 100%;
+  }
+}
+
+/* Staggered animation delays for multiple elements */
+.split-flap-text:nth-child(1) { animation-delay: 0ms; }
+.split-flap-text:nth-child(2) { animation-delay: 50ms; }
+.split-flap-text:nth-child(3) { animation-delay: 100ms; }
+.split-flap-text:nth-child(4) { animation-delay: 150ms; }
+.split-flap-text:nth-child(5) { animation-delay: 200ms; }
+
+/* Enhanced button text styling for settings mode */
+.settings-instruction .button-text.start {
+  color: #10b981; /* Green for enabled/start */
+}
+
+.settings-instruction .button-text.stop {
+  color: #ef4444; /* Red for disabled/stop */
+}
+
+.settings-instruction .button-text.reset {
+  color: #f59e0b; /* Amber for neutral/reset */
+}
+
+/* Profile mode specific styling - improved contrast */
+.profile-instruction {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.profile-instruction:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.12));
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.profile-instruction .button-text {
+  color: #c4b5fd; /* Much lighter purple for better contrast */
+  text-shadow: 0 0 10px rgba(196, 181, 253, 0.4);
+  font-weight: 600;
+}
+
+/* Ensure profile text is highly visible */
+.profile-instruction {
+  color: #e5e7eb; /* Light gray for main text */
+}
+
+.profile-instruction .split-flap-text {
+  color: #c4b5fd; /* Light purple for values */
+  font-weight: 600;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .split-flap-text.flipping {
+    animation: none;
+    transition: opacity 0.3s ease;
+  }
+  
+  .split-flap-text.flipping {
+    opacity: 0.7;
+  }
+  
+  .settings-instruction .button-text {
+    animation: none;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .settings-instruction {
+    padding: 4px 6px;
+    margin: 2px;
+  }
+  
+  .split-flap-text {
+    font-size: 0.9em;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .settings-instruction.clickable:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #fcb131;
+  }
+  
+  .settings-instruction .button-text {
+    text-shadow: none;
+    font-weight: bold;
+  }
+}

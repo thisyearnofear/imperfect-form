@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
-import { usePlatform } from '@/contexts/PlatformContext';
-import { switchChain, SupportedChain } from '@/utils/chainSwitching';
-import { Dialog } from '@/components/ui';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { usePlatform } from "@/contexts/PlatformContext";
+import { SupportedChain, chainConfigs } from "@/utils/chainSwitching";
+import { Dialog } from "@/components/ui";
+import toast from "react-hot-toast";
 
 interface NetworkSwitchPromptProps {
   isOpen: boolean;
@@ -22,16 +22,18 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
   reason,
 }) => {
   const [isSwitching, setIsSwitching] = useState(false);
-  const { wallet } = usePlatform();
+  const { actions, wallet } = usePlatform();
 
   const handleSwitchNetwork = async () => {
     setIsSwitching(true);
-    
+
     try {
-      const success = await switchChain(targetChain);
-      
+      // Get the chain ID from the target chain
+      const chainId = chainConfigs[targetChain].id;
+      const success = await actions.switchChain(chainId);
+
       if (success) {
-        toast.success(`Switched to ${targetChain} network!`);
+        toast.success(`Switched to ${chainConfigs[targetChain].name} network!`);
         onNetworkSwitched();
         onClose();
       } else {
@@ -76,15 +78,26 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Current Network:</span>
               <span className="text-white font-medium">
-                {wallet.chainId ? getNetworkDisplayName(
-                  Object.values(SupportedChain).find(chain => 
-                    chain === SupportedChain.CELO && wallet.chainId === 42220 ||
-                    chain === SupportedChain.CELO_ALFAJORES && wallet.chainId === 44787 ||
-                    chain === SupportedChain.POLYGON && wallet.chainId === 137 ||
-                    chain === SupportedChain.BASE && wallet.chainId === 8453 ||
-                    chain === SupportedChain.MONAD && wallet.chainId === 10143
-                  ) || "Unknown"
-                ) : "Not Connected"}
+                {wallet.chainId
+                  ? (() => {
+                      const foundChain = Object.values(SupportedChain).find(
+                        (chain) =>
+                          (chain === SupportedChain.CELO &&
+                            wallet.chainId === 42220) ||
+                          (chain === SupportedChain.CELO_ALFAJORES &&
+                            wallet.chainId === 44787) ||
+                          (chain === SupportedChain.POLYGON &&
+                            wallet.chainId === 137) ||
+                          (chain === SupportedChain.BASE &&
+                            wallet.chainId === 8453) ||
+                          (chain === SupportedChain.MONAD &&
+                            wallet.chainId === 10143)
+                      );
+                      return foundChain
+                        ? getNetworkDisplayName(foundChain)
+                        : "Unknown";
+                    })()
+                  : "Not Connected"}
               </span>
             </div>
             <div className="flex justify-between items-center">
@@ -101,16 +114,14 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
             <strong>Why switch networks?</strong>
           </p>
           <p>
-            Self Protocol verification is currently available on Celo Alfajores testnet. 
-            This allows you to test the verification feature with mock documents before 
-            the mainnet deployment.
+            Self Protocol verification is currently available on Celo Alfajores
+            testnet. This allows you to test the verification feature with mock
+            documents before the mainnet deployment.
           </p>
         </div>
 
         <div className="bg-blue-900/20 p-3 rounded-lg border border-blue-500/30">
-          <p className="text-sm text-blue-200">
-            Benefits of verification:
-          </p>
+          <p className="text-sm text-blue-200">Benefits of verification:</p>
           <ul className="text-xs text-blue-300 mt-1 space-y-1">
             <li>Get a verified badge on the leaderboard</li>
             <li>Prove you&apos;re a real human</li>
@@ -145,7 +156,8 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
 
         <div className="text-xs text-gray-400 border-t border-gray-700 pt-3">
           <p>
-            <strong>Manual switch:</strong> You can also switch to Celo Alfajores manually in your wallet settings.
+            <strong>Manual switch:</strong> You can also switch to Celo
+            Alfajores manually in your wallet settings.
           </p>
         </div>
       </div>

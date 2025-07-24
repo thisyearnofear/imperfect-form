@@ -9,19 +9,20 @@ type FullscreenHook = {
 
 const getDoc = () => (typeof window !== "undefined" ? window.document : undefined);
 
-export function useFullscreen(targetRef?: React.RefObject<Element>): FullscreenHook {
+export function useFullscreen(targetRef?: React.RefObject<Element | null>): FullscreenHook {
   const [isFullscreen, setIsFullscreen] = useState(false);
   // Used to keep the callback up-to-date
-  const ref = targetRef || useRef<Element>(getDoc()?.documentElement || null);
+  const defaultRef = useRef<Element>(getDoc()?.documentElement || null);
+  const ref = targetRef || defaultRef;
 
   // Cross-browser helpers
   const getCurrentFsElement = () =>
     getDoc()?.fullscreenElement ||
-    // @ts-expect-error webkit
+    // @ts-expect-error - webkit fullscreen API not in standard types
     getDoc()?.webkitFullscreenElement ||
-    // @ts-expect-error moz
+    // @ts-expect-error - mozilla fullscreen API not in standard types
     getDoc()?.mozFullScreenElement ||
-    // @ts-expect-error ms
+    // @ts-expect-error - microsoft fullscreen API not in standard types
     getDoc()?.msFullscreenElement ||
     null;
 
@@ -31,22 +32,22 @@ export function useFullscreen(targetRef?: React.RefObject<Element>): FullscreenH
     if (el.requestFullscreen) {
       el.requestFullscreen();
     } else if (
-      // @ts-expect-error webkit
+      // @ts-expect-error - webkit fullscreen API not in standard types
       el.webkitRequestFullscreen
     ) {
-      // @ts-expect-error webkit
+      // @ts-expect-error - webkit fullscreen API not in standard types
       el.webkitRequestFullscreen();
     } else if (
-      // @ts-expect-error moz
+      // @ts-expect-error - mozilla fullscreen API not in standard types
       el.mozRequestFullScreen
     ) {
-      // @ts-expect-error moz
+      // @ts-expect-error - mozilla fullscreen API not in standard types
       el.mozRequestFullScreen();
     } else if (
-      // @ts-expect-error ms
+      // @ts-expect-error - microsoft fullscreen API not in standard types
       el.msRequestFullscreen
     ) {
-      // @ts-expect-error ms
+      // @ts-expect-error - microsoft fullscreen API not in standard types
       el.msRequestFullscreen();
     }
   }, [ref]);
@@ -57,22 +58,22 @@ export function useFullscreen(targetRef?: React.RefObject<Element>): FullscreenH
     if (doc.exitFullscreen) {
       doc.exitFullscreen();
     } else if (
-      // @ts-expect-error webkit
+      // @ts-expect-error - webkit fullscreen API not in standard types
       doc.webkitExitFullscreen
     ) {
-      // @ts-expect-error webkit
+      // @ts-expect-error - webkit fullscreen API not in standard types
       doc.webkitExitFullscreen();
     } else if (
-      // @ts-expect-error moz
+      // @ts-expect-error - mozilla fullscreen API not in standard types
       doc.mozCancelFullScreen
     ) {
-      // @ts-expect-error moz
+      // @ts-expect-error - mozilla fullscreen API not in standard types
       doc.mozCancelFullScreen();
     } else if (
-      // @ts-expect-error ms
+      // @ts-expect-error - microsoft fullscreen API not in standard types
       doc.msExitFullscreen
     ) {
-      // @ts-expect-error ms
+      // @ts-expect-error - microsoft fullscreen API not in standard types
       doc.msExitFullscreen();
     }
   }, []);
@@ -94,7 +95,6 @@ export function useFullscreen(targetRef?: React.RefObject<Element>): FullscreenH
     };
 
     doc.addEventListener("fullscreenchange", handleChange);
-    // @ts-expect-error webkit
     doc.addEventListener("webkitfullscreenchange", handleChange);
 
     // Initial sync
@@ -102,10 +102,8 @@ export function useFullscreen(targetRef?: React.RefObject<Element>): FullscreenH
 
     return () => {
       doc.removeEventListener("fullscreenchange", handleChange);
-      // @ts-expect-error webkit
       doc.removeEventListener("webkitfullscreenchange", handleChange);
     };
-    // eslint-disable-next-line
   }, []);
 
   return {

@@ -7,6 +7,7 @@
 @import "../styles/filters.css";
 @import "../styles/network-selector.css";
 @import "../styles/mobile-wallet-browser.css";
+@import "../styles/split-flap.css";
 
 /* Base styles */
 body,
