@@ -22,7 +22,12 @@ const SplitFlapText: React.FC<SplitFlapTextProps> = ({
   const [isFlipping, setIsFlipping] = useState(false);
 
   useEffect(() => {
-    if (isAnimating && text !== displayText) {
+    if (text === displayText) {
+      // No change needed
+      return;
+    }
+
+    if (isAnimating) {
       setIsFlipping(true);
 
       const timer = setTimeout(() => {
@@ -32,6 +37,10 @@ const SplitFlapText: React.FC<SplitFlapTextProps> = ({
       }, 300 + delay);
 
       return () => clearTimeout(timer);
+    } else {
+      setDisplayText(text);
+      setIsFlipping(false);
+      // No timer to clean up
     }
   }, [text, isAnimating, displayText, onAnimationComplete, delay]);
 
