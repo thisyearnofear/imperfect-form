@@ -4,11 +4,11 @@ import React, { useState } from "react";
 import { Spinner } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { useAccount, useWriteContract } from "wagmi";
-import { 
-  submitScore, 
-  showSubmissionResult, 
+import {
+  submitScore,
+  showSubmissionResult,
   canUserSubmit,
-  type SubmissionParams 
+  type SubmissionParams,
 } from "@/utils/unifiedSubmission";
 
 interface SubmitScoreProps {
@@ -35,7 +35,7 @@ export default function SubmitScoreWithWagmi({
   const { wallet } = usePlatform();
   const { chainId } = wallet;
   const { writeContract } = useWriteContract();
-  
+
   // Get current user address
   const address = wagmiAddress || walletAddress;
 
@@ -46,7 +46,7 @@ export default function SubmitScoreWithWagmi({
       showSubmissionResult({
         success: false,
         error: "Missing required parameters",
-        processingType: "direct"
+        processingType: "direct",
       });
       return;
     }
@@ -67,28 +67,28 @@ export default function SubmitScoreWithWagmi({
         exerciseType: exerciseType,
         userAddress: address,
         chainId: chainId,
+        provider: window.ethereum, // Ensure provider is passed
         useWagmi: !forceDirectSubmission,
         wagmiWriteContract: writeContract,
       };
 
       // Submit using unified logic
       const result = await submitScore(submissionParams);
-      
+
       if (result.success) {
         setSubmissionStatus("success");
       } else {
         setSubmissionStatus("error");
       }
-      
+
       showSubmissionResult(result);
-      
     } catch (error) {
       console.error("Submission error:", error);
       setSubmissionStatus("error");
       showSubmissionResult({
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
-        processingType: "direct"
+        processingType: "direct",
       });
     } finally {
       setIsLoading(false);
@@ -113,12 +113,14 @@ export default function SubmitScoreWithWagmi({
       ) : (
         <div className="flex flex-col items-center space-y-4">
           <div className="text-center">
-            <p className="text-lg font-semibold text-white">Confirm Submission</p>
+            <p className="text-lg font-semibold text-white">
+              Confirm Submission
+            </p>
             <p className="text-gray-200">
               Submit {score} {exerciseType} to the leaderboard?
             </p>
           </div>
-          
+
           <div className="flex space-x-4">
             <button
               onClick={handleSubmit}
@@ -128,7 +130,7 @@ export default function SubmitScoreWithWagmi({
               {isLoading && <Spinner />}
               <span>{isLoading ? "Submitting..." : "Confirm"}</span>
             </button>
-            
+
             <button
               onClick={() => {
                 setConfirmStep(false);

@@ -149,6 +149,9 @@ async function submitWithDivvi(
     await handleDivviOnboardingIfNeeded(userAddress, chainId);
     
     // Use direct submission with Divvi integration
+    // Ensure we have a provider
+    const ethereumProvider = provider || (typeof window !== 'undefined' ? window.ethereum : null);
+
     const result = await submitScoreDirectly(
       contractAddress,
       pushups,
@@ -156,7 +159,7 @@ async function submitWithDivvi(
       chainId === 8453, // isBaseNetwork
       userAddress,
       false, // skipSubAccountCheck
-      provider || window.ethereum
+      ethereumProvider
     );
     
     if (result.success && result.transactionHash) {

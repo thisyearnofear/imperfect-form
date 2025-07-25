@@ -78,12 +78,23 @@ export async function submitScoreDirectly(
 }> {
   // Helper function to create provider using ethersHelpers
   function createProviderFromEthereum(ethereumProvider: unknown): ethers.BrowserProvider {
+    console.log("Creating provider from ethereum:", {
+      hasProvider: !!ethereumProvider,
+      providerType: typeof ethereumProvider,
+      hasRequest: ethereumProvider && typeof ethereumProvider === 'object' && 'request' in ethereumProvider,
+      hasWindowEthereum: typeof window !== 'undefined' && !!window.ethereum
+    });
+
     if (ethereumProvider && typeof ethereumProvider === 'object' && 'request' in ethereumProvider) {
+      console.log("Using provided ethereum provider");
       return new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
     } else if (typeof window !== 'undefined' && window.ethereum) {
+      console.log("Using window.ethereum as fallback");
       return new ethers.BrowserProvider(window.ethereum);
     } else {
-      throw new Error("No valid Ethereum provider found");
+      const errorMsg = `No valid Ethereum provider found. Provider: ${!!ethereumProvider}, Window.ethereum: ${typeof window !== 'undefined' && !!window.ethereum}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
   }
 
@@ -152,12 +163,18 @@ export async function submitScoreDirectly(
         console.log("Using provided ethereum provider from unified context");
       }
 
+      // Additional fallback: try window.ethereum directly if getEthereumProvider fails
+      if (!ethereumProvider && typeof window !== 'undefined') {
+        console.log("getEthereumProvider() failed, trying window.ethereum directly");
+        ethereumProvider = window.ethereum;
+      }
+
       if (!ethereumProvider) {
-        console.log("No Ethereum provider found, suggesting fallback to Wagmi");
+        console.error("No Ethereum provider found after all fallbacks");
         return {
           success: false,
           processingType: "wagmi",
-          error: "No provider available - use Wagmi fallback",
+          error: "No Ethereum provider available. Please ensure your wallet is connected and try again.",
         };
       }
 
