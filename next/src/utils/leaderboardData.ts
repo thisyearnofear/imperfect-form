@@ -22,14 +22,15 @@ import {
 } from "@/utils/rpcUtils";
 import { Score, ContractScore, NetworkType } from "@/types";
 import { getDisplayName } from "@/utils/ensResolver";
-import { batchResolveFarcasterProfiles } from "@/utils/neynarResolver";
+import { batchResolveFarcasterProfiles, FarcasterProfile } from "@/utils/neynarResolver";
 import { shortenAddress } from "@/utils/formatters";
+import { getCachedLeaderboardData, cacheLeaderboardData } from "./leaderboardCache";
 
 interface LeaderboardData {
   pushups: Score[];
   squats: Score[];
   displayNames: Record<string, string>;
-  farcasterProfiles?: Record<string, { username: string; displayName?: string } | null>;
+  farcasterProfiles?: Record<string, FarcasterProfile | null>;
 }
 
 /**
@@ -186,24 +187,10 @@ export async function getLeaderboard(): Promise<LeaderboardData | null> {
     console.log("🔄 Fetching leaderboard data from all networks...");
 
     // Check cache first
-    if (typeof window !== "undefined") {
-      const cachedData = localStorage.getItem("leaderboardCache");
-      const cacheTimestamp = localStorage.getItem("leaderboardCacheTimestamp");
-      
-      if (cachedData && cacheTimestamp) {
-        const cacheAge = Date.now() - parseInt(cacheTimestamp);
-        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-        
-        if (cacheAge < CACHE_DURATION) {
-          try {
-            const parsedData = JSON.parse(cachedData);
-            console.log("📦 Using cached leaderboard data");
-            return parsedData;
-          } catch (error) {
-            console.error("Error parsing cached leaderboard data:", error);
-          }
-        }
-      }
+    const cachedData = getCachedLeaderboardData();
+    if (cachedData) {
+      console.log("📦 Using cached leaderboard data");
+      return cachedData;
     }
 
     // Define active networks
@@ -293,15 +280,7 @@ export async function getLeaderboard(): Promise<LeaderboardData | null> {
     };
 
     // Cache the result
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("leaderboardCache", JSON.stringify(result));
-        localStorage.setItem("leaderboardCacheTimestamp", Date.now().toString());
-        console.log("💾 Cached leaderboard data");
-      } catch (cacheError) {
-        console.error("Error caching leaderboard data:", cacheError);
-      }
-    }
+    cacheLeaderboardData(result);
 
     console.log("✅ Successfully fetched leaderboard data");
     return result;

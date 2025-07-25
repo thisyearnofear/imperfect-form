@@ -30,6 +30,11 @@ import {
 import { Spinner } from "@/components/ui";
 import toast from "react-hot-toast";
 import { Score, ContractScore } from "@/types";
+import {
+  getCachedLeaderboardData,
+  cacheLeaderboardData,
+  clearLeaderboardCache,
+} from "@/utils/leaderboardCache";
 
 interface LeaderboardProps {
   limit?: number;
@@ -333,43 +338,24 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     // Verify contract addresses
     verifyContractAddresses();
 
-    // Check if we have cached data and it's less than 5 minutes old (client-side only)
-    let cachedData = null;
-    let cacheTimestamp = null;
-    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
-
-    if (typeof window !== "undefined") {
-      cachedData = localStorage.getItem("leaderboardCache");
-      cacheTimestamp = localStorage.getItem("leaderboardCacheTimestamp");
-    }
-
-    if (cachedData && cacheTimestamp) {
-      const cacheAge = Date.now() - parseInt(cacheTimestamp);
-
-      // Use cached data if it's fresh enough
-      if (cacheAge < CACHE_DURATION) {
-        try {
-          const parsedData = JSON.parse(cachedData);
-          setPushupLeaderboard(parsedData.pushups);
-          setSquatLeaderboard(parsedData.squats);
-          setDisplayNames(parsedData.displayNames);
-          // Restore Farcaster profiles if available in cache
-          if (parsedData.farcasterProfiles) {
-            setFarcasterProfiles(parsedData.farcasterProfiles);
-          }
-          setIsLoading(false);
-
-          // Only log in development
-          if (process.env.NODE_ENV === "development") {
-            console.log("Using cached leaderboard data");
-          }
-
-          return;
-        } catch (error) {
-          // If parsing fails, continue with fetching fresh data
-          console.error("Error parsing cached leaderboard data:", error);
-        }
+    // Check if we have cached data
+    const cachedData = getCachedLeaderboardData();
+    if (cachedData) {
+      setPushupLeaderboard(cachedData.pushups);
+      setSquatLeaderboard(cachedData.squats);
+      setDisplayNames(cachedData.displayNames);
+      // Restore Farcaster profiles if available in cache
+      if (cachedData.farcasterProfiles) {
+        setFarcasterProfiles(cachedData.farcasterProfiles);
       }
+      setIsLoading(false);
+
+      // Only log in development
+      if (process.env.NODE_ENV === "development") {
+        console.log("Using cached leaderboard data");
+      }
+
+      return;
     }
 
     try {
@@ -576,29 +562,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
       setDisplayNames(names);
 
-      // Cache the leaderboard data (client-side only)
-      if (typeof window !== "undefined") {
-        try {
-          const cacheData = {
-            pushups: sortedPushups,
-            squats: sortedSquats,
-            displayNames: names,
-            farcasterProfiles: Object.fromEntries(farcasterProfilesMap),
-          };
-          localStorage.setItem("leaderboardCache", JSON.stringify(cacheData));
-          localStorage.setItem(
-            "leaderboardCacheTimestamp",
-            Date.now().toString()
-          );
-
-          // Only log in development
-          if (process.env.NODE_ENV === "development") {
-            console.log("Cached leaderboard data");
-          }
-        } catch (cacheError) {
-          console.error("Error caching leaderboard data:", cacheError);
-        }
-      }
+      // Cache the leaderboard data
+      const cacheData = {
+        pushups: sortedPushups,
+        squats: sortedSquats,
+        displayNames: names,
+        farcasterProfiles: Object.fromEntries(farcasterProfilesMap),
+      };
+      cacheLeaderboardData(cacheData);
     } catch (error) {
       console.error("Error fetching leaderboard data:", error);
       toast.error("Failed to load leaderboard data");
@@ -615,11 +586,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       return;
     }
 
-    // Clear the cache to ensure we get fresh data after contract updates (client-side only)
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("leaderboardCache");
-      localStorage.removeItem("leaderboardCacheTimestamp");
-    }
+    // Clear the cache to ensure we get fresh data after contract updates
+    clearLeaderboardCache();
 
     fetchLeaderboardData();
   }, [
@@ -690,11 +658,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           id="clearCacheButton"
           className="load-button"
           onClick={() => {
-            // Clear cache and reload (client-side only)
-            if (typeof window !== "undefined") {
-              localStorage.removeItem("leaderboardCache");
-              localStorage.removeItem("leaderboardCacheTimestamp");
-            }
+            // Clear cache and reload
+            clearLeaderboardCache();
             setIsLoading(true);
             fetchLeaderboardData();
             toast.success("Cache cleared, reloading data");
@@ -709,8 +674,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             if (typeof window === "undefined") return;
 
             // Force reload by clearing all caches
-            localStorage.removeItem("leaderboardCache");
-            localStorage.removeItem("leaderboardCacheTimestamp");
+            clearLeaderboardCache();
 
             // Clear browser cache for this page
             if (window.caches) {
