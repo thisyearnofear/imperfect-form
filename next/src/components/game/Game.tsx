@@ -27,6 +27,7 @@ import FullscreenExitButton from "../ui/FullscreenExitButton";
 import { SplitFlapInstructions } from "../ui/SplitFlapText";
 import useOrientationLock from "../../hooks/useOrientationLock";
 import { useUserStats } from "../../hooks/useUserStats";
+import { isFarcasterMiniApp } from "../../utils/farcasterMiniApp";
 
 import toast from "react-hot-toast";
 import { Score } from "@/types";
@@ -140,6 +141,59 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
   const { isMobile } = useDeviceDetect(); // Use our enhanced device detection hook
+
+  // Check if fullscreen is available in current context (not restricted by iframe)
+  const isFullscreenAvailable = useMemo(() => {
+    if (typeof window === "undefined") return false;
+
+    // Check if we're in a Farcaster Mini App (iframe context)
+    const inFarcaster = isFarcasterMiniApp();
+
+    // Check if fullscreen API is available and not restricted
+    const hasFullscreenAPI = !!(
+      document.fullscreenEnabled ||
+      (document as Document & { webkitFullscreenEnabled?: boolean })
+        .webkitFullscreenEnabled ||
+      (document as Document & { mozFullScreenEnabled?: boolean })
+        .mozFullScreenEnabled ||
+      (document as Document & { msFullscreenEnabled?: boolean })
+        .msFullscreenEnabled
+    );
+
+    // In Farcaster Mini Apps, fullscreen is typically restricted
+    // unless the iframe has allowfullscreen attribute
+    if (inFarcaster) {
+      // Try to detect if fullscreen is actually allowed
+      // This is a heuristic - we can't definitively know without trying
+      try {
+        // Check if we can access the fullscreen API without throwing
+        const element = document.documentElement;
+        const canRequest = !!(
+          element.requestFullscreen ||
+          (
+            element as HTMLElement & {
+              webkitRequestFullscreen?: () => Promise<void>;
+            }
+          ).webkitRequestFullscreen ||
+          (
+            element as HTMLElement & {
+              mozRequestFullScreen?: () => Promise<void>;
+            }
+          ).mozRequestFullScreen ||
+          (
+            element as HTMLElement & {
+              msRequestFullscreen?: () => Promise<void>;
+            }
+          ).msRequestFullscreen
+        );
+        return hasFullscreenAPI && canRequest;
+      } catch {
+        return false;
+      }
+    }
+
+    return hasFullscreenAPI;
+  }, []);
 
   // Safe state for viewport dimensions
   const [viewportDimensions, setViewportDimensions] = useState({
@@ -341,8 +395,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   const handleStart = () => {
     // Use device detection hook's isMobile value
-    if (isMobile && autoFs) {
+    // Only attempt fullscreen if it's available in the current context
+    if (isMobile && autoFs && isFullscreenAvailable) {
       enterFullscreen(); // Must be synchronous with user gesture
+    } else if (isMobile && autoFs && !isFullscreenAvailable) {
+      // Log for debugging - fullscreen not available (likely Farcaster Mini App)
+      console.log(
+        "Fullscreen requested but not available in current context (likely iframe restriction)"
+      );
     }
     if (isMobile && (mode === "pushups" || mode === "squats")) {
       lockLandscape();
@@ -480,6 +540,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               onModeChange={setCurrentMode}
               autoFs={autoFs}
               setAutoFs={setAutoFs}
+              isFullscreenAvailable={isFullscreenAvailable}
               userStats={
                 formattedStats
                   ? {

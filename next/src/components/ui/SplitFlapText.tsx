@@ -67,6 +67,7 @@ interface SplitFlapInstructionsProps {
   onModeChange: (mode: InstructionMode) => void;
   autoFs: boolean;
   setAutoFs: (value: boolean) => void;
+  isFullscreenAvailable?: boolean;
   userStats?: {
     totalSessions: number;
     bestPushups: number;
@@ -88,6 +89,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   onModeChange,
   autoFs,
   setAutoFs,
+  isFullscreenAvailable = true,
   userStats,
   formattedStats,
   isLoadingStats,
@@ -104,7 +106,15 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
       { key: "d", text: "Have fun!", desc: "" },
     ],
     settings: [
-      { key: "a", text: "FULLSCREEN", desc: autoFs ? "enabled" : "disabled" },
+      {
+        key: "a",
+        text: "FULLSCREEN",
+        desc: !isFullscreenAvailable
+          ? "unavailable"
+          : autoFs
+          ? "enabled"
+          : "disabled",
+      },
       { key: "b", text: "ORIENTATION", desc: "auto-lock" },
       { key: "c", text: "THEME", desc: "retro" },
       { key: "d", text: "Back to profile!", desc: "" },
@@ -147,7 +157,15 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
   const currentInstructions = useMemo(
     () => instructionConfigs[mode],
-    [mode, autoFs, userStats, formattedStats, isLoadingStats]
+    [
+      mode,
+      autoFs,
+      isFullscreenAvailable,
+      userStats,
+      formattedStats,
+      isLoadingStats,
+      instructionConfigs,
+    ]
   );
 
   useEffect(() => {
@@ -171,7 +189,8 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   const handleItemClick = (key: string) => {
     switch (mode) {
       case "settings":
-        if (key === "a") {
+        if (key === "a" && isFullscreenAvailable) {
+          // Only allow toggling if fullscreen is available
           setAutoFs(!autoFs);
           if (typeof window !== "undefined") {
             window.localStorage.setItem(
