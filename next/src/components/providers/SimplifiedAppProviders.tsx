@@ -35,6 +35,28 @@ const monadTestnet: Chain = {
   testnet: true,
 };
 
+// Define Celo Alfajores Testnet
+const celoAlfajores: Chain = {
+  id: 44787,
+  name: "Celo Alfajores Testnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "CELO",
+    symbol: "CELO",
+  },
+  rpcUrls: {
+    public: { http: ["https://alfajores-forno.celo-testnet.org"] },
+    default: { http: ["https://alfajores-forno.celo-testnet.org"] },
+  },
+  blockExplorers: {
+    default: {
+      name: "Celo Alfajores Explorer",
+      url: "https://alfajores.celoscan.io/",
+    },
+  },
+  testnet: true,
+};
+
 // Comprehensive WalletConnect session cleanup utility
 const cleanupWalletConnectSessions = () => {
   if (typeof window === "undefined") return;
@@ -142,28 +164,30 @@ const createConnectors = async () => {
     }),
 
     // Tertiary: WalletConnect (only if project ID is properly configured)
-    ...(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID && 
-        process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID !== "2b1d8e5a5c1e4c8a9b1e3d4a5b6c7d8e" ? [
-      walletConnect({
-        projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-        metadata: {
-          name: "Imperfect Form",
-          description: "Onchain fitness challenges",
-          url: window.location.origin,
-          icons: [`${window.location.origin}/icon-192x192.png`],
-        },
-        showQrModal: true,
-        qrModalOptions: {
-          themeMode: "dark",
-          themeVariables: {
-            "--wcm-z-index": "2000",
-          },
-        },
-        disableProviderPing: false,
-        relayUrl: "wss://relay.walletconnect.com",
-      })
-    ] : []),
-
+    ...(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID &&
+    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID !==
+      "2b1d8e5a5c1e4c8a9b1e3d4a5b6c7d8e"
+      ? [
+          walletConnect({
+            projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
+            metadata: {
+              name: "Imperfect Form",
+              description: "Onchain fitness challenges",
+              url: window.location.origin,
+              icons: [`${window.location.origin}/icon-192x192.png`],
+            },
+            showQrModal: true,
+            qrModalOptions: {
+              themeMode: "dark",
+              themeVariables: {
+                "--wcm-z-index": "2000",
+              },
+            },
+            disableProviderPing: false,
+            relayUrl: "wss://relay.walletconnect.com",
+          }),
+        ]
+      : []),
   ];
 
   // Add Farcaster connector if available (client-side only)
@@ -191,7 +215,7 @@ const createConnectors = async () => {
 const createWagmiConfig = async () => {
   const connectors = await createConnectors();
   return createConfig({
-    chains: [celo, polygon, base, monadTestnet],
+    chains: [celo, polygon, base, monadTestnet, celoAlfajores],
     connectors,
     storage: createStorage({
       storage: cookieStorage,
@@ -206,6 +230,7 @@ const createWagmiConfig = async () => {
       ),
       [celo.id]: http(),
       [monadTestnet.id]: http(),
+      [celoAlfajores.id]: http(),
     },
   });
 };

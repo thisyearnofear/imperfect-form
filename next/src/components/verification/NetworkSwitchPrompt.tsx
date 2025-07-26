@@ -109,25 +109,8 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
           </div>
         </div>
 
-        <div className="text-sm text-gray-300">
-          <p className="mb-2">
-            <strong>Why switch networks?</strong>
-          </p>
-          <p>
-            Self Protocol verification is currently available on Celo Alfajores
-            testnet. This allows you to test the verification feature with mock
-            documents before the mainnet deployment.
-          </p>
-        </div>
-
-        <div className="bg-blue-900/20 p-3 rounded-lg border border-blue-500/30">
-          <p className="text-sm text-blue-200">Benefits of verification:</p>
-          <ul className="text-xs text-blue-300 mt-1 space-y-1">
-            <li>Get a verified badge on the leaderboard</li>
-            <li>Prove you&apos;re a real human</li>
-            <li>One-time setup, works forever</li>
-            <li>Privacy-first (only age verification)</li>
-          </ul>
+        <div className="text-sm text-gray-300 text-center">
+          <p>Self Protocol verification requires Celo testnet</p>
         </div>
 
         <div className="flex space-x-3">

@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useState } from 'react';
-import { SelfVerificationModal } from '@/components/verification';
-import NetworkSwitchPrompt from './NetworkSwitchPrompt';
-import { usePlatform } from '@/contexts/PlatformContext';
-import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
-import { chainSupportsSelfProtocol, getSelfProtocolChain } from '@/utils/chainSwitching';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { SelfVerificationModal } from "@/components/verification";
+import NetworkSwitchPrompt from "./NetworkSwitchPrompt";
+import { usePlatform } from "@/contexts/PlatformContext";
+import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
+import {
+  chainSupportsSelfProtocol,
+  getSelfProtocolChain,
+} from "@/utils/chainSwitching";
+import toast from "react-hot-toast";
 
 interface VerificationIntegrationProps {
   onVerificationComplete?: () => void;
@@ -24,7 +27,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showNetworkSwitch, setShowNetworkSwitch] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  
+
   const { wallet } = usePlatform();
   const { currentTheme } = useEnhancedChainTheme();
   const { address, chainId } = wallet;
@@ -32,7 +35,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   const handleVerificationSuccess = () => {
     setIsVerified(true);
     setShowVerificationModal(false);
-    
+
     toast.success("🎉 Verified as human! You now have a verified badge.", {
       duration: 5000,
       style: {
@@ -41,14 +44,14 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
         border: `2px solid ${currentTheme.palette.accent}`,
       },
     });
-    
+
     onVerificationComplete?.();
   };
 
   const handleVerificationError = (error: unknown) => {
     console.error("Verification failed:", error);
     setShowVerificationModal(false);
-    
+
     toast.error("Verification failed. Please try again.", {
       style: {
         background: currentTheme.palette.surface,
@@ -83,7 +86,8 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
             <div>
               <h4 className="font-bold text-green-400">Verified Human</h4>
               <p className="text-sm text-green-300">
-                You&apos;re verified! Your scores now show with a verified badge.
+                You&apos;re verified! Your scores now show with a verified
+                badge.
               </p>
             </div>
           </div>
@@ -114,7 +118,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
               Verify Now
             </button>
           </div>
-          
+
           <div className="mt-3 text-xs text-yellow-200/80">
             ✨ One-time verification • 🔒 Privacy-first • ⚡ Instant badge
           </div>
@@ -127,7 +131,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
         onClose={() => setShowNetworkSwitch(false)}
         onNetworkSwitched={handleNetworkSwitched}
         targetChain={getSelfProtocolChain()}
-        reason="Self Protocol verification requires Celo Alfajores testnet to test with mock documents before mainnet deployment."
+        reason="Switch to Celo testnet for verification"
       />
 
       {/* Verification Modal */}

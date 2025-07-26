@@ -100,7 +100,7 @@ const PLATFORM_CONFIGS: Record<Platform, Partial<PlatformFeatures>> = {
     canShare: true,
     canAddToHome: true,
     canSwitchChains: true,
-    preferredChains: [42220, 137, 10143], // CELO, Polygon, Monad
+    preferredChains: [42220, 137, 10143, 44787], // CELO, Polygon, Monad, Celo Alfajores
     defaultChain: 42220, // CELO
   },
   mobile: {
@@ -108,7 +108,7 @@ const PLATFORM_CONFIGS: Record<Platform, Partial<PlatformFeatures>> = {
     canShare: true,
     canAddToHome: true,
     canSwitchChains: false,
-    preferredChains: [42220, 8453], // CELO, Base Mainnet
+    preferredChains: [42220, 8453, 44787], // CELO, Base Mainnet, Celo Alfajores
     defaultChain: 42220, // CELO
   },
   desktop: {
@@ -116,7 +116,7 @@ const PLATFORM_CONFIGS: Record<Platform, Partial<PlatformFeatures>> = {
     canShare: false,
     canAddToHome: false,
     canSwitchChains: true,
-    preferredChains: [8453, 137, 42220, 10143], // Base Mainnet, Polygon, CELO, Monad
+    preferredChains: [8453, 137, 42220, 10143, 44787], // Base Mainnet, Polygon, CELO, Monad, Celo Alfajores
     defaultChain: 8453, // Base Mainnet
   },
   pwa: {

@@ -122,24 +122,10 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="text-4xl">🏆</div>
-          <h3 className="text-lg font-bold text-white">Verify Your Humanity</h3>
+          <h3 className="text-lg font-bold text-white">Verify as Human</h3>
           <p className="text-gray-300 text-sm">
-            Use Self Protocol to prove you&apos;re a real human and get your
-            verified badge!
+            Get your verified badge with Self Protocol
           </p>
-        </div>
-
-        {/* Benefits */}
-        <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-4 rounded-lg border border-yellow-500/20">
-          <h4 className="font-bold text-yellow-400 mb-2">
-            Verification Benefits:
-          </h4>
-          <ul className="text-sm text-gray-300 space-y-1">
-            <li>✅ Verified human badge on leaderboard</li>
-            <li>🏆 Join verified-only competitions</li>
-            <li>🔒 Privacy-first verification (age 16+ only)</li>
-            <li>⚡ One-time setup, permanent status</li>
-          </ul>
         </div>
 
         {/* Verification Interface */}
