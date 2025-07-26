@@ -8,11 +8,12 @@
 import { ethers } from "ethers";
 import toast from "react-hot-toast";
 import { submitScoreDirectly } from "./directContractInteraction";
-import { 
-  isFirstTimeDivviUser, 
+import {
+  isFirstTimeDivviUser,
   showEnhancedFeaturesPrompt,
   registerDivviReferral
 } from "./divviIntegration";
+import { getEthereumProvider } from "./farcasterMiniApp";
 import {
   POLYGON_CONTRACT_ADDRESS,
   BASE_CONTRACT_ADDRESS,
@@ -149,8 +150,11 @@ async function submitWithDivvi(
     await handleDivviOnboardingIfNeeded(userAddress, chainId);
     
     // Use direct submission with Divvi integration
-    // Ensure we have a provider
-    const ethereumProvider = provider || (typeof window !== 'undefined' ? window.ethereum : null);
+    // Ensure we have a provider - use proper detection for Farcaster Mini Apps
+    let ethereumProvider = provider;
+    if (!ethereumProvider) {
+      ethereumProvider = await getEthereumProvider();
+    }
 
     const result = await submitScoreDirectly(
       contractAddress,
@@ -283,7 +287,10 @@ export async function canUserSubmit(
       return { canSubmit: false, reason: "Invalid user address" };
     }
     
-    const ethereumProvider = provider || window.ethereum;
+    let ethereumProvider = provider;
+    if (!ethereumProvider) {
+      ethereumProvider = await getEthereumProvider();
+    }
     if (!ethereumProvider) {
       return { canSubmit: false, reason: "No Ethereum provider found" };
     }

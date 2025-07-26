@@ -10,6 +10,7 @@ import {
   canUserSubmit,
   type SubmissionParams,
 } from "@/utils/unifiedSubmission";
+import { getEthereumProvider } from "@/utils/farcasterMiniApp";
 
 interface SubmitScoreProps {
   score?: number;
@@ -61,13 +62,16 @@ export default function SubmitScoreWithWagmi({
         throw new Error(canSubmitResult.reason || "Cannot submit");
       }
 
+      // Get the appropriate Ethereum provider (handles Farcaster Mini App detection)
+      const ethereumProvider = await getEthereumProvider();
+
       // Prepare submission parameters
       const submissionParams: SubmissionParams = {
         score: score,
         exerciseType: exerciseType,
         userAddress: address,
         chainId: chainId,
-        provider: window.ethereum, // Ensure provider is passed
+        provider: ethereumProvider, // Use proper provider detection
         useWagmi: !forceDirectSubmission,
         wagmiWriteContract: writeContract,
       };
