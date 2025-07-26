@@ -8,7 +8,12 @@
 
 import { ethers } from "ethers";
 import { createTransactionOptions, parseEther } from "./ethersHelpers";
-import { enhanceTransactionWithDivvi, completeDivviWorkflow, isValidDivviAddress } from "./divviHelpers";
+import {
+  isFirstTimeDivviUser,
+  getDivviReferralTag,
+  registerDivviReferral,
+  showEnhancedFeaturesPrompt
+} from "./divviIntegration";
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -62,11 +67,11 @@ export async function submitContractTransaction(
 
   try {
     // Validate inputs
-    if (!isValidDivviAddress(userAddress)) {
+    if (!userAddress || !userAddress.startsWith('0x') || userAddress.length !== 42) {
       throw new Error("Invalid user address");
     }
 
-    if (!isValidDivviAddress(contractAddress)) {
+    if (!contractAddress || !contractAddress.startsWith('0x') || contractAddress.length !== 42) {
       throw new Error("Invalid contract address");
     }
 
@@ -87,11 +92,16 @@ export async function submitContractTransaction(
     const originalData = iface.encodeFunctionData(functionName, args);
 
     // Enhance with Divvi referral tracking
-    const enhancedData = enhanceTransactionWithDivvi({
-      userAddress,
-      originalData,
-      chainId
-    });
+    const isFirstTime = await isFirstTimeDivviUser(userAddress, chainId);
+    let enhancedData = originalData;
+
+    if (isFirstTime) {
+      const accepted = await showEnhancedFeaturesPrompt();
+      if (accepted) {
+        const referralTag = getDivviReferralTag(userAddress);
+        enhancedData = originalData + referralTag;
+      }
+    }
 
     // Create transaction options
     const baseGasLimit = await contract[functionName].estimateGas(...args, { value });
@@ -118,18 +128,17 @@ export async function submitContractTransaction(
     }
 
     // Handle Divvi post-transaction workflow
-    const divviResult = await completeDivviWorkflow({
-      userAddress,
-      chainId,
-      originalData,
-      txHash: tx.hash
-    });
+    try {
+      await registerDivviReferral(tx.hash, chainId, userAddress);
+    } catch (divviError) {
+      console.error('Error registering Divvi referral:', divviError);
+      // Don't fail the transaction if Divvi registration fails
+    }
 
     return {
       success: true,
       transactionHash: tx.hash,
-      processingType: "direct_contract",
-      divviResult
+      processingType: "direct_contract"
     };
 
   } catch (error) {
@@ -180,7 +189,7 @@ export async function canUserSubmitToContract(
   const { userAddress, value = 0n, provider: providedProvider } = params;
 
   try {
-    if (!isValidDivviAddress(userAddress)) {
+    if (!userAddress || !userAddress.startsWith('0x') || userAddress.length !== 42) {
       return { canSubmit: false, reason: "Invalid user address" };
     }
 
