@@ -134,15 +134,10 @@ export async function submitScoreDirectly(
         console.log("Skipping subaccount check for direct submission");
       }
 
-      // For direct submission with skipSubAccountCheck=true, we'll use Wagmi without spend limits
+      // For direct submission with skipSubAccountCheck=true, proceed with direct submission
       if (skipSubAccountCheck) {
-        console.log("Using direct submission mode without spend limits");
-        return {
-          success: false,
-          processingType: "wagmi",
-          useSpendLimit: false, // Explicitly set to false for direct submission
-          error: "Use Wagmi for direct Base transactions", // Not an error, just an internal signal
-        };
+        console.log("Proceeding with direct submission on Base (sub-accounts disabled)");
+        // Continue with the normal flow below - don't return here
       } else {
         // For other Base Smart Wallet cases (not direct submission)
         return {

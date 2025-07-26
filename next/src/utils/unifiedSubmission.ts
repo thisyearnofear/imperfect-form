@@ -162,7 +162,7 @@ async function submitWithDivvi(
       squats,
       chainId === 8453, // isBaseNetwork
       userAddress,
-      false, // skipSubAccountCheck
+      true, // skipSubAccountCheck - sub-accounts not live on mainnet
       ethereumProvider
     );
     
