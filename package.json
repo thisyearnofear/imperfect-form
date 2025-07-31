@@ -1,0 +1,18 @@
+{
+  "name": "imperfect-form-monorepo",
+  "private": true,
+  "packageManager": "pnpm@8.15.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}

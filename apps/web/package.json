@@ -1,0 +1,4 @@
+{
+  "name": "web",
+  // ...rest of the original next/package.json, but with "name": "web" and "private" removed if duplicated
+}

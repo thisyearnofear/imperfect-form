@@ -1,131 +1,67 @@
-# Imperfect Form
+# Imperfect Form Monorepo
 
-A web app for on-chain fitness challenges with real-time pose detection, leaderboards, and social sharing. Live on CELO, BASE, POLYGON and MONAD testnet.
+This is a **backend-less Turborepo monorepo** for the Imperfect Form app, built with Next.js, smart contracts, and shared packages. All business logic is handled client-side or via on-chain contracts and typed SDKs.
 
----
-
-## 🚀 Project Structure
-
-This repository contains the production **Next.js** implementation of Imperfect Form. All development and deployment is based on this version.
+## Structure
 
 ```
 imperfect-form/
-├── README.md
-├── next/                    # Next.js implementation (current development)
-│   ├── package.json
-│   ├── next.config.js
-│   ├── public/              # Static assets (images, icons, etc.)
-│   ├── src/
-│   │   ├── app/             # Next.js App Router
-│   │   ├── components/      # Reusable UI components (Leaderboard, Webcam, etc.)
-│   │   ├── modules/         # Business logic, hooks, pose detection, services
-│   │   ├── utils/           # Utility/helper functions
-│   │   ├── constants/       # Config, contract addresses/ABIs
-│   │   ├── styles/          # CSS/SCSS modules
-│   │   └── types/           # TypeScript type definitions
-│   └── contracts/           # Smart contract files
-├── backend/                 # Backend services (optional)
-│   ├── server.js
-│   ├── socketServer.js
-│   └── utils/
-└── .env                     # Environment variables
+├── apps/
+│   └── web/               # Next.js app (migrated from `next/`)
+├── packages/
+│   ├── ui/                # Shared UI components (empty scaffold)
+│   ├── hooks/             # Shared React hooks (empty scaffold)
+│   ├── types/             # Shared TypeScript types (empty scaffold)
+│   ├── sdk-neynar/        # Neynar API wrapper (empty scaffold)
+│   └── sdk-contracts/     # TypeChain bindings (empty scaffold)
+├── public/
+├── turbo.json
+├── tsconfig.base.json
+├── .npmrc
+├── package.json
+└── README.md
 ```
-
----
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js >= 20.x
-- Yarn or npm
+- [pnpm](https://pnpm.io/) v8.15.1+
+- [Node.js](https://nodejs.org/) v18+
 
-### Next.js Implementation (Production Version)
+### Install dependencies
 
-```bash
-# Navigate to the Next.js directory
-cd next
-
-# Install dependencies
-npm install
-
-# Run the development server
-npm run dev
-
-# Build for production
-npm run build
+```sh
+pnpm install
 ```
 
----
+### Development
 
-## Features
+```sh
+pnpm dev
+```
 
-- Real-time pose detection for fitness challenges
-- On-chain leaderboard integration
-- **🎭 Farcaster Mini App integration** (LIVE!)
-- Social sharing (Farcaster, Twitter)
-- thirdweb wallet and SDK integration
-- REST and WebSocket APIs (optional backend)
-- Coinbase Smart Wallet integration with spend limits and sub-accounts
+### Build
 
-### 🎭 Farcaster Mini App Integration
+```sh
+pnpm build
+```
 
-Imperfect Form is a fully-featured **Farcaster Mini App**—live and deployed. It works seamlessly as both a standalone web application and within the Farcaster ecosystem.
+### Test
 
-#### Mini App Highlights
+```sh
+pnpm test
+```
 
-- **Dual Platform**: Web app and Farcaster Mini App
-- **Automatic Detection**: UI adapts when accessed via Farcaster
-- **Seamless Wallet Integration**: Auto-connects to Farcaster wallet in Mini App context
-- **Native Sharing**: Share achievements to Farcaster feed
-- **User Context**: Displays Farcaster user profile and social info
-- **Add to Apps**: Quick access from Farcaster client
-- **Notifications Ready**: Workout reminders and achievements
+### Lint
 
-#### Technical Details
+```sh
+pnpm lint
+```
 
-- Uses @farcaster/frame-sdk v0.0.51 and official Mini App spec
-- Manifest at `/.well-known/farcaster.json`
-- Webhook system for Mini App events
-- Mini App-aware UI components
-- Account association and cryptographic verification complete
+## Monorepo Notes
 
-#### How to Test Mini App Features
-
-1. **Share URL**: Post `https://imperfectform.fun` in a Farcaster cast
-2. **Access via Farcaster**: Open the cast in Warpcast mobile app
-3. **Look for Mini App Features**: Mini App banner, user profile, sharing, "Add to Apps", and automatic wallet connection
-
----
-
-## Wallet Integration
-
-- **ThirdWeb Signature Wallet** (Polygon)
-- **Coinbase Wallet** (Base)
-
----
-
-## Contributing
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/YourFeature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin feature/YourFeature`)
-5. Open a pull request
-
----
-
-## License
-
-MIT
-
----
-
-## Acknowledgements
-
-- [Next.js](https://nextjs.org/)
-- [thirdweb](https://thirdweb.com/)
-- [MediaPipe](https://mediapipe.dev/)
-- [Socket.io](https://socket.io/)
-- [Express](https://expressjs.com/)
-- [Farcaster](https://www.farcaster.xyz/)
+- All apps and packages use [pnpm workspaces](https://pnpm.io/workspaces).
+- `tsconfig.base.json` provides path aliases for all packages.
+- Future backend logic should use Next.js API routes or Vercel Edge Functions.
+- See each package's README for further details as they are developed.
