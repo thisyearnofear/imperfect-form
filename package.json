@@ -13,6 +13,25 @@
     "lint": "turbo run lint"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "turbo": "latest",
+    "prettier": "^3.3.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.2.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "@typescript-eslint/eslint-plugin": "^7.6.0",
+    "@typescript-eslint/parser": "^7.6.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,md,json}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }
