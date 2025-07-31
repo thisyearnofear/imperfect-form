@@ -1,26 +1,19 @@
 {
   "name": "web",
-  "private": true,
   "version": "0.1.0",
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
+    // ... (all other scripts from the original next/package.json)
   },
   "dependencies": {
-    "next": "latest",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "typescript": "^5.0.0"
-    // ...add your other real dependencies here (e.g., tailwindcss, ethers, etc.)
+    // ... (all dependencies from original next/package.json)
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "eslint": "latest",
-    "eslint-config-next": "latest"
-    // ...add your other real devDependencies here
+    // ... (all devDependencies from original next/package.json)
   }
+  // ... (any other fields from original next/package.json)
 }
