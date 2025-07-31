@@ -1,0 +1,6 @@
+{
+  "root": true,
+  "plugins": ["prettier"],
+  "extends": ["plugin:prettier/recommended"],
+  "ignorePatterns": [".next", "dist", "node_modules"]
+}

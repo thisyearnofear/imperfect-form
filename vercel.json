@@ -2,18 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "next/package.json",
-      "use": "@vercel/next",
-      "config": {
-        "installCommand": "yarn install",
-        "buildCommand": "yarn run build:no-lint"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/next/$1"
+      "src": "apps/web/package.json",
+      "use": "@vercel/next"
     }
   ]
 }

@@ -45,16 +45,10 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(({
   const { palette } = currentTheme;
 
   // Dynamic styles based on chain theme
+  // Tailwind font-press, border-2, dynamic borderColor
   const containerStyle: React.CSSProperties = {
     borderColor: palette.accent,
-    fontFamily: "'PressStart2P', monospace",
   };
-
-  const getSegmentStyle = (isSelected: boolean): React.CSSProperties => ({
-    background: isSelected ? palette.accent : "transparent",
-    color: isSelected ? (currentTheme.id === 'celo' ? '#000000' : '#ffffff') : (currentTheme.id === 'celo' ? '#000000' : '#ffffff'),
-    fontFamily: "'PressStart2P', monospace",
-  });
 
   const handleModeChange = (mode: Mode) => {
     if (!disabled && mode !== value) {
@@ -71,7 +65,7 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(({
 
   return (
     <div
-      className={`imf-mode-switch ${className}`.trim()}
+      className={`imf-mode-switch font-press border-2 ${className}`.trim()}
       style={containerStyle}
       id={id}
       role="group"
@@ -80,13 +74,17 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(({
     >
       {MODE_OPTIONS.map((mode) => {
         const isSelected = value === mode.value;
-        
         return (
           <button
             key={mode.value}
             type="button"
-            className={`imf-mode-segment${isSelected ? " selected" : ""}`}
-            style={getSegmentStyle(isSelected)}
+            className={`imf-mode-segment font-press${isSelected ? " selected" : ""}`}
+            style={{
+              background: isSelected ? palette.accent : "transparent",
+              color: isSelected
+                ? (currentTheme.id === 'celo' ? '#000000' : '#ffffff')
+                : (currentTheme.id === 'celo' ? '#000000' : '#ffffff'),
+            }}
             disabled={disabled}
             aria-pressed={isSelected}
             aria-label={mode.ariaLabel || `Select ${mode.label}`}
