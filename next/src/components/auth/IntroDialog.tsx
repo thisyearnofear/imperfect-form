@@ -54,78 +54,24 @@ export default function IntroDialog(props: IntroDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={props.onOpenChange || setOpen}>
       <Dialog.Portal>
-        <Dialog.Overlay
-          style={{
-            background: "rgba(0,0,0,0.7)",
-            zIndex: 2000,
-            position: "fixed",
-            inset: 0,
-          }}
-        />
+        <Dialog.Overlay className="fixed inset-0 bg-black/70 z-[2000]" />
         <Dialog.Content
-          style={{
-            zIndex: 2010,
-            background: "#18181b",
-            color: "#fff",
-            border: `2px solid ${ACCENT}`,
-            borderRadius: 16,
-            padding: 32,
-            minWidth: 320,
-            maxWidth: 360,
-            margin: "10vh auto",
-            fontFamily: "'PressStart2P', monospace",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 24,
-          }}
+          className="z-[2010] bg-neutral-900 text-white border-2 rounded-2xl p-8 min-w-[320px] max-w-[360px] mx-auto mt-[10vh] flex flex-col items-center gap-6 font-press"
+          style={{ borderColor: ACCENT }}
         >
-          <Dialog.Title
-            style={{
-              color: ACCENT,
-              marginBottom: 8,
-              fontFamily: "'PressStart2P', monospace",
-            }}
-          >
+          <Dialog.Title className="text-[var(--accent)] mb-2 font-press">
             Welcome
           </Dialog.Title>
-          <div
-            style={{
-              display: "grid",
-              gap: 20,
-              width: "100%",
-              marginTop: 8,
-            }}
-          >
+          <div className="grid gap-5 w-full mt-2">
             {OPTIONS.map((opt) => (
               <button
                 key={opt.key}
-                style={{
-                  background: "#000",
-                  color: ACCENT,
-                  border: `2px solid ${ACCENT}`,
-                  borderRadius: 10,
-                  fontFamily: "'PressStart2P', monospace",
-                  padding: "20px 0 8px 0",
-                  width: "100%",
-                  fontSize: 16,
-                  marginBottom: 2,
-                  position: "relative",
-                  cursor: "pointer",
-                  outline: "none",
-                }}
+                className="bg-black text-[var(--accent)] border-2 rounded-lg font-press py-5 w-full text-base mb-0.5 relative cursor-pointer focus:outline-none"
+                style={{ borderColor: ACCENT }}
                 onClick={() => handleOption(opt.key)}
               >
-                <span style={{ display: "block" }}>{opt.label}</span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "#fff",
-                    opacity: 0.7,
-                    marginTop: 2,
-                    display: "block",
-                  }}
-                >
+                <span className="block">{opt.label}</span>
+                <span className="block text-white/70 text-xs mt-1">
                   {opt.desc}
                 </span>
               </button>
