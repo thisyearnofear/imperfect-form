@@ -2,6 +2,9 @@
   "name": "imperfect-form-monorepo",
   "private": true,
   "packageManager": "pnpm@8.15.1",
+  "engines": {
+    "node": ">=22.11.0"
+  },
   "workspaces": [
     "next",
     "backend",
