@@ -6,6 +6,11 @@
   "installCommand": "npm install --legacy-peer-deps && cd next && npm install --legacy-peer-deps",
   "outputDirectory": "next/.next",
   "framework": "nextjs",
+  "functions": {
+    "next/src/app/**": {
+      "runtime": "nodejs22.x"
+    }
+  },
 
   "headers": [
     {

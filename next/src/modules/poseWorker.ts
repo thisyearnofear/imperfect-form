@@ -21,7 +21,6 @@ interface Point {
 // Initialize TF backend with WebGPU first then WebGL fallback
 async function initTfBackend(): Promise<'webgpu' | 'webgl'> {
   try {
-    // @ts-expect-error - navigator.gpu is experimental and not in TypeScript types yet
     if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
       await import('@tensorflow/tfjs-backend-webgpu');
       await tf.setBackend('webgpu');

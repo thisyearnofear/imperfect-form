@@ -1,5 +1,5 @@
 {
-  "name": "@sdk-neynar",
+  "name": "@imperfect-form/sdk-neynar",
   "version": "0.0.0",
   "private": true,
   "main": "src/index.ts",

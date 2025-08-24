@@ -9,7 +9,7 @@ export async function GET(_request: NextRequest) {
     const splashPath = join(process.cwd(), 'public', 'splash.png');
     const splashBuffer = await readFile(splashPath);
 
-    return new NextResponse(splashBuffer, {
+    return new NextResponse(splashBuffer as BodyInit, {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=31536000',

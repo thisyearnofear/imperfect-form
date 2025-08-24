@@ -1,8 +1,10 @@
 module.exports = {
-  extends: "next/core-web-vitals",
+  extends: ["next/core-web-vitals", "prettier"],
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
   rules: {
+    // Disable prettier rules during build
+    "prettier/prettier": "off",
     // Disable any type errors completely
     "@typescript-eslint/no-explicit-any": "off",
 
