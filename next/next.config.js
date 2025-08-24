@@ -69,8 +69,7 @@ const nextConfig = {
 
     return config;
   },
-  // Add output configuration for standalone mode
-  output: "standalone",
+  // Remove standalone output for Vercel deployment
   // Specify the source directory
   distDir: ".next",
   // Image optimization
