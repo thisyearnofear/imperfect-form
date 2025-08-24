@@ -40,7 +40,7 @@
     "@storybook/nextjs": "^8.4.7",
     "@storybook/addon-essentials": "^8.4.7",
     "@storybook/addon-interactions": "^8.4.7",
-    "@storybook/testing-react": "^2.2.2"
+    "@storybook/test": "^8.4.7"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,md,json}": [
