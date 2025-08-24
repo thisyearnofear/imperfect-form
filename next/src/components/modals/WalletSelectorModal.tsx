@@ -35,12 +35,21 @@ const WalletSelectorModal: React.FC = () => {
       description="Choose your preferred wallet provider to continue"
     >
       <div className="flex flex-col space-y-4">
+        {/* Promote passkey onboarding without new UI surfaces */}
+        <p className="text-xs text-gray-300 text-center">
+          Tip: Coinbase Smart Wallet supports passkeys (no seed phrase).
+        </p>
         {availableConnectors.map((connector) => (
           <button
             key={connector.id}
             onClick={() => handleConnect(connector)}
             disabled={isConnecting}
             className="flex items-center justify-center w-full px-4 py-3 text-lg font-bold text-black bg-[#fcb131] rounded-lg transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              connector.id.includes("coinbase")
+                ? "Supports passkeys via Smart Wallet"
+                : undefined
+            }
           >
             {isConnecting ? (
               <>

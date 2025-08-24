@@ -121,10 +121,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       fallbackRpcUrls: string[],
       networkName: string
     ) => {
-      // Only log in development mode
+      // Only log in development mode - reduce spam
       const isDev = process.env.NODE_ENV === "development";
 
-      if (isDev) console.log(`Fetching data for ${networkName}`);
+      if (isDev && !("fetchLog" in window)) {
+        console.log(`Fetching leaderboard data for all networks`);
+        (window as Window & { fetchLog?: boolean }).fetchLog = true;
+      }
 
       // Circuit breaker: if network has failed too many times, skip it
       const currentRetryCount = networkRetryCount[networkName] || 0;
@@ -251,15 +254,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               throw codeError;
             }
 
-            console.log(
-              `Calling getLeaderboard() on ${networkName} contract at ${contractAddress}`
-            );
-
+            // Reduce logging spam - only log errors
             try {
               const data = await contractInstance.getLeaderboard();
-              console.log(
-                `Successfully retrieved ${data.length} entries from ${networkName}`
-              );
               return data || [];
             } catch (callError) {
               console.error(
@@ -620,15 +617,25 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     );
   }
 
-  // Debug logging
+  // Debug logging - only log significant changes
   if (process.env.NODE_ENV === "development") {
-    console.log("Render check:", {
-      pushupLength: pushupLeaderboard.length,
-      squatLength: squatLeaderboard.length,
-      isLoading,
-      pushupSample: pushupLeaderboard.slice(0, 2),
-      squatSample: squatLeaderboard.slice(0, 2),
-    });
+    const currentState = `${pushupLeaderboard.length}-${squatLeaderboard.length}-${isLoading}`;
+    const shouldLog =
+      !("leaderboardLastLog" in window) ||
+      (window as Window & { leaderboardLastLog?: string })
+        .leaderboardLastLog !== currentState;
+
+    if (shouldLog) {
+      console.log("Leaderboard state:", {
+        pushupLength: pushupLeaderboard.length,
+        squatLength: squatLeaderboard.length,
+        isLoading,
+        pushupSample: pushupLeaderboard.slice(0, 2),
+        squatSample: squatLeaderboard.slice(0, 2),
+      });
+      (window as Window & { leaderboardLastLog?: string }).leaderboardLastLog =
+        currentState;
+    }
   }
 
   if (pushupLeaderboard.length === 0 && squatLeaderboard.length === 0) {

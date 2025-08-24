@@ -1,4 +1,6 @@
 /// <reference lib="webworker" />
+// Prefer WebGPU, fallback to WebGL
+import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
 import { Keypoint, WorkerMessage } from '../types/mediapipe';
@@ -14,6 +16,24 @@ interface Point {
   y: number;
   score?: number;
   name?: string;
+}
+
+// Initialize TF backend with WebGPU first then WebGL fallback
+async function initTfBackend(): Promise<'webgpu' | 'webgl'> {
+  try {
+    // @ts-expect-error - navigator.gpu is experimental and not in TypeScript types yet
+    if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
+      await import('@tensorflow/tfjs-backend-webgpu');
+      await tf.setBackend('webgpu');
+      await tf.ready();
+      return 'webgpu';
+    }
+  } catch {
+    // noop, will fallback to webgl
+  }
+  await tf.setBackend('webgl');
+  await tf.ready();
+  return 'webgl';
 }
 
 function calculateAngle(a: Point, b: Point, c: Point) {
@@ -81,6 +101,12 @@ self.addEventListener('message', async (event) => {
     offscreen.width = data.width;
     offscreen.height = data.height;
     ctx = offscreen.getContext('2d') as OffscreenCanvasRenderingContext2D;
+
+    // Initialize backend with safe fallback
+    const backend = await initTfBackend();
+    // Optional: notify main thread which backend was selected
+    try { self.postMessage({ type: 'backend', backend }); } catch {}
+
     detector = await createDetector(SupportedModels.MoveNet, { modelType: 'SINGLEPOSE_LIGHTNING' });
     repState = 'middle'; repCount = 0;
   } else if (data.type === 'frame') {

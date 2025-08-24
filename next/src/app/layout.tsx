@@ -121,18 +121,18 @@ export default function RootLayout({
             `,
           }}
         />
-        {/* Extra styles to ensure modals have solid backgrounds */}
+        {/* Modal styling - only target specific wallet modals when actually open */}
         <style
           dangerouslySetInnerHTML={{
             __html: `
-          /* Force all modal backdrops to be solid black */
-          .tw-connect-wallet-modal-overlay,
-          [data-dialog-backdrop],
-          [data-modal-backdrop],
-          [data-overlay],
-          [data-backdrop],
-          .modal,
-          .wallet-modal {
+          /* Only apply backdrop styles when modals are explicitly open */
+          .tw-connect-wallet-modal-overlay:not([style*="display: none"]),
+          [data-dialog-backdrop]:not([style*="display: none"]),
+          [data-modal-backdrop]:not([style*="display: none"]),
+          [data-overlay]:not([style*="display: none"]),
+          [data-backdrop]:not([style*="display: none"]),
+          .modal:not([style*="display: none"]),
+          .wallet-modal:not([style*="display: none"]) {
             background-color: rgb(0, 0, 0) !important;
             --tw-bg-opacity: 1 !important;
           }

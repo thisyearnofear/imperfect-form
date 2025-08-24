@@ -6,10 +6,7 @@ import { Spinner } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { NotificationSignup } from "@/components/miniapp/NotificationSignup";
 import ChainAmbient from "@/components/theme/ChainAmbient";
-import {
-  callFarcasterReady,
-  debugFarcasterContext,
-} from "@/utils/farcasterMiniApp";
+import { callFarcasterReady } from "@/utils/farcasterMiniApp";
 
 const GameWrapper = dynamic(() => import("@/components/game/GameWrapper"), {
   ssr: false,
@@ -33,14 +30,11 @@ const ExpandedLeaderboardModal = dynamic(
 import { Score } from "@/types";
 
 export default function Home() {
-  const { platform, wallet, user } = usePlatform();
-  const { isConnected } = wallet;
+  const { platform, user } = usePlatform();
   const isInMiniApp = platform === "farcaster";
-  const miniAppLoading = false; // No longer needed with unified context
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [showFirstTimePrompt, setShowFirstTimePrompt] = useState(false);
-  const [uiReady, setUiReady] = useState(false);
 
   const [leaderboardData, setLeaderboardData] = useState<{
     pushups: Score[];
@@ -66,17 +60,10 @@ export default function Home() {
     setHasMounted(true);
   }, []);
 
-  // Call Farcaster ready() as soon as possible when in Mini App
-  // IMPORTANT: This is the ONLY place where ready() should be called!
-  // Do NOT add ready() calls elsewhere to avoid conflicts and splash screen issues
+  // Simplified initialization for Mini App
   useEffect(() => {
-    if (hasMounted) {
-      console.log(
-        "🎯 Page mounted, isInMiniApp:",
-        isInMiniApp,
-        "miniAppLoading:",
-        miniAppLoading
-      );
+    if (hasMounted && isInMiniApp) {
+      console.log("🎯 Mini App initialization");
 
       // Track app launch
       if (user?.fid) {
@@ -98,26 +85,20 @@ export default function Home() {
         }).catch((err) => console.warn("Failed to track app launch:", err));
       }
 
-      // Debug Farcaster context
-      debugFarcasterContext();
-
-      // Try calling ready() regardless of detection - it's safe to call even if not in Mini App
-      // The SDK will handle it gracefully if we're not in the right context
+      // Try calling ready() for Farcaster Mini App
       callFarcasterReady()
         .then(() => {
           console.log("🎯 Ready() completed successfully");
-          setUiReady(true);
         })
         .catch(() => {
           console.log("🎯 Ready() failed or not needed, continuing anyway");
-          setUiReady(true); // Continue anyway
         });
     }
-  }, [hasMounted, isInMiniApp, miniAppLoading, user?.fid, platform]); // Include all dependencies used in the effect
+  }, [hasMounted, isInMiniApp, user?.fid, platform]);
 
   // Show first-time Mini App prompt
   useEffect(() => {
-    if (isInMiniApp && hasMounted && uiReady) {
+    if (isInMiniApp && hasMounted) {
       const hasSeenPrompt = localStorage.getItem("miniapp-first-visit-seen");
       if (!hasSeenPrompt) {
         // Show prompt after a short delay to let the app load
@@ -126,22 +107,11 @@ export default function Home() {
         }, 3000);
       }
     }
-  }, [isInMiniApp, hasMounted, uiReady]);
+  }, [isInMiniApp, hasMounted]);
 
-  // Loading state - simplified for faster Mini App loading
-  const shouldShowLoading = !hasMounted || (isInMiniApp && miniAppLoading);
-
-  if (shouldShowLoading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Spinner />
-          <p className="text-yellow-400 font-bold animate-pulse">
-            {isInMiniApp ? "LOADING MINI APP..." : "LOADING IMPERFECT FORM..."}
-          </p>
-        </div>
-      </div>
-    );
+  // Simple loading state check
+  if (!hasMounted) {
+    return null; // Let ClientOnlyProviders handle the loading screen
   }
 
   return (
@@ -175,22 +145,20 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Mobile: Leaderboard - only show after wallet connection */}
-        {isConnected && (
-          <div className="md:hidden mt-12 px-4 animate-fade-in pb-10">
-            <div className="bg-black/80 p-4 rounded-lg border border-gray-800">
-              <h3 className="text-center text-yellow-400 text-sm mb-3 font-bold">
-                LEADERBOARD
-              </h3>
-              <div
-                id="mobileLeaderboardContainer"
-                className="leaderboard-container"
-              >
-                <Leaderboard limit={2} onViewMore={handleViewMore} />
-              </div>
+        {/* Mobile: Leaderboard - visible to all users (read-only if not connected) */}
+        <div className="md:hidden mt-12 px-4 animate-fade-in pb-10">
+          <div className="bg-black/80 p-4 rounded-lg border border-gray-800">
+            <h3 className="text-center text-yellow-400 text-sm mb-3 font-bold">
+              LEADERBOARD
+            </h3>
+            <div
+              id="mobileLeaderboardContainer"
+              className="leaderboard-container"
+            >
+              <Leaderboard limit={2} onViewMore={handleViewMore} />
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Expanded Leaderboard Modal */}

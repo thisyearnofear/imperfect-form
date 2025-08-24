@@ -68,13 +68,6 @@ interface SplitFlapInstructionsProps {
   autoFs: boolean;
   setAutoFs: (value: boolean) => void;
   isFullscreenAvailable?: boolean;
-  userStats?: {
-    totalSessions: number;
-    bestPushups: number;
-    bestSquats: number;
-    currentStreak: number;
-    activeChains: string[];
-  };
   formattedStats?: {
     workouts: string;
     bestScore: string;
@@ -90,7 +83,6 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   autoFs,
   setAutoFs,
   isFullscreenAvailable = true,
-  userStats,
   formattedStats,
   isLoadingStats,
 }) => {
@@ -100,10 +92,30 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   // Configuration-driven instruction sets
   const instructionConfigs: Record<InstructionMode, InstructionItem[]> = {
     instructions: [
-      { key: "a", text: "START", desc: "begin" },
-      { key: "b", text: "STOP", desc: "end" },
-      { key: "c", text: "RESET", desc: "restart" },
-      { key: "d", text: "Have fun!", desc: "" },
+      {
+        key: "🏋️",
+        text: "Real-time pose detection",
+        desc: "AI-powered form analysis",
+        hideKey: true,
+      },
+      {
+        key: "🏆",
+        text: "Onchain leaderboards",
+        desc: "Transparent competition",
+        hideKey: true,
+      },
+      {
+        key: "🎯",
+        text: "Pushups & Squats",
+        desc: "Tracked challenges",
+        hideKey: true,
+      },
+      {
+        key: "⚡",
+        text: "HAVE FUN!",
+        desc: "Stay hard & build",
+        hideKey: true,
+      },
     ],
     settings: [
       {
@@ -157,15 +169,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
   const currentInstructions = useMemo(
     () => instructionConfigs[mode],
-    [
-      mode,
-      autoFs,
-      isFullscreenAvailable,
-      userStats,
-      formattedStats,
-      isLoadingStats,
-      instructionConfigs,
-    ]
+    [mode, formattedStats, isLoadingStats, autoFs, isFullscreenAvailable]
   );
 
   useEffect(() => {
@@ -184,7 +188,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
     );
 
     return () => timers.forEach(clearTimeout);
-  }, [mode, currentInstructions.length]);
+  }, [currentInstructions]);
 
   const handleItemClick = (key: string) => {
     switch (mode) {
@@ -225,13 +229,13 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
       {currentInstructions.map((instruction, index) => (
         <p
           key={instruction.key}
-          className={
+          className={`feature-instruction ${
             mode === "profile"
               ? "profile-instruction clickable"
               : mode === "settings"
               ? "settings-instruction clickable"
               : ""
-          }
+          }`}
           onClick={() => handleItemClick(instruction.key)}
           style={{
             cursor:
@@ -240,9 +244,17 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
                 ? "pointer"
                 : "default",
             transition: "all 0.3s ease",
+            animation:
+              mode === "instructions"
+                ? `slideInFeature 0.6s ease-out ${index * 0.2}s forwards`
+                : "none",
+            opacity: mode === "instructions" ? 0 : 1,
           }}
         >
           {!instruction.hideKey && `${instruction.key}) `}
+          {instruction.hideKey && mode === "instructions" && (
+            <span className="feature-emoji">{instruction.key}</span>
+          )}
           <span
             className={`button-text ${
               instruction.key === "a"
@@ -251,6 +263,8 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
                 ? "stop"
                 : instruction.key === "c"
                 ? "reset"
+                : instruction.key === "⚡"
+                ? "fun-highlight"
                 : ""
             }`}
           >
@@ -263,18 +277,36 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           {instruction.desc && (
             <>
               {" = "}
-              <SplitFlapText
-                text={instruction.desc}
-                isAnimating={isAnimating && animationStep > index}
-                delay={index * 50 + 100}
-              />
+              <span
+                className={`feature-desc ${
+                  instruction.key === "🏋️"
+                    ? "ai-highlight"
+                    : instruction.key === "🏆"
+                    ? "blockchain-highlight"
+                    : instruction.key === "🎯"
+                    ? "challenge-highlight"
+                    : ""
+                }`}
+              >
+                <SplitFlapText
+                  text={instruction.desc}
+                  isAnimating={isAnimating && animationStep > index}
+                  delay={index * 50 + 100}
+                />
+              </span>
             </>
           )}
         </p>
       ))}
 
       {mode === "instructions" && (
-        <p className="built-by">
+        <p
+          className="built-by feature-instruction"
+          style={{
+            animation: "slideInFeature 0.6s ease-out 1s forwards",
+            opacity: 0,
+          }}
+        >
           Built by{" "}
           <a
             href="https://warpcast.com/papa"

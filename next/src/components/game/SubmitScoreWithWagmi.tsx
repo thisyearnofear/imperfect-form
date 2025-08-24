@@ -3,12 +3,11 @@
 import React, { useState } from "react";
 import { Spinner } from "@/components/ui";
 import { usePlatform } from "@/contexts/PlatformContext";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount } from "wagmi";
 import {
   submitScore,
   showSubmissionResult,
   canUserSubmit,
-  type SubmissionParams,
 } from "@/utils/unifiedSubmission";
 import { getEthereumProvider } from "@/utils/farcasterMiniApp";
 
@@ -35,7 +34,8 @@ export default function SubmitScoreWithWagmi({
   const { address: wagmiAddress } = useAccount();
   const { wallet } = usePlatform();
   const { chainId } = wallet;
-  const { writeContract } = useWriteContract();
+  // Note: writeContract available for future Wagmi integration if needed
+  // const { writeContract } = useWriteContract();
 
   // Get current user address
   const address = wagmiAddress || walletAddress;
@@ -57,7 +57,7 @@ export default function SubmitScoreWithWagmi({
 
     try {
       // Check if user can submit
-      const canSubmitResult = await canUserSubmit(address, chainId);
+      const canSubmitResult = canUserSubmit(address);
       if (!canSubmitResult.canSubmit) {
         throw new Error(canSubmitResult.reason || "Cannot submit");
       }
@@ -65,19 +65,33 @@ export default function SubmitScoreWithWagmi({
       // Get the appropriate Ethereum provider (handles Farcaster Mini App detection)
       const ethereumProvider = await getEthereumProvider();
 
-      // Prepare submission parameters
-      const submissionParams: SubmissionParams = {
-        score: score,
-        exerciseType: exerciseType,
-        userAddress: address,
-        chainId: chainId,
-        provider: ethereumProvider, // Use proper provider detection
-        useWagmi: !forceDirectSubmission,
-        wagmiWriteContract: writeContract,
+      // Determine contract address and network based on chainId
+      const getContractInfo = (chainId: number) => {
+        switch (chainId) {
+          case 137: return { address: "0xc783d6E12560dc251F5067A62426A5f3b45b6888", network: "Polygon Mainnet" };
+          case 8453: return { address: "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B", network: "Base Mainnet" };
+          case 42220: return { address: "0xB0cbC7325EbC744CcB14211CA74C5a764928F273", network: "Celo Mainnet" };
+          case 10143: return { address: "0x653d41Fba630381aA44d8598a4b35Ce257924d65", network: "Monad Testnet" };
+          default: throw new Error(`Unsupported chain ID: ${chainId}`);
+        }
       };
 
+      const contractInfo = getContractInfo(chainId);
+      const pushups = exerciseType === "pushups" ? score : 0;
+      const squats = exerciseType === "squats" ? score : 0;
+
       // Submit using unified logic
-      const result = await submitScore(submissionParams);
+      const result = await submitScore(
+        pushups,
+        squats,
+        contractInfo.address,
+        contractInfo.network,
+        address,
+        {
+          skipSubAccountCheck: forceDirectSubmission,
+          providedEthereumProvider: ethereumProvider
+        }
+      );
 
       if (result.success) {
         setSubmissionStatus("success");

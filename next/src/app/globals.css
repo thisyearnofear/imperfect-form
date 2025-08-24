@@ -698,44 +698,8 @@ div[data-backdrop],
   opacity: 1 !important;
 }
 
-/* Additional backdrop for all modals */
-body::after {
-  content: "";
-  display: var(--modal-open, none);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
-  z-index: 1998;
-}
-
-/* Second additional backdrop for extra opacity */
-body::before {
-  content: "";
-  display: var(--modal-open, none);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
-  z-index: 1997;
-  backdrop-filter: blur(4px);
-}
-
-/* Set the variable when any modal is open */
-body:has(div[data-dialog-backdrop]),
-body:has(div[data-modal-backdrop]),
-body:has(div[data-overlay]),
-body:has(div[data-backdrop]),
-body:has(.modal[style*="display: block"]),
-body:has(.tw-connect-wallet-modal-overlay),
-body:has(.tw-modal-overlay),
-body:has(.tw-overlay) {
-  --modal-open: block;
-}
+/* Note: Removed automatic backdrop overlays that were causing initialization issues */
+/* Modal backdrops are now handled individually by each modal component */
 
 /* Force all modal content to have solid black backgrounds */
 [data-dialog-content],

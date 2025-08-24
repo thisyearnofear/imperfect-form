@@ -3,6 +3,7 @@ export { default as AccessibleDialog } from "./AccessibleDialog";
 export { default as Dialog } from "./Dialog";
 export { default as WalletDialog } from "./WalletDialog";
 export { default as LoadingScreen } from './LoadingScreen';
+export { default as InitializationScreen } from './InitializationScreen';
 export { default as MotivationalMessages } from './MotivationalMessages';
 export { default as Navigation } from './Navigation';
 export { default as PoseLoadingOverlay } from './PoseLoadingOverlay';

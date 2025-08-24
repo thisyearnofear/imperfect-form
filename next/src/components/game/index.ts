@@ -7,4 +7,4 @@ export { default as Medal } from './Medal';
 export { default as SubmitScoreWithWagmi } from './SubmitScoreWithWagmi';
 // Don't export Webcam directly to prevent SSR issues with face detection
 // export { default as Webcam } from './Webcam';
-export { default as Welcome } from './Welcome';
+// Welcome component consolidated into InitializationScreen - removed to prevent bloat

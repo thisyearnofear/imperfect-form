@@ -14,7 +14,7 @@ import {
   stopAllCameras as stopAllCamerasUtil,
 } from "@/utils/cameraManager";
 import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
-import { Welcome } from "@/components/game";
+// Welcome component consolidated into InitializationScreen - import removed
 import PoseDetectionGuidance from "./PoseDetectionGuidance";
 import { UniversalConnectButton } from "@/components/wallet";
 import { usePlatform } from "@/contexts/PlatformContext";
@@ -29,7 +29,6 @@ import useOrientationLock from "../../hooks/useOrientationLock";
 import { useUserStats } from "../../hooks/useUserStats";
 import { isFarcasterMiniApp } from "../../utils/farcasterMiniApp";
 
-import toast from "react-hot-toast";
 import { Score } from "@/types";
 
 // Use LazyWebcam for better performance - only loads TensorFlow when needed
@@ -108,7 +107,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     }
   }, [finalAddress, currentMode, getDefaultMode]);
 
-  const [showWelcome, setShowWelcome] = useState(true);
+  // Welcome component consolidated into InitializationScreen - showWelcome removed
   // Tutorial state is managed but not displayed in current UI
   const [, setShowTutorial] = useState(true);
   const [started, setStarted] = useState(false);
@@ -123,11 +122,20 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Intro dialog state - now finalAddress is available
   const [showIntroDialog, setShowIntroDialog] = useState(() => {
     if (typeof window !== "undefined") {
-      const skip = localStorage.getItem("skipIntroDialog");
+      const skip = localStorage.getItem("imf_skipWalletIntro");
+      // Don't show if user has wallet connected or has skipped
       return !finalAddress && skip !== "1";
     }
     return false;
   });
+
+  // Update intro dialog visibility when wallet connection changes
+  useEffect(() => {
+    if (finalAddress) {
+      // Hide intro dialog if user connects wallet
+      setShowIntroDialog(false);
+    }
+  }, [finalAddress]);
 
   // Pose detection guidance state
   const [showPoseGuidance, setShowPoseGuidance] = useState(false);
@@ -372,17 +380,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setStarted(false);
     setShowTutorial(false);
 
-    // Log the address state before showing the summary
+    // Always show summary; SummaryModal will prompt for wallet connection if needed
     console.log("Game: handleStop called with address:", finalAddress);
-
-    // Only show summary if we have an address
-    if (finalAddress) {
-      setShowSummary(true);
-    } else {
-      // If no address, show a toast message
-      toast.error("Please connect your wallet to submit your score");
-      console.error("Please connect your wallet to submit your score");
-    }
+    setShowSummary(true);
 
     // Force camera to stop by accessing the video tracks and stopping them
     stopAllCameras();
@@ -408,7 +408,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       lockLandscape();
     }
 
-    setShowWelcome(false);
+    // Welcome component consolidated into InitializationScreen - setShowWelcome removed
     setShowTutorial(false); // Hide tutorial when starting
     setShowLoading(true);
 
@@ -430,7 +430,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setRepCount(0);
     setTimeLeft(120);
     setStarted(false);
-    setShowWelcome(true);
+    // Welcome component consolidated into InitializationScreen - no need to reset welcome state
     setShowTutorial(true);
     setShowSummary(false);
 
@@ -528,32 +528,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         </div>
 
         <div id="screen">
-          {showWelcome && (
-            <div id="welcomeMessage">
-              <Welcome onComplete={() => setShowWelcome(false)} />
-            </div>
-          )}
+          {/* Welcome component consolidated into InitializationScreen */}
 
-          {!showWelcome && !started && (
+          {!started && (
             <SplitFlapInstructions
               mode={currentMode}
               onModeChange={setCurrentMode}
               autoFs={autoFs}
               setAutoFs={setAutoFs}
               isFullscreenAvailable={isFullscreenAvailable}
-              userStats={
-                formattedStats
-                  ? {
-                      totalSessions:
-                        parseInt(formattedStats.workouts.split(" ")[0]) || 0,
-                      bestPushups: 0, // Will be calculated from formattedStats.bestScore
-                      bestSquats: 0, // Will be calculated from formattedStats.bestScore
-                      currentStreak:
-                        parseInt(formattedStats.streak.split(" ")[0]) || 0,
-                      activeChains: [], // Not needed for display
-                    }
-                  : undefined
-              }
               formattedStats={formattedStats}
               isLoadingStats={statsLoading}
             />
@@ -722,11 +705,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           }}
           onSkip={() => {
             if (typeof window !== "undefined") {
-              localStorage.setItem("skipIntroDialog", "1");
+              localStorage.setItem("imf_skipWalletIntro", "1");
               // Dispatch storage event to update onboarding context
               window.dispatchEvent(
                 new StorageEvent("storage", {
-                  key: "skipIntroDialog",
+                  key: "imf_skipWalletIntro",
                   newValue: "1",
                 })
               );

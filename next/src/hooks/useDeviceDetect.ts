@@ -127,17 +127,24 @@ export default function useDeviceDetect() {
       setIsWalletBrowser(isInWalletBrowser);
       setWalletBrowserType(detectedWalletType);
 
-      // Debug logging for wallet browser detection
+      // Debug logging for wallet browser detection - only log significant changes
       if (process.env.NODE_ENV === 'development') {
-        console.log('Device Detection:', {
-          isMobile: deviceIsMobile,
-          isWalletBrowser: isInWalletBrowser,
-          walletType: detectedWalletType,
-          userAgent: userAgent.substring(0, 100) + '...',
-          viewport: { width, height },
-          hasEthereum: typeof window.ethereum !== 'undefined',
-          touchDevice: isTouchDevice,
-        });
+        // Only log if there are actual changes or first detection
+        const shouldLog = !('deviceDetectLastLog' in window) ||
+          (window as Window & { deviceDetectLastLog?: string }).deviceDetectLastLog !== `${deviceIsMobile}-${isInWalletBrowser}-${detectedWalletType}`;
+
+        if (shouldLog) {
+          console.log('Device Detection:', {
+            isMobile: deviceIsMobile,
+            isWalletBrowser: isInWalletBrowser,
+            walletType: detectedWalletType,
+            userAgent: userAgent.substring(0, 100) + '...',
+            viewport: { width, height },
+            hasEthereum: typeof window.ethereum !== 'undefined',
+            touchDevice: isTouchDevice,
+          });
+          (window as Window & { deviceDetectLastLog?: string }).deviceDetectLastLog = `${deviceIsMobile}-${isInWalletBrowser}-${detectedWalletType}`;
+        }
       }
     };
 

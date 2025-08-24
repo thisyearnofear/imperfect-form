@@ -155,11 +155,12 @@ const createConnectors = async () => {
       shimDisconnect: true,
     }),
 
-    // Secondary: Coinbase Wallet
+    // Secondary: Coinbase Wallet (enable Smart Wallet + EOA)
     coinbaseWallet({
       appName: "Imperfect Form",
       appLogoUrl: "https://imperfectform.fun/icon-192x192.png",
-      preference: "eoaOnly",
+      // Offer passkey (Smart Wallet) and EOA to maximize compatibility
+      preference: "all",
       enableMobileWalletLink: true,
     }),
 
@@ -349,7 +350,7 @@ export default function SimplifiedAppProviders({
         <div className="text-center space-y-4">
           <Spinner />
           <p className="text-yellow-400 font-bold animate-pulse">
-            Initializing wallet providers...
+            Initializing ...
           </p>
         </div>
       </div>

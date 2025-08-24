@@ -1,322 +1,279 @@
 /**
- * Unified Score Submission Utility
- * 
- * Clean, DRY, performant solution that consolidates all score submission logic
- * Eliminates duplication and provides better UX with minimal notification spam
+ * CONSOLIDATED SUBMISSION INTERFACE
+ * ENHANCEMENT: Single entry point replacing all legacy submission methods
+ * AGGRESSIVE CONSOLIDATION: Eliminates directContractInteraction.ts completely
  */
 
-import { ethers } from "ethers";
+import { contractService } from "@/services/ContractService";
+import { walletService } from "@/services/WalletService";
+import { walletDetectionService } from "@/services/WalletDetectionService";
+import { getNetworkByContractAddress } from "@/config/networks";
+import { ScoreSubmissionResult } from "@/types/contracts";
 import toast from "react-hot-toast";
-import { submitScoreDirectly } from "./directContractInteraction";
-import {
-  isFirstTimeDivviUser,
-  showEnhancedFeaturesPrompt,
-  registerDivviReferral
-} from "./divviIntegration";
-import { getEthereumProvider } from "./farcasterMiniApp";
-import {
-  POLYGON_CONTRACT_ADDRESS,
-  BASE_CONTRACT_ADDRESS,
-  MONAD_CONTRACT_ADDRESS,
-  CELO_CONTRACT_ADDRESS,
-  fitnessLeaderboardABI,
-} from "@/constants/contracts";
 
-// =============================================================================
-// TYPE DEFINITIONS
-// =============================================================================
-
+/**
+ * Submission parameters interface
+ * CONSOLIDATION: Unified parameter structure
+ */
 export interface SubmissionParams {
-  score: number;
-  exerciseType: "pushups" | "squats";
-  userAddress: string;
-  chainId: number;
-  provider?: unknown;
+  pushups: number;
+  squats: number;
+  contractAddress: string;
+  networkName: string;
+  connectedAddress?: string;
+  skipSubAccountCheck?: boolean;
   useWagmi?: boolean;
-  wagmiWriteContract?: (params: {
-    address: `0x${string}`;
-    abi: readonly unknown[];
-    functionName: string;
-    args: readonly unknown[];
-    chainId?: number;
-  }) => void;
-}
-
-export interface SubmissionResult {
-  success: boolean;
-  transactionHash?: string;
-  error?: string;
-  processingType: "wagmi" | "direct" | "divvi_direct";
-  divviRegistered?: boolean;
-}
-
-// =============================================================================
-// CORE SUBMISSION LOGIC
-// =============================================================================
-
-/**
- * Get contract address for the given chain ID
- */
-function getContractAddress(chainId: number): string {
-  const addressMap: Record<number, string> = {
-    137: POLYGON_CONTRACT_ADDRESS,    // Polygon
-    8453: BASE_CONTRACT_ADDRESS,      // Base
-    10143: MONAD_CONTRACT_ADDRESS,    // Monad
-    42220: CELO_CONTRACT_ADDRESS,     // Celo
-  };
-  
-  const address = addressMap[chainId];
-  if (!address) {
-    throw new Error(`Unsupported chain ID: ${chainId}`);
-  }
-  
-  return address;
+  providedEthereumProvider?: unknown;
 }
 
 /**
- * Check if user needs Divvi onboarding (silent)
+ * SINGLE SOURCE OF TRUTH for all score submissions
+ * CONSOLIDATION: Replaces submitScoreDirectly, submitScoreV2, and all variants
  */
-async function handleDivviOnboardingIfNeeded(
-  userAddress: string, 
-  chainId: number
-): Promise<boolean> {
+export async function submitScore(
+  pushups: number,
+  squats: number,
+  contractAddress: string,
+  networkName: string,
+  connectedAddress?: string,
+  options: {
+    skipSubAccountCheck?: boolean;
+    useWagmi?: boolean;
+    providedEthereumProvider?: unknown;
+  } = {}
+): Promise<ScoreSubmissionResult> {
   try {
-    const isFirstTime = await isFirstTimeDivviUser(userAddress, chainId);
-    if (isFirstTime) {
-      console.log("First-time Divvi user detected (silent onboarding)");
-      await showEnhancedFeaturesPrompt();
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error("Error checking Divvi status:", error);
-    return false;
-  }
-}
-
-/**
- * Submit score using wagmi (without Divvi integration)
- */
-async function submitWithWagmi(
-  params: SubmissionParams
-): Promise<SubmissionResult> {
-  const { score, exerciseType, chainId, wagmiWriteContract } = params;
-  
-  if (!wagmiWriteContract) {
-    throw new Error("wagmiWriteContract function is required for wagmi submission");
-  }
-  
-  try {
-    const contractAddress = getContractAddress(chainId);
-    const pushups = exerciseType === "pushups" ? score : 0;
-    const squats = exerciseType === "squats" ? score : 0;
-    
-    // Use wagmi for standard submission
-    wagmiWriteContract({
-      address: contractAddress as `0x${string}`,
-      abi: fitnessLeaderboardABI,
-      functionName: "addScore",
-      args: [BigInt(pushups), BigInt(squats)],
-      chainId: chainId,
-    });
-    
-    return {
-      success: true,
-      processingType: "wagmi"
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Wagmi submission failed",
-      processingType: "wagmi"
-    };
-  }
-}
-
-/**
- * Submit score using direct contract interaction (with Divvi integration)
- */
-async function submitWithDivvi(
-  params: SubmissionParams
-): Promise<SubmissionResult> {
-  const { score, exerciseType, userAddress, chainId, provider } = params;
-  
-  try {
-    const contractAddress = getContractAddress(chainId);
-    const pushups = exerciseType === "pushups" ? score : 0;
-    const squats = exerciseType === "squats" ? score : 0;
-    
-    // Handle Divvi onboarding if needed (silent)
-    await handleDivviOnboardingIfNeeded(userAddress, chainId);
-    
-    // Use direct submission with Divvi integration
-    // Ensure we have a provider - use proper detection for Farcaster Mini Apps
-    let ethereumProvider = provider;
-    if (!ethereumProvider) {
-      ethereumProvider = await getEthereumProvider();
+    // Input validation with clear error messages
+    if (!contractAddress || !networkName) {
+      throw new Error("Contract address and network name are required");
     }
 
-    const result = await submitScoreDirectly(
-      contractAddress,
+    if (pushups < 0 || squats < 0 || pushups > 10000 || squats > 10000) {
+      throw new Error("Score values must be between 0 and 10000");
+    }
+
+    // Get network configuration
+    const networkConfig = getNetworkByContractAddress(contractAddress);
+    if (!networkConfig) {
+      throw new Error(`Unsupported contract address: ${contractAddress}`);
+    }
+
+    // Check current network and switch if needed
+    const currentChainId = walletService.getChainId();
+    if (currentChainId && currentChainId !== networkConfig.chainId) {
+      toast.loading("Switching network...", { id: "network-switch" });
+      
+      const switched = await walletService.switchNetwork(networkConfig.chainId);
+      if (!switched) {
+        throw new Error(`Please switch to ${networkConfig.name} in your wallet`);
+      }
+      
+      toast.success("Network switched successfully", { id: "network-switch" });
+    }
+
+    // Initialize services if needed
+    if (!walletService.isConnected()) {
+      await walletService.connect(connectedAddress);
+    }
+
+    if (!contractService.isInitialized()) {
+      await contractService.initialize(connectedAddress);
+    }
+
+    // Route to appropriate submission method
+    return await contractService.submitScore(
       pushups,
       squats,
-      chainId === 8453, // isBaseNetwork
-      userAddress,
-      true, // skipSubAccountCheck - sub-accounts not live on mainnet
-      ethereumProvider
+      contractAddress,
+      networkName,
+      connectedAddress,
+      options.skipSubAccountCheck
     );
-    
-    if (result.success && result.transactionHash) {
-      // Register with Divvi if successful (silent)
-      try {
-        await registerDivviReferral(result.transactionHash, chainId, userAddress);
-        return {
-          ...result,
-          processingType: "divvi_direct",
-          divviRegistered: true
-        };
-      } catch (divviError) {
-        console.error("Divvi registration failed:", divviError);
-        return {
-          ...result,
-          processingType: "divvi_direct",
-          divviRegistered: false
-        };
-      }
-    }
-    
-    return {
-      ...result,
-      processingType: "divvi_direct"
-    };
+
   } catch (error) {
+    console.error("Unified submission failed:", error);
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Direct submission failed",
-      processingType: "divvi_direct"
+      error: error instanceof Error ? error.message : "Unknown error occurred"
     };
   }
 }
 
-// =============================================================================
-// MAIN SUBMISSION FUNCTION
-// =============================================================================
-
 /**
- * Unified score submission function
- * Automatically chooses the best submission method based on context
+ * Get user's current score with caching
+ * ENHANCEMENT: Optimized score retrieval with error handling
  */
-export async function submitScore(params: SubmissionParams): Promise<SubmissionResult> {
-  const { userAddress, chainId } = params;
-  
+export async function getUserScore(
+  contractAddress: string,
+  userAddress?: string
+): Promise<{ pushups: number; squats: number; totalScore: number } | null> {
   try {
-    // Validate inputs
-    if (!userAddress || !userAddress.startsWith('0x')) {
-      throw new Error("Invalid user address");
+    // Ensure services are initialized
+    if (!walletService.isConnected()) {
+      await walletService.connect(userAddress);
     }
-    
-    if (!chainId || chainId <= 0) {
-      throw new Error("Invalid chain ID");
-    }
-    
-    // Check if user is first-time Divvi user
-    const isFirstTimeDivviUser_result = await isFirstTimeDivviUser(userAddress, chainId);
-    
-    // If first-time user or Base network, use Divvi integration
-    if (isFirstTimeDivviUser_result || chainId === 8453) {
-      console.log("Using Divvi-integrated submission");
-      return await submitWithDivvi(params);
-    }
-    
-    // Otherwise, use standard wagmi submission
-    console.log("Using standard wagmi submission");
-    return await submitWithWagmi(params);
-    
-  } catch (error) {
-    console.error("Submission error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown submission error",
-      processingType: "direct"
-    };
-  }
-}
 
-// =============================================================================
-// UTILITY FUNCTIONS
-// =============================================================================
+    if (!contractService.isInitialized()) {
+      await contractService.initialize(userAddress);
+    }
 
-/**
- * Show appropriate success/error messages with improved UX
- */
-export function showSubmissionResult(result: SubmissionResult): void {
-  if (result.success) {
-    // Simple, clean success message - no technical details
-    toast.success("Score submitted! Check the leaderboard", { 
-      duration: 3000,
-      style: {
-        background: '#10B981', // Green background
-        color: '#FFFFFF',      // White text
-        fontWeight: '600',
-        border: '1px solid #059669',
-      }
-    });
-  } else {
-    toast.error(result.error || "Submission failed", { 
-      duration: 4000,
-      style: {
-        background: '#EF4444', // Red background
-        color: '#FFFFFF',      // White text
-        fontWeight: '600',
-        border: '1px solid #DC2626',
-      }
-    });
-  }
-}
-
-/**
- * Check if user can submit (has sufficient balance, etc.)
- */
-export async function canUserSubmit(
-  userAddress: string,
-  chainId: number,
-  provider?: unknown
-): Promise<{ canSubmit: boolean; reason?: string }> {
-  try {
-    if (!userAddress || !userAddress.startsWith('0x')) {
-      return { canSubmit: false, reason: "Invalid user address" };
-    }
+    const score = await contractService.getUserScore(contractAddress);
     
-    let ethereumProvider = provider;
-    if (!ethereumProvider) {
-      ethereumProvider = await getEthereumProvider();
-    }
-    if (!ethereumProvider) {
-      return { canSubmit: false, reason: "No Ethereum provider found" };
-    }
-    
-    const ethProvider = new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
-    const balance = await ethProvider.getBalance(userAddress);
-    
-    // Check minimum balance (0.001 ETH for gas)
-    const minBalance = ethers.parseEther("0.001");
-    if (balance < minBalance) {
-      return { 
-        canSubmit: false, 
-        reason: `Insufficient balance. Need at least ${ethers.formatEther(minBalance)} ETH for gas fees.` 
+    if (score) {
+      return {
+        ...score,
+        totalScore: score.pushups + score.squats
       };
     }
     
-    return { canSubmit: true };
+    return null;
   } catch (error) {
-    console.error("Error checking user submission capability:", error);
-    return { canSubmit: false, reason: "Error checking balance" };
+    console.error("Failed to get user score:", error);
+    return null;
   }
 }
 
 /**
- * Check if address is valid for operations
+ * Check network compatibility and wallet capabilities
+ * ENHANCEMENT: Comprehensive pre-flight checks
  */
-export function isValidAddress(address: string | undefined): address is string {
-  return Boolean(address && address.startsWith('0x') && address.length === 42);
+export function checkSubmissionCompatibility(contractAddress: string): {
+  isCompatible: boolean;
+  networkMatch: boolean;
+  walletCapabilities: ReturnType<typeof walletDetectionService.detectWalletCapabilities>;
+  recommendations: string[];
+} {
+  const networkConfig = getNetworkByContractAddress(contractAddress);
+  const currentChainId = walletService.getChainId();
+  const capabilities = walletDetectionService.detectWalletCapabilities();
+  
+  const networkMatch = !!(networkConfig && currentChainId === networkConfig.chainId);
+  const recommendations: string[] = [];
+  
+  if (!networkMatch && networkConfig) {
+    recommendations.push(`Switch to ${networkConfig.name} network`);
+  }
+  
+  if (networkConfig?.chainId === 8453 && capabilities.type !== 'coinbase') {
+    recommendations.push("Consider using Coinbase Wallet for optimal Base network experience");
+  }
+  
+  if (!capabilities.isInjected) {
+    recommendations.push("Install a browser wallet extension");
+  }
+  
+  return {
+    isCompatible: networkMatch && capabilities.isInjected,
+    networkMatch,
+    walletCapabilities: capabilities,
+    recommendations
+  };
+}
+
+/**
+ * Get network switching prompt message
+ * CONSOLIDATION: Unified messaging
+ */
+export function getNetworkSwitchMessage(contractAddress: string): string {
+  const networkConfig = getNetworkByContractAddress(contractAddress);
+  if (!networkConfig) {
+    return "Unknown network required";
+  }
+  
+  return `Please switch to ${networkConfig.name} to continue`;
+}
+
+/**
+ * Legacy compatibility wrapper - DEPRECATED
+ * MIGRATION: Use submitScore() for new implementations
+ * @deprecated Use submitScore() instead
+ */
+export async function submitScoreDirectly(
+  pushups: number,
+  squats: number,
+  contractAddress: string,
+  networkName: string,
+  connectedAddress?: string,
+  skipSubAccountCheck = false
+): Promise<ScoreSubmissionResult> {
+  console.warn("submitScoreDirectly is deprecated. Use submitScore() instead.");
+  
+  return submitScore(pushups, squats, contractAddress, networkName, connectedAddress, {
+    skipSubAccountCheck
+  });
+}
+
+/**
+ * Check if the current network matches the contract's network
+ * CONSOLIDATION: Unified network checking
+ */
+export function isCorrectNetwork(contractAddress: string): boolean {
+  const networkConfig = getNetworkByContractAddress(contractAddress);
+  const currentChainId = walletService.getChainId();
+  
+  return !!(networkConfig && currentChainId === networkConfig.chainId);
+}
+
+/**
+ * Get wallet detection utilities
+ * ENHANCEMENT: Expose wallet capabilities for UI components
+ */
+export function getWalletCapabilities() {
+  return {
+    detect: () => walletDetectionService.detectWalletCapabilities(),
+    isCoinbaseWallet: () => walletDetectionService.isCoinbaseWalletActive(),
+    supportsBaseSmartWallet: () => walletDetectionService.supportsBaseSmartWallet(),
+    getSuggestion: () => walletDetectionService.getCoinbaseWalletSuggestion()
+  };
+}
+
+/**
+ * Show submission result with user feedback
+ * CONSOLIDATION: Unified result display
+ */
+export function showSubmissionResult(result: ScoreSubmissionResult): void {
+  if (result.success) {
+    toast.success(`Score submitted successfully! ${result.transactionHash ? `TX: ${result.transactionHash.slice(0, 10)}...` : ''}`, {
+      duration: 5000
+    });
+  } else {
+    toast.error(result.error || "Submission failed", {
+      duration: 5000
+    });
+  }
+}
+
+/**
+ * Check if user can submit based on current state
+ * ENHANCEMENT: Comprehensive submission eligibility check
+ */
+export function canUserSubmit(contractAddress: string): {
+  canSubmit: boolean;
+  reason?: string;
+  suggestions: string[];
+} {
+  const compatibility = checkSubmissionCompatibility(contractAddress);
+  const isConnected = walletService.isConnected();
+  
+  if (!isConnected) {
+    return {
+      canSubmit: false,
+      reason: "Wallet not connected",
+      suggestions: ["Connect your wallet to continue"]
+    };
+  }
+  
+  if (!compatibility.isCompatible) {
+    return {
+      canSubmit: false,
+      reason: compatibility.networkMatch ? "Wallet compatibility issues" : "Wrong network",
+      suggestions: compatibility.recommendations
+    };
+  }
+  
+  return {
+    canSubmit: true,
+    suggestions: compatibility.recommendations
+  };
 }
