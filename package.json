@@ -3,6 +3,9 @@
   "private": true,
   "packageManager": "pnpm@8.15.1",
   "workspaces": [
+    "next",
+    "backend",
+    "shared",
     "apps/*",
     "packages/*"
   ],

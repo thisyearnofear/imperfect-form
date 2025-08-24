@@ -89,88 +89,87 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   const [animationStep, setAnimationStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Configuration-driven instruction sets
-  const instructionConfigs: Record<InstructionMode, InstructionItem[]> = {
-    instructions: [
-      {
-        key: "🏋️",
-        text: "Real-time pose detection",
-        desc: "AI-powered form analysis",
-        hideKey: true,
-      },
-      {
-        key: "🏆",
-        text: "Onchain leaderboards",
-        desc: "Transparent competition",
-        hideKey: true,
-      },
-      {
-        key: "🎯",
-        text: "Pushups & Squats",
-        desc: "Tracked challenges",
-        hideKey: true,
-      },
-      {
-        key: "⚡",
-        text: "HAVE FUN!",
-        desc: "Stay hard & build",
-        hideKey: true,
-      },
-    ],
-    settings: [
-      {
-        key: "a",
-        text: "FULLSCREEN",
-        desc: !isFullscreenAvailable
-          ? "unavailable"
-          : autoFs
-          ? "enabled"
-          : "disabled",
-      },
-      { key: "b", text: "ORIENTATION", desc: "auto-lock" },
-      { key: "c", text: "THEME", desc: "retro" },
-      { key: "d", text: "Back to profile!", desc: "" },
-    ],
-    profile: [
-      {
-        key: "a",
-        text: "WORKOUTS",
-        desc: isLoadingStats
-          ? "Loading..."
-          : formattedStats?.workouts || "No data yet",
-        hideKey: true,
-      },
-      {
-        key: "b",
-        text: "BEST SCORE",
-        desc: isLoadingStats
-          ? "Loading..."
-          : formattedStats?.bestScore || "No workouts",
-        hideKey: true,
-      },
-      {
-        key: "c",
-        text: "STREAK",
-        desc: isLoadingStats
-          ? "Loading..."
-          : formattedStats?.streak || "Start today!",
-        hideKey: true,
-      },
-      {
-        key: "d",
-        text: isLoadingStats
-          ? "Fetching stats..."
-          : formattedStats?.summary || "Ready to start?",
-        desc: "",
-        hideKey: true,
-      },
-    ],
-  };
+  // Configuration-driven instruction sets with optimized memoization
+  const currentInstructions = useMemo(() => {
+    const instructionConfigs: Record<InstructionMode, InstructionItem[]> = {
+      instructions: [
+        {
+          key: "🏋️",
+          text: "Real-time pose detection",
+          desc: "AI-powered form analysis",
+          hideKey: true,
+        },
+        {
+          key: "🏆",
+          text: "Onchain leaderboards",
+          desc: "Transparent competition",
+          hideKey: true,
+        },
+        {
+          key: "🎯",
+          text: "Pushups & Squats",
+          desc: "Tracked challenges",
+          hideKey: true,
+        },
+        {
+          key: "⚡",
+          text: "HAVE FUN!",
+          desc: "Stay hard & build",
+          hideKey: true,
+        },
+      ],
+      settings: [
+        {
+          key: "a",
+          text: "FULLSCREEN",
+          desc: !isFullscreenAvailable
+            ? "unavailable"
+            : autoFs
+            ? "enabled"
+            : "disabled",
+        },
+        { key: "b", text: "ORIENTATION", desc: "auto-lock" },
+        { key: "c", text: "THEME", desc: "retro" },
+        { key: "d", text: "Back to profile!", desc: "" },
+      ],
+      profile: [
+        {
+          key: "a",
+          text: "WORKOUTS",
+          desc: isLoadingStats
+            ? "Loading..."
+            : formattedStats?.workouts || "No data yet",
+          hideKey: true,
+        },
+        {
+          key: "b",
+          text: "BEST SCORE",
+          desc: isLoadingStats
+            ? "Loading..."
+            : formattedStats?.bestScore || "No workouts",
+          hideKey: true,
+        },
+        {
+          key: "c",
+          text: "STREAK",
+          desc: isLoadingStats
+            ? "Loading..."
+            : formattedStats?.streak || "Start today!",
+          hideKey: true,
+        },
+        {
+          key: "d",
+          text: isLoadingStats
+            ? "Fetching stats..."
+            : formattedStats?.summary || "Ready to start?",
+          desc: "",
+          hideKey: true,
+        },
+      ],
+    };
 
-  const currentInstructions = useMemo(
-    () => instructionConfigs[mode],
-    [mode, formattedStats, isLoadingStats, autoFs, isFullscreenAvailable]
-  );
+    return instructionConfigs[mode];
+  }, [mode, formattedStats, isLoadingStats, autoFs, isFullscreenAvailable]);
 
   useEffect(() => {
     // Trigger animation when mode changes

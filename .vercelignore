@@ -1,5 +1,36 @@
-# Ignore everything except the next directory
+# Ignore everything except the next directory and necessary files
 /*
 !/next
+!/package.json
+!/package-lock.json
+!/turbo.json
+!/vercel.json
+
+# Ignore build artifacts and cache
 /next/node_modules
 /next/.next/cache
+/next/.next/standalone
+/next/.next/static
+/next/dist
+/next/build
+
+# Ignore development files
+/next/.env.local
+/next/.env.development.local
+/next/.env.test.local
+/next/.env.production.local
+
+# Ignore logs
+/next/npm-debug.log*
+/next/yarn-debug.log*
+/next/yarn-error.log*
+
+# Ignore IDE files
+/next/.vscode
+/next/.idea
+/next/*.swp
+/next/*.swo
+
+# Ignore OS files
+/next/.DS_Store
+/next/Thumbs.db

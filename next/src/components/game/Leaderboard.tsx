@@ -686,8 +686,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             // Clear browser cache for this page
             if (window.caches) {
               try {
-                caches.keys().then((names) => {
-                  names.forEach((name) => {
+                caches.keys().then((names: readonly string[]) => {
+                  names.forEach((name: string) => {
                     caches.delete(name);
                   });
                 });
@@ -737,9 +737,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                         width={24}
                         height={24}
                         className="w-6 h-6 rounded-full"
-                        onError={(e) => {
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                           // Hide image if it fails to load
-                          (e.target as HTMLImageElement).style.display = "none";
+                          e.currentTarget.style.display = "none";
                         }}
                       />
                     )}
@@ -811,9 +811,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                         width={24}
                         height={24}
                         className="w-6 h-6 rounded-full"
-                        onError={(e) => {
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                           // Hide image if it fails to load
-                          (e.target as HTMLImageElement).style.display = "none";
+                          e.currentTarget.style.display = "none";
                         }}
                       />
                     )}

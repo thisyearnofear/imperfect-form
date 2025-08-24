@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Blockchain development
+artifacts/
+cache/
+deployments/
+typechain/
+typechain-types/
+
+# Hardhat
+hardhat.config.ts.bak
+
+# Local development
+.env.local.example
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
