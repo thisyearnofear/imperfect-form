@@ -3,7 +3,7 @@
   "version": 2,
   "buildCommand": "cd next && npm run build",
   "devCommand": "cd next && npm run dev",
-  "installCommand": "npm install && cd next && npm install",
+  "installCommand": "npm install --legacy-peer-deps && cd next && npm install --legacy-peer-deps",
   "outputDirectory": "next/.next",
   "framework": "nextjs",
 
