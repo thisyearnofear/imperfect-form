@@ -6,11 +6,7 @@
   "installCommand": "npm install && cd next && npm install",
   "outputDirectory": "next/.next",
   "framework": "nextjs",
-  "functions": {
-    "next/src/app/api/**/*.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
+
   "headers": [
     {
       "source": "/(.*)",
