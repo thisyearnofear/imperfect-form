@@ -3,6 +3,7 @@
 !/next
 !/package.json
 !/package-lock.json
+!/pnpm-lock.yaml
 !/turbo.json
 !/vercel.json
 
