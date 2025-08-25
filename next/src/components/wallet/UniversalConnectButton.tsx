@@ -9,6 +9,8 @@ import { getBestDisplayName } from '@/utils/web3bio';
 import { useClientOnly } from '@/hooks/useClientOnly';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { useRobustThemeSwitching } from '@/hooks/useRobustThemeSwitching';
+import { useVerificationStatus } from '@/components/verification/hooks/useVerificationStatus';
+import VerificationBadge from '@/components/verification/VerificationBadge';
 
 interface UniversalConnectButtonProps {
   onConnected?: (address: string) => void;
@@ -54,6 +56,9 @@ export default function UniversalConnectButton({
   const hasMounted = useClientOnly();
   const [resolvedDisplayName, setResolvedDisplayName] = useState<string | undefined>();
   const [showNetworkSwitcher, setShowNetworkSwitcher] = useState(false);
+
+  // Check verification status for connected user
+  const { isVerified } = useVerificationStatus();
 
   // Get network name from chainId using centralized config
   const getNetworkName = (id: number | undefined) => {
@@ -179,20 +184,23 @@ export default function UniversalConnectButton({
 
           {/* User Info */}
           <div className="flex flex-col">
-            <span
-              className="font-bold text-sm"
-              style={{
-                color: '#fcb131',
-                textShadow: '0 0 12px rgba(252, 177, 49, 0.8), 0 0 24px rgba(252, 177, 49, 0.4)',
-                background:
-                  'linear-gradient(135deg, rgba(252, 177, 49, 0.1), rgba(252, 177, 49, 0.05))',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                border: '1px solid rgba(252, 177, 49, 0.2)',
-              }}
-            >
-              {resolvedDisplayName || displayName}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className="font-bold text-sm"
+                style={{
+                  color: '#fcb131',
+                  textShadow: '0 0 12px rgba(252, 177, 49, 0.8), 0 0 24px rgba(252, 177, 49, 0.4)',
+                  background:
+                    'linear-gradient(135deg, rgba(252, 177, 49, 0.1), rgba(252, 177, 49, 0.05))',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(252, 177, 49, 0.2)',
+                }}
+              >
+                {resolvedDisplayName || displayName}
+              </span>
+              <VerificationBadge isVerified={isVerified} size="sm" />
+            </div>
             {isInFarcaster && farcasterUser?.username && (
               <span className="text-green-400 text-xs">@{farcasterUser.username}</span>
             )}

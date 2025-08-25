@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
-import Image from "next/image";
-import "@/styles/leaderboard.css";
-import { ethers } from "ethers";
+import React, { useState, useEffect } from 'react';
+import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
+import Image from 'next/image';
+import '@/styles/leaderboard.css';
+import { ethers } from 'ethers';
 import {
   fitnessLeaderboardABI,
   monadLeaderboardABI,
@@ -14,36 +14,32 @@ import {
   BASE_CONTRACT_ADDRESS,
   MONAD_CONTRACT_ADDRESS,
   CELO_CONTRACT_ADDRESS,
-} from "@/constants/contracts";
-import { shortenAddress } from "@/utils/formatters";
-import { getDisplayName } from "@/utils/ensResolver";
-import {
-  batchResolveFarcasterProfiles,
-  type FarcasterProfile,
-} from "@/utils/neynarResolver";
+} from '@/constants/contracts';
+import { shortenAddress } from '@/utils/formatters';
+import { getDisplayName } from '@/utils/ensResolver';
+import { batchResolveFarcasterProfiles, type FarcasterProfile } from '@/utils/neynarResolver';
 import {
   POLYGON_FALLBACK_RPCS,
   BASE_FALLBACK_RPCS,
   MONAD_FALLBACK_RPCS,
   CELO_FALLBACK_RPCS,
-} from "@/utils/rpcUtils";
-import { Spinner } from "@/components/ui";
-import toast from "react-hot-toast";
-import { Score, ContractScore } from "@/types";
+} from '@/utils/rpcUtils';
+import { Spinner } from '@/components/ui';
+import toast from 'react-hot-toast';
+import { Score, ContractScore } from '@/types';
 import {
   getCachedLeaderboardData,
   cacheLeaderboardData,
   clearLeaderboardCache,
-} from "@/utils/leaderboardCache";
+} from '@/utils/leaderboardCache';
+import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
+import VerificationBadge from '@/components/verification/VerificationBadge';
+import VerifiedLeaderboard from '@/components/leaderboard/VerifiedLeaderboard';
 
 interface LeaderboardProps {
   limit?: number;
   showNetworkSelector?: boolean;
-  onViewMore?: (
-    pushups: Score[],
-    squats: Score[],
-    displayNames: Record<string, string>
-  ) => void;
+  onViewMore?: (pushups: Score[], squats: Score[], displayNames: Record<string, string>) => void;
   initialPushups?: Score[];
   initialSquats?: Score[];
   initialDisplayNames?: Record<string, string>;
@@ -59,12 +55,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   initialDisplayNames,
 }) => {
   const [isLoading, setIsLoading] = useState(!initialPushups && !initialSquats);
-  const [pushupLeaderboard, setPushupLeaderboard] = useState<Score[]>(
-    initialPushups || []
-  );
-  const [squatLeaderboard, setSquatLeaderboard] = useState<Score[]>(
-    initialSquats || []
-  );
+  const [pushupLeaderboard, setPushupLeaderboard] = useState<Score[]>(initialPushups || []);
+  const [squatLeaderboard, setSquatLeaderboard] = useState<Score[]>(initialSquats || []);
   // Tab state is defined but currently not used for switching in the UI
   // const [activeTab] = useState<"pushups" | "squats">("pushups");
   const [displayNames, setDisplayNames] = useState<Record<string, string>>(
@@ -73,18 +65,29 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   const [farcasterProfiles, setFarcasterProfiles] = useState<
     Record<string, FarcasterProfile | null>
   >({});
+  const [activeTab, setActiveTab] = useState<'all' | 'verified'>('all');
+
+  // Get all unique user addresses for verification checking
+  const allUserAddresses = React.useMemo(() => {
+    const addresses = new Set<string>();
+    [...pushupLeaderboard, ...squatLeaderboard].forEach((entry) => {
+      addresses.add(entry.user);
+    });
+    return Array.from(addresses);
+  }, [pushupLeaderboard, squatLeaderboard]);
+
+  // Check verification status for all users
+  const { verificationStatuses } = useBatchVerificationStatus(allUserAddresses);
 
   // We'll use ethers.js directly instead of ThirdWeb hooks
   // This avoids React hook issues when switching between wallet modes
 
   // Circuit breaker for failed networks
-  const [networkRetryCount, setNetworkRetryCount] = useState<
-    Record<string, number>
-  >({});
+  const [networkRetryCount, setNetworkRetryCount] = useState<Record<string, number>>({});
 
   // Helper function to verify contract addresses
   const verifyContractAddresses = () => {
-    console.log("Verifying contract addresses:");
+    console.log('Verifying contract addresses:');
     console.log(`Polygon: ${POLYGON_CONTRACT_ADDRESS}`);
     console.log(`Base: ${BASE_CONTRACT_ADDRESS}`);
     console.log(`Monad: ${MONAD_CONTRACT_ADDRESS}`);
@@ -96,17 +99,13 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     };
 
     if (!isValidAddress(POLYGON_CONTRACT_ADDRESS)) {
-      console.error(
-        `Invalid Polygon contract address: ${POLYGON_CONTRACT_ADDRESS}`
-      );
+      console.error(`Invalid Polygon contract address: ${POLYGON_CONTRACT_ADDRESS}`);
     }
     if (!isValidAddress(BASE_CONTRACT_ADDRESS)) {
       console.error(`Invalid Base contract address: ${BASE_CONTRACT_ADDRESS}`);
     }
     if (!isValidAddress(MONAD_CONTRACT_ADDRESS)) {
-      console.error(
-        `Invalid Monad contract address: ${MONAD_CONTRACT_ADDRESS}`
-      );
+      console.error(`Invalid Monad contract address: ${MONAD_CONTRACT_ADDRESS}`);
     }
     if (!isValidAddress(CELO_CONTRACT_ADDRESS)) {
       console.error(`Invalid Celo contract address: ${CELO_CONTRACT_ADDRESS}`);
@@ -122,9 +121,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       networkName: string
     ) => {
       // Only log in development mode - reduce spam
-      const isDev = process.env.NODE_ENV === "development";
+      const isDev = process.env.NODE_ENV === 'development';
 
-      if (isDev && !("fetchLog" in window)) {
+      if (isDev && !('fetchLog' in window)) {
         console.log(`Fetching leaderboard data for all networks`);
         (window as Window & { fetchLog?: boolean }).fetchLog = true;
       }
@@ -134,9 +133,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       const MAX_NETWORK_FAILURES = 3;
 
       if (currentRetryCount >= MAX_NETWORK_FAILURES) {
-        console.warn(
-          `⚡ Circuit breaker: Skipping ${networkName} due to repeated failures`
-        );
+        console.warn(`⚡ Circuit breaker: Skipping ${networkName} due to repeated failures`);
         return [];
       }
 
@@ -148,38 +145,33 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           try {
             if (retry > 0) {
               // Exponential backoff - wait longer between each retry
-              await new Promise((resolve) =>
-                setTimeout(resolve, 1000 * Math.pow(2, retry))
-              );
+              await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, retry)));
             }
 
             // Simplified network detection with caching for performance using centralized config
-            const networkMap: Record<
-              string,
-              { name: string; chainId: number }
-            > = {
+            const networkMap: Record<string, { name: string; chainId: number }> = {
               polygon: {
-                name: "polygon",
+                name: 'polygon',
                 chainId: chainConfigs[SupportedChain.POLYGON].id,
               },
               matic: {
-                name: "polygon",
+                name: 'polygon',
                 chainId: chainConfigs[SupportedChain.POLYGON].id,
               },
               base: {
-                name: "base",
+                name: 'base',
                 chainId: chainConfigs[SupportedChain.BASE].id,
               },
               sepolia: {
-                name: "base",
+                name: 'base',
                 chainId: chainConfigs[SupportedChain.BASE].id,
               },
               monad: {
-                name: "monad",
+                name: 'monad',
                 chainId: chainConfigs[SupportedChain.MONAD].id,
               },
               celo: {
-                name: "celo",
+                name: 'celo',
                 chainId: chainConfigs[SupportedChain.CELO].id,
               },
             };
@@ -191,7 +183,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
             const networkInfo = networkKey
               ? networkMap[networkKey]
-              : { name: "unknown", chainId: 1 };
+              : { name: 'unknown', chainId: 1 };
 
             // Create provider with correct network info and options
             const provider = new ethers.JsonRpcProvider(rpcUrl, networkInfo, {
@@ -204,10 +196,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             try {
               // Set a timeout for getting the network
               const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(
-                  () => reject(new Error(`RPC timeout for ${rpcUrl}`)),
-                  TIMEOUT_MS
-                )
+                setTimeout(() => reject(new Error(`RPC timeout for ${rpcUrl}`)), TIMEOUT_MS)
               );
 
               // Race between provider connection and timeout
@@ -231,26 +220,17 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               contractABI = baseLeaderboardABI;
             }
 
-            const contractInstance = new ethers.Contract(
-              contractAddress,
-              contractABI,
-              provider
-            );
+            const contractInstance = new ethers.Contract(contractAddress, contractABI, provider);
 
             // Check if the contract exists at the address
             try {
               const code = await provider.getCode(contractAddress);
-              if (code === "0x") {
-                console.warn(
-                  `No contract found at ${contractAddress} on ${networkName}`
-                );
+              if (code === '0x') {
+                console.warn(`No contract found at ${contractAddress} on ${networkName}`);
                 throw new Error(`No contract found at address`);
               }
             } catch (codeError) {
-              console.error(
-                `Error checking contract code at ${contractAddress}:`,
-                codeError
-              );
+              console.error(`Error checking contract code at ${contractAddress}:`, codeError);
               throw codeError;
             }
 
@@ -259,10 +239,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               const data = await contractInstance.getLeaderboard();
               return data || [];
             } catch (callError) {
-              console.error(
-                `Error calling getLeaderboard on ${networkName}:`,
-                callError
-              );
+              console.error(`Error calling getLeaderboard on ${networkName}:`, callError);
               throw callError;
             }
           } catch (error) {
@@ -275,32 +252,21 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             };
 
             // Extract error details, handling different error formats
-            const errorCode =
-              err.code || (err.error && err.error.code) || "UNKNOWN";
-            const errorReason =
-              err.reason || (err.error && err.error.reason) || "";
-            const errorMessage =
-              err.message ||
-              (err.error && err.error.message) ||
-              "Unknown error";
+            const errorCode = err.code || (err.error && err.error.code) || 'UNKNOWN';
+            const errorReason = err.reason || (err.error && err.error.reason) || '';
+            const errorMessage = err.message || (err.error && err.error.message) || 'Unknown error';
 
-            if (errorCode === "CALL_EXCEPTION") {
+            if (errorCode === 'CALL_EXCEPTION') {
               console.error(
                 `Contract call exception for ${rpcUrl} (${networkName}):`,
-                errorReason || errorMessage || "No reason provided"
+                errorReason || errorMessage || 'No reason provided'
               );
-            } else if (errorCode === "TIMEOUT") {
+            } else if (errorCode === 'TIMEOUT') {
               console.error(`Timeout error for ${rpcUrl} (${networkName})`);
-            } else if (errorCode === "NETWORK_ERROR") {
-              console.error(
-                `Network error for ${rpcUrl} (${networkName}):`,
-                errorMessage
-              );
+            } else if (errorCode === 'NETWORK_ERROR') {
+              console.error(`Network error for ${rpcUrl} (${networkName}):`, errorMessage);
             } else {
-              console.error(
-                `Error fetching data from ${rpcUrl} (${networkName}):`,
-                err
-              );
+              console.error(`Error fetching data from ${rpcUrl} (${networkName}):`, err);
             }
 
             // If we've reached max retries, continue to the next RPC URL
@@ -348,8 +314,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       setIsLoading(false);
 
       // Only log in development
-      if (process.env.NODE_ENV === "development") {
-        console.log("Using cached leaderboard data");
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Using cached leaderboard data');
       }
 
       return;
@@ -361,26 +327,26 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
       // Always include base and polygon as default networks
       activeNetworks.push({
-        network: "base",
+        network: 'base',
         address: BASE_CONTRACT_ADDRESS,
         rpcs: BASE_FALLBACK_RPCS,
       });
 
       activeNetworks.push({
-        network: "polygon",
+        network: 'polygon',
         address: POLYGON_CONTRACT_ADDRESS,
         rpcs: POLYGON_FALLBACK_RPCS,
       });
 
       // Always fetch data from all networks
       activeNetworks.push({
-        network: "monad",
+        network: 'monad',
         address: MONAD_CONTRACT_ADDRESS,
         rpcs: MONAD_FALLBACK_RPCS,
       });
 
       activeNetworks.push({
-        network: "celo",
+        network: 'celo',
         address: CELO_CONTRACT_ADDRESS,
         rpcs: CELO_FALLBACK_RPCS,
       });
@@ -405,10 +371,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
       // Assign data to appropriate variables
       for (const result of networkResults) {
-        if (result.network === "polygon") polygonData = result.data;
-        if (result.network === "base") baseData = result.data;
-        if (result.network === "monad") monadData = result.data;
-        if (result.network === "celo") celoData = result.data;
+        if (result.network === 'polygon') polygonData = result.data;
+        if (result.network === 'base') baseData = result.data;
+        if (result.network === 'monad') monadData = result.data;
+        if (result.network === 'celo') celoData = result.data;
       }
 
       // Process the data
@@ -418,7 +384,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       // Helper function to process data from each network with improved error handling
       const processNetworkData = (
         data: ContractScore[],
-        network: "polygon" | "base" | "monad" | "celo"
+        network: 'polygon' | 'base' | 'monad' | 'celo'
       ) => {
         if (!Array.isArray(data)) {
           console.error(`Invalid data format for ${network}`);
@@ -428,19 +394,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
         data.forEach((entry) => {
           try {
             // Skip null entries or zero address
-            if (
-              !entry ||
-              entry.user === "0x0000000000000000000000000000000000000000"
-            ) {
+            if (!entry || entry.user === '0x0000000000000000000000000000000000000000') {
               return;
             }
 
             // Validate entry structure
-            if (
-              !entry.user ||
-              entry.user.length !== 42 ||
-              !entry.user.startsWith("0x")
-            ) {
+            if (!entry.user || entry.user.length !== 42 || !entry.user.startsWith('0x')) {
               return;
             }
 
@@ -450,8 +409,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
             // Extract pushup score - handle BigNumber format
             if (entry.pushups !== undefined) {
-              if (typeof entry.pushups === "object" && entry.pushups !== null) {
-                if (typeof entry.pushups.toString === "function") {
+              if (typeof entry.pushups === 'object' && entry.pushups !== null) {
+                if (typeof entry.pushups.toString === 'function') {
                   pushupScore = parseInt(entry.pushups.toString());
                 } else if (entry.pushups._hex) {
                   pushupScore = parseInt(entry.pushups._hex, 16);
@@ -463,8 +422,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
             // Extract squat score - handle BigNumber format
             if (entry.squats !== undefined) {
-              if (typeof entry.squats === "object" && entry.squats !== null) {
-                if (typeof entry.squats.toString === "function") {
+              if (typeof entry.squats === 'object' && entry.squats !== null) {
+                if (typeof entry.squats.toString === 'function') {
                   squatScore = parseInt(entry.squats.toString());
                 } else if (entry.squats._hex) {
                   squatScore = parseInt(entry.squats._hex, 16);
@@ -497,8 +456,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       };
 
       // Only log in development mode
-      if (process.env.NODE_ENV === "development") {
-        console.log("Data counts:", {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Data counts:', {
           polygon: polygonData.length,
           base: baseData.length,
           monad: monadData.length,
@@ -508,12 +467,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
       // Process data from all networks with error handling
       try {
-        processNetworkData(polygonData, "polygon");
-        processNetworkData(baseData, "base");
-        processNetworkData(monadData, "monad");
-        processNetworkData(celoData, "celo");
+        processNetworkData(polygonData, 'polygon');
+        processNetworkData(baseData, 'base');
+        processNetworkData(monadData, 'monad');
+        processNetworkData(celoData, 'celo');
       } catch (error) {
-        console.error("Error processing network data:", error);
+        console.error('Error processing network data:', error);
       }
 
       // Sort by score (highest first)
@@ -532,9 +491,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       );
 
       // Batch resolve Farcaster profiles first (more efficient)
-      const farcasterProfilesMap = await batchResolveFarcasterProfiles(
-        uniqueAddresses
-      );
+      const farcasterProfilesMap = await batchResolveFarcasterProfiles(uniqueAddresses);
       setFarcasterProfiles(Object.fromEntries(farcasterProfilesMap));
 
       // Build display names with Farcaster priority
@@ -568,8 +525,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       };
       cacheLeaderboardData(cacheData);
     } catch (error) {
-      console.error("Error fetching leaderboard data:", error);
-      toast.error("Failed to load leaderboard data");
+      console.error('Error fetching leaderboard data:', error);
+      toast.error('Failed to load leaderboard data');
     } finally {
       setIsLoading(false);
     }
@@ -587,12 +544,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     clearLeaderboardCache();
 
     fetchLeaderboardData();
-  }, [
-    fetchLeaderboardData,
-    initialPushups,
-    initialSquats,
-    initialDisplayNames,
-  ]);
+  }, [fetchLeaderboardData, initialPushups, initialSquats, initialDisplayNames]);
 
   // fetchWithFallbackRpcs is now defined above
 
@@ -618,23 +570,21 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   }
 
   // Debug logging - only log significant changes
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === 'development') {
     const currentState = `${pushupLeaderboard.length}-${squatLeaderboard.length}-${isLoading}`;
     const shouldLog =
-      !("leaderboardLastLog" in window) ||
-      (window as Window & { leaderboardLastLog?: string })
-        .leaderboardLastLog !== currentState;
+      !('leaderboardLastLog' in window) ||
+      (window as Window & { leaderboardLastLog?: string }).leaderboardLastLog !== currentState;
 
     if (shouldLog) {
-      console.log("Leaderboard state:", {
+      console.log('Leaderboard state:', {
         pushupLength: pushupLeaderboard.length,
         squatLength: squatLeaderboard.length,
         isLoading,
         pushupSample: pushupLeaderboard.slice(0, 2),
         squatSample: squatLeaderboard.slice(0, 2),
       });
-      (window as Window & { leaderboardLastLog?: string }).leaderboardLastLog =
-        currentState;
+      (window as Window & { leaderboardLastLog?: string }).leaderboardLastLog = currentState;
     }
   }
 
@@ -649,6 +599,45 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   return (
     <div className="leaderboard-container">
       <h2>Top Performers</h2>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-4">
+        <button
+          className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
+            activeTab === 'all'
+              ? 'bg-fcb131 text-black shadow-lg'
+              : 'bg-gray-800 text-fcb131 border border-fcb131 hover:bg-fcb131 hover:text-black'
+          }`}
+          style={{
+            backgroundColor: activeTab === 'all' ? '#fcb131' : 'rgba(17, 17, 17, 0.8)',
+            color: activeTab === 'all' ? 'black' : '#fcb131',
+            border: activeTab === 'all' ? '2px solid #fcb131' : '2px solid #fcb131',
+            textShadow: activeTab === 'all' ? 'none' : '0 0 5px rgba(252, 177, 49, 0.5)',
+            boxShadow: activeTab === 'all' ? '0 0 10px rgba(252, 177, 49, 0.5)' : 'none',
+          }}
+          onClick={() => setActiveTab('all')}
+        >
+          All Users
+        </button>
+        <button
+          className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
+            activeTab === 'verified'
+              ? 'bg-fcb131 text-black shadow-lg'
+              : 'bg-gray-800 text-fcb131 border border-fcb131 hover:bg-fcb131 hover:text-black'
+          }`}
+          style={{
+            backgroundColor: activeTab === 'verified' ? '#fcb131' : 'rgba(17, 17, 17, 0.8)',
+            color: activeTab === 'verified' ? 'black' : '#fcb131',
+            border: activeTab === 'verified' ? '2px solid #fcb131' : '2px solid #fcb131',
+            textShadow: activeTab === 'verified' ? 'none' : '0 0 5px rgba(252, 177, 49, 0.5)',
+            boxShadow: activeTab === 'verified' ? '0 0 10px rgba(252, 177, 49, 0.5)' : 'none',
+          }}
+          onClick={() => setActiveTab('verified')}
+        >
+          ✓ Verified Only
+        </button>
+      </div>
+
       <div className="flex gap-2 mb-2">
         <button
           id="loadLeaderboardButton"
@@ -669,7 +658,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             clearLeaderboardCache();
             setIsLoading(true);
             fetchLeaderboardData();
-            toast.success("Cache cleared, reloading data");
+            toast.success('Cache cleared, reloading data');
           }}
         >
           Clear Cache
@@ -678,7 +667,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           id="forceReloadButton"
           className="load-button"
           onClick={() => {
-            if (typeof window === "undefined") return;
+            if (typeof window === 'undefined') return;
 
             // Force reload by clearing all caches
             clearLeaderboardCache();
@@ -692,188 +681,195 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                   });
                 });
               } catch (e) {
-                console.error("Error clearing browser caches:", e);
+                console.error('Error clearing browser caches:', e);
               }
             }
 
             // Force reload the page
             window.location.reload();
-            toast.success("Forcing complete page reload");
+            toast.success('Forcing complete page reload');
           }}
         >
           Force Reload
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table id="leaderboardTable">
-          <tbody id="leaderboardBody">
-            {/* Push-ups Section */}
-            <tr>
-              <td
-                colSpan={4}
-                style={{
-                  backgroundColor: "#fcb131",
-                  textAlign: "center",
-                  color: "black",
-                  fontWeight: "bold",
-                }}
-              >
-                Push-ups
-              </td>
-            </tr>
-            {pushupLeaderboard.slice(0, limit || 2).map((entry, i) => (
-              <tr
-                key={`pushup-${entry.user}-${entry.network}-${i}`}
-                className={`${entry.network}-entry`}
-              >
-                <td>{i + 1}</td>
-                <td>
-                  <div className="flex items-center space-x-2">
-                    {farcasterProfiles[entry.user]?.pfpUrl && (
-                      <Image
-                        src={farcasterProfiles[entry.user]?.pfpUrl || ""}
-                        alt="Profile"
-                        width={24}
-                        height={24}
-                        className="w-6 h-6 rounded-full"
-                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                          // Hide image if it fails to load
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    )}
-                    <span
-                      className={
-                        farcasterProfiles[entry.user]
-                          ? "text-purple-600 font-medium"
-                          : ""
-                      }
-                    >
-                      {displayNames[entry.user] || shortenAddress(entry.user)}
-                    </span>
-                    {farcasterProfiles[entry.user] && (
-                      <span className="text-xs text-purple-500">🎭</span>
-                    )}
-                  </div>
-                </td>
-                <td>{entry.score}</td>
-                <td>
-                  <span
-                    className={`text-${
-                      entry.network === "polygon"
-                        ? "pink"
-                        : entry.network === "base"
-                        ? "blue"
-                        : entry.network === "monad"
-                        ? "yellow"
-                        : "green"
-                    }-500 font-bold`}
-                  >
-                    {entry.network === "polygon"
-                      ? "Polygon"
-                      : entry.network === "base"
-                      ? "Base"
-                      : entry.network === "monad"
-                      ? "Monad"
-                      : "Celo"}
-                  </span>
+      {activeTab === 'all' ? (
+        <div className="overflow-x-auto">
+          <table id="leaderboardTable">
+            <tbody id="leaderboardBody">
+              {/* Push-ups Section */}
+              <tr>
+                <td
+                  colSpan={4}
+                  style={{
+                    backgroundColor: '#fcb131',
+                    textAlign: 'center',
+                    color: 'black',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Push-ups
                 </td>
               </tr>
-            ))}
+              {pushupLeaderboard.slice(0, limit || 2).map((entry, i) => (
+                <tr
+                  key={`pushup-${entry.user}-${entry.network}-${i}`}
+                  className={`${entry.network}-entry`}
+                >
+                  <td>{i + 1}</td>
+                  <td>
+                    <div className="flex items-center space-x-2">
+                      {farcasterProfiles[entry.user]?.pfpUrl && (
+                        <Image
+                          src={farcasterProfiles[entry.user]?.pfpUrl || ''}
+                          alt="Profile"
+                          width={24}
+                          height={24}
+                          className="w-6 h-6 rounded-full"
+                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                            // Hide image if it fails to load
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <span
+                        className={
+                          farcasterProfiles[entry.user] ? 'text-purple-600 font-medium' : ''
+                        }
+                      >
+                        {displayNames[entry.user] || shortenAddress(entry.user)}
+                      </span>
+                      {farcasterProfiles[entry.user] && (
+                        <span className="text-xs text-purple-500">🎭</span>
+                      )}
+                      <VerificationBadge
+                        isVerified={verificationStatuses[entry.user] || false}
+                        size="sm"
+                      />
+                    </div>
+                  </td>
+                  <td>{entry.score}</td>
+                  <td>
+                    <span
+                      className={`text-${
+                        entry.network === 'polygon'
+                          ? 'pink'
+                          : entry.network === 'base'
+                            ? 'blue'
+                            : entry.network === 'monad'
+                              ? 'yellow'
+                              : 'green'
+                      }-500 font-bold`}
+                    >
+                      {entry.network === 'polygon'
+                        ? 'Polygon'
+                        : entry.network === 'base'
+                          ? 'Base'
+                          : entry.network === 'monad'
+                            ? 'Monad'
+                            : 'Celo'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
 
-            {/* Squats Section */}
-            <tr>
-              <td
-                colSpan={4}
-                style={{
-                  backgroundColor: "#00a651",
-                  textAlign: "center",
-                  color: "white",
-                  fontWeight: "bold",
-                }}
-              >
-                Squats
-              </td>
-            </tr>
-            {squatLeaderboard.slice(0, limit || 2).map((entry, i) => (
-              <tr
-                key={`squat-${entry.user}-${entry.network}-${i}`}
-                className={`${entry.network}-entry`}
-              >
-                <td>{i + 1}</td>
-                <td>
-                  <div className="flex items-center space-x-2">
-                    {farcasterProfiles[entry.user]?.pfpUrl && (
-                      <Image
-                        src={farcasterProfiles[entry.user]?.pfpUrl || ""}
-                        alt="Profile"
-                        width={24}
-                        height={24}
-                        className="w-6 h-6 rounded-full"
-                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                          // Hide image if it fails to load
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    )}
-                    <span
-                      className={
-                        farcasterProfiles[entry.user]
-                          ? "text-purple-600 font-medium"
-                          : ""
-                      }
-                    >
-                      {displayNames[entry.user] || shortenAddress(entry.user)}
-                    </span>
-                    {farcasterProfiles[entry.user] && (
-                      <span className="text-xs text-purple-500">🎭</span>
-                    )}
-                  </div>
-                </td>
-                <td>{entry.score}</td>
-                <td>
-                  <span
-                    className={`text-${
-                      entry.network === "polygon"
-                        ? "pink"
-                        : entry.network === "base"
-                        ? "blue"
-                        : entry.network === "monad"
-                        ? "yellow"
-                        : "green"
-                    }-500 font-bold`}
-                  >
-                    {entry.network === "polygon"
-                      ? "Polygon"
-                      : entry.network === "base"
-                      ? "Base"
-                      : entry.network === "monad"
-                      ? "Monad"
-                      : "Celo"}
-                  </span>
+              {/* Squats Section */}
+              <tr>
+                <td
+                  colSpan={4}
+                  style={{
+                    backgroundColor: '#00a651',
+                    textAlign: 'center',
+                    color: 'white',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Squats
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              {squatLeaderboard.slice(0, limit || 2).map((entry, i) => (
+                <tr
+                  key={`squat-${entry.user}-${entry.network}-${i}`}
+                  className={`${entry.network}-entry`}
+                >
+                  <td>{i + 1}</td>
+                  <td>
+                    <div className="flex items-center space-x-2">
+                      {farcasterProfiles[entry.user]?.pfpUrl && (
+                        <Image
+                          src={farcasterProfiles[entry.user]?.pfpUrl || ''}
+                          alt="Profile"
+                          width={24}
+                          height={24}
+                          className="w-6 h-6 rounded-full"
+                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                            // Hide image if it fails to load
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <span
+                        className={
+                          farcasterProfiles[entry.user] ? 'text-purple-600 font-medium' : ''
+                        }
+                      >
+                        {displayNames[entry.user] || shortenAddress(entry.user)}
+                      </span>
+                      {farcasterProfiles[entry.user] && (
+                        <span className="text-xs text-purple-500">🎭</span>
+                      )}
+                      <VerificationBadge
+                        isVerified={verificationStatuses[entry.user] || false}
+                        size="sm"
+                      />
+                    </div>
+                  </td>
+                  <td>{entry.score}</td>
+                  <td>
+                    <span
+                      className={`text-${
+                        entry.network === 'polygon'
+                          ? 'pink'
+                          : entry.network === 'base'
+                            ? 'blue'
+                            : entry.network === 'monad'
+                              ? 'yellow'
+                              : 'green'
+                      }-500 font-bold`}
+                    >
+                      {entry.network === 'polygon'
+                        ? 'Polygon'
+                        : entry.network === 'base'
+                          ? 'Base'
+                          : entry.network === 'monad'
+                            ? 'Monad'
+                            : 'Celo'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <VerifiedLeaderboard className="mt-4" />
+      )}
 
       {/* View more button - always show if we have data and onViewMore is provided */}
-      {(pushupLeaderboard.length > 0 || squatLeaderboard.length > 0) &&
-        onViewMore && (
-          <div className="text-center mt-4">
-            <button
-              id="view-more-button"
-              className="view-more-button"
-              onClick={() => {
-                onViewMore(pushupLeaderboard, squatLeaderboard, displayNames);
-              }}
-            >
-              View Full Leaderboard
-            </button>
-          </div>
-        )}
+      {(pushupLeaderboard.length > 0 || squatLeaderboard.length > 0) && onViewMore && (
+        <div className="text-center mt-4">
+          <button
+            id="view-more-button"
+            className="view-more-button"
+            onClick={() => {
+              onViewMore(pushupLeaderboard, squatLeaderboard, displayNames);
+            }}
+          >
+            View Full Leaderboard
+          </button>
+        </div>
+      )}
     </div>
   );
 };
