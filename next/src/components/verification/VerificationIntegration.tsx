@@ -1,15 +1,13 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { SelfVerificationModal } from "@/components/verification";
-import NetworkSwitchPrompt from "./NetworkSwitchPrompt";
-import { usePlatform } from "@/contexts/PlatformContext";
-import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
-import {
-  chainSupportsSelfProtocol,
-  getSelfProtocolChain,
-} from "@/utils/chainSwitching";
-import toast from "react-hot-toast";
+import React, { useState } from 'react';
+import { SelfVerificationModal } from '@/components/verification';
+import NetworkSwitchPrompt from './NetworkSwitchPrompt';
+import { usePlatform } from '@/contexts/PlatformContext';
+import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
+import { chainSupportsSelfProtocol, getSelfProtocolChain } from '@/utils/chainSwitching';
+import { useVerifiedCount } from '@/hooks/useVerifiedCount';
+import toast from 'react-hot-toast';
 
 interface VerificationIntegrationProps {
   onVerificationComplete?: () => void;
@@ -22,7 +20,7 @@ interface VerificationIntegrationProps {
  */
 const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   onVerificationComplete,
-  className = "",
+  className = '',
 }) => {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showNetworkSwitch, setShowNetworkSwitch] = useState(false);
@@ -30,13 +28,14 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
 
   const { wallet } = usePlatform();
   const { currentTheme } = useEnhancedChainTheme();
+  const { count: verifiedCount, isLoading: countLoading } = useVerifiedCount();
   const { address, chainId } = wallet;
 
   const handleVerificationSuccess = () => {
     setIsVerified(true);
     setShowVerificationModal(false);
 
-    toast.success("🎉 Verified as human! You now have a verified badge.", {
+    toast.success('🎉 Verified as human! You now have a verified badge.', {
       duration: 5000,
       style: {
         background: currentTheme.palette.surface,
@@ -49,10 +48,10 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   };
 
   const handleVerificationError = (error: unknown) => {
-    console.error("Verification failed:", error);
+    console.error('Verification failed:', error);
     setShowVerificationModal(false);
 
-    toast.error("Verification failed. Please try again.", {
+    toast.error('Verification failed. Please try again.', {
       style: {
         background: currentTheme.palette.surface,
         color: currentTheme.palette.text,
@@ -86,8 +85,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
             <div>
               <h4 className="font-bold text-green-400">Verified Human</h4>
               <p className="text-sm text-green-300">
-                You&apos;re verified! Your scores now show with a verified
-                badge.
+                You&apos;re verified! Your scores now show with a verified badge.
               </p>
             </div>
           </div>
@@ -107,7 +105,18 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
               <div>
                 <h4 className="font-bold text-yellow-400">Get Verified!</h4>
                 <p className="text-sm text-yellow-300">
-                  Prove you&apos;re human and earn your verified badge
+                  {countLoading ? (
+                    <span className="flex items-center">
+                      <span className="animate-pulse">Loading...</span>
+                    </span>
+                  ) : verifiedCount > 0 ? (
+                    <span className="animate-fade-in">
+                      Join <span className="font-semibold text-yellow-200">{verifiedCount}</span>{' '}
+                      verified athletes and earn your badge
+                    </span>
+                  ) : (
+                    <span className="animate-fade-in">Be among the first verified athletes!</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -120,7 +129,18 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
           </div>
 
           <div className="mt-3 text-xs text-yellow-200/80">
-            ✨ One-time verification • 🔒 Privacy-first • ⚡ Instant badge
+            {countLoading ? (
+              <span className="animate-pulse">✨ Loading verification stats...</span>
+            ) : verifiedCount > 0 ? (
+              <span className="animate-fade-in">
+                ✨ One-time setup • 🏆 <span className="font-medium">{verifiedCount}</span> humans
+                verified • ⚡ Instant badge
+              </span>
+            ) : (
+              <span className="animate-fade-in">
+                ✨ One-time setup • 🔒 Privacy-first • ⚡ Instant badge
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -140,7 +160,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
         onClose={() => setShowVerificationModal(false)}
         onSuccess={handleVerificationSuccess}
         onError={handleVerificationError}
-        userAddress={address || ""}
+        userAddress={address || ''}
       />
     </>
   );
