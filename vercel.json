@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "cd next && npm run build",
-  "devCommand": "cd next && npm run dev",
-  "installCommand": "npm install --legacy-peer-deps && cd next && npm install --legacy-peer-deps",
+  "buildCommand": "cd next && pnpm install && pnpm build",
+  "devCommand": "cd next && pnpm dev",
+  "installCommand": "pnpm install --frozen-lockfile && cd next && pnpm install",
   "outputDirectory": "next/.next",
   "framework": "nextjs",
 

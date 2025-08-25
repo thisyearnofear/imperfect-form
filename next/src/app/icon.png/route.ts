@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(_request: NextRequest) {
   try {
     // Try to serve the actual icon file from public directory
@@ -15,7 +14,7 @@ export async function GET(_request: NextRequest) {
         'Cache-Control': 'public, max-age=31536000',
       },
     });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     // Fallback: Generate a simple SVG icon
     const svg = `

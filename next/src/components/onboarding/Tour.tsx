@@ -1,59 +1,77 @@
-import React, { useEffect, useState } from "react";
-import { TourProvider, useTour } from "@reactour/tour";
-import { useOnboarding } from "@/contexts/OnboardingContext";
-import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
+import React, { useEffect, useState } from 'react';
+import { TourProvider, useTour } from '@reactour/tour';
+import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 
 // Imperfect Form Philosophy Tour Steps
 const imperfectFormSteps = [
   {
-    selector: "#modeSwitch",
+    selector: '#modeSwitch',
     content: (
       <div className="imperfect-step">
         <div className="step-header">
           <span className="step-icon">📐</span>
           <h3>Choose Your Path</h3>
         </div>
-        <p>Select your discipline - Push-ups or Squats. Each rep brings you closer to your asymptote of perfection.</p>
-        <div className="step-tip">💡 Different movements, same journey toward less imperfection</div>
+        <p>
+          Select your discipline - Push-ups or Squats. Each rep brings you closer to your asymptote
+          of perfection.
+        </p>
+        <div className="step-tip">
+          💡 Different movements, same journey toward less imperfection
+        </div>
       </div>
     ),
   },
   {
-    selector: "#startButton",
+    selector: '#startButton',
     content: (
       <div className="imperfect-step">
         <div className="step-header">
           <span className="step-icon">🎯</span>
           <h3>Begin Your Iteration</h3>
         </div>
-        <p>Ready to measure your current form? Start your 2-minute session and embrace the process of improvement.</p>
-        <div className="step-tip">⚡ AI observes your movement - every rep is data toward perfection</div>
+        <p>
+          Ready to measure your current form? Start your 2-minute session and embrace the process of
+          improvement.
+        </p>
+        <div className="step-tip">
+          ⚡ AI observes your movement - every rep is data toward perfection
+        </div>
       </div>
     ),
   },
   {
-    selector: "#wallet-connection",
+    selector: '#wallet-connection',
     content: (
       <div className="imperfect-step">
         <div className="step-header">
           <span className="step-icon">🔗</span>
           <h3>Track Your Progress</h3>
         </div>
-        <p>Connect your wallet to record your journey. Each session becomes part of your permanent record of getting less imperfect.</p>
+        <p>
+          Connect your wallet to record your journey. Each session becomes part of your permanent
+          record of getting less imperfect.
+        </p>
         <div className="step-tip">🌐 Multi-chain progress: Base, Polygon, Celo, and Monad</div>
       </div>
     ),
   },
   {
-    selector: "#submit-score-btn",
+    selector: '#submit-score-btn',
     content: (
       <div className="imperfect-step">
         <div className="step-header">
           <span className="step-icon">📈</span>
           <h3>Document Your Growth</h3>
         </div>
-        <p>Submit your score to the eternal ledger. Compare with others on the same asymptotic journey toward perfection.</p>
-        <div className="step-tip">🎯 Every submission: measurable progress toward your ideal form</div>
+        <p>
+          Submit your score to the eternal ledger. Compare with others on the same asymptotic
+          journey toward perfection.
+        </p>
+        <div className="step-tip">
+          🎯 Every submission: measurable progress toward your ideal form
+        </div>
       </div>
     ),
   },
@@ -101,67 +119,66 @@ export default function Tour() {
 
   // Imperfect Form Philosophy Styling
   const imperfectFormTourStyles = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     popover: (base: any) => ({
       ...base,
-      "--reactour-accent": palette.accent,
-      borderRadius: "16px",
-      backgroundColor: "#0a0a0a",
-      color: "#fff",
+      '--reactour-accent': palette.accent,
+      borderRadius: '16px',
+      backgroundColor: '#0a0a0a',
+      color: '#fff',
       border: `3px solid ${palette.accent}`,
       fontFamily: "'PressStart2P', monospace",
       boxShadow: `0 0 30px ${palette.accent}40, inset 0 0 20px rgba(255,255,255,0.1)`,
-      backdropFilter: "blur(10px)",
-      maxWidth: "400px",
-      padding: "24px",
-      overflow: "hidden",
+      backdropFilter: 'blur(10px)',
+      maxWidth: '400px',
+      padding: '24px',
+      overflow: 'hidden',
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     maskArea: (base: any) => ({
       ...base,
       rx: 12,
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     maskWrapper: (base: any) => ({
       ...base,
-      color: "rgba(0,0,0,0.8)",
+      color: 'rgba(0,0,0,0.8)',
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     badge: (base: any) => ({
       ...base,
-      left: "auto",
-      right: "-12px",
-      top: "-12px",
+      left: 'auto',
+      right: '-12px',
+      top: '-12px',
       backgroundColor: palette.accent,
-      color: "#000",
-      fontWeight: "bold",
-      fontSize: "14px",
-      width: "32px",
-      height: "32px",
-      borderRadius: "50%",
-      border: "2px solid #fff",
+      color: '#000',
+      fontWeight: 'bold',
+      fontSize: '14px',
+      width: '32px',
+      height: '32px',
+      borderRadius: '50%',
+      border: '2px solid #fff',
       boxShadow: `0 0 15px ${palette.accent}`,
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     controls: (base: any) => ({
       ...base,
-      marginTop: "20px",
-      gap: "12px",
+      marginTop: '20px',
+      gap: '12px',
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     close: (base: any) => ({
       ...base,
-      right: "8px",
-      top: "8px",
-      backgroundColor: "rgba(255,255,255,0.1)",
-      border: "1px solid rgba(255,255,255,0.3)",
-      borderRadius: "50%",
-      width: "32px",
-      height: "32px",
-      color: "#fff",
-      fontSize: "16px",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
+      right: '8px',
+      top: '8px',
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      border: '1px solid rgba(255,255,255,0.3)',
+      borderRadius: '50%',
+      width: '32px',
+      height: '32px',
+      color: '#fff',
+      fontSize: '16px',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
     }),
   };
 
@@ -175,12 +192,8 @@ export default function Tour() {
               Welcome to
             </h1>
             <h2 className="app-title">Imperfect Form</h2>
-            <div className="welcome-subtitle">
-              Getting less imperfect every day
-            </div>
-            <div className="philosophy-note">
-              The asymptote towards perfection
-            </div>
+            <div className="welcome-subtitle">Getting less imperfect every day</div>
+            <div className="philosophy-note">The asymptote towards perfection</div>
             <div className="loading-rings">
               <div className="ring ring-1"></div>
               <div className="ring ring-2"></div>
@@ -188,7 +201,7 @@ export default function Tour() {
             </div>
           </div>
         </div>
-        
+
         <style jsx>{`
           .imperfect-welcome-overlay {
             position: fixed;
@@ -269,37 +282,74 @@ export default function Tour() {
             animation: pulse 1.5s ease-in-out infinite;
           }
 
-          .ring-2 { animation-delay: 0.2s; }
-          .ring-3 { animation-delay: 0.4s; }
+          .ring-2 {
+            animation-delay: 0.2s;
+          }
+          .ring-3 {
+            animation-delay: 0.4s;
+          }
 
           @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
           }
 
           @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from {
+              transform: translateY(50px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
           }
 
           @keyframes glow {
-            from { text-shadow: 0 0 20px ${palette.accent}80; }
-            to { text-shadow: 0 0 30px ${palette.accent}, 0 0 40px ${palette.accent}60; }
+            from {
+              text-shadow: 0 0 20px ${palette.accent}80;
+            }
+            to {
+              text-shadow:
+                0 0 30px ${palette.accent},
+                0 0 40px ${palette.accent}60;
+            }
           }
 
           @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
+            0%,
+            100% {
+              transform: scale(1);
+              opacity: 1;
+            }
+            50% {
+              transform: scale(1.1);
+              opacity: 0.8;
+            }
           }
 
           @keyframes shimmer {
-            0% { background-position: -200% center; }
-            100% { background-position: 200% center; }
+            0% {
+              background-position: -200% center;
+            }
+            100% {
+              background-position: 200% center;
+            }
           }
 
           @keyframes fadeInUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from {
+              transform: translateY(20px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
           }
 
           /* Mobile optimizations */
@@ -316,7 +366,7 @@ export default function Tour() {
             .ring {
               animation: none;
             }
-            
+
             .welcome-title {
               animation: none;
               text-shadow: 0 0 10px ${palette.accent}60;
@@ -340,10 +390,10 @@ export default function Tour() {
         disableInteraction={false}
         onClickClose={handleTourClose}
         afterOpen={(target) => {
-          target?.scrollIntoView({ 
-            behavior: "smooth", 
-            block: "center",
-            inline: "center"
+          target?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'center',
           });
         }}
         beforeClose={handleTourComplete}
@@ -403,7 +453,7 @@ export default function Tour() {
           left: -100%;
           width: 100%;
           height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
           animation: shimmer 3s ease-in-out infinite;
         }
 
@@ -412,11 +462,11 @@ export default function Tour() {
           .step-header h3 {
             font-size: 12px;
           }
-          
+
           .imperfect-step p {
             font-size: 10px;
           }
-          
+
           .step-tip {
             font-size: 9px;
             padding: 10px;
@@ -428,20 +478,31 @@ export default function Tour() {
           .step-icon {
             animation: none;
           }
-          
+
           .step-tip::before {
             animation: none;
           }
         }
 
         @keyframes shimmer {
-          0% { left: -100%; }
-          100% { left: 100%; }
+          0% {
+            left: -100%;
+          }
+          100% {
+            left: 100%;
+          }
         }
 
         @keyframes gentle-pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.05); opacity: 0.9; }
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.05);
+            opacity: 0.9;
+          }
         }
       `}</style>
     </>

@@ -39,7 +39,11 @@ interface NotificationsDisabledEvent {
   event: 'notifications_disabled';
 }
 
-type WebhookEvent = FrameAddedEvent | FrameRemovedEvent | NotificationsEnabledEvent | NotificationsDisabledEvent;
+type WebhookEvent =
+  | FrameAddedEvent
+  | FrameRemovedEvent
+  | NotificationsEnabledEvent
+  | NotificationsDisabledEvent;
 
 interface WebhookPayload {
   header: string;
@@ -69,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     logger.info('🎭 Mini App event decoded', {
       event: eventData.event,
-      userFid
+      userFid,
     });
 
     // Handle different event types
@@ -91,18 +95,13 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         logger.warn('🎭 Unknown Mini App event type', { event: (eventData as any).event });
     }
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     logger.error('🎭 Mini App webhook error', error);
-    return NextResponse.json(
-      { error: 'Failed to process webhook' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to process webhook' }, { status: 500 });
   }
 }
 

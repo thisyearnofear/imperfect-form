@@ -6,7 +6,7 @@ export interface NetworkConfig {
   chainId: number;
   name: string;
   contractAddress: string;
-  abi: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  abi: any[];
   rpcUrl?: string;
   blockExplorer?: string;
 }

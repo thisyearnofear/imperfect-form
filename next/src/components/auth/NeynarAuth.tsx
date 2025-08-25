@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef } from "react";
-import { useNeynarAuth } from "@/contexts/NeynarAuthContext";
-import { createRemoteLogger } from "@/utils/remoteLogger";
+import React, { useEffect, useRef } from 'react';
+import { useNeynarAuth } from '@/contexts/NeynarAuthContext';
+import { createRemoteLogger } from '@/utils/remoteLogger';
 
-const logger = createRemoteLogger("NeynarAuth");
+const logger = createRemoteLogger('NeynarAuth');
 
 interface NeynarAuthProps {
   clientId: string;
-  theme?: "light" | "dark";
+  theme?: 'light' | 'dark';
   className?: string;
   onSuccess?: (user: unknown) => void;
   onError?: (error: string) => void;
@@ -16,8 +16,8 @@ interface NeynarAuthProps {
 
 export function NeynarAuth({
   clientId,
-  theme = "dark",
-  className = "",
+  theme = 'dark',
+  className = '',
   onSuccess,
   onError,
 }: NeynarAuthProps) {
@@ -29,18 +29,18 @@ export function NeynarAuth({
   useEffect(() => {
     if (scriptLoadedRef.current) return;
 
-    const script = document.createElement("script");
-    script.src = "https://neynarxyz.github.io/siwn/raw/1.2.0/index.js";
+    const script = document.createElement('script');
+    script.src = 'https://neynarxyz.github.io/siwn/raw/1.2.0/index.js';
     script.async = true;
 
     script.onload = () => {
-      logger.info("SIWN script loaded successfully");
+      logger.info('SIWN script loaded successfully');
       scriptLoadedRef.current = true;
     };
 
     script.onerror = () => {
-      logger.error("Failed to load SIWN script");
-      onError?.("Failed to load authentication script");
+      logger.error('Failed to load SIWN script');
+      onError?.('Failed to load authentication script');
     };
 
     document.head.appendChild(script);
@@ -54,11 +54,11 @@ export function NeynarAuth({
 
   // Set up success callback
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       (
         window as unknown as { onNeynarSignInSuccess?: (data: unknown) => void }
       ).onNeynarSignInSuccess = (data: unknown) => {
-        logger.info("SIWN success callback triggered");
+        logger.info('SIWN success callback triggered');
         onSuccess?.(data);
 
         // The NeynarAuthContext will handle the actual user state update
@@ -72,7 +72,6 @@ export function NeynarAuth({
       <div className={`flex items-center space-x-3 ${className}`}>
         <div className="flex items-center space-x-2">
           {user.pfp_url && (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={user.pfp_url}
               alt={`${user.display_name} profile`}
@@ -80,9 +79,7 @@ export function NeynarAuth({
             />
           )}
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-white">
-              {user.display_name}
-            </span>
+            <span className="text-sm font-medium text-white">{user.display_name}</span>
             <span className="text-xs text-gray-400">@{user.username}</span>
           </div>
         </div>
@@ -112,8 +109,8 @@ export function NeynarAuth({
 // Compact version for use in modals/smaller spaces
 export function CompactNeynarAuth({
   clientId,
-  theme = "dark",
-  className = "",
+  theme = 'dark',
+  className = '',
   onSuccess,
   onError,
 }: NeynarAuthProps) {
@@ -123,7 +120,6 @@ export function CompactNeynarAuth({
     return (
       <div className={`flex items-center space-x-2 ${className}`}>
         {user.pfp_url && (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={user.pfp_url}
             alt={`${user.display_name} profile`}
@@ -151,10 +147,8 @@ export function useNeynarClientId(): string {
   const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID;
 
   if (!clientId) {
-    logger.error(
-      "NEXT_PUBLIC_NEYNAR_CLIENT_ID environment variable is not set"
-    );
-    throw new Error("Neynar client ID is not configured");
+    logger.error('NEXT_PUBLIC_NEYNAR_CLIENT_ID environment variable is not set');
+    throw new Error('Neynar client ID is not configured');
   }
 
   return clientId;

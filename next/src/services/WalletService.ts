@@ -1,5 +1,5 @@
-import { ethers } from "ethers";
-import { getEthereumProvider } from "@/utils/farcasterMiniApp";
+import { ethers } from 'ethers';
+import { getEthereumProvider } from '@/utils/farcasterMiniApp';
 
 /**
  * Centralized wallet service for provider and signer management
@@ -35,13 +35,17 @@ export class WalletService {
 
       // Get provider from multiple sources
       const ethereumProvider = await getEthereumProvider();
-      
-      if (ethereumProvider && typeof ethereumProvider === 'object' && 'request' in ethereumProvider) {
+
+      if (
+        ethereumProvider &&
+        typeof ethereumProvider === 'object' &&
+        'request' in ethereumProvider
+      ) {
         this.provider = new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
       } else if (typeof window !== 'undefined' && window.ethereum) {
         this.provider = new ethers.BrowserProvider(window.ethereum);
       } else {
-        throw new Error("No Ethereum provider found. Please install a wallet.");
+        throw new Error('No Ethereum provider found. Please install a wallet.');
       }
 
       // Get network info
@@ -50,32 +54,31 @@ export class WalletService {
 
       // Get signer and address
       this.signer = await this.provider.getSigner();
-      
+
       if (preferredAddress) {
         this.userAddress = preferredAddress;
       } else {
         this.userAddress = await this.signer.getAddress();
       }
 
-      console.log("Wallet connected:", {
+      console.log('Wallet connected:', {
         address: this.userAddress,
         chainId: this.chainId,
-        networkName: network.name
+        networkName: network.name,
       });
 
       return {
         success: true,
         address: this.userAddress,
-        chainId: this.chainId
+        chainId: this.chainId,
       };
-
     } catch (error) {
-      console.error("Wallet connection failed:", error);
+      console.error('Wallet connection failed:', error);
       this.reset();
-      
+
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown wallet error"
+        error: error instanceof Error ? error.message : 'Unknown wallet error',
       };
     }
   }
@@ -85,13 +88,13 @@ export class WalletService {
    */
   async switchNetwork(chainId: number): Promise<boolean> {
     if (!this.provider) {
-      throw new Error("Wallet not connected");
+      throw new Error('Wallet not connected');
     }
 
     try {
       // Request network switch
-      await this.provider.send("wallet_switchEthereumChain", [
-        { chainId: `0x${chainId.toString(16)}` }
+      await this.provider.send('wallet_switchEthereumChain', [
+        { chainId: `0x${chainId.toString(16)}` },
       ]);
 
       // Update internal state
@@ -100,7 +103,7 @@ export class WalletService {
 
       return true;
     } catch (error) {
-      console.error("Network switch failed:", error);
+      console.error('Network switch failed:', error);
       return false;
     }
   }
@@ -172,9 +175,8 @@ export class WalletService {
       if (typeof window !== 'undefined' && window.ethereum) {
         // Try to remove listeners if the method exists
         if ('removeAllListeners' in window.ethereum) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (window.ethereum as any).removeAllListeners('accountsChanged');
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           (window.ethereum as any).removeAllListeners('chainChanged');
         }
       }

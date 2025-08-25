@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 /**
  * Consolidated wallet detection and provider utilities
@@ -22,21 +22,20 @@ export class WalletDetectionService {
    */
   isCoinbaseWalletActive(): boolean {
     // Check if we have the Coinbase Wallet extension directly
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if ((window as any).coinbaseWalletExtension) {
       return true;
     }
 
     // Check if window.ethereum is Coinbase Wallet
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (window.ethereum && (window.ethereum as any).isCoinbaseWallet) {
       return true;
     }
 
     // Check if we have Coinbase Wallet in the providers array
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (window.ethereum && (window.ethereum as any).providers) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const providers = (window.ethereum as any).providers as Array<{
         isCoinbaseWallet?: boolean;
       }>;
@@ -51,7 +50,7 @@ export class WalletDetectionService {
    * CONSOLIDATION: Moved from directContractInteraction.ts
    */
   getCoinbaseWalletSuggestion(): string {
-    return "For the best experience on Base network, consider using Coinbase Wallet which supports Smart Wallet features including subaccounts and spend limits.";
+    return 'For the best experience on Base network, consider using Coinbase Wallet which supports Smart Wallet features including subaccounts and spend limits.';
   }
 
   /**
@@ -69,11 +68,10 @@ export class WalletDetectionService {
         type: 'unknown',
         supportsSmartWallet: false,
         supportsSubAccounts: false,
-        isInjected: false
+        isInjected: false,
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ethereum = window.ethereum as any;
 
     // Coinbase Wallet detection
@@ -82,7 +80,7 @@ export class WalletDetectionService {
         type: 'coinbase',
         supportsSmartWallet: true,
         supportsSubAccounts: true,
-        isInjected: true
+        isInjected: true,
       };
     }
 
@@ -92,7 +90,7 @@ export class WalletDetectionService {
         type: 'metamask',
         supportsSmartWallet: false,
         supportsSubAccounts: false,
-        isInjected: true
+        isInjected: true,
       };
     }
 
@@ -102,7 +100,7 @@ export class WalletDetectionService {
         type: 'walletconnect',
         supportsSmartWallet: false,
         supportsSubAccounts: false,
-        isInjected: false
+        isInjected: false,
       };
     }
 
@@ -110,7 +108,7 @@ export class WalletDetectionService {
       type: 'unknown',
       supportsSmartWallet: false,
       supportsSubAccounts: false,
-      isInjected: true
+      isInjected: true,
     };
   }
 
@@ -120,11 +118,11 @@ export class WalletDetectionService {
    */
   async createOptimizedProvider(ethereumProvider?: unknown): Promise<ethers.BrowserProvider> {
     const capabilities = this.detectWalletCapabilities();
-    
-    console.log("Creating optimized provider:", {
+
+    console.log('Creating optimized provider:', {
       walletType: capabilities.type,
       supportsSmartWallet: capabilities.supportsSmartWallet,
-      hasProvidedProvider: !!ethereumProvider
+      hasProvidedProvider: !!ethereumProvider,
     });
 
     // Use provided provider if available and valid
@@ -137,7 +135,7 @@ export class WalletDetectionService {
       return new ethers.BrowserProvider(window.ethereum);
     }
 
-    throw new Error("No Ethereum provider found. Please install a wallet.");
+    throw new Error('No Ethereum provider found. Please install a wallet.');
   }
 
   /**
