@@ -1,9 +1,9 @@
-import React, { memo } from "react";
-import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext";
-import "@/styles/mode-switch.css";
+import React, { memo } from 'react';
+import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
+import '@/styles/mode-switch.css';
 
 // Types
-export type Mode = "pushups" | "squats";
+export type Mode = 'pushups' | 'squats';
 
 interface ModeSwitchProps {
   value: Mode;
@@ -21,86 +21,81 @@ interface ModeOption {
 
 // Constants
 const MODE_OPTIONS: ModeOption[] = [
-  { 
-    value: "pushups", 
-    label: "Push-ups",
-    ariaLabel: "Switch to push-ups mode"
+  {
+    value: 'pushups',
+    label: 'Push-ups',
+    ariaLabel: 'Switch to push-ups mode',
   },
-  { 
-    value: "squats", 
-    label: "Squats",
-    ariaLabel: "Switch to squats mode"
+  {
+    value: 'squats',
+    label: 'Squats',
+    ariaLabel: 'Switch to squats mode',
   },
 ];
 
 // Component
-const ModeSwitch: React.FC<ModeSwitchProps> = memo(({
-  value,
-  disabled = false,
-  onChange,
-  id = "modeSwitch",
-  className = "",
-}) => {
-  const { currentTheme } = useEnhancedChainTheme();
-  const { palette } = currentTheme;
+const ModeSwitch: React.FC<ModeSwitchProps> = memo(
+  ({ value, disabled = false, onChange, id = 'modeSwitch', className = '' }) => {
+    const { currentTheme } = useEnhancedChainTheme();
+    const { palette } = currentTheme;
 
-  // Dynamic styles based on chain theme
-  // Tailwind font-press, border-2, dynamic borderColor
-  const containerStyle: React.CSSProperties = {
-    borderColor: palette.accent,
-  };
+    // Dynamic styles based on chain theme
+    // Tailwind font-press, border-2, dynamic borderColor
+    const containerStyle: React.CSSProperties = {
+      borderColor: palette.accent,
+    };
 
-  const handleModeChange = (mode: Mode) => {
-    if (!disabled && mode !== value) {
-      onChange(mode);
-    }
-  };
+    const handleModeChange = (mode: Mode) => {
+      if (!disabled && mode !== value) {
+        onChange(mode);
+      }
+    };
 
-  const handleKeyDown = (event: React.KeyboardEvent, mode: Mode) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      handleModeChange(mode);
-    }
-  };
+    const handleKeyDown = (event: React.KeyboardEvent, mode: Mode) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleModeChange(mode);
+      }
+    };
 
-  return (
-    <div
-      className={`imf-mode-switch font-press border-2 ${className}`.trim()}
-      style={containerStyle}
-      id={id}
-      role="group"
-      aria-label="Workout mode selection"
-      data-testid="mode-switch"
-    >
-      {MODE_OPTIONS.map((mode) => {
-        const isSelected = value === mode.value;
-        return (
-          <button
-            key={mode.value}
-            type="button"
-            className={`imf-mode-segment font-press${isSelected ? " selected" : ""}`}
-            style={{
-              background: isSelected ? palette.accent : "transparent",
-              color: isSelected
-                ? (currentTheme.id === 'celo' ? '#000000' : '#ffffff')
-                : (currentTheme.id === 'celo' ? '#000000' : '#ffffff'),
-            }}
-            disabled={disabled}
-            aria-pressed={isSelected}
-            aria-label={mode.ariaLabel || `Select ${mode.label}`}
-            onClick={() => handleModeChange(mode.value)}
-            onKeyDown={(e) => handleKeyDown(e, mode.value)}
-            data-testid={`mode-${mode.value}`}
-          >
-            {mode.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-});
+    return (
+      <div
+        className={`imf-mode-switch font-press border-2 ${className}`.trim()}
+        style={containerStyle}
+        id={id}
+        role="group"
+        aria-label="Workout mode selection"
+        data-testid="mode-switch"
+      >
+        {MODE_OPTIONS.map((mode) => {
+          const isSelected = value === mode.value;
+          return (
+            <button
+              key={mode.value}
+              type="button"
+              className={`imf-mode-segment font-press${isSelected ? ' selected' : ''}`}
+              style={
+                {
+                  // Let CSS handle the colors for better customization
+                }
+              }
+              disabled={disabled}
+              aria-pressed={isSelected}
+              aria-label={mode.ariaLabel || `Select ${mode.label}`}
+              onClick={() => handleModeChange(mode.value)}
+              onKeyDown={(e) => handleKeyDown(e, mode.value)}
+              data-testid={`mode-${mode.value}`}
+            >
+              {mode.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+);
 
-ModeSwitch.displayName = "ModeSwitch";
+ModeSwitch.displayName = 'ModeSwitch';
 
 export default ModeSwitch;
 

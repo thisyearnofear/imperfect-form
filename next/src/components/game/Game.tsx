@@ -1,38 +1,29 @@
-"use client";
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
-import dynamic from "next/dynamic";
-import { Spinner, LoadingScreen, PoseLoadingOverlay } from "@/components/ui";
-import useDeviceDetect from "@/hooks/useDeviceDetect";
-import {
-  cameraManager,
-  stopAllCameras as stopAllCamerasUtil,
-} from "@/utils/cameraManager";
-import { SummaryModal, ExpandedLeaderboardModal } from "@/components/modals";
+'use client';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
+import { Spinner, LoadingScreen, PoseLoadingOverlay } from '@/components/ui';
+import useDeviceDetect from '@/hooks/useDeviceDetect';
+import { cameraManager, stopAllCameras as stopAllCamerasUtil } from '@/utils/cameraManager';
+import { SummaryModal, ExpandedLeaderboardModal } from '@/components/modals';
 // Welcome component consolidated into InitializationScreen - import removed
-import PoseDetectionGuidance from "./PoseDetectionGuidance";
-import { UniversalConnectButton } from "@/components/wallet";
-import { usePlatform } from "@/contexts/PlatformContext";
-import { useOnboarding } from "@/contexts/OnboardingContext";
-import ModeSwitch from "./ModeSwitch";
-import IntroDialog from "@/components/auth/IntroDialog";
+import PoseDetectionGuidance from './PoseDetectionGuidance';
+import { UniversalConnectButton } from '@/components/wallet';
+import { usePlatform } from '@/contexts/PlatformContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
+import ModeSwitch from './ModeSwitch';
+import IntroDialog from '@/components/auth/IntroDialog';
 
-import { useFullscreen } from "../../hooks/useFullscreen";
-import FullscreenExitButton from "../ui/FullscreenExitButton";
-import { SplitFlapInstructions } from "../ui/SplitFlapText";
-import useOrientationLock from "../../hooks/useOrientationLock";
-import { useUserStats } from "../../hooks/useUserStats";
-import { isFarcasterMiniApp } from "../../utils/farcasterMiniApp";
+import { useFullscreen } from '../../hooks/useFullscreen';
+import FullscreenExitButton from '../ui/FullscreenExitButton';
+import { SplitFlapInstructions } from '../ui/SplitFlapText';
+import useOrientationLock from '../../hooks/useOrientationLock';
+import { useUserStats } from '../../hooks/useUserStats';
+import { isFarcasterMiniApp } from '../../utils/farcasterMiniApp';
 
-import { Score } from "@/types";
+import { Score } from '@/types';
 
 // Use LazyWebcam for better performance - only loads TensorFlow when needed
-const LazyWebcam = dynamic(() => import("./LazyWebcam"), {
+const LazyWebcam = dynamic(() => import('./LazyWebcam'), {
   ssr: false,
   loading: () => <Spinner />,
 });
@@ -51,14 +42,13 @@ interface GameProps {
 const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // --- Fullscreen integration ---
   const gameRef = useRef<HTMLDivElement>(null);
-  const { isFullscreen, enterFullscreen, exitFullscreen } =
-    useFullscreen(gameRef);
+  const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen(gameRef);
 
   const [autoFs, setAutoFs] = useState<boolean>(true);
 
-  const [currentMode, setCurrentMode] = useState<
-    "instructions" | "settings" | "profile"
-  >("instructions");
+  const [currentMode, setCurrentMode] = useState<'instructions' | 'settings' | 'profile'>(
+    'instructions'
+  );
 
   const { lockLandscape, unlock } = useOrientationLock();
 
@@ -73,22 +63,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const finalAddress = address || thirdwebAddress;
 
   // Smart default mode based on user state
-  const getDefaultMode = useCallback(():
-    | "instructions"
-    | "settings"
-    | "profile" => {
-    if (finalAddress) return "profile"; // Logged in → Show progress
-    return "instructions"; // Anonymous → Show instructions
+  const getDefaultMode = useCallback((): 'instructions' | 'settings' | 'profile' => {
+    if (finalAddress) return 'profile'; // Logged in → Show progress
+    return 'instructions'; // Anonymous → Show instructions
   }, [finalAddress]);
 
   // Fetch user statistics from leaderboard data
-  const { formattedStats, isLoading: statsLoading } =
-    useUserStats(finalAddress);
+  const { formattedStats, isLoading: statsLoading } = useUserStats(finalAddress);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const pref = window.localStorage.getItem("prefAutoFullscreen");
-      setAutoFs(pref === null ? true : pref === "true");
+    if (typeof window !== 'undefined') {
+      const pref = window.localStorage.getItem('prefAutoFullscreen');
+      setAutoFs(pref === null ? true : pref === 'true');
     }
   }, []);
 
@@ -100,10 +86,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Update mode when user login state changes
   useEffect(() => {
     const newDefaultMode = getDefaultMode();
-    if (currentMode === "instructions" && newDefaultMode === "profile") {
-      setCurrentMode("profile"); // Switch to profile when user logs in
-    } else if (currentMode === "profile" && newDefaultMode === "instructions") {
-      setCurrentMode("instructions"); // Switch to instructions when user logs out
+    if (currentMode === 'instructions' && newDefaultMode === 'profile') {
+      setCurrentMode('profile'); // Switch to profile when user logs in
+    } else if (currentMode === 'profile' && newDefaultMode === 'instructions') {
+      setCurrentMode('instructions'); // Switch to instructions when user logs out
     }
   }, [finalAddress, currentMode, getDefaultMode]);
 
@@ -113,18 +99,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [started, setStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
   const [repCount, setRepCount] = useState(0);
-  const [mode, setMode] = useState<"pushups" | "squats">("pushups");
+  const [mode, setMode] = useState<'pushups' | 'squats'>('pushups');
   const [showSummary, setShowSummary] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   // Filter state is managed but currently only 'none' is used
-  const [, setCurrentFilter] = useState<string>("none");
+  const [, setCurrentFilter] = useState<string>('none');
   // Intro dialog state - now finalAddress is available
   const [showIntroDialog, setShowIntroDialog] = useState(() => {
-    if (typeof window !== "undefined") {
-      const skip = localStorage.getItem("imf_skipWalletIntro");
+    if (typeof window !== 'undefined') {
+      const skip = localStorage.getItem('imf_skipWalletIntro');
       // Don't show if user has wallet connected or has skipped
-      return !finalAddress && skip !== "1";
+      return !finalAddress && skip !== '1';
     }
     return false;
   });
@@ -152,7 +138,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Check if fullscreen is available in current context (not restricted by iframe)
   const isFullscreenAvailable = useMemo(() => {
-    if (typeof window === "undefined") return false;
+    if (typeof window === 'undefined') return false;
 
     // Check if we're in a Farcaster Mini App (iframe context)
     const inFarcaster = isFarcasterMiniApp();
@@ -160,12 +146,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     // Check if fullscreen API is available and not restricted
     const hasFullscreenAPI = !!(
       document.fullscreenEnabled ||
-      (document as Document & { webkitFullscreenEnabled?: boolean })
-        .webkitFullscreenEnabled ||
-      (document as Document & { mozFullScreenEnabled?: boolean })
-        .mozFullScreenEnabled ||
-      (document as Document & { msFullscreenEnabled?: boolean })
-        .msFullscreenEnabled
+      (document as Document & { webkitFullscreenEnabled?: boolean }).webkitFullscreenEnabled ||
+      (document as Document & { mozFullScreenEnabled?: boolean }).mozFullScreenEnabled ||
+      (document as Document & { msFullscreenEnabled?: boolean }).msFullscreenEnabled
     );
 
     // In Farcaster Mini Apps, fullscreen is typically restricted
@@ -212,7 +195,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Simplified viewport dimensions effect
   useEffect(() => {
     // Safely get viewport dimensions
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const handleResize = () => {
         setViewportDimensions({
           height: window.innerHeight,
@@ -224,12 +207,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       handleResize();
 
       // Update on resize
-      window.addEventListener("resize", handleResize);
-      window.addEventListener("orientationchange", handleResize);
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleResize);
 
       return () => {
-        window.removeEventListener("resize", handleResize);
-        window.removeEventListener("orientationchange", handleResize);
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
       };
     }
   }, []);
@@ -237,15 +220,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Log address changes for debugging
   useEffect(() => {
     // Only log in development environment to reduce production noise
-    if (process.env.NODE_ENV === "development") {
-      console.log("Game: Using universal wallet address:", finalAddress);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Game: Using universal wallet address:', finalAddress);
     }
   }, [finalAddress]);
 
   // Store the address in localStorage for persistence (client-side only)
   useEffect(() => {
-    if (finalAddress && typeof window !== "undefined") {
-      localStorage.setItem("userAddress", finalAddress);
+    if (finalAddress && typeof window !== 'undefined') {
+      localStorage.setItem('userAddress', finalAddress);
     }
   }, [finalAddress]);
 
@@ -259,9 +242,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const formatTime = (sec: number) => {
     const minutes = Math.floor((120 - sec) / 60);
     const secs = (120 - sec) % 60;
-    return `${minutes.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Moved memoized webcam after handler functions are defined
@@ -297,19 +278,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
       // Track workout progress
       if (count > 0 && user?.fid) {
-        fetch("/api/analytics/engagement", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        fetch('/api/analytics/engagement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fid: user.fid,
-            eventType: "workout_completed",
+            eventType: 'workout_completed',
             metadata: {
               reps: count,
               exerciseMode: mode,
               duration: 120 - timeLeftRef.current, // Use ref instead of state to avoid re-renders
             },
           }),
-        }).catch((err) => console.warn("Failed to track workout:", err));
+        }).catch((err) => console.warn('Failed to track workout:', err));
       }
     },
     [started, mode, user?.fid] // Remove timeLeft from dependencies
@@ -337,40 +318,38 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Enhanced function to aggressively stop all cameras using the camera manager
   const stopAllCameras = useCallback(() => {
-    console.log("🛑 Stopping all cameras - using enhanced camera manager");
+    console.log('🛑 Stopping all cameras - using enhanced camera manager');
 
     // Use the enhanced camera manager for comprehensive cleanup
     const stoppedTracks = stopAllCamerasUtil();
 
     // Additional cleanup methods (client-side only)
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       // Cancel any animation frames that might be running
       if (window.requestAnimationFrame) {
         const highestId = window.requestAnimationFrame(() => {});
         for (let i = 0; i < highestId; i++) {
           window.cancelAnimationFrame(i);
         }
-        console.log("🎬 Cancelled animation frames up to ID:", highestId);
+        console.log('🎬 Cancelled animation frames up to ID:', highestId);
       }
 
       // Force garbage collection if available (development only)
-      if (process.env.NODE_ENV === "development" && "gc" in window) {
+      if (process.env.NODE_ENV === 'development' && 'gc' in window) {
         try {
           (window as typeof window & { gc?: () => void }).gc?.();
-          console.log("🗑️ Forced garbage collection");
+          console.log('🗑️ Forced garbage collection');
         } catch {
-          console.log("Garbage collection not available");
+          console.log('Garbage collection not available');
         }
       }
     }
 
     // Log camera status after cleanup
     const status = cameraManager.getCameraStatus();
-    console.log("📊 Camera status after cleanup:", status);
+    console.log('📊 Camera status after cleanup:', status);
 
-    console.log(
-      `🎯 Camera cleanup complete. Stopped ${stoppedTracks} video tracks.`
-    );
+    console.log(`🎯 Camera cleanup complete. Stopped ${stoppedTracks} video tracks.`);
   }, []);
 
   const handleStop = useCallback(() => {
@@ -381,7 +360,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setShowTutorial(false);
 
     // Always show summary; SummaryModal will prompt for wallet connection if needed
-    console.log("Game: handleStop called with address:", finalAddress);
+    console.log('Game: handleStop called with address:', finalAddress);
     setShowSummary(true);
 
     // Force camera to stop by accessing the video tracks and stopping them
@@ -401,10 +380,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     } else if (isMobile && autoFs && !isFullscreenAvailable) {
       // Log for debugging - fullscreen not available (likely Farcaster Mini App)
       console.log(
-        "Fullscreen requested but not available in current context (likely iframe restriction)"
+        'Fullscreen requested but not available in current context (likely iframe restriction)'
       );
     }
-    if (isMobile && (mode === "pushups" || mode === "squats")) {
+    if (isMobile && (mode === 'pushups' || mode === 'squats')) {
       lockLandscape();
     }
 
@@ -443,7 +422,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Handle filter change from Webcam component
   const handleFilterChange = useCallback((filterName: string) => {
-    console.log("Game component received filter change:", filterName);
+    console.log('Game component received filter change:', filterName);
     setCurrentFilter(filterName);
   }, []);
 
@@ -493,8 +472,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           onExit={() => {
             exitFullscreen();
             setAutoFs(false);
-            if (typeof window !== "undefined") {
-              window.localStorage.setItem("prefAutoFullscreen", "false");
+            if (typeof window !== 'undefined') {
+              window.localStorage.setItem('prefAutoFullscreen', 'false');
             }
           }}
         />
@@ -513,7 +492,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
         {/* Wallet connection - now clean without blocking elements */}
         <div id="wallet-connection" className="wallet-connection">
-          <div className={finalAddress ? "wallet-connected" : "wallet-prompt"}>
+          <div className={finalAddress ? 'wallet-connected' : 'wallet-prompt'}>
             <UniversalConnectButton
               size="md"
               showProfileWhenConnected={true}
@@ -521,7 +500,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               onModeChange={setCurrentMode}
               workoutStarted={started}
               onConnected={(address) => {
-                console.log("Game: Wallet connected with address:", address);
+                console.log('Game: Wallet connected with address:', address);
               }}
             />
           </div>
@@ -563,14 +542,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                     minHeight:
                       viewportDimensions.height > 0
                         ? `${viewportDimensions.height * 0.85}px`
-                        : "auto",
+                        : 'auto',
                   }}
                 >
                   {/* Timer and rep counter at the top */}
                   <div className="flex justify-between mb-2 px-2">
-                    <div className="text-xl font-bold">
-                      {formatTime(timeLeft)}
-                    </div>
+                    <div className="text-xl font-bold">{formatTime(timeLeft)}</div>
                     <div className="text-xl font-bold">{repCount}</div>
                   </div>
 
@@ -580,12 +557,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                     aria-label="Game Canvas"
                     className="w-full mx-auto relative border-2 border-yellow-400 flex-grow"
                     style={{
-                      flex: "1",
-                      minHeight: "50%", // Reduced from 60% to give more flexibility
-                      maxWidth: "100%",
-                      display: "flex", // Ensure proper flex behavior
-                      alignItems: "center", // Center video vertically
-                      justifyContent: "center", // Center video horizontally
+                      flex: '1',
+                      minHeight: '50%', // Reduced from 60% to give more flexibility
+                      maxWidth: '100%',
+                      display: 'flex', // Ensure proper flex behavior
+                      alignItems: 'center', // Center video vertically
+                      justifyContent: 'center', // Center video horizontally
                     }}
                   >
                     {memoizedWebcam}
@@ -621,7 +598,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             <>
               <div
                 className="timer"
-                style={{ display: started ? "block" : "none" }}
+                style={{ display: started ? 'block' : 'none' }}
                 aria-live="polite"
               >
                 {formatTime(timeLeft)}
@@ -629,7 +606,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               <div
                 id="repCounterContainer"
                 className="rep-counter-container"
-                style={{ display: started ? "block" : "none" }}
+                style={{ display: started ? 'block' : 'none' }}
               >
                 {repCount}
               </div>
@@ -639,39 +616,38 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
         <div
           id="controls"
-          className={`${
-            isMobile
-              ? "grid grid-cols-2 gap-3 mt-2"
-              : "flex justify-between mt-4"
-          }`}
-          style={{ marginBottom: isMobile ? "8px" : "0" }}
+          className={`${isMobile ? 'grid grid-cols-2 gap-3 mt-2' : 'flex justify-between mt-4'}`}
+          style={{ marginBottom: isMobile ? '8px' : '0' }}
         >
           <ModeSwitch value={mode} disabled={started} onChange={setMode} />
           <button
             id="startButton"
             className="py-3 px-4 text-sm sm:text-base touch-manipulation"
-            style={{ minHeight: isMobile ? "50px" : "auto" }}
+            style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Start game"
             onClick={handleStart}
             disabled={started || showLoading || !finalAddress}
-            title={!finalAddress ? "Connect wallet to start" : "Start game"}
+            title={
+              !finalAddress ? 'Sign in to start' : started ? 'Game already started' : 'Start game'
+            }
           >
             START
           </button>
           <button
             id="stopButton"
             className="py-3 px-4 text-sm sm:text-base touch-manipulation"
-            style={{ minHeight: isMobile ? "50px" : "auto" }}
+            style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Stop game"
             onClick={handleStop}
             disabled={!started}
+            title={!started ? 'Start a game first' : 'Stop current game'}
           >
             STOP
           </button>
           <button
             id="resetButton"
             className="py-3 px-4 text-sm sm:text-base touch-manipulation"
-            style={{ minHeight: isMobile ? "50px" : "auto" }}
+            style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Reset game"
             onClick={handleReset}
             disabled={showLoading}
@@ -692,7 +668,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           }}
           onFarcaster={() => {
             // Placeholder: Open farcaster auth, then hide dialog
-            window.open("/api/auth/farcaster", "_self");
+            window.open('/api/auth/farcaster', '_self');
             setShowIntroDialog(false);
             // Trigger tour after auth flow
             setTimeout(() => setShouldShowTour(true), 1000);
@@ -704,13 +680,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             setTimeout(() => setShouldShowTour(true), 500);
           }}
           onSkip={() => {
-            if (typeof window !== "undefined") {
-              localStorage.setItem("imf_skipWalletIntro", "1");
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('imf_skipWalletIntro', '1');
               // Dispatch storage event to update onboarding context
               window.dispatchEvent(
-                new StorageEvent("storage", {
-                  key: "imf_skipWalletIntro",
-                  newValue: "1",
+                new StorageEvent('storage', {
+                  key: 'imf_skipWalletIntro',
+                  newValue: '1',
                 })
               );
             }

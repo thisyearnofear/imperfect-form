@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
-import "@/styles/split-flap.css";
+import React, { useState, useEffect, useMemo } from 'react';
+import '@/styles/split-flap.css';
 
 interface SplitFlapTextProps {
   text: string;
@@ -15,7 +15,7 @@ const SplitFlapText: React.FC<SplitFlapTextProps> = ({
   text,
   isAnimating = false,
   onAnimationComplete,
-  className = "",
+  className = '',
   delay = 0,
 }) => {
   const [displayText, setDisplayText] = useState(text);
@@ -45,15 +45,13 @@ const SplitFlapText: React.FC<SplitFlapTextProps> = ({
   }, [text, isAnimating, displayText, onAnimationComplete, delay]);
 
   return (
-    <span
-      className={`split-flap-text ${isFlipping ? "flipping" : ""} ${className}`}
-    >
+    <span className={`split-flap-text ${isFlipping ? 'flipping' : ''} ${className}`}>
       {displayText}
     </span>
   );
 };
 
-type InstructionMode = "instructions" | "settings" | "profile";
+type InstructionMode = 'instructions' | 'settings' | 'profile';
 
 interface InstructionItem {
   key: string;
@@ -94,75 +92,63 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
     const instructionConfigs: Record<InstructionMode, InstructionItem[]> = {
       instructions: [
         {
-          key: "🏋️",
-          text: "Real-time pose detection",
-          desc: "AI-powered form analysis",
+          key: '🏋️',
+          text: 'Real-time pose detection',
+          desc: 'AI-powered form analysis',
           hideKey: true,
         },
         {
-          key: "🏆",
-          text: "Onchain leaderboards",
-          desc: "Transparent competition",
+          key: '🏆',
+          text: 'Onchain leaderboards',
+          desc: 'Transparent competition',
           hideKey: true,
         },
         {
-          key: "🎯",
-          text: "Pushups & Squats",
-          desc: "Tracked challenges",
+          key: '🎯',
+          text: 'Pushups & Squats',
+          desc: 'Tracked challenges',
           hideKey: true,
         },
         {
-          key: "⚡",
-          text: "HAVE FUN!",
-          desc: "Stay hard & build",
+          key: '⚡',
+          text: 'HAVE FUN!',
+          desc: 'Stay hard',
           hideKey: true,
         },
       ],
       settings: [
         {
-          key: "a",
-          text: "FULLSCREEN",
-          desc: !isFullscreenAvailable
-            ? "unavailable"
-            : autoFs
-            ? "enabled"
-            : "disabled",
+          key: 'a',
+          text: 'FULLSCREEN',
+          desc: !isFullscreenAvailable ? 'unavailable' : autoFs ? 'enabled' : 'disabled',
         },
-        { key: "b", text: "ORIENTATION", desc: "auto-lock" },
-        { key: "c", text: "THEME", desc: "retro" },
-        { key: "d", text: "Back to profile!", desc: "" },
+        { key: 'b', text: 'ORIENTATION', desc: 'auto-lock' },
+        { key: 'c', text: 'THEME', desc: 'retro' },
+        { key: 'd', text: 'Back to profile!', desc: '' },
       ],
       profile: [
         {
-          key: "a",
-          text: "WORKOUTS",
-          desc: isLoadingStats
-            ? "Loading..."
-            : formattedStats?.workouts || "No data yet",
+          key: 'a',
+          text: 'WORKOUTS',
+          desc: isLoadingStats ? 'Loading...' : formattedStats?.workouts || 'No data yet',
           hideKey: true,
         },
         {
-          key: "b",
-          text: "BEST SCORE",
-          desc: isLoadingStats
-            ? "Loading..."
-            : formattedStats?.bestScore || "No workouts",
+          key: 'b',
+          text: 'BEST SCORE',
+          desc: isLoadingStats ? 'Loading...' : formattedStats?.bestScore || 'No workouts',
           hideKey: true,
         },
         {
-          key: "c",
-          text: "STREAK",
-          desc: isLoadingStats
-            ? "Loading..."
-            : formattedStats?.streak || "Start today!",
+          key: 'c',
+          text: 'STREAK',
+          desc: isLoadingStats ? 'Loading...' : formattedStats?.streak || 'Start today!',
           hideKey: true,
         },
         {
-          key: "d",
-          text: isLoadingStats
-            ? "Fetching stats..."
-            : formattedStats?.summary || "Ready to start?",
-          desc: "",
+          key: 'd',
+          text: isLoadingStats ? 'Fetching stats...' : formattedStats?.summary || 'Ready to start?',
+          desc: '',
           hideKey: true,
         },
       ],
@@ -191,80 +177,76 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
   const handleItemClick = (key: string) => {
     switch (mode) {
-      case "settings":
-        if (key === "a" && isFullscreenAvailable) {
+      case 'settings':
+        if (key === 'a' && isFullscreenAvailable) {
           // Only allow toggling if fullscreen is available
           setAutoFs(!autoFs);
-          if (typeof window !== "undefined") {
-            window.localStorage.setItem(
-              "prefAutoFullscreen",
-              (!autoFs).toString()
-            );
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('prefAutoFullscreen', (!autoFs).toString());
           }
-        } else if (key === "d") {
-          onModeChange("profile"); // Back to profile (new default)
+        } else if (key === 'd') {
+          onModeChange('profile'); // Back to profile (new default)
         }
         break;
 
-      case "profile":
-        if (key === "d") {
+      case 'profile':
+        if (key === 'd') {
           // Refresh stats when clicking the summary line
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("leaderboardCache");
-            localStorage.removeItem("leaderboardCacheTimestamp");
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('leaderboardCache');
+            localStorage.removeItem('leaderboardCacheTimestamp');
             window.location.reload(); // Force refresh to reload data
           }
         }
         break;
 
-      case "instructions":
+      case 'instructions':
         // Instructions are read-only, no click actions
         break;
     }
   };
 
   return (
-    <div id="instructions" style={{ display: "flex" }}>
+    <div id="instructions" style={{ display: 'flex' }}>
       {currentInstructions.map((instruction, index) => (
         <p
           key={instruction.key}
           className={`feature-instruction ${
-            mode === "profile"
-              ? "profile-instruction clickable"
-              : mode === "settings"
-              ? "settings-instruction clickable"
-              : ""
+            mode === 'profile'
+              ? 'profile-instruction clickable'
+              : mode === 'settings'
+                ? 'settings-instruction clickable'
+                : ''
           }`}
           onClick={() => handleItemClick(instruction.key)}
           style={{
             cursor:
-              mode === "settings" &&
-              (instruction.key === "a" || instruction.key === "d")
-                ? "pointer"
-                : "default",
-            transition: "all 0.3s ease",
+              mode === 'settings' && (instruction.key === 'a' || instruction.key === 'd')
+                ? 'pointer'
+                : 'default',
+            transition: 'all 0.3s ease',
             animation:
-              mode === "instructions"
+              mode === 'instructions'
                 ? `slideInFeature 0.6s ease-out ${index * 0.2}s forwards`
-                : "none",
-            opacity: mode === "instructions" ? 0 : 1,
+                : 'none',
+            opacity: mode === 'instructions' ? 0 : 1,
           }}
         >
           {!instruction.hideKey && `${instruction.key}) `}
-          {instruction.hideKey && mode === "instructions" && (
+          {instruction.hideKey && mode === 'instructions' && (
             <span className="feature-emoji">{instruction.key}</span>
           )}
           <span
             className={`button-text ${
-              instruction.key === "a"
-                ? "start"
-                : instruction.key === "b"
-                ? "stop"
-                : instruction.key === "c"
-                ? "reset"
-                : instruction.key === "⚡"
-                ? "fun-highlight"
-                : ""
+              instruction.key === 'a'
+                ? 'start'
+                : instruction.key === 'b'
+                  ? 'stop'
+                  : instruction.key === 'c'
+                    ? 'reset'
+                    : instruction.key === '⚡'
+                      ? 'fun-highlight'
+                      : ''
             }`}
           >
             <SplitFlapText
@@ -275,16 +257,16 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           </span>
           {instruction.desc && (
             <>
-              {" = "}
+              {' = '}
               <span
                 className={`feature-desc ${
-                  instruction.key === "🏋️"
-                    ? "ai-highlight"
-                    : instruction.key === "🏆"
-                    ? "blockchain-highlight"
-                    : instruction.key === "🎯"
-                    ? "challenge-highlight"
-                    : ""
+                  instruction.key === '🏋️'
+                    ? 'ai-highlight'
+                    : instruction.key === '🏆'
+                      ? 'blockchain-highlight'
+                      : instruction.key === '🎯'
+                        ? 'challenge-highlight'
+                        : ''
                 }`}
               >
                 <SplitFlapText
@@ -298,25 +280,17 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         </p>
       ))}
 
-      {mode === "instructions" && (
+      {mode === 'instructions' && (
         <p
           className="built-by feature-instruction"
           style={{
-            animation: "slideInFeature 0.6s ease-out 1s forwards",
+            animation: 'slideInFeature 0.6s ease-out 1s forwards',
             opacity: 0,
           }}
         >
-          Built by{" "}
-          <a
-            href="https://warpcast.com/papa"
-            target="_blank"
-            className="highlight"
-          >
-            <SplitFlapText
-              text="PAPA"
-              isAnimating={isAnimating && animationStep > 3}
-              delay={400}
-            />
+          Built by{' '}
+          <a href="https://warpcast.com/papa" target="_blank" className="highlight">
+            <SplitFlapText text="PAPA" isAnimating={isAnimating && animationStep > 3} delay={400} />
           </a>
         </p>
       )}

@@ -1005,3 +1005,37 @@ div[data-backdrop],
     transform: rotate(360deg);
   }
 }
+
+/* Ensure native HTML tooltips are visible and styled */
+[title]:hover::after {
+  content: attr(title);
+  position: fixed;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'Press Start 2P', cursive;
+  white-space: nowrap;
+  z-index: 9999;
+  pointer-events: none;
+  margin-bottom: 8px;
+  border: 1px solid #fcb131;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[title]:hover::before {
+  content: '';
+  position: fixed;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #fcb131;
+  z-index: 10000;
+  pointer-events: none;
+  margin-bottom: 2px;
+}
