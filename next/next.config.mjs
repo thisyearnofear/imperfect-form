@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Explicitly disable serverless mode
-  target: undefined,
-  
   // Basic configuration
   reactStrictMode: true,
   compress: true,
