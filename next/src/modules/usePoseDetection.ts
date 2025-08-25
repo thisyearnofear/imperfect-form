@@ -1,11 +1,11 @@
-import { useEffect, useRef, RefObject, useCallback, useState } from "react";
+import { useEffect, useRef, RefObject, useCallback, useState } from 'react';
 // TensorFlow is imported but not directly used in this file
 // import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 import { initializeTensorFlow } from '@/utils/tfUtils';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
 
-type ExerciseMode = "pushups" | "squats";
+type ExerciseMode = 'pushups' | 'squats';
 
 // Define keypoint type
 type Keypoint = {
@@ -18,7 +18,7 @@ type Keypoint = {
 
 export function usePoseDetection(
   canvasRef: RefObject<HTMLCanvasElement | null>,
-  mode: ExerciseMode = "pushups",
+  mode: ExerciseMode = 'pushups',
   onRepCount: (count: number) => void = () => {},
   isActive: boolean = true,
   isMobile: boolean = false,
@@ -29,8 +29,8 @@ export function usePoseDetection(
     isLoading: boolean;
   }) => void
 ): RefObject<HTMLVideoElement | null> {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const repState = useRef<"up" | "down" | "middle">("middle");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const repState = useRef<'up' | 'down' | 'middle'>('middle');
   const repCount = useRef(0);
   const lastRepTime = useRef(0);
   const detectorRef = useRef<PoseDetector | null>(null);
@@ -46,21 +46,19 @@ export function usePoseDetection(
 
   function calculateAngle(a: Keypoint, b: Keypoint, c: Keypoint) {
     if (!a || !b || !c) return 0;
-    const radians =
-      Math.atan2(c.y - b.y, c.x - b.x) -
-      Math.atan2(a.y - b.y, a.x - b.x);
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
     let angle = Math.abs((radians * 180.0) / Math.PI);
     if (angle > 180.0) angle = 360 - angle;
     return angle;
   }
 
   function detectPushup(keypoints: Keypoint[]) {
-    const leftShoulder = keypoints.find((kp) => kp.name === "left_shoulder");
-    const rightShoulder = keypoints.find((kp) => kp.name === "right_shoulder");
-    const leftElbow = keypoints.find((kp) => kp.name === "left_elbow");
-    const rightElbow = keypoints.find((kp) => kp.name === "right_elbow");
-    const leftWrist = keypoints.find((kp) => kp.name === "left_wrist");
-    const rightWrist = keypoints.find((kp) => kp.name === "right_wrist");
+    const leftShoulder = keypoints.find((kp) => kp.name === 'left_shoulder');
+    const rightShoulder = keypoints.find((kp) => kp.name === 'right_shoulder');
+    const leftElbow = keypoints.find((kp) => kp.name === 'left_elbow');
+    const rightElbow = keypoints.find((kp) => kp.name === 'right_elbow');
+    const leftWrist = keypoints.find((kp) => kp.name === 'left_wrist');
+    const rightWrist = keypoints.find((kp) => kp.name === 'right_wrist');
 
     if (
       !leftShoulder ||
@@ -69,12 +67,18 @@ export function usePoseDetection(
       !rightElbow ||
       !leftWrist ||
       !rightWrist ||
-      !leftShoulder.score || leftShoulder.score < 0.3 ||
-      !rightShoulder.score || rightShoulder.score < 0.3 ||
-      !leftElbow.score || leftElbow.score < 0.3 ||
-      !rightElbow.score || rightElbow.score < 0.3 ||
-      !leftWrist.score || leftWrist.score < 0.3 ||
-      !rightWrist.score || rightWrist.score < 0.3
+      !leftShoulder.score ||
+      leftShoulder.score < 0.3 ||
+      !rightShoulder.score ||
+      rightShoulder.score < 0.3 ||
+      !leftElbow.score ||
+      leftElbow.score < 0.3 ||
+      !rightElbow.score ||
+      rightElbow.score < 0.3 ||
+      !leftWrist.score ||
+      leftWrist.score < 0.3 ||
+      !rightWrist.score ||
+      rightWrist.score < 0.3
     ) {
       return false;
     }
@@ -90,17 +94,17 @@ export function usePoseDetection(
     const currentTime = Date.now();
     const minTimeBetweenReps = 1000; // 1 second minimum between reps
 
-    if (isDown && repState.current !== "down") {
-      repState.current = "down";
+    if (isDown && repState.current !== 'down') {
+      repState.current = 'down';
       return false;
     }
 
     if (
       isUp &&
-      repState.current === "down" &&
+      repState.current === 'down' &&
       currentTime - lastRepTime.current > minTimeBetweenReps
     ) {
-      repState.current = "up";
+      repState.current = 'up';
       lastRepTime.current = currentTime;
       return true;
     }
@@ -109,12 +113,12 @@ export function usePoseDetection(
   }
 
   function detectSquat(keypoints: Keypoint[]) {
-    const leftHip = keypoints.find((kp) => kp.name === "left_hip");
-    const rightHip = keypoints.find((kp) => kp.name === "right_hip");
-    const leftKnee = keypoints.find((kp) => kp.name === "left_knee");
-    const rightKnee = keypoints.find((kp) => kp.name === "right_knee");
-    const leftAnkle = keypoints.find((kp) => kp.name === "left_ankle");
-    const rightAnkle = keypoints.find((kp) => kp.name === "right_ankle");
+    const leftHip = keypoints.find((kp) => kp.name === 'left_hip');
+    const rightHip = keypoints.find((kp) => kp.name === 'right_hip');
+    const leftKnee = keypoints.find((kp) => kp.name === 'left_knee');
+    const rightKnee = keypoints.find((kp) => kp.name === 'right_knee');
+    const leftAnkle = keypoints.find((kp) => kp.name === 'left_ankle');
+    const rightAnkle = keypoints.find((kp) => kp.name === 'right_ankle');
 
     if (
       !leftHip ||
@@ -123,12 +127,18 @@ export function usePoseDetection(
       !rightKnee ||
       !leftAnkle ||
       !rightAnkle ||
-      !leftHip.score || leftHip.score < 0.3 ||
-      !rightHip.score || rightHip.score < 0.3 ||
-      !leftKnee.score || leftKnee.score < 0.3 ||
-      !rightKnee.score || rightKnee.score < 0.3 ||
-      !leftAnkle.score || leftAnkle.score < 0.3 ||
-      !rightAnkle.score || rightAnkle.score < 0.3
+      !leftHip.score ||
+      leftHip.score < 0.3 ||
+      !rightHip.score ||
+      rightHip.score < 0.3 ||
+      !leftKnee.score ||
+      leftKnee.score < 0.3 ||
+      !rightKnee.score ||
+      rightKnee.score < 0.3 ||
+      !leftAnkle.score ||
+      leftAnkle.score < 0.3 ||
+      !rightAnkle.score ||
+      rightAnkle.score < 0.3
     ) {
       return false;
     }
@@ -144,17 +154,17 @@ export function usePoseDetection(
     const currentTime = Date.now();
     const minTimeBetweenReps = 1000; // 1 second minimum between reps
 
-    if (isDown && repState.current !== "down") {
-      repState.current = "down";
+    if (isDown && repState.current !== 'down') {
+      repState.current = 'down';
       return false;
     }
 
     if (
       isUp &&
-      repState.current === "down" &&
+      repState.current === 'down' &&
       currentTime - lastRepTime.current > minTimeBetweenReps
     ) {
-      repState.current = "up";
+      repState.current = 'up';
       lastRepTime.current = currentTime;
       return true;
     }
@@ -189,7 +199,7 @@ export function usePoseDetection(
 
     // Clean up previous instances
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
 
@@ -203,7 +213,7 @@ export function usePoseDetection(
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext('2d');
 
       if (!ctx) return;
 
@@ -224,8 +234,8 @@ export function usePoseDetection(
         const constraints = {
           video: {
             width: isMobile ? 480 : 640,
-            height: isMobile ? 360 : 480
-          }
+            height: isMobile ? 360 : 480,
+          },
         };
 
         streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
@@ -238,23 +248,29 @@ export function usePoseDetection(
           const rect = canvas.getBoundingClientRect();
           canvas.width = rect.width * window.devicePixelRatio;
           canvas.height = rect.height * window.devicePixelRatio;
-          console.log("Set mobile canvas dimensions:", canvas.width, canvas.height, "DPR:", window.devicePixelRatio);
+          console.log(
+            'Set mobile canvas dimensions:',
+            canvas.width,
+            canvas.height,
+            'DPR:',
+            window.devicePixelRatio
+          );
         } else {
           // Desktop uses video dimensions directly
           canvas.width = video.videoWidth || 640;
           canvas.height = video.videoHeight || 480;
-          console.log("Set desktop canvas dimensions:", canvas.width, canvas.height);
+          console.log('Set desktop canvas dimensions:', canvas.width, canvas.height);
         }
 
         // Force canvas to be visible with a border for debugging
-        const borderColor = isMobile ? "3px solid green" : "3px solid red";
+        const borderColor = isMobile ? '3px solid green' : '3px solid red';
         canvas.style.border = borderColor; // Different color for mobile/desktop for debugging
-        canvas.style.position = "absolute";
-        canvas.style.top = "0";
-        canvas.style.left = "0";
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.style.zIndex = "10";
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.zIndex = '10';
 
         // Import pose detection models dynamically to reduce initial load time
         try {
@@ -280,12 +296,15 @@ export function usePoseDetection(
                 enableSmoothing: true,
                 minPoseScore: 0.25,
                 multiPoseMaxDimension: 512,
-                enableTracking: true
+                enableTracking: true,
               }
             );
           }
 
-          console.log('Pose detector initialized successfully for', isMobile ? 'mobile' : 'desktop');
+          console.log(
+            'Pose detector initialized successfully for',
+            isMobile ? 'mobile' : 'desktop'
+          );
           setHasPoseDetection(true);
           setIsLoading(false);
         } catch (modelError) {
@@ -315,7 +334,10 @@ export function usePoseDetection(
                 if (fallbackWidth > 0 && fallbackHeight > 0) {
                   canvas.width = fallbackWidth;
                   canvas.height = fallbackHeight;
-                  console.log('Fixed zero-sized canvas', { width: fallbackWidth, height: fallbackHeight });
+                  console.log('Fixed zero-sized canvas', {
+                    width: fallbackWidth,
+                    height: fallbackHeight,
+                  });
                 } else {
                   // Last resort fallback to prevent texture size error
                   canvas.width = 320;
@@ -352,7 +374,11 @@ export function usePoseDetection(
                 drawExerciseState(ctx);
 
                 // Check for rep completion
-                if (mode === 'pushups' ? detectPushupCallback(keypoints) : detectSquatCallback(keypoints)) {
+                if (
+                  mode === 'pushups'
+                    ? detectPushupCallback(keypoints)
+                    : detectSquatCallback(keypoints)
+                ) {
                   const count = repCount.current + 1;
                   repCount.current = count;
                   onRepCount(count);
@@ -385,12 +411,15 @@ export function usePoseDetection(
       const confidenceThreshold = 0.3;
 
       // Create a map for faster keypoint lookup
-      const keypointMap = keypoints.reduce((map, kp) => {
-        if (kp.name) {
-          map[kp.name] = kp;
-        }
-        return map;
-      }, {} as Record<string, Keypoint>);
+      const keypointMap = keypoints.reduce(
+        (map, kp) => {
+          if (kp.name) {
+            map[kp.name] = kp;
+          }
+          return map;
+        },
+        {} as Record<string, Keypoint>
+      );
 
       // Mobile-specific scaling for graphics
       const scaleFactor = isMobile ? window.devicePixelRatio : 1;
@@ -413,28 +442,28 @@ export function usePoseDetection(
         ['left_shoulder', 'right_shoulder'],
         ['left_shoulder', 'left_hip'],
         ['right_shoulder', 'right_hip'],
-        ['left_hip', 'right_hip']
+        ['left_hip', 'right_hip'],
       ];
 
       const armConnections = [
         ['left_shoulder', 'left_elbow'],
         ['right_shoulder', 'right_elbow'],
         ['left_elbow', 'left_wrist'],
-        ['right_elbow', 'right_wrist']
+        ['right_elbow', 'right_wrist'],
       ];
 
       const legConnections = [
         ['left_hip', 'left_knee'],
         ['right_hip', 'right_knee'],
         ['left_knee', 'left_ankle'],
-        ['right_knee', 'right_ankle']
+        ['right_knee', 'right_ankle'],
       ];
 
       const faceConnections = [
         ['nose', 'left_eye'],
         ['nose', 'right_eye'],
         ['left_eye', 'left_ear'],
-        ['right_eye', 'right_ear']
+        ['right_eye', 'right_ear'],
       ];
 
       // Helper function to draw connection groups
@@ -446,7 +475,14 @@ export function usePoseDetection(
           const p1 = keypointMap[p1Name];
           const p2 = keypointMap[p2Name];
 
-          if (p1 && p2 && p1.score && p2.score && p1.score > confidenceThreshold && p2.score > confidenceThreshold) {
+          if (
+            p1 &&
+            p2 &&
+            p1.score &&
+            p2.score &&
+            p1.score > confidenceThreshold &&
+            p2.score > confidenceThreshold
+          ) {
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
@@ -490,21 +526,36 @@ export function usePoseDetection(
       ctx.shadowBlur = 0;
 
       // Draw keypoints with larger radius for better visibility
-      keypoints.forEach(keypoint => {
+      keypoints.forEach((keypoint) => {
         if (keypoint.score && keypoint.score > confidenceThreshold && keypoint.name) {
-          const isLegPoint = ['left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle'].includes(keypoint.name);
-          const isArmPoint = ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist'].includes(keypoint.name);
+          const isLegPoint = [
+            'left_hip',
+            'right_hip',
+            'left_knee',
+            'right_knee',
+            'left_ankle',
+            'right_ankle',
+          ].includes(keypoint.name);
+          const isArmPoint = [
+            'left_shoulder',
+            'right_shoulder',
+            'left_elbow',
+            'right_elbow',
+            'left_wrist',
+            'right_wrist',
+          ].includes(keypoint.name);
 
           // Emphasize leg points for squats, arm points for pushups - mobile-aware sizing
           let radius;
           if (isMobile) {
             // Mobile: smaller keypoints to not overwhelm
-            radius = (mode === 'squats' && isLegPoint ? 6 :
-                     mode === 'pushups' && isArmPoint ? 6 : 4) * scaleFactor;
+            radius =
+              (mode === 'squats' && isLegPoint ? 6 : mode === 'pushups' && isArmPoint ? 6 : 4) *
+              scaleFactor;
           } else {
             // Desktop: keep original large keypoints
-            radius = mode === 'squats' && isLegPoint ? 12 :
-                     mode === 'pushups' && isArmPoint ? 12 : 8;
+            radius =
+              mode === 'squats' && isLegPoint ? 12 : mode === 'pushups' && isArmPoint ? 12 : 8;
           }
 
           // Add glow effect for keypoints - mobile-aware
@@ -517,7 +568,10 @@ export function usePoseDetection(
           } else if (isArmPoint) {
             ctx.fillStyle = mode === 'pushups' ? '#00ff00' : '#00ffff'; // Green for arms in pushup mode, cyan otherwise
             ctx.shadowColor = '#00ff00';
-          } else if (keypoint.name && ['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear'].includes(keypoint.name)) {
+          } else if (
+            keypoint.name &&
+            ['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear'].includes(keypoint.name)
+          ) {
             ctx.fillStyle = '#ffffff'; // White for face
             ctx.shadowColor = '#ffffff';
           } else {
@@ -565,14 +619,14 @@ export function usePoseDetection(
       let stateText = '';
       let stateColor = '';
 
-      if (repState.current === "up") {
-        stateText = "UP";
+      if (repState.current === 'up') {
+        stateText = 'UP';
         stateColor = '#00ff00'; // Green
-      } else if (repState.current === "down") {
-        stateText = "DOWN";
+      } else if (repState.current === 'down') {
+        stateText = 'DOWN';
         stateColor = '#ff0000'; // Red
       } else {
-        stateText = "READY";
+        stateText = 'READY';
         stateColor = '#ffffff'; // White
       }
 
@@ -607,7 +661,7 @@ export function usePoseDetection(
           // Use optional chaining to safely call dispose if it exists
           detectorRef.current.dispose?.();
         } catch (error) {
-          console.error("Error disposing detector:", error);
+          console.error('Error disposing detector:', error);
         }
         detectorRef.current = null;
       }
@@ -621,23 +675,32 @@ export function usePoseDetection(
           });
           videoElement.srcObject = null;
         } catch (error) {
-          console.error("Error stopping video tracks:", error);
+          console.error('Error stopping video tracks:', error);
         }
       }
 
       // Stop all tracks from the stream reference
       if (streamRef.current) {
         try {
-          streamRef.current.getTracks().forEach(track => {
+          streamRef.current.getTracks().forEach((track) => {
             track.stop();
           });
           streamRef.current = null;
         } catch (error) {
-          console.error("Error stopping stream tracks:", error);
+          console.error('Error stopping stream tracks:', error);
         }
       }
     };
-  }, [canvasRef, mode, onRepCount, isActive, isMobile, detectPushupCallback, detectSquatCallback, poseDetected]);
+  }, [
+    canvasRef,
+    mode,
+    onRepCount,
+    isActive,
+    isMobile,
+    detectPushupCallback,
+    detectSquatCallback,
+    poseDetected,
+  ]);
 
   return videoRef;
 }

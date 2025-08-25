@@ -1,9 +1,9 @@
-"use client";
-import React, { useRef, useEffect } from "react";
-import { usePoseDetection } from "@/modules/usePoseDetection";
-import { useFaceDetection } from "@/modules/useFaceDetection";
-import useDeviceDetect from "@/hooks/useDeviceDetect";
-import { createRemoteLogger } from "@/utils/remoteLogger";
+'use client';
+import React, { useRef, useEffect } from 'react';
+import { usePoseDetection } from '@/modules/usePoseDetection';
+import { useFaceDetection } from '@/modules/useFaceDetection';
+import useDeviceDetect from '@/hooks/useDeviceDetect';
+import { createRemoteLogger } from '@/utils/remoteLogger';
 
 // Add type declaration for window object
 declare global {
@@ -15,7 +15,7 @@ declare global {
 }
 
 interface WebcamProps {
-  mode?: "pushups" | "squats";
+  mode?: 'pushups' | 'squats';
   onRepCount?: (count: number) => void;
   isActive?: boolean;
   onFilterChange?: (filterName: string) => void;
@@ -28,10 +28,10 @@ interface WebcamProps {
 }
 
 // Initialize logger for the Webcam component
-const logger = createRemoteLogger("Webcam");
+const logger = createRemoteLogger('Webcam');
 
 const Webcam: React.FC<WebcamProps> = ({
-  mode = "pushups",
+  mode = 'pushups',
   onRepCount = () => {},
   isActive = true,
   onFilterChange = () => {},
@@ -57,14 +57,14 @@ const Webcam: React.FC<WebcamProps> = ({
   // Function to handle filter cycling - expose it to parent component
   // We keep this for API compatibility but it doesn't do much
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     // Add a method to the window object that the Game component can call
     const handleFilterChange = () => {
-      const newFilterName = "none"; // Always return "none" as we don't use filters
+      const newFilterName = 'none'; // Always return "none" as we don't use filters
 
       // Notify parent component
-      if (typeof onFilterChange === "function") {
+      if (typeof onFilterChange === 'function') {
         onFilterChange(newFilterName);
       }
 
@@ -92,13 +92,13 @@ const Webcam: React.FC<WebcamProps> = ({
     const handlePlayError = () => {
       if (video.paused && !isPlayAttemptInProgress) {
         isPlayAttemptInProgress = true;
-        logger.warn("Video playback paused unexpectedly, attempting to resume");
+        logger.warn('Video playback paused unexpectedly, attempting to resume');
         // Try to play again after a short delay
         playAttemptTimeout = setTimeout(() => {
           video
             .play()
             .catch((err) => {
-              logger.error("Failed to resume video playback", err);
+              logger.error('Failed to resume video playback', err);
             })
             .finally(() => {
               isPlayAttemptInProgress = false;
@@ -119,7 +119,7 @@ const Webcam: React.FC<WebcamProps> = ({
             const rect = canvasRef.current.getBoundingClientRect();
             canvasRef.current.width = rect.width * window.devicePixelRatio;
             canvasRef.current.height = rect.height * window.devicePixelRatio;
-            logger.info("Set mobile canvas dimensions", {
+            logger.info('Set mobile canvas dimensions', {
               width: canvasRef.current.width,
               height: canvasRef.current.height,
               DPR: window.devicePixelRatio,
@@ -129,20 +129,16 @@ const Webcam: React.FC<WebcamProps> = ({
             // Desktop uses video dimensions directly
             canvasRef.current.width = videoWidth;
             canvasRef.current.height = videoHeight;
-            logger.info("Set desktop canvas dimensions", {
+            logger.info('Set desktop canvas dimensions', {
               width: videoWidth,
               height: videoHeight,
             });
           }
         } else {
           // Fallback to default dimensions if video dimensions aren't available yet
-          canvasRef.current.width = isMobile
-            ? 320 * window.devicePixelRatio
-            : 320;
-          canvasRef.current.height = isMobile
-            ? 240 * window.devicePixelRatio
-            : 240;
-          logger.info("Set fallback canvas dimensions", {
+          canvasRef.current.width = isMobile ? 320 * window.devicePixelRatio : 320;
+          canvasRef.current.height = isMobile ? 240 * window.devicePixelRatio : 240;
+          logger.info('Set fallback canvas dimensions', {
             width: canvasRef.current.width,
             height: canvasRef.current.height,
             mobile: isMobile,
@@ -153,13 +149,13 @@ const Webcam: React.FC<WebcamProps> = ({
       // Only try to play if the component is still active
       if (isActive && !isPlayAttemptInProgress) {
         isPlayAttemptInProgress = true;
-        logger.info("Video metadata loaded, attempting to play");
+        logger.info('Video metadata loaded, attempting to play');
         // Add a small delay to ensure the video is fully loaded
         playAttemptTimeout = setTimeout(() => {
           video
             .play()
             .catch((err) => {
-              logger.warn("Initial video play was rejected", err);
+              logger.warn('Initial video play was rejected', err);
             })
             .finally(() => {
               isPlayAttemptInProgress = false;
@@ -169,9 +165,9 @@ const Webcam: React.FC<WebcamProps> = ({
     };
 
     // Listen for events
-    video.addEventListener("pause", handlePlayError);
-    video.addEventListener("loadedmetadata", handleLoadedMetadata);
-    video.addEventListener("canplay", handleLoadedMetadata);
+    video.addEventListener('pause', handlePlayError);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('canplay', handleLoadedMetadata);
 
     // If video is already loaded, try to play it
     if (video.readyState >= 2) {
@@ -180,9 +176,9 @@ const Webcam: React.FC<WebcamProps> = ({
 
     return () => {
       // Clean up event listeners and timeout
-      video.removeEventListener("pause", handlePlayError);
-      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      video.removeEventListener("canplay", handleLoadedMetadata);
+      video.removeEventListener('pause', handlePlayError);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('canplay', handleLoadedMetadata);
       clearTimeout(playAttemptTimeout);
 
       // Enhanced camera stopping when component unmounts or isActive changes to false
@@ -191,7 +187,7 @@ const Webcam: React.FC<WebcamProps> = ({
         let stoppedTracks = 0;
 
         stream.getTracks().forEach((track) => {
-          if (track.readyState === "live") {
+          if (track.readyState === 'live') {
             track.stop();
             stoppedTracks++;
             logger.info(`Webcam: Stopped ${track.kind} track`, {
@@ -214,27 +210,24 @@ const Webcam: React.FC<WebcamProps> = ({
   // Handle window resize for desktop - simplified since we now fill parent
   useEffect(() => {
     // Skip for mobile
-    if (isMobile || typeof window === "undefined") return;
+    if (isMobile || typeof window === 'undefined') return;
 
     // Log dimensions to help with debugging
     const logDimensions = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
         const containerHeight = containerRef.current.offsetHeight;
-        logger.info(
-          `Desktop container dimensions: ${containerWidth}x${containerHeight}`,
-          {
-            mobile: isMobile,
-          }
-        );
+        logger.info(`Desktop container dimensions: ${containerWidth}x${containerHeight}`, {
+          mobile: isMobile,
+        });
       }
     };
 
     // Call once on mount and whenever window resizes
     logDimensions();
-    window.addEventListener("resize", logDimensions);
+    window.addEventListener('resize', logDimensions);
 
-    return () => window.removeEventListener("resize", logDimensions);
+    return () => window.removeEventListener('resize', logDimensions);
   }, [isMobile]);
 
   // Log when component mounts to help with debugging
@@ -244,7 +237,7 @@ const Webcam: React.FC<WebcamProps> = ({
     }
     return () => {
       if (isMobile) {
-        logger.info("Mobile Webcam unmounting");
+        logger.info('Mobile Webcam unmounting');
       }
     };
   }, [isMobile, mode, isActive]);
@@ -253,13 +246,13 @@ const Webcam: React.FC<WebcamProps> = ({
   useEffect(() => {
     if (canvasRef.current) {
       // Force canvas to be visible with a thin green border - based on the working blue border style
-      canvasRef.current.style.border = "2px solid rgba(0, 255, 0, 0.5)";
-      canvasRef.current.style.position = "absolute";
-      canvasRef.current.style.top = "0";
-      canvasRef.current.style.left = "0";
-      canvasRef.current.style.width = "100%";
-      canvasRef.current.style.height = "100%";
-      canvasRef.current.style.zIndex = "10";
+      canvasRef.current.style.border = '2px solid rgba(0, 255, 0, 0.5)';
+      canvasRef.current.style.position = 'absolute';
+      canvasRef.current.style.top = '0';
+      canvasRef.current.style.left = '0';
+      canvasRef.current.style.width = '100%';
+      canvasRef.current.style.height = '100%';
+      canvasRef.current.style.zIndex = '10';
 
       // Ensure the canvas has non-zero dimensions initially
       if (canvasRef.current.width === 0 || canvasRef.current.height === 0) {
@@ -278,35 +271,35 @@ const Webcam: React.FC<WebcamProps> = ({
         ...(isMobile
           ? {
               // Mobile: Let the parent flex container control height, maintain aspect ratio via padding
-              width: "100%",
-              height: "100%", // Fill the flex-grow container from Game.tsx
-              maxHeight: "70vh",
-              minHeight: "300px",
+              width: '100%',
+              height: '100%', // Fill the flex-grow container from Game.tsx
+              maxHeight: '70vh',
+              minHeight: '300px',
             }
           : {
               // Desktop: Use fixed dimensions to match screen container
-              width: "100%",
-              height: "480px",
+              width: '100%',
+              height: '480px',
             }),
-        overflow: "hidden",
+        overflow: 'hidden',
       }}
     >
       <video
-        ref={videoRef}
+        ref={videoRef as React.RefObject<HTMLVideoElement>}
         className="absolute top-0 left-0 w-full h-full z-0"
         style={{
           // Mobile-specific video optimizations
           ...(isMobile
             ? {
-                objectFit: "contain", // On mobile, show full video without cropping
-                transform: "scaleX(-1)", // Mirror video on mobile for better UX
-                backgroundColor: "#000", // Black background for letterboxing if needed
+                objectFit: 'contain', // On mobile, show full video without cropping
+                transform: 'scaleX(-1)', // Mirror video on mobile for better UX
+                backgroundColor: '#000', // Black background for letterboxing if needed
               }
             : {
-                objectFit: "cover", // Desktop: crop to fill container completely
-                transform: "scaleX(-1)", // Mirror video on desktop too for consistency
-                width: "100%",
-                height: "100%",
+                objectFit: 'cover', // Desktop: crop to fill container completely
+                transform: 'scaleX(-1)', // Mirror video on desktop too for consistency
+                width: '100%',
+                height: '100%',
               }),
         }}
         muted
@@ -318,7 +311,7 @@ const Webcam: React.FC<WebcamProps> = ({
         className="absolute top-0 left-0 w-full h-full z-10"
         style={{
           // Mirror canvas to match video on both mobile and desktop
-          transform: "scaleX(-1)",
+          transform: 'scaleX(-1)',
         }}
       />
       {isMobile && (
