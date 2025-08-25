@@ -1,26 +1,17 @@
-# Imperfect Form Monorepo
+# Imperfect Form - AI Fitness Tracking
 
-This is a **backend-less Turborepo monorepo** for the Imperfect Form app, built with Next.js, smart contracts, and shared packages. All business logic is handled client-side or via on-chain contracts and typed SDKs.
+A Next.js fitness tracking application featuring AI-powered pose detection, blockchain integration, and privacy-first human verification through Self Protocol.
 
-## Structure
+**✅ Self Protocol**: [Live on Celo Mainnet](./next/docs/SELF_PROTOCOL.md) - Real passport verification with zero-knowledge proofs.
 
-```
-imperfect-form/
-├── apps/
-│   └── web/               # Next.js app (migrated from `next/`)
-├── packages/
-│   ├── ui/                # Shared UI components (empty scaffold)
-│   ├── hooks/             # Shared React hooks (empty scaffold)
-│   ├── types/             # Shared TypeScript types (empty scaffold)
-│   ├── sdk-neynar/        # Neynar API wrapper (empty scaffold)
-│   └── sdk-contracts/     # TypeChain bindings (empty scaffold)
-├── public/
-├── turbo.json
-├── tsconfig.base.json
-├── .npmrc
-├── package.json
-└── README.md
-```
+## Features
+
+- **AI Pose Detection**: Real-time fitness tracking using MediaPipe/TensorFlow.js
+- **Multi-Chain Support**: Base, Celo, Polygon, and Monad blockchain integration
+- **Human Verification**: Self Protocol integration for verified leaderboards
+- **Dynamic Theming**: Chain-specific UI/UX with performance optimization
+- **Social Integration**: Farcaster sharing and community features
+- **Mobile-First**: Responsive design optimized for mobile fitness tracking
 
 ## Getting Started
 
@@ -59,9 +50,8 @@ pnpm test
 pnpm lint
 ```
 
-## Monorepo Notes
+## Documentation
 
-- All apps and packages use [pnpm workspaces](https://pnpm.io/workspaces).
-- `tsconfig.base.json` provides path aliases for all packages.
-- Future backend logic should use Next.js API routes or Vercel Edge Functions.
-- See each package's README for further details as they are developed.
+- [Self Protocol Integration](./next/docs/SELF_PROTOCOL.md) - Human verification setup
+- [Theming System](./next/docs/THEMING_SYSTEM.md) - Chain-specific UI/UX system
+- [Next.js App README](./next/README.md) - Application details and deployment

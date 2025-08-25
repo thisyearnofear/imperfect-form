@@ -1,16 +1,18 @@
-const { ethers } = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+const { ethers } = require('hardhat');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Deploy Self Protocol Verified Fitness Contract
  *
+ * Enhanced deployment script with centralized configuration management.
  * This script deploys the VerifiedFitnessContract that extends SelfVerificationRoot
  * and integrates with the Self Protocol for human verification.
  *
  * Architecture:
+ * - Centralized configuration management
+ * - Environment-aware network selection
  * - Modular deployment with proper error handling
- * - Environment-aware configuration
  * - Comprehensive verification and testing
  * - Clean output and documentation
  */
@@ -19,25 +21,29 @@ const path = require("path");
 // CONFIGURATION
 // =============================================================================
 
-const DEPLOYMENT_CONFIG = {
-  // Self Protocol V2 Hub addresses
-  HUBS: {
-    celo_mainnet: "0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF",
-    celo_testnet: "0x68c931C9a534D37aa78094877F46fE46a49F1A51",
-  },
+// Import centralized configuration
+const {
+  SELF_NETWORKS,
+  SELF_PROTOCOL_CONFIG,
+  DEPLOYMENT_CONFIG,
+  getCurrentNetwork,
+  getNetworkConfig,
+  validateConfig,
+} = require('../src/config/self-protocol.ts');
 
-  // Verification configuration
-  SCOPE_NAME: "imperfect-form-fitness",
-  MINIMUM_AGE: 16,
+// Legacy deployment config for backward compatibility
+const MAINNET_CONFIG = {
+  // Self Protocol V2 Hub address (Production only)
+  HUB_ADDRESS: '0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF',
 
-  // Configuration ID for Self Protocol (will be generated)
-  // This should match your frontend disclosures configuration
-  CONFIG_ID:
-    "0x7b6436b0c98f62380866d9432c2af0ee08ce16a171bda6951aecd95ee1307d61", // Default config
+  // Verification configuration (from centralized config)
+  SCOPE_NAME: SELF_PROTOCOL_CONFIG.scopeName,
+  MINIMUM_AGE: SELF_PROTOCOL_CONFIG.minimumAge,
+  CONFIG_ID: SELF_PROTOCOL_CONFIG.configId,
 
   // Deployment settings
-  MIN_BALANCE_CELO: "0.1", // Minimum CELO balance required for deployment
-  CONFIRMATION_BLOCKS: 2, // Number of blocks to wait for confirmation
+  MIN_BALANCE_CELO: DEPLOYMENT_CONFIG.MIN_BALANCE,
+  CONFIRMATION_BLOCKS: DEPLOYMENT_CONFIG.CONFIRMATION_BLOCKS,
 };
 
 // =============================================================================
@@ -52,23 +58,27 @@ const DEPLOYMENT_CONFIG = {
 function calculateScope(contractAddress) {
   // Scope calculation: keccak256(abi.encodePacked(contractAddress, SCOPE_NAME))
   const encoded = ethers.solidityPacked(
-    ["address", "string"],
-    [contractAddress, DEPLOYMENT_CONFIG.SCOPE_NAME]
+    ['address', 'string'],
+    [contractAddress, SELF_PROTOCOL_CONFIG.scopeName]
   );
   return ethers.keccak256(encoded);
 }
 
 /**
  * Get the appropriate hub address for the current network
+ * Enhanced with centralized network configuration
  * @param {string} networkName - The network name
  * @returns {string} - The hub address
  */
 function getHubAddress(networkName) {
-  if (networkName.includes("mainnet") || networkName === "celo") {
-    return DEPLOYMENT_CONFIG.HUBS.celo_mainnet;
-  } else {
-    return DEPLOYMENT_CONFIG.HUBS.celo_testnet;
+  // Try to get from centralized config first
+  const networkConfig = getNetworkConfig(networkName);
+  if (networkConfig) {
+    return networkConfig.hubAddress;
   }
+
+  // Production mainnet only
+  return MAINNET_CONFIG.HUB_ADDRESS;
 }
 
 /**
@@ -76,7 +86,7 @@ function getHubAddress(networkName) {
  * @param {Object} deploymentInfo - The deployment information
  */
 function saveDeploymentInfo(deploymentInfo) {
-  const deploymentPath = path.join(__dirname, "../deployments");
+  const deploymentPath = path.join(__dirname, '../deployments');
 
   if (!fs.existsSync(deploymentPath)) {
     fs.mkdirSync(deploymentPath, { recursive: true });
@@ -85,7 +95,19 @@ function saveDeploymentInfo(deploymentInfo) {
   const filename = `self-protocol-${deploymentInfo.network}-${Date.now()}.json`;
   const filepath = path.join(deploymentPath, filename);
 
-  fs.writeFileSync(filepath, JSON.stringify(deploymentInfo, null, 2));
+  // Enhanced deployment info with network configuration
+  const enhancedInfo = {
+    ...deploymentInfo,
+    configuration: {
+      scope: SELF_PROTOCOL_CONFIG.scope,
+      scopeName: SELF_PROTOCOL_CONFIG.scopeName,
+      configId: SELF_PROTOCOL_CONFIG.configId,
+      minimumAge: SELF_PROTOCOL_CONFIG.minimumAge,
+    },
+    deploymentConfig: DEPLOYMENT_CONFIG,
+  };
+
+  fs.writeFileSync(filepath, JSON.stringify(enhancedInfo, null, 2));
   console.log(`💾 Deployment info saved to: ${filename}`);
 }
 
@@ -95,7 +117,7 @@ function saveDeploymentInfo(deploymentInfo) {
  * @param {string} contractAddress - The contract address
  */
 async function verifyDeployment(contract, contractAddress) {
-  console.log("\n🔍 Verifying deployment...");
+  console.log('\n🔍 Verifying deployment...');
 
   try {
     // Test basic contract functions
@@ -105,7 +127,7 @@ async function verifyDeployment(contract, contractAddress) {
     const owner = await contract.owner();
     const totalVerified = await contract.totalVerifiedUsers();
 
-    console.log("   ✅ Contract functions accessible:");
+    console.log('   ✅ Contract functions accessible:');
     console.log(`      Minimum age: ${minimumAge}`);
     console.log(`      Scope name: ${scopeName}`);
     console.log(`      Config ID: ${configId}`);
@@ -118,7 +140,7 @@ async function verifyDeployment(contract, contractAddress) {
 
     return true;
   } catch (error) {
-    console.log("   ⚠️  Contract verification failed:", error.message);
+    console.log('   ⚠️  Contract verification failed:', error.message);
     return false;
   }
 }
@@ -128,13 +150,27 @@ async function verifyDeployment(contract, contractAddress) {
 // =============================================================================
 
 async function main() {
-  console.log("🚀 Deploying Self Protocol Verified Fitness Contract...");
-  console.log("=".repeat(60));
+  console.log('🚀 Deploying Self Protocol Verified Fitness Contract...');
+  console.log('='.repeat(60));
+
+  // Validate configuration first
+  const configValidation = validateConfig();
+  if (!configValidation.isValid) {
+    console.error('❌ Configuration validation failed:');
+    configValidation.errors.forEach((error) => console.error(`   - ${error}`));
+    process.exit(1);
+  }
 
   // Get network information
   const network = await ethers.provider.getNetwork();
-  const networkName = network.name || "unknown";
+  const networkName = network.name || 'unknown';
   console.log(`📡 Network: ${networkName} (Chain ID: ${network.chainId})`);
+
+  // Get network configuration
+  const networkConfig = getNetworkConfig(networkName) || getNetworkConfig(Number(network.chainId));
+  if (networkConfig) {
+    console.log(`🌐 Network config: ${networkConfig.name} (production mainnet)`);
+  }
 
   // Get deployer account
   const [deployer] = await ethers.getSigners();
@@ -145,12 +181,8 @@ async function main() {
   const balanceEther = ethers.formatEther(balance);
   console.log(`💰 Account balance: ${balanceEther} CELO`);
 
-  if (
-    parseFloat(balanceEther) < parseFloat(DEPLOYMENT_CONFIG.MIN_BALANCE_CELO)
-  ) {
-    console.warn(
-      `⚠️  Low balance! Minimum ${DEPLOYMENT_CONFIG.MIN_BALANCE_CELO} CELO recommended`
-    );
+  if (parseFloat(balanceEther) < parseFloat(DEPLOYMENT_CONFIG.MIN_BALANCE)) {
+    console.warn(`⚠️  Low balance! Minimum ${DEPLOYMENT_CONFIG.MIN_BALANCE} CELO recommended`);
   }
 
   try {
@@ -159,10 +191,8 @@ async function main() {
     console.log(`🏢 Using Self Protocol Hub: ${hubAddress}`);
 
     // Deploy the contract with initial parameters
-    console.log("\n📦 Deploying VerifiedFitnessContract...");
-    const VerifiedFitnessContract = await ethers.getContractFactory(
-      "VerifiedFitnessContract"
-    );
+    console.log('\n📦 Deploying VerifiedFitnessContract...');
+    const VerifiedFitnessContract = await ethers.getContractFactory('VerifiedFitnessContract');
 
     // Initial deployment with temporary scope (will be updated after deployment)
     const tempScope = 1; // Temporary scope, will be calculated and updated
@@ -170,10 +200,10 @@ async function main() {
     const contract = await VerifiedFitnessContract.deploy(
       hubAddress,
       tempScope,
-      DEPLOYMENT_CONFIG.CONFIG_ID
+      SELF_PROTOCOL_CONFIG.configId
     );
 
-    console.log("⏳ Waiting for deployment transaction...");
+    console.log('⏳ Waiting for deployment transaction...');
     await contract.waitForDeployment();
 
     const contractAddress = await contract.getAddress();
@@ -184,19 +214,20 @@ async function main() {
     console.log(`🔢 Calculated scope: ${properScope}`);
 
     // Note: Scope is set in constructor, no need to update separately
-    console.log("✅ Contract deployed with proper scope calculation");
+    console.log('✅ Contract deployed with proper scope calculation');
 
     // Wait for contract to be ready
-    console.log("⏳ Waiting for contract to be ready...");
+    console.log('⏳ Waiting for contract to be ready...');
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Verify deployment
-    const verificationSuccess = await verifyDeployment(
-      contract,
-      contractAddress
-    );
+    const verificationSuccess = await verifyDeployment(contract, contractAddress);
 
-    // Prepare deployment information
+    // Prepare deployment information with enhanced network data
+    const blockExplorer = networkConfig
+      ? `${networkConfig.blockExplorer}/address/${contractAddress}`
+      : `https://celoscan.io/address/${contractAddress}`;
+
     const deploymentInfo = {
       network: networkName,
       chainId: network.chainId.toString(),
@@ -204,61 +235,62 @@ async function main() {
       hubAddress: hubAddress,
       deployer: deployer.address,
       scope: properScope,
-      scopeName: DEPLOYMENT_CONFIG.SCOPE_NAME,
-      configId: DEPLOYMENT_CONFIG.CONFIG_ID,
-      minimumAge: DEPLOYMENT_CONFIG.MINIMUM_AGE,
+      scopeName: SELF_PROTOCOL_CONFIG.scopeName,
+      configId: SELF_PROTOCOL_CONFIG.configId,
+      minimumAge: SELF_PROTOCOL_CONFIG.minimumAge,
       deploymentTime: new Date().toISOString(),
-      blockExplorer:
-        networkName.includes("testnet") || networkName.includes("alfajores")
-          ? `https://alfajores.celoscan.io/address/${contractAddress}`
-          : `https://celoscan.io/address/${contractAddress}`,
+      blockExplorer: blockExplorer,
       transactionHash: contract.deploymentTransaction()?.hash,
       verificationSuccess: verificationSuccess,
+      networkConfig: networkConfig || null,
+      useMockPassports: false, // Production uses real passports only
     };
 
     // Display deployment summary
-    console.log("\n📋 Deployment Summary:");
-    console.log("=".repeat(60));
+    console.log('\n📋 Deployment Summary:');
+    console.log('='.repeat(60));
     console.log(JSON.stringify(deploymentInfo, null, 2));
 
     // Save deployment info
     saveDeploymentInfo(deploymentInfo);
 
     // Display next steps
-    console.log("\n🔗 Next Steps:");
-    console.log("=".repeat(60));
-    console.log("1. Add to your .env.local:");
+    console.log('\n🔗 Next Steps:');
+    console.log('='.repeat(60));
+    console.log('1. Add to your .env.local:');
     console.log(`   NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT=${contractAddress}`);
     console.log(`   NEXT_PUBLIC_SELF_SCOPE=${properScope}`);
-    console.log("");
-    console.log("2. Update your frontend configuration:");
-    console.log("   - Ensure endpoint points to this contract address");
-    console.log("   - Verify disclosures match the config ID");
-    console.log("");
-    console.log("3. View on block explorer:");
+    if (networkConfig) {
+      console.log(`   NEXT_PUBLIC_SELF_NETWORK=${networkConfig.name}`);
+      console.log(`   NEXT_PUBLIC_SELF_CHAIN_ID=${networkConfig.chainId}`);
+    }
+    console.log('');
+    console.log('2. Configuration is centrally managed:');
+    console.log(`   - Scope: ${SELF_PROTOCOL_CONFIG.scope}`);
+    console.log(`   - Config ID: ${SELF_PROTOCOL_CONFIG.configId}`);
+    console.log(`   - Hub Address: ${hubAddress}`);
+    console.log(`   - Real Passports: Production Only`);
+    console.log('');
+    console.log('3. View on block explorer:');
     console.log(`   ${deploymentInfo.blockExplorer}`);
-    console.log("");
-    console.log("4. Test the verification flow:");
-    console.log("   - Frontend → Self app → Contract verification");
-    console.log("");
-    console.log("5. Integration with existing fitness contracts:");
-    console.log(
-      "   - Call isVerifiedHuman(address) to check verification status"
-    );
+    console.log('');
+    console.log('4. Test the verification flow:');
+    console.log('   - Frontend → Self app → Contract verification');
+    console.log('');
+    console.log('5. Integration with existing fitness contracts:');
+    console.log('   - Call isVerifiedHuman(address) to check verification status');
 
-    console.log("\n🎉 Deployment completed successfully!");
+    console.log('\n🎉 Deployment completed successfully!');
   } catch (error) {
-    console.error("\n❌ Deployment failed:", error);
+    console.error('\n❌ Deployment failed:', error);
 
     // Provide helpful error messages
-    if (error.message.includes("insufficient funds")) {
-      console.error("💡 Solution: Add more CELO to your deployer account");
-    } else if (error.message.includes("nonce")) {
-      console.error("💡 Solution: Wait a moment and try again (nonce issue)");
-    } else if (error.message.includes("gas")) {
-      console.error(
-        "💡 Solution: Increase gas limit or check network congestion"
-      );
+    if (error.message.includes('insufficient funds')) {
+      console.error('💡 Solution: Add more CELO to your deployer account');
+    } else if (error.message.includes('nonce')) {
+      console.error('💡 Solution: Wait a moment and try again (nonce issue)');
+    } else if (error.message.includes('gas')) {
+      console.error('💡 Solution: Increase gas limit or check network congestion');
     }
 
     process.exit(1);
@@ -272,6 +304,6 @@ async function main() {
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error("💥 Unexpected error:", error);
+    console.error('💥 Unexpected error:', error);
     process.exit(1);
   });

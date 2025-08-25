@@ -1,6 +1,8 @@
-# Imperfect Form - Fitness App
+# Imperfect Form - AI Fitness Tracking
 
-A Next.js fitness tracking application with blockchain integration and human verification.
+A Next.js fitness app with AI pose detection, blockchain integration, and Self Protocol human verification.
+
+**✅ Self Protocol**: [Integration Guide](./docs/SELF_PROTOCOL.md) - Live on Celo Mainnet with real passport verification.
 
 ## Getting Started
 
@@ -16,35 +18,25 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Self Protocol Integration
+## Key Features
 
-**Human Verification**: Integrated with Self Protocol for privacy-first human verification using zero-knowledge proofs.
+- **AI Pose Detection**: Real-time fitness tracking using MediaPipe/TensorFlow.js
+- **Human Verification**: Self Protocol integration with real passport verification
+- **Multi-Chain Support**: Polygon, Base, Celo, Monad blockchain integration
+- **Dynamic Theming**: Chain-specific UI/UX with performance optimization
+- **Social Features**: Farcaster integration and verified leaderboards
+- **Mobile Optimized**: Responsive design for mobile fitness tracking
 
-- **Status**: Live on Celo Alfajores testnet
-- **Contract**: `0xc51065eCBe91E7DbA69934F37130DCA29E516189`
-- **Trigger**: Automatic prompt after successful score submission
-- **UX**: Smart network switching from Celo Mainnet to Alfajores for verification
-- **Benefits**: Verified badge on leaderboard, one-time setup, privacy-preserving (age 16+ only)
-- **Flow**: QR code (desktop) / deep link (mobile) to Self app verification to on-chain verification status
+## Documentation
 
-## Features
+- [Self Protocol Integration](./docs/SELF_PROTOCOL.md) - Human verification setup and usage
+- [Theming System](./docs/THEMING_SYSTEM.md) - Chain-specific UI/UX implementation
 
-- Multi-chain fitness tracking (Polygon, Base, Celo, Monad)
-- Real-time pose detection using MediaPipe
-- Blockchain-based leaderboards
-- Farcaster integration and sharing
-- Human verification with Self Protocol
-- Mobile-optimized experience
+## Quick Start
 
-## Tech Stack
+```bash
+pnpm install
+pnpm dev
+```
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Blockchain**: Ethers v6, Wagmi v2, Viem
-- **Verification**: Self Protocol (zero-knowledge proofs)
-- **Pose Detection**: MediaPipe, TensorFlow.js
-- **Styling**: Tailwind CSS
-- **Social**: Farcaster integration
-
-## Deployment
-
-The app is deployed on Vercel. Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000) to start tracking fitness with AI pose detection and blockchain verification.

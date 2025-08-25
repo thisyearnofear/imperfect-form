@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "deploy:self": "hardhat run scripts/deploy-self-protocol.js --network celoMainnet",
+    "self:switch-mainnet": "node scripts/switch-to-mainnet.js",
+    "self:verify-config": "node -e \"require('./src/config/self-protocol.ts').validateConfig()\"",
+    "self:health": "curl -X GET http://localhost:3000/api/self/verify"
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.38.19",
