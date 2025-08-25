@@ -7,7 +7,6 @@ import {
 import VerificationBadge from '@/components/verification/VerificationBadge';
 import { getBestDisplayName } from '@/utils/web3bio';
 import { Spinner } from '@/components/ui';
-import { shortenAddress } from '@/utils/formatters';
 
 interface VerifiedScore {
   user: string;

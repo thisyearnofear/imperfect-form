@@ -1,13 +1,10 @@
-import { ethers } from "ethers";
-import { walletService } from "./WalletService";
-import { walletDetectionService } from "./WalletDetectionService";
-import { getNetworkByContractAddress, getNetworkByChainId } from "@/config/networks";
-import { isFirstTimeDivviUser, getDivviReferralTag, registerDivviReferral, showEnhancedFeaturesPrompt } from "@/utils/divviIntegration";
-import { 
-  NetworkConfig, 
-  ScoreSubmissionResult
-} from "@/types/contracts";
-import toast from "react-hot-toast";
+import { ethers } from 'ethers';
+import { walletService } from './WalletService';
+import { walletDetectionService } from './WalletDetectionService';
+import { getNetworkByContractAddress, getNetworkByChainId } from '@/config/networks';
+import { addReferralTagToCalldata, registerDivviReferral } from '@/utils/divviIntegration';
+import { NetworkConfig, ScoreSubmissionResult } from '@/types/contracts';
+import toast from 'react-hot-toast';
 
 /**
  * Centralized contract service for better maintainability and testability
@@ -30,9 +27,9 @@ export class ContractService {
    */
   async initialize(connectedAddress?: string): Promise<void> {
     const result = await walletService.connect(connectedAddress);
-    
+
     if (!result.success) {
-      throw new Error(result.error || "Failed to connect wallet");
+      throw new Error(result.error || 'Failed to connect wallet');
     }
 
     // Set current network based on chain ID
@@ -40,10 +37,10 @@ export class ContractService {
       this.currentNetwork = getNetworkByChainId(result.chainId);
     }
 
-    console.log("ContractService initialized:", {
+    console.log('ContractService initialized:', {
       userAddress: result.address,
       chainId: result.chainId,
-      network: this.currentNetwork?.name
+      network: this.currentNetwork?.name,
     });
   }
 
@@ -64,7 +61,7 @@ export class ContractService {
   private createContract(contractAddress: string): ethers.Contract {
     const signer = walletService.getSigner();
     if (!signer) {
-      throw new Error("Wallet not connected. Call initialize() first.");
+      throw new Error('Wallet not connected. Call initialize() first.');
     }
 
     const networkConfig = this.getNetworkConfig(contractAddress);
@@ -77,7 +74,7 @@ export class ContractService {
   async verifyNetwork(expectedNetworkName: string, contractAddress: string): Promise<void> {
     const provider = walletService.getProvider();
     if (!provider) {
-      throw new Error("Wallet not connected");
+      throw new Error('Wallet not connected');
     }
 
     const networkConfig = this.getNetworkConfig(contractAddress);
@@ -86,14 +83,14 @@ export class ContractService {
     if (currentChainId !== networkConfig.chainId) {
       throw new Error(
         `Wrong network. Expected ${networkConfig.name} (${networkConfig.chainId}), ` +
-        `but connected to chain ${currentChainId}`
+          `but connected to chain ${currentChainId}`
       );
     }
 
-    console.log("Network verification passed:", {
+    console.log('Network verification passed:', {
       chainId: currentChainId,
       networkName: networkConfig.name,
-      contractAddress
+      contractAddress,
     });
   }
 
@@ -112,25 +109,25 @@ export class ContractService {
     try {
       // Input validation
       if (pushups < 0 || squats < 0) {
-        throw new Error("Score values must be non-negative");
+        throw new Error('Score values must be non-negative');
       }
 
       const networkConfig = this.getNetworkConfig(contractAddress);
       const isBaseNetwork = networkConfig.chainId === 8453;
-      
+
       // Handle Base network with Smart Wallet capabilities
       if (isBaseNetwork && !skipSubAccountCheck) {
         const capabilities = walletDetectionService.detectWalletCapabilities();
-        
+
         if (capabilities.supportsSmartWallet) {
-          console.log("Base Smart Wallet detected - using Wagmi flow");
-          
+          console.log('Base Smart Wallet detected - using Wagmi flow');
+
           // For Base Smart Wallet, delegate to Wagmi for subaccount handling
           return {
             success: false,
-            processingType: "wagmi",
+            processingType: 'wagmi',
             useSpendLimit: true,
-            error: "Use Wagmi for Base transactions with automatic subaccounts"
+            error: 'Use Wagmi for Base transactions with automatic subaccounts',
           };
         }
       }
@@ -143,12 +140,11 @@ export class ContractService {
         networkName,
         connectedAddress
       );
-
     } catch (error) {
-      console.error("Score submission failed:", error);
+      console.error('Score submission failed:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error occurred"
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
   }
@@ -171,57 +167,68 @@ export class ContractService {
 
     const userAddress = walletService.getUserAddress();
     if (!userAddress) {
-      throw new Error("Failed to get user address");
+      throw new Error('Failed to get user address');
     }
 
     // Verify network compatibility
     await this.verifyNetwork(networkName, contractAddress);
 
-    // Handle Divvi integration if applicable
-    await this.handleDivviIntegration(userAddress);
-
     // Create contract and submit
     const contract = this.createContract(contractAddress);
 
-    console.log("Executing direct submission:", {
+    console.log('Executing direct submission:', {
       contractAddress,
       userAddress,
       pushups,
       squats,
-      network: networkName
+      network: networkName,
     });
 
     // Show user feedback
-    toast.loading("Preparing transaction...", { id: "submit-score" });
+    toast.loading('Preparing transaction...', { id: 'submit-score' });
 
     try {
       // Estimate gas with intelligent fallback
       const gasLimit = await this.estimateGasWithFallback(contract, pushups, squats);
 
-      // Submit transaction
-      const transaction = await contract.submitScore(pushups, squats, {
-        gasLimit
+      // Prepare transaction data with Divvi referral tag
+      const iface = contract.interface;
+      const originalData = iface.encodeFunctionData('submitScore', [pushups, squats]);
+      const dataWithReferral = addReferralTagToCalldata(userAddress, originalData);
+
+      // Send transaction with Divvi referral tag
+      const signer = walletService.getSigner();
+      if (!signer) {
+        throw new Error('Signer not available');
+      }
+
+      const transaction = await signer.sendTransaction({
+        to: contractAddress,
+        data: dataWithReferral,
+        gasLimit,
       });
 
-      toast.loading("Transaction submitted, waiting for confirmation...", { id: "submit-score" });
+      toast.loading('Transaction submitted, waiting for confirmation...', { id: 'submit-score' });
 
       // Wait for confirmation
       const receipt = await transaction.wait();
-      
+
       if (receipt?.status === 1) {
-        toast.success("Score submitted successfully!", { id: "submit-score" });
-        
+        // Register with Divvi after successful transaction
+        await this.handleDivviIntegration(transaction.hash);
+
+        toast.success('Score submitted successfully!', { id: 'submit-score' });
+
         return {
           success: true,
           transactionHash: transaction.hash,
-          processingType: 'direct'
+          processingType: 'direct',
         };
       } else {
-        throw new Error("Transaction failed");
+        throw new Error('Transaction failed');
       }
-
     } catch (txError) {
-      toast.error("Transaction failed", { id: "submit-score" });
+      toast.error('Transaction failed', { id: 'submit-score' });
       throw txError;
     }
   }
@@ -237,19 +244,19 @@ export class ContractService {
   ): Promise<bigint> {
     try {
       const gasEstimate = await contract.submitScore.estimateGas(pushups, squats);
-      return gasEstimate * 120n / 100n; // Add 20% buffer
+      return (gasEstimate * 120n) / 100n; // Add 20% buffer
     } catch (gasError) {
-      console.warn("Gas estimation failed, using network-specific fallback:", gasError);
-      
+      console.warn('Gas estimation failed, using network-specific fallback:', gasError);
+
       // Network-specific fallbacks based on historical data
       const chainId = walletService.getChainId();
       const fallbackGas: Record<number, bigint> = {
-        137: 250000n,  // Polygon
+        137: 250000n, // Polygon
         8453: 300000n, // Base
         42220: 200000n, // Celo
-        10143: 350000n  // Monad
+        10143: 350000n, // Monad
       };
-      
+
       return fallbackGas[chainId || 137] || 300000n;
     }
   }
@@ -258,17 +265,12 @@ export class ContractService {
    * Handle Divvi referral integration
    * CONSOLIDATION: Moved from legacy file
    */
-  private async handleDivviIntegration(userAddress: string): Promise<void> {
+  private async handleDivviIntegration(txHash: string): Promise<void> {
     try {
-      if (await isFirstTimeDivviUser(userAddress, walletService.getChainId() || 137)) {
-        const referralTag = getDivviReferralTag(userAddress);
-        if (referralTag) {
-          await registerDivviReferral(userAddress, walletService.getChainId() || 137, referralTag);
-          await showEnhancedFeaturesPrompt();
-        }
-      }
+      const chainId = walletService.getChainId() || 137;
+      await registerDivviReferral(txHash, chainId);
     } catch (divviError) {
-      console.warn("Divvi integration failed:", divviError);
+      console.warn('Divvi integration failed:', divviError);
       // Don't block submission for Divvi failures
     }
   }
@@ -283,18 +285,18 @@ export class ContractService {
     try {
       const userAddress = walletService.getUserAddress();
       if (!userAddress) {
-        throw new Error("User address not available");
+        throw new Error('User address not available');
       }
 
       const contract = this.createContract(contractAddress);
       const score = await contract.getScore(userAddress);
-      
+
       return {
         pushups: Number(score.pushups || 0),
-        squats: Number(score.squats || 0)
+        squats: Number(score.squats || 0),
       };
     } catch (error) {
-      console.error("Failed to get user score:", error);
+      console.error('Failed to get user score:', error);
       return null;
     }
   }

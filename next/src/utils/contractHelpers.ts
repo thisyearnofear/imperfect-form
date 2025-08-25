@@ -1,19 +1,14 @@
 /**
  * Contract Interaction Helper Utilities
- * 
+ *
  * Clean, modular utilities for smart contract interactions
  * Maintains DRY principles and provides consistent interfaces
  * across the application for contract operations.
  */
 
-import { ethers } from "ethers";
-import { createTransactionOptions, parseEther } from "./ethersHelpers";
-import {
-  isFirstTimeDivviUser,
-  getDivviReferralTag,
-  registerDivviReferral,
-  showEnhancedFeaturesPrompt
-} from "./divviIntegration";
+import { ethers } from 'ethers';
+import { createTransactionOptions, parseEther } from './ethersHelpers';
+import { addReferralTagToCalldata, registerDivviReferral } from './divviIntegration';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -62,23 +57,23 @@ export async function submitContractTransaction(
     userAddress,
     chainId,
     value = 0n,
-    provider: providedProvider
+    provider: providedProvider,
   } = params;
 
   try {
     // Validate inputs
     if (!userAddress || !userAddress.startsWith('0x') || userAddress.length !== 42) {
-      throw new Error("Invalid user address");
+      throw new Error('Invalid user address');
     }
 
     if (!contractAddress || !contractAddress.startsWith('0x') || contractAddress.length !== 42) {
-      throw new Error("Invalid contract address");
+      throw new Error('Invalid contract address');
     }
 
     // Create provider and signer
     const ethereumProvider = providedProvider || window.ethereum;
     if (!ethereumProvider) {
-      throw new Error("No Ethereum provider found");
+      throw new Error('No Ethereum provider found');
     }
 
     const provider = new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
@@ -87,21 +82,10 @@ export async function submitContractTransaction(
     // Create contract instance
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    // Prepare transaction data
+    // Prepare transaction data with Divvi referral tag
     const iface = new ethers.Interface(abi);
     const originalData = iface.encodeFunctionData(functionName, args);
-
-    // Enhance with Divvi referral tracking
-    const isFirstTime = await isFirstTimeDivviUser(userAddress, chainId);
-    let enhancedData = originalData;
-
-    if (isFirstTime) {
-      const accepted = await showEnhancedFeaturesPrompt();
-      if (accepted) {
-        const referralTag = getDivviReferralTag(userAddress);
-        enhancedData = originalData + referralTag;
-      }
-    }
+    const enhancedData = addReferralTagToCalldata(userAddress, originalData);
 
     // Create transaction options
     const baseGasLimit = await contract[functionName].estimateGas(...args, { value });
@@ -118,18 +102,18 @@ export async function submitContractTransaction(
       maxPriorityFeePerGas: txOptions.maxPriorityFeePerGas,
     });
 
-    console.log("Transaction sent:", tx.hash);
+    console.log('Transaction sent:', tx.hash);
 
     // Wait for confirmation
     const receipt = await tx.wait();
-    
+
     if (!receipt || receipt.status !== 1) {
-      throw new Error("Transaction failed");
+      throw new Error('Transaction failed');
     }
 
     // Handle Divvi post-transaction workflow
     try {
-      await registerDivviReferral(tx.hash, chainId, userAddress);
+      await registerDivviReferral(tx.hash, chainId);
     } catch (divviError) {
       console.error('Error registering Divvi referral:', divviError);
       // Don't fail the transaction if Divvi registration fails
@@ -138,15 +122,14 @@ export async function submitContractTransaction(
     return {
       success: true,
       transactionHash: tx.hash,
-      processingType: "direct_contract"
+      processingType: 'direct_contract',
     };
-
   } catch (error) {
-    console.error("Contract submission error:", error);
+    console.error('Contract submission error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-      processingType: "direct_contract"
+      error: error instanceof Error ? error.message : 'Unknown error',
+      processingType: 'direct_contract',
     };
   }
 }
@@ -159,12 +142,19 @@ export async function submitContractTransaction(
 export async function estimateContractGas(
   params: Omit<ContractSubmissionParams, 'userAddress' | 'chainId'>
 ): Promise<bigint> {
-  const { contractAddress, abi, functionName, args, value = 0n, provider: providedProvider } = params;
+  const {
+    contractAddress,
+    abi,
+    functionName,
+    args,
+    value = 0n,
+    provider: providedProvider,
+  } = params;
 
   try {
     const ethereumProvider = providedProvider || window.ethereum;
     if (!ethereumProvider) {
-      throw new Error("No Ethereum provider found");
+      throw new Error('No Ethereum provider found');
     }
 
     const provider = new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
@@ -172,9 +162,9 @@ export async function estimateContractGas(
 
     return await contract[functionName].estimateGas(...args, { value });
   } catch (error) {
-    console.error("Gas estimation error:", error);
+    console.error('Gas estimation error:', error);
     // Return a reasonable default
-    return parseEther("0.1");
+    return parseEther('0.1');
   }
 }
 
@@ -190,12 +180,12 @@ export async function canUserSubmitToContract(
 
   try {
     if (!userAddress || !userAddress.startsWith('0x') || userAddress.length !== 42) {
-      return { canSubmit: false, reason: "Invalid user address" };
+      return { canSubmit: false, reason: 'Invalid user address' };
     }
 
     const ethereumProvider = providedProvider || window.ethereum;
     if (!ethereumProvider) {
-      return { canSubmit: false, reason: "No Ethereum provider found" };
+      return { canSubmit: false, reason: 'No Ethereum provider found' };
     }
 
     const provider = new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
@@ -203,20 +193,20 @@ export async function canUserSubmitToContract(
 
     // Estimate gas cost
     const estimatedGas = await estimateContractGas(params);
-    const gasPrice = (await provider.getFeeData()).gasPrice || parseEther("0.00002"); // 20 gwei default
+    const gasPrice = (await provider.getFeeData()).gasPrice || parseEther('0.00002'); // 20 gwei default
     const estimatedCost = estimatedGas * gasPrice + value;
 
     if (balance < estimatedCost) {
-      return { 
-        canSubmit: false, 
-        reason: `Insufficient balance. Need ${ethers.formatEther(estimatedCost)} ETH, have ${ethers.formatEther(balance)} ETH` 
+      return {
+        canSubmit: false,
+        reason: `Insufficient balance. Need ${ethers.formatEther(estimatedCost)} ETH, have ${ethers.formatEther(balance)} ETH`,
       };
     }
 
     return { canSubmit: true };
   } catch (error) {
-    console.error("Error checking user submission capability:", error);
-    return { canSubmit: false, reason: "Error checking balance" };
+    console.error('Error checking user submission capability:', error);
+    return { canSubmit: false, reason: 'Error checking balance' };
   }
 }
 
@@ -231,17 +221,19 @@ export async function canUserSubmitToContract(
  */
 export function getNetworkConfig(chainId: number) {
   const configs = {
-    137: { name: "Polygon", requiresValue: false, gasMultiplier: 2 },
-    8453: { name: "Base", requiresValue: false, gasMultiplier: 1 },
-    42220: { name: "Celo", requiresValue: false, gasMultiplier: 3 },
-    10143: { name: "Monad", requiresValue: true, gasMultiplier: 2 },
+    137: { name: 'Polygon', requiresValue: false, gasMultiplier: 2 },
+    8453: { name: 'Base', requiresValue: false, gasMultiplier: 1 },
+    42220: { name: 'Celo', requiresValue: false, gasMultiplier: 3 },
+    10143: { name: 'Monad', requiresValue: true, gasMultiplier: 2 },
   };
 
-  return configs[chainId as keyof typeof configs] || { 
-    name: "Unknown", 
-    requiresValue: false, 
-    gasMultiplier: 1.5 
-  };
+  return (
+    configs[chainId as keyof typeof configs] || {
+      name: 'Unknown',
+      requiresValue: false,
+      gasMultiplier: 1.5,
+    }
+  );
 }
 
 /**
