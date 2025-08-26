@@ -1,5 +1,3 @@
-import { ethers } from 'ethers';
-
 /**
  * Consolidated wallet detection and provider utilities
  * ENHANCEMENT: Consolidates wallet detection logic from legacy directContractInteraction
@@ -110,32 +108,6 @@ export class WalletDetectionService {
       supportsSubAccounts: false,
       isInjected: true,
     };
-  }
-
-  /**
-   * Create optimized provider based on wallet capabilities
-   * ENHANCEMENT: Intelligent provider creation
-   */
-  async createOptimizedProvider(ethereumProvider?: unknown): Promise<ethers.BrowserProvider> {
-    const capabilities = this.detectWalletCapabilities();
-
-    console.log('Creating optimized provider:', {
-      walletType: capabilities.type,
-      supportsSmartWallet: capabilities.supportsSmartWallet,
-      hasProvidedProvider: !!ethereumProvider,
-    });
-
-    // Use provided provider if available and valid
-    if (ethereumProvider && typeof ethereumProvider === 'object' && 'request' in ethereumProvider) {
-      return new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
-    }
-
-    // Use window.ethereum as fallback
-    if (typeof window !== 'undefined' && window.ethereum) {
-      return new ethers.BrowserProvider(window.ethereum);
-    }
-
-    throw new Error('No Ethereum provider found. Please install a wallet.');
   }
 
   /**

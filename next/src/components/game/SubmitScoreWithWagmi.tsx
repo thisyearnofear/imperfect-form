@@ -1,30 +1,25 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { Spinner } from "@/components/ui";
-import { usePlatform } from "@/contexts/PlatformContext";
-import { useAccount } from "wagmi";
-import {
-  submitScore,
-  showSubmissionResult,
-  canUserSubmit,
-} from "@/utils/unifiedSubmission";
-import { getEthereumProvider } from "@/utils/farcasterMiniApp";
+import React, { useState } from 'react';
+import { Spinner } from '@/components/ui';
+import { usePlatform } from '@/contexts/PlatformContext';
+import { useAccount } from 'wagmi';
+import { submitScore, showSubmissionResult, canUserSubmit } from '@/utils/unifiedSubmission';
+import { getEthereumProvider } from '@/utils/farcasterMiniApp';
+import { getNetworkByChainId } from '@/config/networks';
 
 interface SubmitScoreProps {
   score?: number;
-  exerciseType?: "pushups" | "squats";
+  exerciseType?: 'pushups' | 'squats';
   forceDirectSubmission?: boolean;
   walletAddress?: string;
-  setSubmissionStatus: (
-    status: "idle" | "submitting" | "success" | "error"
-  ) => void;
+  setSubmissionStatus: (status: 'idle' | 'submitting' | 'success' | 'error') => void;
 }
 
 // Clean, unified score submission component
 export default function SubmitScoreWithWagmi({
   score,
-  exerciseType = "pushups",
+  exerciseType = 'pushups',
   forceDirectSubmission = false,
   walletAddress,
   setSubmissionStatus,
@@ -43,42 +38,40 @@ export default function SubmitScoreWithWagmi({
   // Unified submission handler
   const handleSubmit = async () => {
     if (!address || !chainId || !score) {
-      setSubmissionStatus("error");
+      setSubmissionStatus('error');
       showSubmissionResult({
         success: false,
-        error: "Missing required parameters",
-        processingType: "direct",
+        error: 'Missing required parameters',
+        processingType: 'direct',
       });
       return;
     }
 
     setIsLoading(true);
-    setSubmissionStatus("submitting");
+    setSubmissionStatus('submitting');
 
     try {
-      // Check if user can submit
-      const canSubmitResult = canUserSubmit(address);
-      if (!canSubmitResult.canSubmit) {
-        throw new Error(canSubmitResult.reason || "Cannot submit");
-      }
-
       // Get the appropriate Ethereum provider (handles Farcaster Mini App detection)
       const ethereumProvider = await getEthereumProvider();
 
-      // Determine contract address and network based on chainId
-      const getContractInfo = (chainId: number) => {
-        switch (chainId) {
-          case 137: return { address: "0xc783d6E12560dc251F5067A62426A5f3b45b6888", network: "Polygon Mainnet" };
-          case 8453: return { address: "0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B", network: "Base Mainnet" };
-          case 42220: return { address: "0xB0cbC7325EbC744CcB14211CA74C5a764928F273", network: "Celo Mainnet" };
-          case 10143: return { address: "0x653d41Fba630381aA44d8598a4b35Ce257924d65", network: "Monad Testnet" };
-          default: throw new Error(`Unsupported chain ID: ${chainId}`);
-        }
+      // Use centralized network configuration instead of hardcoded mappings
+      const networkConfig = getNetworkByChainId(chainId);
+      if (!networkConfig) {
+        throw new Error(`Unsupported chain ID: ${chainId}`);
+      }
+
+      const contractInfo = {
+        address: networkConfig.contractAddress,
+        network: networkConfig.name,
       };
 
-      const contractInfo = getContractInfo(chainId);
-      const pushups = exerciseType === "pushups" ? score : 0;
-      const squats = exerciseType === "squats" ? score : 0;
+      // Check if user can submit using unified wallet state
+      const canSubmitResult = canUserSubmit(wallet, contractInfo.address);
+      if (!canSubmitResult.canSubmit) {
+        throw new Error(canSubmitResult.reason || 'Cannot submit');
+      }
+      const pushups = exerciseType === 'pushups' ? score : 0;
+      const squats = exerciseType === 'squats' ? score : 0;
 
       // Submit using unified logic
       const result = await submitScore(
@@ -88,25 +81,26 @@ export default function SubmitScoreWithWagmi({
         contractInfo.network,
         address,
         {
+          chainId,
           skipSubAccountCheck: forceDirectSubmission,
-          providedEthereumProvider: ethereumProvider
+          providedEthereumProvider: ethereumProvider,
         }
       );
 
       if (result.success) {
-        setSubmissionStatus("success");
+        setSubmissionStatus('success');
       } else {
-        setSubmissionStatus("error");
+        setSubmissionStatus('error');
       }
 
       showSubmissionResult(result);
     } catch (error) {
-      console.error("Submission error:", error);
-      setSubmissionStatus("error");
+      console.error('Submission error:', error);
+      setSubmissionStatus('error');
       showSubmissionResult({
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        processingType: "direct",
+        error: error instanceof Error ? error.message : 'Unknown error',
+        processingType: 'direct',
       });
     } finally {
       setIsLoading(false);
@@ -124,17 +118,25 @@ export default function SubmitScoreWithWagmi({
         <button
           onClick={() => setConfirmStep(true)}
           disabled={isLoading}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
+          style={{
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: '12px',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+          }}
         >
           Submit Score ({score} {exerciseType})
         </button>
       ) : (
         <div className="flex flex-col items-center space-y-4">
           <div className="text-center">
-            <p className="text-lg font-semibold text-white">
+            <p
+              className="text-lg font-semibold text-[#fcb131] mb-2"
+              style={{ fontFamily: "'Press Start 2P', monospace" }}
+            >
               Confirm Submission
             </p>
-            <p className="text-gray-200">
+            <p className="text-[#fcb131] opacity-80">
               Submit {score} {exerciseType} to the leaderboard?
             </p>
           </div>
@@ -143,20 +145,30 @@ export default function SubmitScoreWithWagmi({
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:from-green-700 hover:to-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-green-500 flex items-center space-x-2"
+              style={{
+                fontFamily: "'Press Start 2P', monospace",
+                fontSize: '10px',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+              }}
             >
               {isLoading && <Spinner />}
-              <span>{isLoading ? "Submitting..." : "Confirm"}</span>
+              <span>{isLoading ? 'Submitting...' : 'Confirm'}</span>
             </button>
 
             <button
               onClick={() => {
                 setConfirmStep(false);
                 setIsLoading(false);
-                setSubmissionStatus("idle");
+                setSubmissionStatus('idle');
               }}
               disabled={isLoading}
-              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-lg hover:from-red-700 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-red-500"
+              style={{
+                fontFamily: "'Press Start 2P', monospace",
+                fontSize: '10px',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+              }}
             >
               Cancel
             </button>

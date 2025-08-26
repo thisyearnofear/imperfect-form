@@ -1,9 +1,9 @@
 /**
  * Centralized service exports for better organization
+ * CONSOLIDATION: Simplified after removing ContractService and WalletService
  */
 
-export { ContractService, contractService } from './ContractService';
-export { WalletService, walletService } from './WalletService';
+export { walletDetectionService } from './WalletDetectionService';
 
 // Re-export types for convenience
 export type {
@@ -11,7 +11,4 @@ export type {
   ScoreSubmissionParams,
   ScoreSubmissionResult,
   UserScore,
-  ContractServiceState,
-  TransactionOptions,
-  ContractCallResult
 } from '../types/contracts';

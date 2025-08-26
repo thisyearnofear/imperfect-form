@@ -1,12 +1,12 @@
 /**
  * Ethers v6 Helper Utilities
- * 
+ *
  * Clean, modular utilities for ethers v6 operations
  * Maintains DRY principles and provides consistent interfaces
  * across the application for blockchain interactions.
  */
 
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -54,7 +54,7 @@ export function createBrowserProvider(ethereumProvider: EthereumProvider): ether
  * @returns Ethers JsonRpcProvider instance
  */
 export function createJsonRpcProvider(
-  rpcUrl: string, 
+  rpcUrl: string,
   networkInfo?: NetworkInfo
 ): ethers.JsonRpcProvider {
   return new ethers.JsonRpcProvider(rpcUrl, networkInfo);
@@ -65,9 +65,7 @@ export function createJsonRpcProvider(
  * @param provider - The ethers provider
  * @returns Network information
  */
-export async function getNetworkInfo(
-  provider: ethers.Provider
-): Promise<ethers.Network> {
+export async function getNetworkInfo(provider: ethers.Provider): Promise<ethers.Network> {
   return await provider.getNetwork();
 }
 
@@ -76,26 +74,31 @@ export async function getNetworkInfo(
 // =============================================================================
 
 /**
- * Estimate gas for a contract function call
+ * Estimate gas for a contract function call with buffer
+ * CONSOLIDATION: Single gas estimation utility with optimization
  * @param contract - The contract instance
  * @param functionName - The function name to call
  * @param args - Function arguments
  * @param options - Transaction options
- * @returns Estimated gas as bigint
+ * @param bufferPercent - Gas buffer percentage (default: 20%)
+ * @returns Estimated gas with buffer as bigint
  */
-export async function estimateGas(
+export async function estimateGasWithBuffer(
   contract: ethers.Contract,
   functionName: string,
   args: unknown[],
-  options: TransactionOptions = {}
+  options: TransactionOptions = {},
+  bufferPercent: number = 20
 ): Promise<bigint> {
   try {
     const gasEstimate = await contract[functionName].estimateGas(...args, options);
-    return gasEstimate;
+    // Add buffer to prevent out-of-gas errors
+    const buffer = BigInt(bufferPercent);
+    return (gasEstimate * (100n + buffer)) / 100n;
   } catch (error) {
     console.warn(`Gas estimation failed for ${functionName}:`, error);
-    // Return a reasonable default gas limit
-    return 500000n;
+    // Return a reasonable default gas limit with buffer
+    return 600000n; // 500k + 20% buffer
   }
 }
 
@@ -117,37 +120,37 @@ export function createTransactionOptions(
     case 10143: // Monad Testnet
       return {
         gasLimit: gasLimit * 2n,
-        gasPrice: ethers.parseUnits("50", "gwei"),
-        value: ethers.parseEther("0.001"), // Submission fee for Monad
+        gasPrice: ethers.parseUnits('50', 'gwei'),
+        value: ethers.parseEther('0.001'), // Submission fee for Monad
       };
 
     case 42220: // Celo Mainnet
     case 44787: // Celo Alfajores
       return {
         gasLimit: gasLimit * 3n,
-        gasPrice: ethers.parseUnits("30", "gwei"),
+        gasPrice: ethers.parseUnits('30', 'gwei'),
       };
 
     case 137: // Polygon Mainnet
     case 80002: // Polygon Amoy
       return {
         gasLimit: gasLimit * 2n,
-        maxPriorityFeePerGas: ethers.parseUnits("30", "gwei"),
-        maxFeePerGas: ethers.parseUnits("100", "gwei"),
+        maxPriorityFeePerGas: ethers.parseUnits('30', 'gwei'),
+        maxFeePerGas: ethers.parseUnits('100', 'gwei'),
       };
 
     case 8453: // Base Mainnet
     case 84532: // Base Sepolia
       return {
         gasLimit: gasLimit,
-        maxPriorityFeePerGas: ethers.parseUnits("1", "gwei"),
-        maxFeePerGas: ethers.parseUnits("20", "gwei"),
+        maxPriorityFeePerGas: ethers.parseUnits('1', 'gwei'),
+        maxFeePerGas: ethers.parseUnits('20', 'gwei'),
       };
 
     default:
       return {
         gasLimit: gasLimit,
-        gasPrice: ethers.parseUnits("20", "gwei"),
+        gasPrice: ethers.parseUnits('20', 'gwei'),
       };
   }
 }
@@ -212,6 +215,38 @@ export function createContract(
   signerOrProvider: ethers.Signer | ethers.Provider
 ): ethers.Contract {
   return new ethers.Contract(address, abi, signerOrProvider);
+}
+
+/**
+ * Create ethers provider from Ethereum provider
+ * CONSOLIDATION: Single provider creation utility
+ * @param ethereumProvider - The Ethereum provider (window.ethereum, etc.)
+ * @returns BrowserProvider instance
+ */
+export function createEthersProvider(ethereumProvider: unknown): ethers.BrowserProvider {
+  if (
+    !ethereumProvider ||
+    typeof ethereumProvider !== 'object' ||
+    !('request' in ethereumProvider)
+  ) {
+    throw new Error('Invalid Ethereum provider');
+  }
+  return new ethers.BrowserProvider(ethereumProvider as ethers.Eip1193Provider);
+}
+
+/**
+ * Get a signer from an Ethereum provider
+ * CONSOLIDATION: Combined provider creation and signer retrieval
+ * @param ethereumProvider - The Ethereum provider
+ * @param accountIndex - Account index (default: 0)
+ * @returns Signer instance
+ */
+export async function getSignerFromProvider(
+  ethereumProvider: unknown,
+  accountIndex: number = 0
+): Promise<ethers.Signer> {
+  const provider = createEthersProvider(ethereumProvider);
+  return await provider.getSigner(accountIndex);
 }
 
 /**
@@ -300,8 +335,10 @@ export function getErrorMessage(error: unknown): string {
  */
 export function isUserRejection(error: unknown): boolean {
   if (error instanceof Error) {
-    return error.message.toLowerCase().includes('user rejected') ||
-           error.message.toLowerCase().includes('user denied');
+    return (
+      error.message.toLowerCase().includes('user rejected') ||
+      error.message.toLowerCase().includes('user denied')
+    );
   }
   return false;
 }

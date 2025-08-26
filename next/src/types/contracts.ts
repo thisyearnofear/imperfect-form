@@ -32,25 +32,3 @@ export interface UserScore {
   totalScore?: number;
   lastUpdated?: Date;
 }
-
-export interface ContractServiceState {
-  isInitialized: boolean;
-  userAddress: string | null;
-  currentNetwork: NetworkConfig | null;
-  lastError: string | null;
-}
-
-export interface TransactionOptions {
-  gasLimit?: bigint;
-  gasPrice?: bigint;
-  maxFeePerGas?: bigint;
-  maxPriorityFeePerGas?: bigint;
-  value?: bigint;
-}
-
-export interface ContractCallResult<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  transactionHash?: string;
-}
