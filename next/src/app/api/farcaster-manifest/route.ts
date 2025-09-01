@@ -2,40 +2,42 @@ import { NextResponse } from 'next/server';
 
 // Farcaster Mini App Manifest
 const manifest = {
-  "accountAssociation": {
-    "header": "eyJmaWQiOjUyNTQsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg4QjAzQTJDMzY1YzI2MUFlQmU2ODQyMjREQkI2Qzk1OTJhQkNkRkIyIn0",
-    "payload": "eyJkb21haW4iOiJpbXBlcmZlY3Rmb3JtLmZ1biJ9",
-    "signature": "MHgyYWI5ZGQ1NTAxMTZlNDU5NGQ1OTQ5YTk3ZGY1YzhjNjRkNmQzZTdkNWQ2YzU3NDFiZDk2YjJkM2M1YTVhNTZmMjRkNmNmYWFmNGI5YzAxODNiOTdkNDJkMTAwM2MzMjhiMDliMmI1YmE5MTA4MjdmYWRhY2ZlMDhmMjM5NGZhMDFi"
+  accountAssociation: {
+    header:
+      'eyJmaWQiOjUyNTQsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg4QjAzQTJDMzY1YzI2MUFlQmU2ODQyMjREQkI2Qzk1OTJhQkNkRkIyIn0',
+    payload: 'eyJkb21haW4iOiJpbXBlcmZlY3Rmb3JtLmZ1biJ9',
+    signature:
+      'MHgyYWI5ZGQ1NTAxMTZlNDU5NGQ1OTQ5YTk3ZGY1YzhjNjRkNmQzZTdkNWQ2YzU3NDFiZDk2YjJkM2M1YTVhNTZmMjRkNmNmYWFmNGI5YzAxODNiOTdkNDJkMTAwM2MzMjhiMDliMmI1YmE5MTA4MjdmYWRhY2ZlMDhmMjM5NGZhMDFi',
   },
-  "frame": {
-    "version": "1",
-    "name": "Imperfect Form",
-    "iconUrl": "https://imperfectform.fun/icon.png",
-    "homeUrl": "https://imperfectform.fun",
-    "splashImageUrl": "https://imperfectform.fun/splash.png",
-    "splashBackgroundColor": "#000000",
-    "webhookUrl": "https://imperfectform.fun/api/miniapp/webhook",
-    "subtitle": "Onchain Olympians",
-    "description": "Track your fitness with real-time pose detection and compete onchain. Join the movement of decentralized fitness challenges and earn rewards for your workouts.",
-    "primaryCategory": "health-fitness",
-    "tags": ["fitness", "workout", "onchain", "pose-detection", "competition"],
-    "heroImageUrl": "https://imperfectform.fun/embed.png",
-    "tagline": "Onchain Fitness Revolution",
-    "ogTitle": "Imperfect Form Fitness",
-    "ogDescription": "Track your fitness with real-time pose detection and compete onchain",
-    "ogImageUrl": "https://imperfectform.fun/embed.png",
-    "requiredChains": [
-      "eip155:42220",
-      "eip155:137",
-      "eip155:8453"
+  frame: {
+    version: '1',
+    name: 'Imperfect Form',
+    iconUrl: 'https://imperfectform.fun/icon.png',
+    homeUrl: 'https://imperfectform.fun',
+    splashImageUrl: 'https://imperfectform.fun/splash.png',
+    splashBackgroundColor: '#000000',
+    webhookUrl: 'https://imperfectform.fun/api/miniapp/webhook',
+    subtitle: 'Onchain Olympians',
+    description:
+      'Track your fitness with real-time pose detection and compete onchain. Join the movement of decentralized fitness challenges and earn rewards for your workouts.',
+    primaryCategory: 'health-fitness',
+    tags: ['fitness', 'workout', 'onchain', 'pose-detection', 'competition'],
+    heroImageUrl: 'https://imperfectform.fun/embed.png',
+    tagline: 'Onchain Fitness Revolution',
+    ogTitle: 'Imperfect Form Fitness',
+    ogDescription: 'Track your fitness with real-time pose detection and compete onchain',
+    ogImageUrl: 'https://imperfectform.fun/embed.png',
+    requiredChains: ['eip155:42220', 'eip155:137', 'eip155:8453'],
+    requiredCapabilities: [
+      'wallet.getEthereumProvider',
+      'actions.ready',
+      'actions.composeCast',
+      'actions.addMiniApp',
     ],
-    "requiredCapabilities": [
-      "wallet.getEthereumProvider",
-      "actions.ready",
-      "actions.composeCast",
-      "actions.addMiniApp"
-    ]
-  }
+  },
+  baseBuilder: {
+    allowedAddresses: ['0x3D86Ff165D8bEb8594AE05653249116a6d1fF3f1'],
+  },
 };
 
 export async function GET() {
