@@ -245,8 +245,62 @@ export async function getSignerFromProvider(
   ethereumProvider: unknown,
   accountIndex: number = 0
 ): Promise<ethers.Signer> {
+  // Validate the provider before using it
+  if (
+    !ethereumProvider ||
+    typeof ethereumProvider !== 'object' ||
+    !('request' in ethereumProvider)
+  ) {
+    throw new Error('Invalid Ethereum provider. Please connect your wallet.');
+  }
+
   try {
     const provider = createEthersProvider(ethereumProvider);
+
+    // First, try to get accounts to verify the provider is working
+    try {
+      const accounts = await (ethereumProvider as EthereumProvider).request({
+        method: 'eth_accounts',
+      });
+
+      // If we get an empty response or invalid response, try enabling the provider
+      if (!accounts || !Array.isArray(accounts) || accounts.length === 0) {
+        // Try to request accounts (this might trigger a wallet connection prompt)
+        try {
+          const requestedAccounts = await (ethereumProvider as EthereumProvider).request({
+            method: 'eth_requestAccounts',
+          });
+
+          if (
+            !requestedAccounts ||
+            !Array.isArray(requestedAccounts) ||
+            requestedAccounts.length === 0
+          ) {
+            throw new Error('No accounts available. Please connect your wallet.');
+          }
+        } catch (requestError: any) {
+          // Handle user rejection
+          if (
+            requestError.message?.includes('user rejected') ||
+            requestError.message?.includes('User denied')
+          ) {
+            throw new Error('Wallet connection was rejected by user.');
+          }
+          // Re-throw other errors
+          throw requestError;
+        }
+      }
+    } catch (accountsError: any) {
+      // Handle user rejection
+      if (
+        accountsError.message?.includes('user rejected') ||
+        accountsError.message?.includes('User denied')
+      ) {
+        throw new Error('Wallet connection was rejected by user.');
+      }
+      // For other errors, continue as the provider might still work
+      console.warn('Account verification failed, but continuing:', accountsError);
+    }
 
     // Add defensive error handling for eth_accounts call
     try {
@@ -255,28 +309,11 @@ export async function getSignerFromProvider(
       // Handle the specific "Cannot read properties of undefined (reading 'error')" issue
       if (
         signerError.message &&
-        signerError.message.includes('Cannot read properties of undefined')
+        (signerError.message.includes('Cannot read properties of undefined') ||
+          signerError.message.includes('undefined is not an object'))
       ) {
         // This suggests the provider returned a malformed response
-        // Try to get accounts directly first to validate the provider
-        try {
-          const accounts = await (ethereumProvider as any).request({
-            method: 'eth_accounts',
-            params: [],
-          });
-
-          if (!accounts || !Array.isArray(accounts) || accounts.length === 0) {
-            throw new Error('No accounts available. Please connect your wallet first.');
-          }
-
-          // If accounts are available, try getSigner again with a small delay
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          return await provider.getSigner(accountIndex);
-        } catch (accountsError) {
-          throw new Error(
-            'Failed to access wallet accounts. Please reconnect your wallet and try again.'
-          );
-        }
+        throw new Error('Failed to access wallet. Please reconnect your wallet and try again.');
       }
 
       // Re-throw other signer errors
@@ -286,15 +323,15 @@ export async function getSignerFromProvider(
     console.error('getSignerFromProvider error:', error);
 
     // Provide user-friendly error messages
-    if (error.message.includes('Invalid Ethereum provider')) {
+    if (error.message?.includes('Invalid Ethereum provider')) {
       throw new Error('Wallet provider is not available. Please connect your wallet.');
     }
 
-    if (error.message.includes('user rejected') || error.message.includes('User denied')) {
+    if (error.message?.includes('user rejected') || error.message?.includes('User denied')) {
       throw new Error('Connection was rejected by user.');
     }
 
-    if (error.message.includes('eth_accounts')) {
+    if (error.message?.includes('eth_accounts') || error.message?.includes('eth_requestAccounts')) {
       throw new Error(
         'Unable to access wallet accounts. Please reconnect your wallet and try again.'
       );

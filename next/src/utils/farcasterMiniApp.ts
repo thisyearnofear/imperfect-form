@@ -170,6 +170,16 @@ export async function getEthereumProvider(): Promise<unknown> {
     return windowEthereum;
   }
 
+  // Additional fallback: check for other common provider names
+  const otherProviders = [(window as any).web3?.currentProvider, (window as any).web3Provider];
+
+  for (const provider of otherProviders) {
+    if (validateProvider(provider)) {
+      logger.info('🎯 Using alternative provider');
+      return provider;
+    }
+  }
+
   logger.warn('🎯 No valid Ethereum provider found');
   return null;
 }

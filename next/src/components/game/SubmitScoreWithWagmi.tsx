@@ -51,6 +51,11 @@ export default function SubmitScoreWithWagmi({
     setSubmissionStatus('submitting');
 
     try {
+      // Validate wallet connection before proceeding
+      if (!wallet.isConnected) {
+        throw new Error('Wallet is not connected. Please connect your wallet and try again.');
+      }
+
       // Get the appropriate Ethereum provider (handles Farcaster Mini App detection)
       const ethereumProvider = await getEthereumProvider();
 
@@ -70,6 +75,12 @@ export default function SubmitScoreWithWagmi({
       if (!canSubmitResult.canSubmit) {
         throw new Error(canSubmitResult.reason || 'Cannot submit');
       }
+
+      // Additional validation: check if we have a valid provider
+      if (!ethereumProvider) {
+        throw new Error('No wallet provider found. Please connect your wallet and try again.');
+      }
+
       const pushups = exerciseType === 'pushups' ? score : 0;
       const squats = exerciseType === 'squats' ? score : 0;
 
@@ -97,9 +108,24 @@ export default function SubmitScoreWithWagmi({
     } catch (error) {
       console.error('Submission error:', error);
       setSubmissionStatus('error');
+
+      // More user-friendly error messages
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        if (error.message.includes('user rejected') || error.message.includes('User denied')) {
+          errorMessage = 'Transaction was rejected. Please confirm the transaction in your wallet.';
+        } else if (error.message.includes('insufficient funds')) {
+          errorMessage = 'Insufficient funds for transaction. Please check your wallet balance.';
+        } else if (error.message.includes('network') || error.message.includes('chain')) {
+          errorMessage = 'Network error. Please check your wallet network settings.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       showSubmissionResult({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
         processingType: 'direct',
       });
     } finally {

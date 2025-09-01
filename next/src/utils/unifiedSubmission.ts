@@ -77,12 +77,23 @@ export async function submitScore(
       throw new Error('No Ethereum provider available. Please connect your wallet and try again.');
     }
 
+    // Enhanced provider validation
+    if (typeof ethereumProvider !== 'object' || !('request' in ethereumProvider)) {
+      throw new Error('Invalid Ethereum provider. Please reconnect your wallet and try again.');
+    }
+
     const signer = await getSignerFromProvider(ethereumProvider);
 
     // Verify the signer address matches connected address
     const signerAddress = await signer.getAddress();
     if (signerAddress.toLowerCase() !== connectedAddress.toLowerCase()) {
       throw new Error('Signer address does not match connected address');
+    }
+
+    // Additional check: verify we're on the correct network
+    const network = await signer.provider?.getNetwork();
+    if (network && network.chainId !== BigInt(networkConfig.chainId)) {
+      throw new Error(`Please switch to ${networkConfig.name} network to submit your score`);
     }
 
     // Create contract instance
@@ -131,7 +142,22 @@ export async function submitScore(
     }
   } catch (error) {
     console.error('Score submission failed:', error);
-    toast.error('Submission failed. Please try again.', { id: 'submission' });
+
+    // More specific error messages for common issues
+    let errorMessage = 'Submission failed. Please try again.';
+    if (error instanceof Error) {
+      if (error.message.includes('user rejected') || error.message.includes('User denied')) {
+        errorMessage = 'Transaction was rejected. Please confirm the transaction in your wallet.';
+      } else if (error.message.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds for transaction. Please check your wallet balance.';
+      } else if (error.message.includes('network') || error.message.includes('chain')) {
+        errorMessage = 'Network error. Please check your wallet network settings.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
+    toast.error(errorMessage, { id: 'submission' });
 
     return {
       success: false,
