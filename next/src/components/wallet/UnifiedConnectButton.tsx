@@ -1,22 +1,27 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
-import {
-  usePlatform,
-  useWallet,
-  usePlatformFeatures,
-} from "@/contexts/PlatformContext";
-import { Spinner } from "@/components/ui";
-import useDeviceDetect from "@/hooks/useDeviceDetect";
-import { getBestDisplayName } from "@/utils/web3bio";
-import { useClientOnly } from "@/hooks/useClientOnly";
+import React, { useState, useEffect } from 'react';
+import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
+import { useRobustThemeSwitching } from '@/hooks/useRobustThemeSwitching';
+import { usePlatform, useWallet, usePlatformFeatures } from '@/contexts/PlatformContext';
+import { Spinner } from '@/components/ui';
+import useDeviceDetect from '@/hooks/useDeviceDetect';
+import { getBestDisplayName } from '@/utils/web3bio';
+import { useClientOnly } from '@/hooks/useClientOnly';
 
 interface UnifiedConnectButtonProps {
   onConnected?: (address: string) => void;
+  onWalletConnected?: (address: string, source: 'farcaster' | 'external') => void;
+  onWalletDisconnected?: () => void;
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
   showProfileWhenConnected?: boolean;
+  // New props for mode management
+  currentMode?: 'instructions' | 'settings' | 'profile';
+  onModeChange?: (mode: 'instructions' | 'settings' | 'profile') => void;
+  workoutStarted?: boolean;
+  // Style variants for different use cases
+  variant?: 'default' | 'compact' | 'farcaster' | 'universal';
 }
 
 /**
@@ -25,36 +30,32 @@ interface UnifiedConnectButtonProps {
  */
 export default function UnifiedConnectButton({
   onConnected,
-  className = "",
-  size = "md",
+  className = '',
+  size = 'md',
   showProfileWhenConnected = true,
 }: UnifiedConnectButtonProps) {
   const { platform, user, isReady } = usePlatform();
-  const { isConnected, address, chainId, isConnecting, connect, disconnect } =
-    useWallet();
+  const { isConnected, address, chainId, isConnecting, connect, disconnect } = useWallet();
   const { canSwitchChains, preferredChains } = usePlatformFeatures();
+  const { switchToChain, isLoading: isChainSwitching } = useRobustThemeSwitching();
 
   const { isMobile } = useDeviceDetect();
   const hasMounted = useClientOnly();
-  const [resolvedDisplayName, setResolvedDisplayName] = useState<
-    string | undefined
-  >();
+  const [resolvedDisplayName, setResolvedDisplayName] = useState<string | undefined>();
   const [showNetworkSwitcher, setShowNetworkSwitcher] = useState(false);
   // Get network name from chainId using centralized config
   const getNetworkName = (id: number | null) => {
-    if (!id) return "Unknown";
+    if (!id) return 'Unknown';
     for (const [, config] of Object.entries(chainConfigs)) {
       if (config.id === id) {
         return config.name;
       }
     }
-    return "Unknown";
+    return 'Unknown';
   };
 
   const networkName = getNetworkName(chainId);
-  const isOnPreferredChain = chainId
-    ? preferredChains.includes(chainId)
-    : false;
+  const isOnPreferredChain = chainId ? preferredChains.includes(chainId) : false;
 
   // Resolve display name
   useEffect(() => {
@@ -73,9 +74,7 @@ export default function UnifiedConnectButton({
 
         // Try to resolve ENS/other names
         const resolved = await getBestDisplayName(address);
-        setResolvedDisplayName(
-          resolved || `${address.slice(0, 6)}...${address.slice(-4)}`
-        );
+        setResolvedDisplayName(resolved || `${address.slice(0, 6)}...${address.slice(-4)}`);
       } catch {
         setResolvedDisplayName(`${address.slice(0, 6)}...${address.slice(-4)}`);
       }
@@ -104,33 +103,31 @@ export default function UnifiedConnectButton({
 
   // Size classes (add responsive mobile-first)
   const sizeClasses = {
-    sm: "py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl",
-    md: "py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl",
-    lg: "py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl",
+    sm: 'py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl',
+    md: 'py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl',
+    lg: 'py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl',
   };
 
   // Platform-specific styling
   const getPlatformStyles = () => {
     switch (platform) {
-      case "farcaster":
-        return "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700";
-      case "mobile":
-        return "bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700";
-      case "desktop":
-        return "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700";
-      case "pwa":
-        return "bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700";
+      case 'farcaster':
+        return 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700';
+      case 'mobile':
+        return 'bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700';
+      case 'desktop':
+        return 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700';
+      case 'pwa':
+        return 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700';
       default:
-        return "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800";
+        return 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800';
     }
   };
 
   // Don't render until mounted to prevent hydration issues
   if (!hasMounted || !isReady) {
     return (
-      <div
-        className={`${sizeClasses[size]} ${className} bg-gray-300 animate-pulse rounded-lg`}
-      >
+      <div className={`${sizeClasses[size]} ${className} bg-gray-300 animate-pulse rounded-lg`}>
         <div className="w-24 h-6 bg-gray-400 rounded"></div>
       </div>
     );
@@ -149,27 +146,18 @@ export default function UnifiedConnectButton({
             transition-all duration-200 transform hover:scale-105
             shadow-lg hover:shadow-xl
             flex items-center space-x-2
-            ${!isOnPreferredChain ? "ring-2 ring-yellow-400" : ""}
+            ${!isOnPreferredChain ? 'ring-2 ring-yellow-400' : ''}
           `}
         >
           {/* Platform indicator */}
           <div className="flex items-center space-x-2">
-            {platform === "farcaster" && (
-              <div className="w-2 h-2 bg-purple-300 rounded-full"></div>
-            )}
-            {platform === "mobile" && (
-              <div className="w-2 h-2 bg-green-300 rounded-full"></div>
-            )}
-            {platform === "desktop" && (
-              <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
-            )}
-            {platform === "pwa" && (
-              <div className="w-2 h-2 bg-orange-300 rounded-full"></div>
-            )}
+            {platform === 'farcaster' && <div className="w-2 h-2 bg-purple-300 rounded-full"></div>}
+            {platform === 'mobile' && <div className="w-2 h-2 bg-green-300 rounded-full"></div>}
+            {platform === 'desktop' && <div className="w-2 h-2 bg-blue-300 rounded-full"></div>}
+            {platform === 'pwa' && <div className="w-2 h-2 bg-orange-300 rounded-full"></div>}
 
             <span className="truncate max-w-32">
-              {resolvedDisplayName ||
-                `${address.slice(0, 6)}...${address.slice(-4)}`}
+              {resolvedDisplayName || `${address.slice(0, 6)}...${address.slice(-4)}`}
             </span>
           </div>
 
@@ -178,19 +166,17 @@ export default function UnifiedConnectButton({
             <div
               className={`w-2 h-2 rounded-full ${
                 chainId === chainConfigs[SupportedChain.CELO].id
-                  ? "bg-green-400"
+                  ? 'bg-green-400'
                   : chainId === chainConfigs[SupportedChain.POLYGON].id
-                  ? "bg-purple-400"
-                  : chainId === chainConfigs[SupportedChain.BASE].id
-                  ? "bg-blue-400"
-                  : chainId === chainConfigs[SupportedChain.MONAD].id
-                  ? "bg-yellow-400"
-                  : "bg-gray-400"
+                    ? 'bg-purple-400'
+                    : chainId === chainConfigs[SupportedChain.BASE].id
+                      ? 'bg-blue-400'
+                      : chainId === chainConfigs[SupportedChain.MONAD].id
+                        ? 'bg-yellow-400'
+                        : 'bg-gray-400'
               }`}
             ></div>
-            {!isMobile && (
-              <span className="text-xs opacity-75">{networkName}</span>
-            )}
+            {!isMobile && <span className="text-xs opacity-75">{networkName}</span>}
           </div>
         </button>
 
@@ -205,38 +191,38 @@ export default function UnifiedConnectButton({
               {preferredChains.map((chain) => (
                 <button
                   key={chain}
-                  onClick={() => {
-                    // TODO: Implement chain switching
+                  onClick={async () => {
                     setShowNetworkSwitcher(false);
+                    // Use the robust chain switching system
+                    await switchToChain(chain);
                   }}
+                  disabled={isChainSwitching}
                   className={`
                     w-full text-left px-3 py-2 rounded-md text-sm
                     hover:bg-gray-100 dark:hover:bg-gray-700
                     flex items-center space-x-2
                     ${
                       chainId === chain
-                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                        : ""
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                        : ''
                     }
                   `}
                 >
                   <div
                     className={`w-2 h-2 rounded-full ${
                       chain === chainConfigs[SupportedChain.CELO].id
-                        ? "bg-green-400"
+                        ? 'bg-green-400'
                         : chain === chainConfigs[SupportedChain.POLYGON].id
-                        ? "bg-purple-400"
-                        : chain === chainConfigs[SupportedChain.BASE].id
-                        ? "bg-blue-400"
-                        : chain === chainConfigs[SupportedChain.MONAD].id
-                        ? "bg-yellow-400"
-                        : "bg-gray-400"
+                          ? 'bg-purple-400'
+                          : chain === chainConfigs[SupportedChain.BASE].id
+                            ? 'bg-blue-400'
+                            : chain === chainConfigs[SupportedChain.MONAD].id
+                              ? 'bg-yellow-400'
+                              : 'bg-gray-400'
                     }`}
                   ></div>
                   <span>{getNetworkName(chain)}</span>
-                  {chainId === chain && (
-                    <span className="ml-auto text-xs">✓</span>
-                  )}
+                  {chainId === chain && <span className="ml-auto text-xs">✓</span>}
                 </button>
               ))}
 
@@ -280,17 +266,15 @@ export default function UnifiedConnectButton({
       ) : (
         <>
           {/* Platform-specific icon */}
-          {platform === "farcaster" && <span>🎯</span>}
-          {platform === "mobile" && <span>📱</span>}
-          {platform === "desktop" && <span>💻</span>}
-          {platform === "pwa" && <span>🚀</span>}
+          {platform === 'farcaster' && <span>🎯</span>}
+          {platform === 'mobile' && <span>📱</span>}
+          {platform === 'desktop' && <span>💻</span>}
+          {platform === 'pwa' && <span>🚀</span>}
 
           {/* Responsive connect text */}
-          <span className="sm:hidden">
-            Connect
-          </span>
+          <span className="sm:hidden">Connect</span>
           <span className="hidden sm:inline">
-            Connect {platform === "farcaster" ? "Farcaster" : "Wallet"}
+            Connect {platform === 'farcaster' ? 'Farcaster' : 'Wallet'}
           </span>
         </>
       )}

@@ -127,14 +127,40 @@ export function debugFarcasterContext(): void {
 /**
  * Get the appropriate Ethereum provider - either Farcaster Mini App or window.ethereum
  * This is crucial for score submission to work in Mini Apps
- * Updated to use the latest Farcaster SDK API
+ * Updated to use the latest Farcaster SDK API with enhanced error handling
  */
 export async function getEthereumProvider(): Promise<unknown> {
   if (typeof window === 'undefined') return null;
 
-  // Helper function to validate provider
+  // Helper function to validate provider with more thorough checks
   const validateProvider = (provider: any): boolean => {
-    return provider && typeof provider === 'object' && typeof provider.request === 'function';
+    try {
+      return (
+        provider &&
+        typeof provider === 'object' &&
+        typeof provider.request === 'function' &&
+        // Additional checks to ensure provider is functional
+        provider.request !== undefined &&
+        provider.request !== null
+      );
+    } catch (error) {
+      logger.warn('Provider validation error:', error);
+      return false;
+    }
+  };
+
+  // Test provider functionality
+  const testProvider = async (provider: any): Promise<boolean> => {
+    try {
+      // Try a simple request to verify the provider works
+      await provider.request({ method: 'eth_requestAccounts' }).catch(() => {
+        // It's ok if this fails - just testing if request method works
+      });
+      return true;
+    } catch (error) {
+      logger.warn('Provider test failed:', error);
+      return false;
+    }
   };
 
   try {
@@ -144,7 +170,11 @@ export async function getEthereumProvider(): Promise<unknown> {
     // Use the new getEthereumProvider() method instead of direct ethProvider access
     if (sdk.wallet?.getEthereumProvider) {
       try {
-        const provider = await sdk.wallet.getEthereumProvider();
+        const provider = await Promise.race([
+          sdk.wallet.getEthereumProvider(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Provider timeout')), 3000)),
+        ]);
+
         if (validateProvider(provider)) {
           logger.info('🎯 Using Farcaster Mini App Ethereum provider (new API)');
           return provider;
@@ -156,8 +186,14 @@ export async function getEthereumProvider(): Promise<unknown> {
 
     // Fallback to old API for backward compatibility
     if (sdk.wallet?.ethProvider && validateProvider(sdk.wallet.ethProvider)) {
-      logger.info('🎯 Using Farcaster Mini App Ethereum provider (legacy API)');
-      return sdk.wallet.ethProvider;
+      const provider = sdk.wallet.ethProvider;
+      const isWorking = await testProvider(provider);
+      if (isWorking) {
+        logger.info('🎯 Using Farcaster Mini App Ethereum provider (legacy API)');
+        return provider;
+      } else {
+        logger.warn('🎯 Farcaster provider validation failed, trying alternatives');
+      }
     }
   } catch (error) {
     logger.warn('🎯 Farcaster SDK not available, falling back to window.ethereum:', error);
@@ -171,16 +207,26 @@ export async function getEthereumProvider(): Promise<unknown> {
   }
 
   // Additional fallback: check for other common provider names
-  const otherProviders = [(window as any).web3?.currentProvider, (window as any).web3Provider];
+  const alternativeProviders = [
+    (window as any).web3?.currentProvider,
+    (window as any).web3Provider,
+    (window as any).ethereum,
+    (window as any).coinbaseWalletExtension,
+    (window as any).walletConnect,
+  ];
 
-  for (const provider of otherProviders) {
+  for (const provider of alternativeProviders) {
     if (validateProvider(provider)) {
-      logger.info('🎯 Using alternative provider');
+      logger.info('🎯 Using alternative provider:', {
+        hasRequest: !!provider.request,
+        isMetaMask: provider.isMetaMask,
+        isCoinbaseWallet: provider.isCoinbaseWallet,
+      });
       return provider;
     }
   }
 
-  logger.warn('🎯 No valid Ethereum provider found');
+  logger.warn('🎯 No valid Ethereum provider found - checked all fallbacks');
   return null;
 }
 

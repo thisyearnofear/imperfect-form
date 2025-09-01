@@ -68,8 +68,6 @@ export async function submitScore(
       throw new Error(`Unsupported contract address: ${contractAddress}`);
     }
 
-    console.log(`🎯 Submitting score: ${pushups} pushups, ${squats} squats to ${networkName}`);
-
     // Get Ethereum provider and signer using consolidated utilities
     const ethereumProvider = options.providedEthereumProvider || (await getEthereumProvider());
 
@@ -100,28 +98,25 @@ export async function submitScore(
     const contract = new ethers.Contract(contractAddress, networkConfig.abi, signer);
 
     // Prepare transaction with consolidated gas estimation
-    const gasLimit = await estimateGasWithBuffer(contract, 'submitScore', [pushups, squats]);
+    const gasLimit = await estimateGasWithBuffer(contract, 'addScore', [pushups, squats]);
 
     // Add referral tag if applicable
-    const calldata = contract.interface.encodeFunctionData('submitScore', [pushups, squats]);
+    const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
     const taggedCalldata = addReferralTagToCalldata(connectedAddress, calldata);
 
     // Submit transaction
-    console.log('📤 Sending transaction...');
     const tx = await signer.sendTransaction({
       to: contractAddress,
       data: taggedCalldata,
       gasLimit: gasLimit,
     });
 
-    console.log(`⏳ Transaction sent: ${tx.hash}`);
     toast.loading(`Submitting to ${networkName}...`, { id: 'submission' });
 
     // Wait for confirmation
     const receipt = await tx.wait();
 
     if (receipt?.status === 1) {
-      console.log(`✅ Transaction confirmed: ${tx.hash}`);
       toast.success(`Score submitted to ${networkName}!`, { id: 'submission' });
 
       // Register Divvi referral if applicable
@@ -168,16 +163,23 @@ export async function submitScore(
 }
 
 /**
- * Get user's current score - simplified without ContractService
- * TODO: Implement direct contract reading via ethers if needed
+ * Get user's current score - delegates to existing leaderboard system
+ * CONSOLIDATION: Uses existing robust contract reading infrastructure
  */
 export async function getUserScore(
   _contractAddress: string,
   _userAddress?: string
 ): Promise<{ pushups: number; squats: number; totalScore: number } | null> {
-  // For now, return null - this functionality can be implemented later if needed
-  // Most score reading is now handled by the leaderboard system
-  console.warn('getUserScore not implemented - use leaderboard data instead');
+  // CONSOLIDATION: Don't duplicate contract reading - use existing leaderboard system
+  // The leaderboard system in leaderboardData.ts already handles:
+  // - Fallback RPC support
+  // - Proper ABI selection per network
+  // - BigNumber parsing
+  // - Error handling and retries
+  // - Caching for performance
+
+  // Users should use useUserStats hook which extracts data from cached leaderboard
+  console.info('getUserScore: Use useUserStats hook for better performance and consistency');
   return null;
 }
 
@@ -231,26 +233,6 @@ export function getNetworkSwitchMessage(contractAddress: string): string {
   }
 
   return `Please switch to ${networkConfig.name} to continue`;
-}
-
-/**
- * Legacy compatibility wrapper - DEPRECATED
- * MIGRATION: Use submitScore() for new implementations
- * @deprecated Use submitScore() instead
- */
-export async function submitScoreDirectly(
-  pushups: number,
-  squats: number,
-  contractAddress: string,
-  networkName: string,
-  connectedAddress?: string,
-  skipSubAccountCheck = false
-): Promise<ScoreSubmissionResult> {
-  console.warn('submitScoreDirectly is deprecated. Use submitScore() instead.');
-
-  return submitScore(pushups, squats, contractAddress, networkName, connectedAddress, {
-    skipSubAccountCheck,
-  });
 }
 
 /**

@@ -1,10 +1,7 @@
-// Simplified wallet exports - only what we actually need for the universal system
-export { default as UniversalConnectButton } from './UniversalConnectButton';
+// Unified wallet system - single source of truth
+export { default as UnifiedConnectButton } from './UnifiedConnectButton';
 
-// Keep Farcaster integration for mini app support
-export { FarcasterAwareWalletButton } from './FarcasterAwareWalletButton';
-
-// Legacy stubs to prevent import errors from old components
+// Legacy compatibility exports - all redirect to UnifiedConnectButton
 export {
   WalletButton,
   SignatureWalletButton,
@@ -14,5 +11,10 @@ export {
   FallbackConnectButton,
   ConnectWallet,
   ThirdwebWrapper,
-  // Note: useWalletProvider and useNetwork are now available from @/components/providers
+  useWalletProvider,
+  useNetwork,
 } from './LegacyStubs';
+
+// Re-export unified as all previous button names for backwards compatibility
+export { default as UniversalConnectButton } from './UnifiedConnectButton';
+export { default as FarcasterAwareWalletButton } from './UnifiedConnectButton';

@@ -3,7 +3,7 @@
  * Reuses the same data source as the leaderboard for consistency
  */
 
-import { Score } from "@/types";
+import { Score } from '@/types';
 
 export interface UserStats {
   totalSessions: number;
@@ -45,8 +45,14 @@ export function extractUserStats(
   const normalizedAddress = userAddress.toLowerCase();
 
   console.log(`🔍 Looking for user stats for address: ${normalizedAddress}`);
-  console.log(`📋 Available addresses in pushup leaderboard:`, pushupLeaderboard.map(s => s.user.toLowerCase()));
-  console.log(`📋 Available addresses in squat leaderboard:`, squatLeaderboard.map(s => s.user.toLowerCase()));
+  console.log(
+    `📋 Available addresses in pushup leaderboard:`,
+    pushupLeaderboard.map((s) => s.user.toLowerCase())
+  );
+  console.log(
+    `📋 Available addresses in squat leaderboard:`,
+    squatLeaderboard.map((s) => s.user.toLowerCase())
+  );
 
   // Find user's scores across all networks
   const userPushupScores = pushupLeaderboard.filter(
@@ -57,13 +63,11 @@ export function extractUserStats(
   );
 
   // Calculate best scores across all chains
-  const bestPushups = userPushupScores.length > 0
-    ? Math.max(...userPushupScores.map(s => s.score))
-    : 0;
+  const bestPushups =
+    userPushupScores.length > 0 ? Math.max(...userPushupScores.map((s) => s.score)) : 0;
 
-  const bestSquats = userSquatScores.length > 0
-    ? Math.max(...userSquatScores.map(s => s.score))
-    : 0;
+  const bestSquats =
+    userSquatScores.length > 0 ? Math.max(...userSquatScores.map((s) => s.score)) : 0;
 
   // Calculate total sessions (count unique workout submissions)
   // Each entry represents a workout session, so total unique entries
@@ -71,17 +75,15 @@ export function extractUserStats(
   const totalSessions = allUserScores.length;
 
   console.log(`📊 User ${userAddress} stats:`, {
-    userPushupScores: userPushupScores.map(s => `${s.score} on ${s.network}`),
-    userSquatScores: userSquatScores.map(s => `${s.score} on ${s.network}`),
+    userPushupScores: userPushupScores.map((s) => `${s.score} on ${s.network}`),
+    userSquatScores: userSquatScores.map((s) => `${s.score} on ${s.network}`),
     bestPushups,
     bestSquats,
-    totalSessions
+    totalSessions,
   });
 
   // Get active chains
-  const activeChains = Array.from(
-    new Set(allUserScores.map(score => score.network))
-  );
+  const activeChains = Array.from(new Set(allUserScores.map((score) => score.network)));
 
   // Calculate total score (best pushups + best squats)
   const totalScore = bestPushups + bestSquats;
@@ -89,7 +91,7 @@ export function extractUserStats(
   // Calculate rankings based on best scores
   // Group by user and get their best scores for ranking
   const pushupsByUser = new Map<string, number>();
-  pushupLeaderboard.forEach(score => {
+  pushupLeaderboard.forEach((score) => {
     const addr = score.user.toLowerCase();
     const currentBest = pushupsByUser.get(addr) || 0;
     if (score.score > currentBest) {
@@ -98,7 +100,7 @@ export function extractUserStats(
   });
 
   const squatsByUser = new Map<string, number>();
-  squatLeaderboard.forEach(score => {
+  squatLeaderboard.forEach((score) => {
     const addr = score.user.toLowerCase();
     const currentBest = squatsByUser.get(addr) || 0;
     if (score.score > currentBest) {
@@ -107,28 +109,29 @@ export function extractUserStats(
   });
 
   // Calculate rankings based on best scores
-  const pushupsRank = bestPushups > 0
-    ? Array.from(pushupsByUser.entries())
-        .sort((a, b) => b[1] - a[1])
-        .findIndex(([addr]) => addr === normalizedAddress) + 1
-    : null;
+  const pushupsRank =
+    bestPushups > 0
+      ? Array.from(pushupsByUser.entries())
+          .sort((a, b) => b[1] - a[1])
+          .findIndex(([addr]) => addr === normalizedAddress) + 1
+      : null;
 
-  const squatsRank = bestSquats > 0
-    ? Array.from(squatsByUser.entries())
-        .sort((a, b) => b[1] - a[1])
-        .findIndex(([addr]) => addr === normalizedAddress) + 1
-    : null;
+  const squatsRank =
+    bestSquats > 0
+      ? Array.from(squatsByUser.entries())
+          .sort((a, b) => b[1] - a[1])
+          .findIndex(([addr]) => addr === normalizedAddress) + 1
+      : null;
 
   console.log(`🏆 User rankings:`, {
     pushupsRank: pushupsRank ? `#${pushupsRank}` : 'N/A',
     squatsRank: squatsRank ? `#${squatsRank}` : 'N/A',
     bestPushups,
-    bestSquats
+    bestSquats,
   });
 
-  // TODO: Calculate streak from workout history
-  // For now, estimate based on number of sessions
-  const currentStreak = Math.min(totalSessions, 7); // Cap at 7 days for now
+  // Calculate streak from workout history using timestamps
+  const currentStreak = calculateWorkoutStreak(allUserScores);
 
   return {
     totalSessions,
@@ -140,6 +143,73 @@ export function extractUserStats(
     pushupsRank,
     squatsRank,
   };
+}
+
+/**
+ * Calculate current workout streak based on timestamps
+ * ENHANCEMENT: Proper streak calculation from workout history
+ * FALLBACK: Returns estimation if timestamps not available
+ */
+function calculateWorkoutStreak(userScores: Score[]): number {
+  if (userScores.length === 0) return 0;
+
+  // Check if timestamps are available
+  const scoresWithTimestamps = userScores.filter(
+    (score) => score.timestamp != null && score.timestamp > 0
+  );
+
+  if (scoresWithTimestamps.length === 0) {
+    // Fallback to original estimation logic if no timestamps
+    return Math.min(userScores.length, 7); // Estimate based on total sessions, cap at 7
+  }
+
+  // Sort scores by timestamp (newest first)
+  const sortedScores = scoresWithTimestamps.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  // Get unique workout days (in YYYY-MM-DD format)
+  const workoutDays = new Set<string>();
+  sortedScores.forEach((score) => {
+    if (score.timestamp) {
+      const date = new Date(score.timestamp * 1000);
+      const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      workoutDays.add(dayKey);
+    }
+  });
+
+  const uniqueDays = Array.from(workoutDays).sort().reverse(); // Most recent first
+
+  if (uniqueDays.length === 0) return Math.min(userScores.length, 7); // Fallback
+
+  // Check if the most recent workout was today or yesterday
+  const today = new Date();
+  const todayKey = today.toISOString().split('T')[0];
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  const yesterdayKey = yesterday.toISOString().split('T')[0];
+
+  const mostRecentDay = uniqueDays[0];
+
+  // If the most recent workout isn't today or yesterday, streak is 0
+  if (mostRecentDay !== todayKey && mostRecentDay !== yesterdayKey) {
+    return 0;
+  }
+
+  // Calculate consecutive days
+  let streak = 1;
+  let currentDate = new Date(mostRecentDay);
+
+  for (let i = 1; i < uniqueDays.length; i++) {
+    const previousDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+    const expectedDayKey = previousDate.toISOString().split('T')[0];
+
+    if (uniqueDays[i] === expectedDayKey) {
+      streak++;
+      currentDate = previousDate;
+    } else {
+      break;
+    }
+  }
+
+  return Math.min(streak, 30); // Cap at 30 days for reasonable limits
 }
 
 /**
@@ -164,14 +234,16 @@ export function formatUserStatsForProfile(stats: UserStats) {
 
   return {
     workouts: `${totalSessions} session${totalSessions !== 1 ? 's' : ''}`,
-    bestScore: bestScore > 0
-      ? `${bestScore} ${bestExercise.slice(0, -1)}${bestScore !== 1 ? 's' : ''}`
-      : 'No workouts',
+    bestScore:
+      bestScore > 0
+        ? `${bestScore} ${bestExercise.slice(0, -1)}${bestScore !== 1 ? 's' : ''}`
+        : 'No workouts',
     streak: `${currentStreak} day${currentStreak !== 1 ? 's' : ''}`,
-    summary: totalSessions > 0 && bestRank
-      ? `Rank #${bestRank} • ${stats.activeChains.length} chain${stats.activeChains.length !== 1 ? 's' : ''}`
-      : totalSessions > 0
-        ? `${stats.activeChains.length} chain${stats.activeChains.length !== 1 ? 's' : ''} active`
-        : 'Start your first workout!'
+    summary:
+      totalSessions > 0 && bestRank
+        ? `Rank #${bestRank} • ${stats.activeChains.length} chain${stats.activeChains.length !== 1 ? 's' : ''}`
+        : totalSessions > 0
+          ? `${stats.activeChains.length} chain${stats.activeChains.length !== 1 ? 's' : ''} active`
+          : 'Start your first workout!',
   };
 }

@@ -306,18 +306,39 @@ export async function getSignerFromProvider(
     try {
       return await provider.getSigner(accountIndex);
     } catch (signerError: any) {
+      console.error('getSigner error details:', {
+        error: signerError,
+        message: signerError?.message,
+        code: signerError?.code,
+        stack: signerError?.stack,
+      });
+
       // Handle the specific "Cannot read properties of undefined (reading 'error')" issue
       if (
         signerError.message &&
         (signerError.message.includes('Cannot read properties of undefined') ||
-          signerError.message.includes('undefined is not an object'))
+          signerError.message.includes('undefined is not an object') ||
+          signerError.message.includes("reading 'error'"))
       ) {
         // This suggests the provider returned a malformed response
         throw new Error('Failed to access wallet. Please reconnect your wallet and try again.');
       }
 
-      // Re-throw other signer errors
-      throw signerError;
+      // Handle RPC errors more gracefully
+      if (signerError?.code === -32002) {
+        throw new Error('Wallet connection request is already pending. Please check your wallet.');
+      }
+
+      if (signerError?.code === -32603) {
+        throw new Error('Internal wallet error. Please try reconnecting your wallet.');
+      }
+
+      if (signerError?.code === 4001) {
+        throw new Error('Connection was rejected by user.');
+      }
+
+      // Re-throw other signer errors with more context
+      throw new Error(`Wallet connection failed: ${signerError?.message || 'Unknown error'}`);
     }
   } catch (error: any) {
     console.error('getSignerFromProvider error:', error);
