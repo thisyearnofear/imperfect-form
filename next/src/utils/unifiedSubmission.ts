@@ -72,6 +72,11 @@ export async function submitScore(
 
     // Get Ethereum provider and signer using consolidated utilities
     const ethereumProvider = options.providedEthereumProvider || (await getEthereumProvider());
+
+    if (!ethereumProvider) {
+      throw new Error('No Ethereum provider available. Please connect your wallet and try again.');
+    }
+
     const signer = await getSignerFromProvider(ethereumProvider);
 
     // Verify the signer address matches connected address

@@ -32,7 +32,7 @@ export async function callFarcasterReady(): Promise<void> {
     } else {
       logger.warn('🎯 Farcaster SDK ready() not available', {
         hasActions: !!sdk.actions,
-        sdkKeys: Object.keys(sdk)
+        sdkKeys: Object.keys(sdk),
       });
     }
   } catch (error) {
@@ -60,12 +60,12 @@ export async function callFarcasterReadyWithOptions(
         sdk.actions.ready({ disableNativeGestures }),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error('ready() timeout')), timeoutMs)
-        )
+        ),
       ]);
 
       logger.info('🎯 Farcaster ready() called successfully with options', {
         disableNativeGestures,
-        timeoutMs
+        timeoutMs,
       });
     } else {
       logger.warn('Farcaster SDK ready() not available');
@@ -87,18 +87,20 @@ export function isFarcasterMiniApp(): boolean {
     iframe: window.parent !== window,
     differentLocation: window.location !== window.parent.location,
     referrer: document.referrer.includes('farcaster') || document.referrer.includes('warpcast'),
-    userAgent: window.navigator.userAgent.includes('Farcaster') || window.navigator.userAgent.includes('Warpcast'),
-    url: window.location.href.includes('farcaster') || window.location.href.includes('warpcast')
+    userAgent:
+      window.navigator.userAgent.includes('Farcaster') ||
+      window.navigator.userAgent.includes('Warpcast'),
+    url: window.location.href.includes('farcaster') || window.location.href.includes('warpcast'),
   };
 
-  const result = Object.values(checks).some(check => check);
+  const result = Object.values(checks).some((check) => check);
 
   logger.info('🎯 Simple Farcaster detection', {
     result,
     checks,
     userAgent: navigator.userAgent,
     referrer: document.referrer,
-    href: window.location.href
+    href: window.location.href,
   });
 
   return result;
@@ -118,7 +120,7 @@ export function debugFarcasterContext(): void {
     hostname: window.location.hostname,
     isIframe: window.parent !== window,
     hasParentDifference: window.location !== window.parent.location,
-    simpleDetection: isFarcasterMiniApp()
+    simpleDetection: isFarcasterMiniApp(),
   });
 }
 
@@ -130,21 +132,30 @@ export function debugFarcasterContext(): void {
 export async function getEthereumProvider(): Promise<unknown> {
   if (typeof window === 'undefined') return null;
 
+  // Helper function to validate provider
+  const validateProvider = (provider: any): boolean => {
+    return provider && typeof provider === 'object' && typeof provider.request === 'function';
+  };
+
   try {
     // First, try to get Farcaster Mini App provider using the new API
     const { sdk } = await import('@farcaster/frame-sdk');
 
     // Use the new getEthereumProvider() method instead of direct ethProvider access
     if (sdk.wallet?.getEthereumProvider) {
-      const provider = await sdk.wallet.getEthereumProvider();
-      if (provider) {
-        logger.info('🎯 Using Farcaster Mini App Ethereum provider (new API)');
-        return provider;
+      try {
+        const provider = await sdk.wallet.getEthereumProvider();
+        if (validateProvider(provider)) {
+          logger.info('🎯 Using Farcaster Mini App Ethereum provider (new API)');
+          return provider;
+        }
+      } catch (providerError) {
+        logger.warn('🎯 Failed to get provider via new API:', providerError);
       }
     }
 
     // Fallback to old API for backward compatibility
-    if (sdk.wallet?.ethProvider) {
+    if (sdk.wallet?.ethProvider && validateProvider(sdk.wallet.ethProvider)) {
       logger.info('🎯 Using Farcaster Mini App Ethereum provider (legacy API)');
       return sdk.wallet.ethProvider;
     }
@@ -154,12 +165,12 @@ export async function getEthereumProvider(): Promise<unknown> {
 
   // Fallback to window.ethereum
   const windowEthereum = (window as { ethereum?: unknown }).ethereum;
-  if (windowEthereum) {
+  if (validateProvider(windowEthereum)) {
     logger.info('🎯 Using window.ethereum provider');
     return windowEthereum;
   }
 
-  logger.warn('🎯 No Ethereum provider found');
+  logger.warn('🎯 No valid Ethereum provider found');
   return null;
 }
 
@@ -204,13 +215,15 @@ export async function switchFarcasterChain(chainId: number): Promise<boolean> {
       logger.warn('🎯 Chain not supported by Farcaster wallet', {
         chainId,
         caipChainId,
-        supportedChains
+        supportedChains,
       });
       return false;
     }
 
     // Use the provider to switch chains
-    const provider = sdk.wallet.ethProvider as { request: (args: { method: string; params: unknown[] }) => Promise<unknown> };
+    const provider = sdk.wallet.ethProvider as {
+      request: (args: { method: string; params: unknown[] }) => Promise<unknown>;
+    };
 
     await provider.request({
       method: 'wallet_switchEthereumChain',
@@ -219,7 +232,6 @@ export async function switchFarcasterChain(chainId: number): Promise<boolean> {
 
     logger.info('🎯 Successfully switched Farcaster wallet to chain:', chainId);
     return true;
-
   } catch (error) {
     logger.warn('🎯 Failed to switch Farcaster wallet chain:', error);
     return false;
