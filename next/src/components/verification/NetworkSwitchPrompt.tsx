@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { usePlatform } from "@/contexts/PlatformContext";
-import { SupportedChain, chainConfigs } from "@/utils/chainSwitching";
-import { Dialog } from "@/components/ui";
-import toast from "react-hot-toast";
+import React, { useState } from 'react';
+import { usePlatform } from '@/contexts/PlatformContext';
+import { SupportedChain, chainConfigs } from '@/utils/chainSwitching';
+import { Dialog } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 interface NetworkSwitchPromptProps {
   isOpen: boolean;
@@ -37,11 +37,11 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
         onNetworkSwitched();
         onClose();
       } else {
-        toast.error("Failed to switch network. Please try manually.");
+        toast.error('Failed to switch network. Please try manually.');
       }
     } catch (error) {
-      console.error("Network switch error:", error);
-      toast.error("Error switching network. Please try again.");
+      console.error('Network switch error:', error);
+      toast.error('Error switching network. Please try again.');
     } finally {
       setIsSwitching(false);
     }
@@ -50,15 +50,15 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
   const getNetworkDisplayName = (chain: SupportedChain): string => {
     switch (chain) {
       case SupportedChain.CELO_ALFAJORES:
-        return "Celo Alfajores Testnet";
+        return 'Celo Alfajores Testnet';
       case SupportedChain.CELO:
-        return "Celo Mainnet";
+        return 'Celo Mainnet';
       case SupportedChain.POLYGON:
-        return "Polygon";
+        return 'Polygon';
       case SupportedChain.BASE:
-        return "Base";
+        return 'Base';
       case SupportedChain.MONAD:
-        return "Monad Testnet";
+        return 'Monad Testnet';
       default:
         return chain;
     }
@@ -82,22 +82,15 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
                   ? (() => {
                       const foundChain = Object.values(SupportedChain).find(
                         (chain) =>
-                          (chain === SupportedChain.CELO &&
-                            wallet.chainId === 42220) ||
-                          (chain === SupportedChain.CELO_ALFAJORES &&
-                            wallet.chainId === 44787) ||
-                          (chain === SupportedChain.POLYGON &&
-                            wallet.chainId === 137) ||
-                          (chain === SupportedChain.BASE &&
-                            wallet.chainId === 8453) ||
-                          (chain === SupportedChain.MONAD &&
-                            wallet.chainId === 10143)
+                          (chain === SupportedChain.CELO && wallet.chainId === 42220) ||
+                          (chain === SupportedChain.CELO_ALFAJORES && wallet.chainId === 44787) ||
+                          (chain === SupportedChain.POLYGON && wallet.chainId === 137) ||
+                          (chain === SupportedChain.BASE && wallet.chainId === 8453) ||
+                          (chain === SupportedChain.MONAD && wallet.chainId === 10143)
                       );
-                      return foundChain
-                        ? getNetworkDisplayName(foundChain)
-                        : "Unknown";
+                      return foundChain ? getNetworkDisplayName(foundChain) : 'Unknown';
                     })()
-                  : "Not Connected"}
+                  : 'Not Connected'}
               </span>
             </div>
             <div className="flex justify-between items-center">
@@ -110,7 +103,7 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
         </div>
 
         <div className="text-sm text-gray-300 text-center">
-          <p>Self Protocol verification requires Celo testnet</p>
+          <p>Self Protocol verification requires Celo mainnet</p>
         </div>
 
         <div className="flex space-x-3">
@@ -139,8 +132,8 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
 
         <div className="text-xs text-gray-400 border-t border-gray-700 pt-3">
           <p>
-            <strong>Manual switch:</strong> You can also switch to Celo
-            Alfajores manually in your wallet settings.
+            <strong>Manual switch:</strong> You can also switch to Celo Alfajores manually in your
+            wallet settings.
           </p>
         </div>
       </div>

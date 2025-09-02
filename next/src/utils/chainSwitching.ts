@@ -1,5 +1,5 @@
 // No need to import ThirdwebSDK anymore as we're using a custom interface
-import toast from "react-hot-toast";
+import toast from 'react-hot-toast';
 import {
   POLYGON_CONTRACT_ADDRESS,
   BASE_CONTRACT_ADDRESS,
@@ -9,84 +9,84 @@ import {
   baseLeaderboardABI,
   monadLeaderboardABI,
   fitnessLeaderboardABI,
-} from "@/constants/contracts";
+} from '@/constants/contracts';
 
 // Configuration for each supported chain, now including contract details
 export const chainConfigs = {
   polygon: {
     id: 137,
-    name: "Polygon",
-    fullName: "Polygon Mainnet", // Keep full name for technical contexts
+    name: 'Polygon',
+    fullName: 'Polygon Mainnet', // Keep full name for technical contexts
     nativeCurrency: {
-      name: "MATIC",
-      symbol: "MATIC",
+      name: 'MATIC',
+      symbol: 'MATIC',
       decimals: 18,
     },
     rpcUrls: [
-      "https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-      "https://polygon-rpc.com",
-      "https://rpc-mainnet.matic.network",
+      'https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B',
+      'https://polygon-rpc.com',
+      'https://rpc-mainnet.matic.network',
     ],
-    blockExplorerUrls: ["https://polygonscan.com/"],
+    blockExplorerUrls: ['https://polygonscan.com/'],
     contractAddress: POLYGON_CONTRACT_ADDRESS,
     abi: polygonLeaderboardABI,
   },
   base: {
     id: 8453,
-    name: "Base",
-    fullName: "Base Mainnet", // Keep full name for technical contexts
+    name: 'Base',
+    fullName: 'Base Mainnet', // Keep full name for technical contexts
     nativeCurrency: {
-      name: "ETH",
-      symbol: "ETH",
+      name: 'ETH',
+      symbol: 'ETH',
       decimals: 18,
     },
     rpcUrls: [
-      "https://base-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B",
-      "https://mainnet.base.org",
+      'https://base-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B',
+      'https://mainnet.base.org',
     ],
-    blockExplorerUrls: ["https://basescan.org/"],
+    blockExplorerUrls: ['https://basescan.org/'],
     contractAddress: BASE_CONTRACT_ADDRESS,
     abi: baseLeaderboardABI,
   },
   monad: {
     id: 10143,
-    name: "Monad",
-    fullName: "Monad Testnet", // Keep full name for technical contexts
+    name: 'Monad',
+    fullName: 'Monad Testnet', // Keep full name for technical contexts
     nativeCurrency: {
-      name: "MON",
-      symbol: "MON",
+      name: 'MON',
+      symbol: 'MON',
       decimals: 18,
     },
-    rpcUrls: ["https://testnet-rpc.monad.xyz/"],
-    blockExplorerUrls: ["https://testnet.monadexplorer.com/"],
+    rpcUrls: ['https://testnet-rpc.monad.xyz/'],
+    blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
     contractAddress: MONAD_CONTRACT_ADDRESS,
     abi: monadLeaderboardABI,
   },
   celo: {
     id: 42220,
-    name: "Celo",
-    fullName: "Celo Mainnet", // Keep full name for technical contexts
+    name: 'Celo',
+    fullName: 'Celo Mainnet', // Keep full name for technical contexts
     nativeCurrency: {
-      name: "CELO",
-      symbol: "CELO",
+      name: 'CELO',
+      symbol: 'CELO',
       decimals: 18,
     },
-    rpcUrls: ["https://forno.celo.org", "https://rpc.ankr.com/celo"],
-    blockExplorerUrls: ["https://explorer.celo.org/"],
+    rpcUrls: ['https://forno.celo.org', 'https://rpc.ankr.com/celo'],
+    blockExplorerUrls: ['https://explorer.celo.org/'],
     contractAddress: CELO_CONTRACT_ADDRESS,
     abi: fitnessLeaderboardABI, // Celo uses the base fitness ABI
   },
   celoAlfajores: {
     id: 44787,
-    name: "Celo Testnet",
-    fullName: "Celo Alfajores Testnet",
+    name: 'Celo Testnet',
+    fullName: 'Celo Alfajores Testnet',
     nativeCurrency: {
-      name: "CELO",
-      symbol: "CELO",
+      name: 'CELO',
+      symbol: 'CELO',
       decimals: 18,
     },
-    rpcUrls: ["https://alfajores-forno.celo-testnet.org"],
-    blockExplorerUrls: ["https://alfajores.celoscan.io/"],
+    rpcUrls: ['https://alfajores-forno.celo-testnet.org'],
+    blockExplorerUrls: ['https://alfajores.celoscan.io/'],
     contractAddress: CELO_CONTRACT_ADDRESS, // Same contract for testing
     abi: fitnessLeaderboardABI,
     isTestnet: true, // Flag to indicate this is a testnet
@@ -95,25 +95,23 @@ export const chainConfigs = {
 
 // Enum for wallet provider types
 export enum WalletProviderType {
-  SIGNATURE = "signature", // ThirdWeb/EOA
-  SMART = "smart", // Coinbase Smart Wallet
+  SIGNATURE = 'signature', // ThirdWeb/EOA
+  SMART = 'smart', // Coinbase Smart Wallet
 }
 
 // Enum for supported chains
 export enum SupportedChain {
-  POLYGON = "polygon",
-  BASE = "base",
-  MONAD = "monad",
-  CELO = "celo",
-  CELO_ALFAJORES = "celoAlfajores",
+  POLYGON = 'polygon',
+  BASE = 'base',
+  MONAD = 'monad',
+  CELO = 'celo',
+  CELO_ALFAJORES = 'celoAlfajores',
 }
 
 /**
  * Switch chains using the ThirdWeb SDK (for Signature/EOA wallets)
  */
-export async function switchThirdwebChain(
-  chainName: SupportedChain
-): Promise<boolean> {
+export async function switchThirdwebChain(chainName: SupportedChain): Promise<boolean> {
   try {
     const toastId = toast.loading(`Switching to ${chainConfigs[chainName].name}...`);
 
@@ -153,10 +151,12 @@ export async function switchThirdwebChain(
         console.log(`Using window.ethereum to switch chain to ${hexChainId} (decimal: ${chainId})`);
 
         await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
+          method: 'wallet_switchEthereumChain',
           params: [{ chainId: hexChainId }],
         });
-        console.log(`Successfully switched to ${chainConfigs[chainName].name} using window.ethereum`);
+        console.log(
+          `Successfully switched to ${chainConfigs[chainName].name} using window.ethereum`
+        );
         toast.success(`Switched to ${chainConfigs[chainName].name}`, {
           id: toastId,
         });
@@ -176,11 +176,13 @@ export async function switchThirdwebChain(
             hexChainId = '0' + hexChainId;
           }
           hexChainId = `0x${hexChainId}`;
-          console.log(`Adding network ${chainName} with chainId ${hexChainId} (decimal: ${config.id}) to wallet`);
+          console.log(
+            `Adding network ${chainName} with chainId ${hexChainId} (decimal: ${config.id}) to wallet`
+          );
 
           try {
             await window.ethereum.request({
-              method: "wallet_addEthereumChain",
+              method: 'wallet_addEthereumChain',
               params: [
                 {
                   chainId: hexChainId,
@@ -212,7 +214,7 @@ export async function switchThirdwebChain(
       }
     }
 
-    toast.error("No Ethereum provider found", { id: toastId });
+    toast.error('No Ethereum provider found', { id: toastId });
     return false;
   } catch (err: unknown) {
     const error = err as { message?: string };
@@ -262,40 +264,40 @@ export async function switchChain(
     const switchFn = prepareWagmiChainSwitch(chainName, wagmiSwitchChain);
     return switchFn();
   } else {
-    toast.error("Unable to switch chain: Wallet not connected or unsupported");
+    toast.error('Unable to switch chain: Wallet not connected or unsupported');
     return false;
   }
 }
 
 // Get the appropriate chain name based on network string
 export function getChainFromNetwork(network: string | null): SupportedChain | null {
-  if (network === "polygon") return SupportedChain.POLYGON;
-  if (network === "base") return SupportedChain.BASE;
-  if (network === "monad") return SupportedChain.MONAD;
-  if (network === "celo") return SupportedChain.CELO;
-  if (network === "celoAlfajores") return SupportedChain.CELO_ALFAJORES;
+  if (network === 'polygon') return SupportedChain.POLYGON;
+  if (network === 'base') return SupportedChain.BASE;
+  if (network === 'monad') return SupportedChain.MONAD;
+  if (network === 'celo') return SupportedChain.CELO;
+  if (network === 'celoAlfajores') return SupportedChain.CELO_ALFAJORES;
   return null;
 }
 
 // Get the appropriate network string based on chain
 export function getNetworkFromChain(chain: SupportedChain | null): string | null {
-  if (chain === SupportedChain.POLYGON) return "polygon";
-  if (chain === SupportedChain.BASE) return "base";
-  if (chain === SupportedChain.MONAD) return "monad";
-  if (chain === SupportedChain.CELO) return "celo";
-  if (chain === SupportedChain.CELO_ALFAJORES) return "celoAlfajores";
+  if (chain === SupportedChain.POLYGON) return 'polygon';
+  if (chain === SupportedChain.BASE) return 'base';
+  if (chain === SupportedChain.MONAD) return 'monad';
+  if (chain === SupportedChain.CELO) return 'celo';
+  if (chain === SupportedChain.CELO_ALFAJORES) return 'celoAlfajores';
   return null;
 }
 
 // Get the appropriate chain for Self Protocol verification
 export function getSelfProtocolChain(): SupportedChain {
-  // For now, Self Protocol is only on Celo Alfajores
-  return SupportedChain.CELO_ALFAJORES;
+  // Self Protocol is now on Celo Mainnet
+  return SupportedChain.CELO;
 }
 
 // Check if current chain supports Self Protocol verification
 export function chainSupportsSelfProtocol(chainId: number): boolean {
-  return chainId === 44787; // Celo Alfajores
+  return chainId === 42220; // Celo Mainnet
 }
 
 // Extend the Window interface to include the thirdwebSDK property
