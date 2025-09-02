@@ -3,28 +3,30 @@
  * Extracted from Leaderboard component for reuse in user stats
  */
 
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import {
   fitnessLeaderboardABI,
   monadLeaderboardABI,
   polygonLeaderboardABI,
   baseLeaderboardABI,
+  verifiedFitnessLeaderboardABI,
   POLYGON_CONTRACT_ADDRESS,
   BASE_CONTRACT_ADDRESS,
   MONAD_CONTRACT_ADDRESS,
   CELO_CONTRACT_ADDRESS,
-} from "@/constants/contracts";
+  VERIFIED_FITNESS_CONTRACT_ADDRESS,
+} from '@/constants/contracts';
 import {
   POLYGON_FALLBACK_RPCS,
   BASE_FALLBACK_RPCS,
   MONAD_FALLBACK_RPCS,
   CELO_FALLBACK_RPCS,
-} from "@/utils/rpcUtils";
-import { Score, ContractScore, NetworkType } from "@/types";
-import { getDisplayName } from "@/utils/ensResolver";
-import { batchResolveFarcasterProfiles, FarcasterProfile } from "@/utils/neynarResolver";
-import { shortenAddress } from "@/utils/formatters";
-import { getCachedLeaderboardData, cacheLeaderboardData } from "./leaderboardCache";
+} from '@/utils/rpcUtils';
+import { Score, ContractScore, NetworkType } from '@/types';
+import { getDisplayName } from '@/utils/ensResolver';
+import { batchResolveFarcasterProfiles, FarcasterProfile } from '@/utils/neynarResolver';
+import { shortenAddress } from '@/utils/formatters';
+import { getCachedLeaderboardData, cacheLeaderboardData } from './leaderboardCache';
 
 interface LeaderboardData {
   pushups: Score[];
@@ -51,60 +53,47 @@ async function fetchWithFallbackRpcs(
       // Select appropriate ABI based on network
       let abi;
       switch (networkName) {
-        case "polygon":
+        case 'polygon':
           abi = polygonLeaderboardABI;
           break;
-        case "base":
+        case 'base':
           abi = baseLeaderboardABI;
           break;
-        case "monad":
+        case 'monad':
           abi = monadLeaderboardABI;
           break;
-        case "celo":
+        case 'celo':
           abi = fitnessLeaderboardABI;
+          break;
+        case 'celoVerified':
+          abi = verifiedFitnessLeaderboardABI;
           break;
         default:
           abi = fitnessLeaderboardABI;
       }
 
-      const contractInstance = new ethers.Contract(
-        contractAddress,
-        abi,
-        provider
-      );
+      const contractInstance = new ethers.Contract(contractAddress, abi, provider);
 
       // Check if the contract exists at the address
       try {
         const code = await provider.getCode(contractAddress);
-        if (code === "0x") {
-          console.warn(
-            `No contract found at ${contractAddress} on ${networkName}`
-          );
+        if (code === '0x') {
+          console.warn(`No contract found at ${contractAddress} on ${networkName}`);
           throw new Error(`No contract found at address`);
         }
       } catch (codeError) {
-        console.error(
-          `Error checking contract code at ${contractAddress}:`,
-          codeError
-        );
+        console.error(`Error checking contract code at ${contractAddress}:`, codeError);
         throw codeError;
       }
 
-      console.log(
-        `Calling getLeaderboard() on ${networkName} contract at ${contractAddress}`
-      );
+      console.log(`Calling getLeaderboard() on ${networkName} contract at ${contractAddress}`);
 
       try {
         const data = await contractInstance.getLeaderboard();
-        console.log(
-          `Successfully retrieved ${data.length} entries from ${networkName}`
-        );
+        console.log(`Successfully retrieved ${data.length} entries from ${networkName}`);
         return data || [];
       } catch (callError) {
-        console.error(
-          `Error calling getLeaderboard on ${networkName}:`,
-          callError
-        );
+        console.error(`Error calling getLeaderboard on ${networkName}:`, callError);
         throw callError;
       }
     } catch (error) {
@@ -133,8 +122,8 @@ function processContractData(
 
       // Extract pushup score - handle BigNumber format
       if (entry.pushups !== undefined) {
-        if (typeof entry.pushups === "object" && entry.pushups !== null) {
-          if (typeof entry.pushups.toString === "function") {
+        if (typeof entry.pushups === 'object' && entry.pushups !== null) {
+          if (typeof entry.pushups.toString === 'function') {
             pushupScore = parseInt(entry.pushups.toString());
           } else if (entry.pushups._hex) {
             pushupScore = parseInt(entry.pushups._hex, 16);
@@ -146,8 +135,8 @@ function processContractData(
 
       // Extract squat score - handle BigNumber format
       if (entry.squats !== undefined) {
-        if (typeof entry.squats === "object" && entry.squats !== null) {
-          if (typeof entry.squats.toString === "function") {
+        if (typeof entry.squats === 'object' && entry.squats !== null) {
+          if (typeof entry.squats.toString === 'function') {
             squatScore = parseInt(entry.squats.toString());
           } else if (entry.squats._hex) {
             squatScore = parseInt(entry.squats._hex, 16);
@@ -184,35 +173,40 @@ function processContractData(
  */
 export async function getLeaderboard(): Promise<LeaderboardData | null> {
   try {
-    console.log("🔄 Fetching leaderboard data from all networks...");
+    console.log('🔄 Fetching leaderboard data from all networks...');
 
     // Check cache first
     const cachedData = getCachedLeaderboardData();
     if (cachedData) {
-      console.log("📦 Using cached leaderboard data");
+      console.log('📦 Using cached leaderboard data');
       return cachedData;
     }
 
     // Define active networks
     const activeNetworks = [
       {
-        network: "polygon",
+        network: 'polygon',
         address: POLYGON_CONTRACT_ADDRESS,
         rpcs: POLYGON_FALLBACK_RPCS,
       },
       {
-        network: "base",
+        network: 'base',
         address: BASE_CONTRACT_ADDRESS,
         rpcs: BASE_FALLBACK_RPCS,
       },
       {
-        network: "monad",
+        network: 'monad',
         address: MONAD_CONTRACT_ADDRESS,
         rpcs: MONAD_FALLBACK_RPCS,
       },
       {
-        network: "celo",
+        network: 'celo',
         address: CELO_CONTRACT_ADDRESS,
+        rpcs: CELO_FALLBACK_RPCS,
+      },
+      {
+        network: 'celoVerified',
+        address: VERIFIED_FITNESS_CONTRACT_ADDRESS,
         rpcs: CELO_FALLBACK_RPCS,
       },
     ];
@@ -250,9 +244,7 @@ export async function getLeaderboard(): Promise<LeaderboardData | null> {
     );
 
     // Batch resolve Farcaster profiles first
-    const farcasterProfilesMap = await batchResolveFarcasterProfiles(
-      uniqueAddresses
-    );
+    const farcasterProfilesMap = await batchResolveFarcasterProfiles(uniqueAddresses);
 
     // Build display names with Farcaster priority
     const names: Record<string, string> = {};
@@ -282,11 +274,10 @@ export async function getLeaderboard(): Promise<LeaderboardData | null> {
     // Cache the result
     cacheLeaderboardData(result);
 
-    console.log("✅ Successfully fetched leaderboard data");
+    console.log('✅ Successfully fetched leaderboard data');
     return result;
-
   } catch (error) {
-    console.error("❌ Error fetching leaderboard data:", error);
+    console.error('❌ Error fetching leaderboard data:', error);
     return null;
   }
 }

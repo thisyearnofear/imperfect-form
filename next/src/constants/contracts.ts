@@ -67,9 +67,10 @@ export const PROGRESS_CHAINS = [
   },
 ];
 
-// Self Protocol Verified Fitness Contract (Celo Alfajores)
-export const VERIFIED_FITNESS_CONTRACT_ADDRESS = '0x18082d110113B40A24A41dF10b4b249Ee461D3eb';
-export const SELF_PROTOCOL_CONTRACT_ADDRESS = '0xc51065eCBe91E7DbA69934F37130DCA29E516189';
+// Self Protocol Verified Fitness Contract (Celo Mainnet)
+export const VERIFIED_FITNESS_CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT || '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03';
+export const SELF_PROTOCOL_CONTRACT_ADDRESS = '0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF';
 
 // Full ABI for the standardized FitnessLeaderboard contracts
 // This is the base ABI that works for most networks

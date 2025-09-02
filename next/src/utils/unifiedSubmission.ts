@@ -14,6 +14,7 @@ import { getEthereumProvider } from '@/utils/farcasterMiniApp';
 import { addReferralTagToCalldata, registerDivviReferral } from '@/utils/divviIntegration';
 import { estimateGasWithBuffer, getSignerFromProvider } from '@/utils/ethersHelpers';
 import toast from 'react-hot-toast';
+import { verifiedFitnessLeaderboardABI } from '@/constants/contracts';
 
 /**
  * Submission parameters interface
@@ -29,6 +30,7 @@ export interface SubmissionParams {
   skipSubAccountCheck?: boolean;
   useWagmi?: boolean;
   providedEthereumProvider?: unknown;
+  isVerifiedSubmission?: boolean; // New parameter for verified submissions
 }
 
 /**
@@ -46,6 +48,7 @@ export async function submitScore(
     skipSubAccountCheck?: boolean;
     useWagmi?: boolean;
     providedEthereumProvider?: unknown;
+    isVerifiedSubmission?: boolean; // New option for verified submissions
   } = {}
 ): Promise<ScoreSubmissionResult> {
   try {
@@ -94,73 +97,121 @@ export async function submitScore(
       throw new Error(`Please switch to ${networkConfig.name} network to submit your score`);
     }
 
-    // Create contract instance
-    const contract = new ethers.Contract(contractAddress, networkConfig.abi, signer);
+    // Check if this is the verified fitness contract
+    const isVerifiedFitnessContract =
+      options.isVerifiedSubmission ||
+      networkName.includes('Verified') ||
+      contractAddress === process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT;
 
-    // Prepare transaction with consolidated gas estimation
-    const gasLimit = await estimateGasWithBuffer(contract, 'addScore', [pushups, squats]);
+    if (isVerifiedFitnessContract) {
+      // Handle verified fitness contract submission (single exercise at a time)
+      const contract = new ethers.Contract(contractAddress, verifiedFitnessLeaderboardABI, signer);
 
-    // Check if we're submitting to Monad network which requires a fee
-    const isMonadNetwork = networkConfig.chainId === 10143; // Monad Testnet chain ID
-    let submissionFee = 0n;
+      // Submit pushups if provided
+      if (pushups > 0) {
+        const pushupGasLimit = await estimateGasWithBuffer(contract, 'submitScore', [
+          pushups,
+          'pushups',
+        ]);
 
-    if (isMonadNetwork) {
-      try {
-        // Get the required submission fee from the contract
-        submissionFee = await contract.feeConfig().then((config) => config.submissionFee);
-      } catch {
-        // Fallback to default fee if we can't fetch it
-        submissionFee = ethers.parseEther('0.001');
-        console.warn(
-          'Could not fetch submission fee from contract, using default:',
-          ethers.formatEther(submissionFee),
-          'MON'
-        );
+        const pushupTx = await contract.submitScore(pushups, 'pushups', {
+          gasLimit: pushupGasLimit,
+        });
+
+        toast.loading(`Submitting pushups to ${networkName}...`, { id: 'pushup-submission' });
+        await pushupTx.wait();
+        toast.success(`Pushups submitted to ${networkName}!`, { id: 'pushup-submission' });
       }
-    }
 
-    // Add referral tag if applicable
-    const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
-    const taggedCalldata = addReferralTagToCalldata(connectedAddress, calldata);
+      // Submit squats if provided
+      if (squats > 0) {
+        const squatGasLimit = await estimateGasWithBuffer(contract, 'submitScore', [
+          squats,
+          'squats',
+        ]);
 
-    // Prepare transaction object with value for payable functions
-    const transactionParams: any = {
-      to: contractAddress,
-      data: taggedCalldata,
-      gasLimit: gasLimit,
-    };
+        const squatTx = await contract.submitScore(squats, 'squats', {
+          gasLimit: squatGasLimit,
+        });
 
-    // Include value for Monad network submissions
-    if (isMonadNetwork && submissionFee > 0n) {
-      transactionParams.value = submissionFee;
-    }
-
-    // Submit transaction
-    const tx = await signer.sendTransaction(transactionParams);
-
-    toast.loading(`Submitting to ${networkName}...`, { id: 'submission' });
-
-    // Wait for confirmation
-    const receipt = await tx.wait();
-
-    if (receipt?.status === 1) {
-      toast.success(`Score submitted to ${networkName}!`, { id: 'submission' });
-
-      // Register Divvi referral if applicable
-      try {
-        await registerDivviReferral(tx.hash, options.chainId || 1);
-      } catch (referralError) {
-        console.warn('Referral registration failed:', referralError);
-        // Don't fail the submission for referral errors
+        toast.loading(`Submitting squats to ${networkName}...`, { id: 'squat-submission' });
+        await squatTx.wait();
+        toast.success(`Squats submitted to ${networkName}!`, { id: 'squat-submission' });
       }
 
       return {
         success: true,
-        transactionHash: tx.hash,
         processingType: 'direct',
       };
     } else {
-      throw new Error('Transaction failed');
+      // Handle standard contract submission (both exercises together)
+      const contract = new ethers.Contract(contractAddress, networkConfig.abi, signer);
+
+      // Prepare transaction with consolidated gas estimation
+      const gasLimit = await estimateGasWithBuffer(contract, 'addScore', [pushups, squats]);
+
+      // Check if we're submitting to Monad network which requires a fee
+      const isMonadNetwork = networkConfig.chainId === 10143; // Monad Testnet chain ID
+      let submissionFee = 0n;
+
+      if (isMonadNetwork) {
+        try {
+          // Get the required submission fee from the contract
+          submissionFee = await contract.feeConfig().then((config) => config.submissionFee);
+        } catch {
+          // Fallback to default fee if we can't fetch it
+          submissionFee = ethers.parseEther('0.001');
+          console.warn(
+            'Could not fetch submission fee from contract, using default:',
+            ethers.formatEther(submissionFee),
+            'MON'
+          );
+        }
+      }
+
+      // Add referral tag if applicable
+      const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
+      const taggedCalldata = addReferralTagToCalldata(connectedAddress, calldata);
+
+      // Prepare transaction object with value for payable functions
+      const transactionParams: any = {
+        to: contractAddress,
+        data: taggedCalldata,
+        gasLimit: gasLimit,
+      };
+
+      // Include value for Monad network submissions
+      if (isMonadNetwork && submissionFee > 0n) {
+        transactionParams.value = submissionFee;
+      }
+
+      // Submit transaction
+      const tx = await signer.sendTransaction(transactionParams);
+
+      toast.loading(`Submitting to ${networkName}...`, { id: 'submission' });
+
+      // Wait for confirmation
+      const receipt = await tx.wait();
+
+      if (receipt?.status === 1) {
+        toast.success(`Score submitted to ${networkName}!`, { id: 'submission' });
+
+        // Register Divvi referral if applicable
+        try {
+          await registerDivviReferral(tx.hash, options.chainId || 1);
+        } catch (referralError) {
+          console.warn('Referral registration failed:', referralError);
+          // Don't fail the submission for referral errors
+        }
+
+        return {
+          success: true,
+          transactionHash: tx.hash,
+          processingType: 'direct',
+        };
+      } else {
+        throw new Error('Transaction failed');
+      }
     }
   } catch (error) {
     console.error('unifiedSubmission: Score submission failed:', error);

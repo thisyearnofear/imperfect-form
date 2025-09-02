@@ -7,6 +7,7 @@ import {
 import VerificationBadge from '@/components/verification/VerificationBadge';
 import { getBestDisplayName } from '@/utils/web3bio';
 import { Spinner } from '@/components/ui';
+import { CELO_FALLBACK_RPCS } from '@/utils/rpcUtils';
 
 interface VerifiedScore {
   user: string;
@@ -34,8 +35,8 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
       setIsLoading(true);
       setError(null);
 
-      // Connect to Celo Alfajores testnet (where Self Protocol is deployed)
-      const provider = new ethers.JsonRpcProvider('https://alfajores-forno.celo-testnet.org');
+      // Connect to Celo mainnet
+      const provider = new ethers.JsonRpcProvider(CELO_FALLBACK_RPCS[0]);
       const contract = new ethers.Contract(
         VERIFIED_FITNESS_CONTRACT_ADDRESS,
         verifiedFitnessLeaderboardABI,
@@ -255,7 +256,7 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
           }}
         >
           <p style={{ color: '#fcb131', fontWeight: 'bold', margin: '0 0 8px 0' }}>
-            🏆 {verifiedScores.length} Verified Athletes on Celo Alfajores
+            🏆 {verifiedScores.length} Verified Athletes on Celo Mainnet
           </p>
           <p style={{ color: '#10b981', fontSize: '14px', margin: 0 }}>
             Self Protocol verified users earn bonus recognition and may receive enhanced rewards
