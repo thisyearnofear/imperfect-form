@@ -361,6 +361,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Always show summary; SummaryModal will prompt for wallet connection if needed
     console.log('Game: handleStop called with address:', finalAddress);
+    console.log('Game: Opening SummaryModal');
     setShowSummary(true);
 
     // Force camera to stop by accessing the video tracks and stopping them
@@ -699,7 +700,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
       <SummaryModal
         isOpen={showSummary}
-        onClose={() => setShowSummary(false)}
+        onClose={() => {
+          console.log('Game: Closing SummaryModal');
+          setShowSummary(false);
+        }}
         repCount={repCount}
         timeLeft={timeLeft}
         mode={mode}

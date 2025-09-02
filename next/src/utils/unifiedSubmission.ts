@@ -100,16 +100,43 @@ export async function submitScore(
     // Prepare transaction with consolidated gas estimation
     const gasLimit = await estimateGasWithBuffer(contract, 'addScore', [pushups, squats]);
 
+    // Check if we're submitting to Monad network which requires a fee
+    const isMonadNetwork = networkConfig.chainId === 10143; // Monad Testnet chain ID
+    let submissionFee = 0n;
+
+    if (isMonadNetwork) {
+      try {
+        // Get the required submission fee from the contract
+        submissionFee = await contract.feeConfig().then((config) => config.submissionFee);
+      } catch {
+        // Fallback to default fee if we can't fetch it
+        submissionFee = ethers.parseEther('0.001');
+        console.warn(
+          'Could not fetch submission fee from contract, using default:',
+          ethers.formatEther(submissionFee),
+          'MON'
+        );
+      }
+    }
+
     // Add referral tag if applicable
     const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
     const taggedCalldata = addReferralTagToCalldata(connectedAddress, calldata);
 
-    // Submit transaction
-    const tx = await signer.sendTransaction({
+    // Prepare transaction object with value for payable functions
+    const transactionParams: any = {
       to: contractAddress,
       data: taggedCalldata,
       gasLimit: gasLimit,
-    });
+    };
+
+    // Include value for Monad network submissions
+    if (isMonadNetwork && submissionFee > 0n) {
+      transactionParams.value = submissionFee;
+    }
+
+    // Submit transaction
+    const tx = await signer.sendTransaction(transactionParams);
 
     toast.loading(`Submitting to ${networkName}...`, { id: 'submission' });
 
@@ -136,20 +163,31 @@ export async function submitScore(
       throw new Error('Transaction failed');
     }
   } catch (error) {
-    console.error('Score submission failed:', error);
+    console.error('unifiedSubmission: Score submission failed:', error);
 
     // More specific error messages for common issues
     let errorMessage = 'Submission failed. Please try again.';
     if (error instanceof Error) {
+      console.log('unifiedSubmission: Parsing error message:', error.message);
       if (error.message.includes('user rejected') || error.message.includes('User denied')) {
         errorMessage = 'Transaction was rejected. Please confirm the transaction in your wallet.';
       } else if (error.message.includes('insufficient funds')) {
         errorMessage = 'Insufficient funds for transaction. Please check your wallet balance.';
       } else if (error.message.includes('network') || error.message.includes('chain')) {
         errorMessage = 'Network error. Please check your wallet network settings.';
+      } else if (error.message.includes('revert') || error.message.includes('execution reverted')) {
+        // Check if this is a Monad-specific error
+        if (networkName.toLowerCase().includes('monad')) {
+          errorMessage =
+            'Transaction was reverted. This may be due to insufficient fee or rate limiting. Please ensure you have at least 0.001 MON in your wallet for the submission fee and try again.';
+        } else {
+          errorMessage =
+            'Transaction was reverted. This may be due to rate limiting or contract restrictions. Please wait a moment and try again.';
+        }
       } else {
         errorMessage = error.message;
       }
+      console.log('unifiedSubmission: Final error message:', errorMessage);
     }
 
     toast.error(errorMessage, { id: 'submission' });

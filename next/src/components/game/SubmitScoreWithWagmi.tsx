@@ -13,6 +13,7 @@ interface SubmitScoreProps {
   exerciseType?: 'pushups' | 'squats';
   forceDirectSubmission?: boolean;
   walletAddress?: string;
+  submissionStatus: 'idle' | 'submitting' | 'success' | 'error';
   setSubmissionStatus: (status: 'idle' | 'submitting' | 'success' | 'error') => void;
 }
 
@@ -22,6 +23,7 @@ export default function SubmitScoreWithWagmi({
   exerciseType = 'pushups',
   forceDirectSubmission = false,
   walletAddress,
+  submissionStatus,
   setSubmissionStatus,
 }: SubmitScoreProps) {
   const [confirmStep, setConfirmStep] = useState(false);
@@ -37,7 +39,14 @@ export default function SubmitScoreWithWagmi({
 
   // Unified submission handler
   const handleSubmit = async () => {
+    console.log(
+      'SubmitScoreWithWagmi: handleSubmit called with score:',
+      score,
+      'exerciseType:',
+      exerciseType
+    );
     if (!address || !chainId || !score) {
+      console.log('SubmitScoreWithWagmi: Missing required parameters');
       setSubmissionStatus('error');
       showSubmissionResult({
         success: false,
@@ -99,14 +108,16 @@ export default function SubmitScoreWithWagmi({
       );
 
       if (result.success) {
+        console.log('SubmitScoreWithWagmi: Submission successful');
         setSubmissionStatus('success');
       } else {
+        console.log('SubmitScoreWithWagmi: Submission failed with error:', result.error);
         setSubmissionStatus('error');
       }
 
       showSubmissionResult(result);
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error('SubmitScoreWithWagmi: Submission error:', error);
       setSubmissionStatus('error');
 
       // More user-friendly error messages
@@ -143,7 +154,7 @@ export default function SubmitScoreWithWagmi({
       {!confirmStep ? (
         <button
           onClick={() => setConfirmStep(true)}
-          disabled={isLoading}
+          disabled={isLoading || submissionStatus === 'success'}
           className="px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
           style={{
             fontFamily: "'Press Start 2P', monospace",
@@ -151,7 +162,9 @@ export default function SubmitScoreWithWagmi({
             textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
           }}
         >
-          Submit Score ({score} {exerciseType})
+          {submissionStatus === 'success'
+            ? 'Score Submitted! 🎉'
+            : `Submit Score (${score} ${exerciseType})`}
         </button>
       ) : (
         <div className="flex flex-col items-center space-y-4">

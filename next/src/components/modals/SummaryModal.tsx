@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { chainConfigs, SupportedChain } from "@/utils/chainSwitching";
-import { Dialog } from "@/components/ui";
-import { usePlatform } from "@/contexts/PlatformContext";
-import { UniversalConnectButton } from "@/components/wallet";
-import FarcasterShare from "@/components/social/FarcasterShare";
-import SubmitScoreWithWagmi from "@/components/game/SubmitScoreWithWagmi";
+import React, { useState } from 'react';
+import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
+import { Dialog } from '@/components/ui';
+import { usePlatform } from '@/contexts/PlatformContext';
+import { UniversalConnectButton } from '@/components/wallet';
+import FarcasterShare from '@/components/social/FarcasterShare';
+import SubmitScoreWithWagmi from '@/components/game/SubmitScoreWithWagmi';
 // Removed unused imports - now using unified Wagmi submission
 // Removed unused toast import
-import { AddMiniAppButton } from "@/components/miniapp/AddMiniAppButton";
-import { VerificationIntegration } from "@/components/verification";
+import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
+import { VerificationIntegration } from '@/components/verification';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     if (window.transactionHash === undefined) {
-      window.transactionHash = "";
+      window.transactionHash = '';
     }
     if (window.selectedNetworkName === undefined) {
-      window.selectedNetworkName = "";
+      window.selectedNetworkName = '';
     }
   }
 };
@@ -32,7 +32,7 @@ export interface SummaryModalProps {
   onClose: () => void;
   repCount: number;
   timeLeft: number;
-  mode?: "pushups" | "squats";
+  mode?: 'pushups' | 'squats';
   address?: string; // Optional wallet address
 }
 
@@ -41,31 +41,41 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   onClose,
   repCount,
   timeLeft,
-  mode = "pushups",
+  mode = 'pushups',
   address,
 }) => {
   const { platform, wallet, user } = usePlatform();
   const { address: walletAddress, chainId } = wallet;
-  const isInMiniApp = platform === "farcaster";
+  const isInMiniApp = platform === 'farcaster';
   const [submissionStatus, setSubmissionStatus] = useState<
-    "idle" | "submitting" | "success" | "error"
-  >("idle");
+    'idle' | 'submitting' | 'success' | 'error'
+  >('idle');
+
+  // Debug logging for submission status changes
+  React.useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('SummaryModal: submissionStatus changed to', submissionStatus);
+    }
+  }, [submissionStatus]);
+
+  // Keep modal open for verification after successful submission
+  // User can manually close or verify first
 
   // Map chainId to network name using centralized config
   const getNetworkFromChainId = (id: number | undefined) => {
-    if (!id) return "base"; // Default to base if unknown
+    if (!id) return 'base'; // Default to base if unknown
     for (const [key, config] of Object.entries(chainConfigs)) {
       if (config.id === id) {
         return key;
       }
     }
-    return "base"; // Default to base if unknown
+    return 'base'; // Default to base if unknown
   };
 
   const network = getNetworkFromChainId(chainId || undefined);
 
   // Type assertion to help TypeScript understand the network type
-  const networkType = network as "polygon" | "base" | "monad" | "celo";
+  const networkType = network as 'polygon' | 'base' | 'monad' | 'celo';
 
   // Use the address from props if provided, otherwise fall back to wallet address from context
   const effectiveAddress = address || walletAddress;
@@ -75,8 +85,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   // Debug logging for mobile wallet issues
   React.useEffect(() => {
-    if (process.env.NODE_ENV !== "production") {
-      console.log("SummaryModal Debug Info:", {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('SummaryModal Debug Info:', {
         network: networkType,
         addressFromProps: address,
         walletAddress,
@@ -126,52 +136,54 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   // Determine the medal based on rep count
   const getMedalEmoji = () => {
-    if (mode === "pushups") {
-      if (repCount >= 30) return "🥇";
-      else if (repCount >= 20) return "🥈";
-      else if (repCount >= 10) return "🥉";
+    if (mode === 'pushups') {
+      if (repCount >= 30) return '🥇';
+      else if (repCount >= 20) return '🥈';
+      else if (repCount >= 10) return '🥉';
     } else {
-      if (repCount >= 40) return "🥇";
-      else if (repCount >= 25) return "🥈";
-      else if (repCount >= 15) return "🥉";
+      if (repCount >= 40) return '🥇';
+      else if (repCount >= 25) return '🥈';
+      else if (repCount >= 15) return '🥉';
     }
-    return "💪";
+    return '💪';
   };
 
   return (
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Record Your Score"
-      description={`${getMedalEmoji()} You aced ${repCount} ${mode} in ${
-        120 - timeLeft
-      } secs!`}
+      title={submissionStatus === 'success' ? 'Score Submitted!' : 'Record Your Score'}
+      description={
+        submissionStatus === 'success'
+          ? `${getMedalEmoji()} Score successfully submitted to the leaderboard!`
+          : `${getMedalEmoji()} You aced ${repCount} ${mode} in ${120 - timeLeft} secs!`
+      }
       preventClose={false}
     >
       <div className="space-y-6">
         {/* Network Info - Simplified */}
         <div className="border-b border-gray-700 pb-2">
           <div className="text-center">
-            <p className="text-sm text-white">
-              <span className="text-white font-semibold">Network:</span>{" "}
+            <p className="text-sm text-gray-200">
+              <span className="text-gray-100 font-semibold">Network:</span>{' '}
               <span
                 className={`font-bold px-2 py-0.5 rounded-full text-xs ${
-                  networkType === "polygon"
-                    ? "bg-purple-900/50 text-purple-300"
-                    : networkType === "monad"
-                    ? "bg-yellow-900/50 text-yellow-300"
-                    : networkType === "celo"
-                    ? "bg-green-900/50 text-green-300"
-                    : "bg-blue-900/50 text-blue-300"
+                  networkType === 'polygon'
+                    ? 'bg-purple-900/50 text-purple-300'
+                    : networkType === 'monad'
+                      ? 'bg-yellow-900/50 text-yellow-300'
+                      : networkType === 'celo'
+                        ? 'bg-green-900/50 text-green-300'
+                        : 'bg-blue-900/50 text-blue-300'
                 }`}
               >
-                {networkType === "polygon"
+                {networkType === 'polygon'
                   ? chainConfigs[SupportedChain.POLYGON].name
-                  : networkType === "monad"
-                  ? chainConfigs[SupportedChain.MONAD].name
-                  : networkType === "celo"
-                  ? chainConfigs[SupportedChain.CELO].name
-                  : chainConfigs[SupportedChain.BASE].name}
+                  : networkType === 'monad'
+                    ? chainConfigs[SupportedChain.MONAD].name
+                    : networkType === 'celo'
+                      ? chainConfigs[SupportedChain.CELO].name
+                      : chainConfigs[SupportedChain.BASE].name}
               </span>
             </p>
           </div>
@@ -185,34 +197,44 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Submit Score component */}
-            <div className="rounded-md p-3 text-center">
-              {/* Use unified Wagmi-based submission for all networks */}
-              <SubmitScoreWithWagmi
-                score={repCount}
-                exerciseType={mode}
-                forceDirectSubmission={true}
-                walletAddress={effectiveAddress}
-                setSubmissionStatus={setSubmissionStatus}
-              />
-              {/* Persistent feedback message */}
-              {submissionStatus === "submitting" && (
-                <p className="text-sm text-yellow-400 mt-3 animate-pulse">
-                  Please confirm in your wallet and wait for the transaction to
-                  be processed...
+            {/* Submit Score component - only show if not successfully submitted */}
+            {submissionStatus !== 'success' && (
+              <div className="rounded-md p-3 text-center">
+                {/* Use unified Wagmi-based submission for all networks */}
+                <SubmitScoreWithWagmi
+                  score={repCount}
+                  exerciseType={mode}
+                  forceDirectSubmission={true}
+                  walletAddress={effectiveAddress}
+                  submissionStatus={submissionStatus}
+                  setSubmissionStatus={setSubmissionStatus}
+                />
+                {/* Dynamic feedback message */}
+                {submissionStatus === 'submitting' && (
+                  <p className="text-sm text-yellow-400 mt-3 animate-pulse">
+                    Confirming transaction... 💫
+                  </p>
+                )}
+                {submissionStatus === 'error' && (
+                  <p className="text-sm text-red-400 mt-3">Submission failed. Please try again.</p>
+                )}
+              </div>
+            )}
+
+            {/* Success message - show when successfully submitted */}
+            {submissionStatus === 'success' && (
+              <div className="rounded-md p-3 text-center">
+                <div className="text-green-400 text-lg font-bold mb-2">✅ Score Submitted!</div>
+                <p className="text-sm text-green-300">
+                  Your {repCount} {mode} score has been recorded on the blockchain.
                 </p>
-              )}
-              {submissionStatus === "error" && (
-                <p className="text-sm text-red-400 mt-3">
-                  Submission failed. Please try again.
-                </p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Social sharing buttons - Enhanced for mini app context */}
-        {typeof window !== "undefined" && window.transactionHash && (
+        {typeof window !== 'undefined' && window.transactionHash && (
           <div className="border-t border-gray-700 pt-4">
             <div className="flex flex-col items-center space-y-4">
               {/* Enhanced Farcaster integration */}
@@ -232,14 +254,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   onClick={() => {
                     const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
                     const url = `https://imperfect-form.vercel.app?ref=twitter`;
-                    const hashtags = ["OnchainOlympics", "FitnessOnchain"];
+                    const hashtags = ['OnchainOlympics', 'FitnessOnchain'];
                     window.open(
                       `https://twitter.com/intent/tweet?text=${encodeURIComponent(
                         text
-                      )}&url=${encodeURIComponent(
-                        url
-                      )}&hashtags=${hashtags.join(",")}`,
-                      "_blank"
+                      )}&url=${encodeURIComponent(url)}&hashtags=${hashtags.join(',')}`,
+                      '_blank'
                     );
                   }}
                 >
@@ -251,11 +271,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         )}
 
         {/* Verification prompt - show after successful submission */}
-        {submissionStatus === "success" && (
+        {submissionStatus === 'success' && (
           <div className="border-t border-gray-700 pt-4">
-            <VerificationIntegration 
+            <VerificationIntegration
               onVerificationComplete={() => {
-                console.log("User verified!");
+                console.log('User verified!');
                 // Handle success - refresh leaderboard, show badge, etc.
               }}
             />
@@ -269,11 +289,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               <p className="text-sm text-purple-300 font-medium">
                 🎯 Great workout! Save this app for quick access
               </p>
-              <AddMiniAppButton
-                variant="secondary"
-                showAfterWorkout={true}
-                className="w-full"
-              />
+              <AddMiniAppButton variant="secondary" showAfterWorkout={true} className="w-full" />
             </div>
           </div>
         )}

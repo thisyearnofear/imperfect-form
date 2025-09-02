@@ -103,8 +103,8 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
             <div className="flex items-center space-x-3">
               <div className="text-2xl">🏆</div>
               <div>
-                <h4 className="font-bold text-yellow-400">Get Verified!</h4>
-                <p className="text-sm text-yellow-300">
+                <h4 className="font-bold text-yellow-200">Get Verified!</h4>
+                <p className="text-sm text-yellow-100">
                   {countLoading ? (
                     <span className="flex items-center">
                       <span className="animate-pulse">Loading...</span>
@@ -128,13 +128,14 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
             </button>
           </div>
 
-          <div className="mt-3 text-xs text-yellow-200/80">
+          <div className="mt-3 text-xs text-yellow-100">
             {countLoading ? (
               <span className="animate-pulse">✨ Loading verification stats...</span>
             ) : verifiedCount > 0 ? (
               <span className="animate-fade-in">
-                ✨ One-time setup • 🏆 <span className="font-medium">{verifiedCount}</span> humans
-                verified • ⚡ Instant badge
+                ✨ One-time setup • 🏆{' '}
+                <span className="font-medium text-yellow-50">{verifiedCount}</span> humans verified
+                • ⚡ Instant badge
               </span>
             ) : (
               <span className="animate-fade-in">
