@@ -51,6 +51,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   );
 
   const { lockLandscape, unlock } = useOrientationLock();
+  const [isLandscapeLocked, setIsLandscapeLocked] = useState(false);
 
   // Get universal wallet context first
   const { wallet, user } = usePlatform();
@@ -355,6 +356,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const handleStop = useCallback(() => {
     exitFullscreen();
     unlock();
+    setIsLandscapeLocked(false);
     if (timerRef.current) clearInterval(timerRef.current);
     setStarted(false);
     setShowTutorial(false);
@@ -386,6 +388,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     }
     if (isMobile && (mode === 'pushups' || mode === 'squats')) {
       lockLandscape();
+      setIsLandscapeLocked(true);
     }
 
     // Welcome component consolidated into InitializationScreen - setShowWelcome removed
@@ -406,6 +409,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const handleReset = useCallback(() => {
     exitFullscreen();
     unlock();
+    setIsLandscapeLocked(false);
     if (timerRef.current) clearInterval(timerRef.current);
     setRepCount(0);
     setTimeLeft(120);
@@ -468,19 +472,62 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     <>
       <div id="game-container" ref={gameRef}>
         {/* Top-right control buttons */}
-        <FullscreenExitButton
-          isFullscreen={isFullscreen}
-          onExit={() => {
-            exitFullscreen();
-            setAutoFs(false);
-            if (typeof window !== 'undefined') {
-              window.localStorage.setItem('prefAutoFullscreen', 'false');
-            }
-          }}
-        />
+        <div className="absolute top-2 right-2 flex gap-1 z-20">
+          {/* Orientation Lock Toggle - Mobile Only */}
+          {isMobile && (
+            <button
+              onClick={() => {
+                if (isLandscapeLocked) {
+                  unlock();
+                  setIsLandscapeLocked(false);
+                } else {
+                  lockLandscape();
+                  setIsLandscapeLocked(true);
+                }
+              }}
+              className="bg-white/10 backdrop-blur-sm rounded-lg p-2 hover:bg-white/20 transition-colors touch-manipulation orientation-lock-indicator touch-target"
+              aria-label={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
+              title={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
+            >
+              <span className="text-white text-lg">{isLandscapeLocked ? '🔒' : '🔓'}</span>
+            </button>
+          )}
 
-        <div id="banner">
-          <div className="olympic-rings" aria-label="Olympic Rings">
+          {/* Fullscreen Toggle */}
+          {isFullscreenAvailable && (
+            <button
+              onClick={() => {
+                if (isFullscreen) {
+                  exitFullscreen();
+                } else {
+                  enterFullscreen();
+                }
+              }}
+              className="bg-white/10 backdrop-blur-sm rounded-lg p-2 hover:bg-white/20 transition-colors touch-manipulation mobile-fullscreen-toggle touch-target"
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              <span className="text-white text-lg">{isFullscreen ? '⛶' : '⛶'}</span>
+            </button>
+          )}
+
+          {/* Fullscreen Exit Button (only shown when in fullscreen) */}
+          {isFullscreen && (
+            <FullscreenExitButton
+              isFullscreen={isFullscreen}
+              onExit={() => {
+                exitFullscreen();
+                setAutoFs(false);
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem('prefAutoFullscreen', 'false');
+                }
+              }}
+            />
+          )}
+        </div>
+
+        <div id="banner" className="mobile-banner">
+          <div className="olympic-rings mobile-olympic-rings" aria-label="Olympic Rings">
             <div className="ring blue" />
             <div className="ring black" />
             <div className="ring red" />
@@ -488,11 +535,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             <div className="ring green" />
           </div>
 
-          <h1>Imperfect Form</h1>
+          <h1 className="mobile-banner">Imperfect Form</h1>
         </div>
 
         {/* Wallet connection - now clean without blocking elements */}
-        <div id="wallet-connection" className="wallet-connection">
+        <div id="wallet-connection" className="wallet-connection mobile-wallet-connection">
           <div className={finalAddress ? 'wallet-connected' : 'wallet-prompt'}>
             <UniversalConnectButton
               size="md"
@@ -617,13 +664,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
         <div
           id="controls"
-          className={`${isMobile ? 'grid grid-cols-2 gap-3 mt-2' : 'flex justify-between mt-4'}`}
+          className={`${isMobile ? 'mobile-controls' : 'flex justify-between mt-4'}`}
           style={{ marginBottom: isMobile ? '8px' : '0' }}
         >
-          <ModeSwitch value={mode} disabled={started} onChange={setMode} />
+          <ModeSwitch
+            value={mode}
+            disabled={started}
+            onChange={setMode}
+            className={isMobile ? 'mobile-mode-switch' : ''}
+          />
           <button
             id="startButton"
-            className="py-3 px-4 text-sm sm:text-base touch-manipulation"
+            className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
             style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Start game"
             onClick={handleStart}
@@ -636,7 +688,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </button>
           <button
             id="stopButton"
-            className="py-3 px-4 text-sm sm:text-base touch-manipulation"
+            className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
             style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Stop game"
             onClick={handleStop}
@@ -647,7 +699,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </button>
           <button
             id="resetButton"
-            className="py-3 px-4 text-sm sm:text-base touch-manipulation"
+            className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
             style={{ minHeight: isMobile ? '50px' : 'auto' }}
             aria-label="Reset game"
             onClick={handleReset}

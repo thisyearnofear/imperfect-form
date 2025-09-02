@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 
 interface VerificationIntegrationProps {
   onVerificationComplete?: () => void;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ interface VerificationIntegrationProps {
  */
 const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   onVerificationComplete,
+  onClose,
   className = '',
 }) => {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -98,7 +100,29 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
     <>
       {/* Verification Prompt */}
       <div className={`verification-prompt ${className}`}>
-        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-4 rounded-lg border border-yellow-500/30">
+        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-4 rounded-lg border border-yellow-500/30 relative">
+          {/* Dismiss button for optional verification */}
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-yellow-200 hover:text-white transition-colors"
+            aria-label="Dismiss verification prompt"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="text-2xl">🏆</div>
@@ -142,6 +166,11 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
                 ✨ One-time setup • 🔒 Privacy-first • ⚡ Instant badge
               </span>
             )}
+          </div>
+
+          {/* Clear optional message */}
+          <div className="mt-3 text-xs text-gray-400 text-center">
+            Verification is optional. Close this prompt to continue.
           </div>
         </div>
       </div>

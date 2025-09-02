@@ -73,7 +73,7 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(
             <button
               key={mode.value}
               type="button"
-              className={`imf-mode-segment font-press${isSelected ? ' selected' : ''}`}
+              className={`imf-mode-segment font-press${isSelected ? ' selected' : ''} touch-target`}
               style={
                 {
                   // Let CSS handle the colors for better customization

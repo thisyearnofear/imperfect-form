@@ -1,60 +1,47 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
 
 interface MotivationalMessagesProps {
-  phase: "initial" | "camera" | "ai" | "positioning" | "ready";
+  phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
   className?: string;
 }
 
-const MotivationalMessages: React.FC<MotivationalMessagesProps> = ({
-  phase,
-  className = "",
-}) => {
+const MotivationalMessages: React.FC<MotivationalMessagesProps> = ({ phase, className = '' }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [messageOpacity, setMessageOpacity] = useState(1);
 
   const motivationalMessages = useMemo(
     () => ({
-      initial: [
-        "🚀 Ready, Fire, Aim!",
-        "💪 Every rep counts",
-        "🎯 Consistency > perfection",
-      ],
+      initial: ['🚀 Ready, Fire, Aim!', '💪 Every rep counts', '🎯 Consistency > perfection'],
       camera: [
-        "📸 Perfect! Camera connecting...",
-        "🎬 Imperfect -> Perfect",
-        "📹 Good lighting = better results",
+        '📸 Perfect! Camera connecting...',
+        '🎬 Imperfect -> Perfect',
+        '📹 Good lighting = better results',
       ],
       ai: [
-        "🧠 Tracking movements...",
-        "⚡  Firing up!",
-        "🤖 Gains loading",
-        "🔥 Pretty amazing, no?",
-        "💡 Detect 17 key body points",
-        "🏋️ Visualize those goals",
-        "🧘 Deep breaths...",
-        "⏰ Awesomeness take time",
-        "🎯 Worth the wait",
-        "💪 Patience",
+        '🧠 Tracking movements...',
+        '⚡  Firing up!',
+        '🤖 Gains loading',
+        '🔥 Pretty amazing, no?',
+        '💡 Detect 17 key body points',
+        '🏋️ Visualize those goals',
+        '🧘 Deep breaths...',
+        '⏰ Awesomeness take time',
+        '🎯 Worth the wait',
+        '💪 Patience',
       ],
-      positioning: [
-        "🎯 Almost there!",
-        "👤 Form!",
-        "💡 Lighting is key",
-        "📐 Vamos",
-      ],
-      ready: ["🔥 LET'S GOOO!", "💪 Time to cook!", "🏆 Champion"],
+      positioning: ['🎯 Almost there!', '👤 Form!', '💡 Lighting is key', '📐 Vamos'],
+      ready: ["🔥 LET'S GOOO!", '💪 Time to cook!', '🏆 Champion'],
     }),
     []
   );
 
   useEffect(() => {
-    const messages =
-      motivationalMessages[phase] || motivationalMessages.initial;
+    const messages = motivationalMessages[phase] || motivationalMessages.initial;
 
     // Only cycle messages for AI phase (longer wait time)
-    if (phase === "ai") {
+    if (phase === 'ai') {
       const messageInterval = setInterval(() => {
         setMessageOpacity(0);
 
@@ -72,26 +59,25 @@ const MotivationalMessages: React.FC<MotivationalMessagesProps> = ({
     }
   }, [phase, motivationalMessages]);
 
-  const currentMessages =
-    motivationalMessages[phase] || motivationalMessages.initial;
+  const currentMessages = motivationalMessages[phase] || motivationalMessages.initial;
 
   return (
-    <div className={`text-center ${className}`}>
+    <div className={`text-center px-2 ${className}`}>
       <div
-        className="text-sm font-medium transition-opacity duration-300"
+        className="text-sm sm:text-base font-medium transition-opacity duration-300 max-w-xs"
         style={{ opacity: messageOpacity }}
       >
         {currentMessages[currentMessageIndex]}
       </div>
 
       {/* Show dots indicator only during AI phase */}
-      {phase === "ai" && currentMessages.length > 1 && (
+      {phase === 'ai' && currentMessages.length > 1 && (
         <div className="flex justify-center space-x-1 mt-2">
           {currentMessages.map((_, index) => (
             <div
               key={index}
               className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
-                index === currentMessageIndex ? "bg-purple-400" : "bg-gray-600"
+                index === currentMessageIndex ? 'bg-purple-400' : 'bg-gray-600'
               }`}
             />
           ))}

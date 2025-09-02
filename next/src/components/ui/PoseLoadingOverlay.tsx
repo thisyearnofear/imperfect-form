@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
-import ProgressIndicator from "./ProgressIndicator";
-import MotivationalMessages from "./MotivationalMessages";
+import React, { useState, useEffect, useMemo } from 'react';
+import ProgressIndicator from './ProgressIndicator';
+import MotivationalMessages from './MotivationalMessages';
 
 interface PoseLoadingOverlayProps {
   poseState: {
@@ -22,47 +22,43 @@ interface PoseLoadingOverlayProps {
 export default function PoseLoadingOverlay({
   poseState,
   isVisible,
-  className = "",
+  className = '',
 }: PoseLoadingOverlayProps) {
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState(0);
   const [instructionOpacity, setInstructionOpacity] = useState(1);
   const [currentPhase, setCurrentPhase] = useState<
-    "initial" | "camera" | "ai" | "positioning" | "ready"
-  >("initial");
+    'initial' | 'camera' | 'ai' | 'positioning' | 'ready'
+  >('initial');
 
   // Enhanced loading instructions organized by phase
   const loadingInstructions = useMemo(
     () => ({
       initial: [
-        "📹 Starting camera...",
-        "💡 Position camera to show your full body",
-        "☀️ Ensure good lighting - very important!",
+        '📹 Starting camera...',
+        '💡 Position camera to show your full body',
+        '☀️ Ensure good lighting - very important!',
       ],
       camera: [
-        "📹 Camera ready! Setting up AI...",
-        "🎯 Make sure your full body is visible",
-        "💡 Good lighting makes a huge difference",
+        '📹 Camera ready! Setting up AI...',
+        '🎯 Make sure your full body is visible',
+        '💡 Good lighting makes a huge difference',
       ],
       ai: [
-        "🤖 Loading pose detection...",
-        "🧠 Initializing...",
-        "⚡ This may take 10-30 seconds...",
-        "🏋️ PUSHUPS: Hands shoulder-width apart",
-        "⬇️ PUSHUPS: Extend arms fully",
-        "🦵 SQUATS: Stand with feet shoulder-width apart",
-        "🧘 Stretch while you wait!",
+        '🤖 Loading pose detection...',
+        '🧠 Initializing...',
+        '⚡ This may take 10-30 seconds...',
+        '🏋️ PUSHUPS: Hands shoulder-width apart',
+        '⬇️ PUSHUPS: Extend arms fully',
+        '🦵 SQUATS: Stand with feet shoulder-width apart',
+        '🧘 Stretch while you wait!',
       ],
       positioning: [
-        "🎯 Position yourself in frame",
-        "👤 Stand where full body is visible",
+        '🎯 Position yourself in frame',
+        '👤 Stand where full body is visible',
         "💡 Adjust lighting if skeleton doesn't appear",
-        "🔄 Try moving closer or further from camera",
+        '🔄 Try moving closer or further from camera',
       ],
-      ready: [
-        "✅ All systems ready!",
-        "🏆 Time to get those reps in!",
-        "🔥 Let's make it count!",
-      ],
+      ready: ['✅ All systems ready!', '🏆 Time to get those reps in!', "🔥 Let's make it count!"],
     }),
     []
   );
@@ -72,32 +68,29 @@ export default function PoseLoadingOverlay({
     if (!isVisible) return;
 
     if (!poseState.hasCamera) {
-      setCurrentPhase("initial");
+      setCurrentPhase('initial');
     } else if (poseState.hasCamera && !poseState.hasPoseDetection) {
-      setCurrentPhase("camera");
+      setCurrentPhase('camera');
       // After camera is ready, move to AI loading phase
-      setTimeout(() => setCurrentPhase("ai"), 1000);
+      setTimeout(() => setCurrentPhase('ai'), 1000);
     } else if (poseState.hasPoseDetection && !poseState.poseDetected) {
-      setCurrentPhase("positioning");
+      setCurrentPhase('positioning');
     } else if (poseState.poseDetected) {
-      setCurrentPhase("ready");
+      setCurrentPhase('ready');
     }
   }, [poseState, isVisible]);
 
   useEffect(() => {
     if (!isVisible) return;
 
-    const currentInstructions =
-      loadingInstructions[currentPhase] || loadingInstructions.initial;
+    const currentInstructions = loadingInstructions[currentPhase] || loadingInstructions.initial;
 
     // Cycle through instructions for current phase
     const cycleInterval = setInterval(() => {
       setInstructionOpacity(0);
 
       setTimeout(() => {
-        setCurrentInstructionIndex(
-          (prev) => (prev + 1) % currentInstructions.length
-        );
+        setCurrentInstructionIndex((prev) => (prev + 1) % currentInstructions.length);
         setInstructionOpacity(1);
       }, 500);
     }, 3000);
@@ -118,103 +111,99 @@ export default function PoseLoadingOverlay({
   // Get phase-specific styling and content
   const getPhaseInfo = () => {
     switch (currentPhase) {
-      case "camera":
+      case 'camera':
         return {
-          color: "text-blue-400",
-          bgColor: "bg-blue-900/80",
-          icon: "📹",
+          color: 'text-blue-400',
+          bgColor: 'bg-blue-900/80',
+          icon: '📹',
         };
-      case "ai":
+      case 'ai':
         return {
-          color: "text-purple-400",
-          bgColor: "bg-purple-900/80",
-          icon: "🤖",
+          color: 'text-purple-400',
+          bgColor: 'bg-purple-900/80',
+          icon: '🤖',
         };
-      case "positioning":
+      case 'positioning':
         return {
-          color: "text-green-400",
-          bgColor: "bg-green-900/80",
-          icon: "🎯",
+          color: 'text-green-400',
+          bgColor: 'bg-green-900/80',
+          icon: '🎯',
         };
-      case "ready":
+      case 'ready':
         return {
-          color: "text-yellow-400",
-          bgColor: "bg-yellow-900/80",
-          icon: "✅",
+          color: 'text-yellow-400',
+          bgColor: 'bg-yellow-900/80',
+          icon: '✅',
         };
       default:
         return {
-          color: "text-gray-400",
-          bgColor: "bg-gray-900/80",
-          icon: "⚡",
+          color: 'text-gray-400',
+          bgColor: 'bg-gray-900/80',
+          icon: '⚡',
         };
     }
   };
 
   const phaseInfo = getPhaseInfo();
-  const currentInstructions =
-    loadingInstructions[currentPhase] || loadingInstructions.initial;
+  const currentInstructions = loadingInstructions[currentPhase] || loadingInstructions.initial;
 
   return (
     <div
-      className={`absolute inset-0 flex flex-col items-center justify-center z-10 ${phaseInfo.bgColor} ${className}`}
+      className={`absolute inset-0 flex flex-col items-center justify-center z-10 ${phaseInfo.bgColor} ${className} p-2 sm:p-4`}
     >
       {/* Progress indicator */}
       <ProgressIndicator phase={currentPhase} className="mb-4" />
 
-      {/* Phase indicator */}
-      <div className="mb-4 p-3 rounded-lg bg-black/50 border border-opacity-30">
-        <div className={`text-3xl ${phaseInfo.color} text-center`}>
+      {/* Phase indicator - Mobile optimized */}
+      <div className="mb-4 p-2 sm:p-3 rounded-lg bg-black/50 border border-opacity-30">
+        <div className={`text-2xl sm:text-3xl ${phaseInfo.color} text-center`}>
           {phaseInfo.icon}
         </div>
       </div>
 
-      {/* Phase title */}
-      <div className="mb-4">
-        <h2 className={`text-xl font-bold ${phaseInfo.color} text-center`}>
-          {currentPhase === "initial" && "Starting Camera..."}
-          {currentPhase === "camera" && "Camera Ready!"}
-          {currentPhase === "ai" && "Loading Pose Detection..."}
-          {currentPhase === "positioning" && "Position Yourself in Frame..."}
-          {currentPhase === "ready" && "Ready to Start!"}
+      {/* Phase title - Mobile optimized */}
+      <div className="mb-4 px-2">
+        <h2 className={`text-lg sm:text-xl font-bold ${phaseInfo.color} text-center`}>
+          {currentPhase === 'initial' && 'Starting Camera...'}
+          {currentPhase === 'camera' && 'Camera Ready!'}
+          {currentPhase === 'ai' && 'Loading Pose Detection...'}
+          {currentPhase === 'positioning' && 'Position in Frame...'}
+          {currentPhase === 'ready' && 'Ready to Start!'}
         </h2>
       </div>
 
-      {/* Progress bar for AI loading phase */}
-      {currentPhase === "ai" && (
-        <div className="w-64 bg-gray-700 rounded-full h-2 mb-4">
+      {/* Progress bar for AI loading phase - Mobile optimized */}
+      {currentPhase === 'ai' && (
+        <div className="w-48 sm:w-64 bg-gray-700 rounded-full h-2 mb-4">
           <div
             className="bg-purple-400 h-2 rounded-full animate-pulse"
-            style={{ width: "70%" }}
+            style={{ width: '70%' }}
           ></div>
         </div>
       )}
 
-      {/* Current instruction */}
+      {/* Current instruction - Mobile optimized */}
       <div
-        className={`text-center max-w-md transition-opacity duration-500 text-lg ${phaseInfo.color} mb-4`}
+        className={`text-center max-w-xs transition-opacity duration-500 text-base sm:text-lg ${phaseInfo.color} mb-4 px-2`}
         style={{ opacity: instructionOpacity }}
       >
         {currentInstructions[currentInstructionIndex]}
       </div>
 
-      {/* Motivational messages */}
-      <MotivationalMessages phase={currentPhase} className="text-yellow-200" />
+      {/* Motivational messages - Mobile optimized */}
+      <MotivationalMessages phase={currentPhase} className="text-yellow-200 text-sm sm:text-base" />
 
-      {/* Phase-specific additional info */}
-      {currentPhase === "ai" && (
-        <div className="mt-4 text-sm text-gray-400 text-center max-w-sm">
+      {/* Phase-specific additional info - Mobile optimized */}
+      {currentPhase === 'ai' && (
+        <div className="mt-4 text-xs sm:text-sm text-gray-400 text-center max-w-xs px-2">
           <p>⏱️ This usually takes 10-30 seconds depending on your device</p>
           <p className="mt-1">🎯 Faster on newer devices with good internet</p>
         </div>
       )}
 
-      {currentPhase === "positioning" && (
-        <div className="mt-4 text-sm text-gray-400 text-center max-w-sm">
-          <p>
-            💡 If skeleton doesn&apos;t appear, try adjusting lighting or moving
-            closer/further
-          </p>
+      {currentPhase === 'positioning' && (
+        <div className="mt-4 text-xs sm:text-sm text-gray-400 text-center max-w-xs px-2">
+          <p>💡 If skeleton doesn&apos;t appear, try adjusting lighting or moving closer/further</p>
           <p className="mt-1">🔄 Sometimes a small step back helps</p>
         </div>
       )}

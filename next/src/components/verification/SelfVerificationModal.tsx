@@ -157,7 +157,7 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
               <div className="text-center space-y-4">
                 <p className="text-gray-300 text-sm">Scan this QR code with the Self mobile app:</p>
                 {selfApp && (
-                  <div className="flex justify-center">
+                  <div className="flex justify-center p-4 bg-white rounded-lg">
                     <SelfQRcodeWrapper
                       selfApp={selfApp}
                       onSuccess={handleSuccessfulVerification}

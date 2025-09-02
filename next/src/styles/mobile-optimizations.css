@@ -1,0 +1,82 @@
+/* Mobile Optimizations */
+
+/* Enhanced touch targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px;
+}
+
+/* Mobile control bar */
+.mobile-controls {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.mobile-controls-button {
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+/* Mobile orientation lock indicator */
+.orientation-lock-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* Mobile fullscreen toggle */
+.mobile-fullscreen-toggle {
+  position: absolute;
+  top: 0.5rem;
+  right: 3rem;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+/* Mobile wallet connection */
+.mobile-wallet-connection {
+  margin-bottom: 0.5rem;
+}
+
+/* Mobile mode switch */
+.mobile-mode-switch {
+  min-height: 3rem;
+}
+
+.mobile-mode-switch .imf-mode-segment {
+  min-height: 3rem;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+}
+
+/* Mobile banner */
+.mobile-banner {
+  margin-bottom: 0.5rem;
+}
+
+.mobile-banner h1 {
+  font-size: 1.25rem;
+}
+
+.mobile-olympic-rings {
+  margin-right: 0.5rem;
+}
+
+.mobile-olympic-rings .ring {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0 0.125rem;
+}

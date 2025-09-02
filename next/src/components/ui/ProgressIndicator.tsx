@@ -1,16 +1,13 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 
 interface ProgressIndicatorProps {
   phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
   className?: string;
 }
 
-const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ 
-  phase, 
-  className = "" 
-}) => {
+const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ phase, className = '' }) => {
   const phases = [
     { key: 'initial', label: 'Setup', icon: '⚡' },
     { key: 'camera', label: 'Camera', icon: '📹' },
@@ -19,10 +16,10 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
     { key: 'ready', label: 'Ready', icon: '✅' },
   ];
 
-  const currentIndex = phases.findIndex(p => p.key === phase);
+  const currentIndex = phases.findIndex((p) => p.key === phase);
 
   return (
-    <div className={`flex items-center justify-center space-x-2 ${className}`}>
+    <div className={`flex items-center justify-center space-x-1 sm:space-x-2 ${className}`}>
       {phases.map((phaseItem, index) => {
         const isActive = index === currentIndex;
         const isCompleted = index < currentIndex;
@@ -32,7 +29,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
           <div key={phaseItem.key} className="flex items-center">
             <div
               className={`
-                flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-300
+                flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-bold transition-all duration-300
                 ${isActive ? 'bg-yellow-400 text-black animate-pulse' : ''}
                 ${isCompleted ? 'bg-green-500 text-white' : ''}
                 ${isPending ? 'bg-gray-600 text-gray-400' : ''}
@@ -40,11 +37,11 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
             >
               {isCompleted ? '✓' : phaseItem.icon}
             </div>
-            
+
             {index < phases.length - 1 && (
               <div
                 className={`
-                  w-8 h-0.5 mx-1 transition-all duration-300
+                  w-4 sm:w-8 h-0.5 mx-0.5 sm:mx-1 transition-all duration-300
                   ${isCompleted ? 'bg-green-500' : 'bg-gray-600'}
                 `}
               />

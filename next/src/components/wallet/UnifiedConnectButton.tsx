@@ -128,25 +128,26 @@ export default function UnifiedConnectButton({
     );
   }
 
-  // ENHANCED: Clean 4-section layout when connected
+  // ENHANCED: Clean 4-section layout when connected with mobile optimization
   if (isConnected && address && showProfileWhenConnected) {
     return (
-      <div className={`${className} flex items-center gap-2 relative`}>
-        {/* Section 1: User Profile Display */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
-          <span className="text-white text-sm font-medium">
-            {resolvedDisplayName || `${address.slice(0, 6)}...${address.slice(-4)}`}
+      <div className={`${className} flex items-center gap-1 sm:gap-2 relative`}>
+        {/* Section 1: User Profile Display - Optimized for mobile */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-2 min-w-0">
+          <span className="text-white text-xs sm:text-sm font-medium truncate block max-w-[80px] sm:max-w-[120px]">
+            {resolvedDisplayName || `${address.slice(0, 4)}...${address.slice(-3)}`}
           </span>
         </div>
 
-        {/* Section 2: Network Switcher */}
+        {/* Section 2: Network Switcher - Enhanced for mobile touch targets */}
         <button
           onClick={() => setShowNetworkSwitcher(!showNetworkSwitcher)}
-          className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors"
+          className="bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-2 hover:bg-white/20 transition-colors touch-manipulation"
+          aria-label={`Switch network (${networkName})`}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div
-              className={`w-2 h-2 rounded-full ${
+              className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                 chainId === chainConfigs[SupportedChain.CELO].id
                   ? 'bg-green-400'
                   : chainId === chainConfigs[SupportedChain.POLYGON].id
@@ -158,11 +159,12 @@ export default function UnifiedConnectButton({
                         : 'bg-gray-400'
               }`}
             ></div>
-            <span className="text-white text-sm">{networkName}</span>
+            <span className="text-white text-xs sm:text-sm hidden xs:block">{networkName}</span>
+            <span className="text-white text-xs sm:text-sm block xs:hidden">Net</span>
           </div>
         </button>
 
-        {/* Section 3: Profile Button */}
+        {/* Section 3: Profile Button - Enhanced for mobile touch targets */}
         {onModeChange && (
           <button
             onClick={() =>
@@ -170,15 +172,18 @@ export default function UnifiedConnectButton({
               onModeChange(currentMode === 'profile' ? 'instructions' : 'profile')
             }
             disabled={workoutStarted}
-            className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors ${
+            className={`bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-2 hover:bg-white/20 transition-colors touch-manipulation ${
               currentMode === 'profile' ? 'bg-white/30' : ''
             } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-label={currentMode === 'profile' ? 'Close profile' : 'Open profile'}
           >
-            <span className="text-white text-sm">Profile</span>
+            <span className="text-white text-xs sm:text-sm">
+              {currentMode === 'profile' ? 'Close' : 'Profile'}
+            </span>
           </button>
         )}
 
-        {/* Section 4: Settings Button */}
+        {/* Section 4: Settings Button - Enhanced for mobile touch targets */}
         {onModeChange && (
           <button
             onClick={() =>
@@ -186,11 +191,14 @@ export default function UnifiedConnectButton({
               onModeChange(currentMode === 'settings' ? 'instructions' : 'settings')
             }
             disabled={workoutStarted}
-            className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors ${
+            className={`bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-2 hover:bg-white/20 transition-colors touch-manipulation ${
               currentMode === 'settings' ? 'bg-white/30' : ''
             } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-label={currentMode === 'settings' ? 'Close settings' : 'Open settings'}
           >
-            <span className="text-white text-sm">Settings</span>
+            <span className="text-white text-xs sm:text-sm">
+              {currentMode === 'settings' ? 'Close' : 'Settings'}
+            </span>
           </button>
         )}
 

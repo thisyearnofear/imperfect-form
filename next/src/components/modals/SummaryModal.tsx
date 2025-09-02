@@ -278,6 +278,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 console.log('User verified!');
                 // Handle success - refresh leaderboard, show badge, etc.
               }}
+              onClose={onClose}
             />
           </div>
         )}
