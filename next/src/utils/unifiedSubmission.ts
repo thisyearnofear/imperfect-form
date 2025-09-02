@@ -68,14 +68,14 @@ export async function submitScore(
       throw new Error(`Unsupported contract address: ${contractAddress}`);
     }
 
-    // Get Ethereum provider and signer using consolidated utilities
+    // Get Ethereum provider using existing consolidated utilities
     const ethereumProvider = options.providedEthereumProvider || (await getEthereumProvider());
 
     if (!ethereumProvider) {
       throw new Error('No Ethereum provider available. Please connect your wallet and try again.');
     }
 
-    // Enhanced provider validation
+    // Enhanced provider validation using existing patterns
     if (typeof ethereumProvider !== 'object' || !('request' in ethereumProvider)) {
       throw new Error('Invalid Ethereum provider. Please reconnect your wallet and try again.');
     }

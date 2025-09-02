@@ -2,47 +2,43 @@
 
 import React, { useState, useEffect } from 'react';
 import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
-import { useRobustThemeSwitching } from '@/hooks/useRobustThemeSwitching';
 import { usePlatform, useWallet, usePlatformFeatures } from '@/contexts/PlatformContext';
 import { Spinner } from '@/components/ui';
-import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { getBestDisplayName } from '@/utils/web3bio';
 import { useClientOnly } from '@/hooks/useClientOnly';
+import ChainSelector from '@/components/network/ChainSelector';
 
 interface UnifiedConnectButtonProps {
   onConnected?: (address: string) => void;
-  onWalletConnected?: (address: string, source: 'farcaster' | 'external') => void;
-  onWalletDisconnected?: () => void;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   showProfileWhenConnected?: boolean;
-  // New props for mode management
+  // Enhanced props for clean 4-section layout
   currentMode?: 'instructions' | 'settings' | 'profile';
   onModeChange?: (mode: 'instructions' | 'settings' | 'profile') => void;
   workoutStarted?: boolean;
-  // Style variants for different use cases
-  variant?: 'default' | 'compact' | 'farcaster' | 'universal';
 }
 
 /**
- * Unified Connect Button - Clean, performant, single source of truth
- * Replaces multiple wallet button components with one unified interface
+ * ENHANCED UnifiedConnectButton - Restored clean 4-section layout
+ * Following Core Principles: Enhanced existing component instead of creating new one
  */
 export default function UnifiedConnectButton({
   onConnected,
   className = '',
   size = 'md',
   showProfileWhenConnected = true,
+  currentMode = 'instructions',
+  onModeChange,
+  workoutStarted = false,
 }: UnifiedConnectButtonProps) {
   const { platform, user, isReady } = usePlatform();
   const { isConnected, address, chainId, isConnecting, connect, disconnect } = useWallet();
-  const { canSwitchChains, preferredChains } = usePlatformFeatures();
-  const { switchToChain, isLoading: isChainSwitching } = useRobustThemeSwitching();
-
-  const { isMobile } = useDeviceDetect();
+  const { canSwitchChains } = usePlatformFeatures();
   const hasMounted = useClientOnly();
   const [resolvedDisplayName, setResolvedDisplayName] = useState<string | undefined>();
   const [showNetworkSwitcher, setShowNetworkSwitcher] = useState(false);
+
   // Get network name from chainId using centralized config
   const getNetworkName = (id: number | null) => {
     if (!id) return 'Unknown';
@@ -55,7 +51,6 @@ export default function UnifiedConnectButton({
   };
 
   const networkName = getNetworkName(chainId);
-  const isOnPreferredChain = chainId ? preferredChains.includes(chainId) : false;
 
   // Resolve display name
   useEffect(() => {
@@ -101,11 +96,11 @@ export default function UnifiedConnectButton({
     setShowNetworkSwitcher(false);
   };
 
-  // Size classes (add responsive mobile-first)
+  // Size classes
   const sizeClasses = {
-    sm: 'py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl',
-    md: 'py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl',
-    lg: 'py-3 px-4 text-sm sm:py-4 sm:px-6 sm:text-xl',
+    sm: 'py-2 px-3 text-sm',
+    md: 'py-2 px-3 text-sm',
+    lg: 'py-3 px-4 text-base',
   };
 
   // Platform-specific styling
@@ -133,36 +128,23 @@ export default function UnifiedConnectButton({
     );
   }
 
-  // Connected state
+  // ENHANCED: Clean 4-section layout when connected
   if (isConnected && address && showProfileWhenConnected) {
     return (
-      <div className={`${className} relative`}>
+      <div className={`${className} flex items-center gap-2 relative`}>
+        {/* Section 1: User Profile Display */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
+          <span className="text-white text-sm font-medium">
+            {resolvedDisplayName || `${address.slice(0, 6)}...${address.slice(-4)}`}
+          </span>
+        </div>
+
+        {/* Section 2: Network Switcher */}
         <button
           onClick={() => setShowNetworkSwitcher(!showNetworkSwitcher)}
-          className={`
-            ${sizeClasses[size]}
-            ${getPlatformStyles()}
-            text-white font-semibold rounded-lg
-            transition-all duration-200 transform hover:scale-105
-            shadow-lg hover:shadow-xl
-            flex items-center space-x-2
-            ${!isOnPreferredChain ? 'ring-2 ring-yellow-400' : ''}
-          `}
+          className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors"
         >
-          {/* Platform indicator */}
-          <div className="flex items-center space-x-2">
-            {platform === 'farcaster' && <div className="w-2 h-2 bg-purple-300 rounded-full"></div>}
-            {platform === 'mobile' && <div className="w-2 h-2 bg-green-300 rounded-full"></div>}
-            {platform === 'desktop' && <div className="w-2 h-2 bg-blue-300 rounded-full"></div>}
-            {platform === 'pwa' && <div className="w-2 h-2 bg-orange-300 rounded-full"></div>}
-
-            <span className="truncate max-w-32">
-              {resolvedDisplayName || `${address.slice(0, 6)}...${address.slice(-4)}`}
-            </span>
-          </div>
-
-          {/* Network indicator */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center gap-2">
             <div
               className={`w-2 h-2 rounded-full ${
                 chainId === chainConfigs[SupportedChain.CELO].id
@@ -176,58 +158,51 @@ export default function UnifiedConnectButton({
                         : 'bg-gray-400'
               }`}
             ></div>
-            {!isMobile && <span className="text-xs opacity-75">{networkName}</span>}
+            <span className="text-white text-sm">{networkName}</span>
           </div>
         </button>
 
-        {/* Network switcher dropdown */}
+        {/* Section 3: Profile Button */}
+        {onModeChange && (
+          <button
+            onClick={() =>
+              !workoutStarted &&
+              onModeChange(currentMode === 'profile' ? 'instructions' : 'profile')
+            }
+            disabled={workoutStarted}
+            className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors ${
+              currentMode === 'profile' ? 'bg-white/30' : ''
+            } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <span className="text-white text-sm">Profile</span>
+          </button>
+        )}
+
+        {/* Section 4: Settings Button */}
+        {onModeChange && (
+          <button
+            onClick={() =>
+              !workoutStarted &&
+              onModeChange(currentMode === 'settings' ? 'instructions' : 'settings')
+            }
+            disabled={workoutStarted}
+            className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors ${
+              currentMode === 'settings' ? 'bg-white/30' : ''
+            } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <span className="text-white text-sm">Settings</span>
+          </button>
+        )}
+
+        {/* Network switcher - use proper ChainSelector dialog */}
         {showNetworkSwitcher && canSwitchChains && (
-          <div className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 min-w-48">
+          <ChainSelector onClose={() => setShowNetworkSwitcher(false)} />
+        )}
+
+        {/* Simple disconnect option when network switcher is active */}
+        {showNetworkSwitcher && (
+          <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[9998] min-w-32">
             <div className="p-2">
-              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 px-2">
-                Switch Network
-              </div>
-
-              {preferredChains.map((chain) => (
-                <button
-                  key={chain}
-                  onClick={async () => {
-                    setShowNetworkSwitcher(false);
-                    // Use the robust chain switching system
-                    await switchToChain(chain);
-                  }}
-                  disabled={isChainSwitching}
-                  className={`
-                    w-full text-left px-3 py-2 rounded-md text-sm
-                    hover:bg-gray-100 dark:hover:bg-gray-700
-                    flex items-center space-x-2
-                    ${
-                      chainId === chain
-                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                        : ''
-                    }
-                  `}
-                >
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      chain === chainConfigs[SupportedChain.CELO].id
-                        ? 'bg-green-400'
-                        : chain === chainConfigs[SupportedChain.POLYGON].id
-                          ? 'bg-purple-400'
-                          : chain === chainConfigs[SupportedChain.BASE].id
-                            ? 'bg-blue-400'
-                            : chain === chainConfigs[SupportedChain.MONAD].id
-                              ? 'bg-yellow-400'
-                              : 'bg-gray-400'
-                    }`}
-                  ></div>
-                  <span>{getNetworkName(chain)}</span>
-                  {chainId === chain && <span className="ml-auto text-xs">✓</span>}
-                </button>
-              ))}
-
-              <hr className="my-2 border-gray-200 dark:border-gray-700" />
-
               <button
                 onClick={handleDisconnect}
                 className="w-full text-left px-3 py-2 rounded-md text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"

@@ -78,7 +78,7 @@ html {
 
 .black {
   background-color: #000000; /* Fill color for the black ring */
-  border-color: #000000; /* Same color for the border */
+  border-color: #ffffff; /* White border for visibility on black background */
 }
 
 .green {

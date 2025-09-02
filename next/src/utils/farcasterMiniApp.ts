@@ -141,7 +141,14 @@ export async function getEthereumProvider(): Promise<unknown> {
         typeof provider.request === 'function' &&
         // Additional checks to ensure provider is functional
         provider.request !== undefined &&
-        provider.request !== null
+        provider.request !== null &&
+        // Check if provider has basic ethereum methods
+        (provider.isMetaMask !== undefined ||
+          provider.isCoinbaseWallet !== undefined ||
+          provider.isCoinbaseBrowser !== undefined ||
+          provider.isWalletConnect !== undefined ||
+          provider.selectedAddress !== undefined ||
+          provider.chainId !== undefined)
       );
     } catch (error) {
       logger.warn('Provider validation error:', error);
@@ -149,14 +156,32 @@ export async function getEthereumProvider(): Promise<unknown> {
     }
   };
 
-  // Test provider functionality
+  // Test provider functionality with multiple checks
   const testProvider = async (provider: any): Promise<boolean> => {
     try {
-      // Try a simple request to verify the provider works
-      await provider.request({ method: 'eth_requestAccounts' }).catch(() => {
-        // It's ok if this fails - just testing if request method works
-      });
-      return true;
+      // First try a non-intrusive method to check if provider is responsive
+      try {
+        await Promise.race([
+          provider.request({ method: 'eth_chainId' }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
+        ]);
+        return true;
+      } catch (chainIdError) {
+        // If chainId fails, try accounts (might prompt user)
+        try {
+          await Promise.race([
+            provider.request({ method: 'eth_accounts' }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
+          ]);
+          return true;
+        } catch (accountsError) {
+          logger.warn('Provider test failed for both chainId and accounts:', {
+            chainIdError,
+            accountsError,
+          });
+          return false;
+        }
+      }
     } catch (error) {
       logger.warn('Provider test failed:', error);
       return false;

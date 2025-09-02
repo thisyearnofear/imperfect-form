@@ -35,27 +35,7 @@ const monadTestnet: Chain = {
   testnet: true,
 };
 
-// Define Celo Alfajores Testnet
-const celoAlfajores: Chain = {
-  id: 44787,
-  name: 'Celo Alfajores Testnet',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'CELO',
-    symbol: 'CELO',
-  },
-  rpcUrls: {
-    public: { http: ['https://alfajores-forno.celo-testnet.org'] },
-    default: { http: ['https://alfajores-forno.celo-testnet.org'] },
-  },
-  blockExplorers: {
-    default: {
-      name: 'Celo Alfajores Explorer',
-      url: 'https://alfajores.celoscan.io/',
-    },
-  },
-  testnet: true,
-};
+// Removed unused Celo Alfajores testnet - only using main 4 chains
 
 // Comprehensive WalletConnect session cleanup utility
 const cleanupWalletConnectSessions = () => {
@@ -207,20 +187,23 @@ const createConnectors = async () => {
 const createWagmiConfig = async () => {
   const connectors = await createConnectors();
   return createConfig({
-    chains: [celo, polygon, base, monadTestnet, celoAlfajores],
+    chains: [celo, polygon, base, monadTestnet],
     connectors,
     storage: createStorage({
       storage: cookieStorage,
     }),
     ssr: true,
     transports: {
+      // Base: Primary Alchemy + fallback to public RPC
       [base.id]: http('https://base-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B'),
+      // Polygon: Primary Alchemy + fallback to public RPCs
       [polygon.id]: http(
         'https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B'
       ),
-      [celo.id]: http(),
-      [monadTestnet.id]: http(),
-      [celoAlfajores.id]: http(),
+      // Celo: Official + fallback (critical for Self Protocol)
+      [celo.id]: http('https://forno.celo.org'),
+      // Monad: Official testnet
+      [monadTestnet.id]: http('https://testnet-rpc.monad.xyz'),
     },
   });
 };

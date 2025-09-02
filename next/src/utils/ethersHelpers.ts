@@ -302,44 +302,80 @@ export async function getSignerFromProvider(
       console.warn('Account verification failed, but continuing:', accountsError);
     }
 
-    // Add defensive error handling for eth_accounts call
-    try {
-      return await provider.getSigner(accountIndex);
-    } catch (signerError: any) {
-      console.error('getSigner error details:', {
-        error: signerError,
-        message: signerError?.message,
-        code: signerError?.code,
-        stack: signerError?.stack,
-      });
+    // Add defensive error handling for eth_accounts call with retry logic
+    let retryCount = 0;
+    const maxRetries = 3;
 
-      // Handle the specific "Cannot read properties of undefined (reading 'error')" issue
-      if (
-        signerError.message &&
-        (signerError.message.includes('Cannot read properties of undefined') ||
-          signerError.message.includes('undefined is not an object') ||
-          signerError.message.includes("reading 'error'"))
-      ) {
-        // This suggests the provider returned a malformed response
-        throw new Error('Failed to access wallet. Please reconnect your wallet and try again.');
+    while (retryCount < maxRetries) {
+      try {
+        // Add a small delay for retries to allow provider to stabilize
+        if (retryCount > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+        }
+
+        return await provider.getSigner(accountIndex);
+      } catch (signerError: any) {
+        retryCount++;
+
+        console.error(`getSigner error details (attempt ${retryCount}/${maxRetries}):`, {
+          error: signerError,
+          message: signerError?.message,
+          code: signerError?.code,
+          stack: signerError?.stack,
+          retryCount,
+        });
+
+        // Handle the specific "Cannot read properties of undefined (reading 'error')" issue
+        if (
+          signerError.message &&
+          (signerError.message.includes('Cannot read properties of undefined') ||
+            signerError.message.includes('undefined is not an object') ||
+            signerError.message.includes("reading 'error'"))
+        ) {
+          if (retryCount < maxRetries) {
+            console.warn(
+              `Provider returned malformed response, retrying... (${retryCount}/${maxRetries})`
+            );
+            continue;
+          }
+          // This suggests the provider returned a malformed response
+          throw new Error('Failed to access wallet. Please reconnect your wallet and try again.');
+        }
+
+        // Handle RPC errors more gracefully
+        if (signerError?.code === -32002) {
+          if (retryCount < maxRetries) {
+            console.warn(`Wallet connection pending, retrying... (${retryCount}/${maxRetries})`);
+            continue;
+          }
+          throw new Error(
+            'Wallet connection request is already pending. Please check your wallet.'
+          );
+        }
+
+        if (signerError?.code === -32603) {
+          if (retryCount < maxRetries) {
+            console.warn(`Internal wallet error, retrying... (${retryCount}/${maxRetries})`);
+            continue;
+          }
+          throw new Error('Internal wallet error. Please try reconnecting your wallet.');
+        }
+
+        if (signerError?.code === 4001) {
+          throw new Error('Connection was rejected by user.');
+        }
+
+        // For the last retry, throw the error
+        if (retryCount >= maxRetries) {
+          throw new Error(
+            `Wallet connection failed after ${maxRetries} attempts: ${signerError?.message || 'Unknown error'}`
+          );
+        }
       }
-
-      // Handle RPC errors more gracefully
-      if (signerError?.code === -32002) {
-        throw new Error('Wallet connection request is already pending. Please check your wallet.');
-      }
-
-      if (signerError?.code === -32603) {
-        throw new Error('Internal wallet error. Please try reconnecting your wallet.');
-      }
-
-      if (signerError?.code === 4001) {
-        throw new Error('Connection was rejected by user.');
-      }
-
-      // Re-throw other signer errors with more context
-      throw new Error(`Wallet connection failed: ${signerError?.message || 'Unknown error'}`);
     }
+
+    // This should never be reached, but just in case
+    throw new Error('Failed to get signer after all retry attempts');
   } catch (error: any) {
     console.error('getSignerFromProvider error:', error);
 
