@@ -364,6 +364,27 @@
     margin-top: 8px !important;
     padding: 0 8px !important;
   }
+  
+  /* ENHANCEMENT: Mobile wallet connection two-row layout optimizations */
+  .mobile-wallet-connection {
+    padding-bottom: 0.75rem !important;
+  }
+  
+  /* Ensure proper spacing between button rows on mobile */
+  .mobile-wallet-connection .mb-2 {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Better touch targets for mobile wallet buttons */
+  .mobile-wallet-connection button {
+    min-height: 44px !important;
+    border-radius: 8px !important;
+  }
+  
+  /* Improved text shadow for better readability on mobile */
+  .mobile-wallet-connection .text-white {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+  }
 
   /* Enhanced background for better contrast */
   .bg-black\\/80 {

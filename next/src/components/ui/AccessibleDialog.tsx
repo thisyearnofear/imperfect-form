@@ -43,12 +43,20 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
           onEscapeKeyDown={preventClose ? undefined : onClose}
           style={{
             maxWidth: maxWidth,
-            backgroundColor: 'black', // Ensure background is solid black
+            backgroundColor: '#000000', // ENHANCEMENT: Solid black background for maximum contrast
+            color: '#ffffff', // ENHANCEMENT: Ensure text is white for maximum contrast
           }}
         >
           {/* Title is always present for accessibility, but can be visually hidden */}
           {showTitle ? (
-            <DialogPrimitive.Title className="text-xl font-bold text-[#fcb131] mb-4 font-['Press_Start_2P',cursive]">
+            <DialogPrimitive.Title
+              className="text-xl font-bold text-[#fcb131] mb-4 font-['Press_Start_2P',cursive]"
+              style={{
+                // ENHANCEMENT: Add text shadow for better readability against any background
+                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.9)',
+                color: '#fcb131',
+              }}
+            >
               {title}
             </DialogPrimitive.Title>
           ) : (
@@ -60,7 +68,11 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
           {description && (
             <DialogPrimitive.Description
               className="text-sm text-[#fcb131] mb-4"
-              style={{ color: '#fcb131' }}
+              style={{
+                color: '#fcb131',
+                // ENHANCEMENT: Add text shadow for better readability
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+              }}
             >
               {description}
             </DialogPrimitive.Description>

@@ -60,9 +60,17 @@ export default function SubmitScoreWithWagmi({
     setSubmissionStatus('submitting');
 
     try {
-      // Validate wallet connection before proceeding
+      // ENHANCEMENT: Validate wallet connection with Farcaster-specific messaging
       if (!wallet.isConnected) {
-        throw new Error('Wallet is not connected. Please connect your wallet and try again.');
+        const isFarcaster =
+          typeof window !== 'undefined' &&
+          (window.location.href.includes('farcaster') ||
+            document.referrer.includes('warpcast') ||
+            document.referrer.includes('farcaster'));
+        const errorMsg = isFarcaster
+          ? 'Wallet connection not detected in Farcaster app. Please connect your wallet and try again.'
+          : 'Wallet is not connected. Please connect your wallet and try again.';
+        throw new Error(errorMsg);
       }
 
       // Get the appropriate Ethereum provider (handles Farcaster Mini App detection)
@@ -85,9 +93,17 @@ export default function SubmitScoreWithWagmi({
         throw new Error(canSubmitResult.reason || 'Cannot submit');
       }
 
-      // Additional validation: check if we have a valid provider
+      // ENHANCEMENT: Additional validation with Farcaster-specific error handling
       if (!ethereumProvider) {
-        throw new Error('No wallet provider found. Please connect your wallet and try again.');
+        const isFarcaster =
+          typeof window !== 'undefined' &&
+          (window.location.href.includes('farcaster') ||
+            document.referrer.includes('warpcast') ||
+            document.referrer.includes('farcaster'));
+        const errorMsg = isFarcaster
+          ? 'Farcaster wallet provider not available. Make sure you have a wallet connected in the Farcaster app.'
+          : 'No wallet provider found. Please connect your wallet and try again.';
+        throw new Error(errorMsg);
       }
 
       const pushups = exerciseType === 'pushups' ? score : 0;

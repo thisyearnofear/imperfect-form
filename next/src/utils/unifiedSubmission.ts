@@ -71,16 +71,35 @@ export async function submitScore(
       throw new Error(`Unsupported contract address: ${contractAddress}`);
     }
 
-    // Get Ethereum provider using existing consolidated utilities
+    // ENHANCEMENT: Get Ethereum provider with improved error handling
     const ethereumProvider = options.providedEthereumProvider || (await getEthereumProvider());
 
     if (!ethereumProvider) {
-      throw new Error('No Ethereum provider available. Please connect your wallet and try again.');
+      // Check if we're in Farcaster context for better error messaging
+      const isFarcaster =
+        typeof window !== 'undefined' &&
+        (window.location.href.includes('farcaster') ||
+          document.referrer.includes('warpcast') ||
+          document.referrer.includes('farcaster'));
+      const errorMsg = isFarcaster
+        ? 'Farcaster wallet connection not detected. Please connect your wallet in the Farcaster app and try again.'
+        : 'No Ethereum provider available. Please connect your wallet and try again.';
+      throw new Error(errorMsg);
     }
 
-    // Enhanced provider validation using existing patterns
-    if (typeof ethereumProvider !== 'object' || !('request' in ethereumProvider)) {
-      throw new Error('Invalid Ethereum provider. Please reconnect your wallet and try again.');
+    // ENHANCEMENT: Enhanced provider validation with Farcaster-specific handling
+    if (
+      !ethereumProvider ||
+      typeof ethereumProvider !== 'object' ||
+      !('request' in ethereumProvider)
+    ) {
+      // Check if we're in Farcaster context for better error messaging
+      const isFarcaster =
+        typeof window !== 'undefined' && window.location.href.includes('farcaster');
+      const errorMsg = isFarcaster
+        ? 'Farcaster wallet provider not available. Please ensure your wallet is connected in the Farcaster app.'
+        : 'Invalid Ethereum provider. Please reconnect your wallet and try again.';
+      throw new Error(errorMsg);
     }
 
     const signer = await getSignerFromProvider(ethereumProvider);

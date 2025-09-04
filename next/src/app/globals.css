@@ -678,14 +678,15 @@ button:disabled {
   display: block;
 }
 
-/* Modal Dialog */
+/* Modal Dialog - ENHANCEMENT: Improved contrast and accessibility */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.95); /* Almost fully opaque black background */
+  background-color: rgba(0, 0, 0, 0.98); /* ENHANCEMENT: Near-opaque black for better text visibility */
+  backdrop-filter: blur(2px); /* ENHANCEMENT: Subtle blur for better focus */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -695,7 +696,7 @@ button:disabled {
 }
 
 .modal-content {
-  background-color: #111;
+  background-color: #000000; /* ENHANCEMENT: Pure black for maximum contrast */
   border: 3px solid #fcb131;
   border-radius: 10px;
   padding: 20px;
@@ -704,9 +705,10 @@ button:disabled {
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  color: #fff;
+  color: #ffffff; /* ENHANCEMENT: Pure white text for maximum contrast */
   text-align: center;
   box-shadow: 0 0 25px rgba(252, 177, 49, 0.5);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9); /* ENHANCEMENT: Text shadow for better readability */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -738,13 +740,23 @@ div[data-backdrop],
 /* Note: Removed automatic backdrop overlays that were causing initialization issues */
 /* Modal backdrops are now handled individually by each modal component */
 
-/* Force all modal content to have solid black backgrounds */
+/* ENHANCEMENT: Force all modal content to have solid black backgrounds with improved contrast */
 [data-dialog-content],
 [data-modal-content],
 .modal-content,
 .tw-connect-wallet-modal-content,
 .tw-modal-content {
-  background-color: black !important;
+  background-color: #000000 !important;
+  color: #ffffff !important; /* ENHANCEMENT: Ensure all text is white */
+}
+
+/* ENHANCEMENT: Improve text visibility in all modal contexts */
+[data-dialog-content] *,
+[data-modal-content] *,
+.modal-content *,
+.tw-connect-wallet-modal-content *,
+.tw-modal-content * {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
 .close-button {
@@ -1125,6 +1137,26 @@ div[data-backdrop],
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+/* ENHANCEMENT: Mobile-optimized wallet button layout */
+@media (max-width: 640px) {
+  .wallet-connection {
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Ensure buttons have adequate spacing on mobile */
+  .wallet-connection .bg-white\/10 {
+    min-height: 44px; /* Apple's recommended minimum touch target */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Improve text contrast in wallet buttons */
+  .wallet-connection .text-white {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  }
 }
 
 /* Larger touch targets for buttons on touch devices */

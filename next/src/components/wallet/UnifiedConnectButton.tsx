@@ -128,79 +128,160 @@ export default function UnifiedConnectButton({
     );
   }
 
-  // ENHANCED: Clean 4-section layout when connected with mobile optimization
+  // ENHANCEMENT: Responsive 4-section layout with mobile-optimized two-row design
   if (isConnected && address && showProfileWhenConnected) {
     return (
-      <div className={`${className} flex items-center gap-1 sm:gap-2 relative`}>
-        {/* Section 1: User Profile Display - Optimized for mobile */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-2 min-w-0">
-          <span className="text-white text-xs sm:text-sm font-medium truncate block max-w-[80px] sm:max-w-[120px]">
-            {resolvedDisplayName || `${address.slice(0, 4)}...${address.slice(-3)}`}
-          </span>
+      <div className={`${className} relative`}>
+        {/* Mobile: Two-row layout for better spacing and readability */}
+        <div className="block sm:hidden">
+          {/* Row 1: Username and Network */}
+          <div className="flex items-center gap-2 mb-2">
+            {/* Section 1: User Profile Display */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 flex-1 min-w-0">
+              <span className="text-white text-sm font-medium truncate block">
+                {resolvedDisplayName || `${address.slice(0, 6)}...${address.slice(-4)}`}
+              </span>
+            </div>
+
+            {/* Section 2: Network Switcher - Show full network name on mobile */}
+            <button
+              onClick={() => setShowNetworkSwitcher(!showNetworkSwitcher)}
+              className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation flex-shrink-0"
+              aria-label={`Switch network (${networkName})`}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    chainId === chainConfigs[SupportedChain.CELO].id
+                      ? 'bg-green-400'
+                      : chainId === chainConfigs[SupportedChain.POLYGON].id
+                        ? 'bg-purple-400'
+                        : chainId === chainConfigs[SupportedChain.BASE].id
+                          ? 'bg-blue-400'
+                          : chainId === chainConfigs[SupportedChain.MONAD].id
+                            ? 'bg-yellow-400'
+                            : 'bg-gray-400'
+                  }`}
+                ></div>
+                {/* ENHANCEMENT: Always show full network name on mobile */}
+                <span className="text-white text-sm font-medium">{networkName}</span>
+              </div>
+            </button>
+          </div>
+
+          {/* Row 2: Profile and Settings */}
+          <div className="flex items-center gap-2">
+            {/* Section 3: Profile Button */}
+            {onModeChange && (
+              <button
+                onClick={() =>
+                  !workoutStarted &&
+                  onModeChange(currentMode === 'profile' ? 'instructions' : 'profile')
+                }
+                disabled={workoutStarted}
+                className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation flex-1 ${
+                  currentMode === 'profile' ? 'bg-white/30' : ''
+                } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                aria-label={currentMode === 'profile' ? 'Close profile' : 'Open profile'}
+              >
+                <span className="text-white text-sm font-medium">
+                  {currentMode === 'profile' ? 'Close' : 'Profile'}
+                </span>
+              </button>
+            )}
+
+            {/* Section 4: Settings Button */}
+            {onModeChange && (
+              <button
+                onClick={() =>
+                  !workoutStarted &&
+                  onModeChange(currentMode === 'settings' ? 'instructions' : 'settings')
+                }
+                disabled={workoutStarted}
+                className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation flex-1 ${
+                  currentMode === 'settings' ? 'bg-white/30' : ''
+                } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
+                aria-label={currentMode === 'settings' ? 'Close settings' : 'Open settings'}
+              >
+                <span className="text-white text-sm font-medium">
+                  {currentMode === 'settings' ? 'Close' : 'Settings'}
+                </span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Section 2: Network Switcher - Enhanced for mobile touch targets */}
-        <button
-          onClick={() => setShowNetworkSwitcher(!showNetworkSwitcher)}
-          className="bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-2 hover:bg-white/20 transition-colors touch-manipulation"
-          aria-label={`Switch network (${networkName})`}
-        >
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div
-              className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
-                chainId === chainConfigs[SupportedChain.CELO].id
-                  ? 'bg-green-400'
-                  : chainId === chainConfigs[SupportedChain.POLYGON].id
-                    ? 'bg-purple-400'
-                    : chainId === chainConfigs[SupportedChain.BASE].id
-                      ? 'bg-blue-400'
-                      : chainId === chainConfigs[SupportedChain.MONAD].id
-                        ? 'bg-yellow-400'
-                        : 'bg-gray-400'
-              }`}
-            ></div>
-            <span className="text-white text-xs sm:text-sm hidden xs:block">{networkName}</span>
-            <span className="text-white text-xs sm:text-sm block xs:hidden">Net</span>
+        {/* Desktop/Tablet: Single row layout (original design) */}
+        <div className="hidden sm:flex items-center gap-2">
+          {/* Section 1: User Profile Display */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 min-w-0">
+            <span className="text-white text-sm font-medium truncate block max-w-[120px]">
+              {resolvedDisplayName || `${address.slice(0, 6)}...${address.slice(-4)}`}
+            </span>
           </div>
-        </button>
 
-        {/* Section 3: Profile Button - Enhanced for mobile touch targets */}
-        {onModeChange && (
+          {/* Section 2: Network Switcher */}
           <button
-            onClick={() =>
-              !workoutStarted &&
-              onModeChange(currentMode === 'profile' ? 'instructions' : 'profile')
-            }
-            disabled={workoutStarted}
-            className={`bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-2 hover:bg-white/20 transition-colors touch-manipulation ${
-              currentMode === 'profile' ? 'bg-white/30' : ''
-            } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label={currentMode === 'profile' ? 'Close profile' : 'Open profile'}
+            onClick={() => setShowNetworkSwitcher(!showNetworkSwitcher)}
+            className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation"
+            aria-label={`Switch network (${networkName})`}
           >
-            <span className="text-white text-xs sm:text-sm">
-              {currentMode === 'profile' ? 'Close' : 'Profile'}
-            </span>
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  chainId === chainConfigs[SupportedChain.CELO].id
+                    ? 'bg-green-400'
+                    : chainId === chainConfigs[SupportedChain.POLYGON].id
+                      ? 'bg-purple-400'
+                      : chainId === chainConfigs[SupportedChain.BASE].id
+                        ? 'bg-blue-400'
+                        : chainId === chainConfigs[SupportedChain.MONAD].id
+                          ? 'bg-yellow-400'
+                          : 'bg-gray-400'
+                }`}
+              ></div>
+              <span className="text-white text-sm">{networkName}</span>
+            </div>
           </button>
-        )}
 
-        {/* Section 4: Settings Button - Enhanced for mobile touch targets */}
-        {onModeChange && (
-          <button
-            onClick={() =>
-              !workoutStarted &&
-              onModeChange(currentMode === 'settings' ? 'instructions' : 'settings')
-            }
-            disabled={workoutStarted}
-            className={`bg-white/10 backdrop-blur-sm rounded-lg px-2 py-1 sm:px-3 sm:py-2 hover:bg-white/20 transition-colors touch-manipulation ${
-              currentMode === 'settings' ? 'bg-white/30' : ''
-            } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label={currentMode === 'settings' ? 'Close settings' : 'Open settings'}
-          >
-            <span className="text-white text-xs sm:text-sm">
-              {currentMode === 'settings' ? 'Close' : 'Settings'}
-            </span>
-          </button>
-        )}
+          {/* Section 3: Profile Button */}
+          {onModeChange && (
+            <button
+              onClick={() =>
+                !workoutStarted &&
+                onModeChange(currentMode === 'profile' ? 'instructions' : 'profile')
+              }
+              disabled={workoutStarted}
+              className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation ${
+                currentMode === 'profile' ? 'bg-white/30' : ''
+              } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label={currentMode === 'profile' ? 'Close profile' : 'Open profile'}
+            >
+              <span className="text-white text-sm">
+                {currentMode === 'profile' ? 'Close' : 'Profile'}
+              </span>
+            </button>
+          )}
+
+          {/* Section 4: Settings Button */}
+          {onModeChange && (
+            <button
+              onClick={() =>
+                !workoutStarted &&
+                onModeChange(currentMode === 'settings' ? 'instructions' : 'settings')
+              }
+              disabled={workoutStarted}
+              className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation ${
+                currentMode === 'settings' ? 'bg-white/30' : ''
+              } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label={currentMode === 'settings' ? 'Close settings' : 'Open settings'}
+            >
+              <span className="text-white text-sm">
+                {currentMode === 'settings' ? 'Close' : 'Settings'}
+              </span>
+            </button>
+          )}
+        </div>
 
         {/* Network switcher - use proper ChainSelector dialog */}
         {showNetworkSwitcher && canSwitchChains && (
