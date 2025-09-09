@@ -5,7 +5,7 @@ import { getUniversalLink } from '@selfxyz/core';
 import { SelfQRcodeWrapper, SelfAppBuilder, type SelfApp } from '@selfxyz/qrcode';
 // import { ethers } from "ethers"; // Removed unused import
 import { Dialog } from '@/components/ui';
-// import { useEnhancedChainTheme } from "@/contexts/ChainThemeContext"; // Unused import
+import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
 
 interface SelfVerificationModalProps {
@@ -28,7 +28,7 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // const { currentTheme } = useEnhancedChainTheme(); // Removed unused
+  const { currentTheme } = useEnhancedChainTheme();
   const { platform } = usePlatform();
 
   // Detect mobile device
@@ -116,22 +116,31 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="text-4xl">🏆</div>
-          <h3 className="text-lg font-bold text-white">Verify as Human</h3>
-          <p className="text-gray-300 text-sm">Get your verified badge with Self Protocol</p>
+          <h3 className="text-lg font-bold" style={{ color: currentTheme.palette.text }}>
+            Verify as Human
+          </h3>
+          <p className="text-sm" style={{ color: currentTheme.palette.accent }}>
+            Get your verified badge with Self Protocol
+          </p>
         </div>
 
         {/* Verification Interface */}
         {isLoading ? (
           <div className="text-center py-8">
-            <div className="animate-spin w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-400">Setting up verification...</p>
+            <div
+              className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full mx-auto mb-4"
+              style={{
+                borderColor: `${currentTheme.palette.accent} transparent transparent transparent`,
+              }}
+            ></div>
+            <p style={{ color: currentTheme.palette.textSecondary }}>Setting up verification...</p>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Mobile: Show deep link button */}
             {isMobile ? (
               <div className="text-center space-y-4">
-                <p className="text-gray-300 text-sm">
+                <p className="text-sm" style={{ color: currentTheme.palette.textSecondary }}>
                   Tap the button below to open the Self app and verify your identity:
                 </p>
                 <button
@@ -140,13 +149,14 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
                 >
                   📱 Open Self App
                 </button>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs" style={{ color: currentTheme.palette.textMuted }}>
                   Don&apos;t have the Self app?{' '}
                   <a
                     href="https://self.id"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
+                    className="hover:underline"
+                    style={{ color: currentTheme.palette.accent }}
                   >
                     Download here
                   </a>
@@ -155,7 +165,9 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
             ) : (
               /* Desktop: Show QR code */
               <div className="text-center space-y-4">
-                <p className="text-gray-300 text-sm">Scan this QR code with the Self mobile app:</p>
+                <p className="text-sm" style={{ color: currentTheme.palette.textSecondary }}>
+                  Scan this QR code with the Self mobile app:
+                </p>
                 {selfApp && (
                   <div className="flex justify-center p-4 bg-white rounded-lg">
                     <SelfQRcodeWrapper
@@ -167,13 +179,14 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
                     />
                   </div>
                 )}
-                <p className="text-xs text-gray-400">
+                <p className="text-xs" style={{ color: currentTheme.palette.textMuted }}>
                   Need the Self app?{' '}
                   <a
                     href="https://self.id"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
+                    className="hover:underline"
+                    style={{ color: currentTheme.palette.accent }}
                   >
                     Download for iOS/Android
                   </a>
@@ -184,11 +197,17 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
         )}
 
         {/* Privacy Notice */}
-        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-          <p className="text-xs text-gray-400">
-            🔒 <strong>Privacy First:</strong> Self Protocol only verifies you&apos;re 16+ years
-            old. No personal information is stored or shared. Verification happens entirely
-            on-chain.
+        <div
+          className="p-3 rounded-lg border"
+          style={{
+            backgroundColor: currentTheme.palette.surface + 'E6', // 90% opacity
+            borderColor: currentTheme.palette.accent + '80', // 50% opacity
+          }}
+        >
+          <p className="text-xs" style={{ color: currentTheme.palette.textSecondary }}>
+            🔒 <strong style={{ color: currentTheme.palette.accent }}>Privacy First:</strong> Self
+            Protocol only verifies you&apos;re 16+ years old. No personal information is stored or
+            shared. Verification happens entirely on-chain.
           </p>
         </div>
 
@@ -196,14 +215,36 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
         <div className="flex space-x-3">
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg transition-colors"
+            className="flex-1 py-3 px-4 rounded-lg transition-colors"
+            style={{
+              backgroundColor: currentTheme.palette.surface,
+              color: currentTheme.palette.text,
+              border: `1px solid ${currentTheme.palette.accent}40`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = currentTheme.palette.surfaceLight;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = currentTheme.palette.surface;
+            }}
           >
             Maybe Later
           </button>
           {!isMobile && universalLink && (
             <button
               onClick={openSelfApp}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors"
+              className="flex-1 py-3 px-4 rounded-lg transition-colors"
+              style={{
+                backgroundColor: currentTheme.palette.accent,
+                color: currentTheme.palette.background,
+                border: `1px solid ${currentTheme.palette.accent}`,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = currentTheme.palette.accentLight;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = currentTheme.palette.accent;
+              }}
             >
               📱 Mobile Link
             </button>

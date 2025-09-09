@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { usePlatform } from '@/contexts/PlatformContext';
+import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { SupportedChain, chainConfigs } from '@/utils/chainSwitching';
 import { Dialog } from '@/components/ui';
 import toast from 'react-hot-toast';
@@ -23,6 +24,7 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
 }) => {
   const [isSwitching, setIsSwitching] = useState(false);
   const { actions, wallet } = usePlatform();
+  const { currentTheme } = useEnhancedChainTheme();
 
   const handleSwitchNetwork = async () => {
     setIsSwitching(true);
@@ -73,11 +75,17 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
       preventClose={false}
     >
       <div className="space-y-6">
-        <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+        <div
+          className="p-4 rounded-lg border"
+          style={{
+            backgroundColor: currentTheme.palette.surface + 'E6',
+            borderColor: currentTheme.palette.accent + '80',
+          }}
+        >
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-400">Current Network:</span>
-              <span className="text-white font-medium">
+              <span style={{ color: currentTheme.palette.textSecondary }}>Current Network:</span>
+              <span className="font-medium" style={{ color: currentTheme.palette.text }}>
                 {wallet.chainId
                   ? (() => {
                       const foundChain = Object.values(SupportedChain).find(
@@ -94,22 +102,35 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-400">Required Network:</span>
-              <span className="text-green-400 font-medium">
+              <span style={{ color: currentTheme.palette.textSecondary }}>Required Network:</span>
+              <span className="font-medium" style={{ color: currentTheme.palette.accent }}>
                 {getNetworkDisplayName(targetChain)}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="text-sm text-gray-300 text-center">
-          <p>Self Protocol verification requires Celo mainnet</p>
+        <div className="text-sm text-center">
+          <p style={{ color: currentTheme.palette.textSecondary }}>
+            Self Protocol verification requires Celo mainnet
+          </p>
         </div>
 
         <div className="flex space-x-3">
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg transition-colors"
+            className="flex-1 py-3 px-4 rounded-lg transition-colors"
+            style={{
+              backgroundColor: currentTheme.palette.surface,
+              color: currentTheme.palette.text,
+              border: `1px solid ${currentTheme.palette.accent}40`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = currentTheme.palette.surfaceLight;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = currentTheme.palette.surface;
+            }}
             disabled={isSwitching}
           >
             Maybe Later
@@ -117,7 +138,22 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
           <button
             onClick={handleSwitchNetwork}
             disabled={isSwitching}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="flex-1 py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            style={{
+              backgroundColor: currentTheme.palette.accent,
+              color: currentTheme.palette.background,
+              border: `1px solid ${currentTheme.palette.accent}`,
+            }}
+            onMouseEnter={(e) => {
+              if (!isSwitching) {
+                e.currentTarget.style.backgroundColor = currentTheme.palette.accentLight;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSwitching) {
+                e.currentTarget.style.backgroundColor = currentTheme.palette.accent;
+              }
+            }}
           >
             {isSwitching ? (
               <>
@@ -130,10 +166,16 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
           </button>
         </div>
 
-        <div className="text-xs text-gray-400 border-t border-gray-700 pt-3">
+        <div
+          className="text-xs pt-3 border-t"
+          style={{
+            color: currentTheme.palette.textMuted,
+            borderColor: currentTheme.palette.accent + '40',
+          }}
+        >
           <p>
-            <strong>Manual switch:</strong> You can also switch to Celo Alfajores manually in your
-            wallet settings.
+            <strong style={{ color: currentTheme.palette.accent }}>Manual switch:</strong> You can
+            also switch to Celo Alfajores manually in your wallet settings.
           </p>
         </div>
       </div>

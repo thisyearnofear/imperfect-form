@@ -52,7 +52,7 @@ export const SELF_PROTOCOL_CONFIG: SelfProtocolConfig = {
   configId: '0x7b6436b0c98f62380866d9432c2af0ee08ce16a171bda6951aecd95ee1307d61',
 
   // Minimum age requirement for verification
-  minimumAge: 13,
+  minimumAge: 16,
 
   // Production network (Celo Mainnet only)
   network: CELO_MAINNET,
@@ -61,7 +61,7 @@ export const SELF_PROTOCOL_CONFIG: SelfProtocolConfig = {
   verification: {
     excludedCountries: [], // No country restrictions for fitness app
     ofac: false, // No OFAC checking needed for fitness app
-    minimumAge: 13, // Minimum age for fitness tracking
+    minimumAge: 16, // Minimum age for fitness tracking
   },
 } as const;
 

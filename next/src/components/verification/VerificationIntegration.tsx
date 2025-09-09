@@ -148,7 +148,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
               onClick={promptForVerification}
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 text-sm"
             >
-              Verify Now
+              {chainId && chainSupportsSelfProtocol(chainId) ? 'Verify Now' : 'Switch & Verify'}
             </button>
           </div>
 
@@ -160,10 +160,12 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
                 ✨ One-time setup • 🏆{' '}
                 <span className="font-medium text-yellow-50">{verifiedCount}</span> humans verified
                 • ⚡ Instant badge
+                {!chainId || !chainSupportsSelfProtocol(chainId) ? ' • Requires Celo' : ''}
               </span>
             ) : (
               <span className="animate-fade-in">
                 ✨ One-time setup • 🔒 Privacy-first • ⚡ Instant badge
+                {!chainId || !chainSupportsSelfProtocol(chainId) ? ' • Requires Celo' : ''}
               </span>
             )}
           </div>
