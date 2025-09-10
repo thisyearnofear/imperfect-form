@@ -6,6 +6,7 @@ import { Spinner } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { NotificationSignup } from '@/components/miniapp/NotificationSignup';
 import ChainAmbient from '@/components/theme/ChainAmbient';
+import ThemeSync from '@/components/theme/ThemeSync';
 import { callFarcasterReady } from '@/utils/farcasterMiniApp';
 
 const GameWrapper = dynamic(() => import('@/components/game/GameWrapper'), {
@@ -115,6 +116,9 @@ export default function Home() {
     <>
       {/* Chain-specific ambient background effects */}
       <ChainAmbient />
+
+      {/* Automatic theme synchronization with wallet */}
+      <ThemeSync />
 
       {/* Mini App Banner - hidden as users don't need to see it */}
 

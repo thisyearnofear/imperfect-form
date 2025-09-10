@@ -166,27 +166,34 @@ export async function submitScore(
       // Handle standard contract submission (both exercises together)
       const contract = new ethers.Contract(contractAddress, networkConfig.abi, signer);
 
-      // Prepare transaction with consolidated gas estimation
-      const gasLimit = await estimateGasWithBuffer(contract, 'addScore', [pushups, squats]);
-
       // Check if we're submitting to Monad network which requires a fee
       const isMonadNetwork = networkConfig.chainId === 10143; // Monad Testnet chain ID
       let submissionFee = 0n;
 
       if (isMonadNetwork) {
-        try {
-          // Get the required submission fee from the contract
-          submissionFee = await contract.feeConfig().then((config) => config.submissionFee);
-        } catch {
-          // Fallback to default fee if we can't fetch it
-          submissionFee = ethers.parseEther('0.001');
-          console.warn(
-            'Could not fetch submission fee from contract, using default:',
-            ethers.formatEther(submissionFee),
-            'MON'
+        // Monad contract requires a fixed fee (no feeConfig function available)
+        submissionFee = ethers.parseEther('0.001'); // 0.001 MON
+        console.log('Using fixed Monad submission fee:', ethers.formatEther(submissionFee), 'MON');
+
+        // Check if user has sufficient balance for fee + gas
+        const balance = await signer.provider?.getBalance(connectedAddress);
+        if (balance && balance < submissionFee + ethers.parseEther('0.001')) {
+          // fee + estimated gas
+          throw new Error(
+            `Insufficient MON balance. You need at least ${ethers.formatEther(submissionFee + ethers.parseEther('0.001'))} MON for the submission fee and gas.`
           );
         }
       }
+
+      // Prepare transaction with consolidated gas estimation (include value for payable functions)
+      const gasEstimationOptions =
+        isMonadNetwork && submissionFee > 0n ? { value: submissionFee } : {};
+      const gasLimit = await estimateGasWithBuffer(
+        contract,
+        'addScore',
+        [pushups, squats],
+        gasEstimationOptions
+      );
 
       // Add referral tag if applicable
       const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
@@ -238,7 +245,6 @@ export async function submitScore(
     // More specific error messages for common issues
     let errorMessage = 'Submission failed. Please try again.';
     if (error instanceof Error) {
-      console.log('unifiedSubmission: Parsing error message:', error.message);
       if (error.message.includes('user rejected') || error.message.includes('User denied')) {
         errorMessage = 'Transaction was rejected. Please confirm the transaction in your wallet.';
       } else if (error.message.includes('insufficient funds')) {
@@ -257,7 +263,6 @@ export async function submitScore(
       } else {
         errorMessage = error.message;
       }
-      console.log('unifiedSubmission: Final error message:', errorMessage);
     }
 
     toast.error(errorMessage, { id: 'submission' });
