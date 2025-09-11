@@ -1,4 +1,3 @@
-// No need to import ThirdwebSDK anymore as we're using a custom interface
 import toast from 'react-hot-toast';
 import {
   POLYGON_CONTRACT_ADDRESS,
@@ -308,6 +307,5 @@ declare global {
         switchChain: (chainId: number) => Promise<void>;
       };
     };
-    // Note: ethereum is already defined in src/types/window.d.ts
   }
 }

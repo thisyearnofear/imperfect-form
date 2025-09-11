@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { getUniversalLink } from '@selfxyz/core';
 import { SelfQRcodeWrapper, SelfAppBuilder, type SelfApp } from '@selfxyz/qrcode';
-// import { ethers } from "ethers"; // Removed unused import
 import { Dialog } from '@/components/ui';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
+import { SELF_PROTOCOL_CONFIG } from '@/config/self-protocol';
+import { VERIFIED_FITNESS_CONTRACT_ADDRESS } from '@/constants/contracts';
 
 interface SelfVerificationModalProps {
   isOpen: boolean;
@@ -53,11 +54,11 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
       const app = new SelfAppBuilder({
         version: 2,
         appName: 'Imperfect Form',
-        scope: 'imperfect-form-fitness',
-        endpoint: process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT || '',
+        scope: SELF_PROTOCOL_CONFIG.scope,
+        endpoint: VERIFIED_FITNESS_CONTRACT_ADDRESS,
         logoBase64: 'https://imperfectform.fun/favicon.ico',
         userId: userAddress,
-        endpointType: 'celo', // Use Celo mainnet - migrated from testnet
+        endpointType: 'celo', // Use Celo mainnet
         userIdType: 'hex',
         userDefinedData: JSON.stringify({
           platform: platform,
@@ -65,10 +66,10 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
           action: 'fitness_verification',
         }),
         disclosures: {
-          // Verification requirements (must match contract)
-          minimumAge: 16,
-          excludedCountries: [],
-          ofac: false,
+          // Verification requirements (must match contract and backend)
+          minimumAge: SELF_PROTOCOL_CONFIG.minimumAge,
+          excludedCountries: SELF_PROTOCOL_CONFIG.verification.excludedCountries,
+          ofac: SELF_PROTOCOL_CONFIG.verification.ofac,
 
           // Optional disclosures (what users can choose to reveal)
           nationality: false, // Don't request by default

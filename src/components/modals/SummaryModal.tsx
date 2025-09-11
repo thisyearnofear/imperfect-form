@@ -7,8 +7,6 @@ import { usePlatform } from '@/contexts/PlatformContext';
 import { UniversalConnectButton } from '@/components/wallet';
 import FarcasterShare from '@/components/social/FarcasterShare';
 import SubmitScoreWithWagmi from '@/components/game/SubmitScoreWithWagmi';
-// Removed unused imports - now using unified Wagmi submission
-// Removed unused toast import
 import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
 import { VerificationIntegration } from '@/components/verification';
 
@@ -79,9 +77,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   // Use the address from props if provided, otherwise fall back to wallet address from context
   const effectiveAddress = address || walletAddress;
-  // Removed unused isSubmitting state - now using unified Wagmi submission
-
-  // Removed unused getEthereumProvider function - now using unified Wagmi submission
 
   // Debug logging for mobile wallet issues
   React.useEffect(() => {

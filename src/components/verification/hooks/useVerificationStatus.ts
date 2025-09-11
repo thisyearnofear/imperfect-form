@@ -1,19 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
-import { SELF_PROTOCOL_CONTRACT_ADDRESS } from '@/constants/contracts';
+import {
+  VERIFIED_FITNESS_CONTRACT_ADDRESS,
+  verifiedFitnessContractABI,
+} from '@/constants/contracts';
 import { chainSupportsSelfProtocol } from '@/utils/chainSwitching';
-
-// Self Protocol contract ABI - just the function we need
-const SELF_PROTOCOL_ABI = [
-  {
-    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
-    name: 'isVerifiedHuman',
-    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-];
 
 /**
  * Hook to check if current user is verified through Self Protocol
@@ -40,13 +32,13 @@ export const useVerificationStatus = () => {
     }
 
     try {
-      // Connect to Celo Alfajores testnet (where Self Protocol is deployed)
-      const provider = new ethers.JsonRpcProvider('https://alfajores-forno.celo-testnet.org');
+      // Connect to Celo Mainnet (where Self Protocol is deployed)
+      const provider = new ethers.JsonRpcProvider('https://forno.celo.org');
 
       // Create contract instance
       const contract = new ethers.Contract(
-        SELF_PROTOCOL_CONTRACT_ADDRESS,
-        SELF_PROTOCOL_ABI,
+        VERIFIED_FITNESS_CONTRACT_ADDRESS,
+        verifiedFitnessContractABI,
         provider
       );
 
@@ -54,7 +46,7 @@ export const useVerificationStatus = () => {
       const verified = await contract.isVerifiedHuman(address);
       setIsVerified(verified);
 
-      console.log(`Verification status for ${address} on Celo Alfajores: ${verified}`);
+      console.log(`Verification status for ${address} on Celo Mainnet: ${verified}`);
     } catch (error) {
       console.error('Error checking verification status:', error);
       setIsVerified(false);

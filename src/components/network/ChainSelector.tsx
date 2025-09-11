@@ -5,7 +5,6 @@ import { useSwitchChain } from 'wagmi';
 import { polygon, base, celo } from 'wagmi/chains';
 import { Dialog } from '@/components/ui';
 import Image from 'next/image';
-// Removed unused contract address imports
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 
 // Custom Monad Testnet chain object

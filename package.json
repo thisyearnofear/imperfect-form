@@ -18,7 +18,8 @@
     "deploy:self": "hardhat run scripts/deploy-self-protocol.js --network celoMainnet",
     "self:switch-mainnet": "node scripts/switch-to-mainnet.js",
     "self:test": "node scripts/test-self-protocol.cjs",
-    "self:health": "curl -X GET http://localhost:3000/api/self/verify"
+    "self:health": "curl -X GET http://localhost:3000/api/self/verify",
+    "self:check": "node scripts/check-self-integration.js"
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.38.19",

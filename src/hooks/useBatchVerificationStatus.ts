@@ -1,17 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
-import { SELF_PROTOCOL_CONTRACT_ADDRESS } from '@/constants/contracts';
-
-// Self Protocol contract ABI - just the function we need
-const SELF_PROTOCOL_ABI = [
-  {
-    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
-    name: 'isVerifiedHuman',
-    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-];
+import {
+  VERIFIED_FITNESS_CONTRACT_ADDRESS,
+  verifiedFitnessContractABI,
+} from '@/constants/contracts';
 
 /**
  * Hook to check verification status for multiple users
@@ -32,12 +24,12 @@ export const useBatchVerificationStatus = (addresses: string[]) => {
 
     try {
       // Connect to Celo Alfajores testnet (where Self Protocol is deployed)
-      const provider = new ethers.JsonRpcProvider('https://alfajores-forno.celo-testnet.org');
+      const provider = new ethers.JsonRpcProvider('https://forno.celo.org');
 
       // Create contract instance
       const contract = new ethers.Contract(
-        SELF_PROTOCOL_CONTRACT_ADDRESS,
-        SELF_PROTOCOL_ABI,
+        VERIFIED_FITNESS_CONTRACT_ADDRESS,
+        verifiedFitnessContractABI,
         provider
       );
 

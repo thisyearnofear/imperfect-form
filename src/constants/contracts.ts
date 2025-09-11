@@ -67,10 +67,84 @@ export const PROGRESS_CHAINS = [
   },
 ];
 
-// Self Protocol Verified Fitness Contract (Celo Mainnet)
+// =============================================================================
+// SELF PROTOCOL INTEGRATION - CELO MAINNET
+// =============================================================================
+
+// Self Protocol V2 Hub Address (Celo Mainnet) - DO NOT CHANGE
+export const SELF_PROTOCOL_HUB_ADDRESS = '0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF';
+
+// Our deployed VerifiedFitnessContract address (Celo Mainnet)
+// This is the contract users interact with for verification
 export const VERIFIED_FITNESS_CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT || '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03';
-export const SELF_PROTOCOL_CONTRACT_ADDRESS = '0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF';
+  process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT || '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03'; // DEPLOYED ON CELO MAINNET
+
+// =============================================================================
+// VERIFIED FITNESS CONTRACT ABI - SELF PROTOCOL INTEGRATION
+// =============================================================================
+
+export const verifiedFitnessContractABI = [
+  // Core verification functions
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'isVerifiedHuman',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'getVerificationTimestamp',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getVerificationStats',
+    outputs: [
+      { internalType: 'uint256', name: 'totalUsers', type: 'uint256' },
+      { internalType: 'address', name: 'lastUser', type: 'address' },
+      { internalType: 'uint256', name: 'lastTimestamp', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  // Configuration functions
+  {
+    inputs: [],
+    name: 'MINIMUM_AGE',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'SCOPE_NAME',
+    outputs: [{ internalType: 'string', name: '', type: 'string' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'VERIFICATION_CONFIG_ID',
+    outputs: [{ internalType: 'bytes32', name: '', type: 'bytes32' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  // Events
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+      { indexed: false, internalType: 'bytes32', name: 'userIdentifier', type: 'bytes32' },
+      { indexed: false, internalType: 'string', name: 'platform', type: 'string' },
+    ],
+    name: 'UserVerified',
+    type: 'event',
+  },
+];
 
 // Full ABI for the standardized FitnessLeaderboard contracts
 // This is the base ABI that works for most networks

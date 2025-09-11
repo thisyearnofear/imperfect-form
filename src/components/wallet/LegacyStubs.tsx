@@ -71,7 +71,6 @@ export const WalletTypeSelector = () => (
   <UnifiedConnectButton size="lg" showProfileWhenConnected={false} />
 );
 
-// Removed legacy detectors - unified system handles detection automatically
 export const NetworkSelector = () => null;
 export const FallbackConnectButton = () => (
   <UnifiedConnectButton size="md" showProfileWhenConnected={true} />
