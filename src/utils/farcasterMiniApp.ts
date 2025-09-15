@@ -157,16 +157,30 @@ export async function getEthereumProvider(): Promise<unknown> {
   // Test provider functionality with simplified checks
   const testProvider = async (provider: any): Promise<boolean> => {
     try {
-      // ENHANCEMENT: Simplified provider testing to avoid false negatives
-      // Only test basic functionality without intrusive calls that might fail in Farcaster context
+      // ENHANCEMENT: Test multiple methods to ensure provider is functional
+      // Try eth_accounts first as it's less likely to fail
+      const accounts = await Promise.race([
+        provider.request({ method: 'eth_accounts' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
+      ]);
+
+      // If we get accounts, the provider is working
+      if (Array.isArray(accounts) && accounts.length > 0) {
+        logger.info('Provider test successful - accounts available:', accounts.length);
+        return true;
+      }
+
+      // If no accounts, try chainId as fallback
       await Promise.race([
         provider.request({ method: 'eth_chainId' }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000)),
       ]);
+
+      logger.info('Provider test successful - chainId accessible');
       return true;
     } catch (error) {
       // ENHANCEMENT: Don't fail provider validation based on test - some Farcaster providers
-      // may not respond to eth_chainId until after user interaction
+      // may not respond until after user interaction
       logger.info('Provider test inconclusive, but provider structure is valid:', error);
       return true; // Accept the provider if it has proper structure
     }

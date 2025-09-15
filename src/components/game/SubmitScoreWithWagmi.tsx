@@ -34,8 +34,8 @@ export default function SubmitScoreWithWagmi({
   // Note: writeContract available for future Wagmi integration if needed
   // const { writeContract } = useWriteContract();
 
-  // Get current user address
-  const address = wagmiAddress || walletAddress;
+  // Get current user address - prioritize wallet state, then wagmi, then prop
+  const address = wallet.address || wagmiAddress || walletAddress;
 
   // Unified submission handler
   const handleSubmit = async () => {

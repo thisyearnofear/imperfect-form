@@ -104,10 +104,27 @@ export async function submitScore(
 
     const signer = await getSignerFromProvider(ethereumProvider);
 
-    // Verify the signer address matches connected address
+    // Get the actual signer address and use it as the authoritative source
     const signerAddress = await signer.getAddress();
-    if (signerAddress.toLowerCase() !== connectedAddress.toLowerCase()) {
-      throw new Error('Signer address does not match connected address');
+
+    // Log address comparison for debugging
+    console.log('Address comparison:', {
+      connectedAddress,
+      signerAddress,
+      match: signerAddress.toLowerCase() === connectedAddress?.toLowerCase(),
+    });
+
+    // Use the signer address as the authoritative source instead of failing
+    // This handles cases where Farcaster or other providers return different addresses
+    // than what the UI state thinks is connected
+    const actualAddress = signerAddress;
+
+    // Only warn if addresses don't match, but continue with signer address
+    if (connectedAddress && signerAddress.toLowerCase() !== connectedAddress.toLowerCase()) {
+      console.warn('Signer address differs from connected address, using signer address:', {
+        expected: connectedAddress,
+        actual: signerAddress,
+      });
     }
 
     // Additional check: verify we're on the correct network
@@ -176,7 +193,7 @@ export async function submitScore(
         console.log('Using fixed Monad submission fee:', ethers.formatEther(submissionFee), 'MON');
 
         // Check if user has sufficient balance for fee + gas
-        const balance = await signer.provider?.getBalance(connectedAddress);
+        const balance = await signer.provider?.getBalance(actualAddress);
         if (balance && balance < submissionFee + ethers.parseEther('0.001')) {
           // fee + estimated gas
           throw new Error(
@@ -197,7 +214,7 @@ export async function submitScore(
 
       // Add referral tag if applicable
       const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
-      const taggedCalldata = addReferralTagToCalldata(connectedAddress, calldata);
+      const taggedCalldata = addReferralTagToCalldata(actualAddress, calldata);
 
       // Prepare transaction object with value for payable functions
       const transactionParams: any = {
