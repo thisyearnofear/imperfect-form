@@ -7,6 +7,14 @@
 
 import { createRemoteLogger } from './remoteLogger';
 
+// Type definition for Ethereum provider
+interface EthereumProvider {
+  request: (args: { method: string; params?: any[] }) => Promise<any>;
+  isMetaMask?: boolean;
+  isCoinbaseWallet?: boolean;
+  [key: string]: any;
+}
+
 const logger = createRemoteLogger('FarcasterMiniApp');
 
 /**
@@ -227,11 +235,19 @@ export async function getEthereumProvider(): Promise<unknown> {
     logger.warn('🎯 Farcaster SDK not available, falling back to window.ethereum:', error);
   }
 
-  // Fallback to window.ethereum
-  const windowEthereum = (window as { ethereum?: unknown }).ethereum;
-  if (validateProvider(windowEthereum)) {
-    logger.info('🎯 Using window.ethereum provider');
-    return windowEthereum;
+  // Fallback to window.ethereum using safe access
+  logger.info('🎯 Farcaster SDK not available, falling back to window.ethereum');
+
+  try {
+    // Import the safety utility dynamically to avoid circular dependencies
+    const { getEthereumProvider } = await import('./ethereumProviderSafety');
+    const windowEthereum = getEthereumProvider();
+    if (windowEthereum) {
+      logger.info('🎯 Using window.ethereum provider');
+      return windowEthereum as EthereumProvider;
+    }
+  } catch (error) {
+    logger.warn('🎯 Failed to safely access window.ethereum:', error);
   }
 
   // Additional fallback: check for other common provider names

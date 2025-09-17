@@ -12,6 +12,8 @@ import { NeynarAuthProvider } from '@/contexts/NeynarAuthContext';
 import { EnhancedChainThemeProvider } from '@/contexts/ChainThemeContext';
 import WalletSelectorModal from '@/components/modals/WalletSelectorModal';
 import { Spinner } from '@/components/ui';
+import WalletErrorBoundary from './WalletErrorBoundary';
+import WalletDebugInfo from '@/components/debug/WalletDebugInfo';
 
 // Define Monad Testnet
 const monadTestnet: Chain = {
@@ -134,7 +136,8 @@ const createConnectors = async () => {
       appLogoUrl: 'https://imperfectform.fun/icon-192x192.png',
       // Offer passkey (Smart Wallet) and EOA to maximize compatibility
       preference: 'all',
-      enableMobileWalletLink: true,
+      // Prevent window.ethereum override issues
+      headlessMode: false,
     }),
 
     // Tertiary: WalletConnect (only if project ID is properly configured)
@@ -334,19 +337,22 @@ export default function SimplifiedAppProviders({ children }: AppProvidersProps) 
   const neynarClientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '';
 
   return (
-    <WagmiProviderComponent config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <EnhancedChainThemeProvider>
-          <PlatformProvider>
-            <NeynarAuthProvider clientId={neynarClientId}>
-              <Toaster {...toastConfig} />
-              {children}
-              <WalletSelectorModal />
-            </NeynarAuthProvider>
-          </PlatformProvider>
-        </EnhancedChainThemeProvider>
-      </QueryClientProvider>
-    </WagmiProviderComponent>
+    <WalletErrorBoundary>
+      <WagmiProviderComponent config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <EnhancedChainThemeProvider>
+            <PlatformProvider>
+              <NeynarAuthProvider clientId={neynarClientId}>
+                <Toaster {...toastConfig} />
+                {children}
+                <WalletSelectorModal />
+                <WalletDebugInfo />
+              </NeynarAuthProvider>
+            </PlatformProvider>
+          </EnhancedChainThemeProvider>
+        </QueryClientProvider>
+      </WagmiProviderComponent>
+    </WalletErrorBoundary>
   );
 }
 

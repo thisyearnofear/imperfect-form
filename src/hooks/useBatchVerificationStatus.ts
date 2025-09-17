@@ -4,6 +4,7 @@ import {
   VERIFIED_FITNESS_CONTRACT_ADDRESS,
   verifiedFitnessContractABI,
 } from '@/constants/contracts';
+import { batchContractCalls, logContractError } from '@/utils/contractErrorHandling';
 
 /**
  * Hook to check verification status for multiple users
@@ -33,23 +34,28 @@ export const useBatchVerificationStatus = (addresses: string[]) => {
         provider
       );
 
-      // Check verification status for each address
-      const statusPromises = addresses.map(async (address) => {
-        try {
-          const verified = await contract.isVerifiedHuman(address);
-          return { address, verified };
-        } catch (error) {
-          console.error(`Error checking verification for ${address}:`, error);
-          return { address, verified: false };
-        }
-      });
+      // Check verification status for each address using resilient batch calls
+      const contractCalls = addresses.map((address) => () => contract.isVerifiedHuman(address));
 
-      const results = await Promise.all(statusPromises);
+      const results = await batchContractCalls(contractCalls, {
+        maxConcurrent: 3, // Limit concurrent calls to avoid rate limiting
+        continueOnError: true,
+        onError: (error, index) => {
+          const address = addresses[index];
+          logContractError(error, {
+            contractAddress: VERIFIED_FITNESS_CONTRACT_ADDRESS,
+            functionName: 'isVerifiedHuman',
+            userAddress: address,
+            chainId: 42220, // Celo mainnet
+          });
+        },
+      });
 
       // Convert results to a record
       const statusRecord: Record<string, boolean> = {};
-      results.forEach(({ address, verified }) => {
-        statusRecord[address] = verified;
+      results.forEach((verified, index) => {
+        const address = addresses[index];
+        statusRecord[address] = Boolean(verified); // Handle null results gracefully
       });
 
       setVerificationStatuses(statusRecord);
