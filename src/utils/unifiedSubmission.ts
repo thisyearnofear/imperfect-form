@@ -2,6 +2,8 @@
  * CONSOLIDATED SUBMISSION INTERFACE
  * ENHANCEMENT: Single entry point replacing all legacy submission methods
  * AGGRESSIVE CONSOLIDATION: Eliminates directContractInteraction.ts completely
+ *
+ * ENHANCED: Now uses robust error handling and provider management
  */
 
 import { walletDetectionService } from '@/services/WalletDetectionService';
@@ -15,6 +17,14 @@ import { addReferralTagToCalldata, registerDivviReferral } from '@/utils/divviIn
 import { estimateGasWithBuffer, getSignerFromProvider } from '@/utils/ethersHelpers';
 import toast from 'react-hot-toast';
 import { verifiedFitnessLeaderboardABI } from '@/constants/contracts';
+
+// CONSOLIDATED: Import from the new consolidated web3 error handling module
+import {
+  initializeWeb3Robustly,
+  CommonErrorHandlers,
+  preventiveWalletConnectCleanup,
+  initializeProviderSafely,
+} from '@/utils/web3ErrorHandling';
 
 /**
  * Submission parameters interface
@@ -48,10 +58,13 @@ export async function submitScore(
     skipSubAccountCheck?: boolean;
     useWagmi?: boolean;
     providedEthereumProvider?: unknown;
-    isVerifiedSubmission?: boolean; // New option for verified submissions
+    isVerifiedSubmission?: boolean;
   } = {}
 ): Promise<ScoreSubmissionResult> {
   try {
+    // CONSOLIDATED: Use single robust initialization
+    await preventiveWalletConnectCleanup();
+
     // Input validation with clear error messages
     if (!contractAddress || !networkName) {
       throw new Error('Contract address and network name are required');
@@ -71,20 +84,20 @@ export async function submitScore(
       throw new Error(`Unsupported contract address: ${contractAddress}`);
     }
 
-    // ENHANCEMENT: Get Ethereum provider with improved error handling
-    const ethereumProvider = options.providedEthereumProvider || (await getEthereumProvider());
-
+    // ENHANCEMENT FIRST: Use existing provider or robust initialization
+    let ethereumProvider = options.providedEthereumProvider;
     if (!ethereumProvider) {
-      // Check if we're in Farcaster context for better error messaging
-      const isFarcaster =
-        typeof window !== 'undefined' &&
-        (window.location.href.includes('farcaster') ||
-          document.referrer.includes('warpcast') ||
-          document.referrer.includes('farcaster'));
-      const errorMsg = isFarcaster
-        ? 'Farcaster wallet connection not detected. Please connect your wallet in the Farcaster app and try again.'
-        : 'No Ethereum provider available. Please connect your wallet and try again.';
-      throw new Error(errorMsg);
+      // Try existing farcaster provider first (ENHANCEMENT FIRST)
+      ethereumProvider = await getEthereumProvider();
+
+      // Fallback to robust initialization if needed
+      if (!ethereumProvider) {
+        const web3Setup = await initializeWeb3Robustly(networkConfig.chainId);
+        if (!web3Setup.success) {
+          throw new Error('Failed to initialize Web3 provider');
+        }
+        ethereumProvider = web3Setup.provider;
+      }
     }
 
     // ENHANCEMENT: Enhanced provider validation with Farcaster-specific handling
@@ -140,39 +153,45 @@ export async function submitScore(
       contractAddress === process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT;
 
     if (isVerifiedFitnessContract) {
-      // Handle verified fitness contract submission (single exercise at a time)
-      const contract = new ethers.Contract(contractAddress, verifiedFitnessLeaderboardABI, signer);
+      // Handle verified fitness contract submission using robust contract interaction
+      const { createRobustContract, executeContractWrite } = await import(
+        '@/utils/contractInteractionManager'
+      );
+
+      const contract = await createRobustContract(
+        contractAddress,
+        verifiedFitnessLeaderboardABI,
+        signer,
+        networkConfig.chainId
+      );
+
+      if (!contract) {
+        throw new Error('Failed to create contract instance');
+      }
 
       // Submit pushups if provided
       if (pushups > 0) {
-        const pushupGasLimit = await estimateGasWithBuffer(contract, 'submitScore', [
+        const pushupResult = await executeContractWrite(contract, 'submitScore', [
           pushups,
           'pushups',
         ]);
 
-        const pushupTx = await contract.submitScore(pushups, 'pushups', {
-          gasLimit: pushupGasLimit,
-        });
+        if (!pushupResult.success) {
+          throw new Error(pushupResult.error || 'Failed to submit pushups');
+        }
 
-        toast.loading(`Submitting pushups to ${networkName}...`, { id: 'pushup-submission' });
-        await pushupTx.wait();
-        toast.success(`Pushups submitted to ${networkName}!`, { id: 'pushup-submission' });
+        toast.success(`Pushups submitted to ${networkName}!`);
       }
 
       // Submit squats if provided
       if (squats > 0) {
-        const squatGasLimit = await estimateGasWithBuffer(contract, 'submitScore', [
-          squats,
-          'squats',
-        ]);
+        const squatResult = await executeContractWrite(contract, 'submitScore', [squats, 'squats']);
 
-        const squatTx = await contract.submitScore(squats, 'squats', {
-          gasLimit: squatGasLimit,
-        });
+        if (!squatResult.success) {
+          throw new Error(squatResult.error || 'Failed to submit squats');
+        }
 
-        toast.loading(`Submitting squats to ${networkName}...`, { id: 'squat-submission' });
-        await squatTx.wait();
-        toast.success(`Squats submitted to ${networkName}!`, { id: 'squat-submission' });
+        toast.success(`Squats submitted to ${networkName}!`);
       }
 
       return {
@@ -180,8 +199,19 @@ export async function submitScore(
         processingType: 'direct',
       };
     } else {
-      // Handle standard contract submission (both exercises together)
-      const contract = new ethers.Contract(contractAddress, networkConfig.abi, signer);
+      // Handle standard contract submission using robust contract interaction
+      const { createRobustContract } = await import('@/utils/contractInteractionManager');
+
+      const contract = await createRobustContract(
+        contractAddress,
+        networkConfig.abi,
+        signer,
+        networkConfig.chainId
+      );
+
+      if (!contract) {
+        throw new Error('Failed to create contract instance');
+      }
 
       // Check if we're submitting to Monad network which requires a fee
       const isMonadNetwork = networkConfig.chainId === 10143; // Monad Testnet chain ID
@@ -202,15 +232,22 @@ export async function submitScore(
         }
       }
 
-      // Prepare transaction with consolidated gas estimation (include value for payable functions)
-      const gasEstimationOptions =
-        isMonadNetwork && submissionFee > 0n ? { value: submissionFee } : {};
-      const gasLimit = await estimateGasWithBuffer(
-        contract,
-        'addScore',
-        [pushups, squats],
-        gasEstimationOptions
-      );
+      // Prepare transaction with robust gas estimation
+      let gasLimit: bigint;
+      try {
+        const gasEstimationOptions =
+          isMonadNetwork && submissionFee > 0n ? { value: submissionFee } : {};
+        gasLimit = await estimateGasWithBuffer(
+          contract,
+          'addScore',
+          [pushups, squats],
+          gasEstimationOptions
+        );
+      } catch (gasError) {
+        // Fallback gas limit if estimation fails
+        console.warn('Gas estimation failed, using fallback:', gasError);
+        gasLimit = 200000n; // Conservative fallback
+      }
 
       // Add referral tag if applicable
       const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
@@ -233,8 +270,16 @@ export async function submitScore(
 
       toast.loading(`Submitting to ${networkName}...`, { id: 'submission' });
 
-      // Wait for confirmation
-      const receipt = await tx.wait();
+      // Wait for confirmation with timeout protection
+      const timeout = new Promise(
+        (_, reject) =>
+          setTimeout(() => reject(new Error('Transaction confirmation timeout')), 120000) // 2 minutes
+      );
+
+      const receipt = (await Promise.race([
+        tx.wait(),
+        timeout,
+      ])) as ethers.TransactionReceipt | null;
 
       if (receipt?.status === 1) {
         toast.success(`Score submitted to ${networkName}!`, { id: 'submission' });
@@ -259,30 +304,46 @@ export async function submitScore(
   } catch (error) {
     console.error('unifiedSubmission: Score submission failed:', error);
 
-    // More specific error messages for common issues
-    let errorMessage = 'Submission failed. Please try again.';
-    if (error instanceof Error) {
-      if (error.message.includes('user rejected') || error.message.includes('User denied')) {
-        errorMessage = 'Transaction was rejected. Please confirm the transaction in your wallet.';
-      } else if (error.message.includes('insufficient funds')) {
-        errorMessage = 'Insufficient funds for transaction. Please check your wallet balance.';
-      } else if (error.message.includes('network') || error.message.includes('chain')) {
-        errorMessage = 'Network error. Please check your wallet network settings.';
-      } else if (error.message.includes('revert') || error.message.includes('execution reverted')) {
-        // Check if this is a Monad-specific error
-        if (networkName.toLowerCase().includes('monad')) {
-          errorMessage =
-            'Transaction was reverted. This may be due to insufficient fee or rate limiting. Please ensure you have at least 0.001 MON in your wallet for the submission fee and try again.';
-        } else {
-          errorMessage =
-            'Transaction was reverted. This may be due to rate limiting or contract restrictions. Please wait a moment and try again.';
+    // CONSOLIDATED: Use common error handler for better UX
+    try {
+      await CommonErrorHandlers.handleContractInteraction(
+        error,
+        contractAddress,
+        'submitScore',
+        () => {
+          // Users can manually retry by calling the function again
+          console.log('User requested retry for submission');
         }
-      } else {
-        errorMessage = error.message;
-      }
-    }
+      );
+    } catch (handlerError) {
+      // Fallback to basic error handling if consolidated handler fails
+      console.warn('Consolidated error handler failed:', handlerError);
 
-    toast.error(errorMessage, { id: 'submission' });
+      let errorMessage = 'Submission failed. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('user rejected') || error.message.includes('User denied')) {
+          errorMessage = 'Transaction was rejected. Please confirm the transaction in your wallet.';
+        } else if (error.message.includes('insufficient funds')) {
+          errorMessage = 'Insufficient funds for transaction. Please check your wallet balance.';
+        } else if (error.message.includes('network') || error.message.includes('chain')) {
+          errorMessage = 'Network error. Please check your wallet network settings.';
+        } else if (
+          error.message.includes('revert') ||
+          error.message.includes('execution reverted')
+        ) {
+          if (networkName.toLowerCase().includes('monad')) {
+            errorMessage =
+              'Transaction was reverted. Please ensure you have at least 0.001 MON in your wallet for the submission fee and try again.';
+          } else {
+            errorMessage =
+              'Transaction was reverted. This may be due to rate limiting or contract restrictions. Please wait a moment and try again.';
+          }
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      toast.error(errorMessage, { id: 'submission' });
+    }
 
     return {
       success: false,

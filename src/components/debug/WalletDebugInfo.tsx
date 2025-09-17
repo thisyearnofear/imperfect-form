@@ -63,7 +63,7 @@ export default function WalletDebugInfo() {
           hasEthereum,
           ethereumType,
           availableWallets,
-          providers: providers.map((p) => ({
+          providers: providers.map((p: any) => ({
             isMetaMask: (p as any).isMetaMask,
             isCoinbaseWallet: (p as any).isCoinbaseWallet,
             isTrust: (p as any).isTrust,
