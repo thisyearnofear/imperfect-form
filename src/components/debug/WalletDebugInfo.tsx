@@ -30,7 +30,7 @@ export default function WalletDebugInfo() {
 
       try {
         // Check ethereum provider
-        const ethereum = getEthereumProvider();
+        const ethereum = await getEthereumProvider();
         const hasEthereum = Boolean(ethereum);
 
         // Identify ethereum type

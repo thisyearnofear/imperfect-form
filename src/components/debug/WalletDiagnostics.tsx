@@ -169,25 +169,23 @@ export default function WalletDiagnostics() {
 
         if (sdk.wallet) {
           // Test new API
-          if (sdk.wallet.getEthereumProvider) {
-            try {
-              const farcasterProvider = await sdk.wallet.getEthereumProvider();
-              results.push({
-                test: 'Farcaster Provider (New API)',
-                status: farcasterProvider ? 'pass' : 'fail',
-                message: farcasterProvider
-                  ? 'New API provider available'
-                  : 'New API provider not available',
-                details: { provider: !!farcasterProvider },
-              });
-            } catch (newApiError) {
-              results.push({
-                test: 'Farcaster Provider (New API)',
-                status: 'fail',
-                message: 'New API failed',
-                details: { error: newApiError },
-              });
-            }
+          try {
+            const farcasterProvider = await getEthereumProvider();
+            results.push({
+              test: 'Farcaster Provider (Consolidated)',
+              status: farcasterProvider ? 'pass' : 'fail',
+              message: farcasterProvider
+                ? 'Provider available via consolidated detection'
+                : 'Provider not available',
+              details: { provider: !!farcasterProvider },
+            });
+          } catch (newApiError) {
+            results.push({
+              test: 'Farcaster Provider (Consolidated)',
+              status: 'fail',
+              message: 'Consolidated provider detection failed',
+              details: { error: newApiError },
+            });
           }
 
           // Test legacy API

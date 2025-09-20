@@ -137,7 +137,7 @@ export function debugFarcasterContext(): void {
  * This is crucial for score submission to work in Mini Apps
  * Updated to use the latest Farcaster SDK API with enhanced error handling
  */
-export async function getEthereumProvider(): Promise<unknown> {
+export async function getEthereumProvider(): Promise<EthereumProvider | null> {
   if (typeof window === 'undefined') return null;
 
   // Helper function to validate provider with more thorough checks
