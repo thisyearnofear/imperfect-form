@@ -1,71 +1,9 @@
 import { ethers } from 'ethers';
 
-// Leaderboard contract addresses for all supported networks
-export const POLYGON_CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_POLYGON ||
-  process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT ||
-  '0xc783d6E12560dc251F5067A62426A5f3b45b6888'; // Polygon Mainnet contract (standardized)
-
-export const BASE_CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_BASE ||
-  process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT ||
-  '0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B'; // Base Mainnet contract (based on proven Celo template)
-
-// Standardized contract addresses for all networks
-export const MONAD_CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_MONAD ||
-  '0x653d41Fba630381aA44d8598a4b35Ce257924d65'; // Monad Testnet contract (standardized)
-
-export const CELO_CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_LEADERBOARD_CONTRACT_CELO || '0xB0cbC7325EbC744CcB14211CA74C5a764928F273'; // Celo Mainnet contract (standardized)
-
-// RPC URLs with reliable, well-tested endpoints
-export const POLYGON_RPC_URL = 'https://polygon.llamarpc.com'; // LlamaNodes - highly reliable
-export const BASE_RPC_URL = 'https://base.llamarpc.com'; // LlamaNodes - highly reliable
-export const CELO_RPC_URL = 'https://forno.celo.org'; // Official Celo RPC
-export const MONAD_RPC_URL = 'https://testnet-rpc.monad.xyz'; // Updated Monad testnet RPC
-
-// Deploy block numbers for progress log fetches
-// Using reasonable defaults - can be updated with actual deployment blocks when available
-export const POLYGON_DEPLOY_BLOCK = 51000000; // Recent Polygon block
-export const BASE_DEPLOY_BLOCK = 8000000; // Recent Base block
-export const CELO_DEPLOY_BLOCK = 22000000; // Recent Celo block
-export const MONAD_DEPLOY_BLOCK = 1000000; // Monad testnet block
-
 // Event topic for ScoreSubmitted(address,uint256,uint256,string,bool,uint256)
 export const SCORE_SUBMITTED_TOPIC = ethers.keccak256(
   ethers.toUtf8Bytes('ScoreSubmitted(address,uint256,uint256,string,bool,uint256)')
 );
-
-/**
- * Array of supported chains for user progress fetching.
- */
-export const PROGRESS_CHAINS = [
-  {
-    name: 'polygon',
-    rpcUrl: POLYGON_RPC_URL,
-    contract: POLYGON_CONTRACT_ADDRESS,
-    startBlock: POLYGON_DEPLOY_BLOCK,
-  },
-  {
-    name: 'base',
-    rpcUrl: BASE_RPC_URL,
-    contract: BASE_CONTRACT_ADDRESS,
-    startBlock: BASE_DEPLOY_BLOCK,
-  },
-  {
-    name: 'celo',
-    rpcUrl: CELO_RPC_URL,
-    contract: CELO_CONTRACT_ADDRESS,
-    startBlock: CELO_DEPLOY_BLOCK,
-  },
-  {
-    name: 'monad',
-    rpcUrl: MONAD_RPC_URL,
-    contract: MONAD_CONTRACT_ADDRESS,
-    startBlock: MONAD_DEPLOY_BLOCK,
-  },
-];
 
 // =============================================================================
 // SELF PROTOCOL INTEGRATION - CELO MAINNET
@@ -383,6 +321,78 @@ export const verifiedFitnessLeaderboardABI = [
     outputs: [{ internalType: 'string', name: '', type: 'string' }],
     stateMutability: 'view',
     type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'getUserVerificationTimestamp',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getVerificationStats',
+    outputs: [
+      { internalType: 'uint256', name: 'totalVerifiedUsers', type: 'uint256' },
+      { internalType: 'address', name: 'lastVerifiedUser', type: 'address' },
+      { internalType: 'uint256', name: 'lastVerificationTimestamp', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'newVerificationContract', type: 'address' }],
+    name: 'setVerificationContract',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: 'newBonusPercentage', type: 'uint256' }],
+    name: 'setVerificationBonus',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'newOwner', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'baseScore', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'finalScore', type: 'uint256' },
+      { indexed: false, internalType: 'string', name: 'exerciseType', type: 'string' },
+      { indexed: false, internalType: 'bool', name: 'isVerified', type: 'bool' },
+      { indexed: false, internalType: 'uint256', name: 'bonusEarned', type: 'uint256' },
+    ],
+    name: 'ScoreSubmitted',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'oldContract', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'newContract', type: 'address' },
+      { indexed: false, internalType: 'address', name: 'updatedBy', type: 'address' },
+    ],
+    name: 'VerificationContractUpdated',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: false, internalType: 'uint256', name: 'oldBonus', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'newBonus', type: 'uint256' },
+      { indexed: false, internalType: 'address', name: 'updatedBy', type: 'address' },
+    ],
+    name: 'VerificationBonusUpdated',
+    type: 'event',
   },
 ];
 

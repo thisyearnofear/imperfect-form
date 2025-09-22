@@ -1,96 +1,26 @@
 import toast from 'react-hot-toast';
-import {
-  POLYGON_CONTRACT_ADDRESS,
-  BASE_CONTRACT_ADDRESS,
-  MONAD_CONTRACT_ADDRESS,
-  CELO_CONTRACT_ADDRESS,
-  polygonLeaderboardABI,
-  baseLeaderboardABI,
-  monadLeaderboardABI,
-  fitnessLeaderboardABI,
-} from '@/constants/contracts';
+import { SUPPORTED_NETWORKS } from '@/config/networks';
 
 // Configuration for each supported chain, now including contract details
-export const chainConfigs = {
-  polygon: {
-    id: 137,
-    name: 'Polygon',
-    fullName: 'Polygon Mainnet', // Keep full name for technical contexts
-    nativeCurrency: {
-      name: 'MATIC',
-      symbol: 'MATIC',
-      decimals: 18,
+export const chainConfigs = Object.fromEntries(
+  Object.entries(SUPPORTED_NETWORKS).map(([key, network]) => [
+    key,
+    {
+      id: network.chainId,
+      name: network.name,
+      fullName: network.name,
+      nativeCurrency: {
+        name: 'ETH', // Default, will be overridden
+        symbol: 'ETH', // Default, will be overridden
+        decimals: 18,
+      },
+      rpcUrls: network.rpcUrls,
+      blockExplorerUrls: [network.blockExplorer],
+      contractAddress: network.contractAddress,
+      abi: network.abi,
     },
-    rpcUrls: [
-      'https://polygon-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B',
-      'https://polygon-rpc.com',
-      'https://rpc-mainnet.matic.network',
-    ],
-    blockExplorerUrls: ['https://polygonscan.com/'],
-    contractAddress: POLYGON_CONTRACT_ADDRESS,
-    abi: polygonLeaderboardABI,
-  },
-  base: {
-    id: 8453,
-    name: 'Base',
-    fullName: 'Base Mainnet', // Keep full name for technical contexts
-    nativeCurrency: {
-      name: 'ETH',
-      symbol: 'ETH',
-      decimals: 18,
-    },
-    rpcUrls: [
-      'https://base-mainnet.g.alchemy.com/v2/Tx9luktS3qyIwEKVtjnQrpq8t3MNEV-B',
-      'https://mainnet.base.org',
-    ],
-    blockExplorerUrls: ['https://basescan.org/'],
-    contractAddress: BASE_CONTRACT_ADDRESS,
-    abi: baseLeaderboardABI,
-  },
-  monad: {
-    id: 10143,
-    name: 'Monad',
-    fullName: 'Monad Testnet', // Keep full name for technical contexts
-    nativeCurrency: {
-      name: 'MON',
-      symbol: 'MON',
-      decimals: 18,
-    },
-    rpcUrls: ['https://testnet-rpc.monad.xyz/'],
-    blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
-    contractAddress: MONAD_CONTRACT_ADDRESS,
-    abi: monadLeaderboardABI,
-  },
-  celo: {
-    id: 42220,
-    name: 'Celo',
-    fullName: 'Celo Mainnet', // Keep full name for technical contexts
-    nativeCurrency: {
-      name: 'CELO',
-      symbol: 'CELO',
-      decimals: 18,
-    },
-    rpcUrls: ['https://forno.celo.org', 'https://rpc.ankr.com/celo'],
-    blockExplorerUrls: ['https://explorer.celo.org/'],
-    contractAddress: CELO_CONTRACT_ADDRESS,
-    abi: fitnessLeaderboardABI, // Celo uses the base fitness ABI
-  },
-  celoAlfajores: {
-    id: 44787,
-    name: 'Celo Testnet',
-    fullName: 'Celo Alfajores Testnet',
-    nativeCurrency: {
-      name: 'CELO',
-      symbol: 'CELO',
-      decimals: 18,
-    },
-    rpcUrls: ['https://alfajores-forno.celo-testnet.org'],
-    blockExplorerUrls: ['https://alfajores.celoscan.io/'],
-    contractAddress: CELO_CONTRACT_ADDRESS, // Same contract for testing
-    abi: fitnessLeaderboardABI,
-    isTestnet: true, // Flag to indicate this is a testnet
-  },
-};
+  ])
+);
 
 // Enum for wallet provider types
 export enum WalletProviderType {

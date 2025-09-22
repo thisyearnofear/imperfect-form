@@ -21,12 +21,7 @@ export {
   resolveProviderConflicts,
 } from './providerConflictResolver';
 
-export {
-  createRobustProvider,
-  detectNetworkRobustly,
-  createProviderWithDetection,
-  ProviderHealthMonitor,
-} from './robustNetworkManager';
+export { createRobustProvider } from './robustNetworkManager';
 
 export {
   executeContractRead,
@@ -48,20 +43,14 @@ export { createErrorReport, showUserFeedback } from './enhancedErrorSystem';
 export const LazyWeb3Utils = {
   // Lazy load heavy diagnostics
   async getComprehensiveDiagnostics() {
-    const [
-      { getProviderDiagnostics },
-      { getNetworkDiagnostics },
-      { getWalletConnectStorageDiagnostics },
-    ] = await Promise.all([
+    const [{ getProviderDiagnostics }, { getWalletConnectStorageDiagnostics }] = await Promise.all([
       import('./providerConflictResolver'),
-      import('./robustNetworkManager'),
       import('./walletConnectCleanup'),
     ]);
 
     return {
       provider: getProviderDiagnostics(),
       walletConnect: getWalletConnectStorageDiagnostics(),
-      network: (chainId: number) => getNetworkDiagnostics(chainId),
     };
   },
 
@@ -136,17 +125,19 @@ export async function initializeWeb3Robustly(chainId: number) {
     }
 
     // Step 3: Create robust network provider
-    const { createProviderWithDetection } = await import('./robustNetworkManager');
-    const networkProvider = await createProviderWithDetection(chainId);
+    const { createRobustProvider } = await import('./robustNetworkManager');
+    const networkProvider = await createRobustProvider(chainId);
 
     if (!networkProvider) {
       throw new Error('Failed to establish network connection');
     }
 
+    const network = await networkProvider.getNetwork();
+
     return {
       provider,
-      networkProvider: networkProvider.provider,
-      network: networkProvider.network,
+      networkProvider,
+      network,
       success: true,
     };
   } catch (error) {

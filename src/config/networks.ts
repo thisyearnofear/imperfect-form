@@ -16,7 +16,11 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     name: 'Polygon Mainnet',
     contractAddress: '0xc783d6E12560dc251F5067A62426A5f3b45b6888',
     abi: polygonLeaderboardABI,
-    rpcUrl: 'https://polygon-rpc.com',
+    rpcUrls: [
+      'https://polygon-rpc.com/',
+      'https://polygon-mainnet.g.alchemy.com/public',
+      'https://polygon-bor-rpc.publicnode.com',
+    ],
     blockExplorer: 'https://polygonscan.com',
   },
   base: {
@@ -24,7 +28,11 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     name: 'Base Mainnet',
     contractAddress: '0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B',
     abi: baseLeaderboardABI,
-    rpcUrl: 'https://mainnet.base.org',
+    rpcUrls: [
+      'https://mainnet.base.org',
+      'https://base-rpc.publicnode.com',
+      'https://base.drpc.org',
+    ],
     blockExplorer: 'https://basescan.org',
   },
   celo: {
@@ -32,7 +40,11 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     name: 'Celo Mainnet',
     contractAddress: '0xB0cbC7325EbC744CcB14211CA74C5a764928F273',
     abi: fitnessLeaderboardABI,
-    rpcUrl: 'https://forno.celo.org',
+    rpcUrls: [
+      'https://forno.celo.org',
+      'https://rpc.celo-community.org',
+      'https://rpc.ankr.com/celo',
+    ],
     blockExplorer: 'https://celoscan.io',
   },
   celoVerified: {
@@ -42,7 +54,11 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
       process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT ||
       '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03',
     abi: verifiedFitnessLeaderboardABI,
-    rpcUrl: 'https://forno.celo.org',
+    rpcUrls: [
+      'https://forno.celo.org',
+      'https://rpc.celo-community.org',
+      'https://rpc.ankr.com/celo',
+    ],
     blockExplorer: 'https://celoscan.io',
   },
   monad: {
@@ -50,7 +66,11 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     name: 'Monad Testnet',
     contractAddress: '0x653d41Fba630381aA44d8598a4b35Ce257924d65',
     abi: monadLeaderboardABI,
-    rpcUrl: 'https://testnet-rpc.monad.xyz',
+    rpcUrls: [
+      'https://testnet-rpc.monad.xyz',
+      'https://10143.rpc.thirdweb.com',
+      'https://monad-testnet.drpc.org',
+    ],
     blockExplorer: 'https://testnet-explorer.monad.xyz',
   },
 };

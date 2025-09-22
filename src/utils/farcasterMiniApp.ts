@@ -213,7 +213,7 @@ export async function getEthereumProvider(): Promise<EthereumProvider | null> {
             validated: true,
             tested: isWorking,
           });
-          return provider;
+          return provider as EthereumProvider;
         }
       } catch (providerError) {
         logger.warn('🎯 Failed to get provider via new API:', providerError);

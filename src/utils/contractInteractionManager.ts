@@ -7,7 +7,7 @@
 
 import { ethers } from 'ethers';
 import { createRemoteLogger } from './remoteLogger';
-import { createRobustProvider, detectNetworkRobustly } from './robustNetworkManager';
+import { createRobustProvider } from './robustNetworkManager';
 import toast from 'react-hot-toast';
 
 const logger = createRemoteLogger('ContractInteractionManager');

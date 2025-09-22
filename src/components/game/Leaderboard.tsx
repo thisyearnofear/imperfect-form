@@ -10,11 +10,13 @@ import {
   monadLeaderboardABI,
   polygonLeaderboardABI,
   baseLeaderboardABI,
-  POLYGON_CONTRACT_ADDRESS,
-  BASE_CONTRACT_ADDRESS,
-  MONAD_CONTRACT_ADDRESS,
-  CELO_CONTRACT_ADDRESS,
 } from '@/constants/contracts';
+import { SUPPORTED_NETWORKS } from '@/config/networks';
+
+const POLYGON_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.polygon.contractAddress;
+const BASE_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.base.contractAddress;
+const MONAD_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.monad.contractAddress;
+const CELO_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.celo.contractAddress;
 import { shortenAddress } from '@/utils/formatters';
 import { getDisplayName } from '@/utils/ensResolver';
 import { batchResolveFarcasterProfiles, type FarcasterProfile } from '@/utils/neynarResolver';

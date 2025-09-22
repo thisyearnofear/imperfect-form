@@ -217,7 +217,7 @@ export async function autoFixWalletIssues(requiredChainId: number): Promise<bool
                             : 'ETH',
                     decimals: 18,
                   },
-                  rpcUrls: [networkConfig.rpcUrl],
+                  rpcUrls: networkConfig.rpcUrls,
                   blockExplorerUrls: [networkConfig.blockExplorer],
                 },
               ],

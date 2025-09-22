@@ -4,24 +4,17 @@
  */
 
 import { ethers } from 'ethers';
-import {
-  fitnessLeaderboardABI,
-  monadLeaderboardABI,
-  polygonLeaderboardABI,
-  baseLeaderboardABI,
-  verifiedFitnessLeaderboardABI,
-  POLYGON_CONTRACT_ADDRESS,
-  BASE_CONTRACT_ADDRESS,
-  MONAD_CONTRACT_ADDRESS,
-  CELO_CONTRACT_ADDRESS,
-  VERIFIED_FITNESS_CONTRACT_ADDRESS,
-} from '@/constants/contracts';
-import {
-  POLYGON_FALLBACK_RPCS,
-  BASE_FALLBACK_RPCS,
-  MONAD_FALLBACK_RPCS,
-  CELO_FALLBACK_RPCS,
-} from '@/utils/rpcUtils';
+import { SUPPORTED_NETWORKS } from '@/config/networks';
+import { verifiedFitnessLeaderboardABI } from '@/constants/contracts';
+
+const { polygon, base, monad, celo } = SUPPORTED_NETWORKS;
+
+const POLYGON_CONTRACT_ADDRESS = polygon.contractAddress;
+const BASE_CONTRACT_ADDRESS = base.contractAddress;
+const MONAD_CONTRACT_ADDRESS = monad.contractAddress;
+const CELO_CONTRACT_ADDRESS = celo.contractAddress;
+const VERIFIED_FITNESS_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.celoVerified.contractAddress;
+
 import { Score, ContractScore, NetworkType } from '@/types';
 import { getDisplayName } from '@/utils/ensResolver';
 import { batchResolveFarcasterProfiles, FarcasterProfile } from '@/utils/neynarResolver';
@@ -40,62 +33,31 @@ interface LeaderboardData {
  */
 async function fetchWithFallbackRpcs(
   contractAddress: string,
-  rpcs: string[],
   networkName: string
 ): Promise<ContractScore[]> {
+  const network = SUPPORTED_NETWORKS[networkName];
+  if (!network || !network.rpcUrls || network.rpcUrls.length === 0) {
+    throw new Error(`Unsupported or misconfigured network: ${networkName}`);
+  }
+
   let lastError: Error | null = null;
 
-  for (const rpc of rpcs) {
+  for (const rpc of network.rpcUrls) {
     try {
       console.log(`Trying ${networkName} RPC: ${rpc}`);
       const provider = new ethers.JsonRpcProvider(rpc);
-
-      // Select appropriate ABI based on network
-      let abi;
-      switch (networkName) {
-        case 'polygon':
-          abi = polygonLeaderboardABI;
-          break;
-        case 'base':
-          abi = baseLeaderboardABI;
-          break;
-        case 'monad':
-          abi = monadLeaderboardABI;
-          break;
-        case 'celo':
-          abi = fitnessLeaderboardABI;
-          break;
-        case 'celoVerified':
-          abi = verifiedFitnessLeaderboardABI;
-          break;
-        default:
-          abi = fitnessLeaderboardABI;
-      }
-
-      const contractInstance = new ethers.Contract(contractAddress, abi, provider);
+      const contractInstance = new ethers.Contract(contractAddress, network.abi, provider);
 
       // Check if the contract exists at the address
-      try {
-        const code = await provider.getCode(contractAddress);
-        if (code === '0x') {
-          console.warn(`No contract found at ${contractAddress} on ${networkName}`);
-          throw new Error(`No contract found at address`);
-        }
-      } catch (codeError) {
-        console.error(`Error checking contract code at ${contractAddress}:`, codeError);
-        throw codeError;
+      const code = await provider.getCode(contractAddress);
+      if (code === '0x') {
+        throw new Error(`No contract found at address`);
       }
 
       console.log(`Calling getLeaderboard() on ${networkName} contract at ${contractAddress}`);
-
-      try {
-        const data = await contractInstance.getLeaderboard();
-        console.log(`Successfully retrieved ${data.length} entries from ${networkName}`);
-        return data || [];
-      } catch (callError) {
-        console.error(`Error calling getLeaderboard on ${networkName}:`, callError);
-        throw callError;
-      }
+      const data = await contractInstance.getLeaderboard();
+      console.log(`Successfully retrieved ${data.length} entries from ${networkName}`);
+      return data || [];
     } catch (error) {
       console.error(`RPC ${rpc} failed for ${networkName}:`, error);
       lastError = error as Error;
@@ -182,43 +144,14 @@ export async function getLeaderboard(): Promise<LeaderboardData | null> {
       return cachedData;
     }
 
-    // Define active networks
-    const activeNetworks = [
-      {
-        network: 'polygon',
-        address: POLYGON_CONTRACT_ADDRESS,
-        rpcs: POLYGON_FALLBACK_RPCS,
-      },
-      {
-        network: 'base',
-        address: BASE_CONTRACT_ADDRESS,
-        rpcs: BASE_FALLBACK_RPCS,
-      },
-      {
-        network: 'monad',
-        address: MONAD_CONTRACT_ADDRESS,
-        rpcs: MONAD_FALLBACK_RPCS,
-      },
-      {
-        network: 'celo',
-        address: CELO_CONTRACT_ADDRESS,
-        rpcs: CELO_FALLBACK_RPCS,
-      },
-      {
-        network: 'celoVerified',
-        address: VERIFIED_FITNESS_CONTRACT_ADDRESS,
-        rpcs: CELO_FALLBACK_RPCS,
-      },
-    ];
-
-    // Fetch data from active networks in parallel
+    // Fetch data from all supported networks in parallel
     const networkResults = await Promise.all(
-      activeNetworks.map(({ network, address, rpcs }) =>
-        fetchWithFallbackRpcs(address, rpcs, network)
-          .then((data) => ({ network, data }))
+      Object.entries(SUPPORTED_NETWORKS).map(([networkName, networkConfig]) =>
+        fetchWithFallbackRpcs(networkConfig.contractAddress, networkName)
+          .then((data) => ({ network: networkName, data }))
           .catch((error) => {
-            console.error(`Failed to fetch data for ${network}:`, error);
-            return { network, data: [] };
+            console.error(`Failed to fetch data for ${networkName}:`, error);
+            return { network: networkName, data: [] };
           })
       )
     );

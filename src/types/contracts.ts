@@ -7,7 +7,7 @@ export interface NetworkConfig {
   name: string;
   contractAddress: string;
   abi: any[];
-  rpcUrl?: string;
+  rpcUrls: string[];
   blockExplorer?: string;
 }
 
