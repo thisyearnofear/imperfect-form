@@ -116,6 +116,8 @@ const ERROR_MESSAGES = {
       'Refresh the page and try again',
       'Make sure your wallet extension is installed and unlocked',
       'Try using a different browser or disabling other wallet extensions',
+      'Clear your browser cache and cookies',
+      'If using Farcaster, ensure your wallet is connected in the app',
     ],
   },
   PROVIDER_CONFLICT: {

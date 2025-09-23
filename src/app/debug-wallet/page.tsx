@@ -68,13 +68,13 @@ export default function DebugWalletPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="space-y-2">
               <div className="p-3 bg-gray-700 rounded">
-                <h3 className="font-medium text-blue-400">Base Mainnet</h3>
+                <h3 className="font-medium text-blue-400">Base</h3>
                 <p className="text-gray-300">Chain ID: 8453</p>
                 <p className="text-gray-300">Best for: Farcaster Mini Apps</p>
                 <p className="text-gray-300">Recommended: Coinbase Wallet</p>
               </div>
               <div className="p-3 bg-gray-700 rounded">
-                <h3 className="font-medium text-purple-400">Polygon Mainnet</h3>
+                <h3 className="font-medium text-purple-400">Polygon</h3>
                 <p className="text-gray-300">Chain ID: 137</p>
                 <p className="text-gray-300">Currency: MATIC</p>
                 <p className="text-gray-300">Low gas fees</p>
@@ -82,7 +82,7 @@ export default function DebugWalletPage() {
             </div>
             <div className="space-y-2">
               <div className="p-3 bg-gray-700 rounded">
-                <h3 className="font-medium text-green-400">Celo Mainnet</h3>
+                <h3 className="font-medium text-green-400">Celo</h3>
                 <p className="text-gray-300">Chain ID: 42220</p>
                 <p className="text-gray-300">Currency: CELO</p>
                 <p className="text-gray-300">Mobile-first blockchain</p>

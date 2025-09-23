@@ -13,7 +13,7 @@ import { NetworkConfig } from '@/types/contracts';
 export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   polygon: {
     chainId: 137,
-    name: 'Polygon Mainnet',
+    name: 'Polygon',
     contractAddress: '0xc783d6E12560dc251F5067A62426A5f3b45b6888',
     abi: polygonLeaderboardABI,
     rpcUrls: [
@@ -25,7 +25,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   },
   base: {
     chainId: 8453,
-    name: 'Base Mainnet',
+    name: 'Base',
     contractAddress: '0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B',
     abi: baseLeaderboardABI,
     rpcUrls: [
@@ -37,7 +37,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   },
   celo: {
     chainId: 42220,
-    name: 'Celo Mainnet',
+    name: 'Celo',
     contractAddress: '0xB0cbC7325EbC744CcB14211CA74C5a764928F273',
     abi: fitnessLeaderboardABI,
     rpcUrls: [
@@ -49,7 +49,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   },
   celoVerified: {
     chainId: 42220,
-    name: 'Celo Mainnet (Verified)',
+    name: 'Celo (Verified)',
     contractAddress:
       process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT ||
       '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03',

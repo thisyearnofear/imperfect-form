@@ -60,7 +60,7 @@ export default function SubmitScoreWithWagmi({
     setSubmissionStatus('submitting');
 
     try {
-      // ENHANCEMENT: Validate wallet connection with Farcaster-specific messaging
+      // ENHANCEMENT: Comprehensive wallet connection validation with recovery
       if (!wallet.isConnected) {
         const isFarcaster =
           typeof window !== 'undefined' &&
@@ -72,9 +72,6 @@ export default function SubmitScoreWithWagmi({
           : 'Wallet is not connected. Please connect your wallet and try again.';
         throw new Error(errorMsg);
       }
-
-      // Get the appropriate Ethereum provider (handles Farcaster Mini App detection)
-      const ethereumProvider = await getEthereumProvider();
 
       // Use centralized network configuration instead of hardcoded mappings
       const networkConfig = getNetworkByChainId(chainId);
@@ -93,18 +90,37 @@ export default function SubmitScoreWithWagmi({
         throw new Error(canSubmitResult.reason || 'Cannot submit');
       }
 
-      // ENHANCEMENT: Additional validation with Farcaster-specific error handling
-      if (!ethereumProvider) {
+      // ENHANCEMENT: Robust provider access with automatic recovery
+      const { ensureWalletConnection } = await import('@/utils/walletConnectionRecovery');
+      const connectionCheck = await ensureWalletConnection({
+        maxRetries: 2,
+        enableFarcasterValidation: true,
+        showToasts: false,
+      });
+
+      if (!connectionCheck.isConnected || !connectionCheck.provider) {
         const isFarcaster =
           typeof window !== 'undefined' &&
           (window.location.href.includes('farcaster') ||
             document.referrer.includes('warpcast') ||
             document.referrer.includes('farcaster'));
-        const errorMsg = isFarcaster
+
+        const baseErrorMsg = connectionCheck.error || 'Wallet provider not available';
+        const contextualMsg = isFarcaster
           ? 'Farcaster wallet provider not available. Make sure you have a wallet connected in the Farcaster app.'
           : 'No wallet provider found. Please connect your wallet and try again.';
-        throw new Error(errorMsg);
+
+        // Show suggestions to user
+        if (connectionCheck.suggestions.length > 0) {
+          console.warn('Wallet connection suggestions:', connectionCheck.suggestions);
+        }
+
+        throw new Error(
+          `${contextualMsg}\n\nSuggestions:\n${connectionCheck.suggestions.map((s) => `• ${s}`).join('\n')}`
+        );
       }
+
+      const ethereumProvider = connectionCheck.provider;
 
       const pushups = exerciseType === 'pushups' ? score : 0;
       const squats = exerciseType === 'squats' ? score : 0;

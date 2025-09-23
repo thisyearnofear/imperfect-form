@@ -7,6 +7,8 @@ import { Spinner } from '@/components/ui';
 import { getBestDisplayName } from '@/utils/web3bio';
 import { useClientOnly } from '@/hooks/useClientOnly';
 import ChainSelector from '@/components/network/ChainSelector';
+import { ensureWalletConnection, recoverWalletConnection } from '@/utils/walletConnectionRecovery';
+import toast from 'react-hot-toast';
 
 interface UnifiedConnectButtonProps {
   onConnected?: (address: string) => void;
@@ -20,7 +22,7 @@ interface UnifiedConnectButtonProps {
 }
 
 /**
- * ENHANCED UnifiedConnectButton - Restored clean 4-section layout
+ * ENHANCED UnifiedConnectButton - Enhanced with wallet recovery functionality
  * Following Core Principles: Enhanced existing component instead of creating new one
  */
 export default function UnifiedConnectButton({
@@ -38,6 +40,10 @@ export default function UnifiedConnectButton({
   const hasMounted = useClientOnly();
   const [resolvedDisplayName, setResolvedDisplayName] = useState<string | undefined>();
   const [showNetworkSwitcher, setShowNetworkSwitcher] = useState(false);
+
+  // ENHANCEMENT: Add wallet recovery state
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [connectionError, setConnectionError] = useState<string>('');
 
   // Get network name from chainId using centralized config
   const getNetworkName = (id: number | null) => {
@@ -85,9 +91,64 @@ export default function UnifiedConnectButton({
     }
   }, [address, onConnected]);
 
-  // Handle connection
-  const handleConnect = () => {
-    connect();
+  // Handle connection with recovery
+  const handleConnect = async () => {
+    try {
+      setConnectionError('');
+
+      // First try normal connection
+      const success = await connect();
+
+      if (!success) {
+        // If normal connection fails, try recovery
+        setIsRecovering(true);
+        const recovery = await recoverWalletConnection({
+          maxRetries: 2,
+          showToasts: false,
+        });
+
+        if (recovery.success) {
+          toast.success('Wallet connected successfully!');
+        } else {
+          setConnectionError(recovery.error || 'Connection failed');
+          toast.error('Unable to connect wallet. Please try again.');
+        }
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Connection failed';
+      setConnectionError(errorMsg);
+      toast.error('Connection failed');
+    } finally {
+      setIsRecovering(false);
+    }
+  };
+
+  // ENHANCEMENT: Add wallet recovery function
+  const handleRecovery = async () => {
+    setIsRecovering(true);
+    setConnectionError('');
+
+    try {
+      const result = await recoverWalletConnection({
+        maxRetries: 3,
+        enableCleanup: true,
+        enableFarcasterValidation: true,
+        showToasts: true,
+      });
+
+      if (result.success) {
+        toast.success('Wallet connection restored!');
+      } else {
+        setConnectionError(result.error || 'Recovery failed');
+        toast.error('Unable to restore wallet connection');
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Recovery failed';
+      setConnectionError(errorMsg);
+      toast.error('Wallet recovery failed');
+    } finally {
+      setIsRecovering(false);
+    }
   };
 
   // Handle disconnect
@@ -305,43 +366,53 @@ export default function UnifiedConnectButton({
     );
   }
 
-  // Connection state
+  // Connection state with enhanced error handling
   return (
-    <button
-      onClick={handleConnect}
-      disabled={isConnecting}
-      className={`
-        ${sizeClasses[size]}
-        ${getPlatformStyles()}
-        ${className}
-        text-white font-semibold rounded-lg
-        transition-all duration-200 transform hover:scale-105
-        shadow-lg hover:shadow-xl
-        flex items-center justify-center space-x-2
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-      `}
-    >
-      {isConnecting ? (
-        <>
-          <Spinner />
-          <span className="sm:hidden">Connecting...</span>
-          <span className="hidden sm:inline">Connecting...</span>
-        </>
-      ) : (
-        <>
-          {/* Platform-specific icon */}
-          {platform === 'farcaster' && <span>🎯</span>}
-          {platform === 'mobile' && <span>📱</span>}
-          {platform === 'desktop' && <span>💻</span>}
-          {platform === 'pwa' && <span>🚀</span>}
+    <div className="space-y-3">
+      <button
+        onClick={handleConnect}
+        disabled={isConnecting || isRecovering}
+        className={`
+          ${sizeClasses[size]}
+          ${getPlatformStyles()}
+          ${className}
+          text-white font-semibold rounded-lg
+          transition-all duration-200 transform hover:scale-105
+          shadow-lg hover:shadow-xl
+          flex items-center justify-center space-x-2
+          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+          w-full
+        `}
+      >
+        {isConnecting || isRecovering ? (
+          <>
+            <Spinner />
+            <span className="sm:hidden">{isRecovering ? 'Recovering...' : 'Connecting...'}</span>
+            <span className="hidden sm:inline">
+              {isRecovering ? 'Recovering...' : 'Connecting...'}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="sm:hidden">Connect</span>
+            <span className="hidden sm:inline">Connect Wallet</span>
+          </>
+        )}
+      </button>
 
-          {/* Responsive connect text */}
-          <span className="sm:hidden">Connect</span>
-          <span className="hidden sm:inline">
-            Connect {platform === 'farcaster' ? 'Farcaster' : 'Wallet'}
-          </span>
-        </>
+      {/* ENHANCEMENT: Show connection error and recovery option */}
+      {connectionError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+          <p className="text-red-700 dark:text-red-300 text-sm mb-2">{connectionError}</p>
+          <button
+            onClick={handleRecovery}
+            disabled={isRecovering}
+            className="text-red-600 dark:text-red-400 text-sm font-medium hover:underline disabled:opacity-50"
+          >
+            {isRecovering ? 'Recovering...' : 'Try Recovery'}
+          </button>
+        </div>
       )}
-    </button>
+    </div>
   );
 }

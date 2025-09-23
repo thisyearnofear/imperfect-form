@@ -54,7 +54,7 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
       case SupportedChain.CELO_ALFAJORES:
         return 'Celo Alfajores Testnet';
       case SupportedChain.CELO:
-        return 'Celo Mainnet';
+        return 'Celo';
       case SupportedChain.POLYGON:
         return 'Polygon';
       case SupportedChain.BASE:
@@ -112,7 +112,7 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
 
         <div className="text-sm text-center">
           <p style={{ color: currentTheme.palette.textSecondary }}>
-            Self Protocol verification requires Celo mainnet
+            Self Protocol verification requires Celo
           </p>
         </div>
 

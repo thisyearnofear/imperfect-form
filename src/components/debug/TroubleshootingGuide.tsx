@@ -26,7 +26,7 @@ export default function TroubleshootingGuide() {
         {
           title: 'Verify Network',
           description: "Make sure you're on the correct network (Base for Farcaster)",
-          action: 'Switch to Base Mainnet (Chain ID: 8453)',
+          action: 'Switch to Base (Chain ID: 8453)',
           isCompleted: wallet.chainId === 8453,
         },
         {

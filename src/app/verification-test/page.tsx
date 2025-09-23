@@ -120,7 +120,7 @@ const VerificationTestPage: React.FC = () => {
               </div>
             </div>
             <div>
-              <span className="font-medium">Network:</span> Celo Mainnet
+              <span className="font-medium">Network:</span> Celo
             </div>
             <div>
               <span className="font-medium">Chain ID:</span> 42220

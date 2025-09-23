@@ -256,7 +256,7 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
           }}
         >
           <p style={{ color: '#fcb131', fontWeight: 'bold', margin: '0 0 8px 0' }}>
-            🏆 {verifiedScores.length} Verified Athletes on Celo Mainnet
+            🏆 {verifiedScores.length} Verified Athletes on Celo
           </p>
           <p style={{ color: '#10b981', fontSize: '14px', margin: 0 }}>
             Self Protocol verified users earn bonus recognition and may receive enhanced rewards

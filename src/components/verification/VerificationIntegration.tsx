@@ -183,7 +183,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
         onClose={() => setShowNetworkSwitch(false)}
         onNetworkSwitched={handleNetworkSwitched}
         targetChain={getSelfProtocolChain()}
-        reason="Switch to Celo mainnet for verification"
+        reason="Switch to Celo for verification"
       />
 
       {/* Verification Modal */}

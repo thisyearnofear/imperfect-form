@@ -114,34 +114,25 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
       maxWidth="500px"
     >
       <div className="space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="text-4xl">🏆</div>
-          <h3 className="text-lg font-bold" style={{ color: currentTheme.palette.text }}>
-            Verify as Human
-          </h3>
-          <p className="text-sm" style={{ color: currentTheme.palette.accent }}>
-            Get your verified badge with Self Protocol
-          </p>
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
+            🏆 Verify as Human
+          </h2>
+          <p className="text-cyan-300 font-medium">Get your verified badge with Self Protocol</p>
         </div>
 
         {/* Verification Interface */}
         {isLoading ? (
           <div className="text-center py-8">
-            <div
-              className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full mx-auto mb-4"
-              style={{
-                borderColor: `${currentTheme.palette.accent} transparent transparent transparent`,
-              }}
-            ></div>
-            <p style={{ color: currentTheme.palette.textSecondary }}>Setting up verification...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-cyan-400 mx-auto mb-4"></div>
+            <p className="text-white">Generating verification...</p>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Mobile: Show deep link button */}
             {isMobile ? (
               <div className="text-center space-y-4">
-                <p className="text-sm" style={{ color: currentTheme.palette.textSecondary }}>
+                <p className="text-sm text-gray-300">
                   Tap the button below to open the Self app and verify your identity:
                 </p>
                 <button
@@ -150,25 +141,22 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
                 >
                   📱 Open Self App
                 </button>
-                <p className="text-xs" style={{ color: currentTheme.palette.textMuted }}>
+                <p className="text-xs text-gray-400">
                   Don&apos;t have the Self app?{' '}
                   <a
                     href="https://self.id"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:underline"
-                    style={{ color: currentTheme.palette.accent }}
+                    className="hover:underline text-cyan-400"
                   >
-                    Download here
+                    Download Self app
                   </a>
                 </p>
               </div>
             ) : (
               /* Desktop: Show QR code */
               <div className="text-center space-y-4">
-                <p className="text-sm" style={{ color: currentTheme.palette.textSecondary }}>
-                  Scan this QR code with the Self mobile app:
-                </p>
+                <p className="text-sm text-gray-300">Scan with the Self mobile app</p>
                 {selfApp && (
                   <div className="flex justify-center p-4 bg-white rounded-lg">
                     <SelfQRcodeWrapper
@@ -180,16 +168,15 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
                     />
                   </div>
                 )}
-                <p className="text-xs" style={{ color: currentTheme.palette.textMuted }}>
+                <p className="text-xs text-gray-400">
                   Need the Self app?{' '}
                   <a
                     href="https://self.id"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:underline"
-                    style={{ color: currentTheme.palette.accent }}
+                    className="hover:underline text-cyan-400"
                   >
-                    Download for iOS/Android
+                    Download Self app
                   </a>
                 </p>
               </div>
@@ -198,58 +185,27 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
         )}
 
         {/* Privacy Notice */}
-        <div
-          className="p-3 rounded-lg border"
-          style={{
-            backgroundColor: currentTheme.palette.surface + 'E6', // 90% opacity
-            borderColor: currentTheme.palette.accent + '80', // 50% opacity
-          }}
-        >
-          <p className="text-xs" style={{ color: currentTheme.palette.textSecondary }}>
-            🔒 <strong style={{ color: currentTheme.palette.accent }}>Privacy First:</strong> Self
-            Protocol only verifies you&apos;re 16+ years old. No personal information is stored or
-            shared. Verification happens entirely on-chain.
+        <div className="p-3 rounded-lg border border-cyan-400 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
+          <p className="text-xs text-gray-300">
+            🔒 <strong className="text-cyan-400">Privacy First:</strong> Self Protocol only verifies
+            you're 16+ years old. No personal data stored.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <button
             onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-lg transition-colors"
-            style={{
-              backgroundColor: currentTheme.palette.surface,
-              color: currentTheme.palette.text,
-              border: `1px solid ${currentTheme.palette.accent}40`,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = currentTheme.palette.surfaceLight;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = currentTheme.palette.surface;
-            }}
+            className="flex-1 px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 hover:bg-gray-700 transition-colors"
           >
             Maybe Later
           </button>
-          {!isMobile && universalLink && (
-            <button
-              onClick={openSelfApp}
-              className="flex-1 py-3 px-4 rounded-lg transition-colors"
-              style={{
-                backgroundColor: currentTheme.palette.accent,
-                color: currentTheme.palette.background,
-                border: `1px solid ${currentTheme.palette.accent}`,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = currentTheme.palette.accentLight;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = currentTheme.palette.accent;
-              }}
-            >
-              📱 Mobile Link
-            </button>
-          )}
+          <button
+            onClick={() => window.open(universalLink, '_blank')}
+            className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white border border-cyan-400 hover:from-cyan-400 hover:to-blue-400 transition-all transform hover:scale-105"
+          >
+            📱 Open Self App
+          </button>
         </div>
       </div>
     </Dialog>
