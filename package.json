@@ -25,7 +25,7 @@
     "@coinbase/onchainkit": "^0.38.19",
     "@divvi/referral-sdk": "^2.3.0",
     "@farcaster/frame-sdk": "^0.0.60",
-    "@farcaster/frame-wagmi-connector": "^0.0.40",
+    "@farcaster/miniapp-wagmi-connector": "1.0.0",
     "@mediapipe/camera_utils": "^0.3.1675466862",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/pose": "^0.5.1675469404",

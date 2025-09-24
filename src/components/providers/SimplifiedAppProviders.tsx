@@ -166,21 +166,18 @@ const createConnectors = async () => {
       : []),
   ];
 
-  // Add Farcaster connector if available (client-side only)
+  // Add Farcaster mini app connector if available (client-side only)
   try {
-    const farcasterConnector = await import('@farcaster/frame-wagmi-connector');
-    if (
-      farcasterConnector?.farcasterFrame &&
-      typeof farcasterConnector.farcasterFrame === 'function'
-    ) {
-      const connector = farcasterConnector.farcasterFrame() as any;
+    const { farcasterMiniApp } = await import('@farcaster/miniapp-wagmi-connector');
+    if (farcasterMiniApp && typeof farcasterMiniApp === 'function') {
+      const connector = farcasterMiniApp() as any; // Type assertion for compatibility
       connectors.unshift(connector);
       if (process.env.NODE_ENV === 'development') {
-        console.log('✅ Farcaster connector added to Wagmi config');
+        console.log('✅ Farcaster mini app connector added to Wagmi config');
       }
     }
   } catch (err) {
-    console.warn('@farcaster/frame-wagmi-connector not available:', err);
+    console.warn('@farcaster/miniapp-wagmi-connector not available:', err);
   }
 
   return connectors;

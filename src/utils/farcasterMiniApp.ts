@@ -338,5 +338,91 @@ export async function switchFarcasterChain(chainId: number): Promise<boolean> {
   }
 }
 
-// Note: Timeout functions removed since we now treat transaction submission as immediate success
-// This simplifies the codebase and provides better user experience
+/**
+ * Check if batch transactions (EIP-5792) are supported
+ * Following Farcaster docs for wallet_sendCalls
+ */
+export async function supportsBatchTransactions(): Promise<boolean> {
+  try {
+    const provider = await getEthereumProvider();
+    if (!provider) return false;
+
+    // Check if wallet_sendCalls is supported
+    const capabilities = await provider.request({
+      method: 'wallet_getCapabilities',
+    });
+
+    return capabilities !== null;
+  } catch (error) {
+    logger.warn('Failed to check batch transaction support:', error);
+    return false;
+  }
+}
+
+/**
+ * Send batch transactions using EIP-5792 wallet_sendCalls
+ * Returns transaction IDs if successful
+ */
+export async function sendBatchTransactions(
+  calls: Array<{
+    to: `0x${string}`;
+    data?: `0x${string}`;
+    value?: bigint;
+  }>
+): Promise<{ success: boolean; result?: string; error?: unknown }> {
+  try {
+    const provider = await getEthereumProvider();
+    if (!provider) {
+      throw new Error('No Ethereum provider available');
+    }
+
+    // Use wallet_sendCalls for batch transactions
+    const result = await provider.request({
+      method: 'wallet_sendCalls',
+      params: [
+        {
+          calls: calls.map((call) => ({
+            to: call.to,
+            data: call.data || '0x',
+            value: call.value ? `0x${call.value.toString(16)}` : undefined,
+          })),
+        },
+      ],
+    });
+
+    logger.info('🎯 Batch transaction sent successfully:', result);
+    return { success: true, result: result as string };
+  } catch (error) {
+    logger.error('🎯 Batch transaction failed:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Simple Farcaster error handling - consolidated into single file
+ * Provides user-friendly error messages for common Farcaster issues
+ */
+export function handleFarcasterError(error: unknown): string {
+  const errorMessage =
+    error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+
+  if (errorMessage.includes('user denied') || errorMessage.includes('user rejected')) {
+    return 'Transaction was rejected in the Farcaster wallet. Please try again and approve the transaction.';
+  }
+
+  if (errorMessage.includes('insufficient funds')) {
+    return 'Insufficient funds in your Farcaster wallet. Please add funds and try again.';
+  }
+
+  if (errorMessage.includes('network') || errorMessage.includes('chain')) {
+    return 'Network error in Farcaster wallet. Please check your connection and try again.';
+  }
+
+  if (errorMessage.includes('provider') || errorMessage.includes('wallet not connected')) {
+    return 'Farcaster wallet provider not available. Please ensure your wallet is connected in the Farcaster app.';
+  }
+
+  return error instanceof Error ? error.message : 'Unknown error occurred in Farcaster wallet';
+}
+
+// Note: Enhanced with batch transaction capabilities and error handling following Farcaster docs

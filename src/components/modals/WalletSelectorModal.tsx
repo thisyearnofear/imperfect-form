@@ -22,9 +22,9 @@ const WalletSelectorModal: React.FC = () => {
     // Errors are handled and toasted within the PlatformContext
   };
 
-  // Filter out the Farcaster connector for the general web UI
+  // Filter out the Farcaster connectors for the general web UI
   const availableConnectors = connectors.filter(
-    (c) => c.id !== 'farcasterFrame' && c.id !== 'farcaster'
+    (c) => c.id !== 'farcasterFrame' && c.id !== 'farcaster' && c.id !== 'farcasterMiniApp'
   );
 
   return (

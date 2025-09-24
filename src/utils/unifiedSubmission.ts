@@ -12,7 +12,11 @@ import { ScoreSubmissionResult } from '@/types/contracts';
 import { validateWalletForSubmission } from '@/utils/walletUtils';
 import { WalletState } from '@/contexts/PlatformContext';
 import { ethers } from 'ethers';
-import { getEthereumProvider } from '@/utils/farcasterMiniApp';
+import {
+  getEthereumProvider,
+  isFarcasterMiniApp,
+  handleFarcasterError,
+} from '@/utils/farcasterMiniApp';
 import { addReferralTagToCalldata, registerDivviReferral } from '@/utils/divviIntegration';
 import { estimateGasWithBuffer, getSignerFromProvider } from '@/utils/ethersHelpers';
 import toast from 'react-hot-toast';
@@ -84,10 +88,11 @@ export async function submitScore(
       throw new Error(`Unsupported contract address: ${contractAddress}`);
     }
 
-    // ENHANCEMENT FIRST: Use existing provider or robust initialization
+    // ENHANCEMENT FIRST: Use existing consolidated provider logic
     let ethereumProvider = options.providedEthereumProvider;
     if (!ethereumProvider) {
-      // Try existing farcaster provider first (ENHANCEMENT FIRST)
+      // Use the enhanced getEthereumProvider from farcasterMiniApp.ts
+      // This already handles Farcaster mini app detection and fallbacks
       ethereumProvider = await getEthereumProvider();
 
       // Fallback to robust initialization if needed
@@ -107,10 +112,9 @@ export async function submitScore(
       !('request' in ethereumProvider)
     ) {
       // Check if we're in Farcaster context for better error messaging
-      const isFarcaster =
-        typeof window !== 'undefined' && window.location.href.includes('farcaster');
-      const errorMsg = isFarcaster
-        ? 'Farcaster wallet provider not available. Please ensure your wallet is connected in the Farcaster app.'
+      const isFarcasterContext = isFarcasterMiniApp();
+      const errorMsg = isFarcasterContext
+        ? 'Farcaster wallet provider not available. Please ensure your wallet is connected in the Farcaster app and try again.'
         : 'Invalid Ethereum provider. Please reconnect your wallet and try again.';
       throw new Error(errorMsg);
     }
@@ -320,7 +324,11 @@ export async function submitScore(
       console.warn('Consolidated error handler failed:', handlerError);
 
       let errorMessage = 'Submission failed. Please try again.';
-      if (error instanceof Error) {
+
+      // Use Farcaster-specific error handling if in Farcaster context
+      if (isFarcasterMiniApp()) {
+        errorMessage = handleFarcasterError(error);
+      } else if (error instanceof Error) {
         if (error.message.includes('user rejected') || error.message.includes('User denied')) {
           errorMessage = 'Transaction was rejected. Please confirm the transaction in your wallet.';
         } else if (error.message.includes('insufficient funds')) {

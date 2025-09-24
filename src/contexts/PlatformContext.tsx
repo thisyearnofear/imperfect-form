@@ -390,7 +390,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         } else if (platform === 'farcaster') {
           // Farcaster auto-connect logic (no connectorId provided)
           const farcasterConnector = connectors.find(
-            (c) => c.id === 'farcasterFrame' || c.id === 'farcaster'
+            (c) => c.id === 'farcasterMiniApp' || c.id === 'farcasterFrame' || c.id === 'farcaster'
           );
           if (farcasterConnector) {
             targetConnectors = [farcasterConnector];

@@ -5,12 +5,20 @@ import { Spinner } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { useAccount } from 'wagmi';
 import { submitScore, showSubmissionResult, canUserSubmit } from '@/utils/unifiedSubmission';
-import { getEthereumProvider } from '@/utils/farcasterMiniApp';
+import {
+  getEthereumProvider,
+  isFarcasterMiniApp,
+  supportsBatchTransactions,
+  sendBatchTransactions,
+} from '@/utils/farcasterMiniApp';
 import { getNetworkByChainId } from '@/config/networks';
 
 interface SubmitScoreProps {
   score?: number;
   exerciseType?: 'pushups' | 'squats';
+  // Enhanced: Support for batch submissions
+  pushupsScore?: number;
+  squatsScore?: number;
   forceDirectSubmission?: boolean;
   walletAddress?: string;
   submissionStatus: 'idle' | 'submitting' | 'success' | 'error';
@@ -21,6 +29,8 @@ interface SubmitScoreProps {
 export default function SubmitScoreWithWagmi({
   score,
   exerciseType = 'pushups',
+  pushupsScore,
+  squatsScore,
   forceDirectSubmission = false,
   walletAddress,
   submissionStatus,
@@ -28,6 +38,7 @@ export default function SubmitScoreWithWagmi({
 }: SubmitScoreProps) {
   const [confirmStep, setConfirmStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [supportsBatch, setSupportsBatch] = useState<boolean | null>(null);
   const { address: wagmiAddress } = useAccount();
   const { wallet } = usePlatform();
   const { chainId } = wallet;
@@ -37,6 +48,20 @@ export default function SubmitScoreWithWagmi({
   // Get current user address - prioritize wallet state, then wagmi, then prop
   const address = wallet.address || wagmiAddress || walletAddress;
 
+  // Enhanced: Check batch transaction support for Farcaster
+  React.useEffect(() => {
+    if (isFarcasterMiniApp()) {
+      supportsBatchTransactions().then(setSupportsBatch);
+    } else {
+      setSupportsBatch(false);
+    }
+  }, []);
+
+  // Enhanced: Calculate effective scores (support legacy single score + new batch scores)
+  const effectivePushupsScore = pushupsScore ?? (exerciseType === 'pushups' ? score : 0) ?? 0;
+  const effectiveSquatsScore = squatsScore ?? (exerciseType === 'squats' ? score : 0) ?? 0;
+  const hasMultipleScores = effectivePushupsScore > 0 && effectiveSquatsScore > 0;
+
   // Unified submission handler
   const handleSubmit = async () => {
     console.log(
@@ -45,7 +70,7 @@ export default function SubmitScoreWithWagmi({
       'exerciseType:',
       exerciseType
     );
-    if (!address || !chainId || !score) {
+    if (!address || !chainId || (!effectivePushupsScore && !effectiveSquatsScore)) {
       console.log('SubmitScoreWithWagmi: Missing required parameters');
       setSubmissionStatus('error');
       showSubmissionResult({
@@ -122,13 +147,11 @@ export default function SubmitScoreWithWagmi({
 
       const ethereumProvider = connectionCheck.provider;
 
-      const pushups = exerciseType === 'pushups' ? score : 0;
-      const squats = exerciseType === 'squats' ? score : 0;
-
+      // Enhanced: Use effective scores for submission
       // Submit using unified logic
       const result = await submitScore(
-        pushups,
-        squats,
+        effectivePushupsScore,
+        effectiveSquatsScore,
         contractInfo.address,
         contractInfo.network,
         address,
@@ -176,28 +199,50 @@ export default function SubmitScoreWithWagmi({
     }
   };
 
-  // Don't render if no score or address
-  if (!score || !address) {
+  // Enhanced: Don't render if no scores or address
+  if ((!effectivePushupsScore && !effectiveSquatsScore) || !address) {
     return null;
   }
 
   return (
     <div className="flex flex-col items-center space-y-4">
       {!confirmStep ? (
-        <button
-          onClick={() => setConfirmStep(true)}
-          disabled={isLoading || submissionStatus === 'success'}
-          className="px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
-          style={{
-            fontFamily: "'Press Start 2P', monospace",
-            fontSize: '12px',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-          }}
-        >
-          {submissionStatus === 'success'
-            ? 'Score Submitted! 🎉'
-            : `Submit Score (${score} ${exerciseType})`}
-        </button>
+        <div className="flex flex-col items-center space-y-2">
+          <button
+            onClick={() => setConfirmStep(true)}
+            disabled={isLoading || submissionStatus === 'success'}
+            className="px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
+            style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: '12px',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+            }}
+          >
+            {submissionStatus === 'success'
+              ? 'Scores Submitted! 🎉'
+              : hasMultipleScores
+                ? `Submit Scores${supportsBatch && isFarcasterMiniApp() ? ' (Batch)' : ''}`
+                : `Submit Score (${effectivePushupsScore || effectiveSquatsScore} ${exerciseType})`}
+          </button>
+
+          {/* Enhanced: Show batch transaction status for Farcaster */}
+          {isFarcasterMiniApp() && supportsBatch !== null && hasMultipleScores && (
+            <p className="text-xs text-[#fcb131] opacity-70 text-center">
+              {supportsBatch
+                ? '✨ Batch transactions supported - submit both scores in one action!'
+                : 'Will submit scores individually'}
+            </p>
+          )}
+
+          {/* Enhanced: Show score breakdown */}
+          {hasMultipleScores && (
+            <div className="text-xs text-[#fcb131] opacity-60 text-center">
+              {effectivePushupsScore > 0 && `${effectivePushupsScore} pushups`}
+              {effectivePushupsScore > 0 && effectiveSquatsScore > 0 && ' + '}
+              {effectiveSquatsScore > 0 && `${effectiveSquatsScore} squats`}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="flex flex-col items-center space-y-4">
           <div className="text-center">
@@ -207,9 +252,16 @@ export default function SubmitScoreWithWagmi({
             >
               Confirm Submission
             </p>
-            <p className="text-[#fcb131] opacity-80">
-              Submit {score} {exerciseType} to the leaderboard?
-            </p>
+            <div className="text-[#fcb131] opacity-80 space-y-1">
+              {effectivePushupsScore > 0 && <p>Pushups: {effectivePushupsScore}</p>}
+              {effectiveSquatsScore > 0 && <p>Squats: {effectiveSquatsScore}</p>}
+
+              {isFarcasterMiniApp() && supportsBatch && hasMultipleScores && (
+                <p className="text-xs text-green-400 mt-2">
+                  ⚡ Using batch transaction for better UX
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="flex space-x-4">
@@ -224,7 +276,13 @@ export default function SubmitScoreWithWagmi({
               }}
             >
               {isLoading && <Spinner />}
-              <span>{isLoading ? 'Submitting...' : 'Confirm'}</span>
+              <span>
+                {isLoading
+                  ? supportsBatch && hasMultipleScores && isFarcasterMiniApp()
+                    ? 'Batching...'
+                    : 'Submitting...'
+                  : 'Confirm'}
+              </span>
             </button>
 
             <button
