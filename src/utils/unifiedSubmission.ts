@@ -98,6 +98,36 @@ export async function submitScore(
     // Apply browser-specific fixes before attempting to get provider
     await applyBrowserSpecificFixes();
 
+    // Check if we're in Farcaster or Brave environment - prioritize direct submission for these
+    const isFarcaster = isFarcasterMiniApp();
+    const isBrave = isBraveBrowser();
+    const useDirectSubmission = isFarcaster || isBrave;
+
+    // If in Farcaster or Brave, try direct submission first
+    if (useDirectSubmission) {
+      console.log('Using direct submission for', { isFarcaster, isBrave });
+
+      const result = await submitScoreDirect(
+        pushups,
+        squats,
+        contractAddress,
+        networkConfig.chainId,
+        options.isVerifiedSubmission || false
+      );
+
+      if (result.success) {
+        toast.success(`Score submitted to ${networkName}!`, { id: 'submission' });
+        return {
+          success: true,
+          transactionHash: result.transactionHash,
+          processingType: 'direct',
+        };
+      } else {
+        console.warn('Direct submission failed, will try complex method:', result.error);
+        // Continue to try the complex method if direct fails
+      }
+    }
+
     // ENHANCEMENT FIRST: Use existing consolidated provider logic
     let ethereumProvider = options.providedEthereumProvider;
     if (!ethereumProvider) {
