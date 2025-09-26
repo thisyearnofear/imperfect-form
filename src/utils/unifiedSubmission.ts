@@ -151,7 +151,35 @@ export async function submitScore(
     // Additional check: verify we're on the correct network
     const network = await signer.provider?.getNetwork();
     if (network && network.chainId !== BigInt(networkConfig.chainId)) {
-      throw new Error(`Please switch to ${networkConfig.name} network to submit your score`);
+      // Try to automatically switch to the correct network using platform capabilities
+      let switchResult = false;
+      try {
+        // Import platform context to get switchChain functionality
+        const { getEthereumProvider, isBraveBrowser, applyBrowserSpecificFixes } = await import(
+          '@/utils/farcasterMiniApp'
+        );
+
+        // Apply browser-specific fixes before network switching
+        if (isBraveBrowser()) {
+          await applyBrowserSpecificFixes();
+        }
+
+        // Try to switch the network using the Ethereum provider
+        const provider = await getEthereumProvider();
+        if (provider && typeof provider.request === 'function') {
+          await provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: `0x${networkConfig.chainId.toString(16)}` }],
+          });
+          switchResult = true;
+        }
+      } catch (switchError) {
+        console.warn('Automatic network switch failed:', switchError);
+      }
+
+      if (!switchResult) {
+        throw new Error(`Please switch to ${networkConfig.name} network to submit your score`);
+      }
     }
 
     // Check if this is the verified fitness contract

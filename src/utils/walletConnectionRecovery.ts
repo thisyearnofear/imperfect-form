@@ -16,7 +16,7 @@ import {
   cleanupWalletConnectSessions,
   preventiveWalletConnectCleanup,
 } from './walletConnectCleanup';
-import { validateFarcasterWallet } from './walletCompatibilityFixes';
+import { validateFarcasterWallet } from './farcasterMiniApp';
 import { applyBrowserSpecificFixes } from './farcasterMiniApp';
 import toast from 'react-hot-toast';
 

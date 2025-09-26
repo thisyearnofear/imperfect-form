@@ -593,4 +593,88 @@ export async function checkBrowserCompatibility(): Promise<{
   };
 }
 
+/**
+ * Enhanced Farcaster wallet validation with better error handling
+ */
+export async function validateFarcasterWallet(): Promise<{ isValid: boolean; message: string }> {
+  try {
+    // Check if we're in Farcaster context
+    const isFarcaster =
+      typeof window !== 'undefined' &&
+      (window.location.href.includes('farcaster') ||
+        document.referrer.includes('warpcast') ||
+        document.referrer.includes('farcaster'));
+
+    if (!isFarcaster) {
+      return { isValid: true, message: 'Not in Farcaster context' };
+    }
+
+    // Try to get Farcaster SDK
+    const { sdk } = await import('@farcaster/frame-sdk');
+
+    // Check if wallet is available
+    if (!sdk.wallet) {
+      return {
+        isValid: false,
+        message: 'Farcaster wallet not available. Please connect your wallet in the Farcaster app.',
+      };
+    }
+
+    // Try to get provider using the latest approach
+    let provider = null;
+    if (sdk.wallet.getEthereumProvider) {
+      try {
+        provider = await sdk.wallet.getEthereumProvider();
+      } catch (error) {
+        console.warn('Failed to get provider via getEthereumProvider, trying legacy:', error);
+        // Try legacy API
+        provider = sdk.wallet.ethProvider;
+      }
+    } else {
+      provider = sdk.wallet.ethProvider;
+    }
+
+    if (!provider) {
+      return {
+        isValid: false,
+        message: 'Farcaster wallet provider not available. Please ensure your wallet is connected.',
+      };
+    }
+
+    // Test provider functionality with better error handling
+    try {
+      // Test with both eth_chainId and eth_accounts to ensure full functionality
+      const chainId = await Promise.race([
+        provider.request({ method: 'eth_chainId' }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Provider test timeout')), 3000)
+        ),
+      ]);
+
+      // Test account access as well
+      const accounts = await Promise.race([
+        provider.request({ method: 'eth_accounts' }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Provider accounts timeout')), 2000)
+        ),
+      ]);
+
+      return {
+        isValid: true,
+        message: `Farcaster wallet is ready (Chain: ${chainId}, Accounts: ${accounts.length})`,
+      };
+    } catch (error) {
+      return {
+        isValid: false,
+        message: `Farcaster wallet provider is not responding. Please try refreshing the app: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
+  } catch (error) {
+    return {
+      isValid: false,
+      message: `Farcaster validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
+}
+
 // Note: Enhanced with batch transaction capabilities and error handling following Farcaster docs

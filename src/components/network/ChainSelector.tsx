@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useSwitchChain } from 'wagmi';
 import { polygon, base, celo } from 'wagmi/chains';
 import { Dialog } from '@/components/ui';
 import Image from 'next/image';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
+import { usePlatform } from '@/contexts/PlatformContext';
 
 // Custom Monad Testnet chain object
 const monad = {
@@ -25,7 +25,9 @@ interface ChainSelectorProps {
  * This is different from WalletTypeSelector which chooses the wallet connection type
  */
 export default function ChainSelector({ onClose }: ChainSelectorProps) {
-  const { switchChain } = useSwitchChain();
+  const {
+    actions: { switchChain },
+  } = usePlatform();
   const { setTheme } = useEnhancedChainTheme();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -52,25 +54,27 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
       // Update theme context immediately
       setTheme(selectedNetwork);
 
-      // Switch chain using Wagmi or custom object
-      let targetChain: typeof polygon | typeof base | typeof celo | typeof monad;
+      // Switch chain using platform context which handles Farcaster and other environments properly
+      let targetChainId: number;
 
       if (selectedNetwork === 'polygon') {
-        targetChain = polygon;
+        targetChainId = polygon.id;
       } else if (selectedNetwork === 'base') {
-        targetChain = base;
+        targetChainId = base.id;
       } else if (selectedNetwork === 'celo') {
-        targetChain = celo;
+        targetChainId = celo.id;
       } else if (selectedNetwork === 'monad') {
-        targetChain = monad;
+        targetChainId = 10143; // Monad Testnet chain ID
       } else {
         // This should never happen due to the function parameter type, but satisfies TypeScript
         console.error('Unknown network selected:', selectedNetwork);
         return;
       }
 
-      if (switchChain) {
-        switchChain({ chainId: targetChain.id });
+      const success = await switchChain(targetChainId);
+
+      if (!success) {
+        console.error('Failed to switch chain to', selectedNetwork);
       }
 
       // Close dialog

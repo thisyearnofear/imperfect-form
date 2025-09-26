@@ -607,15 +607,50 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   const switchChain = useCallback(
     async (targetChainId: number): Promise<boolean> => {
       try {
-        if (platform === 'farcaster' && farcasterSDK?.wallet?.ethProvider) {
-          await farcasterSDK.wallet.ethProvider.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${targetChainId.toString(16)}` }],
-          });
+        if (platform === 'farcaster') {
+          // Try to get the provider using the newer method first, then fallback
+          let provider = null;
 
-          setFarcasterWallet((prev) => ({ ...prev, chainId: targetChainId }));
-          toast.success('Chain switched successfully!');
-          return true;
+          if (farcasterSDK?.wallet?.getEthereumProvider) {
+            try {
+              provider = await farcasterSDK.wallet.getEthereumProvider();
+            } catch (error) {
+              logger.warn('Failed to get provider via new API, trying legacy:', error);
+            }
+          }
+
+          if (!provider && farcasterSDK?.wallet?.ethProvider) {
+            provider = farcasterSDK.wallet.ethProvider;
+          }
+
+          if (provider) {
+            // Check if the provider has the required method
+            if (typeof provider.request === 'function') {
+              await provider.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: `0x${targetChainId.toString(16)}` }],
+              });
+
+              setFarcasterWallet((prev) => ({ ...prev, chainId: targetChainId }));
+              toast.success('Chain switched successfully!');
+              return true;
+            } else {
+              logger.warn('Farcaster provider does not have request method');
+            }
+          } else {
+            logger.warn('No Farcaster wallet provider available for chain switch');
+          }
+        }
+
+        // Apply browser-specific fixes for Brave and other privacy browsers
+        if (typeof window !== 'undefined') {
+          // For Brave and other browsers, apply fixes before switching
+          const { isBraveBrowser, applyBrowserSpecificFixes } = await import(
+            '@/utils/farcasterMiniApp'
+          );
+          if (isBraveBrowser()) {
+            await applyBrowserSpecificFixes();
+          }
         }
 
         // Fallback to Wagmi
@@ -624,7 +659,20 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         return true;
       } catch (err) {
         logger.error('Chain switch failed', err);
-        toast.error('Failed to switch chain');
+
+        // More specific error handling for different browsers
+        let errorMessage = 'Failed to switch chain';
+        if (err instanceof Error) {
+          if (err.message.includes('user rejected')) {
+            errorMessage = 'Chain switch was rejected. Please try again.';
+          } else if (err.message.includes('not added')) {
+            errorMessage = `Network not available in wallet. You may need to add the network manually.`;
+          } else if (err.message.includes('unsupported')) {
+            errorMessage = 'Network not supported by current wallet.';
+          }
+        }
+
+        toast.error(errorMessage);
         return false;
       }
     },
