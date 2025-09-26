@@ -677,4 +677,150 @@ export async function validateFarcasterWallet(): Promise<{ isValid: boolean; mes
   }
 }
 
+/**
+ * Simple Direct Contract Submission - Minimalist approach
+ *
+ * This provides a direct path for contract submission without the complex
+ * unified submission system, specifically designed to work better in
+ * Farcaster mini apps and Brave browser
+ */
+
+import { ethers } from 'ethers';
+import {
+  fitnessLeaderboardABI,
+  monadLeaderboardABI,
+  baseLeaderboardABI,
+  polygonLeaderboardABI,
+  verifiedFitnessLeaderboardABI,
+} from '@/constants/contracts';
+import { getNetworkByChainId } from '@/config/networks';
+
+// Get the appropriate ABI based on the network
+function getContractABI(chainId: number, isVerifiedContract = false) {
+  if (isVerifiedContract) {
+    return verifiedFitnessLeaderboardABI;
+  }
+
+  switch (chainId) {
+    case 10143: // Monad Testnet
+      return monadLeaderboardABI;
+    case 8453: // Base Mainnet
+      return baseLeaderboardABI;
+    case 137: // Polygon Mainnet
+    case 80002: // Amoy Testnet
+      return polygonLeaderboardABI;
+    default: // Celo, etc.
+      return fitnessLeaderboardABI;
+  }
+}
+
+/**
+ * Simple direct contract submission - bypasses complex unified system
+ */
+export async function submitScoreDirect(
+  pushups: number,
+  squats: number,
+  contractAddress: string,
+  chainId: number,
+  isVerifiedSubmission = false
+): Promise<{ success: boolean; error?: string; transactionHash?: string }> {
+  try {
+    // Get provider directly using the proven method
+    const provider = await getEthereumProvider();
+    if (!provider) {
+      throw new Error('No Ethereum provider available');
+    }
+
+    // Check if we're in Farcaster context for better error handling
+    const isFarcaster = isFarcasterMiniApp();
+
+    // Create ethers provider and signer
+    const ethersProvider = new ethers.BrowserProvider(provider);
+    const signer = await ethersProvider.getSigner();
+
+    // Get the appropriate ABI
+    const abi = getContractABI(chainId, isVerifiedSubmission);
+
+    // Create contract instance
+    const contract = new ethers.Contract(contractAddress, abi, signer);
+
+    let tx;
+    let methodName: string;
+    let methodArgs: any[];
+
+    if (isVerifiedSubmission) {
+      // For verified fitness contract, we need different parameters
+      if (pushups > 0) {
+        methodName = 'submitScore';
+        methodArgs = [pushups, 'pushups'];
+        tx = await contract[methodName](...methodArgs);
+      } else if (squats > 0) {
+        methodName = 'submitScore';
+        methodArgs = [squats, 'squats'];
+        tx = await contract[methodName](...methodArgs);
+      } else {
+        throw new Error('At least one score (pushups or squats) must be greater than 0');
+      }
+    } else {
+      // For standard contracts, use addScore
+      methodName = 'addScore';
+      methodArgs = [pushups, squats];
+
+      // Handle Monad which requires payment
+      if (chainId === 10143) {
+        // Monad Testnet
+        // Add the required payment for Monad
+        tx = await contract[methodName](...methodArgs, { value: ethers.parseEther('0.001') });
+      } else {
+        tx = await contract[methodName](...methodArgs);
+      }
+    }
+
+    // Wait for transaction to be mined
+    const receipt = await tx.wait();
+
+    if (receipt && (receipt as any).status === 1) {
+      const transactionHash = receipt.hash || (receipt as any).transactionHash;
+      return {
+        success: true,
+        transactionHash,
+        error: undefined,
+      };
+    } else {
+      throw new Error('Transaction failed - receipt status not confirmed');
+    }
+  } catch (error) {
+    console.error('Direct contract submission failed:', error);
+
+    let errorMessage = 'Submission failed';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+
+      // Provide more user-friendly messages for Farcaster context
+      if (isFarcasterMiniApp()) {
+        if (
+          errorMessage.toLowerCase().includes('user denied') ||
+          errorMessage.toLowerCase().includes('user rejected')
+        ) {
+          errorMessage =
+            'Transaction was rejected in the Farcaster wallet. Please approve the transaction.';
+        } else if (errorMessage.toLowerCase().includes('insufficient funds')) {
+          if (chainId === 10143) {
+            // Monad
+            errorMessage =
+              'Insufficient MON balance. You need at least 0.001 MON for the submission fee.';
+          } else {
+            errorMessage = 'Insufficient funds for transaction. Please check your wallet balance.';
+          }
+        }
+      }
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
 // Note: Enhanced with batch transaction capabilities and error handling following Farcaster docs

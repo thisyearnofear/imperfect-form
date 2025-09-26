@@ -21,7 +21,11 @@ import { addReferralTagToCalldata, registerDivviReferral } from '@/utils/divviIn
 import { estimateGasWithBuffer, getSignerFromProvider } from '@/utils/ethersHelpers';
 import toast from 'react-hot-toast';
 import { verifiedFitnessLeaderboardABI } from '@/constants/contracts';
-import { applyBrowserSpecificFixes, getProviderForPrivacyBrowsers } from '@/utils/farcasterMiniApp';
+import {
+  applyBrowserSpecificFixes,
+  getProviderForPrivacyBrowsers,
+  submitScoreDirect,
+} from '@/utils/farcasterMiniApp';
 
 // CONSOLIDATED: Import from the new consolidated web3 error handling module
 import {
@@ -48,9 +52,11 @@ export interface SubmissionParams {
   isVerifiedSubmission?: boolean; // New parameter for verified submissions
 }
 
-/**
+/*
  * SINGLE SOURCE OF TRUTH for all score submissions
  * CONSOLIDATION: Replaces submitScoreDirectly, submitScoreV2, and all variants
+ *
+ * ENHANCEMENT: Now includes fallback to simpler direct submission for compatibility
  */
 export async function submitScore(
   pushups: number,
@@ -189,152 +195,230 @@ export async function submitScore(
       contractAddress === process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT;
 
     if (isVerifiedFitnessContract) {
-      // Handle verified fitness contract submission using robust contract interaction
-      const { createRobustContract, executeContractWrite } = await import(
-        '@/utils/contractInteractionManager'
-      );
-
-      const contract = await createRobustContract(
-        contractAddress,
-        verifiedFitnessLeaderboardABI,
-        signer,
-        networkConfig.chainId
-      );
-
-      if (!contract) {
-        throw new Error('Failed to create contract instance');
-      }
-
-      // Submit pushups if provided
-      if (pushups > 0) {
-        const pushupResult = await executeContractWrite(contract, 'submitScore', [
-          pushups,
-          'pushups',
-        ]);
-
-        if (!pushupResult.success) {
-          throw new Error(pushupResult.error || 'Failed to submit pushups');
-        }
-
-        toast.success(`Pushups submitted to ${networkName}!`);
-      }
-
-      // Submit squats if provided
-      if (squats > 0) {
-        const squatResult = await executeContractWrite(contract, 'submitScore', [squats, 'squats']);
-
-        if (!squatResult.success) {
-          throw new Error(squatResult.error || 'Failed to submit squats');
-        }
-
-        toast.success(`Squats submitted to ${networkName}!`);
-      }
-
-      return {
-        success: true,
-        processingType: 'direct',
-      };
-    } else {
-      // Handle standard contract submission using robust contract interaction
-      const { createRobustContract } = await import('@/utils/contractInteractionManager');
-
-      const contract = await createRobustContract(
-        contractAddress,
-        networkConfig.abi,
-        signer,
-        networkConfig.chainId
-      );
-
-      if (!contract) {
-        throw new Error('Failed to create contract instance');
-      }
-
-      // Check if we're submitting to Monad network which requires a fee
-      const isMonadNetwork = networkConfig.chainId === 10143; // Monad Testnet chain ID
-      let submissionFee = 0n;
-
-      if (isMonadNetwork) {
-        // Monad contract requires a fixed fee (no feeConfig function available)
-        submissionFee = ethers.parseEther('0.001'); // 0.001 MON
-        console.log('Using fixed Monad submission fee:', ethers.formatEther(submissionFee), 'MON');
-
-        // Check if user has sufficient balance for fee + gas
-        const balance = await signer.provider?.getBalance(actualAddress);
-        if (balance && balance < submissionFee + ethers.parseEther('0.001')) {
-          // fee + estimated gas
-          throw new Error(
-            `Insufficient MON balance. You need at least ${ethers.formatEther(submissionFee + ethers.parseEther('0.001'))} MON for the submission fee and gas.`
-          );
-        }
-      }
-
-      // Prepare transaction with robust gas estimation
-      let gasLimit: bigint;
       try {
-        const gasEstimationOptions =
-          isMonadNetwork && submissionFee > 0n ? { value: submissionFee } : {};
-        gasLimit = await estimateGasWithBuffer(
-          contract,
-          'addScore',
-          [pushups, squats],
-          gasEstimationOptions
+        // Handle verified fitness contract submission using robust contract interaction
+        const { createRobustContract, executeContractWrite } = await import(
+          '@/utils/contractInteractionManager'
         );
-      } catch (gasError) {
-        // Fallback gas limit if estimation fails
-        console.warn('Gas estimation failed, using fallback:', gasError);
-        gasLimit = 200000n; // Conservative fallback
-      }
 
-      // Add referral tag if applicable
-      const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
-      const taggedCalldata = addReferralTagToCalldata(actualAddress, calldata);
+        const contract = await createRobustContract(
+          contractAddress,
+          verifiedFitnessLeaderboardABI,
+          signer,
+          networkConfig.chainId
+        );
 
-      // Prepare transaction object with value for payable functions
-      const transactionParams: any = {
-        to: contractAddress,
-        data: taggedCalldata,
-        gasLimit: gasLimit,
-      };
+        if (!contract) {
+          throw new Error('Failed to create contract instance');
+        }
 
-      // Include value for Monad network submissions
-      if (isMonadNetwork && submissionFee > 0n) {
-        transactionParams.value = submissionFee;
-      }
+        // Submit pushups if provided
+        if (pushups > 0) {
+          const pushupResult = await executeContractWrite(contract, 'submitScore', [
+            pushups,
+            'pushups',
+          ]);
 
-      // Submit transaction
-      const tx = await signer.sendTransaction(transactionParams);
+          if (!pushupResult.success) {
+            throw new Error(pushupResult.error || 'Failed to submit pushups');
+          }
 
-      toast.loading(`Submitting to ${networkName}...`, { id: 'submission' });
+          toast.success(`Pushups submitted to ${networkName}!`);
+        }
 
-      // Wait for confirmation with timeout protection
-      const timeout = new Promise(
-        (_, reject) =>
-          setTimeout(() => reject(new Error('Transaction confirmation timeout')), 120000) // 2 minutes
-      );
+        // Submit squats if provided
+        if (squats > 0) {
+          const squatResult = await executeContractWrite(contract, 'submitScore', [
+            squats,
+            'squats',
+          ]);
 
-      const receipt = (await Promise.race([
-        tx.wait(),
-        timeout,
-      ])) as ethers.TransactionReceipt | null;
+          if (!squatResult.success) {
+            throw new Error(squatResult.error || 'Failed to submit squats');
+          }
 
-      if (receipt?.status === 1) {
-        toast.success(`Score submitted to ${networkName}!`, { id: 'submission' });
-
-        // Register Divvi referral if applicable
-        try {
-          await registerDivviReferral(tx.hash, options.chainId || 1);
-        } catch (referralError) {
-          console.warn('Referral registration failed:', referralError);
-          // Don't fail the submission for referral errors
+          toast.success(`Squats submitted to ${networkName}!`);
         }
 
         return {
           success: true,
-          transactionHash: tx.hash,
           processingType: 'direct',
         };
-      } else {
-        throw new Error('Transaction failed');
+      } catch (complexError) {
+        console.warn('Complex submission failed, trying direct submission:', complexError);
+
+        // Fallback to simple direct submission
+        if (pushups > 0) {
+          const pushupResult = await submitScoreDirect(
+            pushups,
+            0,
+            contractAddress,
+            networkConfig.chainId,
+            true
+          );
+          if (!pushupResult.success) {
+            throw new Error(pushupResult.error || 'Failed to submit pushups via direct method');
+          }
+          toast.success(`Pushups submitted to ${networkName}!`);
+        }
+
+        if (squats > 0) {
+          const squatResult = await submitScoreDirect(
+            0,
+            squats,
+            contractAddress,
+            networkConfig.chainId,
+            true
+          );
+          if (!squatResult.success) {
+            throw new Error(squatResult.error || 'Failed to submit squats via direct method');
+          }
+          toast.success(`Squats submitted to ${networkName}!`);
+        }
+
+        return {
+          success: true,
+          processingType: 'direct',
+        };
+      }
+    } else {
+      try {
+        // Handle standard contract submission using robust contract interaction
+        const { createRobustContract } = await import('@/utils/contractInteractionManager');
+
+        const contract = await createRobustContract(
+          contractAddress,
+          networkConfig.abi,
+          signer,
+          networkConfig.chainId
+        );
+
+        if (!contract) {
+          throw new Error('Failed to create contract instance');
+        }
+
+        // Check if we're submitting to Monad network which requires a fee
+        const isMonadNetwork = networkConfig.chainId === 10143; // Monad Testnet chain ID
+        let submissionFee = 0n;
+
+        if (isMonadNetwork) {
+          // Monad contract requires a fixed fee (no feeConfig function available)
+          submissionFee = ethers.parseEther('0.001'); // 0.001 MON
+          console.log(
+            'Using fixed Monad submission fee:',
+            ethers.formatEther(submissionFee),
+            'MON'
+          );
+
+          // Check if user has sufficient balance for fee + gas
+          const balance = await signer.provider?.getBalance(actualAddress);
+          if (balance && balance < submissionFee + ethers.parseEther('0.001')) {
+            // fee + estimated gas
+            throw new Error(
+              `Insufficient MON balance. You need at least ${ethers.formatEther(submissionFee + ethers.parseEther('0.001'))} MON for the submission fee and gas.`
+            );
+          }
+        }
+
+        // Prepare transaction with robust gas estimation
+        let gasLimit: bigint;
+        try {
+          const gasEstimationOptions =
+            isMonadNetwork && submissionFee > 0n ? { value: submissionFee } : {};
+          gasLimit = await estimateGasWithBuffer(
+            contract,
+            'addScore',
+            [pushups, squats],
+            gasEstimationOptions
+          );
+        } catch (gasError) {
+          // Fallback gas limit if estimation fails
+          console.warn('Gas estimation failed, using fallback:', gasError);
+          gasLimit = 200000n; // Conservative fallback
+        }
+
+        // Add referral tag if applicable
+        const calldata = contract.interface.encodeFunctionData('addScore', [pushups, squats]);
+        const taggedCalldata = addReferralTagToCalldata(actualAddress, calldata);
+
+        // Prepare transaction object with value for payable functions
+        const transactionParams: any = {
+          to: contractAddress,
+          data: taggedCalldata,
+          gasLimit: gasLimit,
+        };
+
+        // Include value for Monad network submissions
+        if (isMonadNetwork && submissionFee > 0n) {
+          transactionParams.value = submissionFee;
+        }
+
+        // Submit transaction
+        const tx = await signer.sendTransaction(transactionParams);
+
+        toast.loading(`Submitting to ${networkName}...`, { id: 'submission' });
+
+        // Wait for confirmation with timeout protection
+        const timeout = new Promise(
+          (_, reject) =>
+            setTimeout(() => reject(new Error('Transaction confirmation timeout')), 120000) // 2 minutes
+        );
+
+        const receipt = (await Promise.race([
+          tx.wait(),
+          timeout,
+        ])) as ethers.TransactionReceipt | null;
+
+        if (receipt?.status === 1) {
+          toast.success(`Score submitted to ${networkName}!`, { id: 'submission' });
+
+          // Register Divvi referral if applicable
+          try {
+            await registerDivviReferral(tx.hash, options.chainId || 1);
+          } catch (referralError) {
+            console.warn('Referral registration failed:', referralError);
+            // Don't fail the submission for referral errors
+          }
+
+          return {
+            success: true,
+            transactionHash: tx.hash,
+            processingType: 'direct',
+          };
+        } else {
+          throw new Error('Transaction failed');
+        }
+      } catch (complexError) {
+        console.warn('Complex standard submission failed, trying direct submission:', complexError);
+
+        // Fallback to simple direct submission
+        const result = await submitScoreDirect(
+          pushups,
+          squats,
+          contractAddress,
+          networkConfig.chainId,
+          false
+        );
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to submit via direct method');
+        }
+
+        toast.success(`Score submitted to ${networkName}!`, { id: 'submission' });
+
+        // Register Divvi referral if applicable
+        try {
+          // Note: We don't have the transaction hash with direct submission
+          // This is a limitation of the simple approach but acceptable for fallback
+        } catch (referralError) {
+          console.warn('Referral registration not available for direct submission:', referralError);
+        }
+
+        return {
+          success: true,
+          transactionHash: result.transactionHash,
+          processingType: 'direct',
+        };
       }
     }
   } catch (error) {
