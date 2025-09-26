@@ -513,7 +513,8 @@ export async function applyBrowserSpecificFixes(): Promise<boolean> {
       try {
         // In some cases, Farcaster SDK needs to be initialized properly
         const { sdk } = await import('@farcaster/frame-sdk');
-        if (sdk.actions?.ready) {
+        // The ready method exists as a function, so we check if it's callable
+        if (typeof sdk.actions?.ready === 'function') {
           // Don't call ready() if it's already been called, as this can cause issues
         }
       } catch (sdkError) {
