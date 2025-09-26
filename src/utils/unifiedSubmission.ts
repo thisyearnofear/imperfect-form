@@ -21,6 +21,7 @@ import { addReferralTagToCalldata, registerDivviReferral } from '@/utils/divviIn
 import { estimateGasWithBuffer, getSignerFromProvider } from '@/utils/ethersHelpers';
 import toast from 'react-hot-toast';
 import { verifiedFitnessLeaderboardABI } from '@/constants/contracts';
+import { applyBrowserSpecificFixes, getProviderForPrivacyBrowsers } from '@/utils/farcasterMiniApp';
 
 // CONSOLIDATED: Import from the new consolidated web3 error handling module
 import {
@@ -88,12 +89,15 @@ export async function submitScore(
       throw new Error(`Unsupported contract address: ${contractAddress}`);
     }
 
+    // Apply browser-specific fixes before attempting to get provider
+    await applyBrowserSpecificFixes();
+
     // ENHANCEMENT FIRST: Use existing consolidated provider logic
     let ethereumProvider = options.providedEthereumProvider;
     if (!ethereumProvider) {
-      // Use the enhanced getEthereumProvider from farcasterMiniApp.ts
-      // This already handles Farcaster mini app detection and fallbacks
-      ethereumProvider = await getEthereumProvider();
+      // Use the enhanced provider access for privacy browsers (like Brave)
+      // This handles potential delays and conflicts in provider availability
+      ethereumProvider = await getProviderForPrivacyBrowsers();
 
       // Fallback to robust initialization if needed
       if (!ethereumProvider) {

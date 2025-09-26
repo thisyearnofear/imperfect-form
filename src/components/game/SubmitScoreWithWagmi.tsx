@@ -12,6 +12,7 @@ import {
   sendBatchTransactions,
 } from '@/utils/farcasterMiniApp';
 import { getNetworkByChainId } from '@/config/networks';
+import { checkBrowserCompatibility } from '@/utils/farcasterMiniApp';
 
 interface SubmitScoreProps {
   score?: number;
@@ -115,6 +116,13 @@ export default function SubmitScoreWithWagmi({
         throw new Error(canSubmitResult.reason || 'Cannot submit');
       }
 
+      // Check browser compatibility before proceeding
+      const browserCompatibility = await checkBrowserCompatibility();
+      if (!browserCompatibility.isCompatible) {
+        console.warn('Browser compatibility issues detected:', browserCompatibility);
+        // Don't throw yet - let's try the wallet connection recovery first
+      }
+
       // ENHANCEMENT: Robust provider access with automatic recovery
       const { ensureWalletConnection } = await import('@/utils/walletConnectionRecovery');
       const connectionCheck = await ensureWalletConnection({
@@ -135,13 +143,19 @@ export default function SubmitScoreWithWagmi({
           ? 'Farcaster wallet provider not available. Make sure you have a wallet connected in the Farcaster app.'
           : 'No wallet provider found. Please connect your wallet and try again.';
 
+        // Combine suggestions from both checks
+        let allSuggestions = [...connectionCheck.suggestions];
+        if (browserCompatibility.suggestions.length > 0) {
+          allSuggestions = [...allSuggestions, ...browserCompatibility.suggestions];
+        }
+
         // Show suggestions to user
-        if (connectionCheck.suggestions.length > 0) {
-          console.warn('Wallet connection suggestions:', connectionCheck.suggestions);
+        if (allSuggestions.length > 0) {
+          console.warn('Wallet connection suggestions:', allSuggestions);
         }
 
         throw new Error(
-          `${contextualMsg}\n\nSuggestions:\n${connectionCheck.suggestions.map((s) => `• ${s}`).join('\n')}`
+          `${contextualMsg}\n\nSuggestions:\n${allSuggestions.map((s) => `• ${s}`).join('\n')}`
         );
       }
 

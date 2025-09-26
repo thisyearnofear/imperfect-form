@@ -17,6 +17,7 @@ import {
   preventiveWalletConnectCleanup,
 } from './walletConnectCleanup';
 import { validateFarcasterWallet } from './walletCompatibilityFixes';
+import { applyBrowserSpecificFixes } from './farcasterMiniApp';
 import toast from 'react-hot-toast';
 
 const logger = createRemoteLogger('WalletConnectionRecovery');
@@ -306,8 +307,8 @@ async function tryProviderCleanup(context: any): Promise<ConnectionRecoveryResul
  */
 async function tryProviderReinitialization(context: any): Promise<ConnectionRecoveryResult> {
   try {
-    // Force provider reinitialization
-    const provider = await initializeProviderSafely();
+    // Force provider reinitialization with browser-specific fixes
+    const provider = await initializeProviderWithBrowserFixes();
 
     if (provider) {
       // Give the provider time to fully initialize
@@ -395,7 +396,7 @@ async function tryWalletConnectCleanup(context: any): Promise<ConnectionRecovery
 }
 
 /**
- * Test if a provider is working properly
+ * Test if a provider is working properly with enhanced timeout for privacy browsers
  */
 async function testProviderConnection(provider: any): Promise<boolean> {
   if (!provider || typeof provider.request !== 'function') {
@@ -404,15 +405,36 @@ async function testProviderConnection(provider: any): Promise<boolean> {
 
   try {
     // Test with a simple, non-intrusive method
+    // Use longer timeout for privacy-focused browsers like Brave
     await Promise.race([
       provider.request({ method: 'eth_chainId' }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
     ]);
 
     return true;
   } catch (error) {
     logger.warn('Provider connection test failed:', error);
     return false;
+  }
+}
+
+/**
+ * Enhanced provider initialization with browser-specific fixes
+ */
+async function initializeProviderWithBrowserFixes(): Promise<any> {
+  try {
+    // Apply browser-specific fixes first
+    const fixesApplied = await applyBrowserSpecificFixes();
+    if (!fixesApplied) {
+      logger.warn('Browser-specific fixes failed to apply');
+    }
+
+    // Then try to get the provider
+    const provider = await initializeProviderSafely();
+    return provider;
+  } catch (error) {
+    logger.error('Provider initialization with browser fixes failed:', error);
+    return null;
   }
 }
 

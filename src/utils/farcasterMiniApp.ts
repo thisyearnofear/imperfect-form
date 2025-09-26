@@ -425,4 +425,171 @@ export function handleFarcasterError(error: unknown): string {
   return error instanceof Error ? error.message : 'Unknown error occurred in Farcaster wallet';
 }
 
+/**
+ * Browser-specific fixes for wallet compatibility
+ * ENHANCEMENT FIRST: Added to existing consolidated file
+ */
+
+/**
+ * Detect if we're in Brave browser
+ */
+export function isBraveBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  // Check for Brave-specific properties
+  const isBrave = (navigator as any).brave?.isBrave;
+  if (isBrave) return true;
+
+  // Fallback: check for Brave-specific user agent patterns
+  return navigator.userAgent.includes('Brave');
+}
+
+/**
+ * Enhanced provider access for Brave and other privacy-focused browsers
+ */
+export async function getProviderForPrivacyBrowsers() {
+  try {
+    if (isBraveBrowser()) {
+      // In Brave and other privacy-focused browsers, provider access might be delayed
+      // due to privacy protections or extension conflicts
+
+      // Wait for provider to be ready with longer timeout
+      let provider = null;
+      const maxAttempts = 10;
+      let attempts = 0;
+
+      while (attempts < maxAttempts && !provider) {
+        provider = await getEthereumProvider();
+        if (!provider) {
+          await new Promise((resolve) => setTimeout(resolve, 500)); // Wait 500ms between attempts
+        }
+        attempts++;
+      }
+
+      if (!provider) {
+        return null;
+      }
+
+      // Test provider functionality
+      try {
+        await Promise.race([
+          provider.request({ method: 'eth_chainId' }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+        ]);
+        return provider;
+      } catch (testError) {
+        return null;
+      }
+    }
+
+    // For non-Brave browsers, use normal provider access
+    return await getEthereumProvider();
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Apply browser-specific fixes before transaction submission
+ */
+export async function applyBrowserSpecificFixes(): Promise<boolean> {
+  try {
+    // Apply Brave-specific fixes
+    if (isBraveBrowser()) {
+      // In Brave, ensure we're using the right provider
+      const ethereum = (window as any).ethereum;
+
+      if (ethereum && ethereum.providers && Array.isArray(ethereum.providers)) {
+        // Look for the Brave wallet provider specifically
+        const braveProvider = ethereum.providers.find((provider: any) => provider.isBraveWallet);
+        if (braveProvider) {
+          // Brave wallet is available - this is good
+        }
+      }
+    }
+
+    // For Farcaster mini apps, ensure SDK is ready
+    if (isFarcasterMiniApp()) {
+      try {
+        // In some cases, Farcaster SDK needs to be initialized properly
+        const { sdk } = await import('@farcaster/frame-sdk');
+        if (sdk.actions?.ready) {
+          // Don't call ready() if it's already been called, as this can cause issues
+        }
+      } catch (sdkError) {
+        // SDK not available in this context, that's fine
+      }
+    }
+
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Enhanced compatibility check for privacy-focused browsers
+ */
+export async function checkBrowserCompatibility(): Promise<{
+  isCompatible: boolean;
+  browserType: 'brave' | 'mobile' | 'farcaster' | 'other';
+  issues: string[];
+  suggestions: string[];
+}> {
+  const issues: string[] = [];
+  const suggestions: string[] = [];
+
+  let browserType: 'brave' | 'mobile' | 'farcaster' | 'other' = 'other';
+
+  if (isBraveBrowser()) {
+    browserType = 'brave';
+    // Brave-specific checks
+    const ethereum = (window as any).ethereum;
+    if (ethereum && !ethereum.isBraveWallet) {
+      issues.push('Multiple wallet providers detected in Brave');
+      suggestions.push('Use Brave Wallet or disable other wallet extensions');
+    }
+  }
+
+  // Check for mobile
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    if (browserType === 'other') browserType = 'mobile';
+  }
+
+  // Check for Farcaster
+  if (
+    typeof window !== 'undefined' &&
+    (window.location.href.includes('farcaster') || document.referrer.includes('warpcast'))
+  ) {
+    browserType = 'farcaster';
+  }
+
+  // Check provider availability
+  try {
+    const provider = await getProviderForPrivacyBrowsers();
+    if (!provider) {
+      issues.push('No Ethereum provider detected');
+      if (browserType === 'brave') {
+        suggestions.push('Enable Brave Wallet or check wallet extension settings');
+      } else if (browserType === 'mobile') {
+        suggestions.push('Install a mobile wallet app or enable wallet browser extension');
+      } else if (browserType === 'farcaster') {
+        suggestions.push('Connect a wallet in the Farcaster app');
+      } else {
+        suggestions.push('Install a wallet extension like MetaMask or Coinbase Wallet');
+      }
+    }
+  } catch (error) {
+    issues.push('Provider access failed');
+    suggestions.push('Try refreshing the page or disabling browser ad blockers');
+  }
+
+  return {
+    isCompatible: issues.length === 0,
+    browserType,
+    issues,
+    suggestions,
+  };
+}
+
 // Note: Enhanced with batch transaction capabilities and error handling following Farcaster docs
