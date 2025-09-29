@@ -4,15 +4,9 @@ import React, { useState } from 'react';
 import { Spinner } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { useAccount } from 'wagmi';
-import { submitScore, showSubmissionResult, canUserSubmit } from '@/utils/unifiedSubmission';
-import {
-  getEthereumProvider,
-  isFarcasterMiniApp,
-  supportsBatchTransactions,
-  sendBatchTransactions,
-} from '@/utils/farcasterMiniApp';
+import { submitScoreDirect, detectEnvironment } from '@/utils/directSubmission';
 import { getNetworkByChainId } from '@/config/networks';
-import { checkBrowserCompatibility } from '@/utils/farcasterMiniApp';
+import toast from 'react-hot-toast';
 
 interface SubmitScoreProps {
   score?: number;
@@ -39,26 +33,13 @@ export default function SubmitScoreWithWagmi({
 }: SubmitScoreProps) {
   const [confirmStep, setConfirmStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [supportsBatch, setSupportsBatch] = useState<boolean | null>(null);
-  const { address: wagmiAddress } = useAccount();
   const { wallet } = usePlatform();
   const { chainId } = wallet;
-  // Note: writeContract available for future Wagmi integration if needed
-  // const { writeContract } = useWriteContract();
 
-  // Get current user address - prioritize wallet state, then wagmi, then prop
-  const address = wallet.address || wagmiAddress || walletAddress;
+  // Get current user address
+  const address = wallet.address || walletAddress;
 
-  // Enhanced: Check batch transaction support for Farcaster
-  React.useEffect(() => {
-    if (isFarcasterMiniApp()) {
-      supportsBatchTransactions().then(setSupportsBatch);
-    } else {
-      setSupportsBatch(false);
-    }
-  }, []);
-
-  // Enhanced: Calculate effective scores (support legacy single score + new batch scores)
+  // Calculate effective scores (support legacy single score + new batch scores)
   const effectivePushupsScore = pushupsScore ?? (exerciseType === 'pushups' ? score : 0) ?? 0;
   const effectiveSquatsScore = squatsScore ?? (exerciseType === 'squats' ? score : 0) ?? 0;
   const hasMultipleScores = effectivePushupsScore > 0 && effectiveSquatsScore > 0;
@@ -66,19 +47,17 @@ export default function SubmitScoreWithWagmi({
   // Unified submission handler
   const handleSubmit = async () => {
     console.log(
-      'SubmitScoreWithWagmi: handleSubmit called with score:',
-      score,
-      'exerciseType:',
-      exerciseType
+      'SubmitScoreWithWagmi: handleSubmit called with pushups:',
+      effectivePushupsScore,
+      'squats:',
+      effectiveSquatsScore
     );
+
     if (!address || !chainId || (!effectivePushupsScore && !effectiveSquatsScore)) {
       console.log('SubmitScoreWithWagmi: Missing required parameters');
       setSubmissionStatus('error');
-      showSubmissionResult({
-        success: false,
-        error: 'Missing required parameters',
-        processingType: 'direct',
-      });
+      // Direct toast instead of complex showSubmissionResult
+      toast.error('Missing required parameters');
       return;
     }
 
@@ -86,128 +65,55 @@ export default function SubmitScoreWithWagmi({
     setSubmissionStatus('submitting');
 
     try {
-      // ENHANCEMENT: Comprehensive wallet connection validation with recovery
-      if (!wallet.isConnected) {
-        const isFarcaster =
-          typeof window !== 'undefined' &&
-          (window.location.href.includes('farcaster') ||
-            document.referrer.includes('warpcast') ||
-            document.referrer.includes('farcaster'));
-        const errorMsg = isFarcaster
-          ? 'Wallet connection not detected in Farcaster app. Please connect your wallet and try again.'
-          : 'Wallet is not connected. Please connect your wallet and try again.';
-        throw new Error(errorMsg);
-      }
-
-      // Use centralized network configuration instead of hardcoded mappings
+      // Simple network configuration
       const networkConfig = getNetworkByChainId(chainId);
       if (!networkConfig) {
         throw new Error(`Unsupported chain ID: ${chainId}`);
       }
 
-      const contractInfo = {
-        address: networkConfig.contractAddress,
-        network: networkConfig.name,
-      };
-
-      // Check if user can submit using unified wallet state
-      const canSubmitResult = canUserSubmit(wallet, contractInfo.address);
-      if (!canSubmitResult.canSubmit) {
-        throw new Error(canSubmitResult.reason || 'Cannot submit');
+      // Get fee amount for chains that require it
+      let feeAmount: string | null = null;
+      if (chainId === 10143) {
+        // Monad Testnet
+        feeAmount = '0.001'; // 0.001 MON
       }
 
-      // Check browser compatibility before proceeding
-      const browserCompatibility = await checkBrowserCompatibility();
-      if (!browserCompatibility.isCompatible) {
-        console.warn('Browser compatibility issues detected:', browserCompatibility);
-        // Don't throw yet - let's try the wallet connection recovery first
-      }
-
-      // ENHANCEMENT: Robust provider access with automatic recovery
-      const { ensureWalletConnection } = await import('@/utils/walletConnectionRecovery');
-      const connectionCheck = await ensureWalletConnection({
-        maxRetries: 2,
-        enableFarcasterValidation: true,
-        showToasts: false,
-      });
-
-      if (!connectionCheck.isConnected || !connectionCheck.provider) {
-        const isFarcaster =
-          typeof window !== 'undefined' &&
-          (window.location.href.includes('farcaster') ||
-            document.referrer.includes('warpcast') ||
-            document.referrer.includes('farcaster'));
-
-        const baseErrorMsg = connectionCheck.error || 'Wallet provider not available';
-        const contextualMsg = isFarcaster
-          ? 'Farcaster wallet provider not available. Make sure you have a wallet connected in the Farcaster app.'
-          : 'No wallet provider found. Please connect your wallet and try again.';
-
-        // Combine suggestions from both checks
-        let allSuggestions = [...connectionCheck.suggestions];
-        if (browserCompatibility.suggestions.length > 0) {
-          allSuggestions = [...allSuggestions, ...browserCompatibility.suggestions];
-        }
-
-        // Show suggestions to user
-        if (allSuggestions.length > 0) {
-          console.warn('Wallet connection suggestions:', allSuggestions);
-        }
-
-        throw new Error(
-          `${contextualMsg}\n\nSuggestions:\n${allSuggestions.map((s) => `• ${s}`).join('\n')}`
-        );
-      }
-
-      const ethereumProvider = connectionCheck.provider;
-
-      // Enhanced: Use effective scores for submission
-      // Submit using unified logic
-      const result = await submitScore(
+      // Direct submission using simplified system
+      const result = await submitScoreDirect(
         effectivePushupsScore,
         effectiveSquatsScore,
-        contractInfo.address,
-        contractInfo.network,
-        address,
-        {
-          chainId,
-          skipSubAccountCheck: forceDirectSubmission,
-          providedEthereumProvider: ethereumProvider,
-        }
+        networkConfig.contractAddress,
+        chainId,
+        feeAmount
       );
 
       if (result.success) {
         console.log('SubmitScoreWithWagmi: Submission successful');
         setSubmissionStatus('success');
+        toast.success(`Scores submitted to ${networkConfig.name}!`);
       } else {
         console.log('SubmitScoreWithWagmi: Submission failed with error:', result.error);
         setSubmissionStatus('error');
+        toast.error(result.error || 'Submission failed');
       }
-
-      showSubmissionResult(result);
     } catch (error) {
       console.error('SubmitScoreWithWagmi: Submission error:', error);
       setSubmissionStatus('error');
 
-      // More user-friendly error messages
-      let errorMessage = 'Unknown error';
+      let errorMessage = 'Submission failed';
       if (error instanceof Error) {
-        if (error.message.includes('user rejected') || error.message.includes('User denied')) {
-          errorMessage = 'Transaction was rejected. Please confirm the transaction in your wallet.';
-        } else if (error.message.includes('insufficient funds')) {
-          errorMessage = 'Insufficient funds for transaction. Please check your wallet balance.';
-        } else if (error.message.includes('network') || error.message.includes('chain')) {
-          errorMessage = 'Network error. Please check your wallet network settings.';
-        } else {
-          errorMessage = error.message;
+        errorMessage = error.message;
+
+        // Environment-specific error handling
+        const env = detectEnvironment();
+        if (env.isFarcaster && errorMessage.includes('user rejected')) {
+          errorMessage = 'Transaction rejected in Farcaster wallet - please approve';
+        } else if (env.isBrave && errorMessage.includes('provider')) {
+          errorMessage = 'Brave wallet connection issue - try refreshing';
         }
       }
 
-      showSubmissionResult({
-        success: false,
-        error: errorMessage,
-        processingType: 'direct',
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -269,12 +175,6 @@ export default function SubmitScoreWithWagmi({
             <div className="text-[#fcb131] opacity-80 space-y-1">
               {effectivePushupsScore > 0 && <p>Pushups: {effectivePushupsScore}</p>}
               {effectiveSquatsScore > 0 && <p>Squats: {effectiveSquatsScore}</p>}
-
-              {isFarcasterMiniApp() && supportsBatch && hasMultipleScores && (
-                <p className="text-xs text-green-400 mt-2">
-                  ⚡ Using batch transaction for better UX
-                </p>
-              )}
             </div>
           </div>
 
@@ -290,13 +190,7 @@ export default function SubmitScoreWithWagmi({
               }}
             >
               {isLoading && <Spinner />}
-              <span>
-                {isLoading
-                  ? supportsBatch && hasMultipleScores && isFarcasterMiniApp()
-                    ? 'Batching...'
-                    : 'Submitting...'
-                  : 'Confirm'}
-              </span>
+              <span>{isLoading ? 'Submitting...' : 'Confirm'}</span>
             </button>
 
             <button
