@@ -71,6 +71,11 @@ export default function SubmitScoreWithWagmi({
         throw new Error(`Unsupported chain ID: ${chainId}`);
       }
 
+      // Determine if this is a verified contract
+      const isVerifiedContract =
+        networkConfig.contractAddress.toLowerCase() ===
+        process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT?.toLowerCase();
+
       // Get fee amount for chains that require it
       let feeAmount: string | null = null;
       if (chainId === 10143) {
@@ -84,6 +89,7 @@ export default function SubmitScoreWithWagmi({
         effectiveSquatsScore,
         networkConfig.contractAddress,
         chainId,
+        isVerifiedContract,
         feeAmount
       );
 

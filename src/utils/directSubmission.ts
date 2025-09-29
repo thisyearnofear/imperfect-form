@@ -10,8 +10,8 @@
 
 import { ethers } from 'ethers';
 
-// STANDARDIZED ABI - SAME FOR ALL CONTRACTS
-const STANDARDIZED_ABI = [
+// STANDARDIZED ABI for Normal Contracts
+const NORMAL_ABI = [
   {
     inputs: [
       { internalType: 'uint256', name: 'pushups', type: 'uint256' },
@@ -34,6 +34,41 @@ const STANDARDIZED_ABI = [
           { internalType: 'uint256', name: 'timestamp', type: 'uint256' },
         ],
         internalType: 'struct Score',
+        name: '',
+        type: 'tuple',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+];
+
+// STANDARDIZED ABI for Verified Contracts
+const VERIFIED_ABI = [
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'baseScore', type: 'uint256' },
+      { internalType: 'string', name: 'exerciseType', type: 'string' },
+    ],
+    name: 'submitScore',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'getUserStats',
+    outputs: [
+      {
+        components: [
+          { internalType: 'uint256', name: 'totalSubmissions', type: 'uint256' },
+          { internalType: 'uint256', name: 'bestPushups', type: 'uint256' },
+          { internalType: 'uint256', name: 'bestSquats', type: 'uint256' },
+          { internalType: 'bool', name: 'isVerified', type: 'bool' },
+          { internalType: 'uint256', name: 'verifiedAt', type: 'uint256' },
+          { internalType: 'uint256', name: 'totalBonusEarned', type: 'uint256' },
+        ],
+        internalType: 'struct VerifiedFitnessLeaderboard.UserStats',
         name: '',
         type: 'tuple',
       },
@@ -67,6 +102,7 @@ export async function submitScoreDirect(
   squats: number,
   contractAddress: string,
   chainId: number,
+  isVerifiedContract = false, // Whether this is a verified fitness contract
   feeAmount: string | null = null // Optional fee for chains that require it
 ): Promise<{ success: boolean; error?: string; transactionHash?: string }> {
   try {
@@ -79,17 +115,42 @@ export async function submitScoreDirect(
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
 
-    // Create contract instance with standardized ABI
-    const contract = new ethers.Contract(contractAddress, STANDARDIZED_ABI, signer);
+    // Select appropriate ABI based on contract type
+    const abi = isVerifiedContract ? VERIFIED_ABI : NORMAL_ABI;
+    const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    // Prepare transaction
+    // Prepare transaction based on contract type
     let tx;
-    if (feeAmount) {
-      // For chains requiring fees (like Monad)
-      tx = await contract.addScore(pushups, squats, { value: ethers.parseEther(feeAmount) });
+    if (isVerifiedContract) {
+      // For verified contracts, submit each exercise type separately
+      if (pushups > 0) {
+        if (feeAmount) {
+          tx = await contract.submitScore(pushups, 'pushups', {
+            value: ethers.parseEther(feeAmount),
+          });
+        } else {
+          tx = await contract.submitScore(pushups, 'pushups');
+        }
+      } else if (squats > 0) {
+        if (feeAmount) {
+          tx = await contract.submitScore(squats, 'squats', {
+            value: ethers.parseEther(feeAmount),
+          });
+        } else {
+          tx = await contract.submitScore(squats, 'squats');
+        }
+      } else {
+        return { success: false, error: 'At least one exercise must be > 0' };
+      }
     } else {
-      // Standard transaction
-      tx = await contract.addScore(pushups, squats);
+      // For normal contracts, use addScore
+      if (feeAmount) {
+        // For chains requiring fees (like Monad)
+        tx = await contract.addScore(pushups, squats, { value: ethers.parseEther(feeAmount) });
+      } else {
+        // Standard transaction
+        tx = await contract.addScore(pushups, squats);
+      }
     }
 
     // Wait for confirmation
