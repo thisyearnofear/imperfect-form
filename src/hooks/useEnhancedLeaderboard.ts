@@ -70,6 +70,7 @@ export function useEnhancedLeaderboard({
       .map((score) => ({
         user: score.user,
         score: score.pushups,
+        network: score.network || 'polygon', // default to polygon if not specified
         timestamp: score.timestamp,
         isLegacy: true,
       }));
@@ -79,6 +80,7 @@ export function useEnhancedLeaderboard({
       .map((score) => ({
         user: score.user,
         score: score.squats,
+        network: score.network || 'polygon', // default to polygon if not specified
         timestamp: score.timestamp,
         isLegacy: true,
       }));

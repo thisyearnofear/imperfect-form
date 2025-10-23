@@ -211,7 +211,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             }
 
             // Determine which ABI to use based on the contract address and network
-            let contractABI = fitnessLeaderboardABI;
+            let contractABI: any = fitnessLeaderboardABI;
 
             // Use network-specific ABIs based on contract address
             if (contractAddress === MONAD_CONTRACT_ADDRESS) {

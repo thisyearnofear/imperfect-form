@@ -7,6 +7,7 @@ import { useAccount } from 'wagmi';
 import { submitScoreDirect, detectEnvironment } from '@/utils/directSubmission';
 import { getNetworkByChainId } from '@/config/networks';
 import toast from 'react-hot-toast';
+import { isFarcasterMiniApp } from '@/utils/farcasterMiniApp';
 
 interface SubmitScoreProps {
   score?: number;
@@ -43,6 +44,9 @@ export default function SubmitScoreWithWagmi({
   const effectivePushupsScore = pushupsScore ?? (exerciseType === 'pushups' ? score : 0) ?? 0;
   const effectiveSquatsScore = squatsScore ?? (exerciseType === 'squats' ? score : 0) ?? 0;
   const hasMultipleScores = effectivePushupsScore > 0 && effectiveSquatsScore > 0;
+
+  // Determine if batch transactions are supported (only in Farcaster)
+  const supportsBatch = isFarcasterMiniApp() ? true : null;
 
   // Unified submission handler
   const handleSubmit = async () => {
@@ -112,9 +116,9 @@ export default function SubmitScoreWithWagmi({
 
         // Environment-specific error handling
         const env = detectEnvironment();
-        if (env.isFarcaster && errorMessage.includes('user rejected')) {
+        if (typeof env !== 'string' && env.isFarcaster && errorMessage.includes('user rejected')) {
           errorMessage = 'Transaction rejected in Farcaster wallet - please approve';
-        } else if (env.isBrave && errorMessage.includes('provider')) {
+        } else if (typeof env !== 'string' && env.isBrave && errorMessage.includes('provider')) {
           errorMessage = 'Brave wallet connection issue - try refreshing';
         }
       }

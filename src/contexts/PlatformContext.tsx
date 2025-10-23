@@ -173,6 +173,7 @@ interface FarcasterSDK {
       request: (params: { method: string; params?: unknown[] }) => Promise<unknown>;
       on?: (event: string, handler: (data: unknown) => void) => void;
     };
+    getEthereumProvider?: () => Promise<any>;
   };
   actions: {
     ready: () => Promise<void>;

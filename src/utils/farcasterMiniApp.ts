@@ -652,16 +652,18 @@ export async function validateFarcasterWallet(): Promise<{ isValid: boolean; mes
       ]);
 
       // Test account access as well
-      const accounts = await Promise.race([
+      const accounts: unknown = await Promise.race([
         provider.request({ method: 'eth_accounts' }),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Provider accounts timeout')), 2000)
         ),
       ]);
 
+      const accountsArray = Array.isArray(accounts) ? accounts : [];
+
       return {
         isValid: true,
-        message: `Farcaster wallet is ready (Chain: ${chainId}, Accounts: ${accounts.length})`,
+        message: `Farcaster wallet is ready (Chain: ${chainId}, Accounts: ${accountsArray.length})`,
       };
     } catch (error) {
       return {

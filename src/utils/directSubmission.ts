@@ -127,7 +127,7 @@ export async function submitScoreDirect(
   squats: number,
   contractAddress: string,
   chainId: number,
-  isVerifiedContract = false, // Whether this is a verified fitness contract
+  isVerified = false, // Whether this is a verified fitness contract
   feeAmount: string | null = null // Optional fee for chains that require it
 ): Promise<{ success: boolean; error?: string; transactionHash?: string }> {
   try {
@@ -141,10 +141,10 @@ export async function submitScoreDirect(
     const signer = await provider.getSigner();
 
     // Auto-detect contract type if not specified
-    const isVerified = isVerifiedContract || isVerifiedContract(chainId, contractAddress);
+    const shouldVerify = isVerified || isVerifiedContract(chainId, contractAddress);
 
     // Select appropriate ABI based on contract type
-    const abi = isVerified ? VERIFIED_ABI : NORMAL_ABI;
+    const abi = shouldVerify ? VERIFIED_ABI : NORMAL_ABI;
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
     // Prepare transaction based on contract type
@@ -201,11 +201,11 @@ export async function submitScoreDirect(
 
       // Environment-specific error handling
       const env = detectEnvironment();
-      if (env.isFarcaster) {
+      if (typeof env !== 'string' && env.isFarcaster) {
         if (errorMessage.includes('user denied')) {
           errorMessage = 'Transaction rejected in Farcaster wallet';
         }
-      } else if (env.isBrave) {
+      } else if (typeof env !== 'string' && env.isBrave) {
         if (errorMessage.includes('provider')) {
           errorMessage = 'Brave wallet connection issue - try refreshing';
         }
