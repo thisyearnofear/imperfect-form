@@ -14,7 +14,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   polygon: {
     chainId: 137,
     name: 'Polygon',
-    contractAddress: '0xc783d6E12560dc251F5067A62426A5f3b45b6888',
+    contractAddress: '0x28FE19798fe0A0276CF474f2DCC3749313f1aC0A',
     abi: polygonLeaderboardABI,
     rpcUrls: [
       'https://polygon-rpc.com/',
@@ -26,7 +26,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   base: {
     chainId: 8453,
     name: 'Base',
-    contractAddress: '0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B',
+    contractAddress: '0x58DC4867f87473BF9874892dE8e62C48958c8d96',
     abi: baseLeaderboardABI,
     rpcUrls: [
       'https://mainnet.base.org',
@@ -64,7 +64,7 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
   monad: {
     chainId: 10143,
     name: 'Monad Testnet',
-    contractAddress: '0x653d41Fba630381aA44d8598a4b35Ce257924d65',
+    contractAddress: '0xdf07bD5a057aBf76147231886C94FEb985151ebc',
     abi: monadLeaderboardABI,
     rpcUrls: [
       'https://testnet-rpc.monad.xyz',

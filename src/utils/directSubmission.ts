@@ -10,7 +10,7 @@
 
 import { ethers } from 'ethers';
 
-// STANDARDIZED ABI for Normal Contracts
+// STANDARDIZED ABI for Normal Contracts (Updated for StandardFitnessLeaderboard)
 const NORMAL_ABI = [
   {
     inputs: [
@@ -18,6 +18,16 @@ const NORMAL_ABI = [
       { internalType: 'uint256', name: 'squats', type: 'uint256' },
     ],
     name: 'addScore',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'baseScore', type: 'uint256' },
+      { internalType: 'string', name: 'exerciseType', type: 'string' },
+    ],
+    name: 'submitScore',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
@@ -32,8 +42,9 @@ const NORMAL_ABI = [
           { internalType: 'uint256', name: 'pushups', type: 'uint256' },
           { internalType: 'uint256', name: 'squats', type: 'uint256' },
           { internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+          { internalType: 'uint256', name: 'totalScore', type: 'uint256' },
         ],
-        internalType: 'struct Score',
+        internalType: 'struct StandardFitnessLeaderboard.Score',
         name: '',
         type: 'tuple',
       },
@@ -57,18 +68,17 @@ const VERIFIED_ABI = [
   },
   {
     inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
-    name: 'getUserStats',
+    name: 'getUserScore', // Changed to match our unified contract
     outputs: [
       {
         components: [
-          { internalType: 'uint256', name: 'totalSubmissions', type: 'uint256' },
-          { internalType: 'uint256', name: 'bestPushups', type: 'uint256' },
-          { internalType: 'uint256', name: 'bestSquats', type: 'uint256' },
+          { internalType: 'address', name: 'user', type: 'address' },
+          { internalType: 'uint256', name: 'pushups', type: 'uint256' },
+          { internalType: 'uint256', name: 'squats', type: 'uint256' },
+          { internalType: 'uint256', name: 'timestamp', type: 'uint256' },
           { internalType: 'bool', name: 'isVerified', type: 'bool' },
-          { internalType: 'uint256', name: 'verifiedAt', type: 'uint256' },
-          { internalType: 'uint256', name: 'totalBonusEarned', type: 'uint256' },
         ],
-        internalType: 'struct VerifiedFitnessLeaderboard.UserStats',
+        internalType: 'struct Score',
         name: '',
         type: 'tuple',
       },
@@ -97,6 +107,21 @@ export function detectEnvironment() {
  *
  * AGGRESSIVE CONSOLIDATION: Single function handles all submission logic
  */
+/**
+ * Determine if a contract is a verified contract based on chain ID and contract address
+ */
+export function isVerifiedContract(chainId: number, contractAddress: string): boolean {
+  // Only Celo has verified contracts (Self Protocol integration)
+  if (chainId === 42220) {
+    // Check if it's the verified Celo contract address
+    const verifiedCeloAddress =
+      process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT ||
+      '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03';
+    return contractAddress.toLowerCase() === verifiedCeloAddress.toLowerCase();
+  }
+  return false;
+}
+
 export async function submitScoreDirect(
   pushups: number,
   squats: number,
@@ -115,14 +140,17 @@ export async function submitScoreDirect(
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
 
+    // Auto-detect contract type if not specified
+    const isVerified = isVerifiedContract || isVerifiedContract(chainId, contractAddress);
+
     // Select appropriate ABI based on contract type
-    const abi = isVerifiedContract ? VERIFIED_ABI : NORMAL_ABI;
+    const abi = isVerified ? VERIFIED_ABI : NORMAL_ABI;
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
     // Prepare transaction based on contract type
     let tx;
-    if (isVerifiedContract) {
-      // For verified contracts, submit each exercise type separately
+    if (isVerified) {
+      // For verified contracts (Celo only), submit each exercise type separately using submitScore
       if (pushups > 0) {
         if (feeAmount) {
           tx = await contract.submitScore(pushups, 'pushups', {
@@ -143,7 +171,7 @@ export async function submitScoreDirect(
         return { success: false, error: 'At least one exercise must be > 0' };
       }
     } else {
-      // For normal contracts, use addScore
+      // For standard contracts (Monad, Polygon, Base), use addScore with both values
       if (feeAmount) {
         // For chains requiring fees (like Monad)
         tx = await contract.addScore(pushups, squats, { value: ethers.parseEther(feeAmount) });

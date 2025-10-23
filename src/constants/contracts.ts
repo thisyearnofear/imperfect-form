@@ -396,63 +396,196 @@ export const verifiedFitnessLeaderboardABI = [
   },
 ];
 
-// Monad-specific ABI with payable addScore function
-export const monadLeaderboardABI = [
-  ...fitnessLeaderboardABI.filter((item) => item.name !== 'addScore'),
-  {
-    inputs: [
-      { internalType: 'uint256', name: 'pushups', type: 'uint256' },
-      { internalType: 'uint256', name: 'squats', type: 'uint256' },
-    ],
-    name: 'addScore',
-    outputs: [],
-    stateMutability: 'payable', // Payable for Monad contract
-    type: 'function',
-  },
-];
+// =============================================================================
+// STANDARD FITNESS LEADERBOARD ABI - FOR NON-VERIFICATION CHAINS
+// =============================================================================
 
-// Polygon-specific ABI with nonpayable addScore function
-export const polygonLeaderboardABI = [
-  ...fitnessLeaderboardABI.filter((item) => item.name !== 'addScore'),
-  {
-    inputs: [
-      { internalType: 'uint256', name: 'pushups', type: 'uint256' },
-      { internalType: 'uint256', name: 'squats', type: 'uint256' },
-    ],
-    name: 'addScore',
-    outputs: [],
-    stateMutability: 'nonpayable', // Nonpayable for Polygon contract
-    type: 'function',
-  },
-];
-
-// Base Mainnet ABI - based on proven Celo template (no ReentrancyGuard)
-export const baseLeaderboardABI = [
-  // Use the same proven ABI as Celo for maximum reliability
-  ...fitnessLeaderboardABI.filter((item) => item.name !== 'addScore'),
-  {
-    inputs: [
-      { internalType: 'uint256', name: 'pushups', type: 'uint256' },
-      { internalType: 'uint256', name: 'squats', type: 'uint256' },
-    ],
-    name: 'addScore',
-    outputs: [],
-    stateMutability: 'nonpayable', // Simple nonpayable like Celo
-    type: 'function',
-  },
-  // Add Base-specific functions
+// Standard ABI for Monad, Polygon, and Base (no verification features)
+export const standardFitnessLeaderboardABI = [
   {
     inputs: [],
-    name: 'isBaseMainnet',
-    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
-    stateMutability: 'pure',
-    type: 'function',
+    stateMutability: 'nonpayable',
+    type: 'constructor',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+    ],
+    name: 'NewUserJoined',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'pushups', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'squats', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'totalScore', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+    ],
+    name: 'ScoreSubmitted',
+    type: 'event',
   },
   {
     inputs: [],
-    name: 'getDeployedChainId',
+    name: 'MAX_SCORE_PER_SUBMISSION',
     outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [],
+    name: 'SUBMISSION_COOLDOWN',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'pushups', type: 'uint256' },
+      { internalType: 'uint256', name: 'squats', type: 'uint256' },
+    ],
+    name: 'addScore',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'baseScore', type: 'uint256' },
+      { internalType: 'string', name: 'exerciseType', type: 'string' },
+    ],
+    name: 'submitScore',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'getUserScore',
+    outputs: [
+      {
+        components: [
+          { internalType: 'address', name: 'user', type: 'address' },
+          { internalType: 'uint256', name: 'pushups', type: 'uint256' },
+          { internalType: 'uint256', name: 'squats', type: 'uint256' },
+          { internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+          { internalType: 'uint256', name: 'totalScore', type: 'uint256' },
+        ],
+        internalType: 'struct StandardFitnessLeaderboard.Score',
+        name: '',
+        type: 'tuple',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getLeaderboard',
+    outputs: [
+      {
+        components: [
+          { internalType: 'address', name: 'user', type: 'address' },
+          { internalType: 'uint256', name: 'pushups', type: 'uint256' },
+          { internalType: 'uint256', name: 'squats', type: 'uint256' },
+          { internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+          { internalType: 'uint256', name: 'totalScore', type: 'uint256' },
+        ],
+        internalType: 'struct StandardFitnessLeaderboard.Score[]',
+        name: '',
+        type: 'tuple[]',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getLeaderboardLength',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'uint256', name: 'limit', type: 'uint256' }],
+    name: 'getTopUsers',
+    outputs: [
+      {
+        components: [
+          { internalType: 'address', name: 'user', type: 'address' },
+          { internalType: 'uint256', name: 'pushups', type: 'uint256' },
+          { internalType: 'uint256', name: 'squats', type: 'uint256' },
+          { internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+          { internalType: 'uint256', name: 'totalScore', type: 'uint256' },
+        ],
+        internalType: 'struct StandardFitnessLeaderboard.Score[]',
+        name: '',
+        type: 'tuple[]',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'getUserRank',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'getStats',
+    outputs: [
+      { internalType: 'uint256', name: '_totalUsers', type: 'uint256' },
+      { internalType: 'uint256', name: '_totalSubmissions', type: 'uint256' },
+      { internalType: 'uint256', name: '_leaderboardLength', type: 'uint256' },
+      { internalType: 'uint256', name: '_timestamp', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'hasUserSubmitted',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'owner',
+    outputs: [{ internalType: 'address', name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'paused',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'bool', name: '_paused', type: 'bool' }],
+    name: 'setPaused',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'newOwner', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 ];
+
+// Chain-specific ABIs that extend the standard ABI
+export const monadLeaderboardABI = standardFitnessLeaderboardABI;
+export const polygonLeaderboardABI = standardFitnessLeaderboardABI;
+export const baseLeaderboardABI = standardFitnessLeaderboardABI;
