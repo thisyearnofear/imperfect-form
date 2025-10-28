@@ -1,5 +1,6 @@
 // Unified wallet system - single source of truth
 export { default as UnifiedConnectButton } from './UnifiedConnectButton';
+export { default as WalletConnectionTroubleshooter } from './WalletConnectionTroubleshooter';
 
 // Legacy compatibility exports - all redirect to UnifiedConnectButton
 export {

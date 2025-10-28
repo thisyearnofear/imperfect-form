@@ -61,21 +61,17 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="theme-color" content="#000000" />
 
-        {/* Farcaster Mini App Frame metadata */}
+        {/* Farcaster Mini App Frame metadata - Latest v1 standard */}
         <meta
           name="fc:frame"
           content='{"version":"next","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"🏋️ Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
         />
 
-        {/* Mini App specific metadata */}
-        <meta name="fc:miniapp" content="true" />
-        <meta name="fc:miniapp:name" content="Imperfect Form" />
+        {/* Mini App specific metadata - Current standard */}
         <meta
-          name="fc:miniapp:description"
-          content="Track your fitness with real-time pose detection and compete onchain"
+          name="fc:miniapp"
+          content='{"version":"1","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"🏋️ Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
         />
-        <meta name="fc:miniapp:icon" content="https://imperfectform.fun/favicon.ico" />
-        <meta name="fc:miniapp:url" content="https://imperfectform.fun" />
 
         {/* Dynamic CSS loading script - client-side only */}
         <script

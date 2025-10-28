@@ -1,14 +1,21 @@
 /**
- * MINIMAL DIRECT SUBMISSION SYSTEM
+ * ENHANCED DIRECT SUBMISSION SYSTEM
  *
  * Following Core Principles:
- * - AGGRESSIVE CONSOLIDATION: Single file, no dependencies
- * - PREVENT BLOAT: Minimal code, focused functionality
- * - DRY: Single source of truth
+ * - ROBUST WALLET CONNECTION: Enhanced provider detection with fallbacks
+ * - FARCASTER-FIRST: Optimized for auto-connection scenarios
+ * - WALLETCONNECT FALLBACK: Graceful degradation for failed connections
  * - CLEAN: Clear separation of concerns
  */
 
 import { ethers } from 'ethers';
+import {
+  getTransactionReadyProvider,
+  handleProviderError,
+  validateProviderForTransaction,
+  switchProviderNetwork,
+  type WalletProvider,
+} from './enhancedWalletProvider';
 
 // STANDARDIZED ABI for Normal Contracts (Updated for StandardFitnessLeaderboard)
 const NORMAL_ABI = [
@@ -89,6 +96,9 @@ const VERIFIED_ABI = [
 ];
 
 import { isFarcasterMiniApp, isBraveBrowser } from '@/utils/farcasterMiniApp';
+import { createRemoteLogger } from './remoteLogger';
+
+const logger = createRemoteLogger('DirectSubmission');
 
 /**
  * Minimal Environment Detection
@@ -130,14 +140,58 @@ export async function submitScoreDirect(
   isVerified = false, // Whether this is a verified fitness contract
   feeAmount: string | null = null // Optional fee for chains that require it
 ): Promise<{ success: boolean; error?: string; transactionHash?: string }> {
+  let walletProvider: WalletProvider | null = null;
+
   try {
-    // Direct provider access - minimal abstraction
-    if (!window.ethereum) {
-      return { success: false, error: 'No wallet provider detected' };
+    logger.info('🚀 Starting enhanced score submission', {
+      pushups,
+      squats,
+      contractAddress,
+      chainId,
+      isVerified,
+      feeAmount,
+    });
+
+    // Enhanced provider detection with fallbacks
+    walletProvider = await getTransactionReadyProvider();
+    if (!walletProvider) {
+      return {
+        success: false,
+        error: 'No wallet provider available. Please connect your wallet or try WalletConnect.',
+      };
     }
 
-    const environment = detectEnvironment();
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    logger.info('✅ Wallet provider obtained', {
+      source: walletProvider.source,
+      isReady: walletProvider.isReady,
+      address: walletProvider.address,
+    });
+
+    // Validate provider is ready for transactions
+    if (walletProvider.isReady) {
+      const validation = await validateProviderForTransaction(walletProvider.provider);
+      if (!validation.valid) {
+        logger.warn('Provider validation failed:', validation.error);
+        return {
+          success: false,
+          error: `Wallet not ready: ${validation.error}. Please try reconnecting.`,
+        };
+      }
+    }
+
+    // Switch network if needed
+    if (walletProvider.chainId && walletProvider.chainId !== chainId) {
+      logger.info(`🔄 Switching network from ${walletProvider.chainId} to ${chainId}`);
+      const switchResult = await switchProviderNetwork(walletProvider.provider, chainId);
+      if (!switchResult.success) {
+        return {
+          success: false,
+          error: `Please switch to the correct network. ${switchResult.error || ''}`,
+        };
+      }
+    }
+
+    const provider = walletProvider.provider;
     const signer = await provider.getSigner();
 
     // Auto-detect contract type if not specified
@@ -185,30 +239,41 @@ export async function submitScoreDirect(
     const receipt = await tx.wait();
 
     if (receipt && receipt.status === 1) {
+      logger.info('✅ Transaction successful', {
+        hash: receipt.hash,
+        source: walletProvider.source,
+      });
       return {
         success: true,
         transactionHash: receipt.hash,
         error: undefined,
       };
     } else {
+      logger.error('❌ Transaction failed', { receipt });
       return { success: false, error: 'Transaction failed' };
     }
   } catch (error) {
-    let errorMessage = 'Submission failed';
+    logger.error('❌ Submission error:', error);
 
-    if (error instanceof Error) {
-      errorMessage = error.message;
+    // Use enhanced error handling
+    const providerError = handleProviderError(error, walletProvider?.source || 'unknown');
 
-      // Environment-specific error handling
-      const env = detectEnvironment();
-      if (typeof env !== 'string' && env.isFarcaster) {
-        if (errorMessage.includes('user denied')) {
-          errorMessage = 'Transaction rejected in Farcaster wallet';
-        }
-      } else if (typeof env !== 'string' && env.isBrave) {
-        if (errorMessage.includes('provider')) {
-          errorMessage = 'Brave wallet connection issue - try refreshing';
-        }
+    // Enhanced error messages with recovery suggestions
+    let errorMessage = providerError.message;
+    if (providerError.recoverable) {
+      switch (providerError.code) {
+        case 'PROVIDER_NOT_READY':
+          errorMessage += ' Try using WalletConnect as an alternative.';
+          break;
+        case 'USER_REJECTED':
+          errorMessage += ' Please approve the transaction to continue.';
+          break;
+        case 'SESSION_ERROR':
+          errorMessage += ' Please disconnect and reconnect your wallet.';
+          break;
+        case 'NETWORK_ERROR':
+          errorMessage += ' Please check your internet connection and try again.';
+          break;
       }
     }
 
@@ -217,80 +282,29 @@ export async function submitScoreDirect(
 }
 
 /**
- * Network Switch Helper
+ * Network Switch Helper - Enhanced version
+ * Now uses the enhanced provider system
  */
 export async function switchNetwork(chainId: number): Promise<boolean> {
   try {
-    if (!window.ethereum) return false;
+    logger.info('🔄 Attempting network switch', { chainId });
 
-    const chainIdHex = `0x${chainId.toString(16)}`;
-
-    try {
-      // Try to switch network
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: chainIdHex }],
-      });
-      return true;
-    } catch (switchError: any) {
-      // If network doesn't exist, try to add it
-      if (switchError.code === 4902) {
-        // Define network config based on chainId
-        let networkConfig: any;
-        switch (chainId) {
-          case 1: // Ethereum
-            networkConfig = {
-              chainId: chainIdHex,
-              chainName: 'Ethereum',
-              nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-              rpcUrls: ['https://eth.drpc.org'],
-            };
-            break;
-          case 137: // Polygon
-            networkConfig = {
-              chainId: chainIdHex,
-              chainName: 'Polygon',
-              nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-              rpcUrls: ['https://polygon-rpc.com'],
-            };
-            break;
-          case 42220: // Celo
-            networkConfig = {
-              chainId: chainIdHex,
-              chainName: 'Celo',
-              nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
-              rpcUrls: ['https://forno.celo.org'],
-            };
-            break;
-          case 8453: // Base
-            networkConfig = {
-              chainId: chainIdHex,
-              chainName: 'Base',
-              nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-              rpcUrls: ['https://mainnet.base.org'],
-            };
-            break;
-          case 10143: // Monad Testnet
-            networkConfig = {
-              chainId: chainIdHex,
-              chainName: 'Monad Testnet',
-              nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-              rpcUrls: ['https://testnet-rpc.monad.xyz'],
-            };
-            break;
-          default:
-            return false;
-        }
-
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [networkConfig],
-        });
-        return true;
-      }
+    const walletProvider = await getTransactionReadyProvider();
+    if (!walletProvider) {
+      logger.warn('No wallet provider available for network switch');
       return false;
     }
+
+    const result = await switchProviderNetwork(walletProvider.provider, chainId);
+    if (result.success) {
+      logger.info('✅ Network switch successful', { chainId });
+    } else {
+      logger.error('❌ Network switch failed', { chainId, error: result.error });
+    }
+
+    return result.success;
   } catch (error) {
+    logger.error('Network switch error:', error);
     return false;
   }
 }
