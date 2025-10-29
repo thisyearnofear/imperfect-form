@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Spinner } from '@/components/ui';
-import { useEnhancedWalletConnection } from '@/hooks/useEnhancedWalletConnection';
+// Removed: useEnhancedWalletConnection - using unified PlatformContext only
 import { isFarcasterMiniApp, isBraveBrowser } from '@/utils/farcasterMiniApp';
 import toast from 'react-hot-toast';
 
@@ -28,7 +28,7 @@ export default function WalletConnectionTroubleshooter({
   showTitle = true,
   className = '',
 }: WalletConnectionTroubleshooterProps) {
-  const [enhancedWallet, enhancedActions] = useEnhancedWalletConnection();
+  // Removed: enhancedWallet - using unified PlatformContext only
   const [isAttempting, setIsAttempting] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
 

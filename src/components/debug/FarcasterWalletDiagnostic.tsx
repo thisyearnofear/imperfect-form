@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Spinner } from '@/components/ui';
-import { useEnhancedWalletConnection } from '@/hooks/useEnhancedWalletConnection';
+// Removed: useEnhancedWalletConnection - using unified PlatformContext only
 import { isFarcasterMiniApp } from '@/utils/farcasterMiniApp';
 
 interface FarcasterDiagnosticResult {
@@ -37,7 +37,7 @@ export default function FarcasterWalletDiagnostic({
   onClose,
   className = '',
 }: FarcasterWalletDiagnosticProps) {
-  const [enhancedWallet] = useEnhancedWalletConnection();
+  // Removed: enhancedWallet - using unified PlatformContext only
   const [diagnostic, setDiagnostic] = useState<FarcasterDiagnosticResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [showDetails, setShowDetails] = useState(false);

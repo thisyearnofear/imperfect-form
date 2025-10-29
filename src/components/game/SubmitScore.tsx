@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { Spinner } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
-import { useAccount } from 'wagmi';
-import { submitScoreDirect, detectEnvironment } from '@/utils/directSubmission';
+// Removed: useAccount - using unified PlatformContext only
+import { submitScoreDirect } from '@/utils/directSubmission';
 import { getNetworkByChainId } from '@/config/networks';
-import { useEnhancedWalletConnection } from '@/hooks/useEnhancedWalletConnection';
+// Removed: useEnhancedWalletConnection - using unified PlatformContext only
 import toast from 'react-hot-toast';
 import { isFarcasterMiniApp } from '@/utils/farcasterMiniApp';
 
@@ -22,8 +22,8 @@ interface SubmitScoreProps {
   setSubmissionStatus: (status: 'idle' | 'submitting' | 'success' | 'error') => void;
 }
 
-// Clean, unified score submission component
-export default function SubmitScoreWithWagmi({
+// Unified score submission component using PlatformContext
+export default function SubmitScore({
   score,
   exerciseType = 'pushups',
   pushupsScore,
@@ -38,11 +38,8 @@ export default function SubmitScoreWithWagmi({
   const { wallet } = usePlatform();
   const { chainId } = wallet;
 
-  // Enhanced wallet connection with fallbacks
-  const [enhancedWallet, enhancedActions] = useEnhancedWalletConnection();
-
-  // Get current user address - prefer enhanced wallet if available
-  const address = enhancedWallet.address || wallet.address || walletAddress;
+  // Unified wallet connection via PlatformContext
+  const address = wallet.address || walletAddress;
 
   // Calculate effective scores (support legacy single score + new batch scores)
   const effectivePushupsScore = pushupsScore ?? (exerciseType === 'pushups' ? score : 0) ?? 0;
@@ -72,22 +69,8 @@ export default function SubmitScoreWithWagmi({
     setSubmissionStatus('submitting');
 
     try {
-      // Ensure wallet is ready for transactions
-      if (!enhancedWallet.isReady) {
-        console.log('Enhanced wallet not ready, attempting to prepare...');
-        const isReady = await enhancedActions.ensureReady();
-
-        if (!isReady) {
-          console.log('Failed to prepare wallet, trying WalletConnect fallback...');
-          const connected = await enhancedActions.connect(true); // Force WalletConnect
-
-          if (!connected) {
-            throw new Error(
-              'Unable to establish wallet connection. Please try connecting manually.'
-            );
-          }
-        }
-      }
+      // Unified approach: Use Wagmi connection directly
+      console.log('Wallet connected via unified PlatformContext, proceeding with submission...');
       // Simple network configuration
       const networkConfig = getNetworkByChainId(chainId);
       if (!networkConfig) {
@@ -107,6 +90,15 @@ export default function SubmitScoreWithWagmi({
       }
 
       // Direct submission using simplified system
+      console.log('🚀 Submitting score with params:', {
+        pushups: effectivePushupsScore,
+        squats: effectiveSquatsScore,
+        contractAddress: networkConfig.contractAddress,
+        chainId,
+        isVerified: isVerifiedContract,
+        feeAmount,
+      });
+
       const result = await submitScoreDirect(
         effectivePushupsScore,
         effectiveSquatsScore,
@@ -119,20 +111,14 @@ export default function SubmitScoreWithWagmi({
       if (result.success) {
         console.log('SubmitScoreWithWagmi: Submission successful');
         setSubmissionStatus('success');
-        const sourceMessage = enhancedWallet.source
-          ? ` via ${enhancedWallet.source === 'walletconnect' ? 'WalletConnect' : enhancedWallet.source}`
-          : '';
+        const sourceMessage = wallet.provider === 'wagmi' ? ' via Wagmi' : '';
         toast.success(`Scores submitted to ${networkConfig.name}${sourceMessage}!`);
       } else {
         console.log('SubmitScoreWithWagmi: Submission failed with error:', result.error);
         setSubmissionStatus('error');
 
-        // Enhanced error handling with WalletConnect fallback suggestion
-        let errorMessage = result.error || 'Submission failed';
-        if (enhancedWallet.source !== 'walletconnect' && enhancedWallet.supportsWalletConnect) {
-          errorMessage += ' Try using WalletConnect for better compatibility.';
-        }
-
+        // Simplified error handling
+        const errorMessage = result.error || 'Submission failed';
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -143,33 +129,9 @@ export default function SubmitScoreWithWagmi({
       if (error instanceof Error) {
         errorMessage = error.message;
 
-        // Enhanced error handling with fallback suggestions
-        if (enhancedWallet.error && enhancedWallet.error.recoverable) {
-          switch (enhancedWallet.error.code) {
-            case 'PROVIDER_NOT_READY':
-              if (enhancedWallet.supportsWalletConnect) {
-                errorMessage += ' Try WalletConnect for better compatibility.';
-              }
-              break;
-            case 'USER_REJECTED':
-              errorMessage = 'Transaction rejected. Please approve the transaction to continue.';
-              break;
-            case 'SESSION_ERROR':
-              errorMessage += ' Please disconnect and reconnect your wallet.';
-              break;
-          }
-        } else {
-          // Environment-specific error handling (legacy fallback)
-          const env = detectEnvironment();
-          if (
-            typeof env !== 'string' &&
-            env.isFarcaster &&
-            errorMessage.includes('user rejected')
-          ) {
-            errorMessage = 'Transaction rejected in Farcaster wallet - please approve';
-          } else if (typeof env !== 'string' && env.isBrave && errorMessage.includes('provider')) {
-            errorMessage = 'Brave wallet connection issue - try refreshing or using WalletConnect';
-          }
+        // Simplified error handling
+        if (errorMessage.includes('user rejected')) {
+          errorMessage = 'Transaction rejected. Please approve the transaction to continue.';
         }
       }
 
@@ -184,12 +146,12 @@ export default function SubmitScoreWithWagmi({
     return null;
   }
 
-  // If no address, show connect button
+  // If no address, show connect button using unified PlatformContext
   if (!address) {
     return (
       <div className="flex flex-col items-center space-y-4">
         <button
-          onClick={() => enhancedActions.connect()}
+          onClick={() => wallet.connect()}
           className="px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
           style={{
             fontFamily: "'Press Start 2P', monospace",
@@ -197,7 +159,7 @@ export default function SubmitScoreWithWagmi({
             textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
           }}
         >
-          {enhancedWallet.isConnecting ? (
+          {wallet.isConnecting ? (
             <div className="flex items-center space-x-2">
               <Spinner />
               <span>Connecting...</span>
@@ -206,18 +168,6 @@ export default function SubmitScoreWithWagmi({
             'Connect Wallet'
           )}
         </button>
-        {enhancedWallet.supportsWalletConnect && (
-          <button
-            onClick={() => enhancedActions.connect(true)}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-200 text-xs"
-            style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '10px',
-            }}
-          >
-            Try WalletConnect
-          </button>
-        )}
       </div>
     );
   }
@@ -239,8 +189,8 @@ export default function SubmitScoreWithWagmi({
             {submissionStatus === 'success'
               ? 'Scores Submitted! 🎉'
               : hasMultipleScores
-                ? `Submit Scores${supportsBatch && isFarcasterMiniApp() ? ' (Batch)' : ''}${enhancedWallet.source === 'walletconnect' ? ' via WC' : ''}`
-                : `Submit Score (${effectivePushupsScore || effectiveSquatsScore} ${exerciseType})${enhancedWallet.source === 'walletconnect' ? ' via WC' : ''}`}
+                ? `Submit Scores${supportsBatch && isFarcasterMiniApp() ? ' (Batch)' : ''}`
+                : `Submit Score (${effectivePushupsScore || effectiveSquatsScore} ${exerciseType})`}
           </button>
 
           {/* Enhanced: Show batch transaction status for Farcaster */}
@@ -262,11 +212,9 @@ export default function SubmitScoreWithWagmi({
           )}
 
           {/* Show wallet connection info */}
-          {enhancedWallet.source && (
+          {wallet.provider && (
             <div className="text-xs text-[#fcb131] opacity-50 text-center">
-              Connected via{' '}
-              {enhancedWallet.source === 'walletconnect' ? 'WalletConnect' : enhancedWallet.source}
-              {!enhancedWallet.isReady && ' (preparing...)'}
+              Connected via {wallet.provider}
             </div>
           )}
         </div>

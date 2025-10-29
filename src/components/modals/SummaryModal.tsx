@@ -6,7 +6,7 @@ import { Dialog } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { UniversalConnectButton } from '@/components/wallet';
 import FarcasterShare from '@/components/social/FarcasterShare';
-import SubmitScoreWithWagmi from '@/components/game/SubmitScoreWithWagmi';
+import { SubmitScore } from '@/components/game';
 import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
 import { VerificationIntegration } from '@/components/verification';
 
@@ -196,7 +196,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             {submissionStatus !== 'success' && (
               <div className="rounded-md p-3 text-center">
                 {/* Use unified Wagmi-based submission for all networks */}
-                <SubmitScoreWithWagmi
+                <SubmitScore
                   score={repCount}
                   exerciseType={mode}
                   forceDirectSubmission={true}

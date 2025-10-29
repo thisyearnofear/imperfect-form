@@ -9,13 +9,7 @@
  */
 
 import { ethers } from 'ethers';
-import {
-  getTransactionReadyProvider,
-  handleProviderError,
-  validateProviderForTransaction,
-  switchProviderNetwork,
-  type WalletProvider,
-} from './enhancedWalletProvider';
+// Removed: Enhanced wallet provider imports - using direct ethers approach
 
 // STANDARDIZED ABI for Normal Contracts (Updated for StandardFitnessLeaderboard)
 const NORMAL_ABI = [
@@ -140,10 +134,8 @@ export async function submitScoreDirect(
   isVerified = false, // Whether this is a verified fitness contract
   feeAmount: string | null = null // Optional fee for chains that require it
 ): Promise<{ success: boolean; error?: string; transactionHash?: string }> {
-  let walletProvider: WalletProvider | null = null;
-
   try {
-    logger.info('🚀 Starting enhanced score submission', {
+    logger.info('🚀 Starting unified score submission', {
       pushups,
       squats,
       contractAddress,
@@ -152,46 +144,59 @@ export async function submitScoreDirect(
       feeAmount,
     });
 
-    // Enhanced provider detection with fallbacks
-    walletProvider = await getTransactionReadyProvider();
-    if (!walletProvider) {
+    // Unified approach: Use window.ethereum directly (same as Wagmi)
+    if (typeof window === 'undefined' || !window.ethereum) {
       return {
         success: false,
-        error: 'No wallet provider available. Please connect your wallet or try WalletConnect.',
+        error: 'No wallet provider available. Please connect your wallet.',
       };
     }
 
-    logger.info('✅ Wallet provider obtained', {
-      source: walletProvider.source,
-      isReady: walletProvider.isReady,
-      address: walletProvider.address,
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.listAccounts();
+
+    if (accounts.length === 0) {
+      return {
+        success: false,
+        error: 'No wallet accounts found. Please connect your wallet.',
+      };
+    }
+
+    const network = await provider.getNetwork();
+    const currentChainId = Number(network.chainId);
+
+    logger.info('✅ Wallet provider ready', {
+      address: accounts[0].address,
+      chainId: currentChainId,
     });
 
-    // Validate provider is ready for transactions
-    if (walletProvider.isReady) {
-      const validation = await validateProviderForTransaction(walletProvider.provider);
-      if (!validation.valid) {
-        logger.warn('Provider validation failed:', validation.error);
-        return {
-          success: false,
-          error: `Wallet not ready: ${validation.error}. Please try reconnecting.`,
-        };
-      }
-    }
-
     // Switch network if needed
-    if (walletProvider.chainId && walletProvider.chainId !== chainId) {
-      logger.info(`🔄 Switching network from ${walletProvider.chainId} to ${chainId}`);
-      const switchResult = await switchProviderNetwork(walletProvider.provider, chainId);
-      if (!switchResult.success) {
-        return {
-          success: false,
-          error: `Please switch to the correct network. ${switchResult.error || ''}`,
-        };
+    if (currentChainId !== chainId) {
+      logger.info(`🔄 Switching network from ${currentChainId} to ${chainId}`);
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${chainId.toString(16)}` }],
+        });
+      } catch (switchError: any) {
+        if (switchError.code === 4902) {
+          // Network not added, try to add it
+          const networkConfig = getNetworkConfig(chainId);
+          if (networkConfig) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [networkConfig],
+            });
+          }
+        } else {
+          return {
+            success: false,
+            error: `Please switch to the correct network. ${switchError.message || ''}`,
+          };
+        }
       }
     }
 
-    const provider = walletProvider.provider;
     const signer = await provider.getSigner();
 
     // Auto-detect contract type if not specified
@@ -241,7 +246,6 @@ export async function submitScoreDirect(
     if (receipt && receipt.status === 1) {
       logger.info('✅ Transaction successful', {
         hash: receipt.hash,
-        source: walletProvider.source,
       });
       return {
         success: true,
@@ -255,25 +259,17 @@ export async function submitScoreDirect(
   } catch (error) {
     logger.error('❌ Submission error:', error);
 
-    // Use enhanced error handling
-    const providerError = handleProviderError(error, walletProvider?.source || 'unknown');
+    // Simplified error handling
+    let errorMessage = 'Transaction failed';
+    if (error instanceof Error) {
+      errorMessage = error.message;
 
-    // Enhanced error messages with recovery suggestions
-    let errorMessage = providerError.message;
-    if (providerError.recoverable) {
-      switch (providerError.code) {
-        case 'PROVIDER_NOT_READY':
-          errorMessage += ' Try using WalletConnect as an alternative.';
-          break;
-        case 'USER_REJECTED':
-          errorMessage += ' Please approve the transaction to continue.';
-          break;
-        case 'SESSION_ERROR':
-          errorMessage += ' Please disconnect and reconnect your wallet.';
-          break;
-        case 'NETWORK_ERROR':
-          errorMessage += ' Please check your internet connection and try again.';
-          break;
+      if (errorMessage.includes('user rejected')) {
+        errorMessage = 'Transaction rejected. Please approve the transaction to continue.';
+      } else if (errorMessage.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds in your wallet.';
+      } else if (errorMessage.includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
       }
     }
 
@@ -282,29 +278,83 @@ export async function submitScoreDirect(
 }
 
 /**
- * Network Switch Helper - Enhanced version
- * Now uses the enhanced provider system
+ * Network configuration for adding chains
+ */
+function getNetworkConfig(chainId: number) {
+  const configs: Record<number, any> = {
+    1: {
+      chainId: '0x1',
+      chainName: 'Ethereum Mainnet',
+      nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+      rpcUrls: ['https://eth.drpc.org'],
+    },
+    137: {
+      chainId: '0x89',
+      chainName: 'Polygon',
+      nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+      rpcUrls: ['https://polygon-rpc.com'],
+    },
+    42220: {
+      chainId: '0xa4ec',
+      chainName: 'Celo',
+      nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
+      rpcUrls: ['https://forno.celo.org'],
+    },
+    8453: {
+      chainId: '0x2105',
+      chainName: 'Base',
+      nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+      rpcUrls: ['https://mainnet.base.org'],
+    },
+    10143: {
+      chainId: '0x279f',
+      chainName: 'Monad Testnet',
+      nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
+      rpcUrls: ['https://testnet-rpc.monad.xyz'],
+    },
+  };
+
+  return configs[chainId];
+}
+
+/**
+ * Simplified Network Switch Helper
  */
 export async function switchNetwork(chainId: number): Promise<boolean> {
   try {
     logger.info('🔄 Attempting network switch', { chainId });
 
-    const walletProvider = await getTransactionReadyProvider();
-    if (!walletProvider) {
+    if (typeof window === 'undefined' || !window.ethereum) {
       logger.warn('No wallet provider available for network switch');
       return false;
     }
 
-    const result = await switchProviderNetwork(walletProvider.provider, chainId);
-    if (result.success) {
-      logger.info('✅ Network switch successful', { chainId });
-    } else {
-      logger.error('❌ Network switch failed', { chainId, error: result.error });
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: `0x${chainId.toString(16)}` }],
+    });
+
+    logger.info('✅ Network switch successful', { chainId });
+    return true;
+  } catch (error: any) {
+    if (error.code === 4902) {
+      // Network not added, try to add it
+      const networkConfig = getNetworkConfig(chainId);
+      if (networkConfig) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [networkConfig],
+          });
+          return true;
+        } catch (addError) {
+          logger.error('❌ Network add failed', { chainId, error: addError });
+          return false;
+        }
+      }
     }
 
-    return result.success;
-  } catch (error) {
-    logger.error('Network switch error:', error);
+    logger.error('❌ Network switch failed', { chainId, error });
     return false;
   }
 }

@@ -14,6 +14,7 @@ import WalletSelectorModal from '@/components/modals/WalletSelectorModal';
 import { Spinner } from '@/components/ui';
 import WalletErrorBoundary from './WalletErrorBoundary';
 import WalletDebugInfo from '@/components/debug/WalletDebugInfo';
+// Removed: WalletConnectionDiagnostic - no longer needed after consolidation
 
 // Define Monad Testnet
 const monadTestnet: Chain = {
@@ -344,6 +345,7 @@ export default function SimplifiedAppProviders({ children }: AppProvidersProps) 
                 {children}
                 <WalletSelectorModal />
                 <WalletDebugInfo />
+                {/* Removed: WalletConnectionDiagnostic - consolidated into unified system */}
               </NeynarAuthProvider>
             </PlatformProvider>
           </EnhancedChainThemeProvider>
