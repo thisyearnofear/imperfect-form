@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Spinner } from '@/components/ui';
-// Removed: useEnhancedWalletConnection - using unified PlatformContext only
+import { usePlatform } from '@/contexts/PlatformContext';
 import { isFarcasterMiniApp } from '@/utils/farcasterMiniApp';
 
 interface FarcasterDiagnosticResult {
@@ -37,7 +37,7 @@ export default function FarcasterWalletDiagnostic({
   onClose,
   className = '',
 }: FarcasterWalletDiagnosticProps) {
-  // Removed: enhancedWallet - using unified PlatformContext only
+  const { wallet, isReady } = usePlatform();
   const [diagnostic, setDiagnostic] = useState<FarcasterDiagnosticResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -264,24 +264,24 @@ export default function FarcasterWalletDiagnostic({
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-400">Connected:</span>
-            <span className={enhancedWallet.isConnected ? 'text-green-400' : 'text-red-400'}>
-              {enhancedWallet.isConnected ? '✅' : '❌'}
+            <span className={wallet.isConnected ? 'text-green-400' : 'text-red-400'}>
+              {wallet.isConnected ? '✅' : '❌'}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Ready:</span>
-            <span className={enhancedWallet.isReady ? 'text-green-400' : 'text-red-400'}>
-              {enhancedWallet.isReady ? '✅' : '❌'}
+            <span className={isReady ? 'text-green-400' : 'text-red-400'}>
+              {isReady ? '✅' : '❌'}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Source:</span>
-            <span className="text-[#fcb131]">{enhancedWallet.source || 'None'}</span>
+            <span className="text-[#fcb131]">{wallet.provider || 'None'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Address:</span>
             <span className="text-gray-300 text-xs">
-              {enhancedWallet.address ? `${enhancedWallet.address.slice(0, 6)}...` : 'None'}
+              {wallet.address ? `${wallet.address.slice(0, 6)}...` : 'None'}
             </span>
           </div>
         </div>
@@ -445,11 +445,11 @@ export default function FarcasterWalletDiagnostic({
               url: window.location.href,
               userAgent: navigator.userAgent,
               diagnostic,
-              enhancedWallet: {
-                isConnected: enhancedWallet.isConnected,
-                isReady: enhancedWallet.isReady,
-                source: enhancedWallet.source,
-                error: enhancedWallet.error,
+              wallet: {
+                isConnected: wallet.isConnected,
+                isReady,
+                provider: wallet.provider,
+                address: wallet.address,
               },
             };
 

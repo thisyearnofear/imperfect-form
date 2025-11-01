@@ -127,6 +127,7 @@ export function isVerifiedContract(chainId: number, contractAddress: string): bo
 }
 
 export async function submitScoreDirect(
+  provider: any, // EIP-1193 provider
   pushups: number,
   squats: number,
   contractAddress: string,
@@ -144,16 +145,16 @@ export async function submitScoreDirect(
       feeAmount,
     });
 
-    // Unified approach: Use window.ethereum directly (same as Wagmi)
-    if (typeof window === 'undefined' || !window.ethereum) {
+    // Check if provider is available
+    if (!provider) {
       return {
         success: false,
         error: 'No wallet provider available. Please connect your wallet.',
       };
     }
 
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const accounts = await provider.listAccounts();
+    const ethersProvider = new ethers.BrowserProvider(provider);
+    const accounts = await ethersProvider.listAccounts();
 
     if (accounts.length === 0) {
       return {
@@ -162,7 +163,7 @@ export async function submitScoreDirect(
       };
     }
 
-    const network = await provider.getNetwork();
+    const network = await ethersProvider.getNetwork();
     const currentChainId = Number(network.chainId);
 
     logger.info('✅ Wallet provider ready', {
@@ -174,7 +175,7 @@ export async function submitScoreDirect(
     if (currentChainId !== chainId) {
       logger.info(`🔄 Switching network from ${currentChainId} to ${chainId}`);
       try {
-        await window.ethereum.request({
+        await provider.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: `0x${chainId.toString(16)}` }],
         });
@@ -183,7 +184,7 @@ export async function submitScoreDirect(
           // Network not added, try to add it
           const networkConfig = getNetworkConfig(chainId);
           if (networkConfig) {
-            await window.ethereum.request({
+            await provider.request({
               method: 'wallet_addEthereumChain',
               params: [networkConfig],
             });
@@ -320,16 +321,16 @@ function getNetworkConfig(chainId: number) {
 /**
  * Simplified Network Switch Helper
  */
-export async function switchNetwork(chainId: number): Promise<boolean> {
+export async function switchNetwork(provider: any, chainId: number): Promise<boolean> {
   try {
     logger.info('🔄 Attempting network switch', { chainId });
 
-    if (typeof window === 'undefined' || !window.ethereum) {
+    if (!provider) {
       logger.warn('No wallet provider available for network switch');
       return false;
     }
 
-    await window.ethereum.request({
+    await provider.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: `0x${chainId.toString(16)}` }],
     });
@@ -342,7 +343,7 @@ export async function switchNetwork(chainId: number): Promise<boolean> {
       const networkConfig = getNetworkConfig(chainId);
       if (networkConfig) {
         try {
-          await window.ethereum.request({
+          await provider.request({
             method: 'wallet_addEthereumChain',
             params: [networkConfig],
           });

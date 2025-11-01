@@ -35,7 +35,7 @@ export default function SubmitScore({
 }: SubmitScoreProps) {
   const [confirmStep, setConfirmStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { wallet } = usePlatform();
+  const { wallet, platform, farcasterProvider, actions } = usePlatform();
   const { chainId } = wallet;
 
   // Unified wallet connection via PlatformContext
@@ -89,6 +89,18 @@ export default function SubmitScore({
         feeAmount = '0.001'; // 0.001 MON
       }
 
+      // Get the appropriate provider
+      const provider =
+        platform === 'farcaster'
+          ? farcasterProvider
+          : typeof window !== 'undefined'
+            ? window.ethereum
+            : null;
+
+      if (!provider) {
+        throw new Error('No wallet provider available. Please connect your wallet.');
+      }
+
       // Direct submission using simplified system
       console.log('🚀 Submitting score with params:', {
         pushups: effectivePushupsScore,
@@ -97,9 +109,11 @@ export default function SubmitScore({
         chainId,
         isVerified: isVerifiedContract,
         feeAmount,
+        provider: !!provider,
       });
 
       const result = await submitScoreDirect(
+        provider,
         effectivePushupsScore,
         effectiveSquatsScore,
         networkConfig.contractAddress,
@@ -151,7 +165,7 @@ export default function SubmitScore({
     return (
       <div className="flex flex-col items-center space-y-4">
         <button
-          onClick={() => wallet.connect()}
+          onClick={() => actions.connect()}
           className="px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
           style={{
             fontFamily: "'Press Start 2P', monospace",

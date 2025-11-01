@@ -79,6 +79,9 @@ export interface PlatformContextType {
   // Wallet state
   wallet: WalletState;
 
+  // Farcaster provider (for direct use in submissions)
+  farcasterProvider: any | null;
+
   // Platform features
   features: PlatformFeatures;
 
@@ -200,6 +203,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
 
   // Farcaster SDK state
   const [farcasterSDK, setFarcasterSDK] = useState<FarcasterSDK | null>(null);
+  const [farcasterProvider, setFarcasterProvider] = useState<any | null>(null);
   const [farcasterWallet, setFarcasterWallet] = useState<{
     address: string | null;
     chainId: number | null;
@@ -337,10 +341,12 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         }
 
         if (provider) {
+          setFarcasterProvider(provider);
           logger.info(
             'Farcaster wallet provider available - connection will be handled by Wagmi connector'
           );
         } else {
+          setFarcasterProvider(null);
           logger.warn('Farcaster wallet provider not available');
         }
       } catch (error) {
@@ -779,6 +785,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     isReady,
     user,
     wallet,
+    farcasterProvider,
     features,
     actions,
     error,

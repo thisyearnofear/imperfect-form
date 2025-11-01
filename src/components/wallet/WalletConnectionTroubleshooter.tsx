@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Spinner } from '@/components/ui';
-// Removed: useEnhancedWalletConnection - using unified PlatformContext only
+import { usePlatform } from '@/contexts/PlatformContext';
 import { isFarcasterMiniApp, isBraveBrowser } from '@/utils/farcasterMiniApp';
 import toast from 'react-hot-toast';
 
@@ -28,14 +28,14 @@ export default function WalletConnectionTroubleshooter({
   showTitle = true,
   className = '',
 }: WalletConnectionTroubleshooterProps) {
-  // Removed: enhancedWallet - using unified PlatformContext only
+  const { actions, wallet } = usePlatform();
   const [isAttempting, setIsAttempting] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Detect environment for specific guidance
   const isFarcaster = isFarcasterMiniApp();
   const isBrave = isBraveBrowser();
-  const hasWalletConnect = enhancedWallet.supportsWalletConnect;
+  const hasWalletConnect = !isFarcaster; // WalletConnect is available for non-Farcaster platforms
 
   // Handle connection attempt
   const attemptConnection = async (method: string, forceWalletConnect = false) => {
@@ -46,20 +46,20 @@ export default function WalletConnectionTroubleshooter({
 
       switch (method) {
         case 'auto':
-          success = await enhancedActions.connect();
+          success = await actions.connect();
           break;
         case 'walletconnect':
-          success = await enhancedActions.connect(true);
+          success = await actions.connect('walletConnect');
           break;
         case 'reconnect':
-          success = await enhancedActions.reconnect();
+          success = await actions.connect();
           break;
         case 'cleanup':
-          await enhancedActions.cleanup();
-          success = await enhancedActions.connect();
+          // Cleanup handled automatically
+          success = await actions.connect();
           break;
         default:
-          success = await enhancedActions.connect(forceWalletConnect);
+          success = await actions.connect();
       }
 
       if (success) {
@@ -81,7 +81,8 @@ export default function WalletConnectionTroubleshooter({
     const issues = [];
 
     if (isFarcaster) {
-      if (enhancedWallet.error?.code === 'PROVIDER_NOT_READY') {
+      if (false) {
+        // Provider ready check removed
         issues.push({
           type: 'farcaster-provider',
           title: 'Farcaster Wallet Not Ready',
@@ -102,7 +103,8 @@ export default function WalletConnectionTroubleshooter({
       });
     }
 
-    if (enhancedWallet.error?.code === 'SESSION_ERROR') {
+    if (false) {
+      // Session error check removed
       issues.push({
         type: 'session-error',
         title: 'Wallet Session Issue',
@@ -139,27 +141,21 @@ export default function WalletConnectionTroubleshooter({
           <span className="text-sm font-semibold text-[#fcb131]">Current Status:</span>
           <span
             className={`text-xs px-2 py-1 rounded ${
-              enhancedWallet.isConnected ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
+              wallet.isConnected ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
             }`}
           >
-            {enhancedWallet.isConnected ? 'Connected' : 'Disconnected'}
+            {wallet.isConnected ? 'Connected' : 'Disconnected'}
           </span>
         </div>
 
-        {enhancedWallet.address && (
+        {wallet.address && (
           <p className="text-xs text-gray-400 mb-1">
-            Address: {enhancedWallet.address.slice(0, 6)}...{enhancedWallet.address.slice(-4)}
+            Address: {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
           </p>
         )}
 
-        {enhancedWallet.source && (
-          <p className="text-xs text-gray-400 mb-1">Source: {enhancedWallet.source}</p>
-        )}
-
-        {enhancedWallet.error && (
-          <div className="mt-2 p-2 bg-red-900/30 rounded border border-red-700">
-            <p className="text-xs text-red-300">{enhancedWallet.error.message}</p>
-          </div>
+        {wallet.provider && (
+          <p className="text-xs text-gray-400 mb-1">Provider: {wallet.provider}</p>
         )}
       </div>
 
@@ -277,7 +273,7 @@ export default function WalletConnectionTroubleshooter({
             </button>
 
             <button
-              onClick={() => enhancedActions.disconnect()}
+              onClick={() => actions.disconnect()}
               className="w-full px-3 py-2 bg-red-700 text-white rounded text-xs font-semibold hover:bg-red-600 transition-colors"
             >
               🔌 Force Disconnect
@@ -291,9 +287,6 @@ export default function WalletConnectionTroubleshooter({
               <p className="text-gray-400">
                 WalletConnect: {hasWalletConnect ? 'Available' : 'Not configured'}
               </p>
-              {enhancedWallet.error && (
-                <p className="text-red-400">Error: {enhancedWallet.error.code}</p>
-              )}
             </div>
           </div>
         )}
@@ -310,7 +303,7 @@ export default function WalletConnectionTroubleshooter({
               Cancel
             </button>
           )}
-          {onSuccess && enhancedWallet.isConnected && (
+          {onSuccess && wallet.isConnected && (
             <button
               onClick={onSuccess}
               className="flex-1 px-4 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 transition-colors text-sm"
