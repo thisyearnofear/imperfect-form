@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import '@/styles/split-flap.css';
+import dynamic from 'next/dynamic';
+
+// Dynamically import to avoid SSR issues with Memory API
+const EnhancedUserProfile = dynamic(() => import('@/components/profile/EnhancedUserProfile'), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface SplitFlapTextProps {
   text: string;
@@ -207,7 +214,14 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   };
 
   return (
-    <div id="instructions" style={{ display: 'flex' }}>
+    <div id="instructions" style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* Enhanced User Profile for profile mode */}
+      {mode === 'profile' && (
+        <div className="mb-4">
+          <EnhancedUserProfile compact className="max-w-md mx-auto" />
+        </div>
+      )}
+
       {currentInstructions.map((instruction, index) => (
         <p
           key={instruction.key}

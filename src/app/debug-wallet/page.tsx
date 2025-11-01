@@ -3,6 +3,7 @@
 import React from 'react';
 import { WalletDiagnostics, TroubleshootingGuide } from '@/components/debug';
 import { usePlatform } from '@/contexts/PlatformContext';
+import MemoryAPITester from '@/components/debug/MemoryAPITester';
 
 export default function DebugWalletPage() {
   const { platform, wallet } = usePlatform();
@@ -60,6 +61,11 @@ export default function DebugWalletPage() {
         {/* Wallet Diagnostics */}
         <div className="mb-8">
           <WalletDiagnostics />
+        </div>
+
+        {/* Memory API Tester */}
+        <div className="mb-8">
+          <MemoryAPITester />
         </div>
 
         {/* Network Information */}
