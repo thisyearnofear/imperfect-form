@@ -9,6 +9,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Spinner } from '@/components/ui';
+import {
+  MemoryButton,
+  MemoryInput,
+  MemoryTextarea,
+  MemorySelect,
+} from '@/components/ui/MemoryButton';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { getMemoryClient, type IdentityNode } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
@@ -180,55 +186,51 @@ export default function SocialChallengeCreator({
       <div className="space-y-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Challenge Title</label>
-          <input
+          <MemoryInput
             type="text"
             value={challengeData.title}
             onChange={(e) => setChallengeData((prev) => ({ ...prev, title: e.target.value }))}
             placeholder="e.g., Push-up Challenge 2025"
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-          <textarea
+          <MemoryTextarea
             value={challengeData.description}
             onChange={(e) => setChallengeData((prev) => ({ ...prev, description: e.target.value }))}
             placeholder="Describe your challenge..."
             rows={3}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Exercise Type</label>
-            <select
+            <MemorySelect
               value={challengeData.type}
               onChange={(e) =>
                 setChallengeData((prev) => ({ ...prev, type: e.target.value as any }))
               }
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none"
             >
               <option value="pushups">Push-ups</option>
               <option value="squats">Squats</option>
               <option value="mixed">Mixed</option>
-            </select>
+            </MemorySelect>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Duration (Days)</label>
-            <select
+            <MemorySelect
               value={challengeData.duration}
               onChange={(e) =>
                 setChallengeData((prev) => ({ ...prev, duration: parseInt(e.target.value) }))
               }
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none"
             >
               <option value={7}>7 Days</option>
               <option value={14}>14 Days</option>
               <option value={30}>30 Days</option>
-            </select>
+            </MemorySelect>
           </div>
         </div>
 
@@ -306,13 +308,15 @@ export default function SocialChallengeCreator({
       </div>
 
       {/* Create Button */}
-      <button
+      <MemoryButton
         onClick={handleCreateChallenge}
         disabled={!challengeData.title.trim() || selectedFriends.size === 0}
-        className="w-full px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
+        variant="primary"
+        size="lg"
+        fullWidth
       >
         Create Challenge
-      </button>
+      </MemoryButton>
 
       {/* Memory Protocol Attribution */}
       <div className="mt-4 text-center text-xs text-gray-500">

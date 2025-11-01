@@ -9,6 +9,7 @@
 
 import React, { useState } from 'react';
 import { Spinner } from '@/components/ui';
+import { MemoryButton, MemoryInput } from '@/components/ui/MemoryButton';
 import { getMemoryClient } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 import toast from 'react-hot-toast';
@@ -72,45 +73,52 @@ export default function MemoryAPITester({ className = '' }: MemoryAPITesterProps
         <label className="block text-sm font-medium text-gray-300 mb-2">
           Test Identifier (username, wallet, or FID)
         </label>
-        <input
+        <MemoryInput
           type="text"
           value={testIdentifier}
           onChange={(e) => setTestIdentifier(e.target.value)}
           placeholder="e.g., jessepollak, 0x..., or FID"
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none"
         />
       </div>
 
       {/* Test Buttons */}
       <div className="grid grid-cols-2 gap-2 mb-4">
-        <button
+        <MemoryButton
           onClick={() => runTest('credits')}
           disabled={!!loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-sm"
+          variant="secondary"
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
-          {loading === 'credits' ? <Spinner /> : 'Test Credits'}
-        </button>
-        <button
+          {loading === 'credits' ? '...' : 'Test Credits'}
+        </MemoryButton>
+        <MemoryButton
           onClick={() => runTest('identity-farcaster')}
           disabled={!!loading}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
+          variant="secondary"
+          size="sm"
+          className="bg-green-600 hover:bg-green-700 text-white"
         >
-          {loading === 'identity-farcaster' ? <Spinner /> : 'Farcaster Identity'}
-        </button>
-        <button
+          {loading === 'identity-farcaster' ? '...' : 'Farcaster Identity'}
+        </MemoryButton>
+        <MemoryButton
           onClick={() => runTest('identity-wallet')}
           disabled={!!loading}
-          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 text-sm"
+          variant="secondary"
+          size="sm"
+          className="bg-purple-600 hover:bg-purple-700 text-white"
         >
-          {loading === 'identity-wallet' ? <Spinner /> : 'Wallet Identity'}
-        </button>
-        <button
+          {loading === 'identity-wallet' ? '...' : 'Wallet Identity'}
+        </MemoryButton>
+        <MemoryButton
           onClick={() => runTest('enhanced-profile')}
           disabled={!!loading}
-          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 text-sm"
+          variant="secondary"
+          size="sm"
+          className="bg-orange-600 hover:bg-orange-700 text-white"
         >
-          {loading === 'enhanced-profile' ? <Spinner /> : 'Enhanced Profile'}
-        </button>
+          {loading === 'enhanced-profile' ? '...' : 'Enhanced Profile'}
+        </MemoryButton>
       </div>
 
       {/* Results Display */}

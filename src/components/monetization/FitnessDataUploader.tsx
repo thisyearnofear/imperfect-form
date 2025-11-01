@@ -9,6 +9,12 @@
 
 import React, { useState } from 'react';
 import { Spinner } from '@/components/ui';
+import {
+  MemoryButton,
+  MemoryInput,
+  MemoryTextarea,
+  MemorySelect,
+} from '@/components/ui/MemoryButton';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { getMemoryClient, type FitnessDataUpload } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
@@ -237,28 +243,26 @@ export default function FitnessDataUploader({
       {formData.dataType === 'structured' && (
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-300 mb-2">Schema Type</label>
-          <select
+          <MemorySelect
             value={formData.schema}
             onChange={(e) => setFormData((prev) => ({ ...prev, schema: e.target.value }))}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none"
           >
             <option value="fitness-workouts">Fitness Workouts</option>
             <option value="fitness-goals">Fitness Goals</option>
             <option value="fitness-progress">Fitness Progress</option>
             <option value="fitness-achievements">Fitness Achievements</option>
-          </select>
+          </MemorySelect>
         </div>
       )}
 
       {/* Description */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-        <textarea
+        <MemoryTextarea
           value={formData.description}
           onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
           placeholder="Describe your data to help other apps understand its value..."
           rows={3}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none"
         />
       </div>
 
@@ -279,20 +283,22 @@ export default function FitnessDataUploader({
           ))}
         </div>
         <div className="flex">
-          <input
+          <MemoryInput
             type="text"
             value={formData.tagInput}
             onChange={(e) => setFormData((prev) => ({ ...prev, tagInput: e.target.value }))}
             onKeyPress={(e) => e.key === 'Enter' && addTag()}
             placeholder="Add tags..."
-            className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-l-lg text-white focus:border-[#fcb131] focus:outline-none"
+            className="flex-1 rounded-r-none"
           />
-          <button
+          <MemoryButton
             onClick={addTag}
-            className="px-4 py-2 bg-[#fcb131] text-black rounded-r-lg hover:bg-[#f39c12] font-medium"
+            variant="primary"
+            size="sm"
+            className="rounded-l-none border-l-0"
           >
             Add
-          </button>
+          </MemoryButton>
         </div>
       </div>
 
@@ -323,24 +329,26 @@ export default function FitnessDataUploader({
             Load Sample Data
           </button>
         </div>
-        <textarea
+        <MemoryTextarea
           value={formData.data}
           onChange={(e) => setFormData((prev) => ({ ...prev, data: e.target.value }))}
           placeholder="Paste your fitness data as JSON..."
           rows={10}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white font-mono text-sm focus:border-[#fcb131] focus:outline-none"
+          className="font-mono text-sm"
         />
       </div>
 
       {/* Upload Button */}
-      <button
+      <MemoryButton
         onClick={handleUpload}
         disabled={loading || !wallet.address}
-        className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:from-green-700 hover:to-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-green-500 flex items-center justify-center space-x-2"
+        variant="success"
+        size="lg"
+        loading={loading}
+        fullWidth
       >
-        {loading && <Spinner />}
-        <span>{loading ? 'Uploading...' : 'Upload & Monetize Data'}</span>
-      </button>
+        {loading ? 'Uploading...' : 'Upload & Monetize Data'}
+      </MemoryButton>
 
       {!wallet.address && (
         <p className="text-center text-red-400 text-sm mt-2">
