@@ -44,13 +44,10 @@ export default function PoseLoadingOverlay({
         '💡 Good lighting makes a huge difference',
       ],
       ai: [
-        '🤖 Loading pose detection...',
-        '🧠 Initializing...',
-        '⚡ This may take 10-30 seconds...',
-        '🏋️ PUSHUPS: Hands shoulder-width apart',
-        '⬇️ PUSHUPS: Extend arms fully',
-        '🦵 SQUATS: Stand with feet shoulder-width apart',
-        '🧘 Stretch while you wait!',
+        '🤖 Loading AI pose detection...',
+        '🧠 Initializing... May take 10-30 seconds',
+        '👤 Stand with full body in frame',
+        '💡 Ensure good lighting',
       ],
       positioning: [
         '🎯 Position yourself in frame',
@@ -113,32 +110,32 @@ export default function PoseLoadingOverlay({
     switch (currentPhase) {
       case 'camera':
         return {
-          color: 'text-blue-400',
-          bgColor: 'bg-blue-900/80',
+          color: 'text-blue-300',
+          bgColor: 'bg-blue-900/90',
           icon: '📹',
         };
       case 'ai':
         return {
-          color: 'text-purple-400',
-          bgColor: 'bg-purple-900/80',
+          color: 'text-purple-300',
+          bgColor: 'bg-purple-900/90',
           icon: '🤖',
         };
       case 'positioning':
         return {
-          color: 'text-green-400',
-          bgColor: 'bg-green-900/80',
+          color: 'text-green-300',
+          bgColor: 'bg-green-900/90',
           icon: '🎯',
         };
       case 'ready':
         return {
-          color: 'text-yellow-400',
-          bgColor: 'bg-yellow-900/80',
+          color: 'text-yellow-300',
+          bgColor: 'bg-yellow-900/90',
           icon: '✅',
         };
       default:
         return {
-          color: 'text-gray-400',
-          bgColor: 'bg-gray-900/80',
+          color: 'text-gray-300',
+          bgColor: 'bg-gray-900/90',
           icon: '⚡',
         };
     }
@@ -184,7 +181,7 @@ export default function PoseLoadingOverlay({
 
       {/* Current instruction - Mobile optimized */}
       <div
-        className={`text-center max-w-xs transition-opacity duration-500 text-base sm:text-lg ${phaseInfo.color} mb-4 px-2`}
+        className={`text-center max-w-xs transition-opacity duration-500 text-lg sm:text-xl font-semibold ${phaseInfo.color} mb-4 px-2`}
         style={{ opacity: instructionOpacity }}
       >
         {currentInstructions[currentInstructionIndex]}
@@ -194,17 +191,9 @@ export default function PoseLoadingOverlay({
       <MotivationalMessages phase={currentPhase} className="text-yellow-200 text-sm sm:text-base" />
 
       {/* Phase-specific additional info - Mobile optimized */}
-      {currentPhase === 'ai' && (
-        <div className="mt-4 text-xs sm:text-sm text-gray-400 text-center max-w-xs px-2">
-          <p>⏱️ This usually takes 10-30 seconds depending on your device</p>
-          <p className="mt-1">🎯 Faster on newer devices with good internet</p>
-        </div>
-      )}
-
       {currentPhase === 'positioning' && (
-        <div className="mt-4 text-xs sm:text-sm text-gray-400 text-center max-w-xs px-2">
-          <p>💡 If skeleton doesn&apos;t appear, try adjusting lighting or moving closer/further</p>
-          <p className="mt-1">🔄 Sometimes a small step back helps</p>
+        <div className="mt-4 text-sm sm:text-base text-gray-300 text-center max-w-xs px-2">
+          <p>💡 If skeleton doesn&apos;t appear, adjust lighting or distance from camera</p>
         </div>
       )}
     </div>
