@@ -228,12 +228,12 @@ class MemoryAPIClient {
 // Create singleton instance
 let memoryClient: MemoryAPIClient | null = null;
 
-export function getMemoryClient(): MemoryAPIClient {
+export function getMemoryClient(): MemoryAPIClient | null {
   if (!memoryClient) {
     const apiKey = process.env.NEXT_PUBLIC_MEMORY_API_KEY;
     if (!apiKey) {
-      logger.warn('Memory API key not configured');
-      throw new Error('Memory API key not configured. Please set NEXT_PUBLIC_MEMORY_API_KEY');
+      logger.warn('Memory API key not configured - enhanced features disabled');
+      return null; // Return null instead of throwing
     }
     memoryClient = new MemoryAPIClient(apiKey);
   }

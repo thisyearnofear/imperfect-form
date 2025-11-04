@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { getMemoryClient, type IdentityNode, type SocialProfile } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
+import ErrorBoundary from '@/utils/errorBoundary';
 import toast from 'react-hot-toast';
 
 const logger = createRemoteLogger('EnhancedUserProfile');
@@ -86,6 +87,9 @@ export default function EnhancedUserProfile({
 
       try {
         const client = getMemoryClient();
+        if (!client) {
+          throw new Error('Memory API not configured. Enhanced profile features are disabled.');
+        }
         const profileData = await client.getEnhancedUserProfile(identifier);
         setProfile(profileData);
         logger.info('Enhanced profile loaded', {
@@ -249,5 +253,13 @@ export default function EnhancedUserProfile({
   );
 }
 
+// Wrap with error boundary for additional safety
+const EnhancedUserProfileWithBoundary = (props: EnhancedUserProfileProps) => (
+  <ErrorBoundary>
+    <EnhancedUserProfile {...props} />
+  </ErrorBoundary>
+);
+
 // Export individual components for reuse
 export { PlatformIcon };
+export default EnhancedUserProfileWithBoundary;
