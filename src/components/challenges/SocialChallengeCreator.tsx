@@ -69,6 +69,13 @@ export default function SocialChallengeCreator({
       setLoading(true);
       try {
         const client = getMemoryClient();
+        if (!client) {
+          // Memory API not configured, show empty state
+          setFriends([]);
+          setLoading(false);
+          return;
+        }
+
         let followers: string[] = [];
         let following: string[] = [];
 
@@ -87,32 +94,36 @@ export default function SocialChallengeCreator({
 
         // Get identity graphs for connections to get usernames/avatars
         const friendsData: ChallengeParticipant[] = [];
-        for (const connection of allConnections.slice(0, 10)) {
-          // Limit to 10 for performance
-          try {
-            // Try to get identity graph by Farcaster ID
-            const identityGraph = await client.getIdentityGraphByFarcasterId(parseInt(connection));
-            const primaryIdentity = identityGraph.identities.find(
-              (id) => id.platform === 'farcaster'
-            );
+        if (client) {
+          for (const connection of allConnections.slice(0, 10)) {
+            // Limit to 10 for performance
+            try {
+              // Try to get identity graph by Farcaster ID
+              const identityGraph = await client.getIdentityGraphByFarcasterId(
+                parseInt(connection)
+              );
+              const primaryIdentity = identityGraph.identities.find(
+                (id) => id.platform === 'farcaster'
+              );
 
-            if (primaryIdentity) {
+              if (primaryIdentity) {
+                friendsData.push({
+                  id: connection,
+                  username: primaryIdentity.username || connection,
+                  platform: 'farcaster',
+                  avatar: primaryIdentity.avatar,
+                  isSelected: false,
+                });
+              }
+            } catch (error) {
+              // Fallback: just use FID
               friendsData.push({
                 id: connection,
-                username: primaryIdentity.username || connection,
+                username: connection,
                 platform: 'farcaster',
-                avatar: primaryIdentity.avatar,
                 isSelected: false,
               });
             }
-          } catch (error) {
-            // Fallback: just use FID
-            friendsData.push({
-              id: connection,
-              username: connection,
-              platform: 'farcaster',
-              isSelected: false,
-            });
           }
         }
 
