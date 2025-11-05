@@ -55,7 +55,7 @@ function PlatformIcon({ platform, size = 20, className = '' }: PlatformIconProps
   }
 }
 
-export default function EnhancedUserProfile({
+function EnhancedUserProfile({
   userIdentifier,
   showSocialStats = true,
   showIdentities = true,
