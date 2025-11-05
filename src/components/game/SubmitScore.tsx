@@ -182,7 +182,7 @@ export default function SubmitScore({
 
     // CONSOLIDATION: Unified pre-submission validation
     const validationError = validateSubmissionRequirements(
-      address,
+      address || null,
       chainId,
       effectivePushupsScore,
       effectiveSquatsScore,
