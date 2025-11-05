@@ -9,6 +9,128 @@ import { getNetworkByChainId } from '@/config/networks';
 // Removed: useEnhancedWalletConnection - using unified PlatformContext only
 import toast from 'react-hot-toast';
 import { isFarcasterMiniApp } from '@/utils/farcasterMiniApp';
+import type { WalletState } from '@/contexts/PlatformContext';
+
+/**
+ * CONSOLIDATION: Unified Provider Selection
+ * Single source of truth for provider selection logic
+ */
+function getValidatedProvider(
+  platform: string,
+  farcasterProvider: any,
+  wallet: WalletState
+): any | null {
+  // Priority 1: Farcaster provider for Farcaster platform
+  if (platform === 'farcaster' && farcasterProvider) {
+    return farcasterProvider;
+  }
+
+  // Priority 2: Browser ethereum provider (for all platforms including Farcaster fallback)
+  if (typeof window !== 'undefined' && window.ethereum) {
+    // Validate that wallet is actually connected
+    if (wallet.isConnected && wallet.address) {
+      return window.ethereum;
+    }
+  }
+
+  // Priority 3: No valid provider found
+  return null;
+}
+
+/**
+ * CONSOLIDATION: Unified Error Classification
+ * Single source of truth for error handling and user messages
+ */
+function classifySubmissionError(error: unknown): string {
+  if (!error) return 'Submission failed';
+
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const lowerMessage = errorMessage.toLowerCase();
+
+  // User rejection - most common and expected
+  if (lowerMessage.includes('user rejected') || lowerMessage.includes('user denied')) {
+    return 'Transaction rejected. Please approve the transaction to continue.';
+  }
+
+  // Network/connection issues
+  if (
+    lowerMessage.includes('network') ||
+    lowerMessage.includes('connection') ||
+    lowerMessage.includes('timeout') ||
+    lowerMessage.includes('rpc')
+  ) {
+    return 'Network connection issue. Please check your internet and try again.';
+  }
+
+  // Wallet/provider issues
+  if (
+    lowerMessage.includes('provider') ||
+    lowerMessage.includes('wallet') ||
+    lowerMessage.includes('signer')
+  ) {
+    return 'Wallet connection issue. Please reconnect your wallet and try again.';
+  }
+
+  // Gas/fee issues
+  if (lowerMessage.includes('insufficient funds') || lowerMessage.includes('gas')) {
+    return 'Insufficient funds or gas. Please check your wallet balance.';
+  }
+
+  // Contract/blockchain issues
+  if (lowerMessage.includes('revert') || lowerMessage.includes('execution')) {
+    return 'Transaction failed. Please check your inputs and try again.';
+  }
+
+  // Network switching issues
+  if (lowerMessage.includes('switch') || lowerMessage.includes('chain')) {
+    return 'Network switching issue. Please switch to the correct network manually.';
+  }
+
+  // Default fallback with original message if it's user-friendly
+  if (errorMessage.length < 100 && !lowerMessage.includes('0x')) {
+    return errorMessage;
+  }
+
+  return 'Submission failed. Please try again or contact support if the issue persists.';
+}
+
+/**
+ * CONSOLIDATION: Unified Submission Requirements Validation
+ * Single source of truth for pre-submission checks
+ */
+function validateSubmissionRequirements(
+  address: string | null,
+  chainId: number | null,
+  pushupsScore: number,
+  squatsScore: number,
+  wallet: WalletState
+): string | null {
+  // Check wallet connection
+  if (!wallet.isConnected || !address) {
+    return 'Wallet not connected. Please connect your wallet to continue.';
+  }
+
+  // Check network
+  if (!chainId) {
+    return 'Network not detected. Please check your wallet connection.';
+  }
+
+  // Check scores
+  if (!pushupsScore && !squatsScore) {
+    return 'No scores to submit. Complete some exercises first.';
+  }
+
+  if (pushupsScore < 0 || squatsScore < 0) {
+    return 'Invalid scores detected. Scores must be positive numbers.';
+  }
+
+  // Check provider availability
+  if (!wallet.provider) {
+    return 'Wallet provider not available. Please reconnect your wallet.';
+  }
+
+  return null; // All validations passed
+}
 
 interface SubmitScoreProps {
   score?: number;
@@ -49,7 +171,7 @@ export default function SubmitScore({
   // Determine if batch transactions are supported (only in Farcaster)
   const supportsBatch = isFarcasterMiniApp() ? true : null;
 
-  // Enhanced submission handler with wallet fallbacks
+  // ENHANCEMENT: Pre-submission validation
   const handleSubmit = async () => {
     console.log(
       'SubmitScoreWithWagmi: handleSubmit called with pushups:',
@@ -58,10 +180,19 @@ export default function SubmitScore({
       effectiveSquatsScore
     );
 
-    if (!address || !chainId || (!effectivePushupsScore && !effectiveSquatsScore)) {
-      console.log('SubmitScoreWithWagmi: Missing required parameters');
+    // CONSOLIDATION: Unified pre-submission validation
+    const validationError = validateSubmissionRequirements(
+      address,
+      chainId,
+      effectivePushupsScore,
+      effectiveSquatsScore,
+      wallet
+    );
+
+    if (validationError) {
+      console.log('SubmitScoreWithWagmi: Validation failed:', validationError);
       setSubmissionStatus('error');
-      toast.error('Missing required parameters');
+      toast.error(validationError);
       return;
     }
 
@@ -89,13 +220,8 @@ export default function SubmitScore({
         feeAmount = '0.001'; // 0.001 MON
       }
 
-      // Get the appropriate provider
-      const provider =
-        platform === 'farcaster'
-          ? farcasterProvider
-          : typeof window !== 'undefined'
-            ? window.ethereum
-            : null;
+      // ENHANCEMENT: Unified provider selection with validation
+      const provider = getValidatedProvider(platform, farcasterProvider, wallet);
 
       if (!provider) {
         throw new Error('No wallet provider available. Please connect your wallet.');
@@ -139,17 +265,9 @@ export default function SubmitScore({
       console.error('SubmitScoreWithWagmi: Submission error:', error);
       setSubmissionStatus('error');
 
-      let errorMessage = 'Submission failed';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-
-        // Simplified error handling
-        if (errorMessage.includes('user rejected')) {
-          errorMessage = 'Transaction rejected. Please approve the transaction to continue.';
-        }
-      }
-
-      toast.error(errorMessage);
+      // ENHANCEMENT: Comprehensive error classification and user-friendly messages
+      const userFriendlyError = classifySubmissionError(error);
+      toast.error(userFriendlyError);
     } finally {
       setIsLoading(false);
     }
