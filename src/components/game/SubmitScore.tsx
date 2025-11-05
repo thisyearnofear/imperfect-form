@@ -203,6 +203,9 @@ export default function SubmitScore({
       // Unified approach: Use Wagmi connection directly
       console.log('Wallet connected via unified PlatformContext, proceeding with submission...');
       // Simple network configuration
+      if (!chainId) {
+        throw new Error('Network not detected. Please check your wallet connection.');
+      }
       const networkConfig = getNetworkByChainId(chainId);
       if (!networkConfig) {
         throw new Error(`Unsupported chain ID: ${chainId}`);
