@@ -78,8 +78,22 @@ export default function EnhancedUserProfile({
   const identifier =
     userIdentifier || wallet.address || farcasterUser?.username || farcasterUser?.fid;
 
+  logger.info('EnhancedUserProfile identifier determination', {
+    userIdentifier,
+    walletAddress: wallet.address,
+    farcasterUsername: farcasterUser?.username,
+    farcasterFid: farcasterUser?.fid,
+    finalIdentifier: identifier,
+    identifierType: typeof identifier,
+  });
+
   useEffect(() => {
-    if (!identifier) return;
+    logger.info('EnhancedUserProfile useEffect triggered', { identifier });
+
+    if (!identifier) {
+      logger.warn('No identifier available for enhanced profile lookup');
+      return;
+    }
 
     const fetchProfile = async () => {
       setLoading(true);
@@ -99,8 +113,18 @@ export default function EnhancedUserProfile({
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load profile';
         setError(errorMessage);
-        logger.error('Failed to load enhanced profile', err);
-        toast.error('Failed to load enhanced profile');
+        logger.error('Failed to load enhanced profile', { error: err, identifier });
+
+        // Provide more specific error messages to the user
+        if (errorMessage.includes('404')) {
+          toast.error(
+            'Profile not found in Memory Protocol. This user may not have connected their identities yet.'
+          );
+        } else if (errorMessage.includes('API key')) {
+          toast.error('Memory Protocol API key error. Please check the API configuration.');
+        } else {
+          toast.error(`Failed to load enhanced profile: ${errorMessage}`);
+        }
       } finally {
         setLoading(false);
       }
