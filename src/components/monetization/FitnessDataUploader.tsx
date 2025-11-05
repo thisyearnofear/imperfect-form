@@ -158,6 +158,11 @@ export default function FitnessDataUploader({
     try {
       const client = getMemoryClient();
 
+      // Check if client is available
+      if (!client) {
+        throw new Error('Memory API not configured. Please set NEXT_PUBLIC_MEMORY_API_KEY');
+      }
+
       const uploadData: FitnessDataUpload = {
         userId: wallet.address!,
         dataType: formData.dataType,
