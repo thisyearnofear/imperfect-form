@@ -111,9 +111,24 @@ function EnhancedUserProfile({
         if (!client) {
           throw new Error('Memory API not configured. Enhanced profile features are disabled.');
         }
+        logger.info('About to call getEnhancedUserProfile', {
+          identifier,
+          walletAddress: wallet.address,
+          context: { walletAddress: wallet.address || undefined },
+        });
+
         const profileData = await client.getEnhancedUserProfile(identifier, {
           walletAddress: wallet.address || undefined,
         });
+
+        logger.info('Enhanced profile response received', {
+          profileData,
+          identitiesCount: profileData?.identities?.length,
+          totalFollowers: profileData?.socialStats?.totalFollowers,
+          platforms: profileData?.socialStats?.platforms?.length,
+          primaryIdentity: profileData?.primaryIdentity,
+        });
+
         setProfile(profileData);
 
         // Fetch earnings data if we have a wallet address

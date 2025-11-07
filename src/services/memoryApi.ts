@@ -408,11 +408,27 @@ class MemoryAPIClient {
       platforms: [...new Set(identityGraph.identities.map((id) => id.platform))],
     };
 
-    return {
+    const result = {
       identities: identityGraph.identities,
       primaryIdentity,
       socialStats,
     };
+
+    logger.info('Enhanced profile processing complete', {
+      identifier,
+      inputIdentityGraphSize: identityGraph.identities.length,
+      outputIdentitiesSize: result.identities.length,
+      calculatedTotalFollowers: result.socialStats.totalFollowers,
+      calculatedPlatforms: result.socialStats.platforms.length,
+      primaryIdentityPlatform: result.primaryIdentity?.platform,
+      socialStatsBreakdown: identityGraph.identities.map((id) => ({
+        platform: id.platform,
+        followers: id.social?.followers || 0,
+        username: id.username,
+      })),
+    });
+
+    return result;
   }
 }
 
