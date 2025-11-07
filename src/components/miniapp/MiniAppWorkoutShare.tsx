@@ -39,9 +39,11 @@ export function MiniAppWorkoutShare({
     setShareSuccess(false);
 
     try {
-      // Create workout share content
+      // Create workout share content with monetization messaging
       const shareContent = {
-        text: `Just completed ${reps} ${exerciseMode} in ${timeSpent} on Imperfect Form! 🏋️‍♂️`,
+        text: `Just completed ${reps} ${exerciseMode} in ${timeSpent} on Imperfect Form! 🏋️‍♂️💰
+
+Earning $MEM tokens for sharing my fitness data with the community. Join the movement!`,
         url: 'https://imperfectform.fun',
       };
       const success = await share(shareContent);

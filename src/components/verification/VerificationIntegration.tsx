@@ -98,81 +98,46 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
 
   return (
     <>
-      {/* Verification Prompt */}
+      {/* Streamlined Verification Prompt */}
       <div className={`verification-prompt ${className}`}>
-        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-4 rounded-lg border border-yellow-500/30 relative">
-          {/* Dismiss button for optional verification */}
+        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-3 rounded-lg border border-yellow-500/30 relative">
+          {/* Much more visible dismiss button */}
           <button
             onClick={onClose}
-            className="absolute top-2 right-2 text-yellow-200 hover:text-white transition-colors"
-            aria-label="Dismiss verification prompt"
+            className="absolute top-2 right-2 text-yellow-300 hover:text-white bg-black/30 hover:bg-black/60 rounded-full w-6 h-6 flex items-center justify-center text-lg transition-all duration-200 border border-yellow-500/50 hover:border-white/70"
+            aria-label="Skip verification"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            ×
           </button>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl">🏆</div>
-              <div>
-                <h4 className="font-bold text-yellow-200">Get Verified!</h4>
-                <p className="text-sm text-yellow-100">
-                  {countLoading ? (
-                    <span className="flex items-center">
-                      <span className="animate-pulse">Loading...</span>
-                    </span>
-                  ) : verifiedCount > 0 ? (
-                    <span className="animate-fade-in">
-                      Join <span className="font-semibold text-yellow-200">{verifiedCount}</span>{' '}
-                      verified athletes and earn your badge
-                    </span>
-                  ) : (
-                    <span className="animate-fade-in">Be among the first verified athletes!</span>
-                  )}
-                </p>
-              </div>
+          {/* Compact, visual-first design */}
+          <div className="text-center space-y-2">
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-xl">🏆</span>
+              <span className="text-green-400 text-sm font-bold">+10% Bonus Points</span>
             </div>
+
+            <h4 className="font-bold text-yellow-200 text-base">Get Verified Human Badge</h4>
+
             <button
               onClick={promptForVerification}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 text-sm"
+              className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg text-sm mt-2"
             >
-              {chainId && chainSupportsSelfProtocol(chainId) ? 'Verify Now' : 'Switch & Verify'}
+              {chainId && chainSupportsSelfProtocol(chainId)
+                ? '🚀 Verify Now'
+                : '🔄 Switch to Celo'}
             </button>
-          </div>
 
-          <div className="mt-3 text-xs text-yellow-100">
-            {countLoading ? (
-              <span className="animate-pulse">✨ Loading verification stats...</span>
-            ) : verifiedCount > 0 ? (
-              <span className="animate-fade-in">
-                ✨ One-time setup • 🏆{' '}
-                <span className="font-medium text-yellow-50">{verifiedCount}</span> humans verified
-                • ⚡ Instant badge
-                {!chainId || !chainSupportsSelfProtocol(chainId) ? ' • Requires Celo' : ''}
-              </span>
-            ) : (
-              <span className="animate-fade-in">
-                ✨ One-time setup • 🔒 Privacy-first • ⚡ Instant badge
-                {!chainId || !chainSupportsSelfProtocol(chainId) ? ' • Requires Celo' : ''}
-              </span>
-            )}
-          </div>
-
-          {/* Clear optional message */}
-          <div className="mt-3 text-xs text-gray-400 text-center">
-            Verification is optional. Close this prompt to continue.
+            {/* Ultra-compact stats */}
+            <div className="text-xs text-yellow-200/80">
+              {countLoading ? (
+                <span className="animate-pulse">Loading...</span>
+              ) : verifiedCount > 0 ? (
+                <span>{verifiedCount} verified • One-time setup</span>
+              ) : (
+                <span>Quick one-time setup</span>
+              )}
+            </div>
           </div>
         </div>
       </div>

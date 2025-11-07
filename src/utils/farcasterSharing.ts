@@ -15,6 +15,11 @@ export interface ShareContent {
   timeSpent: string;
   network?: string;
   imageUrl?: string;
+  earnings?: {
+    totalEarned: number;
+    weeklyEarnings: number;
+    dataQueries: number;
+  } | null;
 }
 
 export interface ShareResult {
@@ -183,9 +188,16 @@ export async function smartShare(
  * Generate share text based on content
  */
 function generateShareText(content: ShareContent): string {
-  const { reps, exerciseMode, timeSpent, network } = content;
+  const { reps, exerciseMode, timeSpent, network, earnings } = content;
 
-  let text = `I just completed ${reps} ${exerciseMode} in ${timeSpent} on Imperfect Form! 💪\n\nCome join the Onchain Olympics!`;
+  let text = `I just completed ${reps} ${exerciseMode} in ${timeSpent} on Imperfect Form! 💪`;
+
+  // Add earnings information if available
+  if (earnings && earnings.totalEarned > 0) {
+    text += `\n\n💰 Earning $${earnings.totalEarned.toFixed(4)} in $MEM tokens for sharing fitness data with the community!`;
+  }
+
+  text += `\n\nCome join the Onchain Olympics!`;
 
   if (network) {
     text += `\n\n#${network}`;

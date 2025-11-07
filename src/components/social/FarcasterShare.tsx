@@ -16,6 +16,11 @@ interface FarcasterShareProps {
   network?: string;
   isInMiniApp?: boolean;
   user?: PlatformUser | null;
+  earnings?: {
+    totalEarned: number;
+    weeklyEarnings: number;
+    dataQueries: number;
+  } | null;
 }
 
 export default function FarcasterShare({
@@ -25,6 +30,7 @@ export default function FarcasterShare({
   network,
   isInMiniApp = false,
   user = null,
+  earnings = null,
 }: FarcasterShareProps) {
   const { user: neynarUser, isAuthenticated } = useNeynarAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +56,8 @@ export default function FarcasterShare({
         exerciseMode,
         timeSpent,
         network,
-        imageUrl: `${baseUrl}/api/frames/workout/image?reps=${reps}&exerciseMode=${exerciseMode}&timeSpent=${timeSpent}`,
+        earnings,
+        imageUrl: `${baseUrl}/api/frames/workout/image?reps=${reps}&exerciseMode=${exerciseMode}&timeSpent=${timeSpent}${earnings ? `&totalEarned=${earnings.totalEarned}&dataQueries=${earnings.dataQueries}` : ''}`,
       };
 
       const result = await smartShare(shareContent, {

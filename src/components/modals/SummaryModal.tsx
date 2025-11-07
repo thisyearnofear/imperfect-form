@@ -9,6 +9,8 @@ import FarcasterShare from '@/components/social/FarcasterShare';
 import { SubmitScore } from '@/components/game';
 import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
 import { VerificationIntegration } from '@/components/verification';
+import { getMemoryClient } from '@/services/memoryApi';
+import { createRemoteLogger } from '@/utils/remoteLogger';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -42,12 +44,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   mode = 'pushups',
   address,
 }) => {
+  const logger = createRemoteLogger('SummaryModal');
   const { platform, wallet, user } = usePlatform();
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === 'farcaster';
   const [submissionStatus, setSubmissionStatus] = useState<
     'idle' | 'submitting' | 'success' | 'error'
   >('idle');
+  const [earnings, setEarnings] = useState<{
+    totalEarned: number;
+    weeklyEarnings: number;
+    dataQueries: number;
+  } | null>(null);
 
   // Debug logging for submission status changes
   React.useEffect(() => {
@@ -55,6 +63,33 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       console.log('SummaryModal: submissionStatus changed to', submissionStatus);
     }
   }, [submissionStatus]);
+
+  // Fetch earnings data when modal opens
+  React.useEffect(() => {
+    if (isOpen && walletAddress) {
+      const fetchEarnings = async () => {
+        try {
+          const client = getMemoryClient();
+          if (client) {
+            const earningsData = await client.getEarnings(walletAddress);
+            setEarnings({
+              totalEarned: earningsData.totalEarned,
+              weeklyEarnings: earningsData.weeklyEarnings,
+              dataQueries: earningsData.dataQueries,
+            });
+            logger.info('Earnings data fetched for workout completion', {
+              walletAddress,
+              earningsData,
+            });
+          }
+        } catch (error) {
+          logger.warn('Failed to fetch earnings data', { error, walletAddress });
+          // Don't show error to user, just silently fail
+        }
+      };
+      fetchEarnings();
+    }
+  }, [isOpen, walletAddress, logger]);
 
   // Keep modal open for verification after successful submission
   // User can manually close or verify first
@@ -225,6 +260,33 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </p>
               </div>
             )}
+
+            {/* Earnings Preview - Show after successful submission */}
+            {submissionStatus === 'success' && earnings && (
+              <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700/30 rounded-lg p-3">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <span className="text-green-400 text-lg">💰</span>
+                  <span className="text-sm font-semibold text-green-400">
+                    Data Monetization Active
+                  </span>
+                </div>
+                <p className="text-xs text-gray-300 text-center mb-2">
+                  Your fitness data is earning $MEM tokens through Memory Protocol
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-center">
+                  <div>
+                    <div className="text-green-300 font-medium">
+                      ${earnings.totalEarned.toFixed(4)}
+                    </div>
+                    <div className="text-gray-400">Total Earned</div>
+                  </div>
+                  <div>
+                    <div className="text-blue-300 font-medium">{earnings.dataQueries}</div>
+                    <div className="text-gray-400">Queries Served</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -240,6 +302,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 network={networkType} // Pass the direct network type (polygon, base, celo, monad)
                 isInMiniApp={isInMiniApp}
                 user={user}
+                earnings={earnings}
               />
 
               {/* Twitter sharing - only show outside mini app context */}

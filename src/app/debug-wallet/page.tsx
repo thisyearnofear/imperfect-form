@@ -10,176 +10,121 @@ export default function DebugWalletPage() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-yellow-400 mb-2">Wallet Debug Tools</h1>
-          <p className="text-gray-300">
-            Diagnose and fix wallet compatibility issues for score submission
-          </p>
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-[#fcb131] mb-1">Debug Center</h1>
+          <p className="text-gray-400 text-sm">Wallet & API Diagnostics</p>
         </div>
 
-        {/* Current Status */}
-        <div className="mb-8 p-4 bg-gray-800 border border-gray-600 rounded-lg">
-          <h2 className="text-xl font-semibold mb-3 text-white">Current Status</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="text-gray-400">Platform:</span>
-              <span className="ml-2 text-white font-medium">{platform}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Status & Memory API */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Quick Status */}
+            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+              <h2 className="text-lg font-semibold text-[#fcb131] mb-3">Quick Status</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div className="text-center">
+                  <div className="text-gray-400 text-xs">Platform</div>
+                  <div className="font-medium text-white">{platform}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-400 text-xs">Wallet</div>
+                  <div
+                    className={`font-medium ${wallet.isConnected ? 'text-green-400' : 'text-red-400'}`}
+                  >
+                    {wallet.isConnected ? 'Connected' : 'Disconnected'}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-400 text-xs">Network</div>
+                  <div className="font-medium text-white">
+                    {wallet.chainId ? `Chain ${wallet.chainId}` : 'Unknown'}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-400 text-xs">Credits</div>
+                  <div className="font-medium text-blue-400">95</div>
+                </div>
+              </div>
+              {wallet.address && (
+                <div className="mt-3 pt-3 border-t border-gray-700">
+                  <div className="text-xs text-gray-400">Address</div>
+                  <div className="font-mono text-white text-sm">
+                    {wallet.address.slice(0, 8)}...{wallet.address.slice(-6)}
+                  </div>
+                </div>
+              )}
             </div>
-            <div>
-              <span className="text-gray-400">Wallet:</span>
-              <span
-                className={`ml-2 font-medium ${
-                  wallet.isConnected ? 'text-green-400' : 'text-red-400'
-                }`}
-              >
-                {wallet.isConnected ? 'Connected' : 'Not Connected'}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-400">Network:</span>
-              <span className="ml-2 text-white font-medium">
-                {wallet.chainId ? `Chain ${wallet.chainId}` : 'Unknown'}
-              </span>
-            </div>
+
+            {/* Memory API Tester - Prominent */}
+            <MemoryAPITester />
           </div>
-          {wallet.address && (
-            <div className="mt-2 text-sm">
-              <span className="text-gray-400">Address:</span>
-              <span className="ml-2 text-white font-mono">
-                {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-              </span>
-            </div>
-          )}
-        </div>
 
-        {/* Troubleshooting Guide */}
-        <div className="mb-8">
-          <TroubleshootingGuide />
-        </div>
+          {/* Right Column - Diagnostics & Help */}
+          <div className="space-y-6">
+            {/* Wallet Diagnostics */}
+            <WalletDiagnostics />
 
-        {/* Wallet Diagnostics */}
-        <div className="mb-8">
-          <WalletDiagnostics />
-        </div>
-
-        {/* Memory API Tester */}
-        <div className="mb-8">
-          <MemoryAPITester />
-        </div>
-
-        {/* Network Information */}
-        <div className="mb-8 p-4 bg-gray-800 border border-gray-600 rounded-lg">
-          <h2 className="text-xl font-semibold mb-3 text-white">Supported Networks</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <div className="p-3 bg-gray-700 rounded">
-                <h3 className="font-medium text-blue-400">Base</h3>
-                <p className="text-gray-300">Chain ID: 8453</p>
-                <p className="text-gray-300">Best for: Farcaster Mini Apps</p>
-                <p className="text-gray-300">Recommended: Coinbase Wallet</p>
-              </div>
-              <div className="p-3 bg-gray-700 rounded">
-                <h3 className="font-medium text-purple-400">Polygon</h3>
-                <p className="text-gray-300">Chain ID: 137</p>
-                <p className="text-gray-300">Currency: MATIC</p>
-                <p className="text-gray-300">Low gas fees</p>
+            {/* Quick Troubleshooting */}
+            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+              <h3 className="font-semibold text-[#fcb131] mb-3">Quick Actions</h3>
+              <div className="space-y-2">
+                <button className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded transition-colors">
+                  Refresh Page
+                </button>
+                <button className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors">
+                  Wallet Diagnostics
+                </button>
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="p-3 bg-gray-700 rounded">
-                <h3 className="font-medium text-green-400">Celo</h3>
-                <p className="text-gray-300">Chain ID: 42220</p>
-                <p className="text-gray-300">Currency: CELO</p>
-                <p className="text-gray-300">Mobile-first blockchain</p>
-              </div>
-              <div className="p-3 bg-gray-700 rounded">
-                <h3 className="font-medium text-yellow-400">Monad Testnet</h3>
-                <p className="text-gray-300">Chain ID: 10143</p>
-                <p className="text-gray-300">Currency: MON (testnet)</p>
-                <p className="text-gray-300">Requires 0.001 MON fee</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Help Links */}
-        <div className="p-4 bg-gray-800 border border-gray-600 rounded-lg">
-          <h2 className="text-xl font-semibold mb-3 text-white">Help & Resources</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-medium text-yellow-400 mb-2">Wallet Setup</h3>
-              <ul className="space-y-1 text-sm text-gray-300">
-                <li>
-                  •{' '}
-                  <a
-                    href="https://metamask.io/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
-                  >
-                    Install MetaMask
-                  </a>
-                </li>
-                <li>
-                  •{' '}
-                  <a
-                    href="https://www.coinbase.com/wallet"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
-                  >
-                    Install Coinbase Wallet
-                  </a>
-                </li>
-                <li>
-                  •{' '}
-                  <a
-                    href="https://docs.base.org/using-base"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
-                  >
-                    Base Network Guide
-                  </a>
-                </li>
-              </ul>
+            {/* Network Info - Compact */}
+            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+              <h3 className="font-semibold text-[#fcb131] mb-3">Networks</h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-blue-400">Base</span>
+                  <span className="text-gray-400">8453</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-purple-400">Polygon</span>
+                  <span className="text-gray-400">137</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-400">Celo</span>
+                  <span className="text-gray-400">42220</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-yellow-400">Monad</span>
+                  <span className="text-gray-400">10143</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="font-medium text-yellow-400 mb-2">Farcaster</h3>
-              <ul className="space-y-1 text-sm text-gray-300">
-                <li>
-                  •{' '}
-                  <a
-                    href="https://warpcast.com/~/settings/wallet"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
-                  >
-                    Farcaster Wallet Settings
-                  </a>
-                </li>
-                <li>
-                  •{' '}
-                  <a
-                    href="https://docs.farcaster.xyz/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:underline"
-                  >
-                    Farcaster Documentation
-                  </a>
-                </li>
-              </ul>
+
+            {/* Help Links - Compact */}
+            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+              <h3 className="font-semibold text-[#fcb131] mb-3">Help</h3>
+              <div className="space-y-1 text-xs">
+                <a href="https://metamask.io/" className="block text-blue-400 hover:underline">
+                  MetaMask Setup
+                </a>
+                <a href="https://docs.base.org/" className="block text-blue-400 hover:underline">
+                  Base Network
+                </a>
+                <a href="https://memoryproto.co" className="block text-blue-400 hover:underline">
+                  Memory Protocol
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Back to App */}
-        <div className="text-center mt-8">
+        {/* Back to App - Compact */}
+        <div className="text-center mt-6">
           <a
             href="/"
-            className="inline-block px-6 py-3 bg-yellow-600 text-black font-bold rounded-lg hover:bg-yellow-700 transition-colors"
+            className="inline-block px-4 py-2 bg-[#fcb131] text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors text-sm"
           >
             ← Back to App
           </a>

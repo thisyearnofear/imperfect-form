@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui';
 import { MemoryButton, MemoryInput } from '@/components/ui/MemoryButton';
 import { getMemoryClient } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
+import { usePlatform } from '@/contexts/PlatformContext';
 import toast from 'react-hot-toast';
 
 const logger = createRemoteLogger('MemoryAPITester');
@@ -21,9 +22,10 @@ interface MemoryAPITesterProps {
 }
 
 export default function MemoryAPITester({ className = '' }: MemoryAPITesterProps) {
+  const { wallet } = usePlatform();
   const [loading, setLoading] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
-  const [testIdentifier, setTestIdentifier] = useState('jessepollak'); // Default test identifier
+  const [testIdentifier, setTestIdentifier] = useState(wallet?.address || 'jessepollak'); // Default to user's wallet
 
   const runTest = async (testType: string) => {
     setLoading(testType);
@@ -50,7 +52,9 @@ export default function MemoryAPITester({ className = '' }: MemoryAPITesterProps
           result = await client.getIdentityGraphByWallet(testIdentifier);
           break;
         case 'enhanced-profile':
-          result = await client.getEnhancedUserProfile(testIdentifier);
+          result = await client.getEnhancedUserProfile(testIdentifier, {
+            walletAddress: wallet?.address || undefined,
+          });
           break;
         default:
           throw new Error('Unknown test type');
@@ -70,98 +74,94 @@ export default function MemoryAPITester({ className = '' }: MemoryAPITesterProps
   };
 
   return (
-    <div className={`bg-gray-900 rounded-lg p-6 border border-gray-700 ${className}`}>
-      <h2 className="text-xl font-bold text-[#fcb131] mb-4">Memory API Tester</h2>
+    <div className={`bg-gray-900 rounded-lg p-5 border border-gray-700 ${className}`}>
+      <h2 className="text-lg font-bold text-[#fcb131] mb-4">Memory API Tester</h2>
 
       {/* Test Identifier Input */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-300 mb-2">
-          Test Identifier (username, wallet, or FID)
+          Identifier (username, wallet, or FID)
         </label>
         <MemoryInput
           type="text"
           value={testIdentifier}
           onChange={(e) => setTestIdentifier(e.target.value)}
-          placeholder="e.g., jessepollak, 0x..., or FID"
+          placeholder="e.g., papa, 0x55A5..., or 5254"
+          className="w-full"
         />
       </div>
 
       {/* Test Buttons */}
-      <div className="grid grid-cols-2 gap-2 mb-4">
-        <MemoryButton
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <button
           onClick={() => runTest('credits')}
           disabled={!!loading}
-          variant="secondary"
-          size="sm"
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors text-sm"
         >
-          {loading === 'credits' ? '...' : 'Test Credits'}
-        </MemoryButton>
-        <MemoryButton
+          {loading === 'credits' ? '...' : 'Credits'}
+        </button>
+        <button
           onClick={() => runTest('identity-farcaster')}
           disabled={!!loading}
-          variant="secondary"
-          size="sm"
-          className="bg-green-600 hover:bg-green-700 text-white"
+          className="px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors text-sm"
         >
-          {loading === 'identity-farcaster' ? '...' : 'Farcaster Identity'}
-        </MemoryButton>
-        <MemoryButton
+          {loading === 'identity-farcaster' ? '...' : 'Farcaster'}
+        </button>
+        <button
           onClick={() => runTest('identity-wallet')}
           disabled={!!loading}
-          variant="secondary"
-          size="sm"
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          className="px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors text-sm"
         >
-          {loading === 'identity-wallet' ? '...' : 'Wallet Identity'}
-        </MemoryButton>
-        <MemoryButton
+          {loading === 'identity-wallet' ? '...' : 'Wallet'}
+        </button>
+        <button
           onClick={() => runTest('enhanced-profile')}
           disabled={!!loading}
-          variant="secondary"
-          size="sm"
-          className="bg-orange-600 hover:bg-orange-700 text-white"
+          className="px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors text-sm"
         >
-          {loading === 'enhanced-profile' ? '...' : 'Enhanced Profile'}
-        </MemoryButton>
+          {loading === 'enhanced-profile' ? '...' : 'Profile'}
+        </button>
       </div>
 
       {/* Results Display */}
       {results && (
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold text-[#fcb131] mb-2">
-            Test Results: {results.testType}
-          </h3>
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-[#fcb131]">
+              Results:{' '}
+              {results.testType.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+            </h3>
+            <span
+              className={`text-xs px-2 py-1 rounded ${results.success ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}
+            >
+              {results.success ? 'Success' : 'Failed'}
+            </span>
+          </div>
 
           {results.success ? (
-            <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
-              <p className="text-green-400 font-medium mb-2">✅ Success!</p>
-              <pre className="text-xs text-gray-300 whitespace-pre-wrap overflow-x-auto max-h-60 overflow-y-auto">
+            <div className="bg-gray-800 rounded-lg p-3">
+              <pre className="text-xs text-gray-300 whitespace-pre-wrap overflow-x-auto max-h-48 overflow-y-auto">
                 {JSON.stringify(results.data, null, 2)}
               </pre>
             </div>
           ) : (
-            <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-              <p className="text-red-400 font-medium mb-2">❌ Failed</p>
+            <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
               <p className="text-red-300 text-sm">{results.error}</p>
             </div>
           )}
         </div>
       )}
 
-      {/* Quick Test Data */}
-      <div className="mt-6 p-4 bg-gray-800 rounded-lg">
-        <h4 className="font-semibold text-[#fcb131] mb-2">Quick Test Examples</h4>
-        <div className="text-sm text-gray-300 space-y-1">
-          <p>
-            <strong>Farcaster:</strong> jessepollak, veganbeef, rish
-          </p>
-          <p>
-            <strong>Wallet:</strong> 0x849151d7d0bf1f34b70d5cad5149d28cc2308bf1 (Jesse Pollak)
-          </p>
-          <p>
-            <strong>FID:</strong> 99 (Jesse Pollak)
-          </p>
+      {/* Quick Examples */}
+      <div className="p-3 bg-gray-800 rounded-lg">
+        <div className="text-xs text-gray-400 space-y-1">
+          <div>
+            <strong>Your Wallet:</strong> {wallet?.address?.slice(0, 10)}...
+            {wallet?.address?.slice(-8)}
+          </div>
+          <div>
+            <strong>Examples:</strong> papa, jessepollak, 0x8491...bf1
+          </div>
         </div>
       </div>
     </div>

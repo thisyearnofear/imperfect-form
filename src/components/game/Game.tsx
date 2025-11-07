@@ -50,6 +50,66 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     'instructions'
   );
 
+  // Swipe gesture handling for mobile
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchEndRef = useRef<{ x: number; y: number } | null>(null);
+  const { isMobile } = useDeviceDetect();
+
+  const minSwipeDistance = 80;
+  const maxVerticalSwipe = 120;
+
+  // Touch event handlers for swipe gestures
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isMobile) return;
+      touchEndRef.current = null;
+      touchStartRef.current = {
+        x: e.targetTouches[0].clientX,
+        y: e.targetTouches[0].clientY,
+      };
+    },
+    [isMobile]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isMobile || !touchStartRef.current) return;
+      touchEndRef.current = {
+        x: e.targetTouches[0].clientX,
+        y: e.targetTouches[0].clientY,
+      };
+    },
+    [isMobile]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isMobile || !touchStartRef.current || !touchEndRef.current) return;
+
+    const distanceX = touchStartRef.current.x - touchEndRef.current.x;
+    const distanceY = touchStartRef.current.y - touchEndRef.current.y;
+    const isLeftSwipe = distanceX > minSwipeDistance;
+    const isRightSwipe = distanceX < -minSwipeDistance;
+    const isVerticalSwipe = Math.abs(distanceY) > maxVerticalSwipe;
+
+    // Don't trigger swipe if there's significant vertical movement
+    if (isVerticalSwipe) return;
+
+    const modes: ('instructions' | 'settings' | 'profile')[] = [
+      'instructions',
+      'settings',
+      'profile',
+    ];
+    const currentIndex = modes.indexOf(currentMode);
+
+    if (isLeftSwipe && currentIndex < modes.length - 1) {
+      // Swipe left → next mode
+      setCurrentMode(modes[currentIndex + 1]);
+    } else if (isRightSwipe && currentIndex > 0) {
+      // Swipe right → previous mode
+      setCurrentMode(modes[currentIndex - 1]);
+    }
+  }, [isMobile, currentMode]);
+
   const { lockLandscape, unlock } = useOrientationLock();
   const [isLandscapeLocked, setIsLandscapeLocked] = useState(false);
 
@@ -135,7 +195,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
-  const { isMobile } = useDeviceDetect(); // Use our enhanced device detection hook
 
   // Check if fullscreen is available in current context (not restricted by iframe)
   const isFullscreenAvailable = useMemo(() => {
@@ -470,7 +529,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   return (
     <>
-      <div id="game-container" ref={gameRef}>
+      <div
+        id="game-container"
+        ref={gameRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className={isMobile ? 'touch-manipulation' : ''}
+      >
         {/* Top-right control buttons */}
         <div className="absolute top-2 right-2 flex gap-1 z-20">
           {/* Orientation Lock Toggle - Mobile Only */}

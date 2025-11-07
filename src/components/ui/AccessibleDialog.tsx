@@ -82,10 +82,14 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
 
           {!preventClose && (
             <DialogPrimitive.Close
-              className="absolute right-4 top-4 text-[#fcb131] hover:text-white text-xl font-bold cursor-pointer bg-transparent border-none"
-              aria-label="Close"
+              className="absolute right-3 top-3 text-[#fcb131] hover:text-white text-2xl font-bold cursor-pointer bg-black/50 hover:bg-black/80 rounded-full w-8 h-8 flex items-center justify-center border border-[#fcb131] hover:border-white transition-all duration-200 z-10"
+              aria-label="Close dialog"
+              style={{
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+                lineHeight: '1',
+              }}
             >
-              &times;
+              ×
             </DialogPrimitive.Close>
           )}
         </DialogPrimitive.Content>
