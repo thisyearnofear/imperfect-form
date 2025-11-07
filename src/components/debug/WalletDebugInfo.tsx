@@ -1,11 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  getEthereumProvider,
-  isWalletAvailable,
-  getAvailableProviders,
-} from '@/utils/ethereumProviderSafety';
+import { getEthereumProvider, getAvailableProviders } from '@/utils/ethereumProviderSafety';
 
 interface DebugInfo {
   hasEthereum: boolean;
@@ -43,15 +39,16 @@ export default function WalletDebugInfo() {
           else ethereumType = 'Unknown';
         }
 
-        // Check available wallets
+        // Check available wallets using getAvailableProviders
         const availableWallets: string[] = [];
-        if (isWalletAvailable('metamask')) availableWallets.push('MetaMask');
-        if (isWalletAvailable('coinbase')) availableWallets.push('Coinbase');
-        if (isWalletAvailable('trust')) availableWallets.push('Trust');
-        if (isWalletAvailable('rainbow')) availableWallets.push('Rainbow');
+        const allProviders = getAvailableProviders();
 
-        // Get all providers
-        const providers = getAvailableProviders();
+        allProviders.forEach((provider: any) => {
+          if (provider.isMetaMask) availableWallets.push('MetaMask');
+          if (provider.isCoinbaseWallet) availableWallets.push('Coinbase');
+          if (provider.isTrust) availableWallets.push('Trust');
+          if (provider.isRainbow) availableWallets.push('Rainbow');
+        });
 
         // Device info
         const userAgent = navigator.userAgent;
@@ -63,7 +60,7 @@ export default function WalletDebugInfo() {
           hasEthereum,
           ethereumType,
           availableWallets,
-          providers: providers.map((p: any) => ({
+          providers: allProviders.map((p: any) => ({
             isMetaMask: (p as any).isMetaMask,
             isCoinbaseWallet: (p as any).isCoinbaseWallet,
             isTrust: (p as any).isTrust,

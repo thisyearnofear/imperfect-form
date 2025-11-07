@@ -28,11 +28,15 @@ export function getAvailableProviders() {
 }
 
 // DEPRECATED: Legacy functions - use providerConflictResolver directly
-// These are kept only for backward compatibility
+// These are kept only for backward compatibility but will show warnings
 export function isWalletAvailable(
   walletType: 'metamask' | 'coinbase' | 'trust' | 'rainbow'
 ): boolean {
-  console.warn('isWalletAvailable is deprecated, use getAvailableProviders() instead');
+  // Only show warning in development to avoid console spam
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('isWalletAvailable is deprecated, use getAvailableProviders() instead');
+  }
+
   const { safelyAccessEthereum } = require('./providerConflictResolver');
   const ethereum = safelyAccessEthereum();
   if (!ethereum) return false;

@@ -269,10 +269,24 @@ class MemoryAPIClient {
       throw new Error(`Failed to fetch identity data for ${identifier}`);
     }
 
+    // Ensure identityGraph and identities exist before processing
+    if (!identityGraph || !identityGraph.identities || !Array.isArray(identityGraph.identities)) {
+      logger.warn('Invalid or empty identity graph received', { identityGraph, identifier });
+      return {
+        identities: [],
+        primaryIdentity: undefined,
+        socialStats: {
+          totalFollowers: 0,
+          platforms: [],
+        },
+      };
+    }
+
     // Find primary identity (usually the one with most sources or Farcaster)
     const primaryIdentity =
-      identityGraph.identities.find((id) => id.platform === 'farcaster' || id.sources.length > 0) ||
-      identityGraph.identities[0];
+      identityGraph.identities.find(
+        (id) => id.platform === 'farcaster' || id.sources?.length > 0
+      ) || identityGraph.identities[0];
 
     // Calculate social stats
     const socialStats = {

@@ -102,7 +102,7 @@ export default function SocialChallengeCreator({
               const identityGraph = await client.getIdentityGraphByFarcasterId(
                 parseInt(connection)
               );
-              const primaryIdentity = identityGraph.identities.find(
+              const primaryIdentity = identityGraph?.identities?.find(
                 (id) => id.platform === 'farcaster'
               );
 
