@@ -131,13 +131,21 @@ class MemoryAPIClient {
       throw new Error(`Invalid wallet address format: ${walletAddress}`);
     }
 
+    // Normalize wallet address to lowercase for consistent API calls
+    const normalizedAddress = walletAddress.toLowerCase();
+    logger.info('Normalized wallet address for API call', {
+      original: walletAddress,
+      normalized: normalizedAddress,
+    });
+
     try {
-      return await this.request(`/identities/wallet/${walletAddress}`);
+      return await this.request(`/identities/wallet/${normalizedAddress}`);
     } catch (error) {
       logger.error('Failed to fetch identity graph by wallet', {
         error,
         walletAddress,
-        url: `${this.baseUrl}/identities/wallet/${walletAddress}`,
+        normalizedAddress,
+        url: `${this.baseUrl}/identities/wallet/${normalizedAddress}`,
       });
       throw error;
     }
