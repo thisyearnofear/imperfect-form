@@ -132,12 +132,12 @@ class MemoryAPIClient {
     }
 
     try {
-      return await this.request(`/identity-graph/wallet/${walletAddress}`);
+      return await this.request(`/identities/wallet/${walletAddress}`);
     } catch (error) {
       logger.error('Failed to fetch identity graph by wallet', {
         error,
         walletAddress,
-        url: `${this.baseUrl}/identity-graph/wallet/${walletAddress}`,
+        url: `${this.baseUrl}/identities/wallet/${walletAddress}`,
       });
       throw error;
     }
@@ -145,17 +145,17 @@ class MemoryAPIClient {
 
   async getIdentityGraphByFarcasterUsername(username: string): Promise<IdentityGraph> {
     logger.info('Fetching identity graph by Farcaster username', { username });
-    return this.request(`/identity-graph/farcaster/${username}`);
+    return this.request(`/identities/farcaster/${username}`);
   }
 
   async getIdentityGraphByFarcasterId(fid: number): Promise<IdentityGraph> {
     logger.info('Fetching identity graph by Farcaster ID', { fid });
-    return this.request(`/identity-graph/farcaster/id/${fid}`);
+    return this.request(`/identities/farcaster/id/${fid}`);
   }
 
   async getIdentityGraphByTwitterUsername(username: string): Promise<IdentityGraph> {
     logger.info('Fetching identity graph by Twitter username', { username });
-    return this.request(`/identity-graph/twitter/${username}`);
+    return this.request(`/identities/twitter/${username}`);
   }
 
   // Social Graph Methods

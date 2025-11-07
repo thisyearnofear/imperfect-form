@@ -102,9 +102,9 @@ This document outlines the integration of Memory Protocol into the Imperfect For
 
 #### Identity Graph Endpoints
 
-- `GET /identity-graph/wallet/{address}` - Get user identities by wallet
-- `GET /identity-graph/farcaster/{username}` - Get by Farcaster username
-- `GET /identity-graph/twitter/{username}` - Get by Twitter username
+- `GET /identities/wallet/{address}` - Get user identities by wallet
+- `GET /identities/farcaster/{username}` - Get by Farcaster username
+- `GET /identities/twitter/{username}` - Get by Twitter username
 
 #### Social Graph Endpoints
 
