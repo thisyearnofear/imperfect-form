@@ -16,20 +16,24 @@
     transform: rotateX(0deg);
     opacity: 1;
   }
+
   25% {
     transform: rotateX(-90deg);
     opacity: 0.7;
   }
+
   50% {
     transform: rotateX(-180deg);
     opacity: 0.3;
     filter: blur(1px);
   }
+
   75% {
     transform: rotateX(-270deg);
     opacity: 0.7;
     filter: blur(0px);
   }
+
   100% {
     transform: rotateX(-360deg);
     opacity: 1;
@@ -45,7 +49,8 @@
   margin: 0 4px;
   background: linear-gradient(135deg, rgba(252, 177, 49, 0.15), rgba(252, 177, 49, 0.08));
   border: 1px solid rgba(252, 177, 49, 0.3);
-  color: #fbbf24; /* Better contrast yellow */
+  color: #fbbf24;
+  /* Better contrast yellow */
 }
 
 .settings-instruction.clickable:hover {
@@ -61,13 +66,15 @@
 }
 
 .settings-instruction .button-text {
-  color: #fbbf24; /* Bright yellow for better contrast */
+  color: #fbbf24;
+  /* Bright yellow for better contrast */
   text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
   font-weight: 600;
 }
 
 .settings-instruction .split-flap-text {
-  color: #fbbf24; /* Bright yellow for values */
+  color: #fbbf24;
+  /* Bright yellow for values */
   font-weight: 600;
 }
 
@@ -81,6 +88,7 @@
   from {
     text-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
   }
+
   to {
     text-shadow: 0 0 2px currentColor, 0 0 5px currentColor;
   }
@@ -104,10 +112,12 @@
     opacity: 0;
     width: 0%;
   }
+
   50% {
     opacity: 1;
     width: 100%;
   }
+
   100% {
     opacity: 0;
     width: 100%;
@@ -115,23 +125,40 @@
 }
 
 /* Staggered animation delays for multiple elements */
-.split-flap-text:nth-child(1) { animation-delay: 0ms; }
-.split-flap-text:nth-child(2) { animation-delay: 50ms; }
-.split-flap-text:nth-child(3) { animation-delay: 100ms; }
-.split-flap-text:nth-child(4) { animation-delay: 150ms; }
-.split-flap-text:nth-child(5) { animation-delay: 200ms; }
+.split-flap-text:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.split-flap-text:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.split-flap-text:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.split-flap-text:nth-child(4) {
+  animation-delay: 150ms;
+}
+
+.split-flap-text:nth-child(5) {
+  animation-delay: 200ms;
+}
 
 /* Enhanced button text styling for settings mode */
 .settings-instruction .button-text.start {
-  color: #10b981; /* Green for enabled/start */
+  color: #10b981;
+  /* Green for enabled/start */
 }
 
 .settings-instruction .button-text.stop {
-  color: #ef4444; /* Red for disabled/stop */
+  color: #ef4444;
+  /* Red for disabled/stop */
 }
 
 .settings-instruction .button-text.reset {
-  color: #f59e0b; /* Amber for neutral/reset */
+  color: #f59e0b;
+  /* Amber for neutral/reset */
 }
 
 /* Profile mode specific styling - improved contrast */
@@ -146,18 +173,39 @@
 }
 
 .profile-instruction .button-text {
-  color: #c4b5fd; /* Much lighter purple for better contrast */
+  color: #c4b5fd;
+  /* Much lighter purple for better contrast */
   text-shadow: 0 0 10px rgba(196, 181, 253, 0.4);
   font-weight: 600;
 }
 
+.profile-instruction .button-text.nav-highlight {
+  color: #60a5fa;
+  /* Blue for navigation */
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.6);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.profile-instruction .button-text.memory-highlight {
+  color: #10b981;
+  /* Green for memory protocol */
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Ensure profile text is highly visible */
 .profile-instruction {
-  color: #e5e7eb; /* Light gray for main text */
+  color: #e5e7eb;
+  /* Light gray for main text */
 }
 
 .profile-instruction .split-flap-text {
-  color: #c4b5fd; /* Light purple for values */
+  color: #c4b5fd;
+  /* Light purple for values */
   font-weight: 600;
 }
 
@@ -167,11 +215,11 @@
     animation: none;
     transition: opacity 0.3s ease;
   }
-  
+
   .split-flap-text.flipping {
     opacity: 0.7;
   }
-  
+
   .settings-instruction .button-text {
     animation: none;
   }
@@ -183,7 +231,7 @@
     padding: 4px 6px;
     margin: 2px;
   }
-  
+
   .split-flap-text {
     font-size: 0.9em;
   }
@@ -195,7 +243,7 @@
     background-color: rgba(255, 255, 255, 0.1);
     border-color: #fcb131;
   }
-  
+
   .settings-instruction .button-text {
     text-shadow: none;
     font-weight: bold;
@@ -248,35 +296,91 @@
 
 /* Tech bounce for AI emoji */
 @keyframes techBounce {
-  0%, 100% { transform: scale(1.2) rotate(5deg); }
-  25% { transform: scale(1.4) rotate(-2deg); }
-  50% { transform: scale(1.3) rotate(8deg); }
-  75% { transform: scale(1.35) rotate(0deg); }
+
+  0%,
+  100% {
+    transform: scale(1.2) rotate(5deg);
+  }
+
+  25% {
+    transform: scale(1.4) rotate(-2deg);
+  }
+
+  50% {
+    transform: scale(1.3) rotate(8deg);
+  }
+
+  75% {
+    transform: scale(1.35) rotate(0deg);
+  }
 }
 
 /* Blockchain spin for trophy emoji */
 @keyframes blockchainSpin {
-  0% { transform: scale(1.2) rotate(5deg); }
-  50% { transform: scale(1.4) rotate(180deg); }
-  100% { transform: scale(1.2) rotate(360deg); }
+  0% {
+    transform: scale(1.2) rotate(5deg);
+  }
+
+  50% {
+    transform: scale(1.4) rotate(180deg);
+  }
+
+  100% {
+    transform: scale(1.2) rotate(360deg);
+  }
 }
 
 /* Challenge wiggle for target emoji */
 @keyframes challengeWiggle {
-  0%, 100% { transform: scale(1.2) rotate(5deg); }
-  20% { transform: scale(1.3) rotate(-3deg); }
-  40% { transform: scale(1.25) rotate(7deg); }
-  60% { transform: scale(1.35) rotate(-2deg); }
-  80% { transform: scale(1.28) rotate(4deg); }
+
+  0%,
+  100% {
+    transform: scale(1.2) rotate(5deg);
+  }
+
+  20% {
+    transform: scale(1.3) rotate(-3deg);
+  }
+
+  40% {
+    transform: scale(1.25) rotate(7deg);
+  }
+
+  60% {
+    transform: scale(1.35) rotate(-2deg);
+  }
+
+  80% {
+    transform: scale(1.28) rotate(4deg);
+  }
 }
 
 /* Energy zap for lightning emoji */
 @keyframes energyZap {
-  0% { transform: scale(1.2) rotate(5deg); filter: brightness(1.3); }
-  25% { transform: scale(1.5) rotate(-10deg); filter: brightness(1.8) hue-rotate(30deg); }
-  50% { transform: scale(1.1) rotate(15deg); filter: brightness(2) hue-rotate(-20deg); }
-  75% { transform: scale(1.4) rotate(-5deg); filter: brightness(1.5) hue-rotate(10deg); }
-  100% { transform: scale(1.2) rotate(5deg); filter: brightness(1.3); }
+  0% {
+    transform: scale(1.2) rotate(5deg);
+    filter: brightness(1.3);
+  }
+
+  25% {
+    transform: scale(1.5) rotate(-10deg);
+    filter: brightness(1.8) hue-rotate(30deg);
+  }
+
+  50% {
+    transform: scale(1.1) rotate(15deg);
+    filter: brightness(2) hue-rotate(-20deg);
+  }
+
+  75% {
+    transform: scale(1.4) rotate(-5deg);
+    filter: brightness(1.5) hue-rotate(10deg);
+  }
+
+  100% {
+    transform: scale(1.2) rotate(5deg);
+    filter: brightness(1.3);
+  }
 }
 
 .feature-instruction .button-text.fun-highlight {
@@ -312,28 +416,34 @@
 }
 
 .feature-desc.ai-highlight {
-  color: #10b981; /* Emerald for AI/tech */
+  color: #10b981;
+  /* Emerald for AI/tech */
   text-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
   animation: techGlow 3s ease-in-out infinite;
 }
 
 .feature-desc.blockchain-highlight {
-  color: #8b5cf6; /* Purple for blockchain */
+  color: #8b5cf6;
+  /* Purple for blockchain */
   text-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
   animation: blockchainPulse 2.5s ease-in-out infinite;
 }
 
 .feature-desc.challenge-highlight {
-  color: #f59e0b; /* Amber for challenges */
+  color: #f59e0b;
+  /* Amber for challenges */
   text-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
   animation: challengeShimmer 3.5s ease-in-out infinite;
 }
 
 /* Tech-themed glow animation */
 @keyframes techGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
   }
+
   50% {
     text-shadow: 0 0 18px rgba(16, 185, 129, 0.8), 0 0 25px rgba(16, 185, 129, 0.3);
   }
@@ -341,10 +451,13 @@
 
 /* Blockchain pulse animation */
 @keyframes blockchainPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     text-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
     transform: scale(1);
   }
+
   50% {
     text-shadow: 0 0 16px rgba(139, 92, 246, 0.7), 0 0 24px rgba(139, 92, 246, 0.3);
     transform: scale(1.02);
@@ -357,14 +470,17 @@
     text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
     filter: hue-rotate(0deg);
   }
+
   33% {
     text-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
     filter: hue-rotate(10deg);
   }
+
   66% {
     text-shadow: 0 0 12px rgba(245, 158, 11, 0.7);
     filter: hue-rotate(-10deg);
   }
+
   100% {
     text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
     filter: hue-rotate(0deg);
@@ -377,6 +493,7 @@
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -388,9 +505,11 @@
     transform: scale(0.3);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.1);
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -398,10 +517,13 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     text-shadow: 0 0 10px rgba(252, 177, 49, 0.6);
     transform: scale(1);
   }
+
   50% {
     text-shadow: 0 0 20px rgba(252, 177, 49, 0.9), 0 0 30px rgba(252, 177, 49, 0.4);
     transform: scale(1.02);
@@ -414,15 +536,15 @@
     animation: none;
     transition: opacity 0.3s ease;
   }
-  
+
   .split-flap-text.flipping {
     opacity: 0.7;
   }
-  
+
   .settings-instruction .button-text {
     animation: none;
   }
-  
+
   .feature-instruction .feature-emoji,
   .feature-instruction .button-text.fun-highlight,
   .feature-desc.ai-highlight,
@@ -430,12 +552,12 @@
   .feature-desc.challenge-highlight {
     animation: none;
   }
-  
+
   .feature-instruction {
     opacity: 1;
     transform: none;
   }
-  
+
   .feature-instruction:hover .feature-emoji {
     transform: none;
     filter: none;

@@ -46,9 +46,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   const [autoFs, setAutoFs] = useState<boolean>(true);
 
-  const [currentMode, setCurrentMode] = useState<'instructions' | 'settings' | 'profile'>(
-    'instructions'
-  );
+  const [currentMode, setCurrentMode] = useState<
+    'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail'
+  >('instructions');
 
   // Swipe gesture handling for mobile
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -94,10 +94,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     // Don't trigger swipe if there's significant vertical movement
     if (isVerticalSwipe) return;
 
-    const modes: ('instructions' | 'settings' | 'profile')[] = [
+    const modes: ('instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail')[] = [
       'instructions',
       'settings',
       'profile',
+      'memory',
+      'memory-detail',
     ];
     const currentIndex = modes.indexOf(currentMode);
 

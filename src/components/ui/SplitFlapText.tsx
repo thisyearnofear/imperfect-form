@@ -2,13 +2,10 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import '@/styles/split-flap.css';
-import dynamic from 'next/dynamic';
+import { usePlatform } from '@/contexts/PlatformContext';
+import { getMemoryClient, type IdentityNode } from '@/services/memoryApi';
 
-// Dynamically import to avoid SSR issues with Memory API
-const EnhancedUserProfile = dynamic(() => import('@/components/profile/EnhancedUserProfile'), {
-  ssr: false,
-  loading: () => null,
-});
+// Memory API integration is now handled inline
 
 interface SplitFlapTextProps {
   text: string;
@@ -58,7 +55,7 @@ const SplitFlapText: React.FC<SplitFlapTextProps> = ({
   );
 };
 
-type InstructionMode = 'instructions' | 'settings' | 'profile';
+type InstructionMode = 'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail';
 
 interface InstructionItem {
   key: string;
@@ -93,6 +90,43 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 }) => {
   const [animationStep, setAnimationStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const { wallet, user: farcasterUser } = usePlatform();
+  const [memoryData, setMemoryData] = useState<{
+    identities: IdentityNode[];
+    socialStats: { totalFollowers: number; platforms: string[] };
+  } | null>(null);
+  const [loadingMemory, setLoadingMemory] = useState(false);
+
+  // Load memory data when entering memory mode
+  useEffect(() => {
+    if (mode === 'memory' && wallet?.address && !memoryData && !loadingMemory) {
+      const loadMemoryData = async () => {
+        setLoadingMemory(true);
+        try {
+          const client = getMemoryClient();
+          if (client && wallet.address) {
+            const walletIdentityGraph = await client.getIdentityGraphByWallet(wallet.address);
+            if (Array.isArray(walletIdentityGraph)) {
+              const identities = walletIdentityGraph;
+              const socialStats = {
+                totalFollowers: identities.reduce(
+                  (total: number, id: IdentityNode) => total + (id.social?.followers || 0),
+                  0
+                ),
+                platforms: [...new Set(identities.map((id: IdentityNode) => id.platform))],
+              };
+              setMemoryData({ identities, socialStats });
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to load memory data:', error);
+        } finally {
+          setLoadingMemory(false);
+        }
+      };
+      loadMemoryData();
+    }
+  }, [mode, wallet?.address, memoryData, loadingMemory]);
 
   // Configuration-driven instruction sets with optimized memoization
   const currentInstructions = useMemo(() => {
@@ -154,7 +188,29 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         },
         {
           key: 'd',
-          text: isLoadingStats ? 'Fetching stats...' : formattedStats?.summary || 'Ready to start?',
+          text: 'MORE →',
+          desc: '',
+          hideKey: true,
+        },
+      ],
+      memory: [
+        {
+          key: 'd',
+          text: '← BACK',
+          desc: '',
+          hideKey: true,
+        },
+        {
+          key: 'e',
+          text: 'MORE →',
+          desc: '',
+          hideKey: true,
+        },
+      ],
+      'memory-detail': [
+        {
+          key: 'd',
+          text: '← BACK',
           desc: '',
           hideKey: true,
         },
@@ -196,14 +252,34 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         }
         break;
 
+      case 'memory-detail':
+        if (key === 'd') {
+          // Switch back to memory view
+          onModeChange('memory');
+        }
+        break;
+
       case 'profile':
         if (key === 'd') {
-          // Refresh stats when clicking the summary line
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('leaderboardCache');
-            localStorage.removeItem('leaderboardCacheTimestamp');
-            window.location.reload(); // Force refresh to reload data
-          }
+          // Switch to memory profile view
+          onModeChange('memory');
+        }
+        break;
+
+      case 'memory':
+        if (key === 'd') {
+          // Switch back to profile view
+          onModeChange('profile');
+        } else if (key === 'e') {
+          // Switch to memory detail view
+          onModeChange('memory-detail');
+        }
+        break;
+
+      case 'memory-detail':
+        if (key === 'd') {
+          // Switch back to memory view
+          onModeChange('memory');
         }
         break;
 
@@ -215,10 +291,153 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
   return (
     <div id="instructions" style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Enhanced User Profile for profile mode */}
-      {mode === 'profile' && (
-        <div className="mb-4">
-          <EnhancedUserProfile compact className="max-w-md mx-auto" />
+      {/* Memory profile content - styled like settings mode */}
+      {mode === 'memory' && (
+        <div className="space-y-1">
+          <p className="profile-instruction">
+            <span className="button-text start">WALLET</span> ={' '}
+            <span
+              className="text-[#fcb131] font-mono cursor-pointer hover:text-yellow-400 transition-colors"
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  wallet?.address || '0x55A5705453Ee82c742274154136Fce8149597058'
+                )
+              }
+            >
+              {wallet?.address
+                ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
+                : '0x55A5...7058'}
+            </span>
+          </p>
+          <p className="profile-instruction">
+            <span className="button-text stop">🟣 FARCASTER</span> ={' '}
+            <span
+              className="text-purple-300 cursor-pointer hover:text-purple-100 transition-colors"
+              onClick={() =>
+                window.open(`https://farcaster.xyz/${farcasterUser?.username || 'papa'}`, '_blank')
+              }
+            >
+              {memoryData
+                ? memoryData.identities
+                    .find((id) => id.platform === 'farcaster')
+                    ?.social?.followers?.toLocaleString() || '0'
+                : 'Loading...'}{' '}
+              followers
+            </span>
+          </p>
+          <p className="profile-instruction">
+            <span className="button-text reset">🐦 TWITTER</span> ={' '}
+            <span
+              className="text-blue-300 cursor-pointer hover:text-blue-100 transition-colors"
+              onClick={() =>
+                window.open(
+                  `https://x.com/${memoryData?.identities.find((id) => id.platform === 'twitter')?.username || 'unknown'}`,
+                  '_blank'
+                )
+              }
+            >
+              {memoryData
+                ? memoryData.identities
+                    .find((id) => id.platform === 'twitter')
+                    ?.social?.followers?.toLocaleString() || '0'
+                : 'Loading...'}{' '}
+              followers
+            </span>
+          </p>
+          <p className="profile-instruction">
+            <span className="button-text fun-highlight">👁️ LENS</span> ={' '}
+            <span
+              className="text-cyan-300 cursor-pointer hover:text-cyan-100 transition-colors"
+              onClick={() =>
+                window.open(
+                  `https://hey.xyz/u/${memoryData?.identities.find((id) => id.platform === 'lens')?.username || 'unknown'}`,
+                  '_blank'
+                )
+              }
+            >
+              {memoryData
+                ? memoryData.identities
+                    .find((id) => id.platform === 'lens')
+                    ?.social?.followers?.toLocaleString() || '0'
+                : 'Loading...'}{' '}
+              followers
+            </span>
+          </p>
+        </div>
+      )}
+
+      {/* Memory detail view - additional identity information */}
+      {mode === 'memory-detail' && (
+        <div className="space-y-1">
+          {memoryData?.identities
+            .filter((id) => id.platform === 'solana')
+            .map((identity, idx) => (
+              <p key={`solana-${idx}`} className="profile-instruction">
+                <span className="button-text start">SOLANA</span> ={' '}
+                <span
+                  className="text-[#fcb131] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
+                  onClick={() => navigator.clipboard.writeText(identity.id)}
+                >
+                  {identity.id.slice(0, 10)}...{identity.id.slice(-4)}
+                </span>
+              </p>
+            ))}
+          {memoryData?.identities
+            .filter((id) => id.platform === 'ens')
+            .map((identity, idx) => (
+              <p key={`ens-${idx}`} className="profile-instruction">
+                <span className="button-text stop">ENS</span> ={' '}
+                <span
+                  className="text-[#fcb131] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
+                  onClick={() => navigator.clipboard.writeText(identity.id)}
+                >
+                  {identity.id}
+                </span>
+              </p>
+            ))}
+          {memoryData?.identities
+            .filter((id) => id.platform === 'basenames')
+            .map((identity, idx) => (
+              <p key={`basename-${idx}`} className="profile-instruction">
+                <span className="button-text reset">BASENAME</span> ={' '}
+                <span
+                  className="text-[#fcb131] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
+                  onClick={() => navigator.clipboard.writeText(identity.id)}
+                >
+                  {identity.id}
+                </span>
+              </p>
+            ))}
+          {memoryData?.identities
+            .filter((id) => id.platform === 'zora')
+            .map((identity, idx) => (
+              <p key={`zora-${idx}`} className="profile-instruction">
+                <span className="button-text fun-highlight">ZORA</span> ={' '}
+                <a
+                  href={identity.url || `https://zora.co/@${identity.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-400 hover:text-orange-300 underline transition-colors px-2 py-1 bg-orange-900/20 hover:bg-orange-700/30 rounded border border-orange-600/30"
+                >
+                  {identity.username || identity.id}
+                </a>
+              </p>
+            ))}
+          {memoryData?.identities
+            .filter((id) => id.platform === 'github')
+            .map((identity, idx) => (
+              <p key={`github-${idx}`} className="profile-instruction">
+                <span className="button-text fun-highlight">GITHUB</span> ={' '}
+                <a
+                  href={identity.url || `https://github.com/${identity.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-300 hover:text-white underline transition-colors px-2 py-1 bg-gray-900/20 hover:bg-gray-700/30 rounded border border-gray-600/30"
+                >
+                  {identity.username || identity.id}
+                </a>
+              </p>
+            ))}
         </div>
       )}
 
@@ -232,10 +451,20 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
                 ? 'settings-instruction clickable'
                 : ''
           }`}
-          onClick={() => handleItemClick(instruction.key)}
+          onClick={() => {
+            if (instruction.key === 'd' && mode === 'memory') {
+              // Handle both BACK and MORE clicks on the same line
+              // The click handler will determine which part was clicked
+              handleItemClick(instruction.key);
+            } else {
+              handleItemClick(instruction.key);
+            }
+          }}
           style={{
             cursor:
-              mode === 'settings' && (instruction.key === 'a' || instruction.key === 'd')
+              (mode === 'settings' && (instruction.key === 'a' || instruction.key === 'd')) ||
+              (mode === 'profile' && instruction.key === 'd') ||
+              (mode === 'memory' && (instruction.key === 'd' || instruction.key === 'e'))
                 ? 'pointer'
                 : 'default',
             transition: 'all 0.3s ease',
@@ -257,10 +486,17 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
                 : instruction.key === 'b'
                   ? 'stop'
                   : instruction.key === 'c'
-                    ? 'reset'
+                    ? mode === 'memory'
+                      ? 'memory-highlight'
+                      : 'reset'
                     : instruction.key === '⚡'
                       ? 'fun-highlight'
-                      : ''
+                      : instruction.key === 'd' &&
+                          (mode === 'profile' || mode === 'memory' || mode === 'memory-detail')
+                        ? 'nav-highlight'
+                        : instruction.key === 'e' && mode === 'memory'
+                          ? 'nav-highlight'
+                          : ''
             }`}
           >
             <SplitFlapText
@@ -271,17 +507,24 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           </span>
           {instruction.desc && (
             <>
-              {' = '}
+              {' '}
               <span
-                className={`feature-desc ${
+                className={`feature-desc cursor-pointer ${
                   instruction.key === '🏋️'
                     ? 'ai-highlight'
                     : instruction.key === '🏆'
                       ? 'blockchain-highlight'
                       : instruction.key === '🎯'
                         ? 'challenge-highlight'
-                        : ''
+                        : instruction.key === 'e' && mode === 'memory'
+                          ? 'text-green-400 hover:text-green-300 underline transition-colors'
+                          : ''
                 }`}
+                onClick={() => {
+                  if (instruction.key === 'e' && mode === 'memory') {
+                    onModeChange('memory-detail');
+                  }
+                }}
               >
                 <SplitFlapText
                   text={instruction.desc}
