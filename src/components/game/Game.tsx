@@ -37,9 +37,10 @@ declare global {
 
 interface GameProps {
   thirdwebAddress?: string;
+  profileSearchTarget?: string;
 }
 
-const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
+const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => {
   // --- Fullscreen integration ---
   const gameRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen(gameRef);
@@ -47,8 +48,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [autoFs, setAutoFs] = useState<boolean>(true);
 
   const [currentMode, setCurrentMode] = useState<
-    'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail'
+    'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail' | 'profile-search'
   >('instructions');
+
+  // Profile search state
+  const [targetUser, setTargetUser] = useState<string | undefined>(undefined);
 
   // Swipe gesture handling for mobile
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -94,13 +98,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     // Don't trigger swipe if there's significant vertical movement
     if (isVerticalSwipe) return;
 
-    const modes: ('instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail')[] = [
-      'instructions',
-      'settings',
-      'profile',
-      'memory',
-      'memory-detail',
-    ];
+    const modes: (
+      | 'instructions'
+      | 'settings'
+      | 'profile'
+      | 'memory'
+      | 'memory-detail'
+      | 'profile-search'
+    )[] = ['instructions', 'settings', 'profile', 'memory', 'memory-detail', 'profile-search'];
     const currentIndex = modes.indexOf(currentMode);
 
     if (isLeftSwipe && currentIndex < modes.length - 1) {
@@ -133,6 +138,22 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Fetch user statistics from leaderboard data
   const { formattedStats, isLoading: statsLoading } = useUserStats(finalAddress);
+
+  // Handle profile search
+  const handleProfileSearch = useCallback((identifier: string) => {
+    console.log('🔍 Searching for profile:', identifier);
+    setTargetUser(identifier);
+    setCurrentMode('profile-search');
+  }, []);
+
+  // Handle external profile search target (from leaderboard clicks)
+  useEffect(() => {
+    if (profileSearchTarget) {
+      console.log('🔍 External profile search triggered:', profileSearchTarget);
+      setTargetUser(profileSearchTarget);
+      setCurrentMode('profile-search');
+    }
+  }, [profileSearchTarget]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -272,9 +293,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       window.addEventListener('resize', handleResize);
       window.addEventListener('orientationchange', handleResize);
 
+      // Handle profile search events from leaderboard clicks
+      const handleProfileSearchEvent = (event: Event) => {
+        const customEvent = event as CustomEvent;
+        if (customEvent.detail?.identifier) {
+          console.log('🔍 Profile search event received:', customEvent.detail.identifier);
+          handleProfileSearch(customEvent.detail.identifier);
+        }
+      };
+
+      window.addEventListener('profileSearch', handleProfileSearchEvent);
+
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('orientationchange', handleResize);
+        window.removeEventListener('profileSearch', handleProfileSearchEvent);
       };
     }
   }, []);
@@ -634,6 +667,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               isFullscreenAvailable={isFullscreenAvailable}
               formattedStats={formattedStats}
               isLoadingStats={statsLoading}
+              targetUser={targetUser}
+              onProfileSearch={handleProfileSearch}
             />
           )}
 

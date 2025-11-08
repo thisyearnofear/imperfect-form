@@ -2,11 +2,22 @@
 
 import React, { useState } from 'react';
 import '@/styles/leaderboard.css';
+import '@/styles/expanded-leaderboard.css';
 import { shortenAddress } from '@/utils/formatters';
 import { Dialog } from '@/components/ui';
 import { Score } from '@/types';
 import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
 import VerificationBadge from '@/components/verification/VerificationBadge';
+import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
+import {
+  getNetworkStyling,
+  getMedalStyle,
+  aggregateScoresAcrossNetworks,
+  sortAggregatedScores,
+  getHoverEffects,
+  getGoldenGlow,
+} from '@/utils/leaderboardUtils';
+import { batchResolveFarcasterProfiles, type FarcasterProfile } from '@/utils/neynarResolver';
 
 interface ExpandedLeaderboardModalProps {
   pushupLeaderboard: Score[];
@@ -14,6 +25,8 @@ interface ExpandedLeaderboardModalProps {
   displayNames: Record<string, string>;
   isOpen: boolean;
   onClose: () => void;
+  // New prop for profile viewing
+  onViewProfile?: (userAddress: string) => void;
 }
 
 const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
@@ -22,12 +35,16 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
   displayNames,
   isOpen,
   onClose,
+  onViewProfile,
 }) => {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [breakdownType, setBreakdownType] = useState<'pushups' | 'squats' | null>(null);
   const [progressiveDisplayNames, setProgressiveDisplayNames] =
     useState<Record<string, string>>(displayNames);
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [farcasterProfiles, setFarcasterProfiles] = useState<
+    Record<string, FarcasterProfile | null>
+  >({});
 
   // Get all unique user addresses for verification checking
   const allUserAddresses = React.useMemo(() => {
@@ -46,39 +63,33 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
     setProgressiveDisplayNames(displayNames);
   }, [displayNames]);
 
+  // Resolve Farcaster profiles for all users
+  React.useEffect(() => {
+    if (isOpen && allUserAddresses.length > 0) {
+      batchResolveFarcasterProfiles(allUserAddresses).then((profilesMap) => {
+        setFarcasterProfiles(Object.fromEntries(profilesMap));
+      });
+    }
+  }, [isOpen, allUserAddresses]);
+
   if (!isOpen) return null;
 
-  // Aggregate scores across networks for each user
-  const aggregateScores = (leaderboard: Score[]) => {
-    const combined: Record<string, { totalScore: number; networks: Record<string, number> }> = {};
-    leaderboard.forEach((entry) => {
-      // Filter by verification status if enabled
-      if (showVerifiedOnly && !verificationStatuses[entry.user]) {
-        return;
-      }
-
-      if (!combined[entry.user]) {
-        combined[entry.user] = { totalScore: 0, networks: {} };
-      }
-      combined[entry.user].totalScore += entry.score;
-      if (!combined[entry.user].networks[entry.network]) {
-        combined[entry.user].networks[entry.network] = 0;
-      }
-      combined[entry.user].networks[entry.network] += entry.score;
-    });
-    return combined;
+  // Filter leaderboards by verification status if enabled
+  const filterLeaderboard = (leaderboard: Score[]) => {
+    if (!showVerifiedOnly) return leaderboard;
+    return leaderboard.filter((entry) => verificationStatuses[entry.user]);
   };
 
-  const pushupAggregated = aggregateScores(pushupLeaderboard);
-  const squatAggregated = aggregateScores(squatLeaderboard);
+  const filteredPushupLeaderboard = filterLeaderboard(pushupLeaderboard);
+  const filteredSquatLeaderboard = filterLeaderboard(squatLeaderboard);
+
+  // Aggregate scores across networks for each user
+  const pushupAggregated = aggregateScoresAcrossNetworks(filteredPushupLeaderboard);
+  const squatAggregated = aggregateScoresAcrossNetworks(filteredSquatLeaderboard);
 
   // Sort users by total score
-  const sortedPushupUsers = Object.entries(pushupAggregated)
-    .sort(([, a], [, b]) => b.totalScore - a.totalScore)
-    .map(([user, data]) => ({ user, ...data }));
-  const sortedSquatUsers = Object.entries(squatAggregated)
-    .sort(([, a], [, b]) => b.totalScore - a.totalScore)
-    .map(([user, data]) => ({ user, ...data }));
+  const sortedPushupUsers = sortAggregatedScores(pushupAggregated);
+  const sortedSquatUsers = sortAggregatedScores(squatAggregated);
 
   const handleUserClick = (user: string, type: 'pushups' | 'squats') => {
     setSelectedUser(user);
@@ -90,365 +101,327 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
     setBreakdownType(null);
   };
 
-  // Network color mapping for consistency
-  const getNetworkColor = (network: string) => {
-    switch (network) {
-      case 'polygon':
-        return 'bg-purple-500';
-      case 'base':
-        return 'bg-blue-500';
-      case 'monad':
-        return 'bg-gray-500';
-      case 'celo':
-        return 'bg-[#fcb131]';
-      default:
-        return 'bg-gray-400';
+  // Handle profile view with consistent behavior
+  const handleProfileView = (userAddress: string) => {
+    if (onViewProfile) {
+      onViewProfile(userAddress);
     }
+    onClose(); // Close modal when switching to profile view
   };
 
-  const getNetworkName = (network: string) => {
-    switch (network) {
-      case 'polygon':
-        return 'Polygon';
-      case 'base':
-        return 'Base';
-      case 'monad':
-        return 'Monad';
-      case 'celo':
-        return 'Celo';
-      default:
-        return network;
-    }
+  // Get dominant network for a user (network with highest score)
+  const getDominantNetwork = (networks: Record<string, number>) => {
+    if (Object.keys(networks).length === 0) return 'base';
+    return Object.entries(networks).sort(([, a], [, b]) => b - a)[0][0];
   };
 
   return (
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title="🏆 Onchain Olympians Leaderboard 🏆"
+      title="🏆 Onchain Olympians 🏆"
       description="Out of difficulties grow miracles"
       maxWidth="900px"
     >
-      {/* Header with consistent theming */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-[#fcb131]">🏆 Full Leaderboard</h2>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
-            className="px-4 py-2 rounded-lg font-bold transition-all duration-200 flex items-center justify-center"
-            title={showVerifiedOnly ? 'Show all users' : 'Show verified users only'}
-            style={{
-              backgroundColor: showVerifiedOnly ? '#10b981' : '#fcb131',
-              color: '#000000',
-              fontWeight: 'bold',
-              border: '2px solid white',
-              boxShadow: showVerifiedOnly
-                ? '0 0 15px rgba(16,185,129,0.5)'
-                : '0 0 10px rgba(252,177,49,0.3)',
-              minWidth: '140px',
-              textAlign: 'center',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {showVerifiedOnly ? '✓ Verified Only' : '🔍 Show Verified'}
-          </button>
+      {/* Compact Header with main leaderboard aesthetic */}
+      <div className="bg-black/80 border-2 border-[#fcb131] rounded-lg p-4 mb-4 shadow-[0_0_20px_rgba(252,177,49,0.5)]">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-[#fcb131]">🏆 Leaderboard</h2>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
+              className="px-3 py-1 rounded font-bold transition-all duration-200 text-xs shadow"
+              title={showVerifiedOnly ? 'Show all users' : 'Show verified users only'}
+              style={{
+                backgroundColor: showVerifiedOnly ? '#10b981' : '#fcb131',
+                color: '#000000',
+                border: '1px solid white',
+                boxShadow: showVerifiedOnly
+                  ? '0 0 8px rgba(16,185,129,0.3)'
+                  : '0 0 6px rgba(252,177,49,0.2)',
+              }}
+            >
+              {showVerifiedOnly ? '✓ Verified' : '🔍 Verified'}
+            </button>
 
-          <button
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.reload();
-              }
-            }}
-            className="bg-[#fcb131] hover:bg-[#f39c12] text-black px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-lg border-2 border-[#fcb131]"
-            title="Refresh leaderboard"
-          >
-            🔄 Refresh
-          </button>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.reload();
+                }
+              }}
+              className="bg-[#fcb131] hover:bg-[#f39c12] text-black px-3 py-1 rounded font-bold transition-all duration-200 text-xs shadow border border-[#fcb131]"
+              title="Refresh leaderboard"
+            >
+              🔄 Refresh
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Consistent with main leaderboard styling */}
-      <div className="bg-black/80 border-2 border-[#fcb131] rounded-lg p-4 mb-6 shadow-[0_0_20px_rgba(252,177,49,0.5)]">
-        <p className="text-[#fcb131] font-bold text-center text-lg">
-          🏆 Compete globally and earn your place in the Onchain Olympics! 🏆
-        </p>
-      </div>
-
-      {/* Push-ups Leaderboard */}
-      <div className="mb-8 bg-black/20 rounded-lg p-4 md:p-6 border border-[#fcb131]/30">
-        <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-[#fcb131] text-center border-b-2 border-[#fcb131] pb-2">
+      {/* Push-ups Leaderboard - Compact styling */}
+      <div className="mb-4 bg-black/20 rounded-lg p-2 md:p-3 border border-[#fcb131]/30 shadow-[0_0_10px_rgba(252,177,49,0.3)] expanded-leaderboard-container">
+        <h3 className="text-sm md:text-base font-bold mb-2 text-[#fcb131] text-center border-b border-[#fcb131]/50 pb-1 section-header section-title">
           💪 Push-ups Champions 💪
         </h3>
 
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto bg-black/60 border border-[#fcb131]/30 rounded-lg">
-          <table className="min-w-full">
-            <thead>
-              <tr className="border-b-2 border-[#fcb131]">
-                <th className="px-4 py-3 text-[#fcb131] font-bold">#</th>
-                <th className="px-4 py-3 text-[#fcb131] font-bold">Athlete</th>
-                <th className="px-4 py-3 text-[#fcb131] font-bold">Total Score</th>
-                <th className="px-4 py-3 text-[#fcb131] font-bold">Networks</th>
-              </tr>
-            </thead>
+        {/* Desktop Table View - Enhanced with main leaderboard styling */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="min-w-full expanded-leaderboard-table">
             <tbody>
-              {sortedPushupUsers.slice(0, 10).map((entry, i) => (
-                <tr
-                  key={`pushup-${entry.user}-${i}`}
-                  className={`text-center border-b border-[#fcb131]/20 last:border-none hover:bg-[#fcb131]/10 transition-colors cursor-pointer ${
-                    verificationStatuses[entry.user]
-                      ? 'bg-[#10b981]/10 border-l-4 border-l-[#10b981]'
-                      : i === 0
-                        ? 'bg-[#fcb131]/20'
-                        : i === 1
-                          ? 'bg-[#fcb131]/15'
-                          : i === 2
-                            ? 'bg-[#fcb131]/10'
-                            : ''
-                  }`}
-                  onClick={() => handleUserClick(entry.user, 'pushups')}
-                >
-                  <td className="px-4 py-3 font-bold text-[#fcb131]" style={{ color: '#fcb131' }}>
-                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center space-x-2">
-                      <span
-                        className={`font-bold ${
-                          verificationStatuses[entry.user] ? 'text-[#10b981]' : 'text-[#fcb131]'
-                        }`}
-                        style={{
-                          color: verificationStatuses[entry.user] ? '#10b981' : '#fcb131',
-                        }}
-                      >
-                        {progressiveDisplayNames[entry.user] || shortenAddress(entry.user)}
-                      </span>
-                      <VerificationBadge
-                        isVerified={verificationStatuses[entry.user] || false}
-                        size="sm"
-                      />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-bold text-[#fcb131] text-lg">{entry.totalScore}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center space-x-1">
-                      {Object.entries(entry.networks).map(([network, score]) => (
-                        <div
-                          key={network}
-                          className={`w-4 h-4 rounded-full ${getNetworkColor(
-                            network
-                          )} border border-white/20`}
-                          title={`${getNetworkName(network)}: ${score}`}
+              {sortedPushupUsers.slice(0, 5).map((entry, i) => {
+                const medalStyle = getMedalStyle(i);
+                const dominantNetwork = getDominantNetwork(entry.networks);
+                const networkStyle = getNetworkStyling(dominantNetwork);
+
+                return (
+                  <tr
+                    key={`pushup-${entry.user}-${i}`}
+                    className={`text-center transition-all duration-300 ${getHoverEffects()} ${
+                      medalStyle.bg
+                    } ${networkStyle.borderLeft} hover:${getGoldenGlow()}`}
+                    style={{
+                      backgroundColor:
+                        i < 3
+                          ? `${medalStyle.bg.replace('bg-', '').replace('/20', '')}20`
+                          : 'rgba(0, 0, 0, 0.4)',
+                    }}
+                  >
+                    <td className={`rank-cell ${medalStyle.textColor}`}>
+                      <div className="medal-display">
+                        <span className="medal-icon">{medalStyle.medal}</span>
+                        <span className="rank-number">{i + 1}</span>
+                      </div>
+                    </td>
+                    <td className="profile-cell">
+                      <div className="profile-display-compact">
+                        <ProfileDisplay
+                          userAddress={entry.user}
+                          displayName={
+                            progressiveDisplayNames[entry.user] || shortenAddress(entry.user)
+                          }
+                          farcasterProfile={farcasterProfiles[entry.user]}
+                          isVerified={verificationStatuses[entry.user] || false}
+                          onClick={() => handleProfileView(entry.user)}
+                          size="sm"
                         />
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                    <td className={`score-cell ${medalStyle.textColor}`}>
+                      <div className="score-display">{entry.totalScore}</div>
+                    </td>
+                    <td className="network-cell">
+                      <div className="network-indicator">
+                        <div className={`network-dot ${networkStyle.bg}`} />
+                        <span className={networkStyle.text}>{networkStyle.name}</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Mobile Card View - Optimized for small screens */}
-        <div className="md:hidden space-y-3 px-2">
-          {sortedPushupUsers.slice(0, 10).map((entry, i) => (
-            <div
-              key={`pushup-mobile-${entry.user}-${i}`}
-              className={`bg-black/80 border rounded-lg p-3 cursor-pointer hover:bg-[#fcb131]/10 transition-colors ${
-                verificationStatuses[entry.user]
-                  ? 'border-[#10b981] bg-[#10b981]/10 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
-                  : i === 0
-                    ? 'border-[#fcb131] bg-[#fcb131]/10'
-                    : 'border-[#fcb131]/50'
-              }`}
-              onClick={() => handleUserClick(entry.user, 'pushups')}
-            >
-              <div className="flex justify-between items-center w-full">
-                <div className="flex items-center space-x-2 flex-1 min-w-0">
-                  <span
-                    className="text-lg flex-shrink-0 text-[#fcb131] font-bold"
-                    style={{ color: '#fcb131' }}
-                  >
-                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-1">
-                      <div
-                        className={`font-bold text-xs truncate ${
-                          verificationStatuses[entry.user] ? 'text-[#10b981]' : 'text-[#fcb131]'
-                        }`}
-                        style={{
-                          color: verificationStatuses[entry.user] ? '#10b981' : '#fcb131',
-                        }}
-                      >
-                        {progressiveDisplayNames[entry.user] || shortenAddress(entry.user)}
-                      </div>
-                      <VerificationBadge
+        {/* Mobile Card View - Compact styling */}
+        <div className="md:hidden space-y-2 px-1">
+          {sortedPushupUsers.slice(0, 10).map((entry, i) => {
+            const medalStyle = getMedalStyle(i);
+            const dominantNetwork = getDominantNetwork(entry.networks);
+            const networkStyle = getNetworkStyling(dominantNetwork);
+
+            return (
+              <div
+                key={`pushup-mobile-${entry.user}-${i}`}
+                className={`expanded-leaderboard-mobile-card border rounded cursor-pointer transition-all duration-300 ${getHoverEffects()} ${
+                  verificationStatuses[entry.user]
+                    ? `border-[#10b981] bg-[#10b981]/10 ${getGoldenGlow('subtle')}`
+                    : medalStyle.border
+                } ${medalStyle.bg} ${getGoldenGlow()}`}
+                onClick={() => handleUserClick(entry.user, 'pushups')}
+                style={{
+                  borderColor: verificationStatuses[entry.user]
+                    ? '#10b981'
+                    : i === 0
+                      ? '#fcb131'
+                      : i === 1
+                        ? '#9ca3af'
+                        : i === 2
+                          ? '#ea580c'
+                          : '#fcb131',
+                }}
+              >
+                <div className="card-content">
+                  <div className="medal-section">
+                    <span className={`text-base font-bold ${medalStyle.textColor}`}>
+                      {medalStyle.medal}
+                    </span>
+                  </div>
+                  <div className="profile-section">
+                    <div className="profile-display-compact">
+                      <ProfileDisplay
+                        userAddress={entry.user}
+                        displayName={
+                          progressiveDisplayNames[entry.user] || shortenAddress(entry.user)
+                        }
+                        farcasterProfile={farcasterProfiles[entry.user]}
                         isVerified={verificationStatuses[entry.user] || false}
+                        onClick={() => handleProfileView(entry.user)}
                         size="sm"
                       />
                     </div>
-                    <div className="flex space-x-1 mt-1">
-                      {Object.entries(entry.networks).map(([network, score]) => (
-                        <div
-                          key={network}
-                          className={`w-2 h-2 rounded-full ${getNetworkColor(
-                            network
-                          )} flex-shrink-0`}
-                          title={`${getNetworkName(network)}: ${score}`}
-                        />
-                      ))}
+                    <div className="network-indicator">
+                      <div className={`network-dot ${networkStyle.bg}`} />
+                      <span className={networkStyle.text}>{networkStyle.name}</span>
+                    </div>
+                  </div>
+                  <div className="score-section">
+                    <div className={`score-display ${medalStyle.textColor}`}>
+                      {entry.totalScore}
                     </div>
                   </div>
                 </div>
-                <div className="text-[#fcb131] font-bold text-lg flex-shrink-0 ml-2">
-                  {entry.totalScore}
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Squats Leaderboard */}
-      <div className="mb-6 bg-black/20 rounded-lg p-4 md:p-6 border border-[#fcb131]/30">
-        <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-[#fcb131] text-center border-b-2 border-[#fcb131] pb-2">
+      {/* Squats Leaderboard - Compact styling */}
+      <div className="mb-4 bg-black/20 rounded-lg p-2 md:p-3 border border-[#00a651]/30 shadow-[0_0_10px_rgba(0,166,81,0.3)] expanded-leaderboard-container">
+        <h3 className="text-sm md:text-base font-bold mb-2 text-[#00a651] text-center border-b border-[#00a651]/50 pb-1 section-header section-title">
           🏋️ Squats Champions 🏋️
         </h3>
 
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto bg-black/60 border border-[#fcb131]/30 rounded-lg">
+        {/* Desktop Table View - Enhanced with main leaderboard styling */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full">
-            <thead>
-              <tr className="border-b-2 border-[#fcb131]">
-                <th className="px-4 py-3 text-[#fcb131] font-bold">#</th>
-                <th className="px-4 py-3 text-[#fcb131] font-bold">Athlete</th>
-                <th className="px-4 py-3 text-[#fcb131] font-bold">Total Score</th>
-                <th className="px-4 py-3 text-[#fcb131] font-bold">Networks</th>
-              </tr>
-            </thead>
             <tbody>
-              {sortedSquatUsers.slice(0, 10).map((entry, i) => (
-                <tr
-                  key={`squat-${entry.user}-${i}`}
-                  className={`text-center border-b border-[#fcb131]/20 last:border-none hover:bg-[#fcb131]/10 transition-colors cursor-pointer ${
-                    verificationStatuses[entry.user]
-                      ? 'bg-[#10b981]/10 border-l-4 border-l-[#10b981]'
-                      : i === 0
-                        ? 'bg-[#fcb131]/20'
-                        : i === 1
-                          ? 'bg-[#fcb131]/15'
-                          : i === 2
-                            ? 'bg-[#fcb131]/10'
-                            : ''
-                  }`}
-                  onClick={() => handleUserClick(entry.user, 'squats')}
-                >
-                  <td className="px-4 py-3 font-bold text-[#fcb131]" style={{ color: '#fcb131' }}>
-                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center space-x-2">
-                      <span
-                        className={`font-bold ${
-                          verificationStatuses[entry.user] ? 'text-[#10b981]' : 'text-[#fcb131]'
-                        }`}
-                        style={{
-                          color: verificationStatuses[entry.user] ? '#10b981' : '#fcb131',
-                        }}
-                      >
-                        {progressiveDisplayNames[entry.user] || shortenAddress(entry.user)}
-                      </span>
-                      <VerificationBadge
-                        isVerified={verificationStatuses[entry.user] || false}
-                        size="sm"
-                      />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-bold text-[#fcb131] text-lg">{entry.totalScore}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center space-x-1">
-                      {Object.entries(entry.networks).map(([network, score]) => (
-                        <div
-                          key={network}
-                          className={`w-4 h-4 rounded-full ${getNetworkColor(
-                            network
-                          )} border border-white/20`}
-                          title={`${getNetworkName(network)}: ${score}`}
+              {sortedSquatUsers.slice(0, 5).map((entry, i) => {
+                const medalStyle = getMedalStyle(i);
+                const dominantNetwork = getDominantNetwork(entry.networks);
+                const networkStyle = getNetworkStyling(dominantNetwork);
+
+                return (
+                  <tr
+                    key={`squat-${entry.user}-${i}`}
+                    className={`text-center transition-all duration-300 ${getHoverEffects()} ${
+                      medalStyle.bg
+                    } ${networkStyle.borderLeft} hover:${getGoldenGlow()}`}
+                    style={{
+                      backgroundColor:
+                        i < 3
+                          ? `${medalStyle.bg.replace('bg-', '').replace('/20', '')}20`
+                          : 'rgba(0, 0, 0, 0.4)',
+                    }}
+                  >
+                    <td className={`px-1 py-1 font-bold text-xs ${medalStyle.textColor}`}>
+                      <div className="flex items-center justify-center space-x-1">
+                        <span className="text-sm">{medalStyle.medal}</span>
+                        <span className="text-xs">{i + 1}</span>
+                      </div>
+                    </td>
+                    <td className="px-1 py-1">
+                      <div className="flex items-center justify-start">
+                        <ProfileDisplay
+                          userAddress={entry.user}
+                          displayName={
+                            progressiveDisplayNames[entry.user] || shortenAddress(entry.user)
+                          }
+                          farcasterProfile={farcasterProfiles[entry.user]}
+                          isVerified={verificationStatuses[entry.user] || false}
+                          onClick={() => handleProfileView(entry.user)}
+                          size="sm"
                         />
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                    <td className={`px-1 py-1 font-bold text-center ${medalStyle.textColor}`}>
+                      <div className="flex items-center justify-center">
+                        <span className="text-sm font-bold">{entry.totalScore}</span>
+                      </div>
+                    </td>
+                    <td className="px-1 py-1">
+                      <div className="flex items-center justify-end space-x-1">
+                        <div
+                          className={`w-2 h-2 rounded-full ${networkStyle.bg} border border-white/30`}
+                        />
+                        <span className={`font-bold text-xs ${networkStyle.text}`}>
+                          {networkStyle.name}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Mobile Card View - Optimized for small screens */}
+        {/* Mobile Card View - Enhanced with main leaderboard styling */}
         <div className="md:hidden space-y-3 px-2">
-          {sortedSquatUsers.slice(0, 10).map((entry, i) => (
-            <div
-              key={`squat-mobile-${entry.user}-${i}`}
-              className={`bg-black/80 border rounded-lg p-3 cursor-pointer hover:bg-[#fcb131]/10 transition-colors ${
-                verificationStatuses[entry.user]
-                  ? 'border-[#10b981] bg-[#10b981]/10 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
-                  : i === 0
-                    ? 'border-[#fcb131] bg-[#fcb131]/10'
-                    : 'border-[#fcb131]/50'
-              }`}
-              onClick={() => handleUserClick(entry.user, 'squats')}
-            >
-              <div className="flex justify-between items-center w-full">
-                <div className="flex items-center space-x-2 flex-1 min-w-0">
-                  <span
-                    className="text-lg flex-shrink-0 text-[#fcb131] font-bold"
-                    style={{ color: '#fcb131' }}
-                  >
-                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-1">
-                      <div
-                        className={`font-bold text-xs truncate ${
-                          verificationStatuses[entry.user] ? 'text-[#10b981]' : 'text-[#fcb131]'
-                        }`}
-                        style={{
-                          color: verificationStatuses[entry.user] ? '#10b981' : '#fcb131',
-                        }}
-                      >
-                        {progressiveDisplayNames[entry.user] || shortenAddress(entry.user)}
-                      </div>
-                      <VerificationBadge
+          {sortedSquatUsers.slice(0, 10).map((entry, i) => {
+            const medalStyle = getMedalStyle(i);
+            const dominantNetwork = getDominantNetwork(entry.networks);
+            const networkStyle = getNetworkStyling(dominantNetwork);
+
+            return (
+              <div
+                key={`squat-mobile-${entry.user}-${i}`}
+                className={`expanded-leaderboard-mobile-card border rounded cursor-pointer transition-all duration-300 ${getHoverEffects()} ${
+                  verificationStatuses[entry.user]
+                    ? `border-[#10b981] bg-[#10b981]/10 ${getGoldenGlow('subtle')}`
+                    : medalStyle.border
+                } ${medalStyle.bg} ${getGoldenGlow()}`}
+                onClick={() => handleUserClick(entry.user, 'squats')}
+                style={{
+                  borderColor: verificationStatuses[entry.user]
+                    ? '#10b981'
+                    : i === 0
+                      ? '#fcb131'
+                      : i === 1
+                        ? '#9ca3af'
+                        : i === 2
+                          ? '#ea580c'
+                          : '#fcb131',
+                }}
+              >
+                <div className="card-content">
+                  <div className="medal-section">
+                    <span className={`text-base font-bold ${medalStyle.textColor}`}>
+                      {medalStyle.medal}
+                    </span>
+                  </div>
+                  <div className="profile-section">
+                    <div className="profile-display-compact">
+                      <ProfileDisplay
+                        userAddress={entry.user}
+                        displayName={
+                          progressiveDisplayNames[entry.user] || shortenAddress(entry.user)
+                        }
+                        farcasterProfile={farcasterProfiles[entry.user]}
                         isVerified={verificationStatuses[entry.user] || false}
+                        onClick={() => handleProfileView(entry.user)}
                         size="sm"
                       />
                     </div>
-                    <div className="flex space-x-1 mt-1">
-                      {Object.entries(entry.networks).map(([network, score]) => (
-                        <div
-                          key={network}
-                          className={`w-2 h-2 rounded-full ${getNetworkColor(
-                            network
-                          )} flex-shrink-0`}
-                          title={`${getNetworkName(network)}: ${score}`}
-                        />
-                      ))}
+                    <div className="network-indicator">
+                      <div className={`network-dot ${networkStyle.bg}`} />
+                      <span className={networkStyle.text}>{networkStyle.name}</span>
+                    </div>
+                  </div>
+                  <div className="score-section">
+                    <div className={`score-display ${medalStyle.textColor}`}>
+                      {entry.totalScore}
                     </div>
                   </div>
                 </div>
-                <div className="text-[#fcb131] font-bold text-lg flex-shrink-0 ml-2">
-                  {entry.totalScore}
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* User Breakdown Modal */}
+      {/* Enhanced User Breakdown Modal - With profile integration */}
       {selectedUser && breakdownType && (
         <div
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2002]"
@@ -458,45 +431,53 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
             className="bg-black border-2 border-[#fcb131] rounded-lg p-6 max-w-md w-full mx-4 shadow-[0_0_25px_rgba(252,177,49,0.5)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <h4
-                className={`text-lg font-bold text-center ${
-                  verificationStatuses[selectedUser] ? 'text-[#10b981]' : 'text-[#fcb131]'
-                }`}
-              >
-                {progressiveDisplayNames[selectedUser] || shortenAddress(selectedUser)}
-              </h4>
-              <VerificationBadge
-                isVerified={verificationStatuses[selectedUser] || false}
-                size="md"
-              />
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center space-x-3 mb-4">
+                <ProfileDisplay
+                  userAddress={selectedUser}
+                  displayName={
+                    progressiveDisplayNames[selectedUser] || shortenAddress(selectedUser)
+                  }
+                  farcasterProfile={farcasterProfiles[selectedUser]}
+                  isVerified={verificationStatuses[selectedUser] || false}
+                  size="md"
+                  className="justify-center"
+                />
+              </div>
+              <p className="text-[#fcb131]/80 text-sm font-medium">
+                {breakdownType === 'pushups' ? '💪 Push-ups' : '🏋️ Squats'} performance by network
+              </p>
             </div>
-            <p className="text-white mb-4 text-center">
-              {breakdownType === 'pushups' ? '💪 Push-ups' : '🏋️ Squats'} breakdown by network:
-            </p>
-            <div className="space-y-2">
+
+            <div className="space-y-3 mb-6">
               {Object.entries(
                 breakdownType === 'pushups'
                   ? pushupAggregated[selectedUser]?.networks || {}
                   : squatAggregated[selectedUser]?.networks || {}
-              ).map(([network, score]) => (
-                <div
-                  key={network}
-                  className="flex justify-between items-center bg-black/40 p-2 rounded border border-[#fcb131]/20"
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded-full ${getNetworkColor(network)}`} />
-                    <span className="text-white font-medium">{getNetworkName(network)}</span>
+              ).map(([network, score]) => {
+                const networkStyle = getNetworkStyling(network);
+                return (
+                  <div
+                    key={network}
+                    className={`flex justify-between items-center bg-black/40 p-3 rounded border border-[#fcb131]/20 hover:bg-[#fcb131]/10 transition-all duration-200 ${getHoverEffects()}`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className={`w-4 h-4 rounded-full ${networkStyle.bg} border border-white/20`}
+                      />
+                      <span className="text-white font-medium">{networkStyle.name}</span>
+                    </div>
+                    <span className="text-[#fcb131] font-bold text-lg">{score}</span>
                   </div>
-                  <span className="text-[#fcb131] font-bold">{score}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
             <button
               onClick={closeBreakdown}
-              className="w-full mt-4 bg-[#fcb131] hover:bg-[#f39c12] text-black font-bold py-2 px-4 rounded transition-colors"
+              className="w-full bg-[#fcb131] hover:bg-[#f39c12] text-black font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg border-2 border-[#fcb131] hover:shadow-[0_0_15px_rgba(252,177,49,0.5)] transform hover:scale-[1.02]"
             >
-              Close
+              ✕ Close Breakdown
             </button>
           </div>
         </div>

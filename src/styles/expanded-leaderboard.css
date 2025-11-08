@@ -1,0 +1,160 @@
+/* Enhanced Expanded Leaderboard Styles */
+.expanded-leaderboard-table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.expanded-leaderboard-table td {
+  padding: 0.25rem 0.125rem;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
+.expanded-leaderboard-table .rank-cell {
+  width: 3rem;
+  text-align: center;
+}
+
+.expanded-leaderboard-table .profile-cell {
+  width: 10rem;
+  text-align: left;
+}
+
+.expanded-leaderboard-table .score-cell {
+  width: 4rem;
+  text-align: center;
+}
+
+.expanded-leaderboard-table .network-cell {
+  width: 4rem;
+  text-align: right;
+}
+
+/* Compact mobile cards */
+.expanded-leaderboard-mobile-card {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.expanded-leaderboard-mobile-card .card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.expanded-leaderboard-mobile-card .medal-section {
+  flex-shrink: 0;
+  width: 2rem;
+}
+
+.expanded-leaderboard-mobile-card .profile-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.expanded-leaderboard-mobile-card .score-section {
+  flex-shrink: 0;
+  width: 3rem;
+  text-align: right;
+}
+
+/* Better visual centering */
+.expanded-leaderboard-container .section-header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+.expanded-leaderboard-container .section-title {
+  font-size: 1rem;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+/* Network indicator improvements */
+.network-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.network-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Profile display improvements */
+.profile-display-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+}
+
+.profile-display-compact .profile-pic {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.profile-display-compact .profile-name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.profile-display-compact .verification-badge {
+  font-size: 0.6rem;
+}
+
+/* Medal improvements */
+.medal-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.medal-display .medal-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.medal-display .rank-number {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+/* Score display improvements */
+.score-display {
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1;
+  text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .expanded-leaderboard-mobile-card {
+    padding: 0.375rem 0.5rem;
+  }
+  
+  .expanded-leaderboard-mobile-card .card-content {
+    gap: 0.375rem;
+  }
+  
+  .expanded-leaderboard-mobile-card .medal-section {
+    width: 1.5rem;
+  }
+  
+  .expanded-leaderboard-mobile-card .score-section {
+    width: 2.5rem;
+  }
+}

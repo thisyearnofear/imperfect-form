@@ -12,6 +12,12 @@ import {
   baseLeaderboardABI,
 } from '@/constants/contracts';
 import { SUPPORTED_NETWORKS } from '@/config/networks';
+import {
+  getNetworkStyling,
+  getMedalStyle,
+  getGoldenGlow,
+  getHoverEffects,
+} from '@/utils/leaderboardUtils';
 
 const POLYGON_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.polygon.contractAddress;
 const BASE_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.base.contractAddress;
@@ -37,6 +43,7 @@ import {
 import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
 import VerificationBadge from '@/components/verification/VerificationBadge';
 import VerifiedLeaderboard from '@/components/leaderboard/VerifiedLeaderboard';
+import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
 
 interface LeaderboardProps {
   limit?: number;
@@ -714,67 +721,48 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                   Push-ups
                 </td>
               </tr>
-              {pushupLeaderboard.slice(0, limit || 2).map((entry, i) => (
-                <tr
-                  key={`pushup-${entry.user}-${entry.network}-${i}`}
-                  className={`${entry.network}-entry`}
-                >
-                  <td>{i + 1}</td>
-                  <td>
-                    <div className="flex items-center space-x-2">
-                      {farcasterProfiles[entry.user]?.pfpUrl && (
-                        <Image
-                          src={farcasterProfiles[entry.user]?.pfpUrl || ''}
-                          alt="Profile"
-                          width={24}
-                          height={24}
-                          className="w-6 h-6 rounded-full"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                            // Hide image if it fails to load
-                            e.currentTarget.style.display = 'none';
-                          }}
+              {pushupLeaderboard.slice(0, limit || 2).map((entry, i) => {
+                const medalStyle = getMedalStyle(i);
+                const networkStyle = getNetworkStyling(entry.network);
+
+                return (
+                  <tr
+                    key={`pushup-${entry.user}-${entry.network}-${i}`}
+                    className={`${entry.network}-entry transition-all duration-300 ${getHoverEffects()}`}
+                  >
+                    <td className={`px-3 py-3 font-bold ${medalStyle.textColor}`}>
+                      <div className="flex items-center justify-center space-x-1">
+                        <span className="text-lg">{medalStyle.medal}</span>
+                        <span>{i + 1}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center justify-center">
+                        <ProfileDisplay
+                          userAddress={entry.user}
+                          displayName={displayNames[entry.user] || shortenAddress(entry.user)}
+                          farcasterProfile={farcasterProfiles[entry.user]}
+                          isVerified={verificationStatuses[entry.user] || false}
+                          size="sm"
                         />
-                      )}
-                      <span
-                        className={
-                          farcasterProfiles[entry.user] ? 'text-purple-600 font-medium' : ''
-                        }
-                      >
-                        {displayNames[entry.user] || shortenAddress(entry.user)}
-                      </span>
-                      {farcasterProfiles[entry.user] && (
-                        <span className="text-xs text-purple-500">🎭</span>
-                      )}
-                      <VerificationBadge
-                        isVerified={verificationStatuses[entry.user] || false}
-                        size="sm"
-                      />
-                    </div>
-                  </td>
-                  <td>{entry.score}</td>
-                  <td>
-                    <span
-                      className={`text-${
-                        entry.network === 'polygon'
-                          ? 'pink'
-                          : entry.network === 'base'
-                            ? 'blue'
-                            : entry.network === 'monad'
-                              ? 'yellow'
-                              : 'green'
-                      }-500 font-bold`}
-                    >
-                      {entry.network === 'polygon'
-                        ? 'Polygon'
-                        : entry.network === 'base'
-                          ? 'Base'
-                          : entry.network === 'monad'
-                            ? 'Monad'
-                            : 'Celo'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                    <td className={`px-3 py-3 font-bold text-lg ${medalStyle.textColor}`}>
+                      {entry.score}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className={`font-bold ${networkStyle.text}`}>
+                          {networkStyle.name}
+                        </span>
+                        <div
+                          className={`w-3 h-3 rounded-full ${networkStyle.bg} border border-white/30`}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
 
               {/* Squats Section */}
               <tr>
@@ -790,67 +778,48 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                   Squats
                 </td>
               </tr>
-              {squatLeaderboard.slice(0, limit || 2).map((entry, i) => (
-                <tr
-                  key={`squat-${entry.user}-${entry.network}-${i}`}
-                  className={`${entry.network}-entry`}
-                >
-                  <td>{i + 1}</td>
-                  <td>
-                    <div className="flex items-center space-x-2">
-                      {farcasterProfiles[entry.user]?.pfpUrl && (
-                        <Image
-                          src={farcasterProfiles[entry.user]?.pfpUrl || ''}
-                          alt="Profile"
-                          width={24}
-                          height={24}
-                          className="w-6 h-6 rounded-full"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                            // Hide image if it fails to load
-                            e.currentTarget.style.display = 'none';
-                          }}
+              {squatLeaderboard.slice(0, limit || 2).map((entry, i) => {
+                const medalStyle = getMedalStyle(i);
+                const networkStyle = getNetworkStyling(entry.network);
+
+                return (
+                  <tr
+                    key={`squat-${entry.user}-${entry.network}-${i}`}
+                    className={`${entry.network}-entry transition-all duration-300 ${getHoverEffects()}`}
+                  >
+                    <td className={`px-3 py-3 font-bold ${medalStyle.textColor}`}>
+                      <div className="flex items-center justify-center space-x-1">
+                        <span className="text-lg">{medalStyle.medal}</span>
+                        <span>{i + 1}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center justify-center">
+                        <ProfileDisplay
+                          userAddress={entry.user}
+                          displayName={displayNames[entry.user] || shortenAddress(entry.user)}
+                          farcasterProfile={farcasterProfiles[entry.user]}
+                          isVerified={verificationStatuses[entry.user] || false}
+                          size="sm"
                         />
-                      )}
-                      <span
-                        className={
-                          farcasterProfiles[entry.user] ? 'text-purple-600 font-medium' : ''
-                        }
-                      >
-                        {displayNames[entry.user] || shortenAddress(entry.user)}
-                      </span>
-                      {farcasterProfiles[entry.user] && (
-                        <span className="text-xs text-purple-500">🎭</span>
-                      )}
-                      <VerificationBadge
-                        isVerified={verificationStatuses[entry.user] || false}
-                        size="sm"
-                      />
-                    </div>
-                  </td>
-                  <td>{entry.score}</td>
-                  <td>
-                    <span
-                      className={`text-${
-                        entry.network === 'polygon'
-                          ? 'pink'
-                          : entry.network === 'base'
-                            ? 'blue'
-                            : entry.network === 'monad'
-                              ? 'yellow'
-                              : 'green'
-                      }-500 font-bold`}
-                    >
-                      {entry.network === 'polygon'
-                        ? 'Polygon'
-                        : entry.network === 'base'
-                          ? 'Base'
-                          : entry.network === 'monad'
-                            ? 'Monad'
-                            : 'Celo'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                      </div>
+                    </td>
+                    <td className={`px-3 py-3 font-bold text-lg ${medalStyle.textColor}`}>
+                      {entry.score}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className={`font-bold ${networkStyle.text}`}>
+                          {networkStyle.name}
+                        </span>
+                        <div
+                          className={`w-3 h-3 rounded-full ${networkStyle.bg} border border-white/30`}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
