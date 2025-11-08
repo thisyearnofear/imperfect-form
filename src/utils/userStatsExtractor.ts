@@ -14,6 +14,7 @@ export interface UserStats {
   totalScore: number;
   pushupsRank: number | null;
   squatsRank: number | null;
+  daysSinceLastWorkout?: number | null;
 }
 
 /**
@@ -130,8 +131,9 @@ export function extractUserStats(
     bestSquats,
   });
 
-  // Calculate streak from workout history using timestamps
+  // Calculate streak and days since last workout for motivational messaging
   const currentStreak = calculateWorkoutStreak(allUserScores);
+  const daysSinceLastWorkout = calculateDaysSinceLastWorkout(allUserScores);
 
   return {
     totalSessions,
@@ -142,6 +144,138 @@ export function extractUserStats(
     totalScore,
     pushupsRank,
     squatsRank,
+    daysSinceLastWorkout, // Add this for motivational text generation
+  };
+}
+
+/**
+ * Calculate days since last workout for motivational messaging
+ */
+function calculateDaysSinceLastWorkout(userScores: Score[]): number | null {
+  if (userScores.length === 0) return null;
+
+  const scoresWithTimestamps = userScores.filter(
+    (score) => score.timestamp != null && score.timestamp > 0
+  );
+
+  if (scoresWithTimestamps.length === 0) return null;
+
+  // Find most recent workout
+  const mostRecentTimestamp = Math.max(...scoresWithTimestamps.map((s) => s.timestamp || 0));
+  const mostRecentDate = new Date(mostRecentTimestamp * 1000);
+  const today = new Date();
+
+  const timeDiff = today.getTime() - mostRecentDate.getTime();
+  const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+  return daysDiff;
+}
+
+/**
+ * Generate motivational text based on user activity patterns
+ */
+function generateMotivationalText(
+  streak: number,
+  totalSessions: number,
+  daysSinceLastWorkout: number | null
+): { streakText: string; summaryText: string } {
+  console.log('🎨 generateMotivationalText called with:', {
+    streak,
+    totalSessions,
+    daysSinceLastWorkout,
+  });
+
+  // New user (no workouts)
+  if (totalSessions === 0) {
+    return {
+      streakText: 'Start your journey! 💪',
+      summaryText: 'Your first workout awaits!',
+    };
+  }
+
+  // Handle case where we have no timestamp data (streak will be 0, daysSince will be null)
+  if (daysSinceLastWorkout === null && streak === 0) {
+    return {
+      streakText: `${totalSessions} workout${totalSessions === 1 ? '' : 's'} completed! 🎯`,
+      summaryText: 'Keep building your fitness habit!',
+    };
+  }
+
+  // Active streak (worked out recently)
+  if (streak > 0) {
+    const streakEmoji = streak >= 7 ? '🔥' : streak >= 3 ? '⚡' : '💪';
+    return {
+      streakText: `${streak} day streak ${streakEmoji}`,
+      summaryText: 'Keep the momentum going!',
+    };
+  }
+
+  // Inactive user - show days since last workout with motivation
+  if (daysSinceLastWorkout !== null && daysSinceLastWorkout >= 1) {
+    const motivationalTexts = getMotivationalMessage(daysSinceLastWorkout, totalSessions);
+    return {
+      streakText: motivationalTexts.streakText,
+      summaryText: motivationalTexts.summaryText,
+    };
+  }
+
+  // Fallback for edge cases
+  return {
+    streakText: 'Ready to go! 💪',
+    summaryText: 'Time for your next workout!',
+  };
+}
+
+/**
+ * Get contextual motivational messages based on inactivity period
+ */
+function getMotivationalMessage(
+  daysSince: number,
+  totalSessions: number
+): { streakText: string; summaryText: string } {
+  const isExperienced = totalSessions >= 5;
+
+  if (daysSince === 1) {
+    return {
+      streakText: '1 day away',
+      summaryText: 'Time to get back in there! 💪',
+    };
+  }
+
+  if (daysSince <= 3) {
+    return {
+      streakText: `${daysSince} days away`,
+      summaryText: isExperienced ? 'Your muscles are ready! 🚀' : "Let's jump back in! ⚡",
+    };
+  }
+
+  if (daysSince <= 7) {
+    return {
+      streakText: `${daysSince} days away`,
+      summaryText: isExperienced ? 'We miss you! 🔥' : 'Your comeback starts now! 💫',
+    };
+  }
+
+  if (daysSince <= 14) {
+    return {
+      streakText: `${daysSince} days away`,
+      summaryText: isExperienced ? 'Fitness is calling! 📞' : 'Fresh start time! 🌅',
+    };
+  }
+
+  if (daysSince <= 30) {
+    return {
+      streakText: `${daysSince} days away`,
+      summaryText: isExperienced ? "Let's rebuild! 🏗️" : 'Rediscover your potential! 🗝️',
+    };
+  }
+
+  // More than 30 days
+  return {
+    streakText: `${daysSince} days away`,
+    summaryText: isExperienced
+      ? 'Welcome back, warrior! 👑'
+      : 'Every expert was once a beginner! 🎯',
   };
 }
 
@@ -153,14 +287,40 @@ export function extractUserStats(
 function calculateWorkoutStreak(userScores: Score[]): number {
   if (userScores.length === 0) return 0;
 
+  console.log('🕐 calculateWorkoutStreak called with scores:', {
+    totalScores: userScores.length,
+    scores: userScores.map((s) => ({
+      score: s.score,
+      network: s.network,
+      timestamp: s.timestamp,
+      date: s.timestamp ? new Date(s.timestamp * 1000).toISOString() : 'no timestamp',
+    })),
+  });
+
+  console.log('🔍 Raw userScores input:', userScores);
+  console.log('🔍 First score detailed:', userScores[0]);
+  console.log('🔍 Second score detailed:', userScores[1]);
+
+  console.log('🔍 Checking for timestamp fields in first score:', {
+    timestamp: userScores[0]?.timestamp,
+    allKeys: Object.keys(userScores[0] || {}),
+  });
+
   // Check if timestamps are available
   const scoresWithTimestamps = userScores.filter(
     (score) => score.timestamp != null && score.timestamp > 0
   );
 
+  console.log('📅 Timestamp analysis:', {
+    totalScores: userScores.length,
+    scoresWithTimestamps: scoresWithTimestamps.length,
+    missingTimestamps: userScores.length - scoresWithTimestamps.length,
+  });
+
   if (scoresWithTimestamps.length === 0) {
-    // Fallback to original estimation logic if no timestamps
-    return Math.min(userScores.length, 7); // Estimate based on total sessions, cap at 7
+    // No timestamps available - don't show fake streaks
+    console.log('⚠️ No timestamps available, cannot calculate real streaks');
+    return 0; // Return 0 streak instead of fake estimation
   }
 
   // Sort scores by timestamp (newest first)
@@ -188,8 +348,18 @@ function calculateWorkoutStreak(userScores: Score[]): number {
 
   const mostRecentDay = uniqueDays[0];
 
+  console.log('🗓️ Streak validation check:', {
+    today: todayKey,
+    yesterday: yesterdayKey,
+    mostRecentWorkout: mostRecentDay,
+    uniqueWorkoutDays: uniqueDays,
+    isRecentEnoughForStreak: mostRecentDay === todayKey || mostRecentDay === yesterdayKey,
+    shouldHaveStreak: mostRecentDay === todayKey || mostRecentDay === yesterdayKey,
+  });
+
   // If the most recent workout isn't today or yesterday, streak is 0
   if (mostRecentDay !== todayKey && mostRecentDay !== yesterdayKey) {
+    console.log('💔 Streak broken - most recent workout was not today or yesterday');
     return 0;
   }
 
@@ -209,14 +379,37 @@ function calculateWorkoutStreak(userScores: Score[]): number {
     }
   }
 
-  return Math.min(streak, 30); // Cap at 30 days for reasonable limits
+  const finalStreak = Math.min(streak, 30); // Cap at 30 days for reasonable limits
+
+  console.log('🔥 Final streak calculation:', {
+    calculatedStreak: streak,
+    finalStreak: finalStreak,
+    consecutiveDays: uniqueDays.slice(0, streak),
+  });
+
+  return finalStreak;
 }
 
 /**
  * Format user stats for display in the profile
  */
 export function formatUserStatsForProfile(stats: UserStats) {
-  const { bestPushups, bestSquats, totalSessions, currentStreak, pushupsRank, squatsRank } = stats;
+  console.log('🎯 NEW MOTIVATIONAL SYSTEM v2.0 - formatUserStatsForProfile called with:', {
+    totalSessions: stats.totalSessions,
+    currentStreak: stats.currentStreak,
+    daysSinceLastWorkout: stats.daysSinceLastWorkout,
+    timestamp: new Date().toISOString(),
+  });
+
+  const {
+    bestPushups,
+    bestSquats,
+    totalSessions,
+    currentStreak,
+    pushupsRank,
+    squatsRank,
+    daysSinceLastWorkout,
+  } = stats;
 
   // Determine best exercise type and overall best rank
   const bestExercise = bestPushups >= bestSquats ? 'pushups' : 'squats';
@@ -232,18 +425,31 @@ export function formatUserStatsForProfile(stats: UserStats) {
     bestRank = squatsRank;
   }
 
-  return {
+  // Generate motivational streak/activity text
+  const { streakText, summaryText } = generateMotivationalText(
+    currentStreak,
+    totalSessions,
+    daysSinceLastWorkout ?? null
+  );
+
+  console.log('✨ Generated motivational text:', {
+    streakText,
+    summaryText,
+    inputStreak: currentStreak,
+    inputSessions: totalSessions,
+    inputDaysSince: daysSinceLastWorkout,
+  });
+
+  const result = {
     workouts: `${totalSessions} session${totalSessions !== 1 ? 's' : ''}`,
     bestScore:
       bestScore > 0
         ? `${bestScore} ${bestExercise.slice(0, -1)}${bestScore !== 1 ? 's' : ''}`
         : 'No workouts',
-    streak: `${currentStreak} day${currentStreak !== 1 ? 's' : ''}`,
-    summary:
-      totalSessions > 0 && bestRank
-        ? `Rank #${bestRank} • ${stats.activeChains.length} chain${stats.activeChains.length !== 1 ? 's' : ''}`
-        : totalSessions > 0
-          ? `${stats.activeChains.length} chain${stats.activeChains.length !== 1 ? 's' : ''} active`
-          : 'Start your first workout!',
+    streak: streakText, // Now uses motivational text instead of just numbers
+    summary: summaryText, // Enhanced motivational messaging
   };
+
+  console.log('📤 Final formatted stats output:', result);
+  return result;
 }

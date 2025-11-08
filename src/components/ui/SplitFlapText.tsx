@@ -3,7 +3,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import '@/styles/split-flap.css';
 import { usePlatform } from '@/contexts/PlatformContext';
-import { getMemoryClient, type IdentityNode } from '@/services/memoryApi';
+import { useEnhancedProfile, type EnhancedProfile } from '@/hooks/useEnhancedProfile';
+import {
+  ProfileSearch,
+  ProfileDisplay,
+  ProfileComparison,
+  ProfileActions,
+} from '@/components/profile';
 
 // Memory API integration is now handled inline
 
@@ -55,7 +61,13 @@ const SplitFlapText: React.FC<SplitFlapTextProps> = ({
   );
 };
 
-type InstructionMode = 'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail';
+type InstructionMode =
+  | 'instructions'
+  | 'settings'
+  | 'profile'
+  | 'memory'
+  | 'memory-detail'
+  | 'profile-search';
 
 interface InstructionItem {
   key: string;
@@ -77,6 +89,9 @@ interface SplitFlapInstructionsProps {
     summary: string;
   } | null;
   isLoadingStats?: boolean;
+  // New props for profile search
+  targetUser?: string;
+  onProfileSearch?: (identifier: string) => void;
 }
 
 export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
@@ -87,46 +102,24 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   isFullscreenAvailable = true,
   formattedStats,
   isLoadingStats,
+  targetUser,
+  onProfileSearch,
 }) => {
   const [animationStep, setAnimationStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const { wallet, user: farcasterUser } = usePlatform();
-  const [memoryData, setMemoryData] = useState<{
-    identities: IdentityNode[];
-    socialStats: { totalFollowers: number; platforms: string[] };
-  } | null>(null);
-  const [loadingMemory, setLoadingMemory] = useState(false);
 
-  // Load memory data when entering memory mode
-  useEffect(() => {
-    if (mode === 'memory' && wallet?.address && !memoryData && !loadingMemory) {
-      const loadMemoryData = async () => {
-        setLoadingMemory(true);
-        try {
-          const client = getMemoryClient();
-          if (client && wallet.address) {
-            const walletIdentityGraph = await client.getIdentityGraphByWallet(wallet.address);
-            if (Array.isArray(walletIdentityGraph)) {
-              const identities = walletIdentityGraph;
-              const socialStats = {
-                totalFollowers: identities.reduce(
-                  (total: number, id: IdentityNode) => total + (id.social?.followers || 0),
-                  0
-                ),
-                platforms: [...new Set(identities.map((id: IdentityNode) => id.platform))],
-              };
-              setMemoryData({ identities, socialStats });
-            }
-          }
-        } catch (error) {
-          console.warn('Failed to load memory data:', error);
-        } finally {
-          setLoadingMemory(false);
-        }
-      };
-      loadMemoryData();
-    }
-  }, [mode, wallet?.address, memoryData, loadingMemory]);
+  // Use our new enhanced profile hook
+  // Explicitly convert null to undefined to match hook expectations
+  const walletAddressForHook = wallet?.address ?? undefined;
+  const targetIdentifierForHook = targetUser || walletAddressForHook;
+
+  const userProfile = useEnhancedProfile(targetIdentifierForHook);
+  const { profile: memoryData, loading: loadingMemory } = userProfile;
+
+  // Get current user's profile for comparison
+  const currentUserProfile = useEnhancedProfile(walletAddressForHook);
+  const { profile: currentUserData } = currentUserProfile;
 
   // Configuration-driven instruction sets with optimized memoization
   const currentInstructions = useMemo(() => {
@@ -197,12 +190,14 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         {
           key: 'd',
           text: '← BACK',
-          desc: '',
+          desc: 'SEARCH | MORE →',
           hideKey: true,
         },
+      ],
+      'profile-search': [
         {
-          key: 'e',
-          text: 'MORE →',
+          key: 'd',
+          text: '← BACK',
           desc: '',
           hideKey: true,
         },
@@ -273,13 +268,19 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         } else if (key === 'e') {
           // Switch to memory detail view
           onModeChange('memory-detail');
+        } else if (key === 's') {
+          // Switch to profile search
+          onModeChange('profile-search');
         }
         break;
 
-      case 'memory-detail':
+      case 'profile-search':
         if (key === 'd') {
           // Switch back to memory view
           onModeChange('memory');
+        } else if (key === 'r' && userProfile.refreshProfile) {
+          // Refresh current profile
+          userProfile.refreshProfile();
         }
         break;
 
@@ -291,78 +292,78 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
   return (
     <div id="instructions" style={{ display: 'flex', flexDirection: 'column' }}>
+      {/* Profile Search UI */}
+      {mode === 'profile-search' && (
+        <div className="space-y-3 mb-4">
+          <ProfileSearch
+            onSearch={onProfileSearch || (() => {})}
+            loading={loadingMemory}
+            error={userProfile.error}
+          />
+
+          {/* Contextual breadcrumb for profile search */}
+          {targetUser && targetUser !== wallet?.address && (
+            <div className="profile-instruction">
+              <span className="text-[#fcb131]/70 text-xs">← Viewing profile from search</span>
+            </div>
+          )}
+
+          {memoryData && (
+            <div className="space-y-1 pt-2 border-t border-[#fcb131]/20">
+              <div className="profile-instruction">
+                <span className="button-text start">FOUND</span> ={' '}
+                <span
+                  className="text-green-400 font-bold transform hover:scale-105 transition-transform duration-200 cursor-pointer relative"
+                  onClick={() => {
+                    if (memoryData?.identifier) {
+                      navigator.clipboard.writeText(memoryData.identifier);
+                      // Optional: Add visual feedback
+                      // You could add a toast notification here
+                    }
+                  }}
+                  title="Click to copy full address"
+                >
+                  {memoryData.primaryIdentity?.username ||
+                    (memoryData?.identifier?.length > 20
+                      ? `${memoryData.identifier.substring(0, 6)}...${memoryData.identifier.substring(memoryData.identifier.length - 4)}`
+                      : memoryData.identifier)}
+                </span>
+              </div>
+
+              {/* Loading shimmer effect */}
+              {loadingMemory && (
+                <div className="h-2 bg-gradient-to-r from-[#fcb131]/20 via-[#fcb131]/40 to-[#fcb131]/20 rounded animate-pulse"></div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Memory profile content - styled like settings mode */}
       {mode === 'memory' && (
         <div className="space-y-1">
-          <p className="profile-instruction">
-            <span className="button-text start">WALLET</span> ={' '}
-            <span
-              className="text-[#fcb131] font-mono cursor-pointer hover:text-yellow-400 transition-colors"
-              onClick={() =>
-                navigator.clipboard.writeText(
-                  wallet?.address || '0x55A5705453Ee82c742274154136Fce8149597058'
-                )
-              }
-            >
-              {wallet?.address
-                ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
-                : '0x55A5...7058'}
-            </span>
-          </p>
-          <p className="profile-instruction">
-            <span className="button-text stop">🟣 FARCASTER</span> ={' '}
-            <span
-              className="text-purple-300 cursor-pointer hover:text-purple-100 transition-colors"
-              onClick={() =>
-                window.open(`https://farcaster.xyz/${farcasterUser?.username || 'papa'}`, '_blank')
-              }
-            >
-              {memoryData
-                ? memoryData.identities
-                    .find((id) => id.platform === 'farcaster')
-                    ?.social?.followers?.toLocaleString() || '0'
-                : 'Loading...'}{' '}
-              followers
-            </span>
-          </p>
-          <p className="profile-instruction">
-            <span className="button-text reset">🐦 TWITTER</span> ={' '}
-            <span
-              className="text-blue-300 cursor-pointer hover:text-blue-100 transition-colors"
-              onClick={() =>
-                window.open(
-                  `https://x.com/${memoryData?.identities.find((id) => id.platform === 'twitter')?.username || 'unknown'}`,
-                  '_blank'
-                )
-              }
-            >
-              {memoryData
-                ? memoryData.identities
-                    .find((id) => id.platform === 'twitter')
-                    ?.social?.followers?.toLocaleString() || '0'
-                : 'Loading...'}{' '}
-              followers
-            </span>
-          </p>
-          <p className="profile-instruction">
-            <span className="button-text fun-highlight">👁️ LENS</span> ={' '}
-            <span
-              className="text-cyan-300 cursor-pointer hover:text-cyan-100 transition-colors"
-              onClick={() =>
-                window.open(
-                  `https://hey.xyz/u/${memoryData?.identities.find((id) => id.platform === 'lens')?.username || 'unknown'}`,
-                  '_blank'
-                )
-              }
-            >
-              {memoryData
-                ? memoryData.identities
-                    .find((id) => id.platform === 'lens')
-                    ?.social?.followers?.toLocaleString() || '0'
-                : 'Loading...'}{' '}
-              followers
-            </span>
-          </p>
+          {/* Contextual breadcrumb */}
+          {targetUser && targetUser !== wallet?.address && (
+            <div className="profile-instruction">
+              <span className="text-[#fcb131]/70 text-xs">← Viewing profile from search</span>
+            </div>
+          )}
+
+          <ProfileDisplay
+            profile={memoryData!}
+            loading={loadingMemory}
+            isCurrentUser={!targetUser || targetUser === wallet?.address}
+          />
+
+          {/* Performance comparison - only show when viewing another user */}
+          {targetUser && targetUser !== wallet?.address && currentUserData && memoryData && (
+            <ProfileComparison targetProfile={memoryData} currentProfile={currentUserData} />
+          )}
+
+          {/* Quick actions - only show when viewing another user */}
+          {targetUser && targetUser !== wallet?.address && memoryData && (
+            <ProfileActions profile={memoryData} />
+          )}
         </div>
       )}
 
@@ -451,12 +452,11 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
                 ? 'settings-instruction clickable'
                 : ''
           }`}
-          onClick={() => {
-            if (instruction.key === 'd' && mode === 'memory') {
-              // Handle both BACK and MORE clicks on the same line
-              // The click handler will determine which part was clicked
-              handleItemClick(instruction.key);
-            } else {
+          onClick={(e) => {
+            // Only handle the main click if not clicking on sub-buttons in memory or profile-search mode
+            if (
+              !((mode === 'memory' || mode === 'profile-search') && e.target !== e.currentTarget)
+            ) {
               handleItemClick(instruction.key);
             }
           }}
@@ -464,7 +464,8 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
             cursor:
               (mode === 'settings' && (instruction.key === 'a' || instruction.key === 'd')) ||
               (mode === 'profile' && instruction.key === 'd') ||
-              (mode === 'memory' && (instruction.key === 'd' || instruction.key === 'e'))
+              (mode === 'memory' && (instruction.key === 'd' || instruction.key === 'e')) ||
+              (mode === 'profile-search' && instruction.key === 'd')
                 ? 'pointer'
                 : 'default',
             transition: 'all 0.3s ease',
@@ -479,59 +480,124 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           {instruction.hideKey && mode === 'instructions' && (
             <span className="feature-emoji">{instruction.key}</span>
           )}
-          <span
-            className={`button-text ${
-              instruction.key === 'a'
-                ? 'start'
-                : instruction.key === 'b'
-                  ? 'stop'
-                  : instruction.key === 'c'
-                    ? mode === 'memory'
-                      ? 'memory-highlight'
-                      : 'reset'
-                    : instruction.key === '⚡'
-                      ? 'fun-highlight'
-                      : instruction.key === 'd' &&
-                          (mode === 'profile' || mode === 'memory' || mode === 'memory-detail')
-                        ? 'nav-highlight'
-                        : instruction.key === 'e' && mode === 'memory'
-                          ? 'nav-highlight'
-                          : ''
-            }`}
-          >
-            <SplitFlapText
-              text={instruction.text}
-              isAnimating={isAnimating && animationStep > index}
-              delay={index * 50}
-            />
-          </span>
-          {instruction.desc && (
-            <>
-              {' '}
+          {mode === 'memory' ? (
+            <div className="flex flex-row items-center justify-center gap-1">
               <span
-                className={`feature-desc cursor-pointer ${
-                  instruction.key === '🏋️'
-                    ? 'ai-highlight'
-                    : instruction.key === '🏆'
-                      ? 'blockchain-highlight'
-                      : instruction.key === '🎯'
-                        ? 'challenge-highlight'
-                        : instruction.key === 'e' && mode === 'memory'
-                          ? 'text-green-400 hover:text-green-300 underline transition-colors'
-                          : ''
-                }`}
-                onClick={() => {
-                  if (instruction.key === 'e' && mode === 'memory') {
-                    onModeChange('memory-detail');
-                  }
-                }}
+                className={`button-text nav-highlight px-3 py-1 border border-gray-500/50 rounded text-xs cursor-pointer min-w-[70px] text-center hover:bg-gray-700/20`}
+                onClick={() => handleItemClick(instruction.key)}
               >
                 <SplitFlapText
-                  text={instruction.desc}
+                  text={instruction.text}
                   isAnimating={isAnimating && animationStep > index}
-                  delay={index * 50 + 100}
+                  delay={index * 50}
                 />
               </span>
+              <span className="text-gray-500 select-none px-1">|</span>
+              <span
+                className={`px-3 py-1 border rounded text-xs cursor-pointer min-w-[70px] text-center border-[#fcb131]/50 text-[#fcb131] hover:bg-[#fcb131]/20`}
+                onClick={() => onModeChange('profile-search')}
+              >
+                <SplitFlapText
+                  text="SEARCH"
+                  isAnimating={isAnimating && animationStep > index}
+                  delay={index * 50 + 30}
+                />
+              </span>
+              <span className="text-gray-500 select-none px-1">|</span>
+              <span
+                className={`px-3 py-1 border rounded text-xs cursor-pointer min-w-[70px] text-center border-green-500/50 text-green-400 hover:bg-green-500/20`}
+                onClick={() => onModeChange('memory-detail')}
+              >
+                <SplitFlapText
+                  text="MORE →"
+                  isAnimating={isAnimating && animationStep > index}
+                  delay={index * 50 + 60}
+                />
+              </span>
+            </div>
+          ) : mode === 'profile-search' ? (
+            <div className="flex flex-row items-center justify-center gap-1">
+              <span
+                className={`button-text nav-highlight px-3 py-1 border border-gray-500/50 rounded text-xs cursor-pointer min-w-[70px] text-center hover:bg-gray-700/20`}
+                onClick={() => handleItemClick(instruction.key)}
+              >
+                <SplitFlapText
+                  text={instruction.text}
+                  isAnimating={isAnimating && animationStep > index}
+                  delay={index * 50}
+                />
+              </span>
+              {instruction.key === 'd' && (
+                <>
+                  <span className="text-gray-500 select-none px-1">|</span>
+                  <span
+                    className={`px-3 py-1 border rounded text-xs cursor-pointer min-w-[70px] text-center border-blue-500/55 text-blue-400 hover:bg-blue-500/25 transition-all duration-200`}
+                    onClick={() => {
+                      // Reset to current user's profile by passing the wallet address
+                      // This will load the current user's profile instead of refreshing the searched profile
+                      if (onProfileSearch && wallet?.address) {
+                        onProfileSearch(wallet.address);
+                      }
+                    }}
+                  >
+                    <SplitFlapText
+                      text="RESET"
+                      isAnimating={isAnimating && animationStep > index}
+                      delay={index * 50 + 30}
+                    />
+                  </span>
+                </>
+              )}
+            </div>
+          ) : (
+            <>
+              <span
+                className={`button-text ${
+                  instruction.key === 'a'
+                    ? 'start'
+                    : instruction.key === 'b'
+                      ? 'stop'
+                      : instruction.key === 'c'
+                        ? 'reset'
+                        : instruction.key === '⚡'
+                          ? 'fun-highlight'
+                          : instruction.key === 'd' &&
+                              (mode === 'profile' || mode === 'memory-detail')
+                            ? 'nav-highlight'
+                            : ''
+                }`}
+              >
+                <SplitFlapText
+                  text={instruction.text}
+                  isAnimating={isAnimating && animationStep > index}
+                  delay={index * 50}
+                />
+              </span>
+              {instruction.desc && instruction.desc.trim() && (
+                <>
+                  {' '}
+                  <span
+                    className={`feature-desc cursor-pointer ${
+                      instruction.key === '🏋️'
+                        ? 'ai-highlight'
+                        : instruction.key === '🏆'
+                          ? 'blockchain-highlight'
+                          : instruction.key === '🎯'
+                            ? 'challenge-highlight'
+                            : ''
+                    }`}
+                    onClick={() => {
+                      // No click action needed for other modes
+                    }}
+                  >
+                    <SplitFlapText
+                      text={instruction.desc}
+                      isAnimating={isAnimating && animationStep > index}
+                      delay={index * 50 + 100}
+                    />
+                  </span>
+                </>
+              )}
             </>
           )}
         </p>

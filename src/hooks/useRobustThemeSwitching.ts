@@ -124,12 +124,26 @@ export function useRobustThemeSwitching(): UseRobustThemeSwitchingReturn {
         // Wait for theme to be applied
         await new Promise((resolve) => setTimeout(resolve, 150));
 
-        // Verify theme was applied by checking CSS custom properties
+        // Dispatch a custom event to notify components that theme has changed
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('themeChanged', { detail: { themeId } }));
+        }
+
+        // Verify theme was applied by checking multiple CSS custom properties
         if (typeof document !== 'undefined') {
           const rootStyles = getComputedStyle(document.documentElement);
           const appliedBackground = rootStyles.getPropertyValue('--color-background').trim();
+          const appliedPrimary = rootStyles.getPropertyValue('--color-primary').trim();
+          const appliedText = rootStyles.getPropertyValue('--color-text').trim();
 
-          if (!appliedBackground || appliedBackground === 'initial' || appliedBackground === '') {
+          // Check if at least the essential properties are applied
+          const isBackgroundApplied =
+            appliedBackground && appliedBackground !== 'initial' && appliedBackground !== '';
+          const isPrimaryApplied =
+            appliedPrimary && appliedPrimary !== 'initial' && appliedPrimary !== '';
+          const isTextApplied = appliedText && appliedText !== 'initial' && appliedText !== '';
+
+          if (!isBackgroundApplied || !isPrimaryApplied || !isTextApplied) {
             throw new Error('Theme CSS properties not applied correctly');
           }
         }

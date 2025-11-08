@@ -51,7 +51,7 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
 
   // Render with OnboardingProvider and conditionally show Tour
   function ProvidersWithOnboarding({ children }: { children: React.ReactNode }) {
-    const { shouldShowTour } = useOnboarding?.() || { shouldShowTour: false };
+    const { shouldShowTour } = useOnboarding();
     return (
       <SimplifiedAppProviders>
         <ChainAmbient />

@@ -146,121 +146,178 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
 
   return (
     <div className={`${className}`}>
-      {/* Verified Leaderboard Table */}
-      <div className="leaderboard-container" style={{ marginTop: 0 }}>
-        <table id="verifiedLeaderboardTable" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th
-                style={{
-                  backgroundColor: '#111',
-                  color: '#fcb131',
-                  padding: '10px',
-                  textAlign: 'center',
-                  borderBottom: '2px solid #fcb131',
-                }}
-              >
-                Rank
-              </th>
-              <th
-                style={{
-                  backgroundColor: '#111',
-                  color: '#fcb131',
-                  padding: '10px',
-                  textAlign: 'center',
-                  borderBottom: '2px solid #fcb131',
-                }}
-              >
-                Verified User
-              </th>
-              <th
-                style={{
-                  backgroundColor: '#111',
-                  color: '#fcb131',
-                  padding: '10px',
-                  textAlign: 'center',
-                  borderBottom: '2px solid #fcb131',
-                }}
-              >
-                Score
-              </th>
-              <th
-                style={{
-                  backgroundColor: '#111',
-                  color: '#fcb131',
-                  padding: '10px',
-                  textAlign: 'center',
-                  borderBottom: '2px solid #fcb131',
-                }}
-              >
-                Breakdown
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {verifiedScores.map((score, index) => {
-              const totalScore = score.pushups + score.squats;
-              const displayName =
-                displayNames[score.user] || `${score.user.slice(0, 6)}...${score.user.slice(-4)}`;
+      {/* Enhanced Header with consistent theming */}
+      <div className="bg-black/80 border-2 border-[#fcb131] rounded-lg p-4 mb-6 shadow-[0_0_20px_rgba(252,177,49,0.5)]">
+        <h2 className="text-[#fcb131] font-bold text-center text-xl mb-2">
+          🏆 Verified Champions 🏆
+        </h2>
+        <p className="text-[#fcb131]/80 text-center text-sm">
+          Self Protocol verified athletes on Celo network
+        </p>
+      </div>
 
-              return (
-                <tr
-                  key={`${score.user}-${index}`}
-                  className="celo-entry" // Using celo styling since it's on Celo network
-                  style={{
-                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                    borderLeft: '3px solid #10b981',
-                  }}
-                >
-                  <td
-                    style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #333' }}
-                  >
-                    <span className="text-fcb131 font-bold">#{index + 1}</span>
-                  </td>
-                  <td
-                    style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #333' }}
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <span className="text-white font-medium">{displayName}</span>
-                      <VerificationBadge isVerified={true} size="sm" />
-                    </div>
-                  </td>
-                  <td
-                    style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #333' }}
-                  >
-                    <span className="text-fcb131 font-bold text-lg">{totalScore}</span>
-                  </td>
-                  <td
-                    style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid #333' }}
-                  >
-                    <div className="flex items-center justify-center space-x-4 text-sm">
-                      <span className="text-orange-400">{score.pushups} Push-ups</span>
-                      <span className="text-green-400">{score.squats} Squats</span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {/* Enhanced Leaderboard Table */}
+      <div className="bg-black/20 rounded-lg p-4 md:p-6 border border-[#fcb131]/30 shadow-[0_0_15px_rgba(252,177,49,0.3)]">
+        <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-[#fcb131] text-center border-b-2 border-[#fcb131] pb-2">
+          🏅 Elite Verified Performers 🏅
+        </h3>
 
-        {/* Stats Footer */}
-        <div
-          style={{
-            marginTop: '20px',
-            padding: '15px',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            border: '2px solid #10b981',
-            borderRadius: '8px',
-            textAlign: 'center',
-          }}
-        >
-          <p style={{ color: '#fcb131', fontWeight: 'bold', margin: '0 0 8px 0' }}>
-            🏆 {verifiedScores.length} Verified Athletes on Celo
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto bg-black/60 border border-[#fcb131]/30 rounded-lg">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b-2 border-[#fcb131]">
+                <th className="px-4 py-3 text-[#fcb131] font-bold">#</th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">Verified Athlete</th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">Total Score</th>
+                <th className="px-4 py-3 text-[#fcb131] font-bold">Performance Breakdown</th>
+              </tr>
+            </thead>
+            <tbody>
+              {verifiedScores.map((score, index) => {
+                const totalScore = score.pushups + score.squats;
+                const displayName =
+                  displayNames[score.user] || `${score.user.slice(0, 6)}...${score.user.slice(-4)}`;
+
+                return (
+                  <tr
+                    key={`${score.user}-${index}`}
+                    className={`text-center border-b border-[#fcb131]/20 last:border-none hover:bg-[#fcb131]/10 transition-colors ${
+                      index === 0
+                        ? 'bg-[#fcb131]/20 border-l-4 border-l-[#fcb131]'
+                        : index === 1
+                          ? 'bg-[#fcb131]/15 border-l-4 border-l-[#10b981]'
+                          : index === 2
+                            ? 'bg-[#fcb131]/10 border-l-4 border-l-[#10b981]'
+                            : 'bg-[#10b981]/10 border-l-4 border-l-[#10b981]'
+                    }`}
+                  >
+                    <td className="px-4 py-3 font-bold text-[#fcb131]" style={{ color: '#fcb131' }}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span
+                          className="font-bold cursor-pointer hover:underline transition-all duration-200 transform hover:scale-105 text-[#10b981] hover:text-green-300"
+                          style={{ color: '#10b981' }}
+                          onClick={() => {
+                            // Trigger profile search functionality
+                            // This would need to be passed as a prop or accessed via context
+                            // For now, we'll emit a custom event that the parent can listen to
+                            if (typeof window !== 'undefined') {
+                              window.dispatchEvent(
+                                new CustomEvent('profileSearch', {
+                                  detail: { identifier: score.user },
+                                })
+                              );
+                            }
+                          }}
+                        >
+                          {displayName}
+                        </span>
+                        <VerificationBadge isVerified={true} size="sm" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-[#fcb131] text-lg">{totalScore}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center space-x-4 text-sm">
+                        <span className="text-orange-400 font-medium">
+                          {score.pushups} Push-ups
+                        </span>
+                        <span className="text-green-400 font-medium">{score.squats} Squats</span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card View - Optimized for small screens */}
+        <div className="md:hidden space-y-3 px-2">
+          {verifiedScores.map((score, index) => {
+            const totalScore = score.pushups + score.squats;
+            const displayName =
+              displayNames[score.user] || `${score.user.slice(0, 6)}...${score.user.slice(-4)}`;
+
+            return (
+              <div
+                key={`${score.user}-${index}`}
+                className={`bg-black/80 border rounded-lg p-3 cursor-pointer hover:bg-[#fcb131]/10 transition-colors ${
+                  index === 0
+                    ? 'border-[#fcb131] bg-[#fcb131]/10 shadow-[0_0_10px_rgba(252,177,49,0.5)]'
+                    : index === 1
+                      ? 'border-[#10b981] bg-[#10b981]/10 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                      : index === 2
+                        ? 'border-[#10b981] bg-[#10b981]/10'
+                        : 'border-[#10b981]/50'
+                }`}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <span
+                      className="text-lg flex-shrink-0 text-[#fcb131] font-bold"
+                      style={{ color: '#fcb131' }}
+                    >
+                      {index === 0
+                        ? '🥇'
+                        : index === 1
+                          ? '🥈'
+                          : index === 2
+                            ? '🥉'
+                            : `#${index + 1}`}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-1">
+                        <span
+                          className="font-bold text-xs truncate cursor-pointer hover:underline transition-all duration-200 transform hover:scale-105 text-[#10b981] hover:text-green-300"
+                          style={{ color: '#10b981' }}
+                          onClick={() => {
+                            // Trigger profile search functionality
+                            if (typeof window !== 'undefined') {
+                              window.dispatchEvent(
+                                new CustomEvent('profileSearch', {
+                                  detail: { identifier: score.user },
+                                })
+                              );
+                            }
+                          }}
+                        >
+                          {displayName}
+                        </span>
+                        <VerificationBadge isVerified={true} size="sm" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[#fcb131] font-bold text-lg flex-shrink-0 ml-2">
+                    {totalScore}
+                  </div>
+                </div>
+                <div className="flex justify-center space-x-4 mt-2 text-xs">
+                  <span className="text-orange-400">{score.pushups} Push-ups</span>
+                  <span className="text-green-400">{score.squats} Squats</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Enhanced Stats Footer */}
+      <div className="bg-black/20 rounded-lg p-4 md:p-6 border border-[#fcb131]/30 mt-6 shadow-[0_0_15px_rgba(252,177,49,0.3)]">
+        <div className="text-center">
+          <h4 className="text-[#fcb131] font-bold text-lg mb-2">
+            🏆 {verifiedScores.length} Elite Verified Athletes 🏆
+          </h4>
+          <p className="text-[#10b981] text-sm mb-3">
+            Self Protocol verified users earn enhanced recognition and exclusive rewards
           </p>
-          <p style={{ color: '#10b981', fontSize: '14px', margin: 0 }}>
-            Self Protocol verified users earn bonus recognition and may receive enhanced rewards
-          </p>
+          <div className="flex justify-center space-x-4 text-xs">
+            <span className="text-[#fcb131] font-medium">🌟 Bonus Recognition</span>
+            <span className="text-[#10b981] font-medium">💎 Enhanced Rewards</span>
+            <span className="text-purple-400 font-medium">🏅 Elite Status</span>
+          </div>
         </div>
       </div>
     </div>

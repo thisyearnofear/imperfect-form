@@ -19,7 +19,11 @@ import { Score, ContractScore, NetworkType } from '@/types';
 import { getDisplayName } from '@/utils/ensResolver';
 import { batchResolveFarcasterProfiles, FarcasterProfile } from '@/utils/neynarResolver';
 import { shortenAddress } from '@/utils/formatters';
-import { getCachedLeaderboardData, cacheLeaderboardData } from './leaderboardCache';
+import {
+  getCachedLeaderboardData,
+  cacheLeaderboardData,
+  clearLeaderboardCache,
+} from './leaderboardCache';
 
 interface LeaderboardData {
   pushups: Score[];
@@ -57,6 +61,18 @@ async function fetchWithFallbackRpcs(
       console.log(`Calling getLeaderboard() on ${networkName} contract at ${contractAddress}`);
       const data = await contractInstance.getLeaderboard();
       console.log(`Successfully retrieved ${data.length} entries from ${networkName}`);
+
+      // Log sample entry to debug timestamp data
+      if (data.length > 0) {
+        console.log(`📊 Sample entry from ${networkName}:`, {
+          user: data[0].user,
+          pushups: data[0].pushups?.toString(),
+          squats: data[0].squats?.toString(),
+          timestamp: data[0].timestamp?.toString(),
+          hasTimestamp: !!data[0].timestamp,
+        });
+      }
+
       return data || [];
     } catch (error) {
       console.error(`RPC ${rpc} failed for ${networkName}:`, error);
@@ -77,7 +93,15 @@ function processContractData(
   pushups: Score[],
   squats: Score[]
 ): void {
-  data.forEach((entry) => {
+  data.forEach((entry, index) => {
+    console.log(`🔍 Processing entry ${index} from ${network}:`, {
+      user: entry.user,
+      pushups: entry.pushups,
+      squats: entry.squats,
+      timestamp: entry.timestamp,
+      allKeys: Object.keys(entry),
+    });
+
     try {
       let pushupScore = 0;
       let squatScore = 0;
@@ -108,12 +132,27 @@ function processContractData(
         }
       }
 
+      // Extract timestamp - this is critical for streak calculations
+      let timestamp: number | undefined;
+      if (entry.timestamp !== undefined) {
+        if (typeof entry.timestamp === 'object' && entry.timestamp !== null) {
+          if (typeof entry.timestamp.toString === 'function') {
+            timestamp = parseInt(entry.timestamp.toString());
+          } else if (entry.timestamp._hex) {
+            timestamp = parseInt(entry.timestamp._hex, 16);
+          }
+        } else {
+          timestamp = Number(entry.timestamp);
+        }
+      }
+
       // Only add entries with scores > 0
       if (pushupScore > 0) {
         pushups.push({
           user: entry.user,
           score: pushupScore,
           network: network as NetworkType,
+          timestamp: timestamp, // ✅ FIX: Include timestamp for streak calculations
         });
       }
 
@@ -122,6 +161,7 @@ function processContractData(
           user: entry.user,
           score: squatScore,
           network: network as NetworkType,
+          timestamp: timestamp, // ✅ FIX: Include timestamp for streak calculations
         });
       }
     } catch {
@@ -137,23 +177,30 @@ export async function getLeaderboard(): Promise<LeaderboardData | null> {
   try {
     console.log('🔄 Fetching leaderboard data from all networks...');
 
-    // Check cache first
-    const cachedData = getCachedLeaderboardData();
-    if (cachedData) {
-      console.log('📦 Using cached leaderboard data');
-      return cachedData;
-    }
+    // Clear cache to force fresh data with timestamp fixes
+    console.log('🧹 Clearing cache to test timestamp extraction fix');
+    clearLeaderboardCache(); // Force clear the cache
+
+    console.log('📋 Available networks for main leaderboard:');
+    Object.entries(SUPPORTED_NETWORKS)
+      .filter(([networkName]) => networkName !== 'celoVerified')
+      .forEach(([networkName, config]) => {
+        console.log(`  - ${networkName}: ${config.contractAddress}`);
+      });
 
     // Fetch data from all supported networks in parallel
+    // EXCLUDE celoVerified from main leaderboard (has separate VerifiedLeaderboard component)
     const networkResults = await Promise.all(
-      Object.entries(SUPPORTED_NETWORKS).map(([networkName, networkConfig]) =>
-        fetchWithFallbackRpcs(networkConfig.contractAddress, networkName)
-          .then((data) => ({ network: networkName, data }))
-          .catch((error) => {
-            console.error(`Failed to fetch data for ${networkName}:`, error);
-            return { network: networkName, data: [] };
-          })
-      )
+      Object.entries(SUPPORTED_NETWORKS)
+        .filter(([networkName]) => networkName !== 'celoVerified') // Keep verified separate
+        .map(([networkName, networkConfig]) =>
+          fetchWithFallbackRpcs(networkConfig.contractAddress, networkName)
+            .then((data) => ({ network: networkName, data }))
+            .catch((error) => {
+              console.error(`Failed to fetch data for ${networkName}:`, error);
+              return { network: networkName, data: [] };
+            })
+        )
     );
 
     // Process all network data

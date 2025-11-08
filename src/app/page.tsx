@@ -34,6 +34,7 @@ export default function Home() {
   const { platform, user } = usePlatform();
   const isInMiniApp = platform === 'farcaster';
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
+  const [profileSearchTarget, setProfileSearchTarget] = useState<string | undefined>(undefined);
   const [hasMounted, setHasMounted] = useState(false);
   const [showFirstTimePrompt, setShowFirstTimePrompt] = useState(false);
 
@@ -54,6 +55,13 @@ export default function Home() {
   ) => {
     setLeaderboardData({ pushups, squats, displayNames });
     setShowExpandedLeaderboard(true);
+  };
+
+  const handleViewProfile = (userAddress: string) => {
+    console.log('🔍 Viewing profile for:', userAddress);
+    setProfileSearchTarget(userAddress);
+    setShowExpandedLeaderboard(false);
+    // The profile will be displayed in the main game viewport
   };
 
   // Prevent hydration mismatch
@@ -127,7 +135,7 @@ export default function Home() {
         {/* Game area with better padding for mobile */}
         <div className="relative z-10 flex-grow pb-8 md:pb-24 px-2 md:px-4">
           <div className="transition-opacity duration-300 opacity-100">
-            <GameWrapper />
+            <GameWrapper profileSearchTarget={profileSearchTarget} />
           </div>
         </div>
 
@@ -159,6 +167,7 @@ export default function Home() {
         displayNames={leaderboardData.displayNames}
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
+        onViewProfile={handleViewProfile}
       />
 
       {/* First-time Mini App user prompt */}

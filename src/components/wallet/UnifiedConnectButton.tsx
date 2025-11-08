@@ -16,9 +16,15 @@ interface UnifiedConnectButtonProps {
   size?: 'sm' | 'md' | 'lg';
   showProfileWhenConnected?: boolean;
   // Enhanced props for clean 4-section layout
-  currentMode?: 'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail';
+  currentMode?:
+    | 'instructions'
+    | 'settings'
+    | 'profile'
+    | 'memory'
+    | 'memory-detail'
+    | 'profile-search';
   onModeChange?: (
-    mode: 'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail'
+    mode: 'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail' | 'profile-search'
   ) => void;
   workoutStarted?: boolean;
 }

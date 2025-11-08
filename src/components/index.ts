@@ -2,6 +2,7 @@
 export * from './game';
 export * from './modals';
 export * from './network';
+export * from './profile';
 export * from './providers';
 export * from './social';
 export * from './ui';

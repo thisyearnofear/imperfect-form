@@ -6,12 +6,16 @@ import AuthDebugPanel from '@/components/debug/AuthDebugPanel';
 import { Game } from '@/components/game';
 import { Spinner } from '@/components/ui';
 
+interface GameWrapperProps {
+  profileSearchTarget?: string;
+}
+
 /**
  * Guest-first flow: always render the game.
  * Show a small floating connect button until a wallet is connected.
  * This replaces the previous connection gate while reusing existing components.
  */
-export default function GameWrapper() {
+export default function GameWrapper({ profileSearchTarget }: GameWrapperProps) {
   const { platform, wallet, isReady } = usePlatform();
   const { address } = wallet;
 
@@ -34,7 +38,7 @@ export default function GameWrapper() {
     <div className="min-h-screen bg-black">
       <main>
         {/* Use address from context if available; Game handles no-address gracefully */}
-        <Game thirdwebAddress={address || undefined} />
+        <Game thirdwebAddress={address || undefined} profileSearchTarget={profileSearchTarget} />
       </main>
       <AuthDebugPanel />
     </div>
