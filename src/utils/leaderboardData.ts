@@ -177,6 +177,19 @@ export async function getLeaderboard(): Promise<LeaderboardData | null> {
   try {
     console.log('🔄 Fetching leaderboard data from all networks...');
 
+    // FORCE COMPLETE CACHE CLEAR - timestamps issue
+    console.log('🚨 FORCING COMPLETE CACHE CLEAR FOR TIMESTAMP FIX');
+    clearLeaderboardCache();
+
+    // Also clear any other caches that might interfere
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('leaderboardCache');
+      localStorage.removeItem('leaderboardCacheTimestamp');
+      localStorage.removeItem('leaderboard_data');
+      localStorage.removeItem('leaderboard_timestamp');
+      console.log('🧹 Cleared all possible cache keys');
+    }
+
     // Clear cache to force fresh data with timestamp fixes
     console.log('🧹 Clearing cache to test timestamp extraction fix');
     clearLeaderboardCache(); // Force clear the cache

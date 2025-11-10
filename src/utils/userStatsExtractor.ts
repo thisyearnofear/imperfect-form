@@ -179,12 +179,6 @@ function generateMotivationalText(
   totalSessions: number,
   daysSinceLastWorkout: number | null
 ): { streakText: string; summaryText: string } {
-  console.log('🎨 generateMotivationalText called with:', {
-    streak,
-    totalSessions,
-    daysSinceLastWorkout,
-  });
-
   // New user (no workouts)
   if (totalSessions === 0) {
     return {
@@ -394,13 +388,6 @@ function calculateWorkoutStreak(userScores: Score[]): number {
  * Format user stats for display in the profile
  */
 export function formatUserStatsForProfile(stats: UserStats) {
-  console.log('🎯 NEW MOTIVATIONAL SYSTEM v2.0 - formatUserStatsForProfile called with:', {
-    totalSessions: stats.totalSessions,
-    currentStreak: stats.currentStreak,
-    daysSinceLastWorkout: stats.daysSinceLastWorkout,
-    timestamp: new Date().toISOString(),
-  });
-
   const {
     bestPushups,
     bestSquats,
@@ -432,14 +419,6 @@ export function formatUserStatsForProfile(stats: UserStats) {
     daysSinceLastWorkout ?? null
   );
 
-  console.log('✨ Generated motivational text:', {
-    streakText,
-    summaryText,
-    inputStreak: currentStreak,
-    inputSessions: totalSessions,
-    inputDaysSince: daysSinceLastWorkout,
-  });
-
   const result = {
     workouts: `${totalSessions} session${totalSessions !== 1 ? 's' : ''}`,
     bestScore:
@@ -450,6 +429,5 @@ export function formatUserStatsForProfile(stats: UserStats) {
     summary: summaryText, // Enhanced motivational messaging
   };
 
-  console.log('📤 Final formatted stats output:', result);
   return result;
 }

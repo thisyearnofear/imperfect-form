@@ -7,8 +7,8 @@ import { Score } from '@/types';
 import { FarcasterProfile } from '@/utils/neynarResolver';
 
 export const CACHE_KEYS = {
-  LEADERBOARD_DATA: 'leaderboardCache',
-  LEADERBOARD_TIMESTAMP: 'leaderboardCacheTimestamp',
+  LEADERBOARD_DATA: 'leaderboardCache_v2_with_timestamps', // Force cache refresh
+  LEADERBOARD_TIMESTAMP: 'leaderboardCacheTimestamp_v2',
 } as const;
 
 export const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes

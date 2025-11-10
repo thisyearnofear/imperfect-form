@@ -24,7 +24,7 @@ export const useBatchVerificationStatus = (addresses: string[]) => {
     setIsLoading(true);
 
     try {
-      // Connect to Celo Alfajores testnet (where Self Protocol is deployed)
+      // Connect to Celo Mainnet (where Self Protocol is deployed)
       const provider = new ethers.JsonRpcProvider('https://forno.celo.org');
 
       // Create contract instance
@@ -35,7 +35,7 @@ export const useBatchVerificationStatus = (addresses: string[]) => {
       );
 
       // Check verification status for each address using resilient batch calls
-      const contractCalls = addresses.map((address) => () => contract.isVerifiedHuman(address));
+      const contractCalls = addresses.map((address) => () => contract.isUserVerified(address));
 
       const results = await batchContractCalls(contractCalls, {
         maxConcurrent: 3, // Limit concurrent calls to avoid rate limiting
@@ -44,7 +44,7 @@ export const useBatchVerificationStatus = (addresses: string[]) => {
           const address = addresses[index];
           logContractError(error, {
             contractAddress: VERIFIED_FITNESS_CONTRACT_ADDRESS,
-            functionName: 'isVerifiedHuman',
+            functionName: 'isUserVerified',
             userAddress: address,
             chainId: 42220, // Celo mainnet
           });
