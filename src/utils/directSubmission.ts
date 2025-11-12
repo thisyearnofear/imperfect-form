@@ -397,21 +397,43 @@ export async function submitScoreDirect(
       tx = await contract.addScore(pushups, squats, txOverrides);
     }
 
-    // Wait for confirmation
-    const receipt = await tx.wait();
+    logger.info('📤 Transaction sent', { hash: tx.hash });
 
-    if (receipt && receipt.status === 1) {
-      logger.info('✅ Transaction successful', {
-        hash: receipt.hash,
-      });
-      return {
-        success: true,
-        transactionHash: receipt.hash,
-        error: undefined,
-      };
-    } else {
-      logger.error('❌ Transaction failed', { receipt });
-      return { success: false, error: 'Transaction failed' };
+    // Wait for confirmation with Farcaster-compatible method
+    try {
+      const receipt = await tx.wait();
+
+      if (receipt && receipt.status === 1) {
+        logger.info('✅ Transaction successful', {
+          hash: receipt.hash,
+        });
+        return {
+          success: true,
+          transactionHash: receipt.hash,
+          error: undefined,
+        };
+      } else {
+        logger.error('❌ Transaction failed', { receipt });
+        return { success: false, error: 'Transaction failed' };
+      }
+    } catch (receiptError: any) {
+      // Farcaster provider may not support eth_getTransactionReceipt
+      if (
+        receiptError.code === 'UNSUPPORTED_OPERATION' ||
+        receiptError.code === -32601 ||
+        receiptError.message?.includes('eth_getTransactionReceipt') ||
+        receiptError.message?.includes('does not support')
+      ) {
+        logger.warn('⚠️ Provider does not support receipt polling, assuming success');
+        // Transaction was sent successfully, just can't confirm
+        return {
+          success: true,
+          transactionHash: tx.hash,
+          error: undefined,
+        };
+      }
+      // Re-throw other errors
+      throw receiptError;
     }
   } catch (error) {
     logger.error('❌ Submission error:', error);
