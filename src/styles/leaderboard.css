@@ -198,27 +198,42 @@
 
 /* --- Extra Mobile Optimization for <=480px --- */
 @media (max-width: 480px) {
-  /* Hide the 4th column (network) in header & body */
-  #leaderboardTable th:nth-child(4),
-  #leaderboardTable td:nth-child(4) {
-    display: none !important;
-  }
-
   .leaderboard-container {
     padding: 10px !important;
   }
 
-  .leaderboard-container th,
-  .leaderboard-container td {
-    font-size: 12px !important;
-    padding: 6px 4px !important;
+  /* Make table horizontally scrollable */
+  .overflow-x-auto {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* Truncate long names (addresses) in 2nd column */
-  #leaderboardTable td:nth-child(2) {
+  #leaderboardTable {
+    min-width: 100%;
+    width: max-content;
+  }
+
+  .leaderboard-container th,
+  .leaderboard-container td {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 90px;
+  }
+
+  /* Ensure columns don't collapse */
+  #leaderboardTable td:nth-child(1) {
+    min-width: 50px;
+  }
+
+  #leaderboardTable td:nth-child(2) {
+    min-width: 120px;
+  }
+
+  #leaderboardTable td:nth-child(3) {
+    min-width: 60px;
+  }
+
+  #leaderboardTable td:nth-child(4) {
+    min-width: 100px;
   }
 }
