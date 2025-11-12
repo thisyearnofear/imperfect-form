@@ -122,16 +122,30 @@ async function validateProviderConnection(
 
     // Step 2: Create ethers provider and validate connection
     const ethersProvider = new ethers.BrowserProvider(provider);
-    const accounts = await ethersProvider.listAccounts();
+
+    // Special handling for Farcaster - try to get accounts via eth_requestAccounts if needed
+    let accounts = await ethersProvider.listAccounts();
+
+    if (accounts.length === 0) {
+      // In Farcaster context, accounts might need explicit request
+      try {
+        logger.info('🔑 No accounts found, requesting via eth_requestAccounts...');
+        await provider.request({ method: 'eth_requestAccounts' });
+        accounts = await ethersProvider.listAccounts();
+      } catch (requestError) {
+        logger.warn('Failed to request accounts:', requestError);
+      }
+    }
 
     if (accounts.length === 0) {
       return {
         isValid: false,
-        error: 'No wallet accounts found. Please connect your wallet.',
+        error: 'No wallet accounts found. Please connect your wallet in Farcaster.',
       };
     }
 
     const currentAddress = accounts[0].address;
+    logger.info('✅ Account retrieved:', currentAddress);
 
     // Step 3: Get network info and signer
     const network = await ethersProvider.getNetwork();
@@ -148,8 +162,10 @@ async function validateProviderConnection(
           params: [{ chainId: `0x${targetChainId.toString(16)}` }],
         });
 
-        // Re-validate after network switch
-        const newNetwork = await ethersProvider.getNetwork();
+        // CRITICAL: Recreate ethers provider after network switch (especially for Farcaster)
+        // The old provider instance may have stale network state
+        const freshEthersProvider = new ethers.BrowserProvider(provider);
+        const newNetwork = await freshEthersProvider.getNetwork();
         const newChainId = Number(newNetwork.chainId);
 
         if (newChainId !== targetChainId) {
@@ -159,7 +175,19 @@ async function validateProviderConnection(
           };
         }
 
+        // Update to use the fresh provider and signer
+        const freshSigner = await freshEthersProvider.getSigner();
+
         logger.info(`✅ Network switched successfully to ${targetChainId}`);
+
+        // Return with fresh instances
+        return {
+          isValid: true,
+          ethersProvider: freshEthersProvider,
+          signer: freshSigner,
+          currentAddress,
+          chainId: targetChainId,
+        };
       } catch (switchError: any) {
         if (switchError.code === 4902) {
           // Network not added, try to add it
@@ -297,38 +325,76 @@ export async function submitScoreDirect(
     const abi = shouldVerify ? VERIFIED_ABI : NORMAL_ABI;
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    // Prepare transaction based on contract type
+    // Validate contract has code at the address
+    const code = await ethersProvider!.getCode(contractAddress);
+    if (!code || code === '0x' || code.length <= 2) {
+      return {
+        success: false,
+        error: `No contract found at address ${contractAddress} on chain ${chainId}. Please ensure you're on the correct network.`,
+      };
+    }
+
+    logger.info('✅ Contract validated at address', { contractAddress, codeLength: code.length });
+
+    // Prepare transaction with robust gas estimation
     let tx;
+    const txOverrides: any = {};
+
+    // Add value for fee-based chains
+    if (feeAmount) {
+      txOverrides.value = ethers.parseEther(feeAmount);
+    }
+
+    // Attempt gas estimation with fallback
+    try {
+      if (isVerified) {
+        // For verified contracts, estimate based on which score we're submitting
+        if (pushups > 0) {
+          const gasEstimate = await contract.submitScore.estimateGas(
+            pushups,
+            'pushups',
+            txOverrides
+          );
+          txOverrides.gasLimit = (gasEstimate * 120n) / 100n; // 20% buffer
+        } else if (squats > 0) {
+          const gasEstimate = await contract.submitScore.estimateGas(squats, 'squats', txOverrides);
+          txOverrides.gasLimit = (gasEstimate * 120n) / 100n;
+        }
+      } else {
+        // For standard contracts
+        const gasEstimate = await contract.addScore.estimateGas(pushups, squats, txOverrides);
+        txOverrides.gasLimit = (gasEstimate * 120n) / 100n;
+      }
+      logger.info('✅ Gas estimated successfully', { gasLimit: txOverrides.gasLimit });
+    } catch (gasError: any) {
+      logger.warn('⚠️ Gas estimation failed, using fallback', gasError);
+
+      // Check if it's a revert with reason
+      if (gasError.reason) {
+        return {
+          success: false,
+          error: `Transaction would fail: ${gasError.reason}`,
+        };
+      }
+
+      // Use fallback gas limits
+      txOverrides.gasLimit = isVerified ? 100000n : 150000n;
+      logger.info('📝 Using fallback gas limit', { gasLimit: txOverrides.gasLimit });
+    }
+
+    // Execute transaction based on contract type
     if (isVerified) {
       // For verified contracts (Celo only), submit each exercise type separately using submitScore
       if (pushups > 0) {
-        if (feeAmount) {
-          tx = await contract.submitScore(pushups, 'pushups', {
-            value: ethers.parseEther(feeAmount),
-          });
-        } else {
-          tx = await contract.submitScore(pushups, 'pushups');
-        }
+        tx = await contract.submitScore(pushups, 'pushups', txOverrides);
       } else if (squats > 0) {
-        if (feeAmount) {
-          tx = await contract.submitScore(squats, 'squats', {
-            value: ethers.parseEther(feeAmount),
-          });
-        } else {
-          tx = await contract.submitScore(squats, 'squats');
-        }
+        tx = await contract.submitScore(squats, 'squats', txOverrides);
       } else {
         return { success: false, error: 'At least one exercise must be > 0' };
       }
     } else {
       // For standard contracts (Monad, Polygon, Base), use addScore with both values
-      if (feeAmount) {
-        // For chains requiring fees (like Monad)
-        tx = await contract.addScore(pushups, squats, { value: ethers.parseEther(feeAmount) });
-      } else {
-        // Standard transaction
-        tx = await contract.addScore(pushups, squats);
-      }
+      tx = await contract.addScore(pushups, squats, txOverrides);
     }
 
     // Wait for confirmation
@@ -350,10 +416,22 @@ export async function submitScoreDirect(
   } catch (error) {
     logger.error('❌ Submission error:', error);
 
-    // Simplified error handling
+    // Enhanced error handling with detailed logging
     let errorMessage = 'Transaction failed';
     if (error instanceof Error) {
-      errorMessage = error.message;
+      const fullErrorMessage = error.message;
+      errorMessage = fullErrorMessage;
+
+      // Log detailed error information for debugging
+      logger.error('Error details:', {
+        message: fullErrorMessage,
+        code: (error as any).code,
+        reason: (error as any).reason,
+        data: (error as any).data,
+        chainId,
+        contractAddress,
+        isVerified,
+      });
 
       if (errorMessage.includes('user rejected')) {
         errorMessage = 'Transaction rejected. Please approve the transaction to continue.';
@@ -361,6 +439,14 @@ export async function submitScoreDirect(
         errorMessage = 'Insufficient funds in your wallet.';
       } else if (errorMessage.includes('network')) {
         errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (
+        errorMessage.includes('missing revert data') ||
+        errorMessage.includes('estimateGas')
+      ) {
+        errorMessage =
+          'Contract call failed. Please ensure you are on the correct network and the contract exists.';
+      } else if (errorMessage.includes('no contract')) {
+        errorMessage = 'Contract not found. Please check your network connection.';
       }
     }
 
