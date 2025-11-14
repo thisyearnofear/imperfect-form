@@ -134,3 +134,6 @@ temp/
 
 # Sentry Config File
 .sentryclirc
+
+# Mini app data persistence (runtime-generated)
+data/

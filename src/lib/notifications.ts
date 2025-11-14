@@ -1,12 +1,22 @@
 // Notification system for Farcaster Mini App
 // Follows official Farcaster 2025 standards
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 interface NotificationToken {
   fid: number;
   token: string;
   url: string;
   createdAt: Date;
   isActive: boolean;
+}
+
+interface MiniAppStatus {
+  fid: number;
+  miniAppAdded: boolean;
+  addedAt?: string; // Store as ISO string for JSON serialization
+  removedAt?: string; // Store as ISO string for JSON serialization
 }
 
 interface NotificationRequest {
@@ -23,8 +33,54 @@ interface NotificationResponse {
   rateLimitedTokens: string[];
 }
 
-// In-memory storage for demo (replace with database in production)
+// File-based storage for mini app statuses
+const MINIAPP_STATUS_FILE = path.join(process.cwd(), 'data', 'miniapp-status.json');
+
+// Ensure data directory exists
+function ensureDataDir() {
+  const dataDir = path.dirname(MINIAPP_STATUS_FILE);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+}
+
+// Load mini app statuses from file
+function loadMiniAppStatuses(): Map<number, MiniAppStatus> {
+  ensureDataDir();
+
+  try {
+    if (fs.existsSync(MINIAPP_STATUS_FILE)) {
+      const data = fs.readFileSync(MINIAPP_STATUS_FILE, 'utf-8');
+      const parsed = JSON.parse(data);
+      // Convert object back to Map
+      return new Map(
+        Object.entries(parsed).map(([fid, status]) => [parseInt(fid, 10), status as MiniAppStatus])
+      );
+    }
+  } catch (error) {
+    console.error('Error loading mini app statuses:', error);
+  }
+
+  return new Map();
+}
+
+// Save mini app statuses to file
+function saveMiniAppStatuses(map: Map<number, MiniAppStatus>): void {
+  ensureDataDir();
+
+  try {
+    const obj = Object.fromEntries(map);
+    fs.writeFileSync(MINIAPP_STATUS_FILE, JSON.stringify(obj, null, 2));
+  } catch (error) {
+    console.error('Error saving mini app statuses:', error);
+  }
+}
+
+// In-memory storage for notification tokens (kept in memory for performance)
 const notificationTokens = new Map<number, NotificationToken>();
+
+// Load mini app statuses from file on startup
+const miniAppStatuses = loadMiniAppStatuses();
 
 export class NotificationManager {
   /**
@@ -253,6 +309,49 @@ export class NotificationManager {
       activeTokens: allTokens.filter((t) => t.isActive).length,
       inactiveTokens: allTokens.filter((t) => !t.isActive).length,
     };
+  }
+
+  /**
+   * Mark mini app as added for a user
+   */
+  static async setMiniAppAdded(fid: number): Promise<void> {
+    miniAppStatuses.set(fid, {
+      fid,
+      miniAppAdded: true,
+      addedAt: new Date().toISOString(),
+    });
+    saveMiniAppStatuses(miniAppStatuses);
+    console.log(`✨ Marked mini app as added for FID ${fid}`);
+  }
+
+  /**
+   * Mark mini app as removed for a user
+   */
+  static async setMiniAppRemoved(fid: number): Promise<void> {
+    const existing = miniAppStatuses.get(fid);
+    miniAppStatuses.set(fid, {
+      fid,
+      miniAppAdded: false,
+      addedAt: existing?.addedAt,
+      removedAt: new Date().toISOString(),
+    });
+    saveMiniAppStatuses(miniAppStatuses);
+    console.log(`✨ Marked mini app as removed for FID ${fid}`);
+  }
+
+  /**
+   * Check if user has added the mini app
+   */
+  static async isMiniAppAdded(fid: number): Promise<boolean> {
+    const status = miniAppStatuses.get(fid);
+    return status?.miniAppAdded ?? false;
+  }
+
+  /**
+   * Get mini app status for a user
+   */
+  static async getMiniAppStatus(fid: number): Promise<MiniAppStatus | null> {
+    return miniAppStatuses.get(fid) ?? null;
   }
 }
 

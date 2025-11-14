@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePlatform, usePlatformFeatures } from '@/contexts/PlatformContext';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 
@@ -22,6 +22,33 @@ export function AddMiniAppButton({
   const isInMiniApp = platform === 'farcaster';
   const [isAdding, setIsAdding] = useState(false);
   const [showPrompt, setShowPrompt] = useState(showAfterWorkout);
+  const [hasMiniAppAdded, setHasMiniAppAdded] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Check if user has already added the mini app
+  useEffect(() => {
+    const checkMiniAppStatus = async () => {
+      if (!user?.fid || !isInMiniApp) {
+        setIsChecking(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/user/${user.fid}/miniapp-status`);
+        if (response.ok) {
+          const data = await response.json();
+          setHasMiniAppAdded(data.miniAppAdded);
+          logger.info('🎯 Mini app status checked', { miniAppAdded: data.miniAppAdded });
+        }
+      } catch (error) {
+        logger.error('Error checking mini app status', error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkMiniAppStatus();
+  }, [user?.fid, isInMiniApp]);
 
   const handleAddMiniApp = async () => {
     setIsAdding(true);
@@ -43,8 +70,12 @@ export function AddMiniAppButton({
     }
   };
 
-  // Don't show if not in Mini App or if prompt is hidden
-  if (!isInMiniApp || !showPrompt) {
+  // Don't show if:
+  // - not in Mini App
+  // - prompt is hidden
+  // - still checking status
+  // - mini app already added
+  if (!isInMiniApp || !showPrompt || isChecking || hasMiniAppAdded) {
     return null;
   }
 

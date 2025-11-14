@@ -111,6 +111,9 @@ async function handleFrameAdded(event: FrameAddedEvent, userFid: number) {
     hasNotificationDetails: !!event.notificationDetails,
   });
 
+  // Mark mini app as added in tracking
+  await NotificationManager.setMiniAppAdded(userFid);
+
   // Track engagement event
   await EngagementTracker.trackEvent({
     fid: userFid,
@@ -147,6 +150,9 @@ async function handleFrameAdded(event: FrameAddedEvent, userFid: number) {
 
 async function handleFrameRemoved(_event: FrameRemovedEvent, userFid: number) {
   logger.info('🎭 User removed Mini App', { userFid });
+
+  // Mark mini app as removed in tracking
+  await NotificationManager.setMiniAppRemoved(userFid);
 
   // Track engagement event
   await EngagementTracker.trackEvent({
