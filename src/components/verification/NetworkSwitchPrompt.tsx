@@ -74,109 +74,47 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
       description={reason}
       preventClose={false}
     >
-      <div className="space-y-6">
-        <div
-          className="p-4 rounded-lg border"
-          style={{
-            backgroundColor: currentTheme.palette.surface + 'E6',
-            borderColor: currentTheme.palette.accent + '80',
-          }}
-        >
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span style={{ color: currentTheme.palette.textSecondary }}>Current Network:</span>
-              <span className="font-medium" style={{ color: currentTheme.palette.text }}>
-                {wallet.chainId
-                  ? (() => {
-                      const foundChain = Object.values(SupportedChain).find(
-                        (chain) =>
-                          (chain === SupportedChain.CELO && wallet.chainId === 42220) ||
-                          (chain === SupportedChain.CELO_ALFAJORES && wallet.chainId === 44787) ||
-                          (chain === SupportedChain.POLYGON && wallet.chainId === 137) ||
-                          (chain === SupportedChain.BASE && wallet.chainId === 8453) ||
-                          (chain === SupportedChain.MONAD && wallet.chainId === 10143)
-                      );
-                      return foundChain ? getNetworkDisplayName(foundChain) : 'Unknown';
-                    })()
-                  : 'Not Connected'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span style={{ color: currentTheme.palette.textSecondary }}>Required Network:</span>
-              <span className="font-medium" style={{ color: currentTheme.palette.accent }}>
-                {getNetworkDisplayName(targetChain)}
-              </span>
-            </div>
-          </div>
-        </div>
+      <div className="space-y-3">
+        <p className="text-sm" style={{ color: currentTheme.palette.textSecondary }}>
+          Switch to{' '}
+          <strong style={{ color: currentTheme.palette.text }}>
+            {getNetworkDisplayName(targetChain)}
+          </strong>{' '}
+          to verify.
+        </p>
 
-        <div className="text-sm text-center">
-          <p style={{ color: currentTheme.palette.textSecondary }}>
-            Self Protocol verification requires Celo
-          </p>
-        </div>
-
-        <div className="flex space-x-3">
+        <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-lg transition-colors"
+            className="flex-1 py-2 px-3 rounded-lg text-sm transition-colors"
             style={{
               backgroundColor: currentTheme.palette.surface,
               color: currentTheme.palette.text,
               border: `1px solid ${currentTheme.palette.accent}40`,
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = currentTheme.palette.surfaceLight;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = currentTheme.palette.surface;
-            }}
             disabled={isSwitching}
           >
-            Maybe Later
+            Skip
           </button>
           <button
             onClick={handleSwitchNetwork}
             disabled={isSwitching}
-            className="flex-1 py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="flex-1 py-2 px-3 rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             style={{
               backgroundColor: currentTheme.palette.accent,
               color: currentTheme.palette.background,
               border: `1px solid ${currentTheme.palette.accent}`,
             }}
-            onMouseEnter={(e) => {
-              if (!isSwitching) {
-                e.currentTarget.style.backgroundColor = currentTheme.palette.accentLight;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isSwitching) {
-                e.currentTarget.style.backgroundColor = currentTheme.palette.accent;
-              }
-            }}
           >
             {isSwitching ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                 <span>Switching...</span>
               </>
             ) : (
               <span>Switch Network</span>
             )}
           </button>
-        </div>
-
-        <div
-          className="text-xs pt-3 border-t"
-          style={{
-            color: currentTheme.palette.textMuted,
-            borderColor: currentTheme.palette.accent + '40',
-          }}
-        >
-          <p>
-            <strong style={{ color: currentTheme.palette.accent }}>Manual switch:</strong> You can
-            also switch to Celo Alfajores manually in your wallet settings.
-          </p>
         </div>
       </div>
     </Dialog>

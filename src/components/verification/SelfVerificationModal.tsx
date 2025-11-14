@@ -110,73 +110,71 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Verify as Human"
-      description="Get verified to earn your human badge and join the verified leaderboard!"
-      maxWidth="500px"
+      description="Quick one-time setup with Self Protocol"
+      maxWidth="400px"
     >
-      <div className="space-y-6">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-            🏆 Verify as Human
-          </h2>
-          <p className="text-cyan-300 font-medium">Get your verified badge with Self Protocol</p>
-        </div>
+      <div className="space-y-4 relative">
+        {/* Close button - prominent for mobile */}
+        <button
+          onClick={onClose}
+          className="absolute top-0 right-0 text-3xl text-gray-400 hover:text-white p-2 hover:bg-gray-700/50 rounded transition-all"
+          aria-label="Close verification modal"
+          title="Close"
+        >
+          ×
+        </button>
 
         {/* Verification Interface */}
         {isLoading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-cyan-400 mx-auto mb-4"></div>
-            <p className="text-white">Generating verification...</p>
+          <div className="text-center py-6">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-transparent border-t-cyan-400 mx-auto mb-3"></div>
+            <p className="text-sm text-gray-300">Generating verification...</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Mobile: Show deep link button */}
             {isMobile ? (
-              <div className="text-center space-y-4">
-                <p className="text-sm text-gray-300">
-                  Tap the button below to open the Self app and verify your identity:
-                </p>
+              <div className="space-y-3">
                 <button
                   onClick={openSelfApp}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-105"
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-all text-sm"
                 >
                   📱 Open Self App
                 </button>
-                <p className="text-xs text-gray-400">
-                  Don&apos;t have the Self app?{' '}
+                <p className="text-xs text-gray-400 text-center">
                   <a
                     href="https://self.id"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline text-cyan-400"
                   >
-                    Download Self app
+                    Don&apos;t have it? Download Self
                   </a>
                 </p>
               </div>
             ) : (
               /* Desktop: Show QR code */
-              <div className="text-center space-y-4">
-                <p className="text-sm text-gray-300">Scan with the Self mobile app</p>
+              <div className="space-y-3">
+                <p className="text-xs text-gray-300 text-center">Scan with Self app</p>
                 {selfApp && (
-                  <div className="flex justify-center p-4 bg-white rounded-lg">
+                  <div className="flex justify-center p-3 bg-white rounded-lg">
                     <SelfQRcodeWrapper
                       selfApp={selfApp}
                       onSuccess={handleSuccessfulVerification}
                       onError={handleVerificationError}
-                      size={250}
+                      size={200}
                       darkMode={true}
                     />
                   </div>
                 )}
-                <p className="text-xs text-gray-400">
-                  Need the Self app?{' '}
+                <p className="text-xs text-gray-400 text-center">
                   <a
                     href="https://self.id"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline text-cyan-400"
                   >
-                    Download Self app
+                    Download Self
                   </a>
                 </p>
               </div>
@@ -184,28 +182,21 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
           </div>
         )}
 
-        {/* Privacy Notice */}
-        <div className="p-3 rounded-lg border border-cyan-400 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
-          <p className="text-xs text-gray-300">
-            🔒 <strong className="text-cyan-400">Privacy First:</strong> Self Protocol only verifies
-            you're 16+ years old. No personal data stored.
-          </p>
+        {/* Privacy Notice - compact */}
+        <div className="p-2 rounded border border-cyan-400/30 bg-cyan-900/20">
+          <p className="text-xs text-gray-300">🔒 Verifies age 16+. No personal data stored.</p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 hover:bg-gray-700 transition-colors"
-          >
-            Maybe Later
-          </button>
-          <button
-            onClick={() => window.open(universalLink, '_blank')}
-            className="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white border border-cyan-400 hover:from-cyan-400 hover:to-blue-400 transition-all transform hover:scale-105"
-          >
-            📱 Open Self App
-          </button>
+        <div className="flex gap-2 pt-2">
+          {!isMobile && universalLink && (
+            <button
+              onClick={() => window.open(universalLink, '_blank')}
+              className="flex-1 px-3 py-3 text-sm rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 transition-all font-medium"
+            >
+              Open App
+            </button>
+          )}
         </div>
       </div>
     </Dialog>

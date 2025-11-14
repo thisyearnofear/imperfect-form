@@ -96,50 +96,72 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
     );
   }
 
+  const [showDetails, setShowDetails] = useState(false);
+
   return (
     <>
-      {/* Streamlined Verification Prompt */}
+      {/* Ultra-compact verification prompt - default state */}
       <div className={`verification-prompt ${className}`}>
-        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-3 rounded-lg border border-yellow-500/30 relative">
-          {/* Much more visible dismiss button */}
-          <button
-            onClick={onClose}
-            className="absolute top-2 right-2 text-yellow-300 hover:text-white bg-black/30 hover:bg-black/60 rounded-full w-6 h-6 flex items-center justify-center text-lg transition-all duration-200 border border-yellow-500/50 hover:border-white/70"
-            aria-label="Skip verification"
-          >
-            ×
-          </button>
-
-          {/* Compact, visual-first design */}
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center space-x-2">
-              <span className="text-xl">🏆</span>
-              <span className="text-green-400 text-sm font-bold">+10% Bonus Points</span>
+        {!showDetails ? (
+          // COMPACT VIEW - Single line, easy to dismiss
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm">🏆 +10% bonus for verification</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={() => setShowDetails(true)}
+                className="text-xs px-2 py-0.5 rounded text-yellow-300 hover:bg-yellow-500/20 transition-colors"
+              >
+                Learn more
+              </button>
+              <button
+                onClick={onClose}
+                className="text-2xl text-yellow-300 hover:text-white transition-colors p-1 hover:bg-yellow-500/20 rounded"
+                aria-label="Dismiss verification prompt"
+                title="Dismiss"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        ) : (
+          // EXPANDED VIEW - Details for curious users
+          <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-3 rounded-lg border border-yellow-500/30">
+            <div className="flex justify-between items-start mb-2">
+              <h4 className="font-bold text-yellow-200">Get Verified Human Badge</h4>
+              <button
+                onClick={onClose}
+                className="text-2xl text-yellow-300 hover:text-white transition-colors p-1 hover:bg-yellow-500/20 rounded"
+                aria-label="Dismiss verification details"
+                title="Collapse"
+              >
+                ×
+              </button>
             </div>
 
-            <h4 className="font-bold text-yellow-200 text-base">Get Verified Human Badge</h4>
+            <p className="text-xs text-yellow-200/80 mb-3">
+              Verify your identity with Self Protocol on Celo blockchain. One-time setup, no
+              personal data stored.
+            </p>
 
             <button
               onClick={promptForVerification}
-              className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-2.5 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg text-sm mt-2"
+              className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm"
             >
               {chainId && chainSupportsSelfProtocol(chainId)
                 ? '🚀 Verify Now'
                 : '🔄 Switch to Celo'}
             </button>
 
-            {/* Ultra-compact stats */}
-            <div className="text-xs text-yellow-200/80">
-              {countLoading ? (
-                <span className="animate-pulse">Loading...</span>
-              ) : verifiedCount > 0 ? (
-                <span>{verifiedCount} verified • One-time setup</span>
-              ) : (
-                <span>Quick one-time setup</span>
-              )}
-            </div>
+            <button
+              onClick={() => setShowDetails(false)}
+              className="w-full mt-2 text-xs px-2 py-1 rounded text-yellow-300 hover:bg-yellow-500/20 transition-colors"
+            >
+              Collapse
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Network Switch Prompt */}
