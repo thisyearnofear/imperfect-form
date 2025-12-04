@@ -36,6 +36,9 @@ const nextConfig = {
     scrollRestoration: true,
   },
 
+  // Turbopack configuration (Next.js 16 default)
+  turbopack: {},
+
   // Webpack configuration to fix runtime errors
   webpack: (config, { isServer }) => {
     // Fix for "Cannot read properties of undefined (reading 'call')" error

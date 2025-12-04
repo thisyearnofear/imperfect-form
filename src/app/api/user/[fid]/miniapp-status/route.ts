@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import NotificationManager from '@/lib/notifications';
 
-interface RouteParams {
-  params: {
-    fid: string;
-  };
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ fid: string }> }) {
   try {
-    const fid = parseInt(params.fid, 10);
+    const { fid: fidStr } = await params;
+    const fid = parseInt(fidStr, 10);
 
     if (isNaN(fid)) {
       return NextResponse.json({ error: 'Invalid FID' }, { status: 400 });
