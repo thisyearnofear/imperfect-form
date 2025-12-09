@@ -12,6 +12,7 @@ import { VerificationIntegration } from '@/components/verification';
 import { getMemoryClient } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 import { useFadeTransition } from '@/hooks';
+import { designTokens } from '@/lib/designTokens';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -27,6 +28,37 @@ const initializeWindowProperties = () => {
 
 // Call initialization
 initializeWindowProperties();
+
+// Network color tokens - mapped from design system
+const NETWORK_STYLES = {
+  polygon: {
+    bg: 'bg-purple-900/50',
+    text: 'text-purple-300',
+    badge: { backgroundColor: 'rgba(147, 51, 234, 0.5)', color: 'rgb(216, 180, 254)' },
+  },
+  monad: {
+    bg: 'bg-yellow-900/50',
+    text: 'text-yellow-300',
+    badge: { backgroundColor: 'rgba(180, 83, 9, 0.5)', color: 'rgb(253, 224, 71)' },
+  },
+  celo: {
+    bg: 'bg-green-900/50',
+    text: 'text-green-300',
+    badge: { backgroundColor: 'rgba(20, 83, 45, 0.5)', color: 'rgb(134, 239, 172)' },
+  },
+  base: {
+    bg: 'bg-blue-900/50',
+    text: 'text-blue-300',
+    badge: { backgroundColor: 'rgba(30, 58, 138, 0.5)', color: 'rgb(147, 197, 253)' },
+  },
+} as const;
+
+// Status color tokens
+const STATUS_STYLES = {
+  submitting: { color: designTokens.colors.warning, className: 'text-yellow-400' },
+  error: { color: designTokens.colors.error, className: 'text-red-400' },
+  success: { color: designTokens.colors.success, className: 'text-green-400' },
+} as const;
 
 export interface SummaryModalProps {
   isOpen: boolean;
@@ -198,23 +230,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         {/* Network Info - Minimal badge */}
         <div className="text-center">
           <span
-            className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${
-              networkType === 'polygon'
-                ? 'bg-purple-900/50 text-purple-300'
-                : networkType === 'monad'
-                  ? 'bg-yellow-900/50 text-yellow-300'
-                  : networkType === 'celo'
-                    ? 'bg-green-900/50 text-green-300'
-                    : 'bg-blue-900/50 text-blue-300'
-            }`}
+            className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${NETWORK_STYLES[networkType].bg} ${NETWORK_STYLES[networkType].text}`}
           >
-            {networkType === 'polygon'
-              ? 'Polygon'
-              : networkType === 'monad'
-                ? 'Monad'
-                : networkType === 'celo'
-                  ? 'Celo'
-                  : 'Base'}
+            {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
           </span>
         </div>
 
@@ -241,10 +259,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 />
                 {/* Dynamic feedback message */}
                 {submissionStatus === 'submitting' && (
-                  <p className="text-sm text-yellow-400 mt-3 animate-pulse">Confirming... 💫</p>
+                  <p className={`text-sm ${STATUS_STYLES.submitting.className} mt-3 animate-pulse`}>
+                    Confirming... 💫
+                  </p>
                 )}
                 {submissionStatus === 'error' && (
-                  <p className="text-sm text-red-400 mt-3">Failed. Retry?</p>
+                  <p className={`text-sm ${STATUS_STYLES.error.className} mt-3`}>Failed. Retry?</p>
                 )}
               </div>
             )}

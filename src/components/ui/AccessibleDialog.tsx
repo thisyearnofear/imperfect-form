@@ -3,6 +3,7 @@
 import React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { designTokens } from '@/lib/designTokens';
 
 interface AccessibleDialogProps {
   isOpen: boolean;
@@ -32,29 +33,66 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
   return (
     <DialogPrimitive.Root open={isOpen} onOpenChange={preventClose ? undefined : onClose}>
       <DialogPrimitive.Portal>
-        {/* Triple-layered backdrop for maximum opacity */}
-        <div className="fixed inset-0 bg-black z-[1997]" />
-        <div className="fixed inset-0 bg-black z-[1998]" />
-        <div className="fixed inset-0 bg-black z-[1999]" />
-        {/* Regular overlay with slightly increased z-index */}
-        <DialogPrimitive.Overlay className="fixed inset-0 bg-black z-[2000]" />
+        {/* Backdrop using z-index tokens */}
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: designTokens.colors.background.overlay,
+            zIndex: designTokens.zIndex.modalBackdrop - 3,
+          }}
+        />
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: designTokens.colors.background.overlay,
+            zIndex: designTokens.zIndex.modalBackdrop - 2,
+          }}
+        />
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: designTokens.colors.background.overlay,
+            zIndex: designTokens.zIndex.modalBackdrop - 1,
+          }}
+        />
+        {/* Overlay with modal z-index */}
+        <DialogPrimitive.Overlay
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: designTokens.colors.background.overlay,
+            zIndex: designTokens.zIndex.modalBackdrop,
+          }}
+        />
         <DialogPrimitive.Content
-          className={`fixed left-[50%] top-[50%] z-[2001] max-h-[90vh] w-[90vw] translate-x-[-50%] translate-y-[-50%] rounded-[10px] bg-black border-4 border-[#fcb131] p-6 shadow-[0_0_25px_rgba(252,177,49,0.5)] focus:outline-none overflow-y-auto text-center`}
+          className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto text-center focus:outline-none"
           onEscapeKeyDown={preventClose ? undefined : onClose}
           style={{
             maxWidth: maxWidth,
-            backgroundColor: '#000000', // ENHANCEMENT: Solid black background for maximum contrast
-            color: '#ffffff', // ENHANCEMENT: Ensure text is white for maximum contrast
+            backgroundColor: designTokens.colors.background.primary,
+            color: designTokens.colors.text.primary,
+            zIndex: designTokens.zIndex.modal,
+            borderRadius: designTokens.borderRadius.lg,
+            border: `4px solid ${designTokens.colors.border.strong}`,
+            padding: designTokens.spacing.lg,
+            boxShadow: designTokens.shadows.primaryLg,
+            maxHeight: '90vh',
+            width: '90vw',
           }}
         >
           {/* Title is always present for accessibility, but can be visually hidden */}
           {showTitle ? (
             <DialogPrimitive.Title
-              className="text-xl font-bold text-[#fcb131] mb-4 font-['Press_Start_2P',cursive]"
               style={{
-                // ENHANCEMENT: Add text shadow for better readability against any background
+                fontSize: designTokens.typography.fontSize['2xl'],
+                fontWeight: designTokens.typography.fontWeight.bold,
+                color: designTokens.colors.primary,
+                marginBottom: designTokens.spacing.md,
+                fontFamily: designTokens.typography.fontFamily.display,
                 textShadow: '2px 2px 4px rgba(0, 0, 0, 0.9)',
-                color: '#fcb131',
               }}
             >
               {title}
@@ -67,10 +105,10 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
 
           {description && (
             <DialogPrimitive.Description
-              className="text-sm text-[#fcb131] mb-4"
               style={{
-                color: '#fcb131',
-                // ENHANCEMENT: Add text shadow for better readability
+                fontSize: designTokens.typography.fontSize.sm,
+                color: designTokens.colors.primary,
+                marginBottom: designTokens.spacing.md,
                 textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
               }}
             >
@@ -78,16 +116,40 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
             </DialogPrimitive.Description>
           )}
 
-          {children}
+          <div style={{ marginBottom: designTokens.spacing.lg }}>{children}</div>
 
           {!preventClose && (
             <DialogPrimitive.Close
-              className="absolute right-3 top-3 text-[#fcb131] hover:text-white text-2xl font-bold cursor-pointer bg-black/50 hover:bg-black/80 rounded-full w-8 h-8 flex items-center justify-center border border-[#fcb131] hover:border-white transition-all duration-200 z-10"
-              aria-label="Close dialog"
               style={{
+                position: 'absolute',
+                right: designTokens.spacing.sm,
+                top: designTokens.spacing.sm,
+                color: designTokens.colors.primary,
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                borderRadius: designTokens.borderRadius.full,
+                width: '2rem',
+                height: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${designTokens.colors.border.strong}`,
+                transition: designTokens.transitions.button.hover,
                 textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
                 lineHeight: '1',
+                zIndex: 10,
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = designTokens.colors.text.primary;
+                e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = designTokens.colors.primary;
+                e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+              }}
+              aria-label="Close dialog"
             >
               ×
             </DialogPrimitive.Close>

@@ -7,3 +7,14 @@ export {
   useSlideTransition,
   useScaleTransition,
 } from './useTransition';
+
+// Data synchronization hooks (Phase 5)
+export { useDataSync, useQuery, useMutation } from './useDataSync';
+export type { UseDataSyncOptions, UseDataSyncReturn } from './useDataSync';
+
+// Real leaderboard integration with DataSync
+export {
+  useSyncedLeaderboard,
+  useSyncedScores,
+  useSyncedFullLeaderboard,
+} from './useSyncedLeaderboard';

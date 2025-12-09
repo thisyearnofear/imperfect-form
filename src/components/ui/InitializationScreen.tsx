@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { designTokens } from '@/lib/designTokens';
 
 interface InitializationScreenProps {
   onComplete: () => void;
@@ -10,8 +11,8 @@ interface InitializationScreenProps {
 export default function InitializationScreen({
   onComplete,
 }: Omit<InitializationScreenProps, 'platform'>) {
-  // Use default theme colors during initialization (before theme context is available)
-  const defaultAccentColor = '#fcb131'; // Default gold/yellow accent
+  // Use design tokens for consistent branding during initialization
+  const defaultAccentColor = designTokens.colors.primary;
 
   useEffect(() => {
     // Mark onboarding as seen and intro dialog as skipped during initialization
