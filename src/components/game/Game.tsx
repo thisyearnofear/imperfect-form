@@ -215,6 +215,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     poseDetected: false,
     isLoading: false,
   });
+  const [detectionProgress, setDetectionProgress] = useState<{
+    phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+    message: string;
+    percentage: number;
+  } | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
@@ -557,6 +562,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         isActive={started}
         onFilterChange={handleFilterChange}
         onPoseStateChange={handlePoseStateChange}
+        onDetectionProgress={setDetectionProgress}
       />
     ),
     [mode, handleRepCount, started, handleFilterChange, handlePoseStateChange]
@@ -722,6 +728,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     <PoseLoadingOverlay
                       poseState={poseState}
                       isVisible={started && !poseState.poseDetected}
+                      detectionProgress={detectionProgress || undefined}
                     />
                   </div>
                 </div>
@@ -738,6 +745,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                   <PoseLoadingOverlay
                     poseState={poseState}
                     isVisible={started && !poseState.poseDetected}
+                    detectionProgress={detectionProgress || undefined}
                   />
                 </div>
               )}

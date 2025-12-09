@@ -51,6 +51,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [submissionStatus, setSubmissionStatus] = useState<
     'idle' | 'submitting' | 'success' | 'error'
   >('idle');
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const [submittedChainId, setSubmittedChainId] = useState<number | null>(null);
   const [earnings, setEarnings] = useState<{
     totalEarned: number;
     weeklyEarnings: number;
@@ -238,6 +240,10 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   walletAddress={effectiveAddress}
                   submissionStatus={submissionStatus}
                   setSubmissionStatus={setSubmissionStatus}
+                  onSubmissionSuccess={(txHash, chainId) => {
+                    setTransactionHash(txHash);
+                    setSubmittedChainId(chainId);
+                  }}
                 />
                 {/* Dynamic feedback message */}
                 {submissionStatus === 'submitting' && (
@@ -328,8 +334,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
         )}
 
-        {/* Verification prompt - show after successful submission */}
-        {submissionStatus === 'success' && (
+        {/* Celo-specific verification prompt - show after successful submission on Celo only */}
+        {submissionStatus === 'success' && submittedChainId === 42220 && (
           <div className="border-t border-gray-700 pt-4">
             <VerificationIntegration
               onVerificationComplete={() => {
@@ -338,6 +344,36 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               }}
               onClose={onClose}
             />
+          </div>
+        )}
+
+        {/* Non-Celo success summary - show transaction and summary on other chains */}
+        {submissionStatus === 'success' && submittedChainId !== 42220 && transactionHash && (
+          <div className="border-t border-gray-700 pt-4 space-y-3">
+            <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700/30 rounded-lg p-3 text-center">
+              <p className="text-sm text-green-300 mb-2">
+                ✅ Score successfully recorded on{' '}
+                <span className="font-semibold">
+                  {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
+                </span>
+              </p>
+              {transactionHash && (
+                <a
+                  href={`${chainConfigs[networkType as 'polygon' | 'base' | 'monad' | 'celo'].blockExplorerUrls?.[0]}/tx/${transactionHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-400 hover:text-blue-300 underline break-all"
+                >
+                  View transaction →
+                </a>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="w-full px-4 py-2 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] transition-all duration-200 text-sm"
+            >
+              Back to Menu
+            </button>
           </div>
         )}
 

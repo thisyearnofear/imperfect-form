@@ -291,7 +291,7 @@ export async function submitScoreDirect(
   chainId: number,
   isVerified = false, // Whether this is a verified fitness contract
   feeAmount: string | null = null // Optional fee for chains that require it
-): Promise<{ success: boolean; error?: string; transactionHash?: string }> {
+): Promise<{ success: boolean; error?: string; transactionHash?: string; chainId?: number }> {
   try {
     logger.info('🚀 Starting unified score submission', {
       pushups,
@@ -410,6 +410,7 @@ export async function submitScoreDirect(
         return {
           success: true,
           transactionHash: receipt.hash,
+          chainId: validationResult.chainId,
           error: undefined,
         };
       } else {
@@ -429,6 +430,7 @@ export async function submitScoreDirect(
         return {
           success: true,
           transactionHash: tx.hash,
+          chainId: validationResult.chainId,
           error: undefined,
         };
       }

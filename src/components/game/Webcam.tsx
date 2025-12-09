@@ -25,6 +25,11 @@ interface WebcamProps {
     poseDetected: boolean;
     isLoading: boolean;
   }) => void;
+  onDetectionProgress?: (progress: {
+    phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+    message: string;
+    percentage: number;
+  }) => void;
 }
 
 // Initialize logger for the Webcam component
@@ -36,6 +41,7 @@ const Webcam: React.FC<WebcamProps> = ({
   isActive = true,
   onFilterChange = () => {},
   onPoseStateChange,
+  onDetectionProgress,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Pass isMobile flag to usePoseDetection for mobile-specific optimizations
@@ -46,7 +52,8 @@ const Webcam: React.FC<WebcamProps> = ({
     onRepCount,
     isActive,
     isMobile,
-    onPoseStateChange
+    onPoseStateChange,
+    onDetectionProgress
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
 

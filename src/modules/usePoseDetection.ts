@@ -1,8 +1,9 @@
 import { useEffect, useRef, RefObject, useCallback, useState } from 'react';
-// TensorFlow is imported but not directly used in this file
-// import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
-import { initializeTensorFlow } from '@/utils/tfUtils';
+import {
+  getPoseDetectionService,
+  type PoseDetectionProgress,
+} from '@/services/PoseDetectionService';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
 
 type ExerciseMode = 'pushups' | 'squats';
@@ -27,7 +28,8 @@ export function usePoseDetection(
     hasPoseDetection: boolean;
     poseDetected: boolean;
     isLoading: boolean;
-  }) => void
+  }) => void,
+  onProgressChange?: (progress: PoseDetectionProgress) => void
 ): RefObject<HTMLVideoElement | null> {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const repState = useRef<'up' | 'down' | 'middle'>('middle');
@@ -220,10 +222,20 @@ export function usePoseDetection(
       setIsLoading(true);
 
       try {
-        // Initialize TensorFlow.js with the best available backend
-        // Pass isMobile flag to apply device-specific optimizations
+        // Use unified PoseDetectionService for initialization
+        const service = getPoseDetectionService();
+
+        // Subscribe to progress updates
+        let unsubscribeProgress: (() => void) | undefined;
+        if (onProgressChange) {
+          unsubscribeProgress = service.onProgress((progress) => {
+            onProgressChange(progress);
+          });
+        }
+
         try {
-          const backend = await initializeTensorFlow(isMobile);
+          // Initialize TensorFlow through service
+          const backend = await service.initializeTensorFlow(isMobile);
           console.log('TensorFlow.js initialized with backend:', backend);
         } catch (tfError) {
           console.error('Failed to initialize TensorFlow:', tfError);
@@ -262,9 +274,6 @@ export function usePoseDetection(
           console.log('Set desktop canvas dimensions:', canvas.width, canvas.height);
         }
 
-        // Force canvas to be visible with a border for debugging
-        const borderColor = isMobile ? '3px solid green' : '3px solid red';
-        canvas.style.border = borderColor; // Different color for mobile/desktop for debugging
         canvas.style.position = 'absolute';
         canvas.style.top = '0';
         canvas.style.left = '0';
@@ -272,35 +281,9 @@ export function usePoseDetection(
         canvas.style.height = '100%';
         canvas.style.zIndex = '10';
 
-        // Import pose detection models dynamically to reduce initial load time
+        // Initialize detector through service with progress tracking
         try {
-          const poseDetection = await import('@tensorflow-models/pose-detection');
-
-          // Use a simpler configuration for mobile to ensure compatibility
-          if (isMobile) {
-            // On mobile: use the most reliable and lightweight settings
-            detectorRef.current = await poseDetection.createDetector(
-              poseDetection.SupportedModels.MoveNet,
-              {
-                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
-                enableSmoothing: true,
-                minPoseScore: 0.2,
-              }
-            );
-          } else {
-            // On desktop: use the original high-quality settings
-            detectorRef.current = await poseDetection.createDetector(
-              poseDetection.SupportedModels.MoveNet,
-              {
-                modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
-                enableSmoothing: true,
-                minPoseScore: 0.25,
-                multiPoseMaxDimension: 512,
-                enableTracking: true,
-              }
-            );
-          }
-
+          detectorRef.current = await service.initializeDetector(isMobile);
           console.log(
             'Pose detector initialized successfully for',
             isMobile ? 'mobile' : 'desktop'
@@ -310,6 +293,11 @@ export function usePoseDetection(
         } catch (modelError) {
           console.error('Error initializing pose detection model:', modelError);
           setIsLoading(false);
+        } finally {
+          // Clean up progress subscription
+          if (unsubscribeProgress) {
+            unsubscribeProgress();
+          }
         }
 
         // Detection loop with throttling
@@ -655,7 +643,7 @@ export function usePoseDetection(
         requestRef.current = 0;
       }
 
-      // Dispose of the detector
+      // Dispose of the detector and service
       if (detectorRef.current) {
         try {
           // Use optional chaining to safely call dispose if it exists
@@ -665,6 +653,10 @@ export function usePoseDetection(
         }
         detectorRef.current = null;
       }
+
+      // Dispose service resources
+      const service = getPoseDetectionService();
+      service.dispose();
 
       // Stop all media tracks using the captured ref value
       if (videoElement?.srcObject) {
@@ -700,6 +692,7 @@ export function usePoseDetection(
     detectPushupCallback,
     detectSquatCallback,
     poseDetected,
+    onProgressChange,
   ]);
 
   return videoRef;

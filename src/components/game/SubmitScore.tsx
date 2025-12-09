@@ -142,6 +142,7 @@ interface SubmitScoreProps {
   walletAddress?: string;
   submissionStatus: 'idle' | 'submitting' | 'success' | 'error';
   setSubmissionStatus: (status: 'idle' | 'submitting' | 'success' | 'error') => void;
+  onSubmissionSuccess?: (transactionHash: string, chainId: number) => void;
 }
 
 // Unified score submission component using PlatformContext
@@ -154,6 +155,7 @@ export default function SubmitScore({
   walletAddress,
   submissionStatus,
   setSubmissionStatus,
+  onSubmissionSuccess,
 }: SubmitScoreProps) {
   const [confirmStep, setConfirmStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -256,6 +258,11 @@ export default function SubmitScore({
         setSubmissionStatus('success');
         const sourceMessage = wallet.provider === 'wagmi' ? ' via Wagmi' : '';
         toast.success(`Scores submitted to ${networkConfig.name}${sourceMessage}!`);
+
+        // Notify parent component of successful submission
+        if (result.transactionHash && result.chainId && onSubmissionSuccess) {
+          onSubmissionSuccess(result.transactionHash, result.chainId);
+        }
       } else {
         console.log('SubmitScoreWithWagmi: Submission failed with error:', result.error);
         setSubmissionStatus('error');

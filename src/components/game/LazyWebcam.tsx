@@ -14,6 +14,11 @@ interface LazyWebcamProps {
     poseDetected: boolean;
     isLoading: boolean;
   }) => void;
+  onDetectionProgress?: (progress: {
+    phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+    message: string;
+    percentage: number;
+  }) => void;
 }
 
 /**
@@ -76,7 +81,16 @@ export default function LazyWebcam(props: LazyWebcamProps) {
 
   // Render the actual Webcam component once loaded
   if (WebcamComponent && props.isActive) {
-    return <WebcamComponent {...props} />;
+    return (
+      <WebcamComponent
+        mode={props.mode}
+        onRepCount={props.onRepCount}
+        isActive={props.isActive}
+        onFilterChange={props.onFilterChange}
+        onPoseStateChange={props.onPoseStateChange}
+        onDetectionProgress={props.onDetectionProgress}
+      />
+    );
   }
 
   // Show placeholder when not active

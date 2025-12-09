@@ -16,8 +16,10 @@ interface VerificationIntegrationProps {
 }
 
 /**
- * Component that provides verification functionality after score submission
- * Shows a prompt to verify as human with Self Protocol
+ * Component that provides verification functionality after score submission on Celo
+ * Shows a prompt to verify as human with Self Protocol (Celo-only feature)
+ *
+ * ENHANCEMENT FIRST: Only shows on Celo chain where verification bonus applies
  */
 const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   onVerificationComplete,
@@ -32,6 +34,10 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   const { currentTheme } = useEnhancedChainTheme();
   const { count: verifiedCount, isLoading: countLoading } = useVerifiedCount();
   const { address, chainId } = wallet;
+
+  // CLEAN: Only render verification UI on Celo mainnet (chainId 42220)
+  // Other chains don't support Self Protocol or verification bonuses
+  const isCeloMainnet = chainId === 42220;
 
   const handleVerificationSuccess = () => {
     setIsVerified(true);
@@ -77,6 +83,11 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
     // After successful network switch, show verification modal
     setShowVerificationModal(true);
   };
+
+  // Don't show anything if not on Celo
+  if (!isCeloMainnet) {
+    return null;
+  }
 
   if (isVerified) {
     return (

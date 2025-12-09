@@ -4,6 +4,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ProgressIndicator from './ProgressIndicator';
 import MotivationalMessages from './MotivationalMessages';
 
+export interface DetectionProgress {
+  phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+  message: string;
+  percentage: number;
+}
+
 interface PoseLoadingOverlayProps {
   poseState: {
     hasCamera: boolean;
@@ -13,6 +19,7 @@ interface PoseLoadingOverlayProps {
   };
   isVisible: boolean;
   className?: string;
+  detectionProgress?: DetectionProgress;
 }
 
 /**
@@ -23,12 +30,14 @@ export default function PoseLoadingOverlay({
   poseState,
   isVisible,
   className = '',
+  detectionProgress,
 }: PoseLoadingOverlayProps) {
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState(0);
   const [instructionOpacity, setInstructionOpacity] = useState(1);
   const [currentPhase, setCurrentPhase] = useState<
     'initial' | 'camera' | 'ai' | 'positioning' | 'ready'
   >('initial');
+  const [progressPercentage, setProgressPercentage] = useState(0);
 
   // Enhanced loading instructions organized by phase
   const loadingInstructions = useMemo(
@@ -60,22 +69,37 @@ export default function PoseLoadingOverlay({
     []
   );
 
-  // Update phase based on pose detection state
+  // Update phase based on pose detection state and progress
   useEffect(() => {
     if (!isVisible) return;
 
-    if (!poseState.hasCamera) {
-      setCurrentPhase('initial');
-    } else if (poseState.hasCamera && !poseState.hasPoseDetection) {
-      setCurrentPhase('camera');
-      // After camera is ready, move to AI loading phase
-      setTimeout(() => setCurrentPhase('ai'), 1000);
-    } else if (poseState.hasPoseDetection && !poseState.poseDetected) {
-      setCurrentPhase('positioning');
-    } else if (poseState.poseDetected) {
-      setCurrentPhase('ready');
+    if (detectionProgress) {
+      // Use real progress from detection service
+      setProgressPercentage(detectionProgress.percentage);
+
+      if (detectionProgress.phase === 'tensorflow-init') {
+        setCurrentPhase('ai');
+      } else if (detectionProgress.phase === 'model-download') {
+        setCurrentPhase('ai');
+      } else if (detectionProgress.phase === 'warmup') {
+        setCurrentPhase('ai');
+      } else if (detectionProgress.phase === 'ready') {
+        setCurrentPhase('ready');
+      }
+    } else {
+      // Fallback to state-based phase detection
+      if (!poseState.hasCamera) {
+        setCurrentPhase('initial');
+      } else if (poseState.hasCamera && !poseState.hasPoseDetection) {
+        setCurrentPhase('camera');
+        setTimeout(() => setCurrentPhase('ai'), 1000);
+      } else if (poseState.hasPoseDetection && !poseState.poseDetected) {
+        setCurrentPhase('positioning');
+      } else if (poseState.poseDetected) {
+        setCurrentPhase('ready');
+      }
     }
-  }, [poseState, isVisible]);
+  }, [poseState, isVisible, detectionProgress]);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -171,11 +195,18 @@ export default function PoseLoadingOverlay({
 
       {/* Progress bar for AI loading phase - Mobile optimized */}
       {currentPhase === 'ai' && (
-        <div className="w-48 sm:w-64 bg-gray-700 rounded-full h-2 mb-4">
+        <div className="w-48 sm:w-64 bg-gray-700 rounded-full h-2 mb-4 overflow-hidden">
           <div
-            className="bg-purple-400 h-2 rounded-full animate-pulse"
-            style={{ width: '70%' }}
+            className="bg-purple-400 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${progressPercentage}%` }}
           ></div>
+        </div>
+      )}
+
+      {/* Real progress percentage - Mobile optimized */}
+      {currentPhase === 'ai' && progressPercentage > 0 && (
+        <div className="text-center text-sm sm:text-base text-gray-300 mb-2">
+          {progressPercentage}%
         </div>
       )}
 
