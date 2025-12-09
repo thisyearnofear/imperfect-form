@@ -7,6 +7,7 @@ import { shortenAddress } from '@/utils/formatters';
 import { Dialog } from '@/components/ui';
 import { Score } from '@/types';
 import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
+import { useFadeTransition } from '@/hooks';
 import VerificationBadge from '@/components/verification/VerificationBadge';
 import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
 import {
@@ -37,6 +38,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
   onClose,
   onViewProfile,
 }) => {
+  const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [breakdownType, setBreakdownType] = useState<'pushups' | 'squats' | null>(null);
   const [progressiveDisplayNames, setProgressiveDisplayNames] =
@@ -72,7 +74,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
     }
   }, [isOpen, allUserAddresses]);
 
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   // Filter leaderboards by verification status if enabled
   const filterLeaderboard = (leaderboard: Score[]) => {
@@ -124,7 +126,9 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
       maxWidth="900px"
     >
       {/* Compact Header with main leaderboard aesthetic */}
-      <div className="bg-black/80 border-2 border-[#fcb131] rounded-lg p-4 mb-4 shadow-[0_0_20px_rgba(252,177,49,0.5)]">
+      <div
+        className={`bg-black/80 border-2 border-[#fcb131] rounded-lg p-4 mb-4 shadow-[0_0_20px_rgba(252,177,49,0.5)] ${transitionClass}`}
+      >
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold text-[#fcb131]">🏆 Leaderboard</h2>
           <div className="flex space-x-2">

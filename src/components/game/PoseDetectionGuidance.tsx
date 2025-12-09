@@ -21,7 +21,6 @@ export default function PoseDetectionGuidance({
   onDismiss,
 }: PoseDetectionGuidanceProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [showTips, setShowTips] = useState(false);
 
   // Determine current guidance step based on state
   useEffect(() => {
@@ -38,53 +37,36 @@ export default function PoseDetectionGuidance({
 
   const guidanceSteps = [
     {
-      title: '📹 Camera Setup',
-      subtitle: 'Setting up your camera...',
-      content: [
-        'Allow camera access when prompted',
-        'Position camera to show your full body',
-        'Ensure you have good lighting',
-      ],
+      title: '📹 Camera',
+      subtitle: 'Allow access',
+      content: ['Show full body', 'Good lighting'],
       icon: '📹',
       color: 'text-blue-400',
       bgColor: 'bg-blue-900/20',
       borderColor: 'border-blue-500/30',
     },
     {
-      title: '🤖 AI Loading',
-      subtitle: 'Loading pose detection...',
-      content: [
-        'AI model is initializing',
-        'This may take a few moments',
-        'Please wait while we prepare everything',
-      ],
+      title: '🤖 Loading',
+      subtitle: 'Initializing...',
+      content: ['One moment'],
       icon: '🤖',
       color: 'text-purple-400',
       bgColor: 'bg-purple-900/20',
       borderColor: 'border-purple-500/30',
     },
     {
-      title: '🎯 Get in Position',
-      subtitle: 'Position yourself for detection',
-      content: [
-        'Stand in full view of the camera',
-        'Ensure your whole body is visible',
-        'Check that lighting is bright enough',
-        'Move closer or adjust camera angle if needed',
-      ],
+      title: '🎯 Position',
+      subtitle: 'Full body in view',
+      content: ['Stand clear', 'Visible head to feet'],
       icon: '🎯',
       color: 'text-yellow-400',
       bgColor: 'bg-yellow-900/20',
       borderColor: 'border-yellow-500/30',
     },
     {
-      title: '✅ Ready to Go!',
-      subtitle: 'Pose detected successfully',
-      content: [
-        "Perfect! You're all set",
-        'Your skeleton should be visible',
-        'Ready to start your workout',
-      ],
+      title: '✅ Ready',
+      subtitle: 'Detected',
+      content: ['Go!'],
       icon: '✅',
       color: 'text-green-400',
       bgColor: 'bg-green-900/20',
@@ -93,16 +75,6 @@ export default function PoseDetectionGuidance({
   ];
 
   const currentGuidance = guidanceSteps[currentStep];
-
-  const positioningTips = [
-    '💡 Stand 3-6 feet from your camera',
-    '💡 Ensure your head and feet are both visible',
-    '💡 Face the camera directly',
-    "💡 Avoid backlighting (don't stand in front of windows)",
-    '💡 Use overhead lighting or face a window for best results',
-    '💡 Wear contrasting colors to your background',
-    '💡 Clear the space around you for movement',
-  ];
 
   if (!isVisible) return null;
 
@@ -146,26 +118,6 @@ export default function PoseDetectionGuidance({
           </div>
         )}
 
-        {/* Positioning tips toggle for step 2 */}
-        {currentStep === 2 && (
-          <div className="space-y-3">
-            <button
-              onClick={() => setShowTips(!showTips)}
-              className="text-yellow-400 hover:text-yellow-300 text-sm underline"
-            >
-              {showTips ? 'Hide' : 'Show'} positioning tips
-            </button>
-
-            {showTips && (
-              <div className="text-left space-y-1 text-xs text-gray-400 bg-black/30 rounded p-3">
-                {positioningTips.map((tip, index) => (
-                  <p key={index}>{tip}</p>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Action buttons */}
         <div className="flex justify-center space-x-3 pt-2">
           {currentStep === 3 && onDismiss && (
@@ -173,30 +125,18 @@ export default function PoseDetectionGuidance({
               onClick={onDismiss}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
             >
-              Start Workout
-            </button>
-          )}
-
-          {currentStep === 2 && (
-            <button
-              onClick={() => {
-                logger.info('User requested help with positioning');
-                setShowTips(true);
-              }}
-              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              Need Help?
+              Start
             </button>
           )}
         </div>
 
-        {/* Skip option for experienced users */}
+        {/* Skip option */}
         {onDismiss && currentStep < 3 && (
           <button
             onClick={onDismiss}
             className="text-gray-500 hover:text-gray-400 text-xs underline"
           >
-            Skip guidance
+            Skip
           </button>
         )}
       </div>

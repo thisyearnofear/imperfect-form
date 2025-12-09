@@ -11,6 +11,7 @@ import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
 import { VerificationIntegration } from '@/components/verification';
 import { getMemoryClient } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
+import { useFadeTransition } from '@/hooks';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -48,6 +49,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const { platform, wallet, user } = usePlatform();
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === 'farcaster';
+  const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
   const [submissionStatus, setSubmissionStatus] = useState<
     'idle' | 'submitting' | 'success' | 'error'
   >('idle');
@@ -149,7 +151,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   // Network switching is no longer supported in the summary modal
   // This prevents wallet compatibility issues
 
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   // Format exercise time to handle durations over 2 minutes correctly
   const formatExerciseTime = (seconds: number) => {
@@ -184,49 +186,41 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title={submissionStatus === 'success' ? 'Score Submitted!' : 'Record Your Score'}
+      title={submissionStatus === 'success' ? '✅ Submitted' : '📊 Submit'}
       description={
         submissionStatus === 'success'
-          ? `${getMedalEmoji()} Score successfully submitted to the leaderboard!`
-          : `${getMedalEmoji()} You aced ${repCount} ${mode} in ${120 - timeLeft} secs!`
+          ? `${getMedalEmoji()} Leaderboard updated`
+          : `${getMedalEmoji()} ${repCount} ${mode} • ${120 - timeLeft}s`
       }
       preventClose={false}
     >
-      <div className="space-y-6">
-        {/* Network Info - Simplified */}
-        <div className="border-b border-gray-700 pb-2">
-          <div className="text-center">
-            <p className="text-sm text-gray-200">
-              <span className="text-gray-100 font-semibold">Network:</span>{' '}
-              <span
-                className={`font-bold px-2 py-0.5 rounded-full text-xs ${
-                  networkType === 'polygon'
-                    ? 'bg-purple-900/50 text-purple-300'
-                    : networkType === 'monad'
-                      ? 'bg-yellow-900/50 text-yellow-300'
-                      : networkType === 'celo'
-                        ? 'bg-green-900/50 text-green-300'
-                        : 'bg-blue-900/50 text-blue-300'
-                }`}
-              >
-                {networkType === 'polygon'
-                  ? chainConfigs[SupportedChain.POLYGON].name
-                  : networkType === 'monad'
-                    ? chainConfigs[SupportedChain.MONAD].name
-                    : networkType === 'celo'
-                      ? chainConfigs[SupportedChain.CELO].name
-                      : chainConfigs[SupportedChain.BASE].name}
-              </span>
-            </p>
-          </div>
+      <div className={`space-y-6 ${transitionClass}`}>
+        {/* Network Info - Minimal badge */}
+        <div className="text-center">
+          <span
+            className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${
+              networkType === 'polygon'
+                ? 'bg-purple-900/50 text-purple-300'
+                : networkType === 'monad'
+                  ? 'bg-yellow-900/50 text-yellow-300'
+                  : networkType === 'celo'
+                    ? 'bg-green-900/50 text-green-300'
+                    : 'bg-blue-900/50 text-blue-300'
+            }`}
+          >
+            {networkType === 'polygon'
+              ? 'Polygon'
+              : networkType === 'monad'
+                ? 'Monad'
+                : networkType === 'celo'
+                  ? 'Celo'
+                  : 'Base'}
+          </span>
         </div>
 
         {/* Wallet Connection */}
         {!effectiveAddress ? (
-          <div className="text-center py-2">
-            <p className="mb-2 text-sm">Connect your wallet to submit:</p>
-            <UniversalConnectButton size="lg" />
-          </div>
+          <UniversalConnectButton size="lg" />
         ) : (
           <div className="space-y-4">
             {/* Submit Score component - only show if not successfully submitted */}
@@ -247,50 +241,25 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 />
                 {/* Dynamic feedback message */}
                 {submissionStatus === 'submitting' && (
-                  <p className="text-sm text-yellow-400 mt-3 animate-pulse">
-                    Confirming transaction... 💫
-                  </p>
+                  <p className="text-sm text-yellow-400 mt-3 animate-pulse">Confirming... 💫</p>
                 )}
                 {submissionStatus === 'error' && (
-                  <p className="text-sm text-red-400 mt-3">Submission failed. Please try again.</p>
+                  <p className="text-sm text-red-400 mt-3">Failed. Retry?</p>
                 )}
               </div>
             )}
 
             {/* Success message - show when successfully submitted */}
             {submissionStatus === 'success' && (
-              <div className="rounded-md p-3 text-center">
-                <div className="text-green-400 text-lg font-bold mb-2">✅ Score Submitted!</div>
-                <p className="text-sm text-green-300">
-                  Your {repCount} {mode} score has been recorded on the blockchain.
-                </p>
+              <div className="rounded-md p-2 text-center">
+                <div className="text-green-400 text-base font-bold">✅ Submitted!</div>
               </div>
             )}
 
             {/* Earnings Preview - Show after successful submission */}
             {submissionStatus === 'success' && earnings && (
-              <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700/30 rounded-lg p-3">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <span className="text-green-400 text-lg">💰</span>
-                  <span className="text-sm font-semibold text-green-400">
-                    Data Monetization Active
-                  </span>
-                </div>
-                <p className="text-xs text-gray-300 text-center mb-2">
-                  Your fitness data is earning $MEM tokens through Memory Protocol
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs text-center">
-                  <div>
-                    <div className="text-green-300 font-medium">
-                      ${earnings.totalEarned.toFixed(4)}
-                    </div>
-                    <div className="text-gray-400">Total Earned</div>
-                  </div>
-                  <div>
-                    <div className="text-blue-300 font-medium">{earnings.dataQueries}</div>
-                    <div className="text-gray-400">Queries Served</div>
-                  </div>
-                </div>
+              <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700/30 rounded-lg p-2 text-center">
+                <div className="text-xs text-gray-300">💰 +${earnings.totalEarned.toFixed(4)}</div>
               </div>
             )}
           </div>
@@ -316,18 +285,15 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 <button
                   className="twitter-button transition-all transform hover:scale-105"
                   onClick={() => {
-                    const text = `I just completed ${repCount} ${mode} in the Onchain Olympics! 💪`;
-                    const url = `https://imperfect-form.vercel.app?ref=twitter`;
-                    const hashtags = ['OnchainOlympics', 'FitnessOnchain'];
+                    const text = `${repCount} ${mode} • Onchain Olympics 💪`;
+                    const url = `https://imperfect-form.vercel.app`;
                     window.open(
-                      `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                        text
-                      )}&url=${encodeURIComponent(url)}&hashtags=${hashtags.join(',')}`,
+                      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
                       '_blank'
                     );
                   }}
                 >
-                  Twitter
+                  𝕏
                 </button>
               )}
             </div>
@@ -349,30 +315,24 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
         {/* Non-Celo success summary - show transaction and summary on other chains */}
         {submissionStatus === 'success' && submittedChainId !== 42220 && transactionHash && (
-          <div className="border-t border-gray-700 pt-4 space-y-3">
-            <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700/30 rounded-lg p-3 text-center">
-              <p className="text-sm text-green-300 mb-2">
-                ✅ Score successfully recorded on{' '}
-                <span className="font-semibold">
-                  {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
-                </span>
-              </p>
-              {transactionHash && (
-                <a
-                  href={`${chainConfigs[networkType as 'polygon' | 'base' | 'monad' | 'celo'].blockExplorerUrls?.[0]}/tx/${transactionHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-400 hover:text-blue-300 underline break-all"
-                >
-                  View transaction →
-                </a>
-              )}
+          <div className="border-t border-gray-700 pt-3 space-y-2">
+            <div className="bg-green-900/20 border border-green-700/30 rounded p-2 text-center text-xs text-green-300">
+              ✅ On {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
             </div>
+            <a
+              href={`${chainConfigs[networkType as 'polygon' | 'base' | 'monad' | 'celo'].blockExplorerUrls?.[0]}/tx/${transactionHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-xs text-center text-blue-400 hover:text-blue-300 truncate"
+              title={transactionHash}
+            >
+              View Tx →
+            </a>
             <button
               onClick={onClose}
-              className="w-full px-4 py-2 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] transition-all duration-200 text-sm"
+              className="w-full px-3 py-1.5 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded text-xs hover:from-[#f39c12] hover:to-[#fcb131] transition-all"
             >
-              Back to Menu
+              Menu
             </button>
           </div>
         )}
@@ -381,9 +341,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         {isInMiniApp && repCount > 0 && (
           <div className="border-t border-gray-700 pt-4">
             <div className="text-center space-y-3">
-              <p className="text-sm text-purple-300 font-medium">
-                🎯 Great workout! Save this app for quick access
-              </p>
+              <p className="text-xs text-purple-300 font-medium">📌 Pin app</p>
               <AddMiniAppButton variant="secondary" showAfterWorkout={true} className="w-full" />
             </div>
           </div>

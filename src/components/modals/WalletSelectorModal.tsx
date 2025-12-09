@@ -5,6 +5,7 @@ import { useConnect } from 'wagmi';
 import { useWallet, useWalletSelector } from '@/contexts/PlatformContext';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import { Spinner } from '@/components/ui';
+import { useFadeTransition } from '@/hooks';
 
 // A more specific type for the connectors array from useConnect
 type Connector = ReturnType<typeof useConnect>['connectors'][number];
@@ -13,6 +14,7 @@ const WalletSelectorModal: React.FC = () => {
   const { connectors } = useConnect();
   const { connect, isConnecting } = useWallet();
   const { isOpen, setOpen } = useWalletSelector();
+  const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
 
   const handleConnect = async (connector: Connector) => {
     const success = await connect(connector.id);
@@ -27,6 +29,8 @@ const WalletSelectorModal: React.FC = () => {
     (c) => c.id !== 'farcasterFrame' && c.id !== 'farcaster' && c.id !== 'farcasterMiniApp'
   );
 
+  if (!isVisible) return null;
+
   return (
     <AccessibleDialog
       isOpen={isOpen}
@@ -34,7 +38,7 @@ const WalletSelectorModal: React.FC = () => {
       title="Sign In"
       description="Choose your preferred method to sign in and continue"
     >
-      <div className="flex flex-col space-y-4">
+      <div className={`flex flex-col space-y-4 ${transitionClass}`}>
         {/* Promote passkey onboarding with improved visibility */}
         <div className="bg-gradient-to-r from-blue-50 to-teal-50 border-2 border-blue-300 rounded-lg p-4 mb-3 shadow-lg">
           <p className="text-base text-center font-semibold" style={{ color: '#1f2937' }}>

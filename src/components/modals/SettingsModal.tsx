@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog } from '@/components/ui';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import { useFadeTransition } from '@/hooks';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ interface SettingsModalProps {
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, autoFs, setAutoFs }) => {
+  const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
+
   const handleToggle = (checked: boolean) => {
     setAutoFs(checked);
     if (typeof window !== 'undefined') {
@@ -17,9 +20,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, autoFs, 
     }
   };
 
+  if (!isVisible) return null;
+
   return (
     <Dialog isOpen={isOpen} onClose={onClose} title="Settings">
-      <div className="p-6 min-w-[260px] max-w-[340px]">
+      <div className={`p-6 min-w-[260px] max-w-[340px] ${transitionClass}`}>
         <div className="flex flex-col gap-6">
           <ToggleSwitch
             checked={autoFs}

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Spinner } from '@/components/ui';
-import MobileFastLoader from '@/components/ui/MobileFastLoader';
 
 // Ultra-lazy loading for mobile - only load when absolutely needed
 const GameWrapper = dynamic(() => import('@/components/game/GameWrapper'), {
@@ -75,34 +74,32 @@ export default function MobilePage() {
   }, []);
 
   return (
-    <MobileFastLoader>
-      <div className="flex flex-col min-h-screen bg-black">
-        {/* Game area - prioritized loading */}
-        <div className="relative z-10 flex-grow px-2 pb-4">
-          {gameLoaded ? (
-            <GameWrapper />
-          ) : (
-            <div className="flex items-center justify-center h-96">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-                <p className="text-yellow-400 text-sm">Preparing your workout...</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Leaderboard - delayed loading to not block initial render */}
-        {showLeaderboard && (
-          <div className="px-4 pb-6">
-            <div className="bg-black/80 p-3 rounded-lg border border-gray-800">
-              <h3 className="text-center text-yellow-400 text-sm mb-2 font-bold">LEADERBOARD</h3>
-              <div className="leaderboard-container">
-                <Leaderboard limit={2} onViewMore={handleViewMore} />
-              </div>
+    <div className="flex flex-col min-h-screen bg-black">
+      {/* Game area - prioritized loading */}
+      <div className="relative z-10 flex-grow px-2 pb-4">
+        {gameLoaded ? (
+          <GameWrapper />
+        ) : (
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+              <p className="text-yellow-400 text-sm">Preparing your workout...</p>
             </div>
           </div>
         )}
       </div>
+
+      {/* Leaderboard - delayed loading to not block initial render */}
+      {showLeaderboard && (
+        <div className="px-4 pb-6">
+          <div className="bg-black/80 p-3 rounded-lg border border-gray-800">
+            <h3 className="text-center text-yellow-400 text-sm mb-2 font-bold">LEADERBOARD</h3>
+            <div className="leaderboard-container">
+              <Leaderboard limit={2} onViewMore={handleViewMore} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Expanded Leaderboard Modal */}
       <ExpandedLeaderboardModal
@@ -112,6 +109,6 @@ export default function MobilePage() {
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
       />
-    </MobileFastLoader>
+    </div>
   );
 }

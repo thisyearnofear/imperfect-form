@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Spinner, LoadingScreen, PoseLoadingOverlay } from '@/components/ui';
+import { Spinner, UnifiedLoader } from '@/components/ui';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { cameraManager, stopAllCameras as stopAllCamerasUtil } from '@/utils/cameraManager';
 import { SummaryModal, ExpandedLeaderboardModal } from '@/components/modals';
@@ -679,13 +679,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           )}
 
           {showLoading && (
-            <LoadingScreen
+            <UnifiedLoader
+              phase="initial"
+              isVisible={showLoading}
+              isOverlay={false}
               onComplete={() => {
                 setShowLoading(false);
                 setStarted(true);
               }}
-              autoHide={true}
-              hideDelay={2000}
             />
           )}
 
@@ -725,10 +726,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     {memoizedWebcam}
 
                     {/* Pose loading overlay - shows on top of video while pose detection initializes */}
-                    <PoseLoadingOverlay
-                      poseState={poseState}
+                    <UnifiedLoader
+                      phase={
+                        !poseState.hasCamera
+                          ? 'initial'
+                          : !poseState.hasPoseDetection
+                            ? 'camera'
+                            : !poseState.poseDetected
+                              ? 'positioning'
+                              : 'ready'
+                      }
+                      progress={detectionProgress?.percentage}
                       isVisible={started && !poseState.poseDetected}
-                      detectionProgress={detectionProgress || undefined}
+                      isOverlay={true}
                     />
                   </div>
                 </div>
@@ -742,10 +752,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                   {memoizedWebcam}
 
                   {/* Pose loading overlay - shows on top of video while pose detection initializes */}
-                  <PoseLoadingOverlay
-                    poseState={poseState}
+                  <UnifiedLoader
+                    phase={
+                      !poseState.hasCamera
+                        ? 'initial'
+                        : !poseState.hasPoseDetection
+                          ? 'camera'
+                          : !poseState.poseDetected
+                            ? 'positioning'
+                            : 'ready'
+                    }
+                    progress={detectionProgress?.percentage}
                     isVisible={started && !poseState.poseDetected}
-                    detectionProgress={detectionProgress || undefined}
+                    isOverlay={true}
                   />
                 </div>
               )}

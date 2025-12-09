@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LoadingScreen } from '@/components/ui';
+import { UnifiedLoader } from '@/components/ui';
 
 /**
  * Demo component to showcase the enhanced loading experience
@@ -69,13 +69,21 @@ const LoadingDemo: React.FC = () => {
         </div>
       ) : (
         <div className="w-full h-full">
-          <LoadingScreen
+          <UnifiedLoader
+            phase={
+              !poseState.hasCamera
+                ? 'initial'
+                : !poseState.hasPoseDetection
+                  ? 'camera'
+                  : !poseState.poseDetected
+                    ? 'positioning'
+                    : 'ready'
+            }
+            isVisible={isVisible}
+            isOverlay={false}
             onComplete={() => {
               setTimeout(resetDemo, 2000); // Show completion for 2 seconds
             }}
-            autoHide={false}
-            poseState={poseState}
-            isActive={true}
           />
 
           {/* Demo controls */}
