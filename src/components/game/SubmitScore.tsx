@@ -10,6 +10,9 @@ import { getNetworkByChainId } from '@/config/networks';
 import toast from 'react-hot-toast';
 import { isFarcasterMiniApp } from '@/utils/farcasterMiniApp';
 import type { WalletState } from '@/contexts/PlatformContext';
+import { CONTRACT_ADDRESSES } from '@/config/contract-addresses';
+import { verifiedFitnessContractABI } from '@/constants/contracts';
+import { ethers } from 'ethers';
 
 /**
  * CONSOLIDATION: Unified Provider Selection
@@ -165,6 +168,49 @@ export default function SubmitScore({
   // Unified wallet connection via PlatformContext
   const address = wallet.address || walletAddress;
 
+  // State for verification status
+  const [isVerifiedUser, setIsVerifiedUser] = useState(false);
+
+  // Check verification status on Celo
+  React.useEffect(() => {
+    let isMounted = true;
+
+    async function checkVerification() {
+      // Only check on Celo (42220) and if we have an address
+      if (chainId !== 42220 || !address) {
+        if (isMounted) setIsVerifiedUser(false);
+        return;
+      }
+
+      try {
+        // Simple read provider for Celo
+        const provider = new ethers.JsonRpcProvider('https://forno.celo.org');
+        const verifiedContractAddr = CONTRACT_ADDRESSES.celo.verified;
+
+        const contract = new ethers.Contract(
+          verifiedContractAddr,
+          verifiedFitnessContractABI,
+          provider
+        );
+
+        const isVerified = await contract.isVerifiedHuman(address);
+        if (isMounted) {
+          setIsVerifiedUser(isVerified);
+          console.log('User verification status on Celo:', isVerified);
+        }
+      } catch (err) {
+        console.error('Error checking verification status:', err);
+        if (isMounted) setIsVerifiedUser(false);
+      }
+    }
+
+    checkVerification();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [chainId, address]);
+
   // Calculate effective scores (support legacy single score + new batch scores)
   const effectivePushupsScore = pushupsScore ?? (exerciseType === 'pushups' ? score : 0) ?? 0;
   const effectiveSquatsScore = squatsScore ?? (exerciseType === 'squats' ? score : 0) ?? 0;
@@ -213,10 +259,22 @@ export default function SubmitScore({
         throw new Error(`Unsupported chain ID: ${chainId}`);
       }
 
-      // Determine if this is a verified contract
-      const isVerifiedContract =
-        networkConfig.contractAddress.toLowerCase() ===
+      // Intelligent Routing for Celo
+      let targetContractAddress = networkConfig.contractAddress;
+      let isVerifiedContract =
+        targetContractAddress.toLowerCase() ===
         process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT?.toLowerCase();
+
+      // If we are on Celo and the user is verified, force strict routing to the Verified Contract
+      if (chainId === 42220 && isVerifiedUser) {
+        console.log('🌟 Verified User detected on Celo! Routing to Verified Contract.');
+        targetContractAddress = CONTRACT_ADDRESSES.celo.verified;
+        isVerifiedContract = true;
+      } else if (chainId === 42220) {
+        // Ensure standard contract for non-verified
+        targetContractAddress = CONTRACT_ADDRESSES.celo.standard;
+        isVerifiedContract = false;
+      }
 
       // Get fee amount for chains that require it
       let feeAmount: string | null = null;
@@ -236,7 +294,7 @@ export default function SubmitScore({
       console.log('🚀 Submitting score with params:', {
         pushups: effectivePushupsScore,
         squats: effectiveSquatsScore,
-        contractAddress: networkConfig.contractAddress,
+        contractAddress: targetContractAddress,
         chainId,
         isVerified: isVerifiedContract,
         feeAmount,
@@ -247,7 +305,7 @@ export default function SubmitScore({
         provider,
         effectivePushupsScore,
         effectiveSquatsScore,
-        networkConfig.contractAddress,
+        targetContractAddress,
         chainId,
         isVerifiedContract,
         feeAmount
@@ -257,7 +315,8 @@ export default function SubmitScore({
         console.log('SubmitScoreWithWagmi: Submission successful');
         setSubmissionStatus('success');
         const sourceMessage = wallet.provider === 'wagmi' ? ' via Wagmi' : '';
-        toast.success(`Scores submitted to ${networkConfig.name}${sourceMessage}!`);
+        const leaderboardType = isVerifiedContract ? 'Verified' : networkConfig.name;
+        toast.success(`Scores submitted to ${leaderboardType} Leaderboard${sourceMessage}!`);
 
         // Notify parent component of successful submission
         if (result.transactionHash && result.chainId && onSubmissionSuccess) {
@@ -372,6 +431,11 @@ export default function SubmitScore({
             <div className="text-[#fcb131] opacity-80 space-y-1">
               {effectivePushupsScore > 0 && <p>Pushups: {effectivePushupsScore}</p>}
               {effectiveSquatsScore > 0 && <p>Squats: {effectiveSquatsScore}</p>}
+              {isVerifiedUser && chainId === 42220 && (
+                <p className="text-[#10b981] text-xs mt-2 border border-[#10b981] rounded px-2 py-1 bg-[#10b981]/10">
+                  ✨ Submitting to Verified Leaderboard
+                </p>
+              )}
             </div>
           </div>
 
