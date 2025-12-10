@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { WalletBrowserIndicator } from '@/components/ui';
+import { VerificationTester } from '@/components/debug';
 
 /**
  * Debug page to test mobile and wallet browser detection
@@ -173,6 +174,11 @@ export default function DebugMobilePage() {
               etc.)
             </p>
           </div>
+        </div>
+
+        {/* Verification Debugger */}
+        <div className="mt-6">
+          <VerificationTester />
         </div>
 
         {/* Navigation */}
