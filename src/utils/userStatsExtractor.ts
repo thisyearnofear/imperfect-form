@@ -188,9 +188,10 @@ function generateMotivationalText(
   }
 
   // Handle case where we have no timestamp data (streak will be 0, daysSince will be null)
+  // UX FIX: Don't show total count as a streak. Be honest about status.
   if (daysSinceLastWorkout === null && streak === 0) {
     return {
-      streakText: `${totalSessions} workout${totalSessions === 1 ? '' : 's'} completed! 🎯`,
+      streakText: 'Active',
       summaryText: 'Keep building your fitness habit!',
     };
   }
@@ -199,7 +200,7 @@ function generateMotivationalText(
   if (streak > 0) {
     const streakEmoji = streak >= 7 ? '🔥' : streak >= 3 ? '⚡' : '💪';
     return {
-      streakText: `${streak} day streak ${streakEmoji}`,
+      streakText: `${streak} Day${streak !== 1 ? 's' : ''} ${streakEmoji}`,
       summaryText: 'Keep the momentum going!',
     };
   }
@@ -213,9 +214,9 @@ function generateMotivationalText(
     };
   }
 
-  // Fallback for edge cases
+  // Fallback for edge cases (0 streak, 0 sessions, or unknown state)
   return {
-    streakText: 'Ready to go! 💪',
+    streakText: 'Start Today!',
     summaryText: 'Time for your next workout!',
   };
 }
@@ -420,13 +421,16 @@ export function formatUserStatsForProfile(stats: UserStats) {
   );
 
   const result = {
-    workouts: `${totalSessions} session${totalSessions !== 1 ? 's' : ''}`,
+    // UX IMPROVEMENT: Concise "3" instead of "3 sessions"
+    workouts: totalSessions.toString(),
     bestScore:
       bestScore > 0
-        ? `${bestScore} ${bestExercise.slice(0, -1)}${bestScore !== 1 ? 's' : ''}`
-        : 'No workouts',
-    streak: streakText, // Now uses motivational text instead of just numbers
-    summary: summaryText, // Enhanced motivational messaging
+        ? // UX IMPROVEMENT: "21 Pushups" (kept as is, good balance)
+          `${bestScore} ${bestExercise.slice(0, -1)}${bestScore !== 1 ? 's' : ''}`
+        : '-',
+    // UX IMPROVEMENT: Ensure this is always time-based or action-oriented
+    streak: streakText,
+    summary: summaryText,
   };
 
   return result;

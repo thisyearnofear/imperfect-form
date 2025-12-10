@@ -415,6 +415,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             // All contracts now use the standardized structure: user, pushups, squats, timestamp
             let pushupScore = 0;
             let squatScore = 0;
+            let timestamp = 0;
 
             // Extract pushup score - handle BigNumber format
             if (entry.pushups !== undefined) {
@@ -442,12 +443,26 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               }
             }
 
+            // Extract timestamp - handle BigNumber format
+            if (entry.timestamp !== undefined) {
+              if (typeof entry.timestamp === 'object' && entry.timestamp !== null) {
+                if (typeof entry.timestamp.toString === 'function') {
+                  timestamp = parseInt(entry.timestamp.toString());
+                } else if (entry.timestamp._hex) {
+                  timestamp = parseInt(entry.timestamp._hex, 16);
+                }
+              } else {
+                timestamp = Number(entry.timestamp);
+              }
+            }
+
             // Only add entries with scores > 0
             if (pushupScore > 0) {
               pushups.push({
                 user: entry.user,
                 score: pushupScore,
                 network: network,
+                timestamp: timestamp > 0 ? timestamp : undefined,
               });
             }
 
@@ -456,6 +471,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                 user: entry.user,
                 score: squatScore,
                 network: network,
+                timestamp: timestamp > 0 ? timestamp : undefined,
               });
             }
           } catch {

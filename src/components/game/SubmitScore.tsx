@@ -318,6 +318,61 @@ export default function SubmitScore({
         const leaderboardType = isVerifiedContract ? 'Verified' : networkConfig.name;
         toast.success(`Scores submitted to ${leaderboardType} Leaderboard${sourceMessage}!`);
 
+        // OPTIMISTIC UPDATE: Update leaderboard cache immediately
+        // This ensures stats (streak, sessions) update without waiting for a refetch
+        try {
+          // Dynamic import to avoid circular dependencies if any
+          const { getCachedLeaderboardData, cacheLeaderboardData } = await import(
+            '@/utils/leaderboardCache'
+          );
+
+          const currentCache = getCachedLeaderboardData();
+          if (currentCache) {
+            const now = Math.floor(Date.now() / 1000);
+            const userAddress = address || '';
+            const networkName = networkConfig.name.toLowerCase() as any; // Cast to NetworkType
+
+            // Helper to add score to specific leaderboard array
+            const addScoreToLeaderboard = (leaderboard: any[], scoreVal: number) => {
+              const newScoreEntry = {
+                user: userAddress,
+                score: scoreVal,
+                network: networkName,
+                timestamp: now,
+                displayName: userAddress, // Fallback
+              };
+              // Add to beginning or end? Typically leaderboard is sorted.
+              // We just push it, the sorting happens on display, or we can sort here.
+              // For user stats, order doesn't matter much, but for leaderboard display it does.
+              // Simple push is safest for now.
+              return [...leaderboard, newScoreEntry];
+            };
+
+            const updatedCache = { ...currentCache };
+
+            if (effectivePushupsScore > 0) {
+              updatedCache.pushups = addScoreToLeaderboard(
+                updatedCache.pushups,
+                effectivePushupsScore
+              );
+            }
+
+            if (effectiveSquatsScore > 0) {
+              updatedCache.squats = addScoreToLeaderboard(
+                updatedCache.squats,
+                effectiveSquatsScore
+              );
+            }
+
+            // Save back to cache - this triggers 'leaderboardCacheUpdated' event
+            // which useUserStats listens to
+            cacheLeaderboardData(updatedCache);
+            console.log('🚀 Optimistically updated leaderboard cache with new score');
+          }
+        } catch (err) {
+          console.warn('Failed to optimistically update cache:', err);
+        }
+
         // Notify parent component of successful submission
         if (result.transactionHash && result.chainId && onSubmissionSuccess) {
           onSubmissionSuccess(result.transactionHash, result.chainId);
