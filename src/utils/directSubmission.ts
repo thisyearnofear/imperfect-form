@@ -336,12 +336,17 @@ export async function submitScoreDirect(
 
     logger.info('✅ Contract validated at address', { contractAddress, codeLength: code.length });
 
+    // Sanitize inputs to ensure they are valid integers
+    // Prevents "invalid BigNumberish value" errors if objects/arrays accidental leak in
+    const safePushups = Math.floor(Number(pushups) || 0);
+    const safeSquats = Math.floor(Number(squats) || 0);
+
     // Prepare transaction with robust gas estimation
     let tx;
     const txOverrides: any = {};
 
-    // Add value for fee-based chains
-    if (feeAmount) {
+    // Add value ONLY for fee-based chains (Monad) and ensure it's valid
+    if (feeAmount && parseFloat(feeAmount) > 0) {
       txOverrides.value = ethers.parseEther(feeAmount);
     }
 
@@ -349,20 +354,28 @@ export async function submitScoreDirect(
     try {
       if (isVerified) {
         // For verified contracts, estimate based on which score we're submitting
-        if (pushups > 0) {
+        if (safePushups > 0) {
           const gasEstimate = await contract.submitScore.estimateGas(
-            pushups,
+            safePushups,
             'pushups',
             txOverrides
           );
           txOverrides.gasLimit = (gasEstimate * 120n) / 100n; // 20% buffer
-        } else if (squats > 0) {
-          const gasEstimate = await contract.submitScore.estimateGas(squats, 'squats', txOverrides);
+        } else if (safeSquats > 0) {
+          const gasEstimate = await contract.submitScore.estimateGas(
+            safeSquats,
+            'squats',
+            txOverrides
+          );
           txOverrides.gasLimit = (gasEstimate * 120n) / 100n;
         }
       } else {
         // For standard contracts
-        const gasEstimate = await contract.addScore.estimateGas(pushups, squats, txOverrides);
+        const gasEstimate = await contract.addScore.estimateGas(
+          safePushups,
+          safeSquats,
+          txOverrides
+        );
         txOverrides.gasLimit = (gasEstimate * 120n) / 100n;
       }
       logger.info('✅ Gas estimated successfully', { gasLimit: txOverrides.gasLimit });
@@ -385,16 +398,16 @@ export async function submitScoreDirect(
     // Execute transaction based on contract type
     if (isVerified) {
       // For verified contracts (Celo only), submit each exercise type separately using submitScore
-      if (pushups > 0) {
-        tx = await contract.submitScore(pushups, 'pushups', txOverrides);
-      } else if (squats > 0) {
-        tx = await contract.submitScore(squats, 'squats', txOverrides);
+      if (safePushups > 0) {
+        tx = await contract.submitScore(safePushups, 'pushups', txOverrides);
+      } else if (safeSquats > 0) {
+        tx = await contract.submitScore(safeSquats, 'squats', txOverrides);
       } else {
         return { success: false, error: 'At least one exercise must be > 0' };
       }
     } else {
       // For standard contracts (Monad, Polygon, Base), use addScore with both values
-      tx = await contract.addScore(pushups, squats, txOverrides);
+      tx = await contract.addScore(safePushups, safeSquats, txOverrides);
     }
 
     logger.info('📤 Transaction sent', { hash: tx.hash });
