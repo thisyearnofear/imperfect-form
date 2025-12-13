@@ -886,6 +886,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           console.log('Game: Closing SummaryModal');
           setShowSummary(false);
         }}
+        onViewLeaderboard={() => {
+          console.log('Game: Closing SummaryModal and opening Leaderboard');
+          setShowSummary(false);
+          setShowExpandedLeaderboard(true);
+        }}
         repCount={repCount}
         timeLeft={timeLeft}
         mode={mode}

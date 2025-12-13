@@ -138,7 +138,7 @@ const ChainAmbient: React.FC = memo(() => {
       {shapes.map(({ key, type, style }) => (
         <div
           key={key}
-          className={type}
+          className={`chain-ambient-shape ${type}`}
           style={style}
           data-chain={currentTheme.id}
           data-shape={type}
