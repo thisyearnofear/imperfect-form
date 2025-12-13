@@ -63,6 +63,7 @@ const STATUS_STYLES = {
 export interface SummaryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onViewLeaderboard?: () => void;
   repCount: number;
   timeLeft: number;
   mode?: 'pushups' | 'squats';
@@ -72,6 +73,7 @@ export interface SummaryModalProps {
 const SummaryModal: React.FC<SummaryModalProps> = ({
   isOpen,
   onClose,
+  onViewLeaderboard,
   repCount,
   timeLeft,
   mode = 'pushups',
@@ -349,10 +351,16 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               View Tx →
             </a>
             <button
-              onClick={onClose}
+              onClick={() => {
+                if (onViewLeaderboard) {
+                  onViewLeaderboard();
+                } else {
+                  onClose();
+                }
+              }}
               className="w-full px-3 py-1.5 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded text-xs hover:from-[#f39c12] hover:to-[#fcb131] transition-all"
             >
-              Menu
+              {onViewLeaderboard ? '🏆 VIEW LEADERBOARD' : 'CLOSE'}
             </button>
           </div>
         )}

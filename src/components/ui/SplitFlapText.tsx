@@ -451,7 +451,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
               : mode === 'settings'
                 ? 'settings-instruction clickable'
                 : ''
-          }`}
+          } ${!instruction.desc && mode === 'profile' ? 'single-action' : ''}`}
           onClick={(e) => {
             // Only handle the main click if not clicking on sub-buttons in memory or profile-search mode
             if (
