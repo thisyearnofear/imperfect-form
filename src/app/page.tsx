@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Spinner } from '@/components/ui';
+import { Spinner, Navigation } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { NotificationSignup } from '@/components/miniapp/NotificationSignup';
 import ChainAmbient from '@/components/theme/ChainAmbient';
@@ -132,6 +132,11 @@ export default function Home() {
 
       {/* Main content area with optimized stacked layout for mobile */}
       <div className="flex flex-col min-h-screen">
+        {/* Navigation Bar */}
+        <div className="sticky top-0 z-50 w-full">
+          <Navigation />
+        </div>
+
         {/* Game area with better padding for mobile */}
         <div className="relative z-10 flex-grow pb-8 md:pb-24 px-2 md:px-4">
           <div className="transition-opacity duration-300 opacity-100">

@@ -21,7 +21,7 @@ export default function GameWrapper({ profileSearchTarget }: GameWrapperProps) {
 
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="h-full min-h-[500px] flex items-center justify-center">
         <div className="text-center space-y-4">
           <Spinner />
           <p className="text-yellow-400 font-bold animate-pulse">
@@ -35,8 +35,8 @@ export default function GameWrapper({ profileSearchTarget }: GameWrapperProps) {
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      <main>
+    <div className="h-full bg-black flex flex-col relative">
+      <main className="flex-grow">
         {/* Use address from context if available; Game handles no-address gracefully */}
         <Game thirdwebAddress={address || undefined} profileSearchTarget={profileSearchTarget} />
       </main>
