@@ -33,14 +33,17 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
   return (
     <DialogPrimitive.Root open={isOpen} onOpenChange={preventClose ? undefined : onClose}>
       <DialogPrimitive.Portal>
-        {/* Backdrop using z-index tokens */}
+        {/* Backdrop using z-index tokens with fade transition */}
         <div
           style={{
             position: 'fixed',
             inset: 0,
             backgroundColor: designTokens.colors.background.overlay,
             zIndex: designTokens.zIndex.modalBackdrop - 3,
+            transition: 'opacity 300ms ease-in-out',
+            opacity: 1,
           }}
+          data-state={isOpen ? 'open' : 'closed'}
         />
         <div
           style={{
@@ -48,7 +51,10 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
             inset: 0,
             backgroundColor: designTokens.colors.background.overlay,
             zIndex: designTokens.zIndex.modalBackdrop - 2,
+            transition: 'opacity 300ms ease-in-out',
+            opacity: 1,
           }}
+          data-state={isOpen ? 'open' : 'closed'}
         />
         <div
           style={{
@@ -56,15 +62,19 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
             inset: 0,
             backgroundColor: designTokens.colors.background.overlay,
             zIndex: designTokens.zIndex.modalBackdrop - 1,
+            transition: 'opacity 300ms ease-in-out',
+            opacity: 1,
           }}
+          data-state={isOpen ? 'open' : 'closed'}
         />
-        {/* Overlay with modal z-index */}
+        {/* Overlay with modal z-index and fade transition */}
         <DialogPrimitive.Overlay
           style={{
             position: 'fixed',
             inset: 0,
             backgroundColor: designTokens.colors.background.overlay,
             zIndex: designTokens.zIndex.modalBackdrop,
+            animation: isOpen ? 'fadeIn 300ms ease-in-out' : 'fadeOut 300ms ease-in-out',
           }}
         />
         <DialogPrimitive.Content
@@ -81,6 +91,7 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
             boxShadow: designTokens.shadows.primaryLg,
             maxHeight: '90vh',
             width: '90vw',
+            animation: isOpen ? 'scaleIn 300ms ease-in-out' : 'scaleOut 300ms ease-in-out',
           }}
         >
           {/* Title is always present for accessibility, but can be visually hidden */}

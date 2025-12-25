@@ -457,16 +457,24 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     unlock();
     setIsLandscapeLocked(false);
     if (timerRef.current) clearInterval(timerRef.current);
+
+    // Stagger the transitions: first hide the game, then show summary
     setStarted(false);
     setShowTutorial(false);
 
     // Always show summary; SummaryModal will prompt for wallet connection if needed
     console.log('Game: handleStop called with address:', finalAddress);
-    console.log('Game: Opening SummaryModal');
-    setShowSummary(true);
+    console.log('Game: Opening SummaryModal with staggered transition');
+
+    // Defer summary display by 100ms to allow game fade-out first
+    const summaryTimer = setTimeout(() => {
+      setShowSummary(true);
+    }, 100);
 
     // Force camera to stop by accessing the video tracks and stopping them
     stopAllCameras();
+
+    return () => clearTimeout(summaryTimer);
   }, [stopAllCameras, finalAddress, exitFullscreen, unlock]);
 
   // Update the ref whenever handleStop changes

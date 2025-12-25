@@ -37,6 +37,7 @@ const nextConfig = {
   },
 
   // Turbopack configuration (Next.js 16 default)
+  // Disabled for production builds due to ESM compatibility issues with TensorFlow
   turbopack: {},
 
   // Webpack configuration to fix runtime errors

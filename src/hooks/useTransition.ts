@@ -13,6 +13,7 @@ interface UseTransitionOptions {
   duration?: number; // milliseconds
   enterClass?: string;
   exitClass?: string;
+  autoDismissDelay?: number; // auto-dismiss after this duration (ms)
 }
 
 interface UseTransitionReturn {
@@ -25,7 +26,12 @@ export function useTransition(
   isOpen: boolean,
   options: UseTransitionOptions = {}
 ): UseTransitionReturn {
-  const { duration = 300, enterClass = 'opacity-100', exitClass = 'opacity-0' } = options;
+  const {
+    duration = 300,
+    enterClass = 'opacity-100',
+    exitClass = 'opacity-0',
+    autoDismissDelay = 0, // 0 means disabled
+  } = options;
 
   const [isVisible, setIsVisible] = useState(isOpen);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -35,6 +41,18 @@ export function useTransition(
       // Opening: show immediately, animate in
       setIsVisible(true);
       setIsAnimating(true);
+
+      // If auto-dismiss is enabled, schedule the close
+      if (autoDismissDelay > 0) {
+        const dismissTimer = setTimeout(() => {
+          setIsAnimating(false);
+          const closeTimer = setTimeout(() => {
+            setIsVisible(false);
+          }, duration);
+          return () => clearTimeout(closeTimer);
+        }, autoDismissDelay);
+        return () => clearTimeout(dismissTimer);
+      }
     } else {
       // Closing: animate out, then hide
       setIsAnimating(false);
@@ -43,7 +61,7 @@ export function useTransition(
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, duration]);
+  }, [isOpen, duration, autoDismissDelay]);
 
   const className = `transition-all duration-300 ${isAnimating ? enterClass : exitClass}`;
 

@@ -6,7 +6,7 @@ import { SelfQRcodeWrapper, SelfAppBuilder, type SelfApp } from '@selfxyz/qrcode
 import { Dialog } from '@/components/ui';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
-import { SELF_PROTOCOL_CONFIG } from '@/config/self-protocol';
+import { SELF_PROTOCOL_CONFIG, getVerificationEndpoint } from '@/config/self-protocol';
 import { VERIFIED_FITNESS_CONTRACT_ADDRESS } from '@/constants/contracts';
 
 interface SelfVerificationModalProps {
@@ -55,10 +55,10 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
         version: 2,
         appName: 'Imperfect Form',
         scope: SELF_PROTOCOL_CONFIG.scope,
-        endpoint: VERIFIED_FITNESS_CONTRACT_ADDRESS,
+        endpoint: getVerificationEndpoint(), // Backend verification endpoint URL
         logoBase64: 'https://imperfectform.fun/favicon.ico',
         userId: userAddress,
-        endpointType: 'celo', // Use Celo mainnet
+        endpointType: 'https', // Backend verification (not on-chain contract verification)
         userIdType: 'hex',
         userDefinedData: JSON.stringify({
           platform: platform,
