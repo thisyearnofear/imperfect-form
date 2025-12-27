@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { polygon, base, celo } from 'wagmi/chains';
-import { Dialog } from '@/components/ui';
+import { AccessibleDialog } from '@/components/ui';
 import Image from 'next/image';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
@@ -87,7 +87,7 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
   };
 
   return (
-    <Dialog
+    <AccessibleDialog
       isOpen={true}
       onClose={onClose || (() => {})}
       title="Select Network"
@@ -177,6 +177,6 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
           </button>
         </div>
       </div>
-    </Dialog>
+    </AccessibleDialog>
   );
 }

@@ -42,6 +42,9 @@ import {
   validateTheme,
   mergeThemes,
   themeUtils,
+  enhanceDarkModeContrast,
+  getContrastRatio,
+  isAccessibleContrast,
 } from '@/lib/themes/themeUtils';
 
 // Constants
@@ -196,14 +199,17 @@ const createDebouncedApplyTheme = () => {
   return (theme: ChainTheme, options: ThemeOptions) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-      const properties = generateCSSCustomProperties(theme);
+      // Enhance dark mode contrast if enabled
+      const enhancedTheme = options.enableHighContrast ? enhanceDarkModeContrast(theme) : theme;
+
+      const properties = generateCSSCustomProperties(enhancedTheme);
       applyCSSCustomProperties(properties);
       applyThemeOptions(options);
 
       // Also apply the background directly to body for immediate feedback
       if (typeof document !== 'undefined') {
-        document.body.style.setProperty('background-color', theme.palette.background);
-        document.body.style.setProperty('color', theme.palette.text);
+        document.body.style.setProperty('background-color', enhancedTheme.palette.background);
+        document.body.style.setProperty('color', enhancedTheme.palette.text);
       }
 
       console.log(`Theme applied: ${theme.id}`, {

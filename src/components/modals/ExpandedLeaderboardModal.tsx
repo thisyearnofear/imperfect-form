@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import '@/styles/leaderboard.css';
 import '@/styles/expanded-leaderboard.css';
 import { shortenAddress } from '@/utils/formatters';
-import { Dialog } from '@/components/ui';
+import { AccessibleDialog } from '@/components/ui';
 import { Score } from '@/types';
 import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
 import { useFadeTransition } from '@/hooks';
@@ -118,7 +118,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
   };
 
   return (
-    <Dialog
+    <AccessibleDialog
       isOpen={isOpen}
       onClose={onClose}
       title="🏆 Onchain Olympians 🏆"
@@ -486,7 +486,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
           </div>
         </div>
       )}
-    </Dialog>
+    </AccessibleDialog>
   );
 };
 

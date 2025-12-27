@@ -9,8 +9,9 @@
 
 import React, { useState } from 'react';
 import { Spinner, Button } from '@/components/ui';
-import { MemoryInput, MemoryTextarea, MemorySelect } from '@/components/ui/MemoryButton';
+import { MemoryInput, MemoryTextarea, MemorySelect } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
+import { useFormState } from '@/contexts/FormStateContext';
 import { getMemoryClient, type FitnessDataUpload } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 import toast from 'react-hot-toast';
@@ -37,7 +38,7 @@ export default function FitnessDataUploader({
   className = '',
 }: FitnessDataUploaderProps) {
   const { wallet } = usePlatform();
-  const [loading, setLoading] = useState(false);
+  const { isLoading, isSubmitting, resetForm, handleSubmit } = useFormState();
   const [formData, setFormData] = useState<UploadFormData>({
     dataType: 'structured',
     schema: 'fitness-workouts',
@@ -120,36 +121,40 @@ export default function FitnessDataUploader({
     }
   };
 
-  const validateData = (): boolean => {
+  const validateData = (): { isValid: boolean; errors: { field: string; message: string }[] } => {
+    const validationErrors: { field: string; message: string }[] = [];
+
     if (!wallet.address) {
-      toast.error('Please connect your wallet first');
-      return false;
+      validationErrors.push({ field: 'wallet', message: 'Please connect your wallet first' });
     }
 
     if (!formData.description.trim()) {
-      toast.error('Please provide a description');
-      return false;
+      validationErrors.push({ field: 'description', message: 'Please provide a description' });
     }
 
     if (!formData.data.trim()) {
-      toast.error('Please provide data to upload');
-      return false;
+      validationErrors.push({ field: 'data', message: 'Please provide data to upload' });
     }
 
     try {
       JSON.parse(formData.data);
     } catch (error) {
-      toast.error('Data must be valid JSON');
-      return false;
+      validationErrors.push({ field: 'data', message: 'Data must be valid JSON' });
     }
 
-    return true;
+    return {
+      isValid: validationErrors.length === 0,
+      errors: validationErrors,
+    };
   };
 
   const handleUpload = async () => {
-    if (!validateData()) return;
+    const validationResult = validateData();
+    if (!validationResult.isValid) {
+      // FormStateWrapper will handle the errors
+      return;
+    }
 
-    setLoading(true);
     try {
       const client = getMemoryClient();
 
@@ -190,14 +195,14 @@ export default function FitnessDataUploader({
           quality: 3,
           data: '',
         });
+        resetForm();
       } else {
         throw new Error('Upload failed');
       }
     } catch (error) {
       logger.error('Failed to upload fitness data', error);
       toast.error('Failed to upload data. Please try again.');
-    } finally {
-      setLoading(false);
+      throw error;
     }
   };
 
@@ -340,14 +345,14 @@ export default function FitnessDataUploader({
 
       {/* Upload Button */}
       <Button
-        onClick={handleUpload}
-        disabled={loading || !wallet.address}
+        onClick={() => handleSubmit(handleUpload)}
+        disabled={isSubmitting || !wallet.address}
         variant="success"
         size="lg"
-        loading={loading}
+        loading={isSubmitting}
         fullWidth
       >
-        {loading ? 'Uploading...' : 'Upload & Monetize Data'}
+        {isSubmitting ? 'Uploading...' : 'Upload & Monetize Data'}
       </Button>
 
       {!wallet.address && (

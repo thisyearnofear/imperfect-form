@@ -6,7 +6,7 @@ import {
 } from '@/constants/contracts';
 import VerificationBadge from '@/components/verification/VerificationBadge';
 import { getBestDisplayName } from '@/utils/web3bio';
-import { Spinner } from '@/components/ui';
+import { Spinner, DataLoader } from '@/components/ui';
 import { CELO_FALLBACK_RPCS } from '@/utils/rpcUtils';
 
 interface VerifiedScore {
@@ -80,12 +80,12 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
 
   if (isLoading) {
     return (
-      <div
-        className={`leaderboard-container flex justify-center items-center p-8 ${className}`}
-        style={{ marginTop: 0 }}
-      >
-        <Spinner />
-        <span className="ml-3 text-fcb131 font-medium" style={{ color: '#fcb131' }}>
+      <div className={`leaderboard-container p-8 ${className}`} style={{ marginTop: 0 }}>
+        <DataLoader isLoading={true} type="leaderboard" count={10} />
+        <span
+          className="block text-center mt-4 text-fcb131 font-medium"
+          style={{ color: '#fcb131' }}
+        >
           Loading verified athletes...
         </span>
       </div>

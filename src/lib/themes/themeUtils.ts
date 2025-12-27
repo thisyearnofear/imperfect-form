@@ -18,6 +18,137 @@ import type {
 } from '@/types/theme';
 import { CHAIN_THEMES, DEFAULT_THEME } from './chainThemes';
 
+// Color contrast utilities
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  // Remove hash if present
+  hex = hex.replace(/^#/, '');
+
+  // Parse hex values
+  if (hex.length === 3) {
+    // Shorthand hex (e.g., #abc)
+    const r = parseInt(hex[0] + hex[0], 16);
+    const g = parseInt(hex[1] + hex[1], 16);
+    const b = parseInt(hex[2] + hex[2], 16);
+    return { r, g, b };
+  } else if (hex.length === 6) {
+    // Full hex (e.g., #aabbcc)
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return { r, g, b };
+  }
+
+  return null;
+};
+
+const getLuminance = (r: number, g: number, b: number): number => {
+  // Convert RGB to sRGB
+  const sR = r / 255;
+  const sG = g / 255;
+  const sB = b / 255;
+
+  // Apply gamma correction
+  const R = sR <= 0.03928 ? sR / 12.92 : Math.pow((sR + 0.055) / 1.055, 2.4);
+  const G = sG <= 0.03928 ? sG / 12.92 : Math.pow((sG + 0.055) / 1.055, 2.4);
+  const B = sB <= 0.03928 ? sB / 12.92 : Math.pow((sB + 0.055) / 1.055, 2.4);
+
+  // Calculate relative luminance
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+};
+
+export const getContrastRatio = (color1: string, color2: string): number => {
+  const rgb1 = hexToRgb(color1);
+  const rgb2 = hexToRgb(color2);
+
+  if (!rgb1 || !rgb2) return 1;
+
+  const luminance1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
+  const luminance2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
+
+  const lighter = Math.max(luminance1, luminance2);
+  const darker = Math.min(luminance1, luminance2);
+
+  return (lighter + 0.05) / (darker + 0.05);
+};
+
+export const isAccessibleContrast = (
+  color1: string,
+  color2: string,
+  level: 'AA' | 'AAA' = 'AA'
+): boolean => {
+  const ratio = getContrastRatio(color1, color2);
+
+  // WCAG 2.1 contrast requirements
+  const aaNormal = 4.5;
+  const aaLarge = 3.0;
+  const aaaNormal = 7.0;
+  const aaaLarge = 4.5;
+
+  return level === 'AA'
+    ? ratio >= aaNormal || ratio >= aaLarge
+    : ratio >= aaaNormal || ratio >= aaaLarge;
+};
+
+// Dark mode contrast enhancement utilities
+export const enhanceDarkModeContrast = (theme: ChainTheme): ChainTheme => {
+  // Check if theme needs contrast enhancement for dark mode
+  const needsEnhancement = !isAccessibleContrast(
+    theme.palette.text,
+    theme.palette.background,
+    'AA'
+  );
+
+  if (!needsEnhancement) return theme;
+
+  return {
+    ...theme,
+    palette: {
+      ...theme.palette,
+      // Enhance text contrast on dark backgrounds
+      text: isAccessibleContrast(theme.palette.text, theme.palette.background, 'AA')
+        ? theme.palette.text
+        : lightenColor(theme.palette.text, 10),
+      textSecondary: isAccessibleContrast(
+        theme.palette.textSecondary,
+        theme.palette.background,
+        'AA'
+      )
+        ? theme.palette.textSecondary
+        : lightenColor(theme.palette.textSecondary, 15),
+      textMuted: isAccessibleContrast(theme.palette.textMuted, theme.palette.background, 'AA')
+        ? theme.palette.textMuted
+        : lightenColor(theme.palette.textMuted, 20),
+    },
+  };
+};
+
+// Color manipulation utilities
+export const lightenColor = (color: string, amount: number): string => {
+  const rgb = hexToRgb(color);
+  if (!rgb) return color;
+
+  const r = Math.min(255, rgb.r + amount);
+  const g = Math.min(255, rgb.g + amount);
+  const b = Math.min(255, rgb.b + amount);
+
+  return rgbToHex(r, g, b);
+};
+
+export const darkenColor = (color: string, amount: number): string => {
+  const rgb = hexToRgb(color);
+  if (!rgb) return color;
+
+  const r = Math.max(0, rgb.r - amount);
+  const g = Math.max(0, rgb.g - amount);
+  const b = Math.max(0, rgb.b - amount);
+
+  return rgbToHex(r, g, b);
+};
+
+export const rgbToHex = (r: number, g: number, b: number): string => {
+  return `#${[r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('')}`;
+};
+
 // CSS Custom Properties Generation
 export const generateCSSCustomProperties = (theme: ChainTheme): CSSCustomProperties => {
   const properties: CSSCustomProperties = {};

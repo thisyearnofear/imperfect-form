@@ -1,6 +1,7 @@
 'use client';
 
 import React, { forwardRef } from 'react';
+import '@/styles/animations.css';
 
 /**
  * CONSOLIDATION: Single unified Button component
@@ -96,6 +97,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       SIZE_CLASSES[size],
       fullWidth ? 'w-full' : '',
       loading ? 'cursor-wait' : '',
+      'btn-press', // Micro-interaction: button press feedback
+      'touch-feedback', // Mobile touch feedback
       className,
     ]
       .filter(Boolean)

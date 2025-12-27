@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
 import Image from 'next/image';
 import '@/styles/leaderboard.css';
+import '@/styles/mobile-optimizations.css';
 import { ethers } from 'ethers';
 import {
   fitnessLeaderboardABI,
@@ -32,7 +33,7 @@ import {
   MONAD_FALLBACK_RPCS,
   CELO_FALLBACK_RPCS,
 } from '@/utils/rpcUtils';
-import { Spinner } from '@/components/ui';
+import { Spinner, DataLoader } from '@/components/ui';
 import toast from 'react-hot-toast';
 import { Score, ContractScore } from '@/types';
 import {
@@ -588,8 +589,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-4">
-        <Spinner />
+      <div className="py-4">
+        <DataLoader isLoading={true} type="leaderboard" count={limit || 10} />
       </div>
     );
   }

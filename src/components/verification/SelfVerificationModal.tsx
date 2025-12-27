@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getUniversalLink } from '@selfxyz/core';
 import { SelfQRcodeWrapper, SelfAppBuilder, type SelfApp } from '@selfxyz/qrcode';
-import { Dialog } from '@/components/ui';
+import { AccessibleDialog } from '@/components/ui';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { SELF_PROTOCOL_CONFIG, getVerificationEndpoint } from '@/config/self-protocol';
@@ -106,7 +106,7 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <Dialog
+    <AccessibleDialog
       isOpen={isOpen}
       onClose={onClose}
       title="Verify as Human"
@@ -199,7 +199,7 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
           )}
         </div>
       </div>
-    </Dialog>
+    </AccessibleDialog>
   );
 };
 

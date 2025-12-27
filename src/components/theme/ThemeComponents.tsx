@@ -155,92 +155,6 @@ const ThemeCard: React.FC<ThemeCardProps> = ({
   );
 };
 
-// Theme Input Component
-interface ThemeInputProps extends BaseThemeProps {
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url';
-  placeholder?: string;
-  value?: string;
-  onChange?: (value: string) => void;
-  label?: string;
-  error?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-}
-
-const ThemeInput = forwardRef<HTMLInputElement, ThemeInputProps>(
-  (
-    {
-      type = 'text',
-      placeholder,
-      value,
-      onChange,
-      label,
-      error,
-      leftIcon,
-      rightIcon,
-      className,
-      variant = 'primary',
-      size = 'md',
-      disabled = false,
-      ...props
-    },
-    ref
-  ) => {
-    const { currentTheme } = useEnhancedChainTheme();
-    const chainId = currentTheme.id;
-
-    const inputClasses = [
-      'theme-input',
-      `theme-input--${variant}`,
-      `theme-input--${size}`,
-      `theme-input--${chainId}`,
-      error ? 'theme-input--error' : '',
-      disabled ? 'theme-input--disabled' : '',
-      leftIcon ? 'theme-input--with-left-icon' : '',
-      rightIcon ? 'theme-input--with-right-icon' : '',
-      className || '',
-    ].filter(Boolean);
-
-    return (
-      <div className="theme-input-wrapper">
-        {label && <label className="theme-input__label">{label}</label>}
-
-        <div className="theme-input__container">
-          {leftIcon && (
-            <span className="theme-input__icon theme-input__icon--left">{leftIcon}</span>
-          )}
-
-          <input
-            ref={ref}
-            type={type}
-            placeholder={placeholder}
-            value={value}
-            onChange={(e) => onChange?.(e.target.value)}
-            className={cn(...inputClasses)}
-            disabled={disabled}
-            style={
-              {
-                '--input-border': currentTheme.components.input.border,
-                '--input-focus': currentTheme.palette.primary,
-                '--input-error': currentTheme.palette.error,
-              } as React.CSSProperties
-            }
-            {...props}
-          />
-
-          {rightIcon && (
-            <span className="theme-input__icon theme-input__icon--right">{rightIcon}</span>
-          )}
-        </div>
-
-        {error && <span className="theme-input__error">{error}</span>}
-      </div>
-    );
-  }
-);
-
-ThemeInput.displayName = 'ThemeInput';
-
 // Theme Badge Component
 interface ThemeBadgeProps extends BaseThemeProps {
   children: React.ReactNode;
@@ -637,7 +551,6 @@ const ThemePreview: React.FC<ThemePreviewProps> = ({
 export {
   ThemeButton,
   ThemeCard,
-  ThemeInput,
   ThemeBadge,
   ThemeModal,
   ThemeSpinner,

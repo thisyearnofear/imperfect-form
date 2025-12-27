@@ -1,6 +1,7 @@
 'use client';
 
 import React, { forwardRef } from 'react';
+import '@/styles/animations.css';
 
 type FieldSize = 'sm' | 'md' | 'lg';
 type FieldVariant = 'primary' | 'secondary' | 'error';
@@ -99,6 +100,7 @@ export const FormInput = forwardRef<HTMLInputElement, InputProps>(
               ${rightIcon ? 'pr-9' : ''}
               ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
               ${className}
+              form-focus-glow
             `}
             {...props}
           />

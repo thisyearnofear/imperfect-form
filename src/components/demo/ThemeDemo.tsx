@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import {
   ThemeButton,
   ThemeCard,
-  ThemeInput,
   ThemeBadge,
   ThemeModal,
   ThemeSpinner,
@@ -13,6 +12,7 @@ import {
   ChainIndicator,
   ThemePreview,
 } from '@/components/theme/ThemeComponents';
+import { FormInput } from '@/components/ui';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { CHAIN_THEMES } from '@/lib/themes/chainThemes';
 import type { ChainId } from '@/types/theme';
@@ -177,20 +177,20 @@ export const ThemeDemo: React.FC = () => {
         {/* Inputs Demo */}
         <ThemeCard title="Form Elements" hoverable>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <ThemeInput
+            <FormInput
               label="Email Address"
               type="email"
               placeholder="Enter your email"
               value={inputValue}
-              onChange={setInputValue}
+              onChange={(e) => setInputValue(e.target.value)}
             />
-            <ThemeInput
+            <FormInput
               label="Password"
               type="password"
               placeholder="Enter password"
               rightIcon={<span>👁️</span>}
             />
-            <ThemeInput
+            <FormInput
               label="Amount"
               type="number"
               placeholder="0.00"
@@ -323,7 +323,7 @@ export const ThemeDemo: React.FC = () => {
             to the current chain theme.
           </p>
 
-          <ThemeInput label="Modal Input" placeholder="Type something..." />
+          <FormInput label="Modal Input" placeholder="Type something..." />
 
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <ThemeBadge color="primary">Modal</ThemeBadge>

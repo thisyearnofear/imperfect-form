@@ -9,6 +9,77 @@ import {
   ProgressRing,
 } from './LoadingIcons';
 
+// Skeleton Loader Components for data loading states
+export function SkeletonLoader({
+  type = 'text',
+  count = 1,
+  className = '',
+}: {
+  type?: 'text' | 'card' | 'table' | 'profile';
+  count?: number;
+  className?: string;
+}) {
+  const skeletonClasses = 'animate-pulse bg-gray-800 rounded';
+
+  switch (type) {
+    case 'card':
+      return (
+        <div className={`space-y-4 ${className}`}>
+          {Array(count)
+            .fill(0)
+            .map((_, i) => (
+              <div key={i} className="bg-gray-900 border border-gray-700 rounded-lg p-4">
+                <div className={`h-4 ${skeletonClasses} mb-2 w-3/4`} />
+                <div className={`h-3 ${skeletonClasses} mb-1 w-full`} />
+                <div className={`h-3 ${skeletonClasses} w-2/3`} />
+              </div>
+            ))}
+        </div>
+      );
+
+    case 'table':
+      return (
+        <div className={`space-y-2 ${className}`}>
+          {Array(count)
+            .fill(0)
+            .map((_, i) => (
+              <div
+                key={i}
+                className="flex justify-between items-center py-2 border-b border-gray-700"
+              >
+                <div className={`h-4 ${skeletonClasses} w-1/4`} />
+                <div className={`h-4 ${skeletonClasses} w-1/3`} />
+                <div className={`h-4 ${skeletonClasses} w-1/4`} />
+              </div>
+            ))}
+        </div>
+      );
+
+    case 'profile':
+      return (
+        <div className={`flex items-center space-x-3 ${className}`}>
+          <div className={`w-12 h-12 rounded-full ${skeletonClasses}`} />
+          <div className="flex-1 space-y-2">
+            <div className={`h-4 ${skeletonClasses} w-3/4`} />
+            <div className={`h-3 ${skeletonClasses} w-1/2`} />
+          </div>
+        </div>
+      );
+
+    case 'text':
+    default:
+      return (
+        <div className={`space-y-2 ${className}`}>
+          {Array(count)
+            .fill(0)
+            .map((_, i) => (
+              <div key={i} className={`h-4 ${skeletonClasses}`} />
+            ))}
+        </div>
+      );
+  }
+}
+
 export type LoadingPhase = 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
 
 interface UnifiedLoaderProps {
@@ -18,6 +89,83 @@ interface UnifiedLoaderProps {
   isOverlay?: boolean; // true = overlay on camera feed, false = full screen
   onComplete?: () => void;
   className?: string;
+}
+
+// Enhanced UnifiedLoader with skeleton loading support
+export function DataLoader({
+  isLoading,
+  type = 'leaderboard',
+  count = 5,
+  className = '',
+}: {
+  isLoading: boolean;
+  type?: 'leaderboard' | 'profile' | 'table';
+  count?: number;
+  className?: string;
+}) {
+  if (!isLoading) return null;
+
+  return (
+    <div className={`space-y-4 ${className}`}>
+      {type === 'leaderboard' && (
+        <div className="space-y-3">
+          {Array(count)
+            .fill(0)
+            .map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-3 bg-gray-900 border border-gray-700 rounded-lg"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gray-800 rounded-full animate-pulse" />
+                  <div className="space-y-1">
+                    <div className="h-3 bg-gray-800 rounded animate-pulse w-24" />
+                    <div className="h-2 bg-gray-800 rounded animate-pulse w-16" />
+                  </div>
+                </div>
+                <div className="space-y-1 text-right">
+                  <div className="h-3 bg-gray-800 rounded animate-pulse w-12" />
+                  <div className="h-2 bg-gray-800 rounded animate-pulse w-8" />
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {type === 'profile' && (
+        <div className="space-y-4">
+          {Array(count)
+            .fill(0)
+            .map((_, i) => (
+              <div key={i} className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-full bg-gray-800 animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-3/4" />
+                  <div className="h-3 bg-gray-800 rounded animate-pulse w-1/2" />
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {type === 'table' && (
+        <div className="space-y-2">
+          {Array(count)
+            .fill(0)
+            .map((_, i) => (
+              <div
+                key={i}
+                className="flex justify-between items-center py-2 border-b border-gray-700"
+              >
+                <div className="h-4 bg-gray-800 rounded animate-pulse w-1/4" />
+                <div className="h-4 bg-gray-800 rounded animate-pulse w-1/3" />
+                <div className="h-4 bg-gray-800 rounded animate-pulse w-1/4" />
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
-import { Dialog } from '@/components/ui';
+import { AccessibleDialog } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { UniversalConnectButton } from '@/components/wallet';
 import FarcasterShare from '@/components/social/FarcasterShare';
@@ -302,7 +302,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const verifiedScore = baseScore + bonusPoints;
 
   return (
-    <Dialog
+    <AccessibleDialog
       isOpen={isOpen}
       onClose={onClose}
       title={submissionStatus === 'success' ? '✅ Submitted' : '📊 Submit'}
@@ -572,7 +572,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
         )}
       </div>
-    </Dialog>
+    </AccessibleDialog>
   );
 };
 

@@ -9,8 +9,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Spinner, Button } from '@/components/ui';
-import { MemoryInput, MemoryTextarea, MemorySelect } from '@/components/ui/MemoryButton';
+import { MemoryInput, MemoryTextarea, MemorySelect } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
+import { useFormState } from '@/contexts/FormStateContext';
 import { getMemoryClient, type IdentityNode } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 import toast from 'react-hot-toast';
@@ -44,7 +45,16 @@ export default function SocialChallengeCreator({
   className = '',
 }: SocialChallengeCreatorProps) {
   const { wallet, user: farcasterUser } = usePlatform();
-  const [loading, setLoading] = useState(false);
+  const {
+    isLoading,
+    isSubmitting,
+    isError,
+    errors,
+    setFieldError,
+    clearFieldError,
+    handleSubmit,
+    resetForm,
+  } = useFormState();
   const [friends, setFriends] = useState<ChallengeParticipant[]>([]);
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
   const [challengeData, setChallengeData] = useState<ChallengeData>({
@@ -61,7 +71,6 @@ export default function SocialChallengeCreator({
     const loadFriends = async () => {
       if (!farcasterUser?.fid && !wallet.address) return;
 
-      setLoading(true);
       try {
         const client = getMemoryClient();
         if (!client) {
@@ -127,8 +136,6 @@ export default function SocialChallengeCreator({
       } catch (error) {
         logger.error('Failed to load friends', error);
         toast.error('Failed to load friends list');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -145,17 +152,27 @@ export default function SocialChallengeCreator({
     setSelectedFriends(newSelected);
   };
 
-  const handleCreateChallenge = async () => {
+  const validateForm = (): { isValid: boolean; errors: { field: string; message: string }[] } => {
+    const validationErrors: { field: string; message: string }[] = [];
+
     if (!challengeData.title.trim()) {
-      toast.error('Please enter a challenge title');
-      return;
+      validationErrors.push({ field: 'title', message: 'Please enter a challenge title' });
     }
 
     if (selectedFriends.size === 0) {
-      toast.error('Please select at least one friend');
-      return;
+      validationErrors.push({
+        field: 'participants',
+        message: 'Please select at least one friend',
+      });
     }
 
+    return {
+      isValid: validationErrors.length === 0,
+      errors: validationErrors,
+    };
+  };
+
+  const handleCreateChallenge = async () => {
     const finalChallenge: ChallengeData = {
       ...challengeData,
       participants: Array.from(selectedFriends),
@@ -178,9 +195,11 @@ export default function SocialChallengeCreator({
         isPrivate: false,
       });
       setSelectedFriends(new Set());
+      resetForm();
     } catch (error) {
       logger.error('Failed to create challenge', error);
       toast.error('Failed to create challenge');
+      throw error;
     }
   };
 
@@ -315,13 +334,14 @@ export default function SocialChallengeCreator({
 
       {/* Create Button */}
       <Button
-        onClick={handleCreateChallenge}
-        disabled={!challengeData.title.trim() || selectedFriends.size === 0}
+        onClick={() => handleSubmit(handleCreateChallenge)}
+        disabled={isSubmitting || !challengeData.title.trim() || selectedFriends.size === 0}
         variant="primary"
         size="lg"
         fullWidth
+        loading={isSubmitting}
       >
-        Create Challenge
+        {isSubmitting ? 'Creating...' : 'Create Challenge'}
       </Button>
 
       {/* Memory Protocol Attribution */}

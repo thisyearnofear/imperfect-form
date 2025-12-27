@@ -18,3 +18,7 @@ export {
   useSyncedScores,
   useSyncedFullLeaderboard,
 } from './useSyncedLeaderboard';
+
+// Notification system (Phase 2)
+export { useNotification } from './useNotification';
+export type { NotificationType } from './useNotification';

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { SupportedChain, chainConfigs } from '@/utils/chainSwitching';
-import { Dialog } from '@/components/ui';
+import { AccessibleDialog } from '@/components/ui';
 import toast from 'react-hot-toast';
 
 interface NetworkSwitchPromptProps {
@@ -67,7 +67,7 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
   };
 
   return (
-    <Dialog
+    <AccessibleDialog
       isOpen={isOpen}
       onClose={onClose}
       title="Network Switch Required"
@@ -117,7 +117,7 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
           </button>
         </div>
       </div>
-    </Dialog>
+    </AccessibleDialog>
   );
 };
 
