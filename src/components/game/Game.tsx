@@ -3,10 +3,10 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic';
 import { Spinner, UnifiedLoader } from '@/components/ui';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
+import { useLoadingPhase } from '@/hooks/useLoadingPhase';
 import { cameraManager, stopAllCameras as stopAllCamerasUtil } from '@/utils/cameraManager';
 import { SummaryModal, ExpandedLeaderboardModal } from '@/components/modals';
 // Welcome component consolidated into InitializationScreen - import removed
-import PoseDetectionGuidance from './PoseDetectionGuidance';
 import { UniversalConnectButton } from '@/components/wallet';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -207,8 +207,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     }
   }, [finalAddress]);
 
-  // Pose detection guidance state
-  const [showPoseGuidance, setShowPoseGuidance] = useState(false);
+  // Pose detection state
   const [poseState, setPoseState] = useState({
     hasCamera: false,
     hasPoseDetection: false,
@@ -547,18 +546,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       isLoading: boolean;
     }) => {
       setPoseState(newState);
-
-      // Show guidance when camera starts but pose isn't detected yet
-      if (started && newState.hasCamera && !newState.poseDetected) {
-        setShowPoseGuidance(true);
-      }
-
-      // Hide guidance when pose is detected
-      if (newState.poseDetected) {
-        setShowPoseGuidance(false);
-      }
     },
-    [started] // Add 'started' to dependencies as required by ESLint
+    []
   );
 
   // Memoize the webcam component to prevent re-renders when timer updates
@@ -575,6 +564,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     ),
     [mode, handleRepCount, started, handleFilterChange, handlePoseStateChange]
   );
+
+  // DRY: Single source of truth for loading phase
+  const loadingPhase = useLoadingPhase(poseState);
 
   return (
     <>
@@ -735,15 +727,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
                     {/* Pose loading overlay - shows on top of video while pose detection initializes */}
                     <UnifiedLoader
-                      phase={
-                        !poseState.hasCamera
-                          ? 'initial'
-                          : !poseState.hasPoseDetection
-                            ? 'camera'
-                            : !poseState.poseDetected
-                              ? 'positioning'
-                              : 'ready'
-                      }
+                      phase={loadingPhase}
                       progress={detectionProgress?.percentage}
                       isVisible={started && !poseState.poseDetected}
                       isOverlay={true}
@@ -761,15 +745,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
                   {/* Pose loading overlay - shows on top of video while pose detection initializes */}
                   <UnifiedLoader
-                    phase={
-                      !poseState.hasCamera
-                        ? 'initial'
-                        : !poseState.hasPoseDetection
-                          ? 'camera'
-                          : !poseState.poseDetected
-                            ? 'positioning'
-                            : 'ready'
-                    }
+                    phase={loadingPhase}
                     progress={detectionProgress?.percentage}
                     isVisible={started && !poseState.poseDetected}
                     isOverlay={true}
@@ -903,15 +879,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         timeLeft={timeLeft}
         mode={mode}
         address={finalAddress}
-      />
-
-      {/* Pose Detection Guidance Modal */}
-      <PoseDetectionGuidance
-        isVisible={showPoseGuidance}
-        hasCamera={poseState.hasCamera}
-        hasPoseDetection={poseState.hasPoseDetection}
-        poseDetected={poseState.poseDetected}
-        onDismiss={() => setShowPoseGuidance(false)}
       />
 
       {/* Expanded Leaderboard Modal */}

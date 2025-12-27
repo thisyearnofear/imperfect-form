@@ -9,9 +9,10 @@ interface DialogProps {
   title: string;
   description?: string;
   children: React.ReactNode;
-  maxWidth?: string; // Optional custom max width
-  showTitle?: boolean; // Option to visually hide the title
-  preventClose?: boolean; // Option to prevent closing the dialog
+  maxWidth?: string;
+  showTitle?: boolean;
+  preventClose?: boolean;
+  variant?: 'default' | 'wallet' | 'settings';
 }
 
 /**
@@ -24,9 +25,10 @@ const Dialog: React.FC<DialogProps> = ({
   title,
   description,
   children,
-  maxWidth = '500px', // Default max width
-  showTitle = true, // By default, show the title
-  preventClose = false, // By default, allow closing
+  maxWidth = '500px',
+  showTitle = true,
+  preventClose = false,
+  variant = 'default',
 }) => {
   return (
     <AccessibleDialog
@@ -37,6 +39,7 @@ const Dialog: React.FC<DialogProps> = ({
       maxWidth={maxWidth}
       showTitle={showTitle}
       preventClose={preventClose}
+      variant={variant}
     >
       {children}
     </AccessibleDialog>

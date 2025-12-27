@@ -8,13 +8,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Spinner } from '@/components/ui';
-import {
-  MemoryButton,
-  MemoryInput,
-  MemoryTextarea,
-  MemorySelect,
-} from '@/components/ui/MemoryButton';
+import { Spinner, Button } from '@/components/ui';
+import { MemoryInput, MemoryTextarea, MemorySelect } from '@/components/ui/MemoryButton';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { getMemoryClient, type FitnessDataUpload } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
@@ -296,14 +291,14 @@ export default function FitnessDataUploader({
             placeholder="Add tags..."
             className="flex-1 rounded-r-none"
           />
-          <MemoryButton
+          <Button
             onClick={addTag}
             variant="primary"
             size="sm"
             className="rounded-l-none border-l-0"
           >
             Add
-          </MemoryButton>
+          </Button>
         </div>
       </div>
 
@@ -344,7 +339,7 @@ export default function FitnessDataUploader({
       </div>
 
       {/* Upload Button */}
-      <MemoryButton
+      <Button
         onClick={handleUpload}
         disabled={loading || !wallet.address}
         variant="success"
@@ -353,7 +348,7 @@ export default function FitnessDataUploader({
         fullWidth
       >
         {loading ? 'Uploading...' : 'Upload & Monetize Data'}
-      </MemoryButton>
+      </Button>
 
       {!wallet.address && (
         <p className="text-center text-red-400 text-sm mt-2">

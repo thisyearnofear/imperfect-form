@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-
-/**
- * CONSOLIDATION: Single unified loading component for all states
- * Replaces: LoadingScreen, PoseLoadingOverlay, MobileFastLoader
- * CLEAN: Clear separation - container vs overlay rendering
- * MODULAR: Reusable across web, mobile, Farcaster
- */
+import {
+  CameraIcon,
+  SpinnerIcon,
+  CrosshairIcon,
+  CheckmarkIcon,
+  ProgressRing,
+} from './LoadingIcons';
 
 export type LoadingPhase = 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
 
@@ -20,57 +20,73 @@ interface UnifiedLoaderProps {
   className?: string;
 }
 
+/**
+ * CONSOLIDATION: Single unified loading component replacing LoadingScreen + PoseLoadingOverlay + PoseDetectionGuidance
+ * ENHANCEMENT FIRST: Premium design with glassmorphism, sophisticated motion, and user guidance
+ * DRY: Single source of truth for all loading states
+ * MODULAR: Independent, composable, testable
+ */
+
 const PHASE_CONFIG: Record<
   LoadingPhase,
-  { icon: string; title: string; color: string; bgColor: string }
+  {
+    title: string;
+    subtitle: string;
+    guidance: string;
+    color: string;
+    bgGradient: string;
+    borderColor: string;
+    icon: React.ReactNode;
+    estimatedTime?: string;
+  }
 > = {
   initial: {
-    icon: '📹',
-    title: 'Starting Camera',
-    color: 'text-gray-300',
-    bgColor: 'bg-gray-900/90',
+    title: 'Enabling Camera',
+    subtitle: 'Camera permission required',
+    guidance: 'Allow access to your device camera to start',
+    color: 'text-blue-300',
+    bgGradient: 'from-blue-950/40 via-blue-900/20 to-blue-950/40',
+    borderColor: 'border-blue-400/30',
+    icon: <CameraIcon className="w-14 h-14 sm:w-16 sm:h-16" />,
   },
   camera: {
-    icon: '📹',
-    title: 'Camera Ready',
-    color: 'text-blue-300',
-    bgColor: 'bg-blue-900/90',
+    title: 'Loading AI Model',
+    subtitle: 'Initializing pose detection',
+    guidance: 'Position yourself in the frame, showing your full body',
+    color: 'text-purple-300',
+    bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
+    borderColor: 'border-purple-400/30',
+    icon: <SpinnerIcon className="w-14 h-14 sm:w-16 sm:h-16 text-purple-400" />,
+    estimatedTime: 'Usually 15-30 seconds on 4G',
   },
   ai: {
-    icon: '🤖',
-    title: 'Loading Pose Detection',
+    title: 'Downloading Neural Networks',
+    subtitle: 'First time setup',
+    guidance: 'Downloading pose detection model (happens once)',
     color: 'text-purple-300',
-    bgColor: 'bg-purple-900/90',
+    bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
+    borderColor: 'border-purple-400/30',
+    icon: <SpinnerIcon className="w-14 h-14 sm:w-16 sm:h-16 text-purple-400" />,
+    estimatedTime: 'Usually 2-5 minutes on first run',
   },
   positioning: {
-    icon: '🎯',
-    title: 'Position in Frame',
-    color: 'text-green-300',
-    bgColor: 'bg-green-900/90',
+    title: 'Detecting Your Position',
+    subtitle: 'Full body visibility needed',
+    guidance: 'Stand clear with your entire body visible from head to feet',
+    color: 'text-yellow-300',
+    bgGradient: 'from-yellow-950/40 via-yellow-900/20 to-yellow-950/40',
+    borderColor: 'border-yellow-400/30',
+    icon: <CrosshairIcon className="w-14 h-14 sm:w-16 sm:h-16" />,
   },
   ready: {
-    icon: '✅',
-    title: 'Ready to Start',
-    color: 'text-yellow-300',
-    bgColor: 'bg-yellow-900/90',
+    title: "You're Ready!",
+    subtitle: 'Pose detected',
+    guidance: "Start your exercise whenever you're ready",
+    color: 'text-green-300',
+    bgGradient: 'from-green-950/40 via-green-900/20 to-green-950/40',
+    borderColor: 'border-green-400/30',
+    icon: <CheckmarkIcon className="w-14 h-14 sm:w-16 sm:h-16" />,
   },
-};
-
-// DRY: Single source of truth for status messages
-const STATUS_MESSAGES: Record<LoadingPhase, string> = {
-  initial: 'Initializing...',
-  camera: 'Camera access granted',
-  ai: 'Downloading model...',
-  positioning: 'Detecting pose...',
-  ready: 'All systems ready!',
-};
-
-const MOBILE_STATUS_MESSAGES: Record<LoadingPhase, string> = {
-  initial: 'Starting...',
-  camera: 'Camera OK',
-  ai: 'Downloading...',
-  positioning: 'Detecting...',
-  ready: 'Ready!',
 };
 
 export default function UnifiedLoader({
@@ -82,14 +98,16 @@ export default function UnifiedLoader({
   className = '',
 }: UnifiedLoaderProps) {
   const [shouldShow, setShouldShow] = useState(isVisible);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [hasCompleted, setHasCompleted] = useState(false);
   const config = PHASE_CONFIG[phase];
-  const message = isMobile ? MOBILE_STATUS_MESSAGES[phase] : STATUS_MESSAGES[phase];
 
   // Auto-complete when ready
   useEffect(() => {
     if (phase === 'ready' && onComplete) {
-      const timer = setTimeout(onComplete, 1500);
+      const timer = setTimeout(() => {
+        setHasCompleted(true);
+        onComplete();
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [phase, onComplete]);
@@ -98,6 +116,7 @@ export default function UnifiedLoader({
   useEffect(() => {
     if (isVisible) {
       setShouldShow(true);
+      setHasCompleted(false);
     } else {
       const timer = setTimeout(() => setShouldShow(false), 300);
       return () => clearTimeout(timer);
@@ -114,30 +133,71 @@ export default function UnifiedLoader({
           absolute inset-0 z-10 flex flex-col items-center justify-center
           transition-all duration-300 pointer-events-none
           ${isVisible ? 'opacity-100' : 'opacity-0'}
-          ${config.bgColor} ${className}
+          backdrop-blur-sm
+          ${className}
         `}
+        style={{
+          background: `linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15))`,
+        }}
       >
-        {/* Phase icon */}
-        <div className="mb-4 text-4xl sm:text-5xl animate-pulse">{config.icon}</div>
-
-        {/* Status text - single line, minimal */}
-        <div className={`${config.color} text-sm sm:text-base font-semibold text-center px-2`}>
-          {message}
+        {/* Icon with scale animation */}
+        <div
+          className="mb-6 transition-transform duration-500"
+          style={{
+            transform: phase === 'ready' ? 'scale(1)' : 'scale(1)',
+            animation: phase === 'ready' ? 'pulse 1s ease-in-out' : 'none',
+          }}
+        >
+          {config.icon}
         </div>
 
-        {/* Progress bar for AI phase only */}
+        {/* Status text - responsive and properly constrained */}
+        <div
+          className={`
+            ${config.color} text-center space-y-2
+            px-4 sm:px-6 max-w-xs sm:max-w-sm
+          `}
+        >
+          <h3 className="text-base sm:text-lg font-bold leading-snug">{config.title}</h3>
+          <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">{config.guidance}</p>
+        </div>
+
+        {/* Progress indicators */}
         {phase === 'ai' && progress > 0 && (
-          <div className="mt-3 w-32 sm:w-48 bg-gray-700 rounded-full h-1.5 overflow-hidden">
-            <div
-              className={`h-1.5 rounded-full transition-all duration-500 ease-out ${config.color.replace('text', 'bg')}`}
-              style={{ width: `${Math.min(progress, 100)}%` }}
-            />
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <div className="text-purple-300">
+              <ProgressRing progress={progress} size={56} strokeWidth={2} />
+            </div>
+            <div className="text-center">
+              <p className="text-xs sm:text-sm text-gray-300">
+                {progress < 20 && 'Preparing download...'}
+                {progress >= 20 && progress < 50 && 'Downloading neural networks...'}
+                {progress >= 50 && progress < 85 && 'Almost there...'}
+                {progress >= 85 && 'Finalizing setup...'}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">{progress}%</p>
+            </div>
           </div>
         )}
 
-        {/* Progress percentage for AI phase */}
-        {phase === 'ai' && progress > 0 && (
-          <div className="mt-2 text-xs sm:text-sm text-gray-300">{progress}%</div>
+        {/* Loading spinner for other phases */}
+        {phase !== 'ai' && phase !== 'ready' && (
+          <div className="mt-6 flex items-center gap-2 text-gray-300">
+            <div className="flex gap-1">
+              <div
+                className="w-1.5 h-1.5 rounded-full bg-current animate-bounce"
+                style={{ animationDelay: '0ms' }}
+              />
+              <div
+                className="w-1.5 h-1.5 rounded-full bg-current animate-bounce"
+                style={{ animationDelay: '150ms' }}
+              />
+              <div
+                className="w-1.5 h-1.5 rounded-full bg-current animate-bounce"
+                style={{ animationDelay: '300ms' }}
+              />
+            </div>
+          </div>
         )}
       </div>
     );
@@ -150,47 +210,112 @@ export default function UnifiedLoader({
         fixed inset-0 z-50 flex flex-col items-center justify-center
         transition-all duration-300
         ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}
-        bg-gradient-to-br from-black via-gray-900 to-black
         ${className}
       `}
+      style={{
+        background:
+          'linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 27, 75) 50%, rgb(15, 23, 42) 100%)',
+      }}
     >
-      {/* Main content */}
-      <div className="text-center space-y-6">
-        {/* Icon with animation */}
-        <div className="text-6xl sm:text-7xl animate-bounce">{config.icon}</div>
+      {/* Animated background gradient */}
+      <div
+        className="absolute inset-0 opacity-30"
+        style={{
+          background: `radial-gradient(circle at ${50 + 20 * Math.sin(Date.now() / 3000)}% ${50 + 20 * Math.cos(Date.now() / 4000)}%, rgba(139, 92, 246, 0.1), transparent)`,
+        }}
+      />
 
-        {/* Title */}
-        <h2 className={`text-xl sm:text-2xl font-bold ${config.color}`}>{config.title}</h2>
-
-        {/* Status message */}
-        <p className="text-sm sm:text-base text-gray-300">{message}</p>
-
-        {/* Progress bar */}
-        <div className="w-48 sm:w-64 bg-gray-800 rounded-full h-2 overflow-hidden">
-          <div
-            className={`h-2 rounded-full transition-all ease-out
-              ${
-                phase === 'ready'
-                  ? 'duration-300 w-full bg-green-400'
-                  : phase === 'ai'
-                    ? `duration-500 ${config.color.replace('text', 'bg')}`
-                    : 'duration-300 bg-gray-600'
-              }
-            `}
-            style={{
-              width:
-                phase === 'ai' ? `${Math.min(progress, 100)}%` : phase === 'ready' ? '100%' : '50%',
-            }}
-          />
+      {/* Premium glassmorphism card */}
+      <div
+        className={`
+          relative z-10 text-center space-y-8 max-w-md w-full mx-auto px-6 sm:px-8
+          backdrop-blur-xl rounded-2xl border
+          ${config.bgGradient} ${config.borderColor}
+          bg-gradient-to-br shadow-2xl
+          py-10 sm:py-12
+        `}
+      >
+        {/* Icon with entrance animation */}
+        <div
+          className="flex justify-center transition-all duration-700 ease-out"
+          style={{
+            animation: 'scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          }}
+        >
+          <div className={config.color}>{config.icon}</div>
         </div>
 
-        {/* Hint text for positioning phase */}
-        {phase === 'positioning' && (
-          <p className="text-xs text-gray-400 max-w-sm px-4">
-            Position your full body in frame for best detection
-          </p>
+        {/* Header */}
+        <div className="space-y-3">
+          <h2 className={`${config.color} text-2xl sm:text-3xl font-bold leading-tight`}>
+            {config.title}
+          </h2>
+          <p className="text-gray-300 text-sm sm:text-base leading-relaxed">{config.subtitle}</p>
+        </div>
+
+        {/* Guidance text */}
+        <p className="text-gray-400 text-xs sm:text-sm leading-relaxed px-2">{config.guidance}</p>
+
+        {/* Progress indicators */}
+        <div className="space-y-4">
+          {phase === 'ai' && progress > 0 ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className={config.color}>
+                <ProgressRing progress={progress} size={72} strokeWidth={2.5} />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-gray-300 text-sm font-medium">
+                  {progress < 25 && 'Preparing download...'}
+                  {progress >= 25 && progress < 50 && 'Downloading neural networks...'}
+                  {progress >= 50 && progress < 85 && 'Initializing model...'}
+                  {progress >= 85 && 'Finalizing setup...'}
+                </p>
+                <p className={`${config.color} text-lg font-semibold`}>{progress}%</p>
+              </div>
+            </div>
+          ) : phase !== 'ready' ? (
+            <div className="flex justify-center">
+              <div className="flex gap-1.5">
+                <div
+                  className={`w-2 h-2 rounded-full ${config.color} animate-bounce`}
+                  style={{ animationDelay: '0ms' }}
+                />
+                <div
+                  className={`w-2 h-2 rounded-full ${config.color} animate-bounce`}
+                  style={{ animationDelay: '150ms' }}
+                />
+                <div
+                  className={`w-2 h-2 rounded-full ${config.color} animate-bounce`}
+                  style={{ animationDelay: '300ms' }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className={`${config.color} text-lg font-semibold animate-pulse`}>
+              Ready to start!
+            </div>
+          )}
+        </div>
+
+        {/* Estimated time hint */}
+        {config.estimatedTime && phase !== 'ready' && (
+          <p className="text-gray-500 text-xs italic pt-2">{config.estimatedTime}</p>
         )}
       </div>
+
+      {/* CSS for entrance animation */}
+      <style jsx>{`
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 }

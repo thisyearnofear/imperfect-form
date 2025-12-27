@@ -8,8 +8,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Spinner } from '@/components/ui';
-import { MemoryButton, MemoryInput } from '@/components/ui/MemoryButton';
+import { Spinner, Button, MemoryInput } from '@/components/ui';
 import { getMemoryClient } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 import { usePlatform } from '@/contexts/PlatformContext';

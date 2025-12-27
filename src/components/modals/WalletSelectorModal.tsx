@@ -37,6 +37,7 @@ const WalletSelectorModal: React.FC = () => {
       onClose={() => setOpen(false)}
       title="Sign In"
       description="Choose your preferred method to sign in and continue"
+      variant="wallet"
     >
       <div className={`flex flex-col space-y-4 ${transitionClass}`}>
         {/* Promote passkey onboarding with improved visibility */}

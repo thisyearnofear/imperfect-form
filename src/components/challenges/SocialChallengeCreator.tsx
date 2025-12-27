@@ -8,13 +8,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Spinner } from '@/components/ui';
-import {
-  MemoryButton,
-  MemoryInput,
-  MemoryTextarea,
-  MemorySelect,
-} from '@/components/ui/MemoryButton';
+import { Spinner, Button } from '@/components/ui';
+import { MemoryInput, MemoryTextarea, MemorySelect } from '@/components/ui/MemoryButton';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { getMemoryClient, type IdentityNode } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
@@ -319,7 +314,7 @@ export default function SocialChallengeCreator({
       </div>
 
       {/* Create Button */}
-      <MemoryButton
+      <Button
         onClick={handleCreateChallenge}
         disabled={!challengeData.title.trim() || selectedFriends.size === 0}
         variant="primary"
@@ -327,7 +322,7 @@ export default function SocialChallengeCreator({
         fullWidth
       >
         Create Challenge
-      </MemoryButton>
+      </Button>
 
       {/* Memory Protocol Attribution */}
       <div className="mt-4 text-center text-xs text-gray-500">

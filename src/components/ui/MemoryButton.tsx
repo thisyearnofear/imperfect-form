@@ -87,42 +87,6 @@ function MemoryButton({
   );
 }
 
-// Export the main component and additional styled components for consistency
+// Export the main component
 export { MemoryButton };
 export default MemoryButton;
-
-export function MemoryInput({
-  className = '',
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={`w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none focus:ring-1 focus:ring-[#fcb131] transition-colors ${className}`}
-      {...props}
-    />
-  );
-}
-
-export function MemoryTextarea({
-  className = '',
-  ...props
-}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      className={`w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none focus:ring-1 focus:ring-[#fcb131] transition-colors resize-vertical ${className}`}
-      {...props}
-    />
-  );
-}
-
-export function MemorySelect({
-  className = '',
-  ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select
-      className={`w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-[#fcb131] focus:outline-none focus:ring-1 focus:ring-[#fcb131] transition-colors ${className}`}
-      {...props}
-    />
-  );
-}
