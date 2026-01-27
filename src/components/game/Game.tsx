@@ -546,6 +546,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       isLoading: boolean;
     }) => {
       setPoseState(newState);
+
+      // Debug logging to track state changes
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎭 Pose state changed:', {
+          hasCamera: newState.hasCamera,
+          hasPoseDetection: newState.hasPoseDetection,
+          poseDetected: newState.poseDetected,
+          isLoading: newState.isLoading,
+          loadingPhase: useLoadingPhase(newState),
+        });
+      }
     },
     []
   );
@@ -732,6 +743,16 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                       isVisible={started && !poseState.poseDetected}
                       isOverlay={true}
                     />
+
+                    {/* Debug: Show overlay visibility state */}
+                    {process.env.NODE_ENV === 'development' &&
+                      started &&
+                      !poseState.poseDetected && (
+                        <div className="absolute top-2 right-2 bg-red-600 text-white text-xs p-2 rounded z-50">
+                          Debug: Overlay visible (started={started.toString()}, poseDetected=
+                          {poseState.poseDetected.toString()})
+                        </div>
+                      )}
                   </div>
                 </div>
               ) : (

@@ -254,6 +254,11 @@ export function usePoseDetection(
         video.srcObject = streamRef.current;
         setHasCamera(true);
 
+        // Try to play the video immediately after setting srcObject
+        video.play().catch((err) => {
+          console.warn('Initial video play failed, will retry in Webcam component:', err);
+        });
+
         // Set canvas dimensions to match video with mobile optimization
         if (isMobile) {
           // On mobile, use the actual display size to avoid scaling issues
@@ -352,6 +357,7 @@ export function usePoseDetection(
                 const currentTime = Date.now();
                 lastPoseDetectedTime.current = currentTime;
                 if (!poseDetected) {
+                  console.log('✅ Pose detected! Setting poseDetected to true');
                   setPoseDetected(true);
                 }
 
@@ -372,9 +378,16 @@ export function usePoseDetection(
                   onRepCount(count);
                 }
               } else {
+                // Log when no poses detected for debugging
+                if (Math.random() < 0.01) {
+                  // Only log occasionally to avoid spam
+                  console.log('🔍 No pose detected in this frame');
+                }
+
                 // Check if we should mark pose as not detected (after 2 seconds of no detection)
                 const currentTime = Date.now();
                 if (poseDetected && currentTime - lastPoseDetectedTime.current > 2000) {
+                  console.log('⚠️ No pose detected for 2 seconds, setting poseDetected to false');
                   setPoseDetected(false);
                 }
 
