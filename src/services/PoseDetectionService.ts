@@ -59,13 +59,13 @@ export class PoseDetectionService {
   static getDetectorConfig(isMobile: boolean) {
     if (isMobile) {
       return {
-        modelType: 'SinglePose.Lightning',
+        modelType: 'SINGLEPOSE_LIGHTNING',
         enableSmoothing: true,
         minPoseScore: 0.2,
       };
     }
     return {
-      modelType: 'SinglePose.Thunder',
+      modelType: 'SINGLEPOSE_THUNDER',
       enableSmoothing: true,
       minPoseScore: 0.25,
       multiPoseMaxDimension: 512,
