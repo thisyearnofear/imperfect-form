@@ -189,9 +189,9 @@ const PHASE_CONFIG: Record<
   }
 > = {
   initial: {
-    title: 'Enabling Camera',
-    subtitle: 'Camera permission required',
-    guidance: 'Allow access to your device camera to start',
+    title: 'Loading...',
+    subtitle: 'Getting things ready',
+    guidance: 'Please wait',
     color: 'text-blue-300',
     bgGradient: 'from-blue-950/40 via-blue-900/20 to-blue-950/40',
     borderColor: 'border-blue-400/30',
@@ -208,9 +208,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: 'Usually 15-30 seconds on 4G',
   },
   ai: {
-    title: 'Loading AI Model',
-    subtitle: 'First time setup',
-    guidance: 'Loading pose detection model from our servers (happens once)',
+    title: 'Loading Pose Detection Model',
+    subtitle: 'Just a moment',
+    guidance: 'Loading AI model for pose detection',
     color: 'text-purple-300',
     bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
     borderColor: 'border-purple-400/30',
