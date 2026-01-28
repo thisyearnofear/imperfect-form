@@ -146,16 +146,34 @@ export class PoseDetectionService {
       this.emitProgress({
         phase: 'model-download',
         message: 'Loading pose detection model...',
-        percentage: 40,
+        percentage: 0,
       });
 
       const poseDetection = await import('@tensorflow-models/pose-detection');
       const config = PoseDetectionService.getDetectorConfig(isMobile);
 
+      // Start progress animation from 0% to 70% during model loading
+      // This gives users visual feedback during the 10-30s loading time
+      let progress = 0;
+      const targetProgress = 70;
+      const progressInterval = setInterval(() => {
+        // Slow down progress as we get closer to target
+        const remaining = targetProgress - progress;
+        const increment = Math.max(0.5, remaining * 0.05);
+        progress = Math.min(targetProgress, progress + increment);
+        this.emitProgress({
+          phase: 'model-download',
+          message: 'Loading pose detection model...',
+          percentage: Math.floor(progress),
+        });
+      }, 200); // Update every 200ms
+
       const detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet,
         config
       );
+
+      clearInterval(progressInterval);
 
       this.emitProgress({
         phase: 'model-download',
