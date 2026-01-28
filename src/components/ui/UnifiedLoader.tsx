@@ -208,9 +208,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: 'Usually 15-30 seconds on 4G',
   },
   ai: {
-    title: 'Loading Pose Detection Model',
-    subtitle: 'Just a moment',
-    guidance: 'Loading AI model for pose detection',
+    title: 'Loading',
+    subtitle: 'Please wait',
+    guidance: 'Loading pose detection model',
     color: 'text-purple-300',
     bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
     borderColor: 'border-purple-400/30',

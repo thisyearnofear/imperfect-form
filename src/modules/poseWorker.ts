@@ -109,7 +109,7 @@ self.addEventListener('message', async (event) => {
       self.postMessage({ type: 'backend', backend });
     } catch {}
 
-    detector = await createDetector(SupportedModels.MoveNet, { modelType: 'SINGLEPOSE_LIGHTNING' });
+    detector = await createDetector(SupportedModels.MoveNet, { modelType: 'SinglePose.Lightning' });
     repState = 'middle';
     repCount = 0;
   } else if (data.type === 'frame') {
