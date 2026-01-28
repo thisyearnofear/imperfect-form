@@ -65,7 +65,7 @@ export function useSyncedLeaderboard(
       if (isMountedRef.current) {
         const metadata = service.getCacheMetadata(key);
         setState({
-          data,
+          data: data as Score[] | EnhancedLeaderboardData,
           loading: false,
           error: null,
           isStale: metadata?.status === 'stale',
@@ -97,7 +97,7 @@ export function useSyncedLeaderboard(
       (data) => {
         if (isMountedRef.current) {
           setState({
-            data,
+            data: data as Score[] | EnhancedLeaderboardData,
             loading: false,
             error: null,
             isStale: false,

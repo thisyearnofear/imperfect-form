@@ -2,6 +2,7 @@
 
 /* Portrait mode optimizations for wallet browsers */
 @media (orientation: portrait) and (max-width: 768px) {
+
   /* Optimize layout for portrait mode - common in wallet browsers */
   #screen {
     /* Reduce height to leave room for controls and leaderboard */
@@ -74,7 +75,7 @@
     margin-bottom: 8px !important;
   }
 
-  .flex.justify-between.mb-2.px-2 > div {
+  .flex.justify-between.mb-2.px-2>div {
     color: #fcb131 !important;
     text-shadow: 0 0 4px rgba(252, 177, 49, 0.8) !important;
     font-weight: bold !important;
@@ -109,11 +110,13 @@
 }
 
 /* Enhanced mobile detection for wallet browsers */
-@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+@media (max-width: 768px),
+(hover: none) and (pointer: coarse) {
 
   /* Improved typography for wallet browsers */
   body {
-    font-size: 16px; /* Prevent zoom on iOS */
+    font-size: 16px;
+    /* Prevent zoom on iOS */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
@@ -360,34 +363,34 @@
   }
 
   /* Better spacing for mobile layout */
-  .md\\:hidden {
+  .md\:hidden {
     margin-top: 8px !important;
     padding: 0 8px !important;
   }
-  
+
   /* ENHANCEMENT: Mobile wallet connection two-row layout optimizations */
   .mobile-wallet-connection {
     padding-bottom: 0.75rem !important;
   }
-  
+
   /* Ensure proper spacing between button rows on mobile */
   .mobile-wallet-connection .mb-2 {
     margin-bottom: 0.5rem !important;
   }
-  
+
   /* Better touch targets for mobile wallet buttons */
   .mobile-wallet-connection button {
     min-height: 44px !important;
     border-radius: 8px !important;
   }
-  
+
   /* Improved text shadow for better readability on mobile */
   .mobile-wallet-connection .text-white {
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
   }
 
   /* Enhanced background for better contrast */
-  .bg-black\\/80 {
+  .bg-black\/80 {
     background-color: rgba(0, 0, 0, 0.92) !important;
     backdrop-filter: blur(8px);
   }
@@ -415,6 +418,7 @@
 
 /* Specific optimizations for very small screens (wallet browsers on phones) */
 @media (max-width: 480px) {
+
   .leaderboard-container th,
   .leaderboard-container td {
     padding: 8px 4px !important;
@@ -439,7 +443,9 @@
 }
 
 /* High DPI display optimizations */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+
   .timer,
   .rep-counter-container,
   .leaderboard-container {

@@ -53,13 +53,18 @@ export async function initializeLeaderboardSources(): Promise<void> {
         // Fetch fresh data
         const data = await getLeaderboard();
 
-        // Cache using existing mechanism (to not break other code)
-        cacheLeaderboardData(data);
+        if (data) {
+          // Cache using existing mechanism (to not break other code)
+          cacheLeaderboardData(data);
 
-        // Also persist offline
-        await offlineStore.set('leaderboard:pushups', data.pushups);
+          // Also persist offline
+          await offlineStore.set('leaderboard:pushups', data.pushups);
 
-        return data.pushups;
+          return data.pushups;
+        } else {
+          // Handle the case where data is null
+          throw new Error('Failed to fetch leaderboard data');
+        }
       } catch (error) {
         // Fallback to offline cache
         const offline = await offlineStore.get<Score[]>('leaderboard:pushups');
@@ -77,10 +82,15 @@ export async function initializeLeaderboardSources(): Promise<void> {
         if (cached?.squats) return cached.squats;
 
         const data = await getLeaderboard();
-        cacheLeaderboardData(data);
-        await offlineStore.set('leaderboard:squats', data.squats);
+        if (data) {
+          cacheLeaderboardData(data);
+          await offlineStore.set('leaderboard:squats', data.squats);
 
-        return data.squats;
+          return data.squats;
+        } else {
+          // Handle the case where data is null
+          throw new Error('Failed to fetch leaderboard data');
+        }
       } catch (error) {
         const offline = await offlineStore.get<Score[]>('leaderboard:squats');
         if (offline) return offline;
@@ -103,16 +113,27 @@ export async function initializeLeaderboardSources(): Promise<void> {
         }
 
         const data = await getLeaderboard();
-        cacheLeaderboardData(data);
+        if (data) {
+          cacheLeaderboardData(data);
 
-        const fullData: EnhancedLeaderboardData = {
-          pushups: data.pushups || [],
-          squats: data.squats || [],
-          timestamp: Date.now(),
-        };
+          const fullData: EnhancedLeaderboardData = {
+            pushups: data.pushups || [],
+            squats: data.squats || [],
+            timestamp: Date.now(),
+          };
 
-        await offlineStore.set('leaderboard:full', fullData);
-        return fullData;
+          await offlineStore.set('leaderboard:full', fullData);
+          return fullData;
+        } else {
+          // Handle the case where data is null
+          const fallbackData: EnhancedLeaderboardData = {
+            pushups: [],
+            squats: [],
+            timestamp: Date.now(),
+          };
+
+          return fallbackData;
+        }
       } catch (error) {
         const offline = await offlineStore.get<EnhancedLeaderboardData>('leaderboard:full');
         if (offline) return offline;
@@ -126,8 +147,30 @@ export async function initializeLeaderboardSources(): Promise<void> {
     fetch: async (signal) => {
       try {
         const legacy = await getLegacyScores();
-        await offlineStore.set('leaderboard:legacy', legacy);
-        return legacy;
+        // Convert LegacyScore[] to Score[] by mapping to the expected format
+        const scores: Score[] = legacy.map((item) => {
+          // Create a proper Score object with required fields
+          const scoreObj: Score = {
+            user:
+              (item as any).user ||
+              (item as any).address ||
+              (item as any).userAddress ||
+              (item as any).wallet ||
+              '',
+            score:
+              (item as any).score ||
+              (item as any).count ||
+              (item as any).value ||
+              (item as any).reps ||
+              0,
+            network: (item as any).network || (item as any).chain || 'celo', // Default to celo as it's a valid NetworkType
+            timestamp: (item as any).timestamp || (item as any).time || Date.now(),
+          };
+          return scoreObj;
+        });
+
+        await offlineStore.set('leaderboard:legacy', scores);
+        return scores;
       } catch (error) {
         const offline = await offlineStore.get<Score[]>('leaderboard:legacy');
         if (offline) return offline;

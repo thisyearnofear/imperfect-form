@@ -341,7 +341,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     {/* Verified Option - Primary */}
                     <button
                       onClick={handleSubmitVerified}
-                      disabled={submissionStatus === 'submitting'}
+                      disabled={submissionStatus !== 'idle'}
                       className="w-full p-4 rounded-lg border-2 border-green-500/50 bg-gradient-to-r from-green-500/10 to-emerald-500/10 hover:from-green-500/20 hover:to-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -361,7 +361,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     {/* Basic Option - Secondary */}
                     <button
                       onClick={handleSubmitBasic}
-                      disabled={submissionStatus === 'submitting'}
                       className="w-full p-4 rounded-lg border-2 border-slate-600 bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -384,7 +383,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     {/* Verification Option - Primary CTA */}
                     <button
                       onClick={handleStartVerification}
-                      disabled={submissionStatus === 'submitting'}
                       className="w-full p-4 rounded-lg border-2 border-yellow-500/50 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 hover:from-yellow-500/20 hover:to-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -404,7 +402,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     {/* Fallback Option */}
                     <button
                       onClick={handleSubmitBasic}
-                      disabled={submissionStatus === 'submitting'}
                       className="w-full p-4 rounded-lg border-2 border-slate-600 bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       <div className="flex items-center justify-between mb-2">

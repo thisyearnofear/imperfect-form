@@ -6,7 +6,7 @@ import '@/styles/animations.css';
 type FieldSize = 'sm' | 'md' | 'lg';
 type FieldVariant = 'primary' | 'secondary' | 'error';
 
-interface BaseFieldProps extends React.HTMLAttributes<HTMLDivElement> {
+interface BaseFieldProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
   label?: string;
   error?: string;
   hint?: string;
@@ -19,17 +19,53 @@ interface BaseFieldProps extends React.HTMLAttributes<HTMLDivElement> {
   rightIcon?: React.ReactNode;
 }
 
-interface InputProps extends BaseFieldProps, React.InputHTMLAttributes<HTMLInputElement> {}
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  hint?: string;
+  fieldSize?: FieldSize;
+  variant?: FieldVariant;
+  fullWidth?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
 
-interface TextareaProps extends BaseFieldProps, React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  error?: string;
+  hint?: string;
+  fieldSize?: FieldSize;
+  variant?: FieldVariant;
+  fullWidth?: boolean;
+}
 
-interface SelectProps extends BaseFieldProps, React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  error?: string;
+  hint?: string;
+  fieldSize?: FieldSize;
+  variant?: FieldVariant;
+  fullWidth?: boolean;
   children: React.ReactNode;
 }
 
-interface CheckboxProps extends BaseFieldProps, React.InputHTMLAttributes<HTMLInputElement> {}
+interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  hint?: string;
+  fieldSize?: FieldSize;
+  variant?: FieldVariant;
+  fullWidth?: boolean;
+}
 
-interface RadioProps extends BaseFieldProps, React.InputHTMLAttributes<HTMLInputElement> {}
+interface RadioProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  hint?: string;
+  fieldSize?: FieldSize;
+  variant?: FieldVariant;
+  fullWidth?: boolean;
+}
 
 // Shared styles
 const sizeClasses: Record<FieldSize, string> = {
@@ -60,7 +96,7 @@ export const FormInput = forwardRef<HTMLInputElement, InputProps>(
       error,
       hint,
       disabled = false,
-      size = 'md',
+      fieldSize = 'md',
       variant = 'primary',
       required = false,
       fullWidth = true,
@@ -94,7 +130,7 @@ export const FormInput = forwardRef<HTMLInputElement, InputProps>(
             disabled={disabled}
             className={`
               ${baseFieldClasses}
-              ${sizeClasses[size]}
+              ${sizeClasses[fieldSize]}
               ${variantClasses[effectiveVariant]}
               ${leftIcon ? 'pl-9' : ''}
               ${rightIcon ? 'pr-9' : ''}
@@ -131,7 +167,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       error,
       hint,
       disabled = false,
-      size = 'md',
+      fieldSize = 'md',
       variant = 'primary',
       required = false,
       fullWidth = true,
@@ -156,7 +192,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           disabled={disabled}
           className={`
             ${baseFieldClasses}
-            ${sizeClasses[size]}
+            ${sizeClasses[fieldSize]}
             ${variantClasses[effectiveVariant]}
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             resize-vertical min-h-[120px]
@@ -184,7 +220,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, SelectProps>(
       error,
       hint,
       disabled = false,
-      size = 'md',
+      fieldSize = 'md',
       variant = 'primary',
       required = false,
       fullWidth = true,
@@ -210,7 +246,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, SelectProps>(
           disabled={disabled}
           className={`
             ${baseFieldClasses}
-            ${sizeClasses[size]}
+            ${sizeClasses[fieldSize]}
             ${variantClasses[effectiveVariant]}
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             appearance-none pr-9

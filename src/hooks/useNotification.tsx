@@ -70,8 +70,8 @@ export function useNotification() {
       const toastOptions = {
         duration,
         id,
-        position: position as Parameters<typeof toast>[2]['position'],
-        ariaLive: ariaLive as Parameters<typeof toast>[2]['ariaLive'],
+        position,
+        ...(ariaLive && { ariaLive }),
       };
 
       // Build styled toast message with icon and consistent formatting
@@ -90,7 +90,13 @@ export function useNotification() {
         case 'warning':
           return toast(styledMessage, {
             ...toastOptions,
-            icon: icon || '⚠️',
+            icon:
+              typeof icon !== 'number' &&
+              typeof icon !== 'bigint' &&
+              typeof icon !== 'boolean' &&
+              icon != null
+                ? (icon as any)
+                : '⚠️',
           });
         case 'loading':
           return toast.loading(styledMessage, toastOptions);
@@ -98,7 +104,13 @@ export function useNotification() {
         default:
           return toast(styledMessage, {
             ...toastOptions,
-            icon: icon || 'ℹ️',
+            icon:
+              typeof icon !== 'number' &&
+              typeof icon !== 'bigint' &&
+              typeof icon !== 'boolean' &&
+              icon != null
+                ? (icon as any)
+                : 'ℹ️',
           });
       }
     },
@@ -163,7 +175,7 @@ export function useNotification() {
         },
         {
           duration: undefined,
-          position: options?.position as Parameters<typeof toast.promise>[2]['position'],
+          ...(options?.position && { position: options.position }),
         }
       );
     },

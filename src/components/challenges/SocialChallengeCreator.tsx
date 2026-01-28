@@ -55,6 +55,7 @@ export default function SocialChallengeCreator({
     handleSubmit,
     resetForm,
   } = useFormState();
+  const [isFriendsLoading, setIsFriendsLoading] = useState(false);
   const [friends, setFriends] = useState<ChallengeParticipant[]>([]);
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
   const [challengeData, setChallengeData] = useState<ChallengeData>({
@@ -66,17 +67,16 @@ export default function SocialChallengeCreator({
     isPrivate: false,
   });
 
-  // Load friends from social graphs
   useEffect(() => {
     const loadFriends = async () => {
       if (!farcasterUser?.fid && !wallet.address) return;
 
+      setIsFriendsLoading(true);
       try {
         const client = getMemoryClient();
         if (!client) {
           // Memory API not configured, show empty state
           setFriends([]);
-          setLoading(false);
           return;
         }
 
@@ -136,6 +136,8 @@ export default function SocialChallengeCreator({
       } catch (error) {
         logger.error('Failed to load friends', error);
         toast.error('Failed to load friends list');
+      } finally {
+        setIsFriendsLoading(false);
       }
     };
 
@@ -235,7 +237,10 @@ export default function SocialChallengeCreator({
             <MemorySelect
               value={challengeData.type}
               onChange={(e) =>
-                setChallengeData((prev) => ({ ...prev, type: e.target.value as any }))
+                setChallengeData((prev) => ({
+                  ...prev,
+                  type: e.target.value as 'pushups' | 'squats' | 'mixed',
+                }))
               }
             >
               <option value="pushups">Push-ups</option>
@@ -279,7 +284,7 @@ export default function SocialChallengeCreator({
           Invite Friends ({selectedFriends.size} selected)
         </h3>
 
-        {loading ? (
+        {isFriendsLoading ? (
           <div className="flex items-center justify-center p-4">
             <Spinner />
             <span className="ml-2 text-gray-400">Loading friends...</span>

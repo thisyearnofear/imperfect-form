@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
 @import "../styles/leaderboard.css";
 @import "../styles/filters.css";
@@ -10,6 +6,10 @@
 @import "../styles/split-flap.css";
 @import "../styles/mobile-optimizations.css";
 @import "../styles/chain-effects.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Base styles */
 body,
@@ -20,7 +20,8 @@ html {
   font-family: var(--font-family, "Press Start 2P", cursive);
   background-color: var(--color-background, #000);
   color: var(--color-text, #fff);
-  overflow-y: auto; /* Allow vertical scrolling */
+  overflow-y: auto;
+  /* Allow vertical scrolling */
   min-height: 100vh;
   transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
 }
@@ -29,12 +30,15 @@ html {
 #game-container {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center content horizontally */
+  align-items: center;
+  /* Center content horizontally */
   min-height: 100vh;
   padding: 10px;
   box-sizing: border-box;
-  overflow-y: auto; /* Allow vertical scrolling */
-  justify-content: flex-start; /* Changed to align content from the top */
+  overflow-y: auto;
+  /* Allow vertical scrolling */
+  justify-content: flex-start;
+  /* Changed to align content from the top */
   background-color: var(--color-background, #000);
   transition: background-color 300ms ease-in-out;
 }
@@ -65,9 +69,11 @@ html {
   height: 25px;
   border-radius: 50%;
   margin: 0 3px;
-  border: 3px solid transparent; /* Change to transparent to show filled color */
+  border: 3px solid transparent;
+  /* Change to transparent to show filled color */
   /* Add this to ensure the rings are filled */
-  display: inline-block; /* Ensure they are inline */
+  display: inline-block;
+  /* Ensure they are inline */
 }
 
 /* Mobile optimizations for banner */
@@ -75,45 +81,55 @@ html {
   #banner {
     margin-bottom: 10px;
   }
-  
+
   .olympic-rings {
     margin-right: 10px;
   }
-  
+
   .ring {
     width: 20px;
     height: 20px;
     margin: 0 2px;
   }
-  
+
   h1 {
     font-size: 20px;
   }
 }
 
 .blue {
-  background-color: #416ced; /* Fill color for the blue ring */
-  border-color: #416ced; /* Same color for the border */
+  background-color: #416ced;
+  /* Fill color for the blue ring */
+  border-color: #416ced;
+  /* Same color for the border */
 }
 
 .red {
-  background-color: #ff69b4; /* Fill color for the red ring */
-  border-color: #ff69b4; /* Same color for the border */
+  background-color: #ff69b4;
+  /* Fill color for the red ring */
+  border-color: #ff69b4;
+  /* Same color for the border */
 }
 
 .yellow {
-  background-color: #fcb131; /* Fill color for the yellow ring */
-  border-color: #fcb131; /* Same color for the border */
+  background-color: #fcb131;
+  /* Fill color for the yellow ring */
+  border-color: #fcb131;
+  /* Same color for the border */
 }
 
 .black {
-  background-color: #000000; /* Fill color for the black ring */
-  border-color: #ffffff; /* White border for visibility on black background */
+  background-color: #000000;
+  /* Fill color for the black ring */
+  border-color: #ffffff;
+  /* White border for visibility on black background */
 }
 
 .green {
-  background-color: #11aa11; /* Fill color for the green ring */
-  border-color: #11aa11; /* Same color for the border */
+  background-color: #11aa11;
+  /* Fill color for the green ring */
+  border-color: #11aa11;
+  /* Same color for the border */
 }
 
 h1 {
@@ -153,7 +169,8 @@ body[data-chain="celo"] .olympic-rings {
 }
 
 /* Mobile override for screen */
-@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+@media (max-width: 768px),
+(hover: none) and (pointer: coarse) {
   #screen {
     height: auto !important;
     min-height: 300px !important;
@@ -167,12 +184,14 @@ body[data-chain="celo"] .olympic-rings {
   left: 0;
   width: 100%;
   height: 100%;
-  border: 3px solid #ff00ff !important; /* Bright magenta border for visibility */
+  border: 3px solid #ff00ff !important;
+  /* Bright magenta border for visibility */
 }
 
 /* Make sure canvas is visible */
 canvas {
-  border: 4px solid #00ff00 !important; /* Bright green border for visibility */
+  border: 4px solid #00ff00 !important;
+  /* Bright green border for visibility */
   position: absolute;
   top: 0;
   left: 0;
@@ -252,7 +271,8 @@ button:active {
 }
 
 #modeButton {
-  background-color: #800080; /* Purple color for the mode button */
+  background-color: #800080;
+  /* Purple color for the mode button */
   color: #fff;
 }
 
@@ -392,13 +412,25 @@ button:disabled {
 }
 
 @keyframes typing {
-  from { width: 0 }
-  to { width: 100% }
+  from {
+    width: 0
+  }
+
+  to {
+    width: 100%
+  }
 }
 
 @keyframes blink-caret {
-  from, to { border-color: transparent }
-  50% { border-color: #fcb131 }
+
+  from,
+  to {
+    border-color: transparent
+  }
+
+  50% {
+    border-color: #fcb131
+  }
 }
 
 /* Wallet Connection Styles */
@@ -668,13 +700,15 @@ button:disabled {
   font-size: 12px;
 }
 
-#leaderboardTable th, #leaderboardTable td {
+#leaderboardTable th,
+#leaderboardTable td {
   padding: 10px;
   text-align: center;
   border-bottom: 1px solid #fcb131;
 }
 
-.load-button, .view-more-button {
+.load-button,
+.view-more-button {
   font-family: "Press Start 2P", cursive;
   background-color: #000;
   color: #fff;
@@ -694,8 +728,10 @@ button:disabled {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.98); /* ENHANCEMENT: Near-opaque black for better text visibility */
-  backdrop-filter: blur(2px); /* ENHANCEMENT: Subtle blur for better focus */
+  background-color: rgba(0, 0, 0, 0.98);
+  /* ENHANCEMENT: Near-opaque black for better text visibility */
+  backdrop-filter: blur(2px);
+  /* ENHANCEMENT: Subtle blur for better focus */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -705,7 +741,8 @@ button:disabled {
 }
 
 .modal-content {
-  background-color: #000000; /* ENHANCEMENT: Pure black for maximum contrast */
+  background-color: #000000;
+  /* ENHANCEMENT: Pure black for maximum contrast */
   border: 3px solid #fcb131;
   border-radius: 10px;
   padding: 20px;
@@ -714,10 +751,12 @@ button:disabled {
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  color: #ffffff; /* ENHANCEMENT: Pure white text for maximum contrast */
+  color: #ffffff;
+  /* ENHANCEMENT: Pure white text for maximum contrast */
   text-align: center;
   box-shadow: 0 0 25px rgba(252, 177, 49, 0.5);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9); /* ENHANCEMENT: Text shadow for better readability */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+  /* ENHANCEMENT: Text shadow for better readability */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -756,7 +795,8 @@ div[data-backdrop],
 .tw-connect-wallet-modal-content,
 .tw-modal-content {
   background-color: #000000 !important;
-  color: #ffffff !important; /* ENHANCEMENT: Ensure all text is white */
+  color: #ffffff !important;
+  /* ENHANCEMENT: Ensure all text is white */
 }
 
 /* ENHANCEMENT: Improve text visibility in all modal contexts */
@@ -813,7 +853,9 @@ div[data-backdrop],
   margin-top: 20px;
 }
 
-.farcaster-button, .twitter-button, .lens-button {
+.farcaster-button,
+.twitter-button,
+.lens-button {
   margin: 0 10px;
   padding: 8px 12px;
   border: none;
@@ -875,10 +917,12 @@ div[data-backdrop],
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
     border-color: white;
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
     border-color: #fcb131;
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
     border-color: white;
@@ -892,11 +936,13 @@ div[data-backdrop],
     opacity: 1;
     box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
   }
+
   50% {
     transform: scale(1.01);
     opacity: 1;
     box-shadow: 0 0 10px 5px rgba(255, 215, 0, 0.5);
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -966,10 +1012,13 @@ div[data-backdrop],
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.3);
     opacity: 0.7;
@@ -985,8 +1034,13 @@ div[data-backdrop],
 }
 
 @keyframes typing {
-  from { width: 0 }
-  to { width: 100% }
+  from {
+    width: 0
+  }
+
+  to {
+    width: 100%
+  }
 }
 
 /* Button text styling */
@@ -1049,7 +1103,7 @@ div[data-backdrop],
   .xs\:block {
     display: block !important;
   }
-  
+
   .xs\:hidden {
     display: none !important;
   }
@@ -1060,11 +1114,11 @@ div[data-backdrop],
   .touch\:min-h-12 {
     min-height: 3rem !important;
   }
-  
+
   .touch\:min-w-12 {
     min-width: 3rem !important;
   }
-  
+
   .touch\:p-3 {
     padding: 0.75rem !important;
   }
@@ -1085,6 +1139,7 @@ div[data-backdrop],
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -1130,7 +1185,7 @@ div[data-backdrop],
     background: transparent;
     transform: none;
   }
-  
+
   .imf-mode-segment:active:not(:disabled) {
     background: rgba(255, 255, 255, 0.1);
     transform: scale(0.98);
@@ -1153,15 +1208,15 @@ div[data-backdrop],
   .wallet-connection {
     padding-bottom: 0.5rem;
   }
-  
+
   /* Ensure buttons have adequate spacing on mobile */
   .wallet-connection .bg-white\/10 {
-    min-height: 44px; /* Apple's recommended minimum touch target */
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  
+
   /* Improve text contrast in wallet buttons */
   .wallet-connection .text-white {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
@@ -1174,7 +1229,7 @@ div[data-backdrop],
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   .wallet-button {
     min-height: 48px;
   }

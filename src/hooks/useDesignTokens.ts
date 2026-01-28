@@ -21,7 +21,7 @@ export function getComponentStyle(
   component: 'button' | 'card' | 'modal' | 'input',
   variant: 'primary' | 'secondary' | 'ghost' = 'primary',
   size: 'xs' | 'sm' | 'base' | 'lg' = 'base'
-): Record<string, string> {
+): string {
   const { colors, spacing, typography, borderRadius, shadows } = designTokens;
 
   const baseStyles: Record<string, Record<string, Record<string, string>>> = {
@@ -221,5 +221,5 @@ export function getComponentStyle(
     },
   };
 
-  return baseStyles[component][variant][size] as Record<string, string>;
+  return baseStyles[component][variant][size];
 }

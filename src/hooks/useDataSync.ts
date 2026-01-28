@@ -106,11 +106,15 @@ export function useDataSync<T>(
 ): UseDataSyncReturn<T> {
   const serviceRef = useRef(getDataSyncService());
   const keyRef = useRef<DataKey>(
-    typeof keyOrSource === 'string' ? createDataKey(keyOrSource) : (keyOrSource as DataKey)
+    typeof keyOrSource === 'string'
+      ? createDataKey(keyOrSource)
+      : 'fetch' in (keyOrSource as object)
+        ? createDataKey(`datasource_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
+        : (keyOrSource as unknown as DataKey)
   );
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const isSourceRef = useRef<boolean>(typeof keyOrSource === 'object' && 'fetch' in keyOrSource);
-  const [state, dispatch] = useReducer(dataReducer<T>, null, createInitialState<T>);
+  const [state, dispatch] = useReducer(dataReducer<T>, createInitialState<T>());
 
   const enabled = options.enabled !== false;
 
@@ -253,7 +257,7 @@ export function useMutation<T, R = any>(
 ) {
   const service = getDataSyncService();
   const keyRef = useRef<DataKey>(typeof key === 'string' ? createDataKey(key) : key);
-  const [state, dispatch] = useReducer(dataReducer<R>, null, createInitialState<R>());
+  const [state, dispatch] = useReducer(dataReducer<R>, createInitialState<R>());
 
   // Register mutator source
   useEffect(() => {

@@ -77,8 +77,8 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
         },
       }).build();
 
-      setSelfApp(app);
-      setUniversalLink(getUniversalLink(app));
+      setSelfApp(app as any);
+      setUniversalLink(getUniversalLink(app as any));
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to initialize Self app:', error);
