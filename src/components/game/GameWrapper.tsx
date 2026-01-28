@@ -19,20 +19,16 @@ export default function GameWrapper({ profileSearchTarget }: GameWrapperProps) {
   const { platform, wallet, isReady } = usePlatform();
   const { address } = wallet;
 
-  if (!isReady) {
-    return (
-      <div className="h-full min-h-[500px] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Spinner />
-          <p className="text-yellow-400 font-bold animate-pulse">
-            {platform === 'farcaster'
-              ? 'CONNECTING TO FARCASTER...'
-              : 'INITIALIZING IMPERFECT FORM...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Remove initial loading state - Game component handles its own loading
+  return (
+    <div className="h-full bg-black flex flex-col relative">
+      <main className="flex-grow">
+        {/* Use address from context if available; Game handles no-address gracefully */}
+        <Game thirdwebAddress={address || undefined} profileSearchTarget={profileSearchTarget} />
+      </main>
+      <AuthDebugPanel />
+    </div>
+  );
 
   return (
     <div className="h-full bg-black flex flex-col relative">

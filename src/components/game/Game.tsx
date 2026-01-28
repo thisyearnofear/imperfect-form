@@ -207,6 +207,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     }
   }, [finalAddress]);
 
+  // Loading overlay for desktop pose detection
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
+
   // Pose detection state
   const [poseState, setPoseState] = useState({
     hasCamera: false,
@@ -219,6 +222,55 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     message: string;
     percentage: number;
   } | null>(null);
+
+  // Handle pose detection progress updates
+  const handleDetectionProgress = useCallback(
+    (progress: {
+      phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+      message: string;
+      percentage: number;
+    }) => {
+      console.log('⚙️  Pose detection progress:', progress);
+      if (progress.phase !== 'ready') {
+        setShowLoadingOverlay(true);
+      } else {
+        setShowLoadingOverlay(false);
+      }
+      setDetectionProgress(progress);
+    },
+    []
+  );
+
+  // Handle pose detection state changes
+  const handlePoseStateChange = useCallback(
+    (state: {
+      hasCamera: boolean;
+      hasPoseDetection: boolean;
+      poseDetected: boolean;
+      isLoading: boolean;
+    }) => {
+      console.log('⚙️  Pose detection state:', state);
+      if (state.isLoading && !showLoadingOverlay) {
+        setShowLoadingOverlay(true);
+      }
+      if (!state.isLoading && state.hasPoseDetection) {
+        setShowLoadingOverlay(false);
+      }
+      setPoseState(state);
+
+      // Debug logging to track state changes
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎭 Pose state changed:', {
+          hasCamera: state.hasCamera,
+          hasPoseDetection: state.hasPoseDetection,
+          poseDetected: state.poseDetected,
+          isLoading: state.isLoading,
+          loadingPhase: useLoadingPhase(state),
+        });
+      }
+    },
+    [showLoadingOverlay]
+  );
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
@@ -537,30 +589,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     setCurrentFilter(filterName);
   }, []);
 
-  // Handle pose detection state changes
-  const handlePoseStateChange = useCallback(
-    (newState: {
-      hasCamera: boolean;
-      hasPoseDetection: boolean;
-      poseDetected: boolean;
-      isLoading: boolean;
-    }) => {
-      setPoseState(newState);
-
-      // Debug logging to track state changes
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🎭 Pose state changed:', {
-          hasCamera: newState.hasCamera,
-          hasPoseDetection: newState.hasPoseDetection,
-          poseDetected: newState.poseDetected,
-          isLoading: newState.isLoading,
-          loadingPhase: useLoadingPhase(newState),
-        });
-      }
-    },
-    []
-  );
-
   // Memoize the webcam component to prevent re-renders when timer updates
   const memoizedWebcam = useMemo(
     () => (
@@ -570,10 +598,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         isActive={started}
         onFilterChange={handleFilterChange}
         onPoseStateChange={handlePoseStateChange}
-        onDetectionProgress={setDetectionProgress}
+        onDetectionProgress={handleDetectionProgress}
       />
     ),
-    [mode, handleRepCount, started, handleFilterChange, handlePoseStateChange]
+    [
+      mode,
+      handleRepCount,
+      started,
+      handleFilterChange,
+      handlePoseStateChange,
+      handleDetectionProgress,
+    ]
   );
 
   // DRY: Single source of truth for loading phase
@@ -581,6 +616,32 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
   return (
     <>
+      {/* Loading overlay for desktop pose detection */}
+      {showLoadingOverlay && (
+        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+            <p className="text-yellow-400 text-lg font-bold">
+              {detectionProgress?.phase === 'tensorflow-init'
+                ? 'Initializing TensorFlow...'
+                : detectionProgress?.phase === 'model-download'
+                  ? 'Loading pose detection model...'
+                  : detectionProgress?.phase === 'warmup'
+                    ? 'Warming up model...'
+                    : 'Getting ready...'}
+            </p>
+            {detectionProgress?.percentage && (
+              <div className="w-64 bg-gray-800 rounded-full h-2">
+                <div
+                  className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${detectionProgress.percentage}%` }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div
         id="game-container"
         ref={gameRef}
