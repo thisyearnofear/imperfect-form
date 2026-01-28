@@ -64,41 +64,35 @@ export interface EarningsData {
 }
 
 class MemoryAPIClient {
-  private baseUrl = 'https://api.memoryproto.co';
-  private apiKey: string;
-
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
-  }
-
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
-    const url = `${this.baseUrl}${endpoint}`;
+    const method = options.method || 'GET';
 
-    logger.info('Making Memory API request', {
-      url,
-      method: options.method || 'GET',
-      hasApiKey: !!this.apiKey,
-      apiKeyLength: this.apiKey?.length || 0,
+    logger.info('Making Memory API request via proxy', {
+      endpoint,
+      method,
     });
 
-    const response = await fetch(url, {
-      ...options,
+    // Route through our API proxy to keep the API key secure
+    const response = await fetch('/api/memory', {
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
-        ...options.headers,
       },
+      body: JSON.stringify({
+        endpoint,
+        method,
+        data: options.body ? JSON.parse(options.body as string) : undefined,
+      }),
     });
+
+    const responseData = await response.json();
 
     if (!response.ok) {
-      const errorText = await response.text();
       const errorDetails = {
         endpoint,
-        url,
         status: response.status,
         statusText: response.statusText,
-        error: errorText,
-        headers: Object.fromEntries(response.headers.entries()),
+        error: responseData?.error,
       };
 
       logger.error('Memory API request failed', errorDetails);
@@ -112,14 +106,16 @@ class MemoryAPIClient {
         errorMessage = `Resource not found: ${endpoint}. This could mean the identifier doesn't exist in Memory Protocol or the endpoint is incorrect.`;
       } else if (response.status === 429) {
         errorMessage = 'Rate limit exceeded. Please wait before making more requests.';
-      } else if (errorText) {
-        errorMessage += ` - ${errorText}`;
+      } else if (response.status === 503) {
+        errorMessage = 'Memory API not configured on server.';
+      } else if (responseData?.error) {
+        errorMessage = responseData.error;
       }
 
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    return responseData;
   }
 
   // Identity Graph Methods
@@ -145,7 +141,7 @@ class MemoryAPIClient {
         error,
         walletAddress,
         normalizedAddress,
-        url: `${this.baseUrl}/identities/wallet/${normalizedAddress}`,
+        endpoint: `/identities/wallet/${normalizedAddress}`,
       });
       throw error;
     }
@@ -435,20 +431,9 @@ class MemoryAPIClient {
 // Create singleton instance
 let memoryClient: MemoryAPIClient | null = null;
 
-export function getMemoryClient(): MemoryAPIClient | null {
+export function getMemoryClient(): MemoryAPIClient {
   if (!memoryClient) {
-    const apiKey = process.env.NEXT_PUBLIC_MEMORY_API_KEY;
-    logger.info('Memory API key configuration check', {
-      hasApiKey: !!apiKey,
-      apiKeyLength: apiKey ? apiKey.length : 0,
-      isProduction: process.env.NODE_ENV === 'production',
-    });
-
-    if (!apiKey) {
-      logger.warn('Memory API key not configured - enhanced features disabled');
-      return null; // Return null instead of throwing
-    }
-    memoryClient = new MemoryAPIClient(apiKey);
+    memoryClient = new MemoryAPIClient();
   }
   return memoryClient;
 }

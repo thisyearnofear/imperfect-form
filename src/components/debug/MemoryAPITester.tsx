@@ -32,12 +32,6 @@ export default function MemoryAPITester({ className = '' }: MemoryAPITesterProps
 
     try {
       const client = getMemoryClient();
-
-      // Check if client is available
-      if (!client) {
-        throw new Error('Memory API not configured. Please set NEXT_PUBLIC_MEMORY_API_KEY');
-      }
-
       let result: any;
 
       switch (testType) {

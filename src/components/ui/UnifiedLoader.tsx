@@ -249,14 +249,25 @@ export default function UnifiedLoader({
   const [hasCompleted, setHasCompleted] = useState(false);
   const config = PHASE_CONFIG[phase];
 
-  // Auto-complete when ready
+  // Auto-complete when ready OR when initial phase (to trigger camera request)
   useEffect(() => {
-    if (phase === 'ready' && onComplete) {
-      const timer = setTimeout(() => {
-        setHasCompleted(true);
-        onComplete();
-      }, 1500);
-      return () => clearTimeout(timer);
+    if (onComplete) {
+      // Initial phase: brief display then proceed to trigger actual camera request
+      if (phase === 'initial') {
+        const timer = setTimeout(() => {
+          setHasCompleted(true);
+          onComplete();
+        }, 800); // Brief delay to show the message
+        return () => clearTimeout(timer);
+      }
+      // Ready phase: celebrate briefly then complete
+      if (phase === 'ready') {
+        const timer = setTimeout(() => {
+          setHasCompleted(true);
+          onComplete();
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
     }
   }, [phase, onComplete]);
 
