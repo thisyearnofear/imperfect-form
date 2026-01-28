@@ -328,12 +328,7 @@ export default function UnifiedLoader({
               <ProgressRing progress={progress} size={56} strokeWidth={2} />
             </div>
             <div className="text-center">
-              <p className="text-xs sm:text-sm text-gray-300">
-                {progress < 20 && 'Preparing...'}
-                {progress >= 20 && progress < 50 && 'Loading model...'}
-                {progress >= 50 && progress < 85 && 'Almost there...'}
-                {progress >= 85 && 'Finalizing setup...'}
-              </p>
+              <p className="text-xs sm:text-sm text-gray-300">Loading...</p>
               <p className="text-xs text-gray-400 mt-1">{progress}%</p>
             </div>
           </div>
@@ -423,12 +418,7 @@ export default function UnifiedLoader({
                 <ProgressRing progress={progress} size={72} strokeWidth={2.5} />
               </div>
               <div className="text-center space-y-1">
-                <p className="text-gray-300 text-sm font-medium">
-                  {progress < 25 && 'Preparing...'}
-                  {progress >= 25 && progress < 50 && 'Loading model...'}
-                  {progress >= 50 && progress < 85 && 'Initializing model...'}
-                  {progress >= 85 && 'Finalizing setup...'}
-                </p>
+                <p className="text-gray-300 text-sm font-medium">Loading...</p>
                 <p className={`${config.color} text-lg font-semibold`}>{progress}%</p>
               </div>
             </div>
