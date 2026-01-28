@@ -209,8 +209,8 @@ const PHASE_CONFIG: Record<
   },
   ai: {
     title: 'Loading',
-    subtitle: 'Please wait',
-    guidance: 'Loading pose detection model',
+    subtitle: '',
+    guidance: '',
     color: 'text-purple-300',
     bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
     borderColor: 'border-purple-400/30',
