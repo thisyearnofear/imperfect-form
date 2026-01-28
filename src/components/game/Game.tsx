@@ -589,7 +589,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         onTouchEnd={handleTouchEnd}
         className={isMobile ? 'touch-manipulation' : ''}
       >
-        {/* Top-right control buttons */}
+        {/* Top-right control buttons - orientation lock only */}
         <div className="absolute top-2 right-2 flex gap-1 z-20">
           {/* Orientation Lock Toggle - Mobile Only */}
           {isMobile && (
@@ -608,24 +608,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
               title={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
             >
               <span className="text-white text-lg">{isLandscapeLocked ? '🔒' : '🔓'}</span>
-            </button>
-          )}
-
-          {/* Fullscreen Toggle */}
-          {isFullscreenAvailable && (
-            <button
-              onClick={() => {
-                if (isFullscreen) {
-                  exitFullscreen();
-                } else {
-                  enterFullscreen();
-                }
-              }}
-              className="bg-white/10 backdrop-blur-sm rounded-lg p-2 hover:bg-white/20 transition-colors touch-manipulation mobile-fullscreen-toggle touch-target"
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            >
-              <span className="text-white text-lg">{isFullscreen ? '⛶' : '⛶'}</span>
             </button>
           )}
 
@@ -656,9 +638,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           <h1 className="mobile-banner">Imperfect Form</h1>
         </div>
 
-        {/* Wallet connection - now clean without blocking elements */}
+        {/* Wallet connection with fullscreen toggle */}
         <div id="wallet-connection" className="wallet-connection mobile-wallet-connection">
-          <div className={finalAddress ? 'wallet-connected' : 'wallet-prompt'}>
+          <div
+            className={`flex items-center gap-2 ${finalAddress ? 'wallet-connected' : 'wallet-prompt'}`}
+          >
             <UniversalConnectButton
               size="md"
               showProfileWhenConnected={true}
@@ -669,6 +653,23 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                 console.log('Game: Wallet connected with address:', address);
               }}
             />
+            {/* Fullscreen Toggle - alongside connect button */}
+            {isFullscreenAvailable && (
+              <button
+                onClick={() => {
+                  if (isFullscreen) {
+                    exitFullscreen();
+                  } else {
+                    enterFullscreen();
+                  }
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-2 hover:bg-white/20 transition-colors touch-manipulation"
+                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+              >
+                <span className="text-white text-lg">{isFullscreen ? '⛶' : '⛶'}</span>
+              </button>
+            )}
           </div>
         </div>
 
