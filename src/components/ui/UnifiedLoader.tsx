@@ -208,9 +208,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: 'Usually 15-30 seconds on 4G',
   },
   ai: {
-    title: 'Downloading Neural Networks',
+    title: 'Loading AI Model',
     subtitle: 'First time setup',
-    guidance: 'Downloading pose detection model (happens once)',
+    guidance: 'Loading pose detection model from our servers (happens once)',
     color: 'text-purple-300',
     bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
     borderColor: 'border-purple-400/30',
@@ -329,8 +329,8 @@ export default function UnifiedLoader({
             </div>
             <div className="text-center">
               <p className="text-xs sm:text-sm text-gray-300">
-                {progress < 20 && 'Preparing download...'}
-                {progress >= 20 && progress < 50 && 'Downloading neural networks...'}
+                {progress < 20 && 'Preparing...'}
+                {progress >= 20 && progress < 50 && 'Loading model...'}
                 {progress >= 50 && progress < 85 && 'Almost there...'}
                 {progress >= 85 && 'Finalizing setup...'}
               </p>
@@ -424,8 +424,8 @@ export default function UnifiedLoader({
               </div>
               <div className="text-center space-y-1">
                 <p className="text-gray-300 text-sm font-medium">
-                  {progress < 25 && 'Preparing download...'}
-                  {progress >= 25 && progress < 50 && 'Downloading neural networks...'}
+                  {progress < 25 && 'Preparing...'}
+                  {progress >= 25 && progress < 50 && 'Loading model...'}
                   {progress >= 50 && progress < 85 && 'Initializing model...'}
                   {progress >= 85 && 'Finalizing setup...'}
                 </p>

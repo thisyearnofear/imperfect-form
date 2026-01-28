@@ -368,7 +368,7 @@ service.dispose();
 ### Progress Phases
 
 1. **10%** - Initializing TensorFlow.js
-2. **30%** - Downloading pose detection model
+2. **30%** - Loading pose detection model
 3. **70%** - Warming up detector (first inference)
 4. **100%** - Ready for detection
 

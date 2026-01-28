@@ -59,13 +59,13 @@ export class PoseDetectionService {
   static getDetectorConfig(isMobile: boolean) {
     if (isMobile) {
       return {
-        modelType: 'lightning',
+        modelType: 'SinglePose.Lightning',
         enableSmoothing: true,
         minPoseScore: 0.2,
       };
     }
     return {
-      modelType: 'thunder',
+      modelType: 'SinglePose.Thunder',
       enableSmoothing: true,
       minPoseScore: 0.25,
       multiPoseMaxDimension: 512,
@@ -145,7 +145,7 @@ export class PoseDetectionService {
     try {
       this.emitProgress({
         phase: 'model-download',
-        message: 'Downloading pose detection model...',
+        message: 'Loading pose detection model...',
         percentage: 40,
       });
 
