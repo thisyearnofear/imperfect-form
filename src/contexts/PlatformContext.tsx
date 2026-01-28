@@ -103,7 +103,7 @@ const PLATFORM_CONFIGS: Record<Platform, Partial<PlatformFeatures>> = {
     canShare: true,
     canAddToHome: true,
     canSwitchChains: true,
-    preferredChains: [42220, 137, 10143, 44787], // CELO, Polygon, Monad, Celo Alfajores
+    preferredChains: [42220, 137, 143, 44787], // CELO, Polygon, Monad Mainnet, Celo Alfajores
     defaultChain: 42220, // CELO
   },
   mobile: {
@@ -119,7 +119,7 @@ const PLATFORM_CONFIGS: Record<Platform, Partial<PlatformFeatures>> = {
     canShare: false,
     canAddToHome: false,
     canSwitchChains: true,
-    preferredChains: [8453, 137, 42220, 10143, 44787], // Base Mainnet, Polygon, CELO, Monad, Celo Alfajores
+    preferredChains: [8453, 137, 42220, 143, 44787], // Base Mainnet, Polygon, CELO, Monad Mainnet, Celo Alfajores
     defaultChain: 8453, // Base Mainnet
   },
   pwa: {
@@ -652,9 +652,8 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         // Apply browser-specific fixes for Brave and other privacy browsers
         if (typeof window !== 'undefined') {
           // For Brave and other browsers, apply fixes before switching
-          const { isBraveBrowser, applyBrowserSpecificFixes } = await import(
-            '@/utils/farcasterMiniApp'
-          );
+          const { isBraveBrowser, applyBrowserSpecificFixes } =
+            await import('@/utils/farcasterMiniApp');
           if (isBraveBrowser()) {
             await applyBrowserSpecificFixes();
           }

@@ -520,11 +520,11 @@ function getNetworkConfig(chainId: number) {
       nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
       rpcUrls: ['https://mainnet.base.org'],
     },
-    10143: {
-      chainId: '0x279f',
-      chainName: 'Monad Testnet',
+    143: {
+      chainId: '0x8f',
+      chainName: 'Monad',
       nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-      rpcUrls: ['https://testnet-rpc.monad.xyz'],
+      rpcUrls: ['https://rpc.monad.xyz'],
     },
   };
 

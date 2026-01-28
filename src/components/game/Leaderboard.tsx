@@ -45,6 +45,7 @@ import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
 import VerificationBadge from '@/components/verification/VerificationBadge';
 import VerifiedLeaderboard from '@/components/leaderboard/VerifiedLeaderboard';
 import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
+import { usePlatform } from '@/contexts/PlatformContext';
 
 interface LeaderboardProps {
   limit?: number;
@@ -76,6 +77,17 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     Record<string, FarcasterProfile | null>
   >({});
   const [activeTab, setActiveTab] = useState<'all' | 'verified'>('all');
+
+  // Get current chain to determine if verification tab should be shown
+  const { wallet } = usePlatform();
+  const isCeloChain = wallet.chainId === 42220;
+
+  // Reset to 'all' tab when not on Celo
+  useEffect(() => {
+    if (!isCeloChain && activeTab === 'verified') {
+      setActiveTab('all');
+    }
+  }, [isCeloChain, activeTab]);
 
   // Get all unique user addresses for verification checking
   const allUserAddresses = React.useMemo(() => {
@@ -626,43 +638,45 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
     <div className="leaderboard-container">
       <h2>Top Performers</h2>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 mb-4">
-        <button
-          className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
-            activeTab === 'all'
-              ? 'bg-fcb131 text-black shadow-lg'
-              : 'bg-gray-800 text-fcb131 border border-fcb131 hover:bg-fcb131 hover:text-black'
-          }`}
-          style={{
-            backgroundColor: activeTab === 'all' ? '#fcb131' : 'rgba(17, 17, 17, 0.8)',
-            color: activeTab === 'all' ? 'black' : '#fcb131',
-            border: activeTab === 'all' ? '2px solid #fcb131' : '2px solid #fcb131',
-            textShadow: activeTab === 'all' ? 'none' : '0 0 5px rgba(252, 177, 49, 0.5)',
-            boxShadow: activeTab === 'all' ? '0 0 10px rgba(252, 177, 49, 0.5)' : 'none',
-          }}
-          onClick={() => setActiveTab('all')}
-        >
-          All Users
-        </button>
-        <button
-          className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
-            activeTab === 'verified'
-              ? 'bg-fcb131 text-black shadow-lg'
-              : 'bg-gray-800 text-fcb131 border border-fcb131 hover:bg-fcb131 hover:text-black'
-          }`}
-          style={{
-            backgroundColor: activeTab === 'verified' ? '#fcb131' : 'rgba(17, 17, 17, 0.8)',
-            color: activeTab === 'verified' ? 'black' : '#fcb131',
-            border: activeTab === 'verified' ? '2px solid #fcb131' : '2px solid #fcb131',
-            textShadow: activeTab === 'verified' ? 'none' : '0 0 5px rgba(252, 177, 49, 0.5)',
-            boxShadow: activeTab === 'verified' ? '0 0 10px rgba(252, 177, 49, 0.5)' : 'none',
-          }}
-          onClick={() => setActiveTab('verified')}
-        >
-          ✓ Verified Only
-        </button>
-      </div>
+      {/* Tab Navigation - Only show verified tab on Celo */}
+      {isCeloChain && (
+        <div className="flex gap-2 mb-4">
+          <button
+            className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
+              activeTab === 'all'
+                ? 'bg-fcb131 text-black shadow-lg'
+                : 'bg-gray-800 text-fcb131 border border-fcb131 hover:bg-fcb131 hover:text-black'
+            }`}
+            style={{
+              backgroundColor: activeTab === 'all' ? '#fcb131' : 'rgba(17, 17, 17, 0.8)',
+              color: activeTab === 'all' ? 'black' : '#fcb131',
+              border: activeTab === 'all' ? '2px solid #fcb131' : '2px solid #fcb131',
+              textShadow: activeTab === 'all' ? 'none' : '0 0 5px rgba(252, 177, 49, 0.5)',
+              boxShadow: activeTab === 'all' ? '0 0 10px rgba(252, 177, 49, 0.5)' : 'none',
+            }}
+            onClick={() => setActiveTab('all')}
+          >
+            All Users
+          </button>
+          <button
+            className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
+              activeTab === 'verified'
+                ? 'bg-fcb131 text-black shadow-lg'
+                : 'bg-gray-800 text-fcb131 border border-fcb131 hover:bg-fcb131 hover:text-black'
+            }`}
+            style={{
+              backgroundColor: activeTab === 'verified' ? '#fcb131' : 'rgba(17, 17, 17, 0.8)',
+              color: activeTab === 'verified' ? 'black' : '#fcb131',
+              border: activeTab === 'verified' ? '2px solid #fcb131' : '2px solid #fcb131',
+              textShadow: activeTab === 'verified' ? 'none' : '0 0 5px rgba(252, 177, 49, 0.5)',
+              boxShadow: activeTab === 'verified' ? '0 0 10px rgba(252, 177, 49, 0.5)' : 'none',
+            }}
+            onClick={() => setActiveTab('verified')}
+          >
+            ✓ Verified Only
+          </button>
+        </div>
+      )}
 
       <div className="flex gap-2 mb-2">
         <button
@@ -840,9 +854,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
             </tbody>
           </table>
         </div>
-      ) : (
+      ) : isCeloChain ? (
         <VerifiedLeaderboard className="mt-4" />
-      )}
+      ) : null}
 
       {/* View more button - always show if we have data and onViewMore is provided */}
       {(pushupLeaderboard.length > 0 || squatLeaderboard.length > 0) && onViewMore && (

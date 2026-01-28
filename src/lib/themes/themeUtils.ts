@@ -248,48 +248,12 @@ export const removeCSSCustomProperties = (properties: CSSCustomProperties): void
 };
 
 // Color manipulation utilities
-export const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : null;
-};
-
-export const rgbToHex = (r: number, g: number, b: number): string => {
-  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-};
 
 export const adjustOpacity = (color: string, opacity: number): string => {
   const rgb = hexToRgb(color);
   if (!rgb) return color;
 
   return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
-};
-
-export const lightenColor = (color: string, amount: number): string => {
-  const rgb = hexToRgb(color);
-  if (!rgb) return color;
-
-  const r = Math.min(255, Math.floor(rgb.r + (255 - rgb.r) * amount));
-  const g = Math.min(255, Math.floor(rgb.g + (255 - rgb.g) * amount));
-  const b = Math.min(255, Math.floor(rgb.b + (255 - rgb.b) * amount));
-
-  return rgbToHex(r, g, b);
-};
-
-export const darkenColor = (color: string, amount: number): string => {
-  const rgb = hexToRgb(color);
-  if (!rgb) return color;
-
-  const r = Math.max(0, Math.floor(rgb.r * (1 - amount)));
-  const g = Math.max(0, Math.floor(rgb.g * (1 - amount)));
-  const b = Math.max(0, Math.floor(rgb.b * (1 - amount)));
-
-  return rgbToHex(r, g, b);
 };
 
 // Enhanced theme validation with comprehensive checks
@@ -594,40 +558,6 @@ export const createThemeTransition = (duration: number = 300): string => {
   const properties = ['background-color', 'border-color', 'color', 'box-shadow', 'opacity'];
 
   return properties.map((prop) => `${prop} ${duration}ms ease-in-out`).join(', ');
-};
-
-// Accessibility utilities
-export const getContrastRatio = (color1: string, color2: string): number => {
-  const rgb1 = hexToRgb(color1);
-  const rgb2 = hexToRgb(color2);
-
-  if (!rgb1 || !rgb2) return 1;
-
-  const luminance1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
-  const luminance2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
-
-  const brightest = Math.max(luminance1, luminance2);
-  const darkest = Math.min(luminance1, luminance2);
-
-  return (brightest + 0.05) / (darkest + 0.05);
-};
-
-const getLuminance = (r: number, g: number, b: number): number => {
-  const [rs, gs, bs] = [r, g, b].map((c) => {
-    c = c / 255;
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  });
-
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-};
-
-export const isAccessibleContrast = (
-  color1: string,
-  color2: string,
-  level: 'AA' | 'AAA' = 'AA'
-): boolean => {
-  const ratio = getContrastRatio(color1, color2);
-  return level === 'AA' ? ratio >= 4.5 : ratio >= 7;
 };
 
 // Performance utilities

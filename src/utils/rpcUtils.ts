@@ -16,8 +16,12 @@ export const BASE_FALLBACK_RPCS = [
   'https://base-rpc.publicnode.com',
 ];
 
-// Fallback RPC URLs for Monad Testnet
-export const MONAD_FALLBACK_RPCS = ['https://testnet-rpc.monad.xyz'];
+// Fallback RPC URLs for Monad Mainnet
+export const MONAD_FALLBACK_RPCS = [
+  'https://rpc.monad.xyz',
+  'https://rpc1.monad.xyz',
+  'https://rpc3.monad.xyz',
+];
 
 // Fallback RPC URLs for Celo Mainnet
 export const CELO_FALLBACK_RPCS = ['https://forno.celo.org', 'https://rpc.ankr.com/celo'];

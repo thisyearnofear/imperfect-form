@@ -92,7 +92,7 @@ export default function WalletDiagnostics() {
             });
 
             // Test 6: Balance Check (for Monad)
-            if (chainId === 10143 && accounts.length > 0) {
+            if (chainId === 143 && accounts.length > 0) {
               try {
                 const balance = await (provider as any).request({
                   method: 'eth_getBalance',

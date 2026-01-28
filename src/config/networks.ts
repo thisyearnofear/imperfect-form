@@ -62,16 +62,12 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     blockExplorer: 'https://celoscan.io',
   },
   monad: {
-    chainId: 10143,
-    name: 'Monad Testnet',
-    contractAddress: '0xdf07bD5a057aBf76147231886C94FEb985151ebc',
+    chainId: 143,
+    name: 'Monad',
+    contractAddress: process.env.NEXT_PUBLIC_MONAD_CONTRACT_ADDRESS || '',
     abi: monadLeaderboardABI,
-    rpcUrls: [
-      'https://testnet-rpc.monad.xyz',
-      'https://10143.rpc.thirdweb.com',
-      'https://monad-testnet.drpc.org',
-    ],
-    blockExplorer: 'https://testnet-explorer.monad.xyz',
+    rpcUrls: ['https://rpc.monad.xyz', 'https://rpc1.monad.xyz', 'https://rpc3.monad.xyz'],
+    blockExplorer: 'https://monadvision.com',
   },
 };
 

@@ -1536,10 +1536,10 @@ const monadTheme: ChainTheme = {
   metadata: {
     brandColor: '#555555',
     logoUrl: '/monad-logo.svg',
-    networkType: 'testnet',
-    chainId: 10143,
-    rpcUrl: 'https://testnet-rpc.monad.xyz',
-    blockExplorer: 'https://testnet-explorer.monad.xyz',
+    networkType: 'mainnet',
+    chainId: 143,
+    rpcUrl: 'https://rpc.monad.xyz',
+    blockExplorer: 'https://monadvision.com',
   },
 };
 

@@ -97,7 +97,7 @@ export default function DebugWalletPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-yellow-400">Monad</span>
-                  <span className="text-gray-400">10143</span>
+                  <span className="text-gray-400">143</span>
                 </div>
               </div>
             </div>

@@ -16,26 +16,26 @@ import WalletErrorBoundary from './WalletErrorBoundary';
 import WalletDebugInfo from '@/components/debug/WalletDebugInfo';
 // Removed: WalletConnectionDiagnostic - no longer needed after consolidation
 
-// Define Monad Testnet
-const monadTestnet: Chain = {
-  id: 10143,
-  name: 'Monad Testnet',
+// Define Monad Mainnet
+const monadMainnet: Chain = {
+  id: 143,
+  name: 'Monad',
   nativeCurrency: {
     decimals: 18,
     name: 'MON',
     symbol: 'MON',
   },
   rpcUrls: {
-    public: { http: ['https://testnet-rpc.monad.xyz/'] },
-    default: { http: ['https://testnet-rpc.monad.xyz/'] },
+    public: { http: ['https://rpc.monad.xyz/'] },
+    default: { http: ['https://rpc.monad.xyz/'] },
   },
   blockExplorers: {
     default: {
-      name: 'Monad Explorer',
-      url: 'https://testnet.monadexplorer.com/',
+      name: 'MonadVision',
+      url: 'https://monadvision.com/',
     },
   },
-  testnet: true,
+  testnet: false,
 };
 
 // Removed unused Celo Alfajores testnet - only using main 4 chains
@@ -188,7 +188,7 @@ const createConnectors = async () => {
 const createWagmiConfig = async () => {
   const connectors = await createConnectors();
   return createConfig({
-    chains: [celo, polygon, base, monadTestnet],
+    chains: [celo, polygon, base, monadMainnet],
     connectors,
     storage: createStorage({
       storage: cookieStorage,
@@ -203,8 +203,8 @@ const createWagmiConfig = async () => {
       ),
       // Celo: Official + fallback (critical for Self Protocol)
       [celo.id]: http('https://forno.celo.org'),
-      // Monad: Official testnet
-      [monadTestnet.id]: http('https://testnet-rpc.monad.xyz'),
+      // Monad: Official mainnet
+      [monadMainnet.id]: http('https://rpc.monad.xyz'),
     },
   });
 };

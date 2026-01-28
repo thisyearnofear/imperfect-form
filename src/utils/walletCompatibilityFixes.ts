@@ -81,9 +81,8 @@ export async function checkWalletCompatibility(
       };
     }
 
-    // 5. Check wallet balance for fee-based networks (Monad)
-    if (requiredChainId === 10143) {
-      // Monad testnet
+    // 5. Check wallet balance for Monad Mainnet
+    if (requiredChainId === 143) {
       try {
         const accounts = await (provider as any).request({ method: 'eth_accounts' });
         if (accounts.length === 0) {
@@ -98,17 +97,17 @@ export async function checkWalletCompatibility(
         });
 
         const balanceInMON = parseFloat(ethers.formatEther(balance));
-        const requiredMON = 0.002; // 0.001 for fee + 0.001 for gas
+        const requiredMON = 0.01; // Small amount for gas
 
         if (balanceInMON < requiredMON) {
           issues.push(`Insufficient MON balance (${balanceInMON.toFixed(4)} MON)`);
-          solutions.push(`You need at least ${requiredMON} MON for submission fee and gas`);
-          solutions.push('Get testnet MON from the Monad faucet');
+          solutions.push(`You need at least ${requiredMON} MON for gas fees`);
+          solutions.push('Get MON from a supported exchange or bridge');
           return { isCompatible: false, issues, solutions };
         }
       } catch (error) {
         issues.push('Unable to check wallet balance');
-        solutions.push('Ensure your wallet is properly connected to Monad testnet');
+        solutions.push('Ensure your wallet is properly connected to Monad');
       }
     }
 
@@ -200,7 +199,7 @@ export async function autoFixWalletIssues(requiredChainId: number): Promise<bool
                   chainName: networkConfig.name,
                   nativeCurrency: {
                     name:
-                      requiredChainId === 10143
+                      requiredChainId === 143
                         ? 'MON'
                         : requiredChainId === 42220
                           ? 'CELO'
@@ -208,7 +207,7 @@ export async function autoFixWalletIssues(requiredChainId: number): Promise<bool
                             ? 'MATIC'
                             : 'ETH',
                     symbol:
-                      requiredChainId === 10143
+                      requiredChainId === 143
                         ? 'MON'
                         : requiredChainId === 42220
                           ? 'CELO'
@@ -255,8 +254,8 @@ export function getWalletErrorMessage(chainId: number, error: string): string {
   }
 
   if (error.includes('insufficient funds')) {
-    if (chainId === 10143) {
-      return 'Insufficient MON balance. You need at least 0.002 MON for submission fee and gas.';
+    if (chainId === 143) {
+      return 'Insufficient MON balance. You need MON for gas fees.';
     }
     return 'Insufficient funds for transaction. Please check your wallet balance.';
   }

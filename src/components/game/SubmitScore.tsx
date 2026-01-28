@@ -278,10 +278,7 @@ export default function SubmitScore({
 
       // Get fee amount for chains that require it
       let feeAmount: string | null = null;
-      if (chainId === 10143) {
-        // Monad Testnet
-        feeAmount = '0.001'; // 0.001 MON
-      }
+      // Monad Mainnet (chainId 143) does not require a submission fee, only gas
 
       // ENHANCEMENT: Unified provider selection with validation
       const provider = getValidatedProvider(platform, farcasterProvider, wallet);
@@ -322,9 +319,8 @@ export default function SubmitScore({
         // This ensures stats (streak, sessions) update without waiting for a refetch
         try {
           // Dynamic import to avoid circular dependencies if any
-          const { getCachedLeaderboardData, cacheLeaderboardData } = await import(
-            '@/utils/leaderboardCache'
-          );
+          const { getCachedLeaderboardData, cacheLeaderboardData } =
+            await import('@/utils/leaderboardCache');
 
           const currentCache = getCachedLeaderboardData();
           if (currentCache) {

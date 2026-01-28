@@ -117,11 +117,10 @@ export function createTransactionOptions(
   const gasLimit = baseGasLimit * BigInt(Math.ceil(gasMultiplier));
 
   switch (networkId) {
-    case 10143: // Monad Testnet
+    case 143: // Monad Mainnet
       return {
         gasLimit: gasLimit * 2n,
         gasPrice: ethers.parseUnits('50', 'gwei'),
-        value: ethers.parseEther('0.001'), // Submission fee for Monad
       };
 
     case 42220: // Celo Mainnet

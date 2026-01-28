@@ -7,13 +7,13 @@ import Image from 'next/image';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
 
-// Custom Monad Testnet chain object
+// Custom Monad Mainnet chain object
 const monad = {
-  id: 10143,
-  name: 'Monad Testnet',
+  id: 143,
+  name: 'Monad',
   network: 'monad',
   nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
-  rpcUrls: { default: { http: ['https://testnet-rpc.monad.xyz'] } },
+  rpcUrls: { default: { http: ['https://rpc.monad.xyz'] } },
 } as const;
 
 interface ChainSelectorProps {
@@ -64,7 +64,7 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
       } else if (selectedNetwork === 'celo') {
         targetChainId = celo.id;
       } else if (selectedNetwork === 'monad') {
-        targetChainId = 10143; // Monad Testnet chain ID
+        targetChainId = 143; // Monad Mainnet chain ID
       } else {
         // This should never happen due to the function parameter type, but satisfies TypeScript
         console.error('Unknown network selected:', selectedNetwork);

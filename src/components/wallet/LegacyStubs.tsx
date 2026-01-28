@@ -40,7 +40,7 @@ export const useNetwork = () => {
         return 'polygon';
       case 42220:
         return 'celo';
-      case 10143:
+      case 143:
         return 'monad';
       default:
         return 'celo'; // Default to CELO for all contexts

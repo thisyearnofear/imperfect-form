@@ -16,14 +16,14 @@ const LEGACY_ADDRESSES = {
   },
   137: '0x28FE19798fe0A0276CF474f2DCC3749313f1aC0A', // Polygon (updated)
   8453: '0x58DC4867f87473BF9874892dE8e62C48958c8d96', // Base (updated)
-  10143: '0xdf07bD5a057aBf76147231886C94FEb985151ebc', // Monad (updated)
+  143: process.env.NEXT_PUBLIC_MONAD_CONTRACT_ADDRESS || '', // Monad Mainnet (deployed)
 };
 
 const RPC_URLS = {
   42220: 'https://forno.celo.org',
   137: 'https://polygon-rpc.com',
   8453: 'https://mainnet.base.org',
-  10143: 'https://testnet-rpc.monad.xyz',
+  143: 'https://rpc.monad.xyz',
 };
 
 // Simple ABI for getting leaderboard data
@@ -101,8 +101,8 @@ export async function getAllLegacyScores(): Promise<LegacyScore[]> {
     fetchLegacyFromContract(LEGACY_ADDRESSES[137], 137),
     // Base
     fetchLegacyFromContract(LEGACY_ADDRESSES[8453], 8453),
-    // Monad
-    fetchLegacyFromContract(LEGACY_ADDRESSES[10143], 10143),
+    // Monad Mainnet
+    fetchLegacyFromContract(LEGACY_ADDRESSES[143], 143),
   ];
 
   const results = await Promise.allSettled(promises);

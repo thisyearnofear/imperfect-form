@@ -40,7 +40,7 @@ export default function TroubleshootingGuide() {
           action: 'Connect Coinbase Wallet in Farcaster if available',
         },
       ];
-    } else if (wallet.chainId === 10143) {
+    } else if (wallet.chainId === 143) {
       return [
         {
           title: 'Add Monad Network',
@@ -149,7 +149,7 @@ export default function TroubleshootingGuide() {
           Steps for{' '}
           {platform === 'farcaster'
             ? 'Farcaster Mini App'
-            : wallet.chainId === 10143
+            : wallet.chainId === 143
               ? 'Monad Network'
               : 'General Setup'}
         </h4>

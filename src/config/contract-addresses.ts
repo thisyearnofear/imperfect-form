@@ -23,7 +23,7 @@ export const CONTRACT_ADDRESSES = {
   },
 
   monad: {
-    standard: '0xdf07bD5a057aBf76147231886C94FEb985151ebc', // StandardFitnessLeaderboard deployed
+    standard: process.env.NEXT_PUBLIC_MONAD_CONTRACT_ADDRESS || '', // Deployed on Monad Mainnet
   },
 } as const;
 
@@ -43,7 +43,7 @@ export function getContractAddress(
       return CONTRACT_ADDRESSES.polygon.standard;
     case 8453: // Base
       return CONTRACT_ADDRESSES.base.standard;
-    case 10143: // Monad Testnet
+    case 143: // Monad Mainnet
       return CONTRACT_ADDRESSES.monad.standard;
     default:
       return null;
@@ -71,7 +71,7 @@ export function getABIName(chainId: number, isVerified: boolean = false): string
       return 'polygonLeaderboardABI';
     case 8453: // Base
       return 'baseLeaderboardABI';
-    case 10143: // Monad
+    case 143: // Monad
       return 'monadLeaderboardABI';
     case 42220: // Celo (standard)
       return 'fitnessLeaderboardABI';
