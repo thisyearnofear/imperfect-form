@@ -611,11 +611,6 @@ export function usePoseDetection(
       ctx.shadowOffsetX = isMobile ? -1 : -2; // Flip shadow offset
       ctx.shadowOffsetY = isMobile ? 1 : 2;
 
-      // Show exercise type with background - positioned on left (but flipped)
-      const modeText = `MODE: ${mode.toUpperCase()}`;
-      ctx.fillStyle = '#fcb131';
-      ctx.fillText(modeText, -10, 30); // Negative position due to flip
-
       // Show position state with visual indicator
       let stateText = '';
       let stateColor = '';
