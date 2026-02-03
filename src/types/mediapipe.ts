@@ -47,8 +47,21 @@ export type WorkerMessage =
   | { type: 'frame'; bitmap: ImageBitmap }
   | { type: 'stop' };
 
+export interface BiomechanicalState {
+  trunkLean: number;
+  kneeValgus: number;
+  ankleFlexion: number;
+  depth: number;
+  symmetry: number;
+  isStable: boolean;
+  warnings: string[];
+}
+
 // Worker response types
 export type WorkerResponse =
   | { type: 'pose'; keypoints: Keypoint[] }
   | { type: 'rep'; count: number }
+  | { type: 'metrics'; state: BiomechanicalState }
+  | { type: 'ready' }
+  | { type: 'backend'; backend: string }
   | { type: 'error'; message: string };

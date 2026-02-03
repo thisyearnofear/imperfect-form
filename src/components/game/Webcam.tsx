@@ -1,7 +1,6 @@
 'use client';
 import React, { useRef, useEffect } from 'react';
-import { usePoseDetection } from '@/modules/usePoseDetection';
-import { useFaceDetection } from '@/modules/useFaceDetection';
+import { usePoseWorker } from '@/modules/usePoseWorker';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 
@@ -30,6 +29,7 @@ interface WebcamProps {
     message: string;
     percentage: number;
   }) => void;
+  onMetrics?: (state: import('@/types/mediapipe').BiomechanicalState) => void;
 }
 
 // Initialize logger for the Webcam component
@@ -42,24 +42,22 @@ const Webcam: React.FC<WebcamProps> = ({
   onFilterChange = () => {},
   onPoseStateChange,
   onDetectionProgress,
+  onMetrics,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  // Pass isMobile flag to usePoseDetection for mobile-specific optimizations
+  // Pass isMobile flag to usePoseWorker for mobile-specific optimizations
   const { isMobile } = useDeviceDetect();
-  const videoRef = usePoseDetection(
+  const videoRef = usePoseWorker(
     canvasRef,
     mode,
     onRepCount,
     isActive,
     isMobile,
     onPoseStateChange,
-    onDetectionProgress
+    onDetectionProgress,
+    onMetrics
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  // Initialize face detection API but don't actually use face detection
-  // This maintains API compatibility without loading heavy ML libraries
-  const {} = useFaceDetection(videoRef, canvasRef, isActive);
 
   // Function to handle filter cycling - expose it to parent component
   // We keep this for API compatibility but it doesn't do much

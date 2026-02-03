@@ -11,6 +11,7 @@ import { UniversalConnectButton } from '@/components/wallet';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import ModeSwitch from './ModeSwitch';
+import { AgentInsightTray } from './AgentInsightTray';
 import IntroDialog from '@/components/auth/IntroDialog';
 
 import { useFullscreen } from '../../hooks/useFullscreen';
@@ -187,8 +188,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   const [showSummary, setShowSummary] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
-  // Filter state is managed but currently only 'none' is used
-  const [, setCurrentFilter] = useState<string>('none');
+
+  // Real-time biomechanical state for AI Agent feedback
+  const [metrics, setMetrics] = useState<import('@/types/mediapipe').BiomechanicalState | null>(
+    null
+  );
   // Intro dialog state - now finalAddress is available
   const [showIntroDialog, setShowIntroDialog] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -249,7 +253,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       poseDetected: boolean;
       isLoading: boolean;
     }) => {
-      console.log('⚙️  Pose detection state:', state);
       if (state.isLoading && !showLoadingOverlay) {
         setShowLoadingOverlay(true);
       }
@@ -257,20 +260,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         setShowLoadingOverlay(false);
       }
       setPoseState(state);
-
-      // Debug logging to track state changes
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🎭 Pose state changed:', {
-          hasCamera: state.hasCamera,
-          hasPoseDetection: state.hasPoseDetection,
-          poseDetected: state.poseDetected,
-          isLoading: state.isLoading,
-          loadingPhase: useLoadingPhase(state),
-        });
-      }
     },
     [showLoadingOverlay]
   );
+
+  const handleMetrics = useCallback((state: import('@/types/mediapipe').BiomechanicalState) => {
+    setMetrics(state);
+  }, []);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
@@ -583,11 +579,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   // handleModeChange function removed as it's no longer used
   // Mode switching is now handled directly by ModeSwitch component
 
-  // Handle filter change from Webcam component
-  const handleFilterChange = useCallback((filterName: string) => {
-    console.log('Game component received filter change:', filterName);
-    setCurrentFilter(filterName);
-  }, []);
+  // Handle filter change removed (consolidated)
 
   // Memoize the webcam component to prevent re-renders when timer updates
   const memoizedWebcam = useMemo(
@@ -596,19 +588,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         mode={mode}
         onRepCount={handleRepCount}
         isActive={started}
-        onFilterChange={handleFilterChange}
         onPoseStateChange={handlePoseStateChange}
         onDetectionProgress={handleDetectionProgress}
+        onMetrics={handleMetrics}
       />
     ),
-    [
-      mode,
-      handleRepCount,
-      started,
-      handleFilterChange,
-      handlePoseStateChange,
-      handleDetectionProgress,
-    ]
+    [mode, handleRepCount, started, handlePoseStateChange, handleDetectionProgress, handleMetrics]
   );
 
   // DRY: Single source of truth for loading phase
@@ -738,17 +723,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           {/* Welcome component consolidated into InitializationScreen */}
 
           {!started && (
-            <SplitFlapInstructions
-              mode={currentMode}
-              onModeChange={setCurrentMode}
-              autoFs={autoFs}
-              setAutoFs={setAutoFs}
-              isFullscreenAvailable={isFullscreenAvailable}
-              formattedStats={formattedStats}
-              isLoadingStats={statsLoading}
-              targetUser={targetUser}
-              onProfileSearch={handleProfileSearch}
-            />
+            <div className={showLoading ? 'selection-screen-exit' : ''}>
+              <SplitFlapInstructions
+                mode={currentMode}
+                onModeChange={setCurrentMode}
+                autoFs={autoFs}
+                setAutoFs={setAutoFs}
+                isFullscreenAvailable={isFullscreenAvailable}
+                formattedStats={formattedStats}
+                isLoadingStats={statsLoading}
+                targetUser={targetUser}
+                onProfileSearch={handleProfileSearch}
+              />
+            </div>
           )}
 
           {showLoading && (
@@ -865,49 +852,54 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
         <div
           id="controls"
-          className={`${isMobile ? 'mobile-controls' : 'flex justify-between mt-4'}`}
+          className={`${isMobile ? 'mobile-controls' : 'mt-4'} controls-container`}
           style={{ marginBottom: isMobile ? '8px' : '0' }}
         >
-          <ModeSwitch
-            value={mode}
-            disabled={started}
-            onChange={setMode}
-            className={isMobile ? 'mobile-mode-switch' : ''}
-          />
-          <button
-            id="startButton"
-            className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
-            style={{ minHeight: isMobile ? '50px' : 'auto' }}
-            aria-label="Start game"
-            onClick={handleStart}
-            disabled={started || showLoading || !finalAddress}
-            title={
-              !finalAddress ? 'Sign in to start' : started ? 'Game already started' : 'Start game'
-            }
-          >
-            START
-          </button>
-          <button
-            id="stopButton"
-            className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
-            style={{ minHeight: isMobile ? '50px' : 'auto' }}
-            aria-label="Stop game"
-            onClick={handleStop}
-            disabled={!started}
-            title={!started ? 'Start a game first' : 'Stop current game'}
-          >
-            STOP
-          </button>
-          <button
-            id="resetButton"
-            className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
-            style={{ minHeight: isMobile ? '50px' : 'auto' }}
-            aria-label="Reset game"
-            onClick={handleReset}
-            disabled={showLoading}
-          >
-            RESET
-          </button>
+          {started ? (
+            <div className="controls-enter w-full">
+              <AgentInsightTray metrics={metrics} onStop={handleStop} mode={mode} />
+            </div>
+          ) : (
+            <div
+              className={`flex justify-between w-full h-full items-center controls-enter ${showLoading ? 'controls-exit' : ''}`}
+            >
+              <ModeSwitch
+                value={mode}
+                disabled={started}
+                onChange={setMode}
+                className={isMobile ? 'mobile-mode-switch' : ''}
+              />
+              <div className="flex gap-2">
+                <button
+                  id="startButton"
+                  className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
+                  style={{ minHeight: isMobile ? '50px' : 'auto' }}
+                  aria-label="Start game"
+                  onClick={handleStart}
+                  disabled={started || showLoading || !finalAddress}
+                  title={
+                    !finalAddress
+                      ? 'Sign in to start'
+                      : started
+                        ? 'Game already started'
+                        : 'Start game'
+                  }
+                >
+                  START
+                </button>
+                <button
+                  id="resetButton"
+                  className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
+                  style={{ minHeight: isMobile ? '50px' : 'auto' }}
+                  aria-label="Reset game"
+                  onClick={handleReset}
+                  disabled={showLoading}
+                >
+                  RESET
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       {showIntroDialog && (
