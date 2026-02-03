@@ -89,6 +89,8 @@ interface UnifiedLoaderProps {
   isOverlay?: boolean; // true = overlay on camera feed, false = full screen
   onComplete?: () => void;
   className?: string;
+  title?: string;
+  subtitle?: string;
 }
 
 // Enhanced UnifiedLoader with skeleton loading support
@@ -244,10 +246,15 @@ export default function UnifiedLoader({
   isOverlay = false,
   onComplete,
   className = '',
+  title,
+  subtitle,
 }: UnifiedLoaderProps) {
   const [shouldShow, setShouldShow] = useState(isVisible);
   const [hasCompleted, setHasCompleted] = useState(false);
   const config = PHASE_CONFIG[phase];
+
+  const displayTitle = title || config.title;
+  const displaySubtitle = subtitle || config.subtitle;
 
   // Auto-complete when ready OR when initial phase (to trigger camera request)
   useEffect(() => {
@@ -402,9 +409,9 @@ export default function UnifiedLoader({
         {/* Header */}
         <div className="space-y-3">
           <h2 className={`${config.color} text-2xl sm:text-3xl font-bold leading-tight`}>
-            {config.title}
+            {displayTitle}
           </h2>
-          <p className="text-gray-300 text-sm sm:text-base leading-relaxed">{config.subtitle}</p>
+          <p className="text-gray-300 text-sm sm:text-base leading-relaxed">{displaySubtitle}</p>
         </div>
 
         {/* Guidance text */}

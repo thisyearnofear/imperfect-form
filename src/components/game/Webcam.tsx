@@ -119,35 +119,44 @@ const Webcam: React.FC<WebcamProps> = ({
         // Size canvas with mobile-specific optimization
         const { videoWidth, videoHeight } = video;
         if (videoWidth && videoHeight) {
-          if (isMobile) {
-            // On mobile, use the actual display size to avoid scaling issues
-            const rect = canvasRef.current.getBoundingClientRect();
-            canvasRef.current.width = rect.width * window.devicePixelRatio;
-            canvasRef.current.height = rect.height * window.devicePixelRatio;
-            logger.info('Set mobile canvas dimensions', {
-              width: canvasRef.current.width,
-              height: canvasRef.current.height,
-              DPR: window.devicePixelRatio,
-              displaySize: { width: rect.width, height: rect.height },
-            });
-          } else {
-            // Desktop uses video dimensions directly
-            canvasRef.current.width = videoWidth;
-            canvasRef.current.height = videoHeight;
-            logger.info('Set desktop canvas dimensions', {
-              width: videoWidth,
-              height: videoHeight,
-            });
+          try {
+            if (isMobile) {
+              // On mobile, use the actual display size to avoid scaling issues
+              const rect = canvasRef.current.getBoundingClientRect();
+              canvasRef.current.width = rect.width * window.devicePixelRatio;
+              canvasRef.current.height = rect.height * window.devicePixelRatio;
+              logger.info('Set mobile canvas dimensions', {
+                width: canvasRef.current.width,
+                height: canvasRef.current.height,
+                DPR: window.devicePixelRatio,
+                displaySize: { width: rect.width, height: rect.height },
+              });
+            } else {
+              // Desktop uses video dimensions directly
+              canvasRef.current.width = videoWidth;
+              canvasRef.current.height = videoHeight;
+              logger.info('Set desktop canvas dimensions', {
+                width: videoWidth,
+                height: videoHeight,
+              });
+            }
+          } catch (e) {
+            // This happens if transferControlToOffscreen has already been called
+            logger.debug('Canvas already transferred, skipping resize');
           }
         } else {
-          // Fallback to default dimensions if video dimensions aren't available yet
-          canvasRef.current.width = isMobile ? 320 * window.devicePixelRatio : 320;
-          canvasRef.current.height = isMobile ? 240 * window.devicePixelRatio : 240;
-          logger.info('Set fallback canvas dimensions', {
-            width: canvasRef.current.width,
-            height: canvasRef.current.height,
-            mobile: isMobile,
-          });
+          try {
+            // Fallback to default dimensions if video dimensions aren't available yet
+            canvasRef.current.width = isMobile ? 320 * window.devicePixelRatio : 320;
+            canvasRef.current.height = isMobile ? 240 * window.devicePixelRatio : 240;
+            logger.info('Set fallback canvas dimensions', {
+              width: canvasRef.current.width,
+              height: canvasRef.current.height,
+              mobile: isMobile,
+            });
+          } catch (e) {
+            logger.debug('Canvas already transferred, skipping resize');
+          }
         }
       }
 

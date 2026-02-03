@@ -195,6 +195,32 @@
     animation: blink 1s step-end infinite;
 }
 
+.stop-button-discrete {
+    background: #ff3366 !important;
+    color: white !important;
+    box-shadow: 0 4px 0 #990033 !important;
+    border: none !important;
+    min-width: 100px;
+    height: 60px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stop-button-discrete:hover {
+    background: #ff4d7d !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #990033 !important;
+}
+
+.stop-button-discrete:active {
+    transform: translateY(2px);
+    box-shadow: none !important;
+}
+
+.agent-insight-tray {
+    margin-top: 0;
+    flex-grow: 1;
+}
+
 @keyframes blink {
     50% {
         opacity: 0;

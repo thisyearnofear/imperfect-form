@@ -84,6 +84,7 @@ export default function LazyWebcam(props: LazyWebcamProps) {
   if (WebcamComponent && props.isActive) {
     return (
       <WebcamComponent
+        key={props.isActive ? 'webcam-active' : 'webcam-inactive'}
         mode={props.mode}
         onRepCount={props.onRepCount}
         isActive={props.isActive}

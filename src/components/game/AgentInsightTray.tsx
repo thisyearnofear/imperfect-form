@@ -5,11 +5,10 @@ import '@/styles/agent-insights.css';
 
 interface AgentInsightTrayProps {
   metrics: BiomechanicalState | null;
-  onStop: () => void;
   mode: 'pushups' | 'squats';
 }
 
-export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({ metrics, onStop, mode }) => {
+export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({ metrics, mode }) => {
   const [insight, setInsight] = useState<string>('Analyzing your form...');
   const [reasoning, setReasoning] = useState<string[]>([]);
   const [pulse, setPulse] = useState(false);
@@ -91,10 +90,6 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({ metrics, onS
           ))}
         </div>
       </div>
-
-      <button onClick={onStop} className="stop-button-mini">
-        STOP
-      </button>
     </div>
   );
 };

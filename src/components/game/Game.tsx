@@ -602,30 +602,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   return (
     <>
       {/* Loading overlay for desktop pose detection */}
-      {showLoadingOverlay && (
-        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-            <p className="text-yellow-400 text-lg font-bold">
-              {detectionProgress?.phase === 'tensorflow-init'
-                ? 'Initializing TensorFlow...'
-                : detectionProgress?.phase === 'model-download'
-                  ? 'Loading pose detection model...'
-                  : detectionProgress?.phase === 'warmup'
-                    ? 'Warming up model...'
-                    : 'Getting ready...'}
-            </p>
-            {detectionProgress?.percentage && (
-              <div className="w-64 bg-gray-800 rounded-full h-2">
-                <div
-                  className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${detectionProgress.percentage}%` }}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       <div
         id="game-container"
@@ -787,14 +763,31 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
                     {/* Pose loading overlay - shows on top of video while pose detection initializes */}
                     {/* Show while loading pose detection or when camera is ready but pose not detected yet */}
-                    <UnifiedLoader
-                      phase={loadingPhase === 'initial' ? 'ai' : loadingPhase}
-                      progress={detectionProgress?.percentage}
-                      isVisible={
-                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
-                      }
-                      isOverlay={true}
-                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <UnifiedLoader
+                        phase={
+                          !poseState.hasCamera
+                            ? 'camera'
+                            : !poseState.hasPoseDetection
+                              ? 'ai'
+                              : !poseState.poseDetected
+                                ? 'positioning'
+                                : 'ready'
+                        }
+                        progress={detectionProgress?.percentage}
+                        title={
+                          detectionProgress?.phase === 'tensorflow-init' ||
+                          detectionProgress?.phase === 'model-download'
+                            ? 'Loading AI Engine'
+                            : undefined
+                        }
+                        subtitle={detectionProgress?.message}
+                        isVisible={
+                          started && (!poseState.hasPoseDetection || !poseState.poseDetected)
+                        }
+                        isOverlay={true}
+                      />
+                    </div>
 
                     {/* Debug: Show overlay visibility state */}
                     {process.env.NODE_ENV === 'development' &&
@@ -816,14 +809,31 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                 >
                   {memoizedWebcam}
 
-                  {/* Pose loading overlay - shows on top of video while pose detection initializes */}
-                  {/* Show while loading pose detection or when camera is ready but pose not detected yet */}
-                  <UnifiedLoader
-                    phase={loadingPhase === 'initial' ? 'ai' : loadingPhase}
-                    progress={detectionProgress?.percentage}
-                    isVisible={started && (!poseState.hasPoseDetection || !poseState.poseDetected)}
-                    isOverlay={true}
-                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <UnifiedLoader
+                      phase={
+                        !poseState.hasCamera
+                          ? 'camera'
+                          : !poseState.hasPoseDetection
+                            ? 'ai'
+                            : !poseState.poseDetected
+                              ? 'positioning'
+                              : 'ready'
+                      }
+                      progress={detectionProgress?.percentage}
+                      title={
+                        detectionProgress?.phase === 'tensorflow-init' ||
+                        detectionProgress?.phase === 'model-download'
+                          ? 'Loading AI Engine'
+                          : undefined
+                      }
+                      subtitle={detectionProgress?.message}
+                      isVisible={
+                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
+                      }
+                      isOverlay={true}
+                    />
+                  </div>
                 </div>
               )}
             </>
@@ -856,8 +866,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           style={{ marginBottom: isMobile ? '8px' : '0' }}
         >
           {started ? (
-            <div className="controls-enter w-full">
-              <AgentInsightTray metrics={metrics} onStop={handleStop} mode={mode} />
+            <div className="controls-enter w-full flex gap-4 items-center">
+              <div className="flex-grow">
+                <AgentInsightTray metrics={metrics} mode={mode} />
+              </div>
+              <button
+                id="stopButton"
+                className="py-3 px-6 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target stop-button-discrete"
+                aria-label="Stop game"
+                onClick={handleStop}
+              >
+                STOP
+              </button>
             </div>
           ) : (
             <div
