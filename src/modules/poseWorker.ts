@@ -247,11 +247,11 @@ function drawFeedback(
   ctx.roundRect(barX, barY + (barHeight - fillHeight), barWidth, fillHeight, 6);
   ctx.fill();
 
-  // Label - positioned to right of bar (appears on left after mirroring)
+  // Label - positioned to left of bar (closer to center after mirroring)
   ctx.fillStyle = 'white';
   ctx.font = 'bold 12px Outfit, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('DEPTH', barX + barWidth + 45, barY - 15);
+  ctx.fillText('DEPTH', barX - 5, barY - 15);
 
   // Warnings - position on right side (appears on left after mirroring)
   if (warnings.length > 0) {

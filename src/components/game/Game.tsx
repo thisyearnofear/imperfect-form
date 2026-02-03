@@ -858,7 +858,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
             </>
           )}
 
-          {!isMobile && (
+          {!isMobile && started && (
             <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-4 z-50 pointer-events-none">
               <div className="timer bg-black/80 backdrop-blur-md px-6 py-3 rounded-2xl border-2 border-yellow-500 shadow-[0_0_20px_rgba(252,177,49,0.3)] flex flex-col items-center">
                 <span className="text-[10px] uppercase text-yellow-500 font-black tracking-widest mb-1">
