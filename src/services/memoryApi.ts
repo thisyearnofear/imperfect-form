@@ -1,7 +1,7 @@
 /**
  * Memory Protocol API Client
  *
- * Provides integration with Memory Protocol for identity graphs, social data, and data monetization.
+ * Provides integration with Memory Protocol for identity graphs and social data.
  */
 
 import { createRemoteLogger } from '@/utils/remoteLogger';
@@ -42,25 +42,6 @@ export interface SocialProfile {
   };
   bio?: string;
   url: string;
-}
-
-export interface FitnessDataUpload {
-  userId: string;
-  dataType: 'structured' | 'unstructured';
-  schema?: string;
-  data: any;
-  metadata: {
-    description: string;
-    tags: string[];
-    quality: number;
-  };
-}
-
-export interface EarningsData {
-  totalEarned: number;
-  weeklyEarnings: number;
-  dataQueries: number;
-  lastPayout: string;
 }
 
 class MemoryAPIClient {
@@ -254,24 +235,6 @@ class MemoryAPIClient {
     return response.following || [];
   }
 
-  // Data Upload Methods (when available)
-  async uploadFitnessData(
-    data: FitnessDataUpload
-  ): Promise<{ success: boolean; uploadId: string }> {
-    logger.info('Uploading fitness data', { userId: data.userId, dataType: data.dataType });
-    // Note: This endpoint may not be available yet in the current API
-    return this.request('/data/uploads', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async getEarnings(userId: string): Promise<EarningsData> {
-    logger.info('Fetching earnings data', { userId });
-    // Note: This endpoint may not be available yet in the current API
-    return this.request(`/data/earnings/${userId}`);
-  }
-
   // Utility Methods
   async getCredits(): Promise<{ remaining: number; limit: number }> {
     logger.info('Fetching API credits');
@@ -334,7 +297,9 @@ class MemoryAPIClient {
               (total, id) => total + (id.social?.followers || 0),
               0
             ),
-            platforms: [...new Set(walletIdentityGraph.identities.map((id) => id.platform))],
+            platforms: [
+              ...new Set(walletIdentityGraph.identities.map((id: IdentityNode) => id.platform)),
+            ],
           };
 
           return {
@@ -415,16 +380,16 @@ class MemoryAPIClient {
     // Find primary identity (usually the one with most sources or Farcaster)
     const primaryIdentity =
       identityGraph.identities.find(
-        (id) => id.platform === 'farcaster' || id.sources?.length > 0
+        (id: IdentityNode) => id.platform === 'farcaster' || id.sources?.length > 0
       ) || identityGraph.identities[0];
 
     // Calculate social stats
     const socialStats = {
       totalFollowers: identityGraph.identities.reduce(
-        (total, id) => total + (id.social?.followers || 0),
+        (total: number, id: IdentityNode) => total + (id.social?.followers || 0),
         0
       ),
-      platforms: [...new Set(identityGraph.identities.map((id) => id.platform))],
+      platforms: [...new Set(identityGraph.identities.map((id: IdentityNode) => id.platform))],
     };
 
     const result = {
@@ -440,11 +405,6 @@ class MemoryAPIClient {
       calculatedTotalFollowers: result.socialStats.totalFollowers,
       calculatedPlatforms: result.socialStats.platforms.length,
       primaryIdentityPlatform: result.primaryIdentity?.platform,
-      socialStatsBreakdown: identityGraph.identities.map((id) => ({
-        platform: id.platform,
-        followers: id.social?.followers || 0,
-        username: id.username,
-      })),
     });
 
     return result;

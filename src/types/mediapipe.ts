@@ -66,9 +66,8 @@ export interface BiomechanicalState {
 
 // Worker response types
 export type WorkerResponse =
-  | { type: 'pose'; keypoints: Keypoint[] }
+  | { type: 'result'; state: BiomechanicalState | null; keypoints: Keypoint[] }
   | { type: 'rep'; count: number }
-  | { type: 'metrics'; state: BiomechanicalState }
   | { type: 'ready' }
   | { type: 'backend'; backend: string }
   | { type: 'error'; message: string };

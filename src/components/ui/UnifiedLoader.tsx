@@ -309,6 +309,9 @@ export default function UnifiedLoader({
             phase === 'ready'
               ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))'
               : 'linear-gradient(135deg, rgba(88, 28, 135, 0.4), rgba(30, 27, 75, 0.4))',
+          maxHeight: '100%',
+          maxWidth: '100%',
+          overflow: 'hidden',
         }}
       >
         {/* Animated Background Ring for 'Ready' state */}

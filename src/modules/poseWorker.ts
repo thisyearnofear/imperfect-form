@@ -198,30 +198,34 @@ function drawFeedback(
   warnings: string[]
 ) {
   ctx.save();
-  // Clear flip status for text
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-
   const width = ctx.canvas.width;
   const height = ctx.canvas.height;
 
-  // Rep State Text (Top Right)
+  // IMPORTANT: The main canvas is mirrored with CSS scaleX(-1), which makes text appear reversed.
+  // To counteract this, we flip the canvas horizontally when drawing text,
+  // so it appears normal after the CSS mirroring is applied.
+  ctx.setTransform(-1, 0, 0, 1, width, 0);
+
+  // Rep State Text (Top Right - appears on left after flip)
   let statusText = state === 'down' ? 'GO UP!' : state === 'up' ? 'GO DOWN!' : 'READY';
   let statusColor = state === 'down' ? '#ff3366' : state === 'up' ? '#00ffcc' : '#ffffff';
 
+  // Position for mirrored coordinates (swap left/right)
+  const statusBoxX = 20; // Left side (appears on right after mirroring)
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.beginPath();
-  ctx.roundRect(width - 170, 20, 150, 45, 10);
+  ctx.roundRect(statusBoxX, 20, 150, 45, 10);
   ctx.fill();
 
   ctx.fillStyle = statusColor;
   ctx.font = 'bold 22px Outfit, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(statusText, width - 95, 52);
+  ctx.fillText(statusText, statusBoxX + 75, 52);
 
-  // Depth Gauge (Left Side)
+  // Depth Gauge (Right Side - appears on left after flip)
   const barWidth = 12;
   const barHeight = 200;
-  const barX = 30;
+  const barX = width - 42; // Right side (appears on left after mirroring)
   const barY = (height - barHeight) / 2;
 
   // BG
@@ -243,23 +247,25 @@ function drawFeedback(
   ctx.roundRect(barX, barY + (barHeight - fillHeight), barWidth, fillHeight, 6);
   ctx.fill();
 
-  // Label
+  // Label - positioned to right of bar (appears on left after mirroring)
   ctx.fillStyle = 'white';
   ctx.font = 'bold 12px Outfit, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('DEPTH', barX - 5, barY - 15);
+  ctx.textAlign = 'right';
+  ctx.fillText('DEPTH', barX + barWidth + 45, barY - 15);
 
-  // Warnings
+  // Warnings - position on right side (appears on left after mirroring)
   if (warnings.length > 0) {
     ctx.font = 'bold 16px Outfit, sans-serif';
-    ctx.textAlign = 'left';
+    ctx.textAlign = 'right';
     warnings.forEach((msg, i) => {
+      const textWidth = ctx.measureText(msg).width;
+      const boxX = width - textWidth - 40; // Right side (appears on left after mirroring)
       ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
       ctx.beginPath();
-      ctx.roundRect(20, height - 40 - i * 30, ctx.measureText(msg).width + 20, 25, 5);
+      ctx.roundRect(boxX, height - 40 - i * 30, textWidth + 20, 25, 5);
       ctx.fill();
       ctx.fillStyle = 'white';
-      ctx.fillText(`! ${msg}`, 30, height - 23 - i * 30);
+      ctx.fillText(`! ${msg}`, boxX + 10, height - 23 - i * 30);
     });
   }
 
@@ -404,11 +410,10 @@ self.addEventListener('message', async (event) => {
           drawSkeleton(ctx, keypoints, mode);
           drawFeedback(ctx, mode, repState, lastProgress, warnings);
 
-          self.postMessage({ type: 'metrics', state: metrics });
-          self.postMessage({ type: 'pose', keypoints });
+          self.postMessage({ type: 'result', state: metrics, keypoints });
         } else {
           drawFeedback(ctx, mode, 'middle', 0, []);
-          self.postMessage({ type: 'pose', keypoints: [] });
+          self.postMessage({ type: 'result', state: null, keypoints: [] });
         }
       } catch (err) {
         console.error('In-worker processing error:', err);

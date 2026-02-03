@@ -72,6 +72,7 @@ export interface SummaryModalProps {
   timeLeft: number;
   mode?: 'pushups' | 'squats';
   address?: string; // Optional wallet address
+  sessionSummary?: import('@/services/sessionLogger').SessionSummary | null;
 }
 
 const SummaryModal: React.FC<SummaryModalProps> = ({
@@ -82,6 +83,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   timeLeft,
   mode = 'pushups',
   address,
+  sessionSummary,
 }) => {
   const logger = createRemoteLogger('SummaryModal');
   const { platform, wallet, user } = usePlatform();
@@ -97,11 +99,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [submittedChainId, setSubmittedChainId] = useState<number | null>(null);
-  const [earnings, setEarnings] = useState<{
-    totalEarned: number;
-    weeklyEarnings: number;
-    dataQueries: number;
-  } | null>(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [submissionType, setSubmissionType] = useState<'verified' | 'basic' | null>(null);
@@ -122,33 +119,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       return () => clearTimeout(autoDismissTimer);
     }
   }, [shouldAutoDismiss, isOpen, onClose]);
-
-  // Fetch earnings data when modal opens
-  React.useEffect(() => {
-    if (isOpen && walletAddress) {
-      const fetchEarnings = async () => {
-        try {
-          const client = getMemoryClient();
-          if (client) {
-            const earningsData = await client.getEarnings(walletAddress);
-            setEarnings({
-              totalEarned: earningsData.totalEarned,
-              weeklyEarnings: earningsData.weeklyEarnings,
-              dataQueries: earningsData.dataQueries,
-            });
-            logger.info('Earnings data fetched for workout completion', {
-              walletAddress,
-              earningsData,
-            });
-          }
-        } catch (error) {
-          logger.warn('Failed to fetch earnings data', { error, walletAddress });
-          // Don't show error to user, just silently fail
-        }
-      };
-      fetchEarnings();
-    }
-  }, [isOpen, walletAddress, logger]);
 
   // Check verification status on Celo
   React.useEffect(() => {
@@ -469,18 +439,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               </div>
             )}
-
-            {/* Earnings Preview - Show after successful submission */}
-            {submissionStatus === 'success' && earnings && (
-              <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl p-4 text-center shadow-inner animate-in slide-in-from-bottom duration-500 delay-200">
-                <div className="text-[10px] text-blue-300 font-bold uppercase tracking-wider mb-1">
-                  Memory Rewards Earned
-                </div>
-                <div className="text-2xl font-black text-white">
-                  $ {earnings.totalEarned.toFixed(4)}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -496,7 +454,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 network={networkType} // Pass the direct network type (polygon, base, celo, monad)
                 isInMiniApp={isInMiniApp}
                 user={user}
-                earnings={earnings}
               />
 
               {/* Twitter sharing - only show outside mini app context */}

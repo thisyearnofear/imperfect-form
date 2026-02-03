@@ -81,6 +81,8 @@ interface SplitFlapInstructionsProps {
   onModeChange: (mode: InstructionMode) => void;
   autoFs: boolean;
   setAutoFs: (value: boolean) => void;
+  voiceEnabled: boolean;
+  setVoiceEnabled: (value: boolean) => void;
   isFullscreenAvailable?: boolean;
   formattedStats?: {
     workouts: string;
@@ -99,6 +101,8 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   onModeChange,
   autoFs,
   setAutoFs,
+  voiceEnabled,
+  setVoiceEnabled,
   isFullscreenAvailable = true,
   formattedStats,
   isLoadingStats,
@@ -156,8 +160,8 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           text: 'FULLSCREEN',
           desc: !isFullscreenAvailable ? 'unavailable' : autoFs ? 'enabled' : 'disabled',
         },
-        { key: 'b', text: 'ORIENTATION', desc: 'auto-lock' },
-        { key: 'c', text: 'THEME', desc: 'retro' },
+        { key: 'b', text: 'VOICE COACH', desc: voiceEnabled ? 'enabled' : 'disabled' },
+        { key: 'c', text: 'THEME', desc: 'retro edition' },
         { key: 'd', text: 'Back to profile!', desc: '' },
       ],
       profile: [
@@ -241,6 +245,12 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           setAutoFs(!autoFs);
           if (typeof window !== 'undefined') {
             window.localStorage.setItem('prefAutoFullscreen', (!autoFs).toString());
+          }
+        } else if (key === 'b') {
+          // Toggle voice enabled
+          setVoiceEnabled(!voiceEnabled);
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('prefVoiceEnabled', (!voiceEnabled).toString());
           }
         } else if (key === 'd') {
           onModeChange('profile'); // Back to profile (new default)

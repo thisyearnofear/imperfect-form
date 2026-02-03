@@ -30,6 +30,7 @@ interface WebcamProps {
     percentage: number;
   }) => void;
   onMetrics?: (state: import('@/types/mediapipe').BiomechanicalState) => void;
+  onSessionEnd?: (summary: import('@/services/sessionLogger').SessionSummary) => void;
 }
 
 // Initialize logger for the Webcam component
@@ -43,6 +44,7 @@ const Webcam: React.FC<WebcamProps> = ({
   onPoseStateChange,
   onDetectionProgress,
   onMetrics,
+  onSessionEnd,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Pass isMobile flag to usePoseWorker for mobile-specific optimizations
@@ -55,7 +57,8 @@ const Webcam: React.FC<WebcamProps> = ({
     isMobile,
     onPoseStateChange,
     onDetectionProgress,
-    onMetrics
+    onMetrics,
+    onSessionEnd
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
 

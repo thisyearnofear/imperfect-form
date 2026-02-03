@@ -57,12 +57,26 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
   const [autoFs, setAutoFs] = useState<boolean>(true);
 
+  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(true);
+
   const [currentMode, setCurrentMode] = useState<
     'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail' | 'profile-search'
   >('instructions');
 
   // Profile search state
   const [targetUser, setTargetUser] = useState<string | undefined>(undefined);
+
+  const [sessionSummary, setSessionSummary] = useState<
+    import('@/services/sessionLogger').SessionSummary | null
+  >(null);
+
+  const handleSessionEnd = useCallback(
+    (summary: import('@/services/sessionLogger').SessionSummary) => {
+      console.log('📊 Session ended with summary:', summary);
+      setSessionSummary(summary);
+    },
+    []
+  );
 
   // Swipe gesture handling for mobile
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -175,6 +189,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     if (typeof window !== 'undefined') {
       const pref = window.localStorage.getItem('prefAutoFullscreen');
       setAutoFs(pref === null ? true : pref === 'true');
+
+      const voicePref = window.localStorage.getItem('prefVoiceEnabled');
+      setVoiceEnabled(voicePref === null ? true : voicePref === 'true');
     }
   }, []);
 
@@ -608,9 +625,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         onPoseStateChange={handlePoseStateChange}
         onDetectionProgress={handleDetectionProgress}
         onMetrics={handleMetrics}
+        onSessionEnd={handleSessionEnd}
       />
     ),
-    [mode, handleRepCount, started, handlePoseStateChange, handleDetectionProgress, handleMetrics]
+    [
+      mode,
+      handleRepCount,
+      started,
+      handlePoseStateChange,
+      handleDetectionProgress,
+      handleMetrics,
+      handleSessionEnd,
+    ]
   );
 
   // DRY: Single source of truth for loading phase
@@ -720,6 +746,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                 onModeChange={setCurrentMode}
                 autoFs={autoFs}
                 setAutoFs={setAutoFs}
+                voiceEnabled={voiceEnabled}
+                setVoiceEnabled={setVoiceEnabled}
                 isFullscreenAvailable={isFullscreenAvailable}
                 formattedStats={formattedStats}
                 isLoadingStats={statsLoading}
@@ -731,88 +759,72 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
           {started && (
             <>
-              {/* On mobile, arrange everything in a flex column with specific heights */}
+              {/* On mobile, use absolute positioning like desktop for landscape mode */}
               {isMobile ? (
                 <div
-                  className="w-full flex flex-col h-full"
+                  id="canvasContainer"
+                  aria-label="Game Canvas"
+                  className="w-full relative border-2 border-yellow-400"
                   style={{
-                    minHeight:
-                      viewportDimensions.height > 0
-                        ? `${viewportDimensions.height * 0.85}px`
-                        : 'auto',
+                    flex: '1',
+                    minHeight: '50%',
+                    maxWidth: '100%',
+                    overflow: 'hidden',
                   }}
                 >
-                  {/* HUD: Timer, Mode and Rep Counter */}
-                  <div className="flex justify-between items-center mb-3 px-4 py-3 bg-black/40 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-                        <span className="text-[10px] uppercase text-yellow-500 font-black tracking-widest leading-none">
-                          {mode}
-                        </span>
-                      </div>
-                      <span className="text-2xl font-bold font-mono tracking-tighter leading-none">
+                  {/* Timer at top center */}
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
+                    <div className="bg-black/80 backdrop-blur-md px-4 py-2 rounded-xl border-2 border-yellow-500 shadow-[0_0_15px_rgba(252,177,49,0.3)] flex flex-col items-center">
+                      <span className="text-[9px] uppercase text-yellow-500 font-black tracking-widest">
+                        {mode}
+                      </span>
+                      <span className="text-xl font-bold font-mono tracking-tighter">
                         {formatTime(timeLeft)}
                       </span>
                     </div>
-                    <div className="flex flex-col items-end gap-0.5">
-                      <span className="text-[10px] uppercase text-blue-400 font-black tracking-widest leading-none">
+                  </div>
+
+                  {/* Rep counter at bottom right */}
+                  <div className="absolute bottom-3 right-3 z-30">
+                    <div className="bg-black/80 backdrop-blur-md px-4 py-2 rounded-xl border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex flex-col items-center">
+                      <span className="text-[9px] uppercase text-blue-400 font-black tracking-widest">
                         Reps
                       </span>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-black leading-none">{repCount}</span>
-                        <span className="text-xs text-blue-400/60 font-bold uppercase">pts</span>
+                        <span className="text-2xl font-black">{repCount}</span>
+                        <span className="text-[10px] text-blue-400/60 font-bold">pts</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Camera takes most of the available space */}
-                  <div
-                    id="canvasContainer"
-                    aria-label="Game Canvas"
-                    className="w-full mx-auto relative border-2 border-yellow-400 flex-grow"
-                    style={{
-                      flex: '1',
-                      minHeight: '50%', // Reduced from 60% to give more flexibility
-                      maxWidth: '100%',
-                      display: 'flex', // Ensure proper flex behavior
-                      alignItems: 'center', // Center video vertically
-                      justifyContent: 'center', // Center video horizontally
-                    }}
-                  >
-                    {memoizedWebcam}
+                  {memoizedWebcam}
 
-                    {/* Pose loading overlay - shows on top of video while pose detection initializes */}
-                    {/* Show while loading pose detection or when camera is ready but pose not detected yet */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <UnifiedLoader
-                        phase={
-                          !poseState.hasCamera
-                            ? 'camera'
-                            : !poseState.hasPoseDetection
-                              ? 'ai'
-                              : !poseState.poseDetected
-                                ? 'positioning'
-                                : 'ready'
-                        }
-                        progress={detectionProgress?.percentage}
-                        isVisible={
-                          started && (!poseState.hasPoseDetection || !poseState.poseDetected)
-                        }
-                        isOverlay={true}
-                      />
-                    </div>
-
-                    {/* Debug: Show overlay visibility state */}
-                    {process.env.NODE_ENV === 'development' &&
-                      started &&
-                      !poseState.poseDetected && (
-                        <div className="absolute top-2 right-2 bg-red-600 text-white text-xs p-2 rounded z-50">
-                          Debug: Overlay visible (started={started.toString()}, poseDetected=
-                          {poseState.poseDetected.toString()})
-                        </div>
-                      )}
+                  {/* Pose loading overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <UnifiedLoader
+                      phase={
+                        !poseState.hasCamera
+                          ? 'camera'
+                          : !poseState.hasPoseDetection
+                            ? 'ai'
+                            : !poseState.poseDetected
+                              ? 'positioning'
+                              : 'ready'
+                      }
+                      progress={detectionProgress?.percentage}
+                      isVisible={
+                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
+                      }
+                      isOverlay={true}
+                    />
                   </div>
+
+                  {/* Debug overlay */}
+                  {process.env.NODE_ENV === 'development' && started && !poseState.poseDetected && (
+                    <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded z-50">
+                      Debug: Overlay visible
+                    </div>
+                  )}
                 </div>
               ) : (
                 // Desktop layout - use relative positioning to fit in screen container
@@ -872,7 +884,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           {started ? (
             <div className="controls-enter w-full flex gap-4 items-center">
               <div className="flex-grow">
-                <AgentInsightTray metrics={metrics} mode={mode} />
+                <AgentInsightTray
+                  metrics={metrics}
+                  mode={mode}
+                  voiceEnabled={voiceEnabled}
+                  repCount={repCount}
+                />
               </div>
               <button
                 id="stopButton"
@@ -980,6 +997,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         timeLeft={timeLeft}
         mode={mode}
         address={finalAddress}
+        sessionSummary={sessionSummary}
       />
 
       {/* Expanded Leaderboard Modal */}

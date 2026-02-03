@@ -1,5 +1,6 @@
 import { useEffect, useRef, RefObject, useState, useCallback } from 'react';
 import { WorkerMessage, WorkerResponse } from '../types/mediapipe';
+import { SessionLogger, SessionSummary } from '../services/sessionLogger';
 
 type ExerciseMode = 'pushups' | 'squats';
 
@@ -20,7 +21,8 @@ export function usePoseWorker(
     message: string;
     percentage: number;
   }) => void,
-  onMetrics?: (state: import('../types/mediapipe').BiomechanicalState) => void
+  onMetrics?: (state: import('../types/mediapipe').BiomechanicalState) => void,
+  onSessionEnd?: (summary: SessionSummary) => void
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -32,18 +34,23 @@ export function usePoseWorker(
     isLoading: false,
   });
 
+  const sessionLoggerRef = useRef<SessionLogger | null>(null);
+  const lastRepCountRef = useRef(0);
+
   // Use refs for callbacks to avoid re-triggering the main effect
   const onRepCountRef = useRef(onRepCount);
   const onPoseStateChangeRef = useRef(onPoseStateChange);
   const onDetectionProgressRef = useRef(onDetectionProgress);
   const onMetricsRef = useRef(onMetrics);
+  const onSessionEndRef = useRef(onSessionEnd);
 
   useEffect(() => {
     onRepCountRef.current = onRepCount;
     onPoseStateChangeRef.current = onPoseStateChange;
     onDetectionProgressRef.current = onDetectionProgress;
     onMetricsRef.current = onMetrics;
-  }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics]);
+    onSessionEndRef.current = onSessionEnd;
+  }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics, onSessionEnd]);
 
   const notifyStateChange = useCallback((newState: Partial<typeof poseState>) => {
     setPoseState((prev) => {
@@ -64,6 +71,10 @@ export function usePoseWorker(
       message: 'Starting worker...',
       percentage: 10,
     });
+
+    // Initialize session logger
+    sessionLoggerRef.current = new SessionLogger(mode);
+    lastRepCountRef.current = 0;
 
     const canvas = canvasRef.current;
     // We need to transfer control only once. Use a flag on the canvas element itself
@@ -162,18 +173,32 @@ export function usePoseWorker(
         notifyStateChange({ hasPoseDetection: true, isLoading: false });
         onDetectionProgressRef.current?.({ phase: 'ready', message: 'Ready!', percentage: 100 });
       } else if (data.type === 'rep') {
-        onRepCountRef.current((data as any).count);
-      } else if (data.type === 'metrics') {
-        onMetricsRef.current?.((data as any).state);
-      } else if (data.type === 'pose') {
-        const keypoints = (data as any).keypoints;
+        const count = (data as any).count;
+        lastRepCountRef.current = count;
+        onRepCountRef.current(count);
+      } else if (data.type === 'result') {
+        const { state, keypoints } = data;
         const detected = keypoints && keypoints.length > 0;
+
         notifyStateChange({ poseDetected: detected });
+
+        if (state) {
+          onMetricsRef.current?.(state);
+          // Log frame to session logger
+          sessionLoggerRef.current?.logFrame(state, keypoints);
+        }
       }
     };
 
     return () => {
       console.log('🧹 Cleaning up pose worker and stream');
+
+      // Calculate and trigger session end callback before clearing
+      if (sessionLoggerRef.current) {
+        const summary = sessionLoggerRef.current.getSummary(lastRepCountRef.current);
+        onSessionEndRef.current?.(summary);
+      }
+
       worker.terminate();
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());

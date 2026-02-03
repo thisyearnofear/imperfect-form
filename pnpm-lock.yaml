@@ -26,6 +26,9 @@ dependencies:
   '@farcaster/miniapp-wagmi-connector':
     specifier: 1.0.0
     version: 1.0.0(@farcaster/miniapp-sdk@0.1.10)(@wagmi/core@2.20.3)(viem@2.45.0)
+  '@google/generative-ai':
+    specifier: 0.24.1
+    version: 0.24.1
   '@mediapipe/camera_utils':
     specifier: ^0.3.1675466862
     version: 0.3.1675466862
@@ -1072,6 +1075,11 @@ packages:
       viem: 2.45.0(typescript@5.9.3)(zod@3.25.76)
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /@google/generative-ai@0.24.1:
+    resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==, tarball: https://registry.npmjs.org/@google/generative-ai/-/generative-ai-0.24.1.tgz}
+    engines: {node: '>=18.0.0'}
     dev: false
 
   /@humanfs/core@0.19.1:
