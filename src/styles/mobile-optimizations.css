@@ -2,8 +2,11 @@
 
 /* Base mobile responsive utilities */
 @media (max-width: 768px) {
+
   /* Enhanced touch targets - Core Principle: PERFORMANT */
-  .touch-target, button, [role="button"] {
+  .touch-target,
+  button,
+  [role="button"] {
     min-height: 44px;
     min-width: 44px;
     padding: 12px;
@@ -143,7 +146,10 @@
 
 /* Button touch targets - Core Principle: AGGRESSIVE CONSOLIDATION */
 @media (max-width: 768px) {
-  .btn, .button, [role="button"] {
+
+  .btn,
+  .button,
+  [role="button"] {
     min-height: 48px;
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
@@ -173,7 +179,9 @@
     margin-bottom: 0.25rem;
   }
 
-  .form-input, .form-select, .form-textarea {
+  .form-input,
+  .form-select,
+  .form-textarea {
     font-size: 0.875rem;
     padding: 0.75rem;
   }
@@ -185,7 +193,7 @@
     gap: 1rem;
   }
 
-  .form-grid > * {
+  .form-grid>* {
     width: 100%;
   }
 }
@@ -237,20 +245,93 @@
 
 /* Responsive typography */
 @media (max-width: 768px) {
-  h1, .h1 {
+
+  h1,
+  .h1 {
     font-size: 1.75rem;
   }
 
-  h2, .h2 {
+  h2,
+  .h2 {
     font-size: 1.5rem;
   }
 
-  h3, .h3 {
+  h3,
+  .h3 {
     font-size: 1.25rem;
   }
 
-  h4, .h4 {
+  h4,
+  .h4 {
     font-size: 1rem;
+  }
+}
+
+/* AI Panel & Loader Optimizations */
+@media (max-width: 640px) {
+  .agent-insight-tray {
+    margin: 0.5rem 0;
+    min-height: 80px;
+    background: rgba(10, 10, 10, 0.9) !important;
+    border-color: rgba(255, 204, 0, 0.5) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .ai-brain-icon {
+    font-size: 1.1rem !important;
+  }
+
+  .insight-message {
+    font-size: 0.75rem !important;
+    letter-spacing: -0.2px;
+  }
+
+  .reasoning-trace {
+    height: 32px !important;
+    opacity: 0.6;
+  }
+
+  /* Stop button mobile styling */
+  .stop-button-discrete {
+    min-width: 80px !important;
+    max-width: 100px;
+    height: 50px !important;
+    padding: 0 1rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Landscape-specific workout optimizations */
+@media (max-height: 480px) and (orientation: landscape) {
+  .agent-insight-tray {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    z-index: 40;
+    margin: 0;
+  }
+
+  .stop-button-discrete {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 40;
+  }
+
+  .rep-counter-container {
+    font-size: 3rem !important;
+    top: 10px !important;
+    left: 10px !important;
+    transform: none !important;
+  }
+
+  .timer {
+    top: 10px !important;
+    right: 110px !important;
+    /* Offset for stop button */
+    font-size: 1.5rem !important;
   }
 }
 
@@ -261,7 +342,8 @@
     transition: transform 100ms ease-out;
   }
 
-  .touch-feedback:hover {
-    transform: none;
+  .touch-feedback {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
 }

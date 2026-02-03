@@ -94,9 +94,17 @@ class MemoryAPIClient {
       const text = await response.text().catch(() => '');
       logger.error('Memory API returned non-JSON response', {
         status: response.status,
+        url: response.url,
         contentType,
         preview: text.slice(0, 100),
       });
+
+      if (response.status === 404) {
+        console.warn(
+          `[MemoryAPI] 404 detected at ${response.url}. Ensure src/app/api/memory/route.ts exists and is reachable.`
+        );
+      }
+
       responseData = { error: `Server error (${response.status})` };
     }
 

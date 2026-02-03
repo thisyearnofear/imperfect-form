@@ -55,26 +55,35 @@ export function useFullscreen(targetRef?: React.RefObject<Element | null>): Full
   const exitFullscreen = useCallback(() => {
     const doc = getDoc();
     if (!doc) return;
-    if (doc.exitFullscreen) {
-      doc.exitFullscreen();
-    } else if (
-      // @ts-expect-error - webkit fullscreen API not in standard types
-      doc.webkitExitFullscreen
-    ) {
-      // @ts-expect-error - webkit fullscreen API not in standard types
-      doc.webkitExitFullscreen();
-    } else if (
-      // @ts-expect-error - mozilla fullscreen API not in standard types
-      doc.mozCancelFullScreen
-    ) {
-      // @ts-expect-error - mozilla fullscreen API not in standard types
-      doc.mozCancelFullScreen();
-    } else if (
-      // @ts-expect-error - microsoft fullscreen API not in standard types
-      doc.msExitFullscreen
-    ) {
-      // @ts-expect-error - microsoft fullscreen API not in standard types
-      doc.msExitFullscreen();
+
+    // Only attempt to exit if we are currently in fullscreen
+    const fsElement = getCurrentFsElement();
+    if (!fsElement) return;
+
+    try {
+      if (doc.exitFullscreen) {
+        doc.exitFullscreen();
+      } else if (
+        // @ts-expect-error - webkit fullscreen API not in standard types
+        doc.webkitExitFullscreen
+      ) {
+        // @ts-expect-error - webkit fullscreen API not in standard types
+        doc.webkitExitFullscreen();
+      } else if (
+        // @ts-expect-error - mozilla fullscreen API not in standard types
+        doc.mozCancelFullScreen
+      ) {
+        // @ts-expect-error - mozilla fullscreen API not in standard types
+        doc.mozCancelFullScreen();
+      } else if (
+        // @ts-expect-error - microsoft fullscreen API not in standard types
+        doc.msExitFullscreen
+      ) {
+        // @ts-expect-error - microsoft fullscreen API not in standard types
+        doc.msExitFullscreen();
+      }
+    } catch (err) {
+      console.warn('Failed to exit fullscreen, document might be inactive:', err);
     }
   }, []);
 

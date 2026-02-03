@@ -303,40 +303,44 @@ button:disabled {
 }
 
 /* Timer and Rep Counter */
+.timer,
+.rep-counter-container {
+  background-color: rgba(0, 0, 0, 0.85);
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-family: inherit;
+  color: #fcb131;
+  z-index: 100;
+  border: 2px solid rgba(252, 177, 49, 0.6);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(252, 177, 49, 0.2);
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .timer {
+  min-width: 100px;
+}
+
+.rep-counter-container {
+  min-width: 80px;
+}
+
+/* Legacy absolute classes if needed */
+.timer-abs {
   position: absolute;
   top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  padding: 8px 15px;
-  border-radius: 20px;
-  font-size: 16px;
-  color: #fcb131;
-  z-index: 100;
-  border: 2px solid #fcb131;
-  box-shadow: 0 0 10px rgba(252, 177, 49, 0.5);
-  text-align: center;
-  min-width: 80px;
 }
 
-.rep-counter-container {
+.rep-abs {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background-color: rgba(0, 0, 0, 0.8);
-  padding: 10px 15px;
-  border-radius: 50%;
-  font-size: 28px;
-  color: #fcb131;
-  z-index: 100;
-  border: 2px solid #fcb131;
-  box-shadow: 0 0 15px rgba(252, 177, 49, 0.7);
-  width: 60px;
-  height: 60px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* Tutorial Overlay */

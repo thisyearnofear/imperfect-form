@@ -298,11 +298,6 @@ const Webcam: React.FC<WebcamProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Centered exercise name label at the top */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 bg-black/70 text-yellow-400 px-4 py-2 rounded-lg font-bold text-lg">
-        {mode === 'pushups' ? 'PUSH-UPS' : 'SQUATS'}
-      </div>
-
       <video
         ref={videoRef as React.RefObject<HTMLVideoElement>}
         className="absolute top-0 left-0 w-full h-full z-0"

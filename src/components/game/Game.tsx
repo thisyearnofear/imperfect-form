@@ -26,7 +26,16 @@ import { Score } from '@/types';
 // Use LazyWebcam for better performance - only loads TensorFlow when needed
 const LazyWebcam = dynamic(() => import('./LazyWebcam'), {
   ssr: false,
-  loading: () => <Spinner />,
+  loading: () => (
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-16 h-16 border-4 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin shadow-[0_0_15px_rgba(252,177,49,0.3)]" />
+        <span className="text-[10px] text-yellow-500 font-black uppercase tracking-widest animate-pulse">
+          Initializing Engine...
+        </span>
+      </div>
+    </div>
+  ),
 });
 
 // Add type declaration for window object
@@ -192,7 +201,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   const [repCount, setRepCount] = useState(0);
   const [mode, setMode] = useState<'pushups' | 'squats'>('pushups');
   const [showSummary, setShowSummary] = useState(false);
-  const [showLoading, setShowLoading] = useState(false);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
 
   // Real-time biomechanical state for AI Agent feedback
@@ -559,14 +567,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
     // Welcome component consolidated into InitializationScreen - setShowWelcome removed
     setShowTutorial(false); // Hide tutorial when starting
-    setShowLoading(true);
+    setStarted(true);
 
     // Reset counters
     setRepCount(0);
     setTimeLeft(120);
-
-    // The LoadingScreen component will automatically transition to started state
-    // after its hideDelay time expires via the onComplete callback
   };
 
   // This useEffect is already handled by the one above
@@ -709,7 +714,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           {/* Welcome component consolidated into InitializationScreen */}
 
           {!started && (
-            <div className={showLoading ? 'selection-screen-exit' : ''}>
+            <div className="">
               <SplitFlapInstructions
                 mode={currentMode}
                 onModeChange={setCurrentMode}
@@ -722,18 +727,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                 onProfileSearch={handleProfileSearch}
               />
             </div>
-          )}
-
-          {showLoading && (
-            <UnifiedLoader
-              phase="initial"
-              isVisible={showLoading}
-              isOverlay={false}
-              onComplete={() => {
-                setShowLoading(false);
-                setStarted(true);
-              }}
-            />
           )}
 
           {started && (
@@ -749,10 +742,28 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                         : 'auto',
                   }}
                 >
-                  {/* Timer and rep counter at the top */}
-                  <div className="flex justify-between mb-2 px-2">
-                    <div className="text-xl font-bold">{formatTime(timeLeft)}</div>
-                    <div className="text-xl font-bold">{repCount}</div>
+                  {/* HUD: Timer, Mode and Rep Counter */}
+                  <div className="flex justify-between items-center mb-3 px-4 py-3 bg-black/40 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                        <span className="text-[10px] uppercase text-yellow-500 font-black tracking-widest leading-none">
+                          {mode}
+                        </span>
+                      </div>
+                      <span className="text-2xl font-bold font-mono tracking-tighter leading-none">
+                        {formatTime(timeLeft)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="text-[10px] uppercase text-blue-400 font-black tracking-widest leading-none">
+                        Reps
+                      </span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-3xl font-black leading-none">{repCount}</span>
+                        <span className="text-xs text-blue-400/60 font-bold uppercase">pts</span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Camera takes most of the available space */}
@@ -785,13 +796,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                                 : 'ready'
                         }
                         progress={detectionProgress?.percentage}
-                        title={
-                          detectionProgress?.phase === 'tensorflow-init' ||
-                          detectionProgress?.phase === 'model-download'
-                            ? 'Loading AI Engine'
-                            : undefined
-                        }
-                        subtitle={detectionProgress?.message}
                         isVisible={
                           started && (!poseState.hasPoseDetection || !poseState.poseDetected)
                         }
@@ -831,13 +835,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                               : 'ready'
                       }
                       progress={detectionProgress?.percentage}
-                      title={
-                        detectionProgress?.phase === 'tensorflow-init' ||
-                        detectionProgress?.phase === 'model-download'
-                          ? 'Loading AI Engine'
-                          : undefined
-                      }
-                      subtitle={detectionProgress?.message}
                       isVisible={
                         started && (!poseState.hasPoseDetection || !poseState.poseDetected)
                       }
@@ -849,24 +846,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
             </>
           )}
 
-          {/* Desktop-only timer and counter - hidden on mobile as they're repositioned */}
-          {!isMobile && (
-            <>
-              <div
-                className="timer"
-                style={{ display: started ? 'block' : 'none' }}
-                aria-live="polite"
-              >
-                {formatTime(timeLeft)}
+          {!isMobile && started && (
+            <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-4 z-50 pointer-events-none">
+              <div className="timer bg-black/80 backdrop-blur-md px-6 py-3 rounded-2xl border-2 border-yellow-500 shadow-[0_0_20px_rgba(252,177,49,0.3)] flex flex-col items-center">
+                <span className="text-[10px] uppercase text-yellow-500 font-black tracking-widest mb-1">
+                  {mode}
+                </span>
+                <span className="text-2xl font-black">{formatTime(timeLeft)}</span>
               </div>
-              <div
-                id="repCounterContainer"
-                className="rep-counter-container"
-                style={{ display: started ? 'block' : 'none' }}
-              >
-                {repCount}
+              <div className="rep-counter-container bg-black/80 backdrop-blur-md px-6 py-3 rounded-2xl border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)] flex flex-col items-center">
+                <span className="text-[10px] uppercase text-blue-400 font-black tracking-widest mb-1">
+                  Reps
+                </span>
+                <span className="text-3xl font-black">{repCount}</span>
               </div>
-            </>
+            </div>
           )}
         </div>
 
@@ -890,9 +884,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
               </button>
             </div>
           ) : (
-            <div
-              className={`flex justify-between w-full h-full items-center controls-enter ${showLoading ? 'controls-exit' : ''}`}
-            >
+            <div className="flex justify-between w-full h-full items-center controls-enter">
               <ModeSwitch
                 value={mode}
                 disabled={started}
@@ -906,7 +898,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                   style={{ minHeight: isMobile ? '50px' : 'auto' }}
                   aria-label="Start game"
                   onClick={handleStart}
-                  disabled={started || showLoading || !finalAddress}
+                  disabled={started || !finalAddress}
                   title={
                     !finalAddress
                       ? 'Sign in to start'
@@ -923,7 +915,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                   style={{ minHeight: isMobile ? '50px' : 'auto' }}
                   aria-label="Reset game"
                   onClick={handleReset}
-                  disabled={showLoading}
+                  disabled={started}
                 >
                   RESET
                 </button>

@@ -330,94 +330,84 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           <div className="space-y-4">
             {/* Celo-specific: Show submission choice directly in main dialog */}
             {chainId === 42220 && submissionStatus === 'idle' && submissionType === null && (
-              <div className="space-y-3 border-t border-gray-700 pt-4">
-                <p className="text-sm text-gray-400 text-center font-medium">
-                  Choose your submission path:
+              <div className="space-y-3 border-t border-gray-700/50 pt-4 px-1">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 text-center font-bold mb-1">
+                  Submission Path
                 </p>
 
                 {isVerified ? (
                   // VERIFIED USER: Two submission options
-                  <>
+                  <div className="grid grid-cols-1 gap-3">
                     {/* Verified Option - Primary */}
                     <button
                       onClick={handleSubmitVerified}
                       disabled={submissionStatus !== 'idle'}
-                      className="w-full p-4 rounded-lg border-2 border-green-500/50 bg-gradient-to-r from-green-500/10 to-emerald-500/10 hover:from-green-500/20 hover:to-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="w-full p-4 rounded-xl border-2 border-green-500/50 bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-50 transition-all shadow-lg shadow-green-900/20 group"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-lg font-bold text-green-400">
-                          ✨ Verified Submission
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-base sm:text-lg font-bold text-green-300 group-active:scale-95 transition-transform">
+                          ✨ Verified Mode
                         </span>
-                        <span className="text-2xl font-bold text-green-300">{verifiedScore}</span>
+                        <span className="text-xl sm:text-2xl font-black text-white">
+                          {verifiedScore}
+                        </span>
                       </div>
-                      <div className="text-xs text-green-300 text-left">
-                        Base {baseScore} + {bonusPoints} bonus (10%)
-                      </div>
-                      <div className="text-xs text-green-300/70 text-left mt-2">
-                        📍 Verified Leaderboard
+                      <div className="text-[10px] sm:text-xs text-green-400 font-medium text-left flex items-center gap-1">
+                        <span>Base {baseScore}</span>
+                        <span className="opacity-60">+</span>
+                        <span className="bg-green-500 text-black px-1 rounded-sm text-[9px]">
+                          {bonusPoints} Bonus
+                        </span>
                       </div>
                     </button>
 
                     {/* Basic Option - Secondary */}
                     <button
                       onClick={handleSubmitBasic}
-                      className="w-full p-4 rounded-lg border-2 border-slate-600 bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="w-full p-3 rounded-xl border border-gray-700 bg-gray-800/40 hover:bg-gray-800/60 transition-all"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-base font-bold text-slate-300">
-                          📊 Standard Submission
-                        </span>
-                        <span className="text-2xl font-bold text-slate-300">{baseScore}</span>
-                      </div>
-                      <div className="text-xs text-slate-400 text-left">
-                        Standard scoring, no bonus
-                      </div>
-                      <div className="text-xs text-slate-400/70 text-left mt-2">
-                        📍 Standard Leaderboard
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-gray-400">Standard</span>
+                        <span className="text-lg font-bold text-gray-300">{baseScore}</span>
                       </div>
                     </button>
-                  </>
+                  </div>
                 ) : (
                   // UNVERIFIED USER: Verification option + fallback
-                  <>
+                  <div className="grid grid-cols-1 gap-3">
                     {/* Verification Option - Primary CTA */}
                     <button
                       onClick={handleStartVerification}
-                      className="w-full p-4 rounded-lg border-2 border-yellow-500/50 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 hover:from-yellow-500/20 hover:to-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="w-full p-4 rounded-xl border-2 border-yellow-500/50 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-orange-500/30 transition-all shadow-lg shadow-yellow-900/20 group"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-lg font-bold text-yellow-300">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-base sm:text-lg font-bold text-yellow-300 group-active:scale-95 transition-transform">
                           🚀 Verify & Submit
                         </span>
-                        <span className="text-2xl font-bold text-yellow-200">+{bonusPoints}</span>
+                        <span className="text-xl sm:text-2xl font-black text-white">
+                          +{bonusPoints}
+                        </span>
                       </div>
-                      <div className="text-xs text-yellow-300 text-left">
-                        Would earn {verifiedScore} pts (10% bonus)
-                      </div>
-                      <div className="text-xs text-yellow-300/70 text-left mt-2">
-                        ⏱️ One-time setup, ~60 seconds
+                      <div className="text-[10px] sm:text-xs text-yellow-500 font-medium text-left">
+                        Unlock {verifiedScore} total pts (10% boost)
                       </div>
                     </button>
 
                     {/* Fallback Option */}
                     <button
                       onClick={handleSubmitBasic}
-                      className="w-full p-4 rounded-lg border-2 border-slate-600 bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="w-full p-3 rounded-xl border border-gray-700 bg-gray-800/40 hover:bg-gray-800/60 transition-all"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-base font-bold text-slate-300">
-                          📊 Submit Without Verification
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-gray-400 text-left">
+                          Standard (No Bonus)
                         </span>
-                        <span className="text-2xl font-bold text-slate-300">{baseScore}</span>
-                      </div>
-                      <div className="text-xs text-slate-400 text-left">
-                        Standard scoring, no bonus
-                      </div>
-                      <div className="text-xs text-slate-400/70 text-left mt-2">
-                        You can verify anytime to unlock bonus on future submissions
+                        <span className="text-lg font-bold text-gray-300 text-right">
+                          {baseScore}
+                        </span>
                       </div>
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
             )}
@@ -438,7 +428,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
             {/* Submit Score component - only show if not successfully submitted */}
             {submissionStatus !== 'success' && (
-              <div className="rounded-md p-3 text-center">
+              <div className="rounded-xl bg-black/20 p-4 text-center border border-white/5">
                 {/* Use unified Wagmi-based submission for all networks */}
                 <SubmitScore
                   score={repCount}
@@ -454,28 +444,41 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 />
                 {/* Dynamic feedback message */}
                 {submissionStatus === 'submitting' && (
-                  <p className={`text-sm ${STATUS_STYLES.submitting.className} mt-3 animate-pulse`}>
-                    Confirming... 💫
+                  <p
+                    className={`text-xs ${STATUS_STYLES.submitting.className} mt-3 animate-pulse font-bold tracking-widest uppercase`}
+                  >
+                    Confirming Transation...
                   </p>
                 )}
                 {submissionStatus === 'error' && (
-                  <p className={`text-sm ${STATUS_STYLES.error.className} mt-3`}>Failed. Retry?</p>
+                  <p className={`text-xs ${STATUS_STYLES.error.className} mt-3 font-bold`}>
+                    Connection Failed. Tap to Retry.
+                  </p>
                 )}
               </div>
             )}
 
             {/* Success message - show when successfully submitted */}
             {submissionStatus === 'success' && (
-              <div className="rounded-md p-3 text-center space-y-2">
-                <div className="text-green-400 text-base font-bold">✅ Submitted!</div>
-                <div className="text-xs text-gray-400">Closing in 2 seconds...</div>
+              <div className="rounded-xl bg-green-500/10 p-6 text-center space-y-3 border border-green-500/30 animate-in fade-in zoom-in duration-300">
+                <div className="text-green-400 text-xl font-black tracking-tight">
+                  MISSION SUCCESSFUL
+                </div>
+                <div className="text-[10px] text-green-400/60 uppercase font-black tracking-widest">
+                  Onchain data stored
+                </div>
               </div>
             )}
 
             {/* Earnings Preview - Show after successful submission */}
             {submissionStatus === 'success' && earnings && (
-              <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700/30 rounded-lg p-2 text-center">
-                <div className="text-xs text-gray-300">💰 +${earnings.totalEarned.toFixed(4)}</div>
+              <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl p-4 text-center shadow-inner animate-in slide-in-from-bottom duration-500 delay-200">
+                <div className="text-[10px] text-blue-300 font-bold uppercase tracking-wider mb-1">
+                  Memory Rewards Earned
+                </div>
+                <div className="text-2xl font-black text-white">
+                  $ {earnings.totalEarned.toFixed(4)}
+                </div>
               </div>
             )}
           </div>

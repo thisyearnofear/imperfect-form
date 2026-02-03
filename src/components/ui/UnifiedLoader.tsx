@@ -210,14 +210,16 @@ const PHASE_CONFIG: Record<
     estimatedTime: 'Usually 15-30 seconds on 4G',
   },
   ai: {
-    title: 'Loading',
-    subtitle: '',
-    guidance: '',
-    color: 'text-purple-300',
-    bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
-    borderColor: 'border-purple-400/30',
-    icon: <SpinnerIcon className="w-14 h-14 sm:w-16 sm:h-16 text-purple-400" />,
-    estimatedTime: 'Usually 2-5 minutes on first run',
+    title: 'Warming Up AI Engine',
+    subtitle: 'Optimizing detection for your device',
+    guidance: 'Preparing neural network for real-time biomechanics',
+    color: 'text-purple-400',
+    bgGradient: 'from-purple-950/60 via-indigo-950/40 to-purple-950/60',
+    borderColor: 'border-purple-500/40',
+    icon: (
+      <SpinnerIcon className="w-14 h-14 sm:w-16 sm:h-16 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)]" />
+    ),
+    estimatedTime: 'Usually 15-30 seconds after first run',
   },
   positioning: {
     title: 'Detecting Your Position',
@@ -296,22 +298,35 @@ export default function UnifiedLoader({
     return (
       <div
         className={`
-          absolute inset-0 z-10 flex flex-col items-center justify-center
-          transition-all duration-300 pointer-events-none
-          ${isVisible ? 'opacity-100' : 'opacity-0'}
-          backdrop-blur-sm
+          absolute inset-0 z-20 flex flex-col items-center justify-center
+          transition-all duration-500 pointer-events-none
+          ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
+          backdrop-blur-md
           ${className}
         `}
         style={{
-          background: `linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15))`,
+          background:
+            phase === 'ready'
+              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))'
+              : 'linear-gradient(135deg, rgba(88, 28, 135, 0.4), rgba(30, 27, 75, 0.4))',
         }}
       >
-        {/* Icon with scale animation */}
+        {/* Animated Background Ring for 'Ready' state */}
+        {phase === 'ready' && (
+          <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+            <div className="w-64 h-64 border-4 border-green-500/20 rounded-full animate-ping opacity-20" />
+            <div className="absolute w-48 h-48 border-2 border-green-400/30 rounded-full animate-pulse opacity-30" />
+          </div>
+        )}
+
+        {/* Icon with scaling/pulse animation */}
         <div
-          className="mb-6 transition-transform duration-500"
+          className={`
+            mb-6 p-4 rounded-full transition-all duration-700
+            ${phase === 'ready' ? 'bg-green-500/20 shadow-lg shadow-green-500/30' : 'bg-white/5'}
+          `}
           style={{
-            transform: phase === 'ready' ? 'scale(1)' : 'scale(1)',
-            animation: phase === 'ready' ? 'pulse 1s ease-in-out' : 'none',
+            animation: phase === 'ready' ? 'victory-bounce 1.5s infinite ease-in-out' : 'none',
           }}
         >
           {config.icon}
@@ -320,46 +335,70 @@ export default function UnifiedLoader({
         {/* Status text - responsive and properly constrained */}
         <div
           className={`
-            ${config.color} text-center space-y-2
-            px-4 sm:px-6 max-w-xs sm:max-w-sm
+            text-center space-y-3 px-6 max-w-[280px] sm:max-w-sm
+            drop-shadow-lg transition-transform duration-500
+            ${phase === 'ready' ? 'scale-110' : 'scale-100'}
           `}
         >
-          <h3 className="text-base sm:text-lg font-bold leading-snug">{config.title}</h3>
-          <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">{config.guidance}</p>
+          <h3
+            className={`
+            font-bold leading-tight tracking-tight
+            ${phase === 'ready' ? 'text-green-300 text-2xl' : config.color + ' text-lg'}
+          `}
+          >
+            {phase === 'ready' ? 'READY!' : config.title}
+          </h3>
+          <p className="text-xs sm:text-sm text-white/80 font-medium leading-relaxed">
+            {phase === 'ready' ? config.guidance : config.subtitle || config.guidance}
+          </p>
         </div>
 
         {/* Progress indicators */}
         {phase === 'ai' && progress > 0 && (
-          <div className="mt-6 flex flex-col items-center gap-3">
-            <div className="text-purple-300">
-              <ProgressRing progress={progress} size={56} strokeWidth={2} />
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <div className="text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">
+              <ProgressRing progress={progress} size={64} strokeWidth={3} />
             </div>
             <div className="text-center">
-              <p className="text-xs sm:text-sm text-gray-300">Loading...</p>
-              <p className="text-xs text-gray-400 mt-1">{progress}%</p>
+              <p className="text-xs font-bold text-white uppercase tracking-widest opacity-60">
+                Initializing
+              </p>
+              <p className="text-sm font-black text-purple-300 mt-1">{progress}%</p>
             </div>
           </div>
         )}
 
-        {/* Loading spinner for other phases */}
+        {/* Loading dots for other non-ready phases */}
         {phase !== 'ai' && phase !== 'ready' && (
-          <div className="mt-6 flex items-center gap-2 text-gray-300">
-            <div className="flex gap-1">
+          <div className="mt-8 flex items-center gap-2">
+            <div className="flex gap-1.5 p-2 bg-black/20 rounded-full backdrop-blur-sm">
               <div
-                className="w-1.5 h-1.5 rounded-full bg-current animate-bounce"
+                className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"
                 style={{ animationDelay: '0ms' }}
               />
               <div
-                className="w-1.5 h-1.5 rounded-full bg-current animate-bounce"
+                className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
                 style={{ animationDelay: '150ms' }}
               />
               <div
-                className="w-1.5 h-1.5 rounded-full bg-current animate-bounce"
+                className="w-2 h-2 rounded-full bg-pink-400 animate-bounce"
                 style={{ animationDelay: '300ms' }}
               />
             </div>
           </div>
         )}
+
+        <style jsx>{`
+          @keyframes victory-bounce {
+            0%,
+            100% {
+              transform: translateY(0) scale(1.1);
+            }
+            50% {
+              transform: translateY(-10px) scale(1.15);
+            }
+          }
+        `}</style>
       </div>
     );
   }

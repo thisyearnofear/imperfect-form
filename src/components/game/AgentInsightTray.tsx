@@ -73,19 +73,16 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({ metrics, mod
     <div className="agent-insight-tray font-press">
       <div className="agent-avatar">
         <div className="ai-brain-icon">🧠</div>
-        <div className="ai-status">AI-COACH v1.0</div>
+        <div className="ai-status">COACH v1</div>
       </div>
 
       <div className="insight-content">
-        <div className={`insight-message ${pulse ? 'pulse' : ''}`}>
-          <span className="typing-cursor"></span>
-          {insight}
-        </div>
+        <div className={`insight-message ${pulse ? 'pulse' : ''}`}>{insight}</div>
 
         <div className="reasoning-trace">
           {reasoning.map((line, i) => (
             <div key={i} className="reasoning-line">
-              {line}
+              <span className="reasoning-prefix">{'>'}</span> {line}
             </div>
           ))}
         </div>
