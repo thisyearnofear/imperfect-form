@@ -32,16 +32,26 @@ export function usePoseWorker(
     isLoading: false,
   });
 
-  const notifyStateChange = useCallback(
-    (newState: Partial<typeof poseState>) => {
-      setPoseState((prev) => {
-        const updated = { ...prev, ...newState };
-        onPoseStateChange?.(updated);
-        return updated;
-      });
-    },
-    [onPoseStateChange]
-  );
+  // Use refs for callbacks to avoid re-triggering the main effect
+  const onRepCountRef = useRef(onRepCount);
+  const onPoseStateChangeRef = useRef(onPoseStateChange);
+  const onDetectionProgressRef = useRef(onDetectionProgress);
+  const onMetricsRef = useRef(onMetrics);
+
+  useEffect(() => {
+    onRepCountRef.current = onRepCount;
+    onPoseStateChangeRef.current = onPoseStateChange;
+    onDetectionProgressRef.current = onDetectionProgress;
+    onMetricsRef.current = onMetrics;
+  }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics]);
+
+  const notifyStateChange = useCallback((newState: Partial<typeof poseState>) => {
+    setPoseState((prev) => {
+      const updated = { ...prev, ...newState };
+      onPoseStateChangeRef.current?.(updated);
+      return updated;
+    });
+  }, []);
 
   useEffect(() => {
     if (!isActive) return;
@@ -49,13 +59,24 @@ export function usePoseWorker(
     if (!canvasRef.current || !videoRef.current) return;
 
     notifyStateChange({ isLoading: true });
-    onDetectionProgress?.({ phase: 'initial', message: 'Starting worker...', percentage: 10 });
+    onDetectionProgressRef.current?.({
+      phase: 'initial',
+      message: 'Starting worker...',
+      percentage: 10,
+    });
 
     const canvas = canvasRef.current;
-    // We need to transfer control only once
+    // We need to transfer control only once. Use a flag on the canvas element itself
+    // to track if it has already been transferred, as a safeguard.
+    if ((canvas as any)._isTransferred) {
+      console.warn('Canvas already transferred according to internal flag');
+      return;
+    }
+
     let offscreen: OffscreenCanvas;
     try {
       offscreen = canvas.transferControlToOffscreen();
+      (canvas as any)._isTransferred = true;
     } catch (e) {
       console.warn('Canvas already controlled by offscreen or transfer failed', e);
       return;
@@ -80,7 +101,7 @@ export function usePoseWorker(
         await video.play();
 
         notifyStateChange({ hasCamera: true });
-        onDetectionProgress?.({
+        onDetectionProgressRef.current?.({
           phase: 'tensorflow-init',
           message: 'Initializing Model...',
           percentage: 40,
@@ -92,6 +113,7 @@ export function usePoseWorker(
           mode,
           width: video.videoWidth,
           height: video.videoHeight,
+          isMobile,
         };
         worker.postMessage(initMessage, [offscreen]);
 
@@ -107,7 +129,7 @@ export function usePoseWorker(
               const bitmap = await createImageBitmap(video);
               worker.postMessage({ type: 'frame', bitmap }, [bitmap]);
             } catch (e) {
-              console.error('Frame capture failed', e);
+              // Silently handle frame capture errors
             }
             isProcessing = false;
           }
@@ -138,28 +160,29 @@ export function usePoseWorker(
       const data = e.data;
       if (data.type === 'ready') {
         notifyStateChange({ hasPoseDetection: true, isLoading: false });
-        onDetectionProgress?.({ phase: 'ready', message: 'Ready!', percentage: 100 });
+        onDetectionProgressRef.current?.({ phase: 'ready', message: 'Ready!', percentage: 100 });
       } else if (data.type === 'rep') {
-        onRepCount((data as any).count);
+        onRepCountRef.current((data as any).count);
       } else if (data.type === 'metrics') {
-        onMetrics?.((data as any).state);
+        onMetricsRef.current?.((data as any).state);
       } else if (data.type === 'pose') {
         const keypoints = (data as any).keypoints;
         const detected = keypoints && keypoints.length > 0;
-        if (detected !== poseState.poseDetected) {
-          notifyStateChange({ poseDetected: detected });
-        }
+        notifyStateChange({ poseDetected: detected });
       }
     };
 
     return () => {
-      workerRef.current?.terminate();
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      console.log('🧹 Cleaning up pose worker and stream');
+      worker.terminate();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
       workerRef.current = null;
       streamRef.current = null;
       notifyStateChange({ hasCamera: false, hasPoseDetection: false, poseDetected: false });
     };
-  }, [canvasRef, mode, onRepCount, isActive, isMobile, notifyStateChange, onDetectionProgress]);
+  }, [canvasRef, mode, isActive, isMobile, notifyStateChange]);
 
   return videoRef;
 }

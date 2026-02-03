@@ -147,6 +147,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     setCurrentMode('profile-search');
   }, []);
 
+  const handleWalletConnected = useCallback((address: string) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Game: Wallet connected with address:', address);
+    }
+  }, []);
+
   // Handle external profile search target (from leaderboard clicks)
   useEffect(() => {
     if (profileSearchTarget) {
@@ -253,15 +259,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       poseDetected: boolean;
       isLoading: boolean;
     }) => {
-      if (state.isLoading && !showLoadingOverlay) {
-        setShowLoadingOverlay(true);
-      }
-      if (!state.isLoading && state.hasPoseDetection) {
-        setShowLoadingOverlay(false);
-      }
-      setPoseState(state);
+      // Only update showLoadingOverlay if it's actually changing to avoid unnecessary re-renders
+      setPoseState((prev) => {
+        // Comparison to avoid state updates if nothing changed
+        if (
+          prev.isLoading === state.isLoading &&
+          prev.hasCamera === state.hasCamera &&
+          prev.hasPoseDetection === state.hasPoseDetection &&
+          prev.poseDetected === state.poseDetected
+        ) {
+          return prev;
+        }
+        return state;
+      });
     },
-    [showLoadingOverlay]
+    []
   );
 
   const handleMetrics = useCallback((state: import('@/types/mediapipe').BiomechanicalState) => {
@@ -671,9 +683,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
               currentMode={currentMode}
               onModeChange={setCurrentMode}
               workoutStarted={started}
-              onConnected={(address) => {
-                console.log('Game: Wallet connected with address:', address);
-              }}
+              onConnected={handleWalletConnected}
             />
             {/* Fullscreen Toggle - alongside connect button */}
             {isFullscreenAvailable && (

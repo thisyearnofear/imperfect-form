@@ -145,22 +145,6 @@ const injectEnhancedThemeCSS = (): void => {
   document.head.appendChild(link);
 };
 
-const injectChainEffectsCSS = (): void => {
-  if (typeof document === 'undefined') return;
-
-  // Check if CSS is already injected
-  if (document.getElementById(CHAIN_EFFECTS_CSS_ID)) return;
-
-  const link = document.createElement('link');
-  link.id = CHAIN_EFFECTS_CSS_ID;
-  link.rel = 'stylesheet';
-  link.href = '/chain-effects.css';
-  link.onload = () => console.debug('Chain effects CSS loaded');
-  link.onerror = () => console.warn('Failed to load chain effects CSS');
-
-  document.head.appendChild(link);
-};
-
 const updateBodyAttribute = (chainId: ChainId): void => {
   if (typeof document === 'undefined') return;
   document.body.setAttribute('data-chain', chainId);
@@ -265,7 +249,6 @@ export const EnhancedChainThemeProvider: React.FC<EnhancedChainThemeProviderProp
     setThemeOptions((prev) => ({ ...prev, ...storedOptions }));
 
     updateBodyAttribute(storedChain);
-    injectChainEffectsCSS();
     injectEnhancedThemeCSS();
 
     setIsHydrated(true);

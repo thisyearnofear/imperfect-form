@@ -268,103 +268,158 @@ function drawFeedback(
 
 let lastProgress = 0;
 
+// Helper to dispose the current detector
+async function disposeDetector() {
+  if (detector) {
+    try {
+      (detector as any).dispose?.();
+    } catch (e) {
+      console.warn('Error disposing detector:', e);
+    }
+  }
+}
+
+// Warm up the model with a dummy inference to avoid first-run latency
+async function warmupDetector(detector: PoseDetector, width: number, height: number) {
+  try {
+    // Create a small dummy buffer/canvas
+    const offscreen = new OffscreenCanvas(256, 256);
+    const tempCtx = offscreen.getContext('2d');
+    if (tempCtx) {
+      tempCtx.fillStyle = 'black';
+      tempCtx.fillRect(0, 0, 256, 256);
+      const bitmap = offscreen.transferToImageBitmap();
+      await detector.estimatePoses(bitmap);
+      bitmap.close();
+    }
+  } catch (error) {
+    console.warn('Detector warmup failed:', error);
+  }
+}
+
 self.addEventListener('message', async (event) => {
   const data = event.data as WorkerMessage;
 
-  if (data.type === 'init') {
-    const offscreen: OffscreenCanvas = data.canvas;
-    mode = data.mode as 'pushups' | 'squats';
-    offscreen.width = data.width;
-    offscreen.height = data.height;
-    ctx = offscreen.getContext('2d', { alpha: true }) as OffscreenCanvasRenderingContext2D;
+  try {
+    if (data.type === 'init') {
+      const offscreen: OffscreenCanvas = data.canvas;
+      mode = data.mode as 'pushups' | 'squats';
+      const isMobile = !!data.isMobile;
 
-    const backend = await initTfBackend();
-    try {
+      offscreen.width = data.width;
+      offscreen.height = data.height;
+      ctx = offscreen.getContext('2d', { alpha: true }) as OffscreenCanvasRenderingContext2D;
+
+      const backend = await initTfBackend();
       self.postMessage({ type: 'backend', backend });
-    } catch {}
 
-    detector = await createDetector(SupportedModels.MoveNet, {
-      modelType: mode === 'squats' ? 'SinglePose.Thunder' : 'SinglePose.Lightning',
-      enableSmoothing: true,
-    });
+      // Consolidate model selection logic:
+      // Desktop Squats/Pushups -> Thunder (Best accuracy)
+      // Mobile -> Lightning (Best performance)
+      const modelType = isMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
 
-    repState = 'middle';
-    repCount = 0;
-    lastProgress = 0;
+      await disposeDetector();
 
-    self.postMessage({ type: 'ready' });
-  } else if (data.type === 'frame') {
-    if (!detector || !ctx) return;
+      detector = await createDetector(SupportedModels.MoveNet, {
+        modelType,
+        enableSmoothing: true,
+      });
 
-    const bitmap: ImageBitmap = data.bitmap;
-    const poses = await detector.estimatePoses(bitmap);
+      // Warm up the detector
+      await warmupDetector(detector, data.width, data.height);
 
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      repState = 'middle';
+      repCount = 0;
+      lastProgress = 0;
 
-    if (poses.length > 0) {
-      const keypoints = poses[0].keypoints as Keypoint[];
-      const warnings: string[] = [];
-      const metrics: BiomechanicalState = {
-        trunkLean: 0,
-        kneeValgus: 0,
-        ankleFlexion: 0,
-        depth: 0,
-        symmetry: 1,
-        isStable: true,
-        warnings: [],
-      };
-
-      // Biomechanical Analysis
-      const lh = getPoint(keypoints, 'left_hip');
-      const ls = getPoint(keypoints, 'left_shoulder');
-      const lk = getPoint(keypoints, 'left_knee');
-      const la = getPoint(keypoints, 'left_ankle');
-      const lw = getPoint(keypoints, 'left_wrist');
-
-      if (ls && lh) metrics.trunkLean = calculateTrunkLean(ls, lh);
-
-      if (mode === 'squats' && lh && lk && la) {
-        metrics.kneeValgus = calculateKneeValgus(lh, lk, la);
-        metrics.ankleFlexion = calculateAngle(lk, la, { x: la.x + 10, y: la.y });
-
-        const currentAngle = calculateAngle(lh, lk, la);
-        metrics.depth = (170 - currentAngle) / (170 - 110);
-        lastProgress = metrics.depth;
-
-        if (metrics.kneeValgus > 40) warnings.push('KNEES IN');
-        if (metrics.trunkLean > 45) warnings.push('LEANING TOO FAR');
+      self.postMessage({ type: 'ready' });
+    } else if (data.type === 'frame') {
+      if (!detector || !ctx) {
+        if (data.bitmap) data.bitmap.close();
+        return;
       }
 
-      if (mode === 'pushups' && ls && lw) {
-        const le = getPoint(keypoints, 'left_elbow');
-        if (le) {
-          const currentAngle = calculateAngle(ls, le, lw);
-          metrics.depth = (160 - currentAngle) / (160 - 85);
-          lastProgress = metrics.depth;
+      const bitmap: ImageBitmap = data.bitmap;
+
+      try {
+        const poses = await detector.estimatePoses(bitmap);
+
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        if (poses.length > 0) {
+          const keypoints = poses[0].keypoints as Keypoint[];
+          const warnings: string[] = [];
+          const metrics: BiomechanicalState = {
+            trunkLean: 0,
+            kneeValgus: 0,
+            ankleFlexion: 0,
+            depth: 0,
+            symmetry: 1,
+            isStable: true,
+            warnings: [],
+          };
+
+          // Biomechanical Analysis
+          const lh = getPoint(keypoints, 'left_hip');
+          const ls = getPoint(keypoints, 'left_shoulder');
+          const lk = getPoint(keypoints, 'left_knee');
+          const la = getPoint(keypoints, 'left_ankle');
+          const lw = getPoint(keypoints, 'left_wrist');
+
+          if (ls && lh) metrics.trunkLean = calculateTrunkLean(ls, lh);
+
+          if (mode === 'squats' && lh && lk && la) {
+            metrics.kneeValgus = calculateKneeValgus(lh, lk, la);
+            metrics.ankleFlexion = calculateAngle(lk, la, { x: la.x + 10, y: la.y });
+
+            const currentAngle = calculateAngle(lh, lk, la);
+            metrics.depth = (170 - currentAngle) / (170 - 110);
+            lastProgress = metrics.depth;
+
+            if (metrics.kneeValgus > 40) warnings.push('KNEES IN');
+            if (metrics.trunkLean > 45) warnings.push('LEANING TOO FAR');
+          }
+
+          if (mode === 'pushups' && ls && lw) {
+            const le = getPoint(keypoints, 'left_elbow');
+            if (le) {
+              const currentAngle = calculateAngle(ls, le, lw);
+              metrics.depth = (160 - currentAngle) / (160 - 85);
+              lastProgress = metrics.depth;
+            }
+          }
+
+          metrics.warnings = warnings;
+
+          // Update Detection
+          const repIncremented =
+            mode === 'pushups' ? detectPushup(keypoints) : detectSquat(keypoints);
+
+          if (repIncremented) {
+            repCount += 1;
+            self.postMessage({ type: 'rep', count: repCount });
+          }
+
+          // Render
+          drawSkeleton(ctx, keypoints, mode);
+          drawFeedback(ctx, mode, repState, lastProgress, warnings);
+
+          self.postMessage({ type: 'metrics', state: metrics });
+          self.postMessage({ type: 'pose', keypoints });
+        } else {
+          drawFeedback(ctx, mode, 'middle', 0, []);
+          self.postMessage({ type: 'pose', keypoints: [] });
         }
+      } catch (err) {
+        console.error('In-worker processing error:', err);
+      } finally {
+        bitmap.close();
       }
-
-      metrics.warnings = warnings;
-
-      // Update Detection
-      const repIncremented = mode === 'pushups' ? detectPushup(keypoints) : detectSquat(keypoints);
-
-      if (repIncremented) {
-        repCount += 1;
-        self.postMessage({ type: 'rep', count: repCount });
-      }
-
-      // Render
-      drawSkeleton(ctx, keypoints, mode);
-      drawFeedback(ctx, mode, repState, lastProgress, warnings);
-
-      self.postMessage({ type: 'metrics', state: metrics });
-      self.postMessage({ type: 'pose', keypoints });
-    } else {
-      drawFeedback(ctx, mode, 'middle', 0, []);
-      self.postMessage({ type: 'pose', keypoints: [] });
+    } else if (data.type === 'stop') {
+      await disposeDetector();
     }
-
-    bitmap.close();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown worker error';
+    self.postMessage({ type: 'error', message });
   }
 });

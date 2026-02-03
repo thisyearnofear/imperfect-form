@@ -231,7 +231,9 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   const wallet: WalletState = useMemo(
     () => ({
       isConnected:
-        platform === 'farcaster' ? !!farcasterWallet.address || isWagmiConnected : isWagmiConnected,
+        platform === 'farcaster'
+          ? !!farcasterWallet.address || isWagmiConnected
+          : isWagmiConnected || !!wagmiAddress,
       address:
         platform === 'farcaster' && farcasterWallet.address
           ? farcasterWallet.address
@@ -243,7 +245,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
       provider:
         platform === 'farcaster' && farcasterWallet.address
           ? 'farcaster'
-          : isWagmiConnected
+          : isWagmiConnected || !!wagmiAddress
             ? 'wagmi'
             : null,
       isConnecting: isWagmiConnecting,

@@ -43,7 +43,14 @@ export interface VideoFrameCallbackMetadata {
 
 // Worker message types
 export type WorkerMessage =
-  | { type: 'init'; canvas: OffscreenCanvas; mode: string; width: number; height: number }
+  | {
+      type: 'init';
+      canvas: OffscreenCanvas;
+      mode: string;
+      width: number;
+      height: number;
+      isMobile?: boolean;
+    }
   | { type: 'frame'; bitmap: ImageBitmap }
   | { type: 'stop' };
 

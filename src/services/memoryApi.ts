@@ -85,7 +85,20 @@ class MemoryAPIClient {
       }),
     });
 
-    const responseData = await response.json();
+    let responseData;
+    const contentType = response.headers.get('content-type');
+
+    if (contentType && contentType.includes('application/json')) {
+      responseData = await response.json().catch(() => null);
+    } else {
+      const text = await response.text().catch(() => '');
+      logger.error('Memory API returned non-JSON response', {
+        status: response.status,
+        contentType,
+        preview: text.slice(0, 100),
+      });
+      responseData = { error: `Server error (${response.status})` };
+    }
 
     if (!response.ok) {
       const errorDetails = {
@@ -108,6 +121,8 @@ class MemoryAPIClient {
         errorMessage = 'Rate limit exceeded. Please wait before making more requests.';
       } else if (response.status === 503) {
         errorMessage = 'Memory API not configured on server.';
+      } else if (response.status === 504) {
+        errorMessage = 'Memory API request timed out. The server might be busy.';
       } else if (responseData?.error) {
         errorMessage = responseData.error;
       }
