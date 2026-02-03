@@ -20,13 +20,7 @@ export type {
 
 export type { StoredData, SyncRecord } from './OfflineDataStore';
 
-export type {
-  IdentityNode,
-  IdentityGraph,
-  SocialProfile,
-  FitnessDataUpload,
-  EarningsData,
-} from './memoryApi';
+export type { IdentityNode, IdentityGraph, SocialProfile } from './memoryApi';
 
 // Re-export types for convenience
 export type {
