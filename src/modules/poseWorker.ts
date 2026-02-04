@@ -309,7 +309,8 @@ self.addEventListener('message', async (event) => {
   try {
     if (data.type === 'init') {
       const offscreen: OffscreenCanvas = data.canvas;
-      mode = data.mode as 'pushups' | 'squats';
+      // Defensive: ensure mode is never null/undefined
+      mode = (data.mode ?? 'pushups') as 'pushups' | 'squats';
       const isMobile = !!data.isMobile;
 
       offscreen.width = data.width;
