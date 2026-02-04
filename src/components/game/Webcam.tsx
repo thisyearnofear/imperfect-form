@@ -1,6 +1,6 @@
 'use client';
 import React, { useRef, useEffect } from 'react';
-import { usePoseWorker } from '@/modules/usePoseWorker';
+import { usePoseDetection } from '@/modules/usePoseDetection';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 
@@ -47,9 +47,9 @@ const Webcam: React.FC<WebcamProps> = ({
   onSessionEnd,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  // Pass isMobile flag to usePoseWorker for mobile-specific optimizations
+  // Pass isMobile flag to usePoseDetection for mobile-specific optimizations
   const { isMobile } = useDeviceDetect();
-  const videoRef = usePoseWorker(
+  const videoRef = usePoseDetection(
     canvasRef,
     mode,
     onRepCount,
