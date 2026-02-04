@@ -253,7 +253,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     isLoading: false,
   });
   const [detectionProgress, setDetectionProgress] = useState<{
-    phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+    phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
     message: string;
     percentage: number;
   } | null>(null);
