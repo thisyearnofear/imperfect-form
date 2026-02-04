@@ -77,6 +77,24 @@ export function usePoseWorker(
     lastRepCountRef.current = 0;
 
     const canvas = canvasRef.current;
+
+    // Check if OffscreenCanvas is supported (not available on iOS Safari/Brave or in some iframes)
+    const supportsOffscreenCanvas =
+      typeof OffscreenCanvas !== 'undefined' && canvas.transferControlToOffscreen;
+
+    if (!supportsOffscreenCanvas) {
+      console.error(
+        'OffscreenCanvas not supported - pose detection requires a modern browser with OffscreenCanvas support'
+      );
+      notifyStateChange({ isLoading: false });
+      onDetectionProgressRef.current?.({
+        phase: 'initial',
+        message: 'Browser not supported - OffscreenCanvas required',
+        percentage: 0,
+      });
+      return;
+    }
+
     // We need to transfer control only once. Use a flag on the canvas element itself
     // to track if it has already been transferred, as a safeguard.
     if ((canvas as any)._isTransferred) {
@@ -89,7 +107,8 @@ export function usePoseWorker(
       offscreen = canvas.transferControlToOffscreen();
       (canvas as any)._isTransferred = true;
     } catch (e) {
-      console.warn('Canvas already controlled by offscreen or transfer failed', e);
+      console.error('Canvas transfer failed:', e);
+      notifyStateChange({ isLoading: false });
       return;
     }
 
