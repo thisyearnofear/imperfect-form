@@ -293,11 +293,11 @@
 
   /* Stop button mobile styling */
   .stop-button-discrete {
-    min-width: 80px !important;
+    min-width: 75px !important;
     max-width: 100px;
-    height: 50px !important;
-    padding: 0 1rem !important;
-    font-size: 0.75rem !important;
+    height: 46px !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.8rem !important;
   }
 }
 
