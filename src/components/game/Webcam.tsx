@@ -25,7 +25,7 @@ interface WebcamProps {
     isLoading: boolean;
   }) => void;
   onDetectionProgress?: (progress: {
-    phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+    phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
     message: string;
     percentage: number;
   }) => void;

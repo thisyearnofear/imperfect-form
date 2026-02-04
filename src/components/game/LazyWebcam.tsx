@@ -15,7 +15,7 @@ interface LazyWebcamProps {
     isLoading: boolean;
   }) => void;
   onDetectionProgress?: (progress: {
-    phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+    phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
     message: string;
     percentage: number;
   }) => void;
@@ -41,7 +41,7 @@ export default function LazyWebcam(props: LazyWebcamProps) {
       // Dynamically import the heavy Webcam component
       import('./Webcam')
         .then((module) => {
-          setWebcamComponent(() => module.default);
+          setWebcamComponent(module.default as React.ComponentType<LazyWebcamProps>);
           setIsLoading(false);
         })
         .catch((err) => {

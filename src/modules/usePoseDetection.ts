@@ -117,7 +117,7 @@ export function usePoseDetection(
     isLoading: boolean;
   }) => void,
   onDetectionProgress?: (progress: {
-    phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
+    phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
     message: string;
     percentage: number;
   }) => void,
@@ -225,8 +225,8 @@ export function usePoseDetection(
 
         notifyStateChange({ hasCamera: true });
         onDetectionProgressRef.current?.({
-          phase: 'tensorflow-init',
-          message: 'Initializing Model...',
+          phase: 'ai',
+          message: 'Initializing AI Model...',
           percentage: 40,
         });
 
@@ -328,9 +328,9 @@ export function usePoseDetection(
 
         notifyStateChange({ hasCamera: true });
         onDetectionProgressRef.current?.({
-          phase: 'tensorflow-init',
-          message: 'Initializing TensorFlow...',
-          percentage: 20,
+          phase: 'camera',
+          message: 'Camera ready',
+          percentage: 25,
         });
 
         // Initialize TensorFlow
@@ -338,9 +338,9 @@ export function usePoseDetection(
         await tf.ready();
 
         onDetectionProgressRef.current?.({
-          phase: 'model-download',
-          message: 'Loading pose detection model...',
-          percentage: 40,
+          phase: 'ai',
+          message: 'Loading AI model...',
+          percentage: 50,
         });
 
         // Create detector
