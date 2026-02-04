@@ -41,6 +41,9 @@ export default function LazyWebcam(props: LazyWebcamProps) {
       // Dynamically import the heavy Webcam component
       import('./Webcam')
         .then((module) => {
+          if (!module.default) {
+            throw new Error('Webcam module has no default export');
+          }
           setWebcamComponent(module.default as React.ComponentType<LazyWebcamProps>);
           setIsLoading(false);
         })
@@ -83,10 +86,12 @@ export default function LazyWebcam(props: LazyWebcamProps) {
 
   // Render the actual Webcam component once loaded
   if (WebcamComponent && props.isActive) {
+    // Defensive: ensure mode is never null/undefined
+    const safeMode = props.mode ?? 'pushups';
     return (
       <WebcamComponent
         key={props.isActive ? 'webcam-active' : 'webcam-inactive'}
-        mode={props.mode}
+        mode={safeMode}
         onRepCount={props.onRepCount}
         isActive={props.isActive}
         onFilterChange={props.onFilterChange}
