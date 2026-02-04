@@ -759,67 +759,123 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
           {started && (
             <>
-              {/* Unified game canvas container - standardized across mobile/desktop */}
-              <div
-                id="canvasContainer"
-                aria-label="Game Canvas"
-                className={`w-full relative border-2 border-yellow-400 ${isMobile ? '' : 'h-full'}`}
-                style={
-                  isMobile
-                    ? { flex: '1', minHeight: '50%', maxWidth: '100%', overflow: 'hidden' }
-                    : {}
-                }
-              >
-                {memoizedWebcam}
+              {/* Mobile layout */}
+              {isMobile ? (
+                <div
+                  id="canvasContainer"
+                  aria-label="Game Canvas"
+                  className="w-full relative border-2 border-yellow-400"
+                  style={{
+                    flex: '1',
+                    minHeight: '50%',
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {memoizedWebcam}
 
-                {/* Unified HUD overlay - timer and reps at top center for all devices */}
-                <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-3 sm:gap-4 z-50 pointer-events-none">
-                  <div className="timer bg-black/90 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-yellow-500 shadow-[0_0_15px_rgba(252,177,49,0.3)] flex flex-col items-center">
-                    <span className="text-[9px] sm:text-[10px] uppercase text-yellow-500 font-black tracking-widest mb-0 sm:mb-1">
-                      {mode}
-                    </span>
-                    <span className="text-xl sm:text-2xl font-black font-mono tracking-tighter text-white">
-                      {formatTime(timeLeft)}
-                    </span>
-                  </div>
-                  <div className="rep-counter-container bg-black/90 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex flex-col items-center">
-                    <span className="text-[9px] sm:text-[10px] uppercase text-blue-400 font-black tracking-widest mb-0 sm:mb-1">
-                      Reps
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl sm:text-3xl font-black text-white">{repCount}</span>
-                      <span className="text-[10px] sm:text-xs text-blue-400/60 font-bold hidden sm:inline">
-                        pts
+                  {/* Mobile HUD - timer and reps at top center */}
+                  <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-3 z-50 pointer-events-none">
+                    <div className="timer bg-black/90 backdrop-blur-sm px-4 py-2 rounded-xl border-2 border-yellow-500 shadow-[0_0_15px_rgba(252,177,49,0.3)] flex flex-col items-center">
+                      <span className="text-[9px] uppercase text-yellow-500 font-black tracking-widest">
+                        {mode}
+                      </span>
+                      <span className="text-xl font-black font-mono tracking-tighter text-white">
+                        {formatTime(timeLeft)}
                       </span>
                     </div>
+                    <div className="rep-counter-container bg-black/90 backdrop-blur-sm px-4 py-2 rounded-xl border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex flex-col items-center">
+                      <span className="text-[9px] uppercase text-blue-400 font-black tracking-widest">
+                        Reps
+                      </span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-black text-white">{repCount}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pose loading overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <UnifiedLoader
+                      phase={
+                        !poseState.hasCamera
+                          ? 'camera'
+                          : !poseState.hasPoseDetection
+                            ? 'ai'
+                            : !poseState.poseDetected
+                              ? 'positioning'
+                              : 'ready'
+                      }
+                      progress={detectionProgress?.percentage}
+                      isVisible={
+                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
+                      }
+                      isOverlay={true}
+                    />
+                  </div>
+
+                  {/* Debug overlay */}
+                  {process.env.NODE_ENV === 'development' && started && !poseState.poseDetected && (
+                    <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded z-50">
+                      Debug: Overlay visible
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Desktop layout */
+                <div
+                  id="canvasContainer"
+                  aria-label="Game Canvas"
+                  className="w-full h-full relative"
+                >
+                  {memoizedWebcam}
+
+                  {/* Pose loading overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <UnifiedLoader
+                      phase={
+                        !poseState.hasCamera
+                          ? 'camera'
+                          : !poseState.hasPoseDetection
+                            ? 'ai'
+                            : !poseState.poseDetected
+                              ? 'positioning'
+                              : 'ready'
+                      }
+                      progress={detectionProgress?.percentage}
+                      isVisible={
+                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
+                      }
+                      isOverlay={true}
+                    />
+                  </div>
+
+                  {/* Debug overlay */}
+                  {process.env.NODE_ENV === 'development' && started && !poseState.poseDetected && (
+                    <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded z-50">
+                      Debug: Overlay visible
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Desktop HUD - outside canvasContainer */}
+              {!isMobile && (
+                <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-4 z-50 pointer-events-none">
+                  <div className="timer bg-black/80 backdrop-blur-md px-6 py-3 rounded-2xl border-2 border-yellow-500 shadow-[0_0_20px_rgba(252,177,49,0.3)] flex flex-col items-center">
+                    <span className="text-[10px] uppercase text-yellow-500 font-black tracking-widest mb-1">
+                      {mode}
+                    </span>
+                    <span className="text-2xl font-black text-white">{formatTime(timeLeft)}</span>
+                  </div>
+                  <div className="rep-counter-container bg-black/80 backdrop-blur-md px-6 py-3 rounded-2xl border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)] flex flex-col items-center">
+                    <span className="text-[10px] uppercase text-blue-400 font-black tracking-widest mb-1">
+                      Reps
+                    </span>
+                    <span className="text-3xl font-black text-white">{repCount}</span>
                   </div>
                 </div>
-
-                {/* Pose loading overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <UnifiedLoader
-                    phase={
-                      !poseState.hasCamera
-                        ? 'camera'
-                        : !poseState.hasPoseDetection
-                          ? 'ai'
-                          : !poseState.poseDetected
-                            ? 'positioning'
-                            : 'ready'
-                    }
-                    progress={detectionProgress?.percentage}
-                    isVisible={started && (!poseState.hasPoseDetection || !poseState.poseDetected)}
-                    isOverlay={true}
-                  />
-                </div>
-
-                {/* Debug overlay */}
-                {process.env.NODE_ENV === 'development' && started && !poseState.poseDetected && (
-                  <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded z-50">
-                    Debug: Overlay visible
-                  </div>
-                )}
-              </div>
+              )}
             </>
           )}
         </div>
