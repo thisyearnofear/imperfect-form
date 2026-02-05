@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { Spinner, UnifiedLoader } from '@/components/ui';
+import { UnifiedLoader } from '@/components/ui';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { useLoadingPhase } from '@/hooks/useLoadingPhase';
 import { cameraManager, stopAllCameras as stopAllCamerasUtil } from '@/utils/cameraManager';
@@ -12,7 +12,12 @@ import { usePlatform } from '@/contexts/PlatformContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import ModeSwitch from './ModeSwitch';
 import { AgentInsightTray } from './AgentInsightTray';
+import useSwipeGesture from '@/hooks/useSwipeGesture';
+import { GameControls } from './GameControls';
+
 import IntroDialog from '@/components/auth/IntroDialog';
+import { GameHUD, RepFeedbackOverlay } from './GameHUD';
+import { GameLoadingOverlay, DebugOverlay } from './GameOverlay';
 
 import { useFullscreen } from '../../hooks/useFullscreen';
 import FullscreenExitButton from '../ui/FullscreenExitButton';
@@ -80,67 +85,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   );
 
   // Swipe gesture handling for mobile
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const touchEndRef = useRef<{ x: number; y: number } | null>(null);
   const { isMobile, isClient } = useDeviceDetect();
 
-  const minSwipeDistance = 80;
-  const maxVerticalSwipe = 120;
-
-  // Touch event handlers for swipe gestures
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isMobile) return;
-      touchEndRef.current = null;
-      touchStartRef.current = {
-        x: e.targetTouches[0].clientX,
-        y: e.targetTouches[0].clientY,
-      };
-    },
-    [isMobile]
+  // Swipe gesture handling for mobile using custom hook
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeGesture(
+    ['instructions', 'settings', 'profile', 'memory', 'memory-detail', 'profile-search'],
+    currentMode,
+    setCurrentMode
   );
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isMobile || !touchStartRef.current) return;
-      touchEndRef.current = {
-        x: e.targetTouches[0].clientX,
-        y: e.targetTouches[0].clientY,
-      };
-    },
-    [isMobile]
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    if (!isMobile || !touchStartRef.current || !touchEndRef.current) return;
-
-    const distanceX = touchStartRef.current.x - touchEndRef.current.x;
-    const distanceY = touchStartRef.current.y - touchEndRef.current.y;
-    const isLeftSwipe = distanceX > minSwipeDistance;
-    const isRightSwipe = distanceX < -minSwipeDistance;
-    const isVerticalSwipe = Math.abs(distanceY) > maxVerticalSwipe;
-
-    // Don't trigger swipe if there's significant vertical movement
-    if (isVerticalSwipe) return;
-
-    const modes: (
-      | 'instructions'
-      | 'settings'
-      | 'profile'
-      | 'memory'
-      | 'memory-detail'
-      | 'profile-search'
-    )[] = ['instructions', 'settings', 'profile', 'memory', 'memory-detail', 'profile-search'];
-    const currentIndex = modes.indexOf(currentMode);
-
-    if (isLeftSwipe && currentIndex < modes.length - 1) {
-      // Swipe left → next mode
-      setCurrentMode(modes[currentIndex + 1]);
-    } else if (isRightSwipe && currentIndex > 0) {
-      // Swipe right → previous mode
-      setCurrentMode(modes[currentIndex - 1]);
-    }
-  }, [isMobile, currentMode]);
 
   const { lockLandscape, unlock } = useOrientationLock();
   const [isLandscapeLocked, setIsLandscapeLocked] = useState(false);
@@ -780,43 +732,65 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
           {started && (
             <>
-              {/* Mobile layout - CSS responsive instead of JS conditional */}
-              <div
-                id="canvasContainerMobile"
-                aria-label="Game Canvas Mobile"
-                className="w-full relative md:hidden"
-                style={{
-                  height: '100%',
-                  minHeight: '300px',
-                  maxWidth: '100%',
-                  overflow: 'visible',
-                }}
-              >
-                {memoizedWebcam}
+              {isMobile ? (
+                /* Mobile layout */
+                <div
+                  id="canvasContainerMobile"
+                  aria-label="Game Canvas Mobile"
+                  className="w-full relative"
+                  style={{
+                    height: '100%',
+                    minHeight: '300px',
+                    maxWidth: '100%',
+                    overflow: 'visible',
+                  }}
+                >
+                  {memoizedWebcam}
 
-                {/* Mobile HUD - timer and reps at top center */}
-                <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-3 z-[100] pointer-events-none">
-                  <div className="timer bg-black/90 backdrop-blur-sm px-4 py-2 rounded-xl border-2 border-yellow-500 shadow-[0_0_15px_rgba(252,177,49,0.3)] flex flex-col items-center">
-                    <span className="text-[9px] uppercase text-yellow-500 font-black tracking-widest">
-                      {mode}
-                    </span>
-                    <span className="text-xl font-black font-mono tracking-tighter text-white">
-                      {formatTime(timeLeft)}
-                    </span>
-                  </div>
-                  <div className="rep-counter-container bg-black/90 backdrop-blur-sm px-4 py-2 rounded-xl border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex flex-col items-center">
-                    <span className="text-[9px] uppercase text-blue-400 font-black tracking-widest">
-                      Reps
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-white">{repCount}</span>
-                    </div>
-                  </div>
+                  <GameHUD
+                    mode={mode}
+                    timeLeft={timeLeft}
+                    repCount={repCount}
+                    formatTime={formatTime}
+                  />
+
+                  <GameLoadingOverlay
+                    phase={
+                      !poseState.hasCamera
+                        ? 'camera'
+                        : !poseState.hasPoseDetection
+                          ? 'ai'
+                          : !poseState.poseDetected
+                            ? 'positioning'
+                            : 'ready'
+                    }
+                    progress={detectionProgress?.percentage}
+                    isVisible={started && (!poseState.hasPoseDetection || !poseState.poseDetected)}
+                  />
+
+                  <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+
+                  <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
                 </div>
+              ) : (
+                /* Desktop layout */
+                <div
+                  id="canvasContainerDesktop"
+                  aria-label="Game Canvas Desktop"
+                  className="w-full h-full relative"
+                >
+                  {memoizedWebcam}
 
-                {/* Pose loading overlay */}
-                <div className="absolute inset-0 flex items-center justify-center z-[90] pointer-events-none">
-                  <UnifiedLoader
+                  {/* Desktop HUD is overlaid on top of canvas as well to match mobile style for consistency, 
+                      or we can keep it outside if strictly required. 
+                      Based on prev code, desktop HUD was outside. 
+                      However, since GameHUD is absolute, we can place it here too. 
+                      Let's stick to the previous 'outside the canvas' div if we want to mimic exact structure,
+                      but putting it inside the relative container is cleaner if dimensions match. 
+                      Actually, let's keep the structure: Canvas Div + HUD Div.
+                  */}
+
+                  <GameLoadingOverlay
                     phase={
                       !poseState.hasCamera
                         ? 'camera'
@@ -830,157 +804,37 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     isVisible={started && (!poseState.hasPoseDetection || !poseState.poseDetected)}
                     isOverlay={true}
                   />
-                </div>
 
-                {/* Visual Rep Feedback Overlay */}
-                {repFeedback.show && (
-                  <div className="absolute inset-0 flex items-center justify-center z-[85] pointer-events-none">
-                    <div className="bg-green-500/30 backdrop-blur-sm rounded-full p-8 animate-bounce">
-                      <span className="text-6xl font-black text-white drop-shadow-lg">
-                        +{repFeedback.count}
-                      </span>
-                    </div>
-                  </div>
-                )}
+                  <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
 
-                {/* Debug overlay */}
-                {process.env.NODE_ENV === 'development' && started && !poseState.poseDetected && (
-                  <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded z-50">
-                    Debug: Overlay visible
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop layout - CSS responsive instead of JS conditional */}
-              <div
-                id="canvasContainerDesktop"
-                aria-label="Game Canvas Desktop"
-                className="w-full h-full relative hidden md:block"
-              >
-                {memoizedWebcam}
-
-                {/* Pose loading overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <UnifiedLoader
-                    phase={
-                      !poseState.hasCamera
-                        ? 'camera'
-                        : !poseState.hasPoseDetection
-                          ? 'ai'
-                          : !poseState.poseDetected
-                            ? 'positioning'
-                            : 'ready'
-                    }
-                    progress={detectionProgress?.percentage}
-                    isVisible={started && (!poseState.hasPoseDetection || !poseState.poseDetected)}
-                    isOverlay={true}
+                  {/* Desktop HUD can overlay the webcam container just like mobile */}
+                  <GameHUD
+                    mode={mode}
+                    timeLeft={timeLeft}
+                    repCount={repCount}
+                    formatTime={formatTime}
                   />
+                  <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
                 </div>
-
-                {/* Debug overlay */}
-                {process.env.NODE_ENV === 'development' && started && !poseState.poseDetected && (
-                  <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded z-50">
-                    Debug: Overlay visible
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop HUD - outside canvasContainer, shown only on desktop */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 hidden md:flex justify-center items-start gap-4 z-50 pointer-events-none">
-                <div className="timer bg-black/80 backdrop-blur-md px-6 py-3 rounded-2xl border-2 border-yellow-500 shadow-[0_0_20px_rgba(252,177,49,0.3)] flex flex-col items-center">
-                  <span className="text-[10px] uppercase text-yellow-500 font-black tracking-widest mb-1">
-                    {mode}
-                  </span>
-                  <span className="text-2xl font-black text-white">{formatTime(timeLeft)}</span>
-                </div>
-                <div className="rep-counter-container bg-black/80 backdrop-blur-md px-6 py-3 rounded-2xl border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)] flex flex-col items-center">
-                  <span className="text-[10px] uppercase text-blue-400 font-black tracking-widest mb-1">
-                    Reps
-                  </span>
-                  <span className="text-3xl font-black text-white">{repCount}</span>
-                </div>
-              </div>
+              )}
             </>
           )}
         </div>
 
-        <div
-          id="controls"
-          className={`${isMobile ? 'mobile-controls' : 'mt-4'} controls-container`}
-          style={{ marginBottom: isMobile ? '8px' : '0' }}
-        >
-          {started ? (
-            <div className="controls-enter w-full flex gap-3 items-center">
-              <div className={`min-w-0 ${isMobile ? 'coachy-wrap' : 'flex-1'}`}>
-                <AgentInsightTray
-                  metrics={metrics}
-                  mode={mode}
-                  voiceEnabled={voiceEnabled}
-                  repCount={repCount}
-                  userId={wallet.address || undefined}
-                />
-              </div>
-              <button
-                id="stopButton"
-                className={`touch-manipulation font-bold touch-target stop-button-discrete transition-all duration-200 hover:scale-105 active:scale-95 ${
-                  isMobile
-                    ? 'py-4 px-6 text-base min-h-[56px] min-w-[80px] rounded-xl shadow-lg'
-                    : 'py-3 px-5 text-sm'
-                }`}
-                style={
-                  isMobile
-                    ? {
-                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                        boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
-                      }
-                    : {}
-                }
-                aria-label="Stop game"
-                onClick={handleStop}
-              >
-                {isMobile ? '■' : 'STOP'}
-              </button>
-            </div>
-          ) : (
-            <div className="flex justify-between w-full h-full items-center controls-enter">
-              <ModeSwitch
-                value={mode}
-                disabled={started}
-                onChange={setMode}
-                className={isMobile ? 'mobile-mode-switch' : ''}
-              />
-              <div className="flex gap-2">
-                <button
-                  id="startButton"
-                  className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
-                  style={{ minHeight: isMobile ? '50px' : 'auto' }}
-                  aria-label="Start game"
-                  onClick={handleStart}
-                  disabled={started || !finalAddress}
-                  title={
-                    !finalAddress
-                      ? 'Sign in to start'
-                      : started
-                        ? 'Game already started'
-                        : 'Start game'
-                  }
-                >
-                  START
-                </button>
-                <button
-                  id="resetButton"
-                  className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
-                  style={{ minHeight: isMobile ? '50px' : 'auto' }}
-                  aria-label="Reset game"
-                  onClick={handleReset}
-                  disabled={started}
-                >
-                  RESET
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <GameControls
+          started={started}
+          isMobile={isMobile}
+          metrics={metrics}
+          mode={mode}
+          voiceEnabled={voiceEnabled}
+          repCount={repCount}
+          userId={wallet.address || undefined}
+          finalAddress={finalAddress}
+          onStop={handleStop}
+          onStart={handleStart}
+          onReset={handleReset}
+          onModeChange={setMode}
+        />
       </div>
       {showIntroDialog && (
         <IntroDialog
