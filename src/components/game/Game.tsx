@@ -769,7 +769,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     flex: '1',
                     minHeight: '50%',
                     maxWidth: '100%',
-                    overflow: 'hidden',
+                    overflow: 'visible',
                   }}
                 >
                   {memoizedWebcam}
@@ -887,7 +887,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         >
           {started ? (
             <div className="controls-enter w-full flex gap-3 items-center">
-              <div className="flex-1 min-w-0">
+              <div className={`min-w-0 ${isMobile ? 'coachy-wrap' : 'flex-1'}`}>
                 <AgentInsightTray
                   metrics={metrics}
                   mode={mode}

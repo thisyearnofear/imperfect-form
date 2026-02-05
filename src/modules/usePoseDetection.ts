@@ -1,9 +1,9 @@
 import { useEffect, useRef, RefObject, useState, useCallback } from 'react';
 import { WorkerMessage, WorkerResponse, BiomechanicalState, Keypoint } from '../types/mediapipe';
+import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
 import { SessionLogger, SessionSummary } from '../services/sessionLogger';
-import * as tf from '@tensorflow/tfjs-core';
-import '@tensorflow/tfjs-backend-webgl';
-import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
+import { getPoseDetectionService } from '../services/PoseDetectionService';
+import type { PoseDetector } from '@tensorflow-models/pose-detection';
 
 type ExerciseMode = 'pushups' | 'squats';
 
@@ -315,6 +315,35 @@ export function usePoseDetection(
       console.log('Using main-thread pose detection (mobile fallback)');
 
       try {
+        const service = getPoseDetectionService();
+        let unsubscribeProgress: (() => void) | undefined;
+        if (onDetectionProgressRef.current) {
+          unsubscribeProgress = service.onProgress((progress) => {
+            let phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready' = 'ai';
+            if (progress.phase === 'initial') phase = 'initial';
+            if (progress.phase === 'ready') phase = 'ready';
+            onDetectionProgressRef.current?.({
+              phase,
+              message: progress.message,
+              percentage: progress.percentage,
+            });
+          });
+        }
+
+        try {
+          await service.initializeTensorFlow(isMobile);
+        } catch (tfError) {
+          console.error('Failed to initialize TensorFlow:', tfError);
+          notifyStateChange({ isLoading: false, hasPoseDetection: false });
+          onDetectionProgressRef.current?.({
+            phase: 'ai',
+            message: 'AI backend failed to initialize',
+            percentage: 0,
+          });
+          if (unsubscribeProgress) unsubscribeProgress();
+          return;
+        }
+
         const constraints = {
           video: {
             width: isMobile ? 480 : 640,
@@ -334,42 +363,31 @@ export function usePoseDetection(
           percentage: 25,
         });
 
-        // Initialize TensorFlow with fallback for mobile Safari quirks
-        try {
-          await tf.setBackend('webgl');
-          await tf.ready();
-        } catch (err) {
-          console.warn('WebGL backend init failed, falling back to CPU', err);
-          try {
-            await tf.setBackend('cpu');
-            await tf.ready();
-          } catch (err2) {
-            console.error('CPU backend init failed', err2);
-            notifyStateChange({ isLoading: false, hasPoseDetection: false });
-            onDetectionProgressRef.current?.({
-              phase: 'ai',
-              message: 'AI backend failed to initialize',
-              percentage: 0,
-            });
-            return;
-          }
+        if (isMobile) {
+          const rect = canvas.getBoundingClientRect();
+          canvas.width = rect.width * window.devicePixelRatio;
+          canvas.height = rect.height * window.devicePixelRatio;
+        } else {
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
         }
 
-        onDetectionProgressRef.current?.({
-          phase: 'ai',
-          message: 'Loading AI model...',
-          percentage: 50,
-        });
-
-        // Create detector
-        const modelType = isMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
-        detectorRef.current = await createDetector(SupportedModels.MoveNet, {
-          modelType: modelType as any,
-          enableSmoothing: true,
-        });
-
-        notifyStateChange({ hasPoseDetection: true, isLoading: false });
-        onDetectionProgressRef.current?.({ phase: 'ready', message: 'Ready!', percentage: 100 });
+        try {
+          detectorRef.current = await service.initializeDetector(isMobile);
+          notifyStateChange({ hasPoseDetection: true, isLoading: false });
+          onDetectionProgressRef.current?.({ phase: 'ready', message: 'Ready!', percentage: 100 });
+        } catch (modelError) {
+          console.error('Error initializing pose detection model:', modelError);
+          notifyStateChange({ isLoading: false, hasPoseDetection: false });
+          onDetectionProgressRef.current?.({
+            phase: 'ai',
+            message: 'AI model failed to load',
+            percentage: 0,
+          });
+          return;
+        } finally {
+          if (unsubscribeProgress) unsubscribeProgress();
+        }
 
         // Start detection loop with throttling on mobile (tuned by device class)
         const getMobileDetectionIntervalMs = () => {
@@ -465,7 +483,17 @@ export function usePoseDetection(
                 const ctx = canvasRef.current.getContext('2d');
                 if (ctx) {
                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                  // Draw skeleton here if needed
+                  drawSkeleton(ctx as any, keypoints, safeMode);
+                  drawFeedback(ctx as any, safeMode, repState, metrics.depth, metrics.warnings);
+                }
+              }
+            } else {
+              // Clear canvas and draw basic feedback if no pose detected
+              if (canvasRef.current) {
+                const ctx = canvasRef.current.getContext('2d');
+                if (ctx) {
+                  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                  drawFeedback(ctx as any, safeMode, 'middle', 0, []);
                 }
               }
             }
@@ -511,6 +539,13 @@ export function usePoseDetection(
           console.warn('Error disposing detector:', e);
         }
         detectorRef.current = null;
+      }
+      // Dispose service resources (main-thread fallback uses it)
+      try {
+        const service = getPoseDetectionService();
+        service.dispose();
+      } catch (e) {
+        // No-op if service is not in use
       }
 
       // Clean up animation frame
