@@ -22,3 +22,6 @@ export {
 // Notification system (Phase 2)
 export { useNotification } from './useNotification';
 export type { NotificationType } from './useNotification';
+
+// Haptic feedback for mobile UX enhancement
+export { useHapticFeedback } from './useHapticFeedback';

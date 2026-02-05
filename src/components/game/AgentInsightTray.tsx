@@ -161,9 +161,8 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
       if (newFeedback.message !== lastMessageRef.current) {
         setFeedback(newFeedback);
         setPulse(true);
-        const timer = setTimeout(() => setPulse(false), 400);
+        setTimeout(() => setPulse(false), 400);
         lastMessageRef.current = newFeedback.message;
-        return () => clearTimeout(timer);
       }
     });
   }, [metricsHash, mode, speak, startTransition]);

@@ -68,6 +68,7 @@ export interface SummaryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onViewLeaderboard?: () => void;
+  onPlayAgain?: () => void;
   repCount: number;
   timeLeft: number;
   mode?: 'pushups' | 'squats';
@@ -79,6 +80,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   isOpen,
   onClose,
   onViewLeaderboard,
+  onPlayAgain,
   repCount,
   timeLeft,
   mode = 'pushups',
@@ -479,7 +481,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <p
                     className={`text-xs ${STATUS_STYLES.submitting.className} mt-3 animate-pulse font-bold tracking-widest uppercase`}
                   >
-                    Confirming Transation...
+                    Confirming Transaction...
                   </p>
                 )}
                 {submissionStatus === 'error' && (
@@ -550,13 +552,30 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
             {/* Success message - show when successfully submitted */}
             {submissionStatus === 'success' && (
-              <div className="rounded-xl bg-green-500/10 p-6 text-center space-y-3 border border-green-500/30 animate-in fade-in zoom-in duration-300">
+              <div className="rounded-xl bg-green-500/10 p-6 text-center space-y-4 border border-green-500/30 animate-in fade-in zoom-in duration-300">
                 <div className="text-green-400 text-xl font-black tracking-tight">
                   MISSION SUCCESSFUL
                 </div>
                 <div className="text-[10px] text-green-400/60 uppercase font-black tracking-widest">
                   Onchain data stored
                 </div>
+                {/* Play Again Button */}
+                {onPlayAgain && (
+                  <button
+                    onClick={() => {
+                      onPlayAgain();
+                      onClose();
+                    }}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-blue-500 flex items-center justify-center gap-2"
+                    style={{
+                      fontFamily: "'Press Start 2P', monospace",
+                      fontSize: '11px',
+                    }}
+                  >
+                    <span>🎮</span>
+                    <span>PLAY AGAIN</span>
+                  </button>
+                )}
               </div>
             )}
           </div>

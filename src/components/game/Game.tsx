@@ -20,6 +20,7 @@ import { SplitFlapInstructions } from '../ui/SplitFlapText';
 import useOrientationLock from '../../hooks/useOrientationLock';
 import { useUserStats } from '../../hooks/useUserStats';
 import { isFarcasterMiniApp } from '../../utils/farcasterMiniApp';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 
 import { Score } from '@/types';
 
@@ -224,6 +225,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   const [metrics, setMetrics] = useState<import('@/types/mediapipe').BiomechanicalState | null>(
     null
   );
+
+  // Haptic feedback for rep counting
+  const { triggerRepFeedback } = useHapticFeedback();
+
+  // Visual rep feedback state
+  const [repFeedback, setRepFeedback] = useState<{ show: boolean; count: number }>({
+    show: false,
+    count: 0,
+  });
   // Intro dialog state - now finalAddress is available
   const [showIntroDialog, setShowIntroDialog] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -453,7 +463,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   // Handle rep counting from webcam component
   const handleRepCount = useCallback(
     (count: number) => {
+      const prevCount = repCount;
       setRepCount(count);
+
+      // Trigger feedback when rep count increases
+      if (count > prevCount && count > 0) {
+        // Haptic feedback
+        triggerRepFeedback();
+
+        // Visual feedback
+        setRepFeedback({ show: true, count });
+        setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 600);
+      }
 
       // Start the timer on the first rep if it hasn't started yet
       if (count === 1 && started && !timerRef.current) {
@@ -477,7 +498,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         }).catch((err) => console.warn('Failed to track workout:', err));
       }
     },
-    [started, mode, user?.fid] // Remove timeLeft from dependencies
+    [started, mode, user?.fid, repCount, triggerRepFeedback] // Remove timeLeft from dependencies
   );
 
   // Keep timeLeftRef in sync with timeLeft state
@@ -814,6 +835,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     />
                   </div>
 
+                  {/* Visual Rep Feedback Overlay */}
+                  {repFeedback.show && (
+                    <div className="absolute inset-0 flex items-center justify-center z-[85] pointer-events-none">
+                      <div className="bg-green-500/30 backdrop-blur-sm rounded-full p-8 animate-bounce">
+                        <span className="text-6xl font-black text-white drop-shadow-lg">
+                          +{repFeedback.count}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Debug overlay */}
                   {process.env.NODE_ENV === 'development' && started && !poseState.poseDetected && (
                     <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded z-50">
@@ -893,16 +925,28 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                   mode={mode}
                   voiceEnabled={voiceEnabled}
                   repCount={repCount}
-                  userId={wallet.address}
+                  userId={wallet.address || undefined}
                 />
               </div>
               <button
                 id="stopButton"
-                className="py-3 px-5 text-sm touch-manipulation font-bold mobile-controls-button touch-target stop-button-discrete"
+                className={`touch-manipulation font-bold touch-target stop-button-discrete transition-all duration-200 hover:scale-105 active:scale-95 ${
+                  isMobile
+                    ? 'py-4 px-6 text-base min-h-[56px] min-w-[80px] rounded-xl shadow-lg'
+                    : 'py-3 px-5 text-sm'
+                }`}
+                style={
+                  isMobile
+                    ? {
+                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                        boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+                      }
+                    : {}
+                }
                 aria-label="Stop game"
                 onClick={handleStop}
               >
-                STOP
+                {isMobile ? '■' : 'STOP'}
               </button>
             </div>
           ) : (
@@ -997,6 +1041,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           console.log('Game: Closing SummaryModal and opening Leaderboard');
           setShowSummary(false);
           setShowExpandedLeaderboard(true);
+        }}
+        onPlayAgain={() => {
+          console.log('Game: Play Again clicked');
+          handleReset();
         }}
         repCount={repCount}
         timeLeft={timeLeft}
