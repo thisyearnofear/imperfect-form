@@ -238,18 +238,22 @@ export default function UnifiedConnectButton({
             {/* Section 3: Profile Button */}
             {onModeChange && (
               <button
-                onClick={() =>
-                  !workoutStarted &&
-                  onModeChange(currentMode === 'profile' ? 'instructions' : 'profile')
-                }
+                onClick={() => {
+                  if (workoutStarted) return;
+                  if (currentMode === 'profile') {
+                    handleDisconnect();
+                  } else {
+                    onModeChange('profile');
+                  }
+                }}
                 disabled={workoutStarted}
                 className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation flex-1 ${
                   currentMode === 'profile' ? 'bg-white/30' : ''
                 } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
-                aria-label={currentMode === 'profile' ? 'Close profile' : 'Open profile'}
+                aria-label={currentMode === 'profile' ? 'Logout' : 'Open profile'}
               >
                 <span className="text-white text-sm font-medium">
-                  {currentMode === 'profile' ? 'Close' : 'Profile'}
+                  {currentMode === 'profile' ? 'Logout' : 'Profile'}
                 </span>
               </button>
             )}
@@ -265,10 +269,10 @@ export default function UnifiedConnectButton({
                 className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation flex-1 ${
                   currentMode === 'memory' ? 'bg-white/30' : ''
                 } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
-                aria-label={currentMode === 'memory' ? 'Close memory' : 'Open memory'}
+                aria-label={currentMode === 'memory' ? 'Back' : 'Open memory'}
               >
                 <span className="text-white text-sm font-medium">
-                  {currentMode === 'memory' ? 'Close' : 'Memory'}
+                  {currentMode === 'memory' ? 'Back' : 'Memory'}
                 </span>
               </button>
             )}
