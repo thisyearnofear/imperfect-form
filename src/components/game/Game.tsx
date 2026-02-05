@@ -82,7 +82,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   // Swipe gesture handling for mobile
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const touchEndRef = useRef<{ x: number; y: number } | null>(null);
-  const { isMobile } = useDeviceDetect();
+  const { isMobile, isClient } = useDeviceDetect();
 
   const minSwipeDistance = 80;
   const maxVerticalSwipe = 120;
