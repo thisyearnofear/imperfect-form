@@ -73,6 +73,7 @@ export const AI_PROVIDERS: Partial<Record<AIProvider, AIProviderConfig>> = {
 
 export interface CoachRequest {
   mode: 'pushups' | 'squats';
+  userId?: string; // User wallet address or ID - for persistent sessions
   metrics: {
     trunkLean: number;
     kneeValgus: number;
@@ -84,14 +85,50 @@ export interface CoachRequest {
   };
   repCount: number;
   preferredProvider?: AIProvider;
+  sessionId?: string; // Persistent session ID from client
 }
 
+/**
+ * Individual coaching issue
+ * Structure allows multi-issue feedback, prioritization, and detailed analysis
+ */
+export interface CoachingIssue {
+  type:
+    | 'stability'
+    | 'depth'
+    | 'trunk_lean'
+    | 'knee_valgus'
+    | 'ankle_flexion'
+    | 'symmetry'
+    | 'momentum'
+    | 'recovery';
+  severity: 'critical' | 'warning' | 'info';
+  current: number;
+  target: number;
+  cue: string;
+  priority: number;
+  confidence: number;
+}
+
+/**
+ * Enhanced coach response supporting multi-issue feedback
+ * Also includes legacy single-message format for backward compatibility
+ */
 export interface CoachResponse {
+  // Legacy format (maintained for backward compatibility)
   feedback: string;
   severity: 'info' | 'warning' | 'critical';
   shouldSpeak: boolean;
-  provider: AIProvider;
+
+  // New multi-issue format
+  issues?: CoachingIssue[];
+  summary?: string;
+  primaryIssue?: CoachingIssue | null;
+
+  // Metadata
+  provider: AIProvider | 'local' | 'cached';
   latencyMs: number;
+  sessionTrend?: 'improving' | 'degrading' | 'stable';
 }
 
 /**
@@ -141,4 +178,103 @@ export function estimateCost(
   const inputCost = (inputTokens / 1000) * config.costPer1kTokens.input;
   const outputCost = (outputTokens / 1000) * config.costPer1kTokens.output;
   return inputCost + outputCost;
+}
+
+/**
+ * Circuit Breaker State Management
+ *
+ * Prevents thundering herd and credit waste:
+ * - Track failures per provider
+ * - Cool down provider after N consecutive failures
+ * - Resume after cooldown period
+ */
+interface CircuitBreakerState {
+  failureCount: number;
+  lastFailure: number;
+  isCoolingDown: boolean;
+}
+
+const circuitBreakerState = new Map<AIProvider, CircuitBreakerState>();
+const FAILURE_THRESHOLD = 3; // Open circuit after 3 failures
+const COOLDOWN_MS = 30000; // 30 second cooldown before retry
+
+function initializeBreaker(provider: AIProvider): CircuitBreakerState {
+  if (!circuitBreakerState.has(provider)) {
+    circuitBreakerState.set(provider, {
+      failureCount: 0,
+      lastFailure: 0,
+      isCoolingDown: false,
+    });
+  }
+  return circuitBreakerState.get(provider)!;
+}
+
+/**
+ * Record a failure for a provider
+ */
+export function recordProviderFailure(provider: AIProvider): void {
+  const state = initializeBreaker(provider);
+  state.failureCount++;
+  state.lastFailure = Date.now();
+
+  if (state.failureCount >= FAILURE_THRESHOLD) {
+    state.isCoolingDown = true;
+    console.warn(
+      `⚠️ Circuit breaker OPENED for ${provider} (${state.failureCount} failures). Cooldown: ${COOLDOWN_MS}ms`
+    );
+  }
+}
+
+/**
+ * Record a success for a provider (reset failures)
+ */
+export function recordProviderSuccess(provider: AIProvider): void {
+  const state = initializeBreaker(provider);
+  state.failureCount = 0;
+  state.isCoolingDown = false;
+  console.log(`✅ Circuit breaker RESET for ${provider}`);
+}
+
+/**
+ * Check if provider is available (not in cooldown)
+ */
+export function isProviderAvailable(provider: AIProvider): boolean {
+  const state = initializeBreaker(provider);
+
+  // Check if cooldown has expired
+  if (state.isCoolingDown && Date.now() - state.lastFailure > COOLDOWN_MS) {
+    state.isCoolingDown = false;
+    state.failureCount = 0; // Reset on cooldown recovery
+    console.log(`🔄 Circuit breaker HALF_OPEN for ${provider} (retrying)`);
+    return true;
+  }
+
+  return !state.isCoolingDown;
+}
+
+/**
+ * Get provider state (for monitoring)
+ */
+export function getProviderState(provider: AIProvider): CircuitBreakerState {
+  return initializeBreaker(provider);
+}
+
+/**
+ * Get the best available provider considering circuit breaker
+ * Prefers: configured + not cooling down + lowest priority
+ */
+export function getBestAvailableProvider(preferredProvider?: AIProvider): AIProviderConfig | null {
+  // Try preferred provider first if specified and available
+  if (preferredProvider) {
+    if (isProviderConfigured(preferredProvider) && isProviderAvailable(preferredProvider)) {
+      return AI_PROVIDERS[preferredProvider] || null;
+    }
+  }
+
+  // Get all available providers (configured + not cooling down)
+  const available = getAvailableProviders()
+    .filter((p) => isProviderConfigured(p.name) && isProviderAvailable(p.name))
+    .sort((a, b) => a.priority - b.priority);
+
+  return available.length > 0 ? available[0] : null;
 }

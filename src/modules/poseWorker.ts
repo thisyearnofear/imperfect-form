@@ -11,6 +11,9 @@ let repState: 'up' | 'down' | 'middle' = 'middle';
 let repCount = 0;
 let mode: 'pushups' | 'squats' = 'pushups';
 let lastRepTime = 0;
+let lastProcessTime = 0;
+let workerIsMobile = false;
+const DESKTOP_FRAME_INTERVAL_MS = 66; // ~15fps for stability
 const MIN_TIME_BETWEEN_REPS = 800; // ms
 
 interface Point {
@@ -164,7 +167,7 @@ self.addEventListener('message', async (event) => {
       const offscreen: OffscreenCanvas = data.canvas;
       // Defensive: ensure mode is never null/undefined
       mode = (data.mode ?? 'pushups') as 'pushups' | 'squats';
-      const isMobile = !!data.isMobile;
+      workerIsMobile = !!data.isMobile;
 
       offscreen.width = data.width;
       offscreen.height = data.height;
@@ -176,7 +179,7 @@ self.addEventListener('message', async (event) => {
       // Consolidate model selection logic:
       // Desktop Squats/Pushups -> Thunder (Best accuracy)
       // Mobile -> Lightning (Best performance)
-      const modelType = isMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
+      const modelType = workerIsMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
 
       await disposeDetector();
 
@@ -200,6 +203,12 @@ self.addEventListener('message', async (event) => {
       }
 
       const bitmap: ImageBitmap = data.bitmap;
+      const now = performance.now();
+      if (!workerIsMobile && now - lastProcessTime < DESKTOP_FRAME_INTERVAL_MS) {
+        if (data.bitmap) data.bitmap.close();
+        return;
+      }
+      lastProcessTime = now;
 
       try {
         const poses = await detector.estimatePoses(bitmap);

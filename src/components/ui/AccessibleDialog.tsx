@@ -40,7 +40,7 @@ const variantStyles: Record<
       animation: 'fadeIn 300ms ease-in-out',
     },
     content:
-      'modal-content fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto overflow-x-hidden text-center focus:outline-none',
+      'imf-modal-content fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto overflow-x-hidden text-center focus:outline-none',
     contentStyle: {
       backgroundColor: designTokens.colors.background.primary,
       color: designTokens.colors.text.primary,
@@ -150,7 +150,7 @@ const variantStyles: Record<
       animation: 'fadeIn 300ms ease-in-out',
     },
     content:
-      'modal-content fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto overflow-x-hidden text-center focus:outline-none',
+      'imf-modal-content fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto overflow-x-hidden text-center focus:outline-none',
     contentStyle: {
       backgroundColor: designTokens.colors.background.primary,
       color: designTokens.colors.text.primary,

@@ -91,6 +91,25 @@
   text-overflow: ellipsis;
 }
 
+/* Desktop: make tray slightly narrower and taller to avoid STOP overlap */
+@media (min-width: 641px) {
+  .coachy-tray {
+    width: auto;
+    max-width: 72%;
+  }
+
+  .coachy-message {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .coachy-feedback {
+    min-height: 2.6rem;
+  }
+}
+
 .coachy-warning {
   color: var(--coachy-warning);
   text-shadow: 0 0 12px rgba(255, 51, 102, 0.4);
@@ -201,6 +220,49 @@
 
 .coachy-trace-line {
   white-space: nowrap;
+}
+
+/* Model selector styling */
+.coachy-select-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.coachy-select-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  font-weight: 700;
+}
+
+.coachy-select {
+  appearance: none;
+  background: linear-gradient(180deg, rgba(15, 15, 15, 0.9), rgba(0, 0, 0, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e5e7eb;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.35rem 1.75rem 0.35rem 0.6rem;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  background-image: linear-gradient(45deg, transparent 50%, #fcb131 50%),
+    linear-gradient(135deg, #fcb131 50%, transparent 50%);
+  background-position: calc(100% - 14px) calc(50% - 2px), calc(100% - 8px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.coachy-select:focus {
+  border-color: rgba(252, 177, 49, 0.8);
+  box-shadow: 0 0 0 2px rgba(252, 177, 49, 0.25);
+}
+
+.coachy-select option {
+  background: #0b0b0b;
+  color: #e5e7eb;
 }
 
 /* Toggle button */

@@ -8,7 +8,21 @@ import {
   getAvailableProviders,
   getNextProvider,
   isProviderConfigured,
+  recordProviderFailure,
+  recordProviderSuccess,
+  getBestAvailableProvider,
+  estimateCost,
 } from '@/config/aiProviders';
+import {
+  getCachedFeedback,
+  cacheFeedback,
+  hashMetrics,
+  shouldSkipAPICall,
+  recordCost,
+  getSessionStats,
+} from '@/lib/cacheManager';
+import { analyzeForm, convertToLegacyFormat, CoachingAnalysis } from '@/lib/coachingEngine';
+import { getOrCreateSessionId, updateSessionMetrics } from '@/lib/sessionManager';
 
 /**
  * Multi-Provider Live Coach API
@@ -21,41 +35,10 @@ import {
  * - Automatic provider rotation on failure
  * - User preference support
  * - Privacy-first option
+ * - Response caching with similarity detection
+ * - Circuit breaker pattern for provider reliability
+ * - Cost tracking and optimization
  */
-
-const COACHING_PROMPT = `You are Coachy, an expert biomechanics coach analyzing real-time exercise form.
-
-Your role:
-- Provide CONCISE, actionable feedback (max 10 words)
-- Focus on the most critical issue first
-- Use encouraging, motivational language
-- Be specific about body parts and movements
-
-Exercise Context:
-- Mode: {mode}
-- Current Rep: {repCount}
-
-Current Metrics:
-- Trunk Lean: {trunkLean}° (ideal: <30° for squats, <15° for pushups)
-- Knee Valgus: {kneeValgus}px (ideal: <30px, measures inward knee collapse)
-- Depth: {depth} (0-1 scale, ideal: >0.8)
-- Stability: {isStable}
-- Active Warnings: {warnings}
-
-Rules:
-1. If warnings exist, address the first one directly
-2. If depth < 0.3, say "Go deeper!" or "Lower down more!"
-3. If depth > 0.9, say "Perfect depth!" or "Excellent range!"
-4. If trunk lean > 45° (squats), say "Stay more upright!"
-5. If knee valgus > 40px, say "Push knees out!"
-6. If no issues, give brief encouragement
-
-Respond with ONLY a JSON object:
-{
-  "feedback": "Your concise feedback here",
-  "severity": "info" | "warning" | "critical",
-  "shouldSpeak": true/false (speak if warning or critical)
-}`;
 
 /**
  * Call Gemini API
@@ -83,6 +66,35 @@ async function callGemini(
   }
 
   return JSON.parse(jsonMatch[0]);
+}
+
+/**
+ * Generate feedback using unified coaching engine
+ * Single source of truth for ALL feedback logic
+ * Used when:
+ * - API providers are unavailable
+ * - Metrics haven't changed significantly
+ * - Session budget exhausted
+ */
+function generateCoachingFeedback(
+  metrics: any,
+  mode: string
+): { feedback: string; severity: string; shouldSpeak: boolean } {
+  const analysis = analyzeForm(
+    {
+      ...metrics,
+      trunkLean: metrics.trunkLean || 0,
+      kneeValgus: metrics.kneeValgus || 0,
+      ankleFlexion: metrics.ankleFlexion || 0,
+      depth: metrics.depth || 0,
+      symmetry: metrics.symmetry || 1,
+      isStable: metrics.isStable ?? true,
+      warnings: metrics.warnings || [],
+    },
+    mode as 'pushups' | 'squats'
+  );
+
+  return convertToLegacyFormat(analysis);
 }
 
 /**
@@ -137,27 +149,31 @@ async function callVenice(
 }
 
 /**
- * Call AI provider with automatic fallback
+ * Call AI provider with circuit breaker
+ *
+ * Features:
+ * - Uses circuit breaker to prevent repeated failures
+ * - Tracks provider success/failure
+ * - Cost estimation
+ * - Falls back to next available provider
  */
 async function callAIProvider(
   prompt: string,
   preferredProvider?: AIProvider
-): Promise<{ result: any; provider: AIProvider; latencyMs: number }> {
+): Promise<{ result: any; provider: AIProvider; latencyMs: number; estimatedCost: number }> {
   const startTime = Date.now();
   const failedProviders = new Set<AIProvider>();
 
-  // Start with preferred provider if specified and configured
+  // Get best available provider (considering circuit breaker)
   let currentProvider: AIProvider | null = null;
+  let config = getBestAvailableProvider(preferredProvider);
+  currentProvider = config?.name || null;
 
-  if (preferredProvider && isProviderConfigured(preferredProvider)) {
-    currentProvider = preferredProvider;
-  } else {
-    // Use highest priority available provider
-    const available = getAvailableProviders();
-    currentProvider = available.find((p) => isProviderConfigured(p.name))?.name || null;
+  if (!currentProvider) {
+    throw new Error('No AI providers available (all in cooldown or misconfigured)');
   }
 
-  while (currentProvider) {
+  while (currentProvider && config) {
     try {
       console.log(`🤖 Attempting AI call with provider: ${currentProvider}`);
 
@@ -171,16 +187,26 @@ async function callAIProvider(
       }
 
       const latencyMs = Date.now() - startTime;
-      console.log(`✅ AI call successful with ${currentProvider} (${latencyMs}ms)`);
 
-      return { result, provider: currentProvider, latencyMs };
+      // Estimate cost (rough: ~150 input tokens + ~50 output tokens)
+      const estimatedCost = estimateCost(currentProvider, 150, 50);
+
+      // Record success
+      recordProviderSuccess(currentProvider);
+      console.log(
+        `✅ AI call successful with ${currentProvider} (${latencyMs}ms, cost: $${estimatedCost.toFixed(4)})`
+      );
+
+      return { result, provider: currentProvider, latencyMs, estimatedCost };
     } catch (error) {
       console.warn(`❌ ${currentProvider} failed:`, error);
       failedProviders.add(currentProvider);
+      recordProviderFailure(currentProvider);
 
       // Try next provider
       const nextConfig = getNextProvider(currentProvider, failedProviders);
       currentProvider = nextConfig?.name || null;
+      config = nextConfig || null;
 
       if (currentProvider) {
         console.log(`🔄 Falling back to ${currentProvider}`);
@@ -188,13 +214,13 @@ async function callAIProvider(
     }
   }
 
-  throw new Error('All AI providers failed');
+  throw new Error('No AI providers available');
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: CoachRequest = await request.json();
-    const { mode, metrics, repCount, preferredProvider } = body;
+    const { mode, metrics, repCount, preferredProvider, userId } = body;
 
     // Validate input
     if (!mode || !metrics) {
@@ -204,52 +230,197 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare prompt with actual data
-    const prompt = COACHING_PROMPT.replace('{mode}', mode)
-      .replace('{repCount}', repCount.toString())
-      .replace('{trunkLean}', metrics.trunkLean.toFixed(1))
-      .replace('{kneeValgus}', metrics.kneeValgus.toFixed(1))
-      .replace('{depth}', metrics.depth.toFixed(2))
-      .replace('{isStable}', metrics.isStable.toString())
-      .replace('{warnings}', metrics.warnings.join(', ') || 'None');
+    // ===== SESSION MANAGEMENT =====
+    // Use real user ID if available, otherwise fall back to unique identifier
+    const effectiveUserId =
+      userId || `anonymous-${request.headers.get('user-agent')?.substring(0, 20) || 'unknown'}`;
 
-    // Call AI with automatic fallback
-    try {
-      const { result, provider, latencyMs } = await callAIProvider(prompt, preferredProvider);
+    const { sessionId, isNewSession } = getOrCreateSessionId(effectiveUserId, mode);
+    const metricsHash = hashMetrics(metrics);
+
+    // ===== STAGE 1: Check Cache =====
+    const cached = getCachedFeedback(sessionId, metricsHash, true);
+    if (cached) {
+      console.log(`📦 Cache HIT (metrics hash: ${metricsHash.substring(0, 8)}...)`);
+
+      // Update session metrics
+      updateSessionMetrics(sessionId, { repsAnalyzed: repCount });
+
+      return NextResponse.json({
+        ...cached.response,
+        provider: 'cached',
+        cached: true,
+      } as CoachResponse & { cached?: boolean });
+    }
+
+    // ===== STAGE 2: Check if should skip API call =====
+    const skipDecision = shouldSkipAPICall(sessionId, metricsHash);
+    if (skipDecision.skip) {
+      console.log(`⏭️  Skipping API call: ${skipDecision.reason}`);
+
+      // Use unified coaching engine for local feedback
+      const analysis = analyzeForm(metrics, mode);
+      const localFeedback = convertToLegacyFormat(analysis);
 
       const response: CoachResponse = {
-        ...result,
-        provider,
-        latencyMs,
+        ...localFeedback,
+        provider: 'local',
+        latencyMs: 0,
+        issues: analysis.issues,
+        summary: analysis.summary,
+        primaryIssue: analysis.primaryIssue,
       };
 
-      return NextResponse.json(response);
-    } catch (error) {
-      console.error('All AI providers failed:', error);
+      // Cache for next similar request
+      cacheFeedback(sessionId, metricsHash, response);
 
-      // Graceful fallback to local feedback
-      return NextResponse.json(
-        {
-          feedback: 'Keep pushing!',
-          severity: 'info',
-          shouldSpeak: false,
+      // Update session
+      updateSessionMetrics(sessionId, {
+        repsAnalyzed: repCount,
+        issuesRaised: analysis.issues.length,
+      });
+
+      return NextResponse.json({
+        ...response,
+        skipped: true,
+        reason: skipDecision.reason,
+      } as CoachResponse & { skipped?: boolean; reason?: string });
+    }
+
+    // ===== STAGE 3: Unified form analysis (local first) =====
+    // Always run coaching engine for detailed analysis
+    const analysis = analyzeForm(metrics, mode);
+
+    // ===== STAGE 4: Try AI for enhanced feedback (optional) =====
+    let finalResponse: CoachResponse;
+    let provider: AIProvider | string = 'local';
+    let latencyMs = 0;
+    let estimatedCost = 0;
+
+    // Only call AI if: form is acceptable (no critical issues) + AI enabled
+    const hasCriticalIssues = analysis.issues.some((i) => i.severity === 'critical');
+
+    if (!hasCriticalIssues) {
+      try {
+        // Build prompt for AI enhancement
+        const COACHING_PROMPT = `You are Coachy, an expert biomechanics coach analyzing real-time exercise form.
+Current Analysis:
+- Mode: ${mode}
+- Rep: ${repCount}
+- Primary Issue: ${analysis.primaryIssue?.cue || 'Form looks good'}
+- Issues Found: ${analysis.issues.length}
+
+Current Metrics:
+- Trunk Lean: ${metrics.trunkLean.toFixed(1)}° (ideal: ${mode === 'squats' ? '<30°' : '<15°'})
+- Knee Valgus: ${metrics.kneeValgus.toFixed(1)}px (ideal: <30px)
+- Depth: ${metrics.depth.toFixed(2)} (ideal: >0.8)
+- Stability: ${metrics.isStable ? 'Stable' : 'Unstable'}
+
+Provide CONCISE motivational enhancement (max 8 words). Respond with ONLY JSON:
+{
+  "feedback": "Your enhanced feedback here",
+  "severity": "info" | "warning" | "critical",
+  "shouldSpeak": false
+}`;
+
+        const startTime = Date.now();
+        const aiResponse = await callAIProvider(COACHING_PROMPT, preferredProvider);
+        latencyMs = Date.now() - startTime;
+        estimatedCost = aiResponse.estimatedCost;
+        provider = aiResponse.provider;
+
+        // Merge AI feedback into analysis
+        finalResponse = {
+          feedback: aiResponse.result.feedback,
+          severity: aiResponse.result.severity,
+          shouldSpeak: aiResponse.result.shouldSpeak,
+          provider,
+          latencyMs,
+          issues: analysis.issues,
+          summary: aiResponse.result.feedback, // Use AI feedback as summary
+          primaryIssue: analysis.primaryIssue,
+        };
+
+        recordCost(sessionId, estimatedCost, true);
+      } catch (aiError) {
+        console.warn('AI enhancement failed, using coaching engine analysis:', aiError);
+        provider = 'local';
+
+        // Fall back to coaching engine
+        finalResponse = {
+          ...convertToLegacyFormat(analysis),
           provider: 'local',
           latencyMs: 0,
-        } as CoachResponse,
-        { status: 200 }
-      );
+          issues: analysis.issues,
+          summary: analysis.summary,
+          primaryIssue: analysis.primaryIssue,
+        };
+
+        recordCost(sessionId, 0, false);
+      }
+    } else {
+      // Critical issues: use coaching engine, don't call AI
+      finalResponse = {
+        ...convertToLegacyFormat(analysis),
+        provider: 'local',
+        latencyMs: 0,
+        issues: analysis.issues,
+        summary: analysis.summary,
+        primaryIssue: analysis.primaryIssue,
+      };
+
+      recordCost(sessionId, 0, true);
     }
+
+    // ===== STAGE 5: Cache & Update Session =====
+    cacheFeedback(sessionId, metricsHash, finalResponse);
+    updateSessionMetrics(sessionId, {
+      repsAnalyzed: repCount,
+      issuesRaised: analysis.issues.length,
+      totalCost: (getSessionStats(sessionId).costUSD || 0) + estimatedCost,
+    });
+
+    // ===== STAGE 6: Return Response =====
+    const stats = getSessionStats(sessionId);
+    const debugInfo = {
+      sessionId,
+      isNewSession,
+      sessionStats: {
+        repsAnalyzed: stats.totalCalls,
+        cachedResponses: stats.cachedResponses,
+        costUSD: stats.costUSD.toFixed(4),
+        successRate:
+          stats.totalCalls > 0 ? ((stats.successCount / stats.totalCalls) * 100).toFixed(1) : '0',
+      },
+    };
+
+    return NextResponse.json({
+      ...finalResponse,
+      debug: process.env.NODE_ENV === 'development' ? debugInfo : undefined,
+    });
   } catch (error) {
     console.error('Live coach error:', error);
 
-    // Graceful fallback
+    // Final graceful fallback - still use coaching engine
+    const analysis = analyzeForm(
+      {
+        trunkLean: 0,
+        kneeValgus: 0,
+        ankleFlexion: 0,
+        depth: 0,
+        symmetry: 1,
+        isStable: true,
+        warnings: [],
+      },
+      'pushups'
+    );
+
     return NextResponse.json(
       {
-        feedback: 'Keep going!',
-        severity: 'info',
-        shouldSpeak: false,
+        ...convertToLegacyFormat(analysis),
         provider: 'local',
         latencyMs: 0,
+        issues: [],
       } as CoachResponse,
       { status: 200 }
     );

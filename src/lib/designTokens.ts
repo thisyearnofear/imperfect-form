@@ -408,11 +408,11 @@ export const zIndex = {
   dropdown: 10,
   sticky: 20,
   fixed: 30,
-  modalBackdrop: 40,
-  modal: 50,
-  popover: 60,
-  tooltip: 70,
-  notification: 80,
+  modalBackdrop: 900,
+  modal: 1000,
+  popover: 1100,
+  tooltip: 1200,
+  notification: 1300,
   debug: 9999, // Debug panels stay on top
 };
 

@@ -1,6 +1,7 @@
 'use client';
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback, useTransition } from 'react';
 import { BiomechanicalState } from '@/types/mediapipe';
+import { analyzeForm, CoachingAnalysis } from '@/lib/coachingEngine';
 import '@/styles/agent-insights.css';
 
 interface AgentInsightTrayProps {
@@ -8,6 +9,7 @@ interface AgentInsightTrayProps {
   mode: 'pushups' | 'squats';
   voiceEnabled: boolean;
   repCount: number;
+  userId?: string;
 }
 
 type FeedbackType = 'warning' | 'perfect' | 'good' | 'neutral';
@@ -15,6 +17,7 @@ type FeedbackType = 'warning' | 'perfect' | 'good' | 'neutral';
 interface FeedbackState {
   message: string;
   type: FeedbackType;
+  analysis?: CoachingAnalysis;
 }
 
 const FEEDBACK_CONFIG: Record<FeedbackType, { icon: string; className: string }> = {
@@ -24,24 +27,33 @@ const FEEDBACK_CONFIG: Record<FeedbackType, { icon: string; className: string }>
   neutral: { icon: '🤖', className: 'coachy-neutral' },
 };
 
-// Single source of truth for feedback logic
-const getFeedbackFromMetrics = (
-  metrics: BiomechanicalState,
+/**
+ * Convert coaching analysis to feedback state
+ * Uses unified coaching engine (single source of truth)
+ */
+const getFeedbackFromAnalysis = (
+  analysis: CoachingAnalysis,
   mode: 'pushups' | 'squats'
 ): FeedbackState => {
-  if (metrics.warnings.length > 0) {
-    return { message: metrics.warnings[0], type: 'warning' };
+  // Determine UI type based on severity and issues
+  let type: FeedbackType = 'neutral';
+
+  if (analysis.primaryIssue) {
+    if (analysis.primaryIssue.severity === 'critical') {
+      type = 'warning';
+    } else if (analysis.primaryIssue.severity === 'warning') {
+      type = 'warning';
+    } else {
+      // Info-level issues (positive feedback)
+      type = analysis.primaryIssue.cue.includes('Perfect') ? 'perfect' : 'good';
+    }
   }
-  if (metrics.depth > 0.9) {
-    return { message: 'Perfect depth!', type: 'perfect' };
-  }
-  if (metrics.depth > 0.6) {
-    return { message: mode === 'squats' ? 'Good depth!' : 'Great range!', type: 'good' };
-  }
-  if (metrics.depth > 0 && metrics.depth < 0.3) {
-    return { message: mode === 'squats' ? 'Go deeper!' : 'Lower!', type: 'warning' };
-  }
-  return { message: 'Analyzing your form...', type: 'neutral' };
+
+  return {
+    message: analysis.summary,
+    type,
+    analysis,
+  };
 };
 
 export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
@@ -49,6 +61,7 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
   mode,
   voiceEnabled,
   repCount,
+  userId,
 }) => {
   const [feedback, setFeedback] = useState<FeedbackState>({
     message: 'Analyzing your form...',
@@ -59,17 +72,48 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
   const lastMessageRef = useRef<string>('');
   const lastVoiceRef = useRef<number>(0);
   const lastAICallRef = useRef<number>(0);
-  const [aiEnabled, setAiEnabled] = useState(true); // Toggle for AI coaching
+  const lastMetricsHashRef = useRef<string>('');
+  const metricsRef = useRef<BiomechanicalState | null>(metrics);
+  const [aiEnabled, setAiEnabled] = useState(true);
   const [currentProvider, setCurrentProvider] = useState<string>('local');
   const [providerPreference, setProviderPreference] = useState<'gemini' | 'venice' | 'auto'>(
     'auto'
   );
+  const [, startTransition] = useTransition();
+  const aiCoachingEnabled = process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() !== 'off';
+  const aiIntervalMs = process.env.NODE_ENV === 'development' ? 15000 : 5000;
+
+  // Keep metrics ref in sync (non-blocking)
+  useEffect(() => {
+    metricsRef.current = metrics;
+  }, [metrics]);
 
   // Memoized depth percentage
   const depthPercent = useMemo(() => {
     if (!metrics) return 0;
     return Math.min(100, Math.max(0, Math.round(metrics.depth * 100)));
   }, [metrics?.depth]);
+
+  /**
+   * Hash metrics to detect meaningful changes
+   * Only analyze when metrics have moved significantly (>5% change)
+   */
+  const getMetricsHash = useCallback((m: BiomechanicalState | null): string => {
+    if (!m) return '';
+    return JSON.stringify({
+      depth: Math.round(m.depth * 20), // 5% threshold
+      trunkLean: Math.round(m.trunkLean / 5), // ~5° threshold
+      kneeValgus: Math.round(m.kneeValgus / 5), // ~5px threshold
+      isStable: m.isStable,
+      warnings: m.warnings?.length ?? 0,
+    });
+  }, []);
+
+  /**
+   * Memoized metrics hash - only changes when metrics meaningfully change
+   * This prevents expensive analyzeForm() calls on every frame
+   */
+  const metricsHash = useMemo(() => getMetricsHash(metrics), [metrics, getMetricsHash]);
 
   // Voice feedback with throttling
   const speak = useMemo(
@@ -89,68 +133,111 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
     [voiceEnabled]
   );
 
-  // Single effect for feedback processing
+  // Local feedback: Debounced analysis (only when metrics meaningfully change)
   useEffect(() => {
-    if (!metrics) return;
+    if (!metrics || !metricsHash) return;
 
-    const newFeedback = getFeedbackFromMetrics(metrics, mode);
-
-    if (newFeedback.type === 'warning') {
-      speak(newFeedback.message);
+    // Check if metrics hash is new (skip initial empty hash)
+    if (metricsHash === lastMetricsHashRef.current) {
+      return; // Same metrics, same feedback
     }
 
-    if (newFeedback.message !== lastMessageRef.current) {
-      setFeedback(newFeedback);
-      setPulse(true);
-      const timer = setTimeout(() => setPulse(false), 400);
-      lastMessageRef.current = newFeedback.message;
-      return () => clearTimeout(timer);
-    }
-  }, [metrics, mode, speak]);
+    // Update hash and trigger analysis
+    lastMetricsHashRef.current = metricsHash;
 
-  // AI Coaching: Call Gemini API every 5 seconds for enhanced feedback
+    // Defer state updates to avoid blocking video render
+    startTransition(() => {
+      // Use unified coaching engine for local analysis
+      const analysis = analyzeForm(metrics, mode);
+      const newFeedback = getFeedbackFromAnalysis(analysis, mode);
+
+      // Speak critical/warning issues (immediate, not deferred)
+      if (newFeedback.analysis?.primaryIssue?.severity === 'critical') {
+        speak(newFeedback.message);
+      }
+
+      // Update UI if feedback changed
+      if (newFeedback.message !== lastMessageRef.current) {
+        setFeedback(newFeedback);
+        setPulse(true);
+        const timer = setTimeout(() => setPulse(false), 400);
+        lastMessageRef.current = newFeedback.message;
+        return () => clearTimeout(timer);
+      }
+    });
+  }, [metricsHash, mode, speak, startTransition]);
+
+  // AI Coaching: Call API every 5 seconds for enhanced feedback (deferred, non-blocking)
   useEffect(() => {
-    if (!metrics || !aiEnabled) return;
+    if (!metrics || !aiEnabled || !aiCoachingEnabled) return;
+
+    // Gate AI calls until pose is stable for a short window
+    if (!metrics.isStable) return;
 
     const now = Date.now();
     const timeSinceLastCall = now - lastAICallRef.current;
 
-    // Throttle: Only call API every 5 seconds
-    if (timeSinceLastCall < 5000) return;
+    // Throttle: Only call API at configured interval
+    if (timeSinceLastCall < aiIntervalMs) return;
 
     lastAICallRef.current = now;
 
-    // Call live coach API
-    fetch('/api/coach/live', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mode,
-        metrics,
-        repCount,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data: { feedback: string; severity: string; shouldSpeak: boolean }) => {
-        // Update feedback with AI response
-        const aiType: FeedbackType =
-          data.severity === 'critical' || data.severity === 'warning' ? 'warning' : 'good';
-
-        setFeedback({ message: data.feedback, type: aiType });
-        setPulse(true);
-        setTimeout(() => setPulse(false), 400);
-
-        // Speak if AI recommends it
-        if (data.shouldSpeak) {
-          speak(data.feedback);
-        }
+    // Defer API call and state updates so they don't block video render
+    startTransition(() => {
+      // Call live coach API with userId for proper session management
+      fetch('/api/coach/live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          metrics: metricsRef.current,
+          repCount,
+          userId, // Pass userId for persistent sessions
+        }),
       })
-      .catch((err) => {
-        console.warn('AI coaching failed, using local feedback:', err);
-        setCurrentProvider('local');
-        // Fallback to local feedback on error
-      });
-  }, [metrics, mode, repCount, speak, aiEnabled]);
+        .then((res) => res.json())
+        .then(
+          (data: {
+            feedback: string;
+            severity: string;
+            shouldSpeak: boolean;
+            issues?: any[];
+            provider: string;
+          }) => {
+            // Update feedback with enhanced AI response
+            const aiType: FeedbackType =
+              data.severity === 'critical' || data.severity === 'warning' ? 'warning' : 'good';
+
+            setFeedback((prev) => ({
+              message: data.feedback,
+              type: aiType,
+              analysis: prev.analysis, // Preserve local analysis
+            }));
+            setPulse(true);
+            setTimeout(() => setPulse(false), 400);
+            setCurrentProvider(data.provider);
+
+            // Speak if recommended
+            if (data.shouldSpeak) {
+              speak(data.feedback);
+            }
+          }
+        )
+        .catch((err) => {
+          console.warn('AI coaching failed, using local feedback:', err);
+          setCurrentProvider('local');
+        });
+    });
+  }, [
+    metricsHash,
+    mode,
+    repCount,
+    speak,
+    aiEnabled,
+    aiCoachingEnabled,
+    aiIntervalMs,
+    startTransition,
+  ]);
 
   const config = FEEDBACK_CONFIG[feedback.type];
 
@@ -187,13 +274,14 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
           <div className="coachy-trace-line">
             AI: {currentProvider === 'local' ? '❌ Offline' : `✅ ${currentProvider}`}
           </div>
-          <div className="coachy-trace-line">
+          <div className="coachy-trace-line coachy-select-row">
+            <span className="coachy-select-label">Model</span>
             <select
               value={providerPreference}
               onChange={(e) =>
                 setProviderPreference(e.target.value as 'gemini' | 'venice' | 'auto')
               }
-              className="text-xs bg-black/50 border border-white/20 rounded px-2 py-1"
+              className="coachy-select"
             >
               <option value="auto">Auto (Gemini → Venice)</option>
               <option value="gemini">Gemini Only</option>

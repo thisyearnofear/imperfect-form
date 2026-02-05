@@ -128,60 +128,6 @@
   transform: scale(1.05);
 }
 
-/* Expanded leaderboard modal */
-#expandedLeaderboardModal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-#expandedLeaderboardModal .modal-content {
-  background-color: #111;
-  color: white;
-  border: 4px solid #fcb131;
-  border-radius: 10px;
-  padding: 20px;
-  max-width: 800px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 0 30px rgba(252, 177, 49, 0.7);
-}
-
-#expandedLeaderboardModal h2 {
-  color: #fcb131;
-  text-shadow: 0 0 5px rgba(252, 177, 49, 0.5);
-  margin-bottom: 15px;
-}
-
-#expandedLeaderboardModal h3 {
-  margin-top: 20px;
-  padding: 8px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-#expandedLeaderboardModal .close-button {
-  color: #fcb131;
-  cursor: pointer;
-  font-size: 24px;
-  background: none;
-  border: none;
-  transition: all 0.3s ease;
-}
-
-#expandedLeaderboardModal .close-button:hover {
-  color: #ff5e5e;
-  transform: scale(1.2);
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {

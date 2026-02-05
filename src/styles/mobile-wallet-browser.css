@@ -48,24 +48,6 @@
     font-size: 10px !important;
   }
 
-  /* Compact timer and counter for portrait */
-  .timer {
-    font-size: 14px !important;
-    padding: 6px 12px !important;
-    z-index: 100 !important;
-    background: rgba(0, 0, 0, 0.8) !important;
-    border: 2px solid #fcb131 !important;
-  }
-
-  .rep-counter-container {
-    font-size: 18px !important;
-    width: 50px !important;
-    height: 50px !important;
-    z-index: 100 !important;
-    background: rgba(0, 0, 0, 0.8) !important;
-    border: 2px solid #fcb131 !important;
-  }
-
   /* Ensure mobile timer/counter are visible in wallet browsers */
   .flex.justify-between.mb-2.px-2 {
     z-index: 100 !important;
@@ -226,25 +208,6 @@
     transition: all 0.2s ease;
   }
 
-  /* Enhanced timer and counter for mobile */
-  .timer {
-    font-size: 18px !important;
-    padding: 10px 16px !important;
-    border-radius: 25px !important;
-    border-width: 3px !important;
-    box-shadow: 0 0 15px rgba(252, 177, 49, 0.6) !important;
-    backdrop-filter: blur(8px);
-  }
-
-  .rep-counter-container {
-    font-size: 24px !important;
-    width: 70px !important;
-    height: 70px !important;
-    border-width: 3px !important;
-    box-shadow: 0 0 20px rgba(252, 177, 49, 0.8) !important;
-    backdrop-filter: blur(8px);
-  }
-
   /* Wallet browser specific optimizations */
   .wallet-browser-indicator {
     margin-bottom: 8px;
@@ -254,16 +217,6 @@
     background: linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(59, 130, 246, 0.2));
     border: 1px solid rgba(147, 51, 234, 0.4);
     backdrop-filter: blur(4px);
-  }
-
-  /* Enhanced modal dialogs for mobile */
-  .modal-content {
-    max-width: 95vw !important;
-    max-height: 90vh !important;
-    margin: 20px !important;
-    padding: 20px !important;
-    border-radius: 16px !important;
-    font-size: 14px !important;
   }
 
   /* Better wallet connection area */
@@ -430,24 +383,12 @@
     padding: 8px 4px !important;
   }
 
-  .timer {
-    font-size: 16px !important;
-    padding: 8px 12px !important;
-  }
-
-  .rep-counter-container {
-    font-size: 20px !important;
-    width: 60px !important;
-    height: 60px !important;
-  }
 }
 
 /* High DPI display optimizations */
 @media (-webkit-min-device-pixel-ratio: 2),
 (min-resolution: 192dpi) {
 
-  .timer,
-  .rep-counter-container,
   .leaderboard-container {
     border-width: 1px !important;
   }

@@ -147,6 +147,26 @@ export function usePoseDetection(
   const onMetricsRef = useRef(onMetrics);
   const onSessionEndRef = useRef(onSessionEnd);
 
+  const scheduleCallback = useCallback((fn: () => void) => {
+    if (typeof queueMicrotask === 'function') {
+      queueMicrotask(fn);
+    } else {
+      Promise.resolve().then(fn);
+    }
+  }, []);
+
+  const emitProgress = useCallback(
+    (progress: {
+      phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
+      message: string;
+      percentage: number;
+    }) => {
+      if (!onDetectionProgressRef.current) return;
+      scheduleCallback(() => onDetectionProgressRef.current?.(progress));
+    },
+    [scheduleCallback]
+  );
+
   useEffect(() => {
     onRepCountRef.current = onRepCount;
     onPoseStateChangeRef.current = onPoseStateChange;
@@ -155,13 +175,18 @@ export function usePoseDetection(
     onSessionEndRef.current = onSessionEnd;
   }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics, onSessionEnd]);
 
-  const notifyStateChange = useCallback((newState: Partial<typeof poseState>) => {
-    setPoseState((prev) => {
-      const updated = { ...prev, ...newState };
-      onPoseStateChangeRef.current?.(updated);
-      return updated;
-    });
-  }, []);
+  const notifyStateChange = useCallback(
+    (newState: Partial<typeof poseState>) => {
+      setPoseState((prev) => {
+        const updated = { ...prev, ...newState };
+        if (onPoseStateChangeRef.current) {
+          scheduleCallback(() => onPoseStateChangeRef.current?.(updated));
+        }
+        return updated;
+      });
+    },
+    [scheduleCallback]
+  );
 
   // Check if OffscreenCanvas is supported
   const supportsOffscreenCanvas = typeof OffscreenCanvas !== 'undefined';
@@ -171,7 +196,7 @@ export function usePoseDetection(
     if (!canvasRef.current || !videoRef.current) return;
 
     notifyStateChange({ isLoading: true });
-    onDetectionProgressRef.current?.({
+    emitProgress({
       phase: 'initial',
       message: 'Starting...',
       percentage: 10,
@@ -230,7 +255,7 @@ export function usePoseDetection(
         await video.play();
 
         notifyStateChange({ hasCamera: true });
-        onDetectionProgressRef.current?.({
+        emitProgress({
           phase: 'ai',
           message: 'Initializing AI Model...',
           percentage: 40,
@@ -291,7 +316,7 @@ export function usePoseDetection(
           const data = e.data;
           if (data.type === 'ready') {
             notifyStateChange({ hasPoseDetection: true, isLoading: false });
-            onDetectionProgressRef.current?.({
+            emitProgress({
               phase: 'ready',
               message: 'Ready!',
               percentage: 100,
@@ -327,7 +352,7 @@ export function usePoseDetection(
             let phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready' = 'ai';
             if (progress.phase === 'initial') phase = 'initial';
             if (progress.phase === 'ready') phase = 'ready';
-            onDetectionProgressRef.current?.({
+            emitProgress({
               phase,
               message: progress.message,
               percentage: progress.percentage,
@@ -340,7 +365,7 @@ export function usePoseDetection(
         } catch (tfError) {
           console.error('Failed to initialize TensorFlow:', tfError);
           notifyStateChange({ isLoading: false, hasPoseDetection: false });
-          onDetectionProgressRef.current?.({
+          emitProgress({
             phase: 'ai',
             message: 'AI backend failed to initialize',
             percentage: 0,
@@ -362,7 +387,7 @@ export function usePoseDetection(
         await video.play();
 
         notifyStateChange({ hasCamera: true });
-        onDetectionProgressRef.current?.({
+        emitProgress({
           phase: 'camera',
           message: 'Camera ready',
           percentage: 25,
@@ -380,11 +405,11 @@ export function usePoseDetection(
         try {
           detectorRef.current = await service.initializeDetector(isMobile);
           notifyStateChange({ hasPoseDetection: true, isLoading: false });
-          onDetectionProgressRef.current?.({ phase: 'ready', message: 'Ready!', percentage: 100 });
+          emitProgress({ phase: 'ready', message: 'Ready!', percentage: 100 });
         } catch (modelError) {
           console.error('Error initializing pose detection model:', modelError);
           notifyStateChange({ isLoading: false, hasPoseDetection: false });
-          onDetectionProgressRef.current?.({
+          emitProgress({
             phase: 'ai',
             message: 'AI model failed to load',
             percentage: 0,
@@ -513,7 +538,7 @@ export function usePoseDetection(
       } catch (error) {
         console.error('Failed to start main-thread detection:', error);
         notifyStateChange({ isLoading: false, hasPoseDetection: false });
-        onDetectionProgressRef.current?.({
+        emitProgress({
           phase: 'ai',
           message: 'Pose detection failed to start',
           percentage: 0,
