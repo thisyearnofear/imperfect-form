@@ -785,10 +785,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                 <div
                   id="canvasContainer"
                   aria-label="Game Canvas"
-                  className="w-full relative border-2 border-yellow-400"
+                  className="w-full relative"
                   style={{
-                    flex: '1',
-                    minHeight: '50%',
+                    height: '100%',
+                    minHeight: '300px',
                     maxWidth: '100%',
                     overflow: 'visible',
                   }}
