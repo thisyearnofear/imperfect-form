@@ -2,8 +2,10 @@ import { useEffect, useRef, RefObject, useState, useCallback } from 'react';
 import { WorkerMessage, WorkerResponse, BiomechanicalState, Keypoint } from '../types/mediapipe';
 import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
 import { SessionLogger, SessionSummary } from '../services/sessionLogger';
-import { getPoseDetectionService } from '../services/PoseDetectionService';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
+import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-backend-webgl';
+import { createDetector, SupportedModels } from '@tensorflow-models/pose-detection';
 
 type ExerciseMode = 'pushups' | 'squats';
 
@@ -345,35 +347,7 @@ export function usePoseDetection(
       console.log('Using main-thread pose detection (mobile fallback)');
 
       try {
-        const service = getPoseDetectionService();
-        let unsubscribeProgress: (() => void) | undefined;
-        if (onDetectionProgressRef.current) {
-          unsubscribeProgress = service.onProgress((progress) => {
-            let phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready' = 'ai';
-            if (progress.phase === 'initial') phase = 'initial';
-            if (progress.phase === 'ready') phase = 'ready';
-            emitProgress({
-              phase,
-              message: progress.message,
-              percentage: progress.percentage,
-            });
-          });
-        }
-
-        try {
-          await service.initializeTensorFlow(isMobile);
-        } catch (tfError) {
-          console.error('Failed to initialize TensorFlow:', tfError);
-          notifyStateChange({ isLoading: false, hasPoseDetection: false });
-          emitProgress({
-            phase: 'ai',
-            message: 'AI backend failed to initialize',
-            percentage: 0,
-          });
-          if (unsubscribeProgress) unsubscribeProgress();
-          return;
-        }
-
+        // STEP 1: Initialize Camera FIRST (critical for iOS)
         const constraints = {
           video: {
             width: isMobile ? 480 : 640,
@@ -390,9 +364,55 @@ export function usePoseDetection(
         emitProgress({
           phase: 'camera',
           message: 'Camera ready',
-          percentage: 25,
+          percentage: 20,
         });
 
+        // STEP 2: Initialize TensorFlow AFTER camera is running
+        emitProgress({
+          phase: 'ai',
+          message: 'Initializing AI...',
+          percentage: 40,
+        });
+
+        // iOS Safari workaround: Try WebGL first, fall back to CPU
+        try {
+          await tf.setBackend('webgl');
+          await tf.ready();
+          console.log('TensorFlow WebGL backend initialized');
+        } catch (webglError) {
+          console.warn('WebGL failed, trying CPU backend:', webglError);
+          try {
+            await import('@tensorflow/tfjs-backend-cpu');
+            await tf.setBackend('cpu');
+            await tf.ready();
+            console.log('TensorFlow CPU backend initialized');
+          } catch (cpuError) {
+            console.error('Both WebGL and CPU backends failed:', cpuError);
+            throw cpuError;
+          }
+        }
+
+        emitProgress({
+          phase: 'ai',
+          message: 'Loading model...',
+          percentage: 60,
+        });
+
+        // STEP 3: Create detector
+        const modelType = isMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
+        detectorRef.current = await createDetector(SupportedModels.MoveNet, {
+          modelType: modelType as any,
+          enableSmoothing: true,
+        });
+
+        notifyStateChange({ hasPoseDetection: true, isLoading: false });
+        emitProgress({
+          phase: 'ready',
+          message: 'Ready!',
+          percentage: 100,
+        });
+
+        // Set canvas dimensions
         if (isMobile) {
           const rect = canvas.getBoundingClientRect();
           canvas.width = rect.width * window.devicePixelRatio;
@@ -402,57 +422,12 @@ export function usePoseDetection(
           canvas.height = video.videoHeight || 480;
         }
 
-        try {
-          detectorRef.current = await service.initializeDetector(isMobile);
-          notifyStateChange({ hasPoseDetection: true, isLoading: false });
-          emitProgress({ phase: 'ready', message: 'Ready!', percentage: 100 });
-        } catch (modelError) {
-          console.error('Error initializing pose detection model:', modelError);
-          notifyStateChange({ isLoading: false, hasPoseDetection: false });
-          emitProgress({
-            phase: 'ai',
-            message: 'AI model failed to load',
-            percentage: 0,
-          });
-          return;
-        } finally {
-          if (unsubscribeProgress) unsubscribeProgress();
-        }
-
-        // Start detection loop with throttling on mobile (tuned by device class)
-        const getMobileDetectionIntervalMs = () => {
-          if (typeof navigator === 'undefined') return 140;
-          const cores = navigator.hardwareConcurrency ?? 4;
-          const memory = (navigator as any).deviceMemory ?? 4; // GB, not supported on iOS
-          // Heuristic device classes
-          if (cores >= 8 && memory >= 6) return 80; // high-end
-          if (cores >= 6 && memory >= 4) return 110; // mid
-          return 160; // low-end / unknown
-        };
-        const detectionIntervalMs = isMobile ? getMobileDetectionIntervalMs() : 0;
-        let lastDetectionTime = 0;
-        const scheduleNext = () => {
-          if (!videoRef.current) return;
-          if ('requestVideoFrameCallback' in videoRef.current) {
-            videoRef.current.requestVideoFrameCallback(() => {
-              detect();
-            });
-          } else {
-            animationRef.current = requestAnimationFrame(detect);
-          }
-        };
-
+        // Start detection loop
         const detect = async () => {
           if (!isActive || !videoRef.current || !detectorRef.current) return;
 
           try {
-            const now = performance.now();
-            if (detectionIntervalMs > 0 && now - lastDetectionTime < detectionIntervalMs) {
-              scheduleNext();
-              return;
-            }
-            lastDetectionTime = now;
-            const poses = await detectorRef.current.estimatePoses(videoRef.current);
+            const poses = await detectorRef.current!.estimatePoses(videoRef.current);
 
             const detected = poses.length > 0 && poses[0].keypoints.length > 0;
             notifyStateChange({ poseDetected: detected });
@@ -508,7 +483,7 @@ export function usePoseDetection(
               onMetricsRef.current?.(metrics);
               sessionLoggerRef.current?.logFrame(metrics, keypoints);
 
-              // Draw on canvas if available
+              // Draw on canvas
               if (canvasRef.current) {
                 const ctx = canvasRef.current.getContext('2d');
                 if (ctx) {
@@ -518,12 +493,11 @@ export function usePoseDetection(
                 }
               }
             } else {
-              // Clear canvas and draw basic feedback if no pose detected
+              // Clear canvas if no pose
               if (canvasRef.current) {
                 const ctx = canvasRef.current.getContext('2d');
                 if (ctx) {
                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                  drawFeedback(ctx as any, safeMode, 'middle', 0, []);
                 }
               }
             }
@@ -531,16 +505,16 @@ export function usePoseDetection(
             console.error('Detection error:', error);
           }
 
-          scheduleNext();
+          animationRef.current = requestAnimationFrame(detect);
         };
 
-        scheduleNext();
+        animationRef.current = requestAnimationFrame(detect);
       } catch (error) {
         console.error('Failed to start main-thread detection:', error);
         notifyStateChange({ isLoading: false, hasPoseDetection: false });
         emitProgress({
           phase: 'ai',
-          message: 'Pose detection failed to start',
+          message: 'AI initialization failed',
           percentage: 0,
         });
       }
@@ -569,13 +543,6 @@ export function usePoseDetection(
           console.warn('Error disposing detector:', e);
         }
         detectorRef.current = null;
-      }
-      // Dispose service resources (main-thread fallback uses it)
-      try {
-        const service = getPoseDetectionService();
-        service.dispose();
-      } catch (e) {
-        // No-op if service is not in use
       }
 
       // Clean up animation frame
