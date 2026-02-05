@@ -9,7 +9,7 @@ interface GameHUDProps {
 
 export const GameHUD: React.FC<GameHUDProps> = ({ mode, timeLeft, repCount, formatTime }) => {
   return (
-    <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-3 z-[100] pointer-events-none">
+    <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-3 z-[100] pointer-events-none transform-gpu">
       <div className="timer bg-black/90 backdrop-blur-sm px-4 py-2 rounded-xl border-2 border-yellow-500 shadow-[0_0_15px_rgba(252,177,49,0.3)] flex flex-col items-center">
         <span className="text-[9px] uppercase text-yellow-500 font-black tracking-widest">
           {mode}
@@ -37,7 +37,7 @@ export const RepFeedbackOverlay: React.FC<RepFeedbackProps> = ({ show, count }) 
   if (!show) return null;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center z-[85] pointer-events-none">
+    <div className="absolute inset-0 flex items-center justify-center z-[85] pointer-events-none transform-gpu">
       <div className="bg-green-500/30 backdrop-blur-sm rounded-full p-8 animate-bounce">
         <span className="text-6xl font-black text-white drop-shadow-lg">+{count}</span>
       </div>
