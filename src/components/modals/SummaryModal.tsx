@@ -194,6 +194,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   };
 
   const network = getNetworkFromChainId(chainId || undefined);
+  const isCelo = chainId === 42220;
 
   // Type assertion to help TypeScript understand the network type
   const networkType = network as 'polygon' | 'base' | 'monad' | 'celo';
@@ -282,12 +283,15 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           : `${getMedalEmoji()} ${repCount} ${mode} • ${120 - timeLeft}s`
       }
       preventClose={false}
+      maxWidth="520px"
     >
       <div className={`space-y-6 ${transitionClass}`}>
         {/* Network Info - Minimal badge */}
         <div className="text-center">
           <span
-            className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${NETWORK_STYLES[networkType].bg} ${NETWORK_STYLES[networkType].text}`}
+            className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${
+              NETWORK_STYLES[networkType].bg
+            } ${NETWORK_STYLES[networkType].text} ${isCelo ? 'text-green-100' : ''}`}
           >
             {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
           </span>
@@ -301,7 +305,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             {/* Celo-specific: Show submission choice directly in main dialog */}
             {chainId === 42220 && submissionStatus === 'idle' && submissionType === null && (
               <div className="space-y-3 border-t border-gray-700/50 pt-4 px-1">
-                <p className="text-[10px] uppercase tracking-wider text-gray-500 text-center font-bold mb-1">
+                <p
+                  className={`text-[10px] uppercase tracking-wider text-center font-bold mb-1 ${
+                    isCelo ? 'text-green-200' : 'text-gray-500'
+                  }`}
+                >
                   Submission Path
                 </p>
 
@@ -315,14 +323,22 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                       className="w-full p-4 rounded-xl border-2 border-green-500/50 bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-50 transition-all shadow-lg shadow-green-900/20 group"
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-base sm:text-lg font-bold text-green-300 group-active:scale-95 transition-transform">
+                        <span
+                          className={`text-base sm:text-lg font-bold group-active:scale-95 transition-transform ${
+                            isCelo ? 'text-white' : 'text-green-300'
+                          }`}
+                        >
                           ✨ Verified Mode
                         </span>
                         <span className="text-xl sm:text-2xl font-black text-white">
                           {verifiedScore}
                         </span>
                       </div>
-                      <div className="text-[10px] sm:text-xs text-green-400 font-medium text-left flex items-center gap-1">
+                      <div
+                        className={`text-[10px] sm:text-xs font-medium text-left flex items-center gap-1 ${
+                          isCelo ? 'text-green-100' : 'text-green-400'
+                        }`}
+                      >
                         <span>Base {baseScore}</span>
                         <span className="opacity-60">+</span>
                         <span className="bg-green-500 text-black px-1 rounded-sm text-[9px]">
@@ -337,8 +353,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                       className="w-full p-3 rounded-xl border border-gray-700 bg-gray-800/40 hover:bg-gray-800/60 transition-all"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-gray-400">Standard</span>
-                        <span className="text-lg font-bold text-gray-300">{baseScore}</span>
+                        <span
+                          className={`text-sm font-bold ${isCelo ? 'text-gray-200' : 'text-gray-400'}`}
+                        >
+                          Standard
+                        </span>
+                        <span
+                          className={`text-lg font-bold ${
+                            isCelo ? 'text-gray-100' : 'text-gray-300'
+                          }`}
+                        >
+                          {baseScore}
+                        </span>
                       </div>
                     </button>
                   </div>

@@ -178,28 +178,6 @@ body[data-chain="celo"] .olympic-rings {
   }
 }
 
-#canvasContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 3px solid #ff00ff !important;
-  /* Bright magenta border for visibility */
-}
-
-/* Make sure canvas is visible */
-canvas {
-  border: 4px solid #00ff00 !important;
-  /* Bright green border for visibility */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-}
-
 /* Messages and instructions */
 #welcomeMessage,
 #instructions {
@@ -217,7 +195,7 @@ canvas {
   font-size: 16px;
   line-height: 1.5;
   text-align: center;
-  z-index: 1000;
+  z-index: 100;
   pointer-events: auto;
 }
 

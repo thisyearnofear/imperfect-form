@@ -775,7 +775,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                   {memoizedWebcam}
 
                   {/* Mobile HUD - timer and reps at top center */}
-                  <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-3 z-50 pointer-events-none">
+                  <div className="absolute top-4 left-0 right-0 flex justify-center items-start gap-3 z-[100] pointer-events-none">
                     <div className="timer bg-black/90 backdrop-blur-sm px-4 py-2 rounded-xl border-2 border-yellow-500 shadow-[0_0_15px_rgba(252,177,49,0.3)] flex flex-col items-center">
                       <span className="text-[9px] uppercase text-yellow-500 font-black tracking-widest">
                         {mode}
@@ -795,7 +795,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                   </div>
 
                   {/* Pose loading overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="absolute inset-0 flex items-center justify-center z-[90] pointer-events-none">
                     <UnifiedLoader
                       phase={
                         !poseState.hasCamera

@@ -40,7 +40,7 @@ const variantStyles: Record<
       animation: 'fadeIn 300ms ease-in-out',
     },
     content:
-      'fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto text-center focus:outline-none',
+      'modal-content fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto overflow-x-hidden text-center focus:outline-none',
     contentStyle: {
       backgroundColor: designTokens.colors.background.primary,
       color: designTokens.colors.text.primary,
@@ -51,6 +51,7 @@ const variantStyles: Record<
       boxShadow: designTokens.shadows.primaryLg,
       maxHeight: '90vh',
       width: '90vw',
+      boxSizing: 'border-box',
       animation: 'scaleIn 300ms ease-in-out',
     },
     title: {
@@ -149,7 +150,7 @@ const variantStyles: Record<
       animation: 'fadeIn 300ms ease-in-out',
     },
     content:
-      'fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto text-center focus:outline-none',
+      'modal-content fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] overflow-y-auto overflow-x-hidden text-center focus:outline-none',
     contentStyle: {
       backgroundColor: designTokens.colors.background.primary,
       color: designTokens.colors.text.primary,
@@ -161,6 +162,7 @@ const variantStyles: Record<
       maxHeight: '90vh',
       width: '90vw',
       maxWidth: '600px',
+      boxSizing: 'border-box',
       animation: 'scaleIn 300ms ease-in-out',
     } as React.CSSProperties,
     title: {

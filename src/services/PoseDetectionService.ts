@@ -6,6 +6,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-cpu';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
 
 export interface PoseDetectionProgress {
@@ -119,7 +120,9 @@ export class PoseDetectionService {
     });
 
     try {
-      const backend = 'webgl';
+      // Force CPU backend on mobile for better stability
+      // WebGL can often fail or be extremely slow on iOS/Safari mobile devices
+      const backend = isMobile ? 'cpu' : 'webgl';
       await tf.setBackend(backend);
       await tf.ready();
 

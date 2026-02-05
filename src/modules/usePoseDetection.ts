@@ -186,12 +186,17 @@ export function usePoseDetection(
     const canvas = canvasRef.current;
     const video = videoRef.current;
 
-    // Use worker if OffscreenCanvas is supported, otherwise use main thread
-    if (supportsOffscreenCanvas && typeof canvas.transferControlToOffscreen === 'function') {
+    // Use worker if OffscreenCanvas is supported AND not on mobile
+    // Mobile devices (even with OffscreenCanvas support) often struggle with createImageBitmap and worker overhead
+    if (
+      supportsOffscreenCanvas &&
+      typeof canvas.transferControlToOffscreen === 'function' &&
+      !isMobile
+    ) {
       // Worker-based approach (desktop)
       startWorkerBasedDetection();
     } else {
-      // Main-thread approach (mobile iOS)
+      // Main-thread approach (mobile)
       startMainThreadDetection();
     }
 
