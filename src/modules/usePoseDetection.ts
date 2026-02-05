@@ -1,7 +1,6 @@
 import { useEffect, useRef, RefObject, useState, useCallback } from 'react';
 import { WorkerMessage, WorkerResponse, BiomechanicalState, Keypoint } from '../types/mediapipe';
 import { SessionLogger, SessionSummary } from '../services/sessionLogger';
-import { getPoseDetectionService, PoseDetectionService } from '../services/PoseDetectionService';
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
@@ -124,6 +123,8 @@ export function usePoseDetection(
   onMetrics?: (state: BiomechanicalState) => void,
   onSessionEnd?: (summary: SessionSummary) => void
 ) {
+  // Defensive: handle unexpected null/undefined at runtime
+  const safeMode: ExerciseMode = mode === 'squats' ? 'squats' : 'pushups';
   const videoRef = useRef<HTMLVideoElement>(null);
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -177,7 +178,7 @@ export function usePoseDetection(
     });
 
     // Initialize session logger
-    sessionLoggerRef.current = new SessionLogger(mode);
+    sessionLoggerRef.current = new SessionLogger(safeMode);
     lastRepCountRef.current = 0;
     repCount = 0;
     repState = 'middle';
@@ -236,7 +237,7 @@ export function usePoseDetection(
         const initMessage: WorkerMessage = {
           type: 'init',
           canvas: offscreen,
-          mode,
+          mode: safeMode,
           width: video.videoWidth,
           height: video.videoHeight,
           isMobile,
@@ -333,9 +334,26 @@ export function usePoseDetection(
           percentage: 25,
         });
 
-        // Initialize TensorFlow
-        await tf.setBackend('webgl');
-        await tf.ready();
+        // Initialize TensorFlow with fallback for mobile Safari quirks
+        try {
+          await tf.setBackend('webgl');
+          await tf.ready();
+        } catch (err) {
+          console.warn('WebGL backend init failed, falling back to CPU', err);
+          try {
+            await tf.setBackend('cpu');
+            await tf.ready();
+          } catch (err2) {
+            console.error('CPU backend init failed', err2);
+            notifyStateChange({ isLoading: false, hasPoseDetection: false });
+            onDetectionProgressRef.current?.({
+              phase: 'ai',
+              message: 'AI backend failed to initialize',
+              percentage: 0,
+            });
+            return;
+          }
+        }
 
         onDetectionProgressRef.current?.({
           phase: 'ai',
@@ -353,11 +371,39 @@ export function usePoseDetection(
         notifyStateChange({ hasPoseDetection: true, isLoading: false });
         onDetectionProgressRef.current?.({ phase: 'ready', message: 'Ready!', percentage: 100 });
 
-        // Start detection loop
+        // Start detection loop with throttling on mobile (tuned by device class)
+        const getMobileDetectionIntervalMs = () => {
+          if (typeof navigator === 'undefined') return 140;
+          const cores = navigator.hardwareConcurrency ?? 4;
+          const memory = (navigator as any).deviceMemory ?? 4; // GB, not supported on iOS
+          // Heuristic device classes
+          if (cores >= 8 && memory >= 6) return 80; // high-end
+          if (cores >= 6 && memory >= 4) return 110; // mid
+          return 160; // low-end / unknown
+        };
+        const detectionIntervalMs = isMobile ? getMobileDetectionIntervalMs() : 0;
+        let lastDetectionTime = 0;
+        const scheduleNext = () => {
+          if (!videoRef.current) return;
+          if ('requestVideoFrameCallback' in videoRef.current) {
+            videoRef.current.requestVideoFrameCallback(() => {
+              detect();
+            });
+          } else {
+            animationRef.current = requestAnimationFrame(detect);
+          }
+        };
+
         const detect = async () => {
           if (!isActive || !videoRef.current || !detectorRef.current) return;
 
           try {
+            const now = performance.now();
+            if (detectionIntervalMs > 0 && now - lastDetectionTime < detectionIntervalMs) {
+              scheduleNext();
+              return;
+            }
+            lastDetectionTime = now;
             const poses = await detectorRef.current.estimatePoses(videoRef.current);
 
             const detected = poses.length > 0 && poses[0].keypoints.length > 0;
@@ -385,7 +431,7 @@ export function usePoseDetection(
 
               if (ls && lh) metrics.trunkLean = calculateTrunkLean(ls, lh);
 
-              if (mode === 'squats' && lh && lk && la) {
+              if (safeMode === 'squats' && lh && lk && la) {
                 metrics.kneeValgus = calculateKneeValgus(lh, lk, la);
                 metrics.ankleFlexion = calculateAngle(lk, la, { x: la.x + 10, y: la.y });
                 const currentAngle = calculateAngle(lh, lk, la);
@@ -394,7 +440,7 @@ export function usePoseDetection(
                 if (metrics.trunkLean > 45) metrics.warnings.push('LEANING TOO FAR');
               }
 
-              if (mode === 'pushups' && ls && lw) {
+              if (safeMode === 'pushups' && ls && lw) {
                 const le = getPoint(keypoints, 'left_elbow');
                 if (le) {
                   const currentAngle = calculateAngle(ls, le, lw);
@@ -404,7 +450,7 @@ export function usePoseDetection(
 
               // Rep detection
               const repIncremented =
-                mode === 'pushups' ? detectPushup(keypoints) : detectSquat(keypoints);
+                safeMode === 'pushups' ? detectPushup(keypoints) : detectSquat(keypoints);
               if (repIncremented) {
                 repCount += 1;
                 lastRepCountRef.current = repCount;
@@ -427,13 +473,18 @@ export function usePoseDetection(
             console.error('Detection error:', error);
           }
 
-          animationRef.current = requestAnimationFrame(detect);
+          scheduleNext();
         };
 
-        animationRef.current = requestAnimationFrame(detect);
+        scheduleNext();
       } catch (error) {
         console.error('Failed to start main-thread detection:', error);
-        notifyStateChange({ isLoading: false });
+        notifyStateChange({ isLoading: false, hasPoseDetection: false });
+        onDetectionProgressRef.current?.({
+          phase: 'ai',
+          message: 'Pose detection failed to start',
+          percentage: 0,
+        });
       }
     }
 
@@ -481,7 +532,7 @@ export function usePoseDetection(
 
       notifyStateChange({ hasCamera: false, hasPoseDetection: false, poseDetected: false });
     };
-  }, [canvasRef, mode, isActive, isMobile, notifyStateChange, supportsOffscreenCanvas]);
+  }, [canvasRef, safeMode, isActive, isMobile, notifyStateChange, supportsOffscreenCanvas]);
 
   return videoRef;
 }

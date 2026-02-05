@@ -46,12 +46,14 @@ const Webcam: React.FC<WebcamProps> = ({
   onMetrics,
   onSessionEnd,
 }) => {
+  // Defensive: default to pushups if mode is null/undefined at runtime
+  const safeMode: 'pushups' | 'squats' = mode === 'squats' ? 'squats' : 'pushups';
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Pass isMobile flag to usePoseDetection for mobile-specific optimizations
   const { isMobile } = useDeviceDetect();
   const videoRef = usePoseDetection(
     canvasRef,
-    mode,
+    safeMode,
     onRepCount,
     isActive,
     isMobile,
@@ -250,14 +252,14 @@ const Webcam: React.FC<WebcamProps> = ({
   // Log when component mounts to help with debugging
   useEffect(() => {
     if (isMobile) {
-      logger.info(`Mobile Webcam mounted - mode: ${mode}, active: ${isActive}`);
+      logger.info(`Mobile Webcam mounted - mode: ${safeMode}, active: ${isActive}`);
     }
     return () => {
       if (isMobile) {
         logger.info('Mobile Webcam unmounting');
       }
     };
-  }, [isMobile, mode, isActive]);
+  }, [isMobile, safeMode, isActive]);
 
   // Style the canvas directly to ensure it's properly visible and sized
   useEffect(() => {

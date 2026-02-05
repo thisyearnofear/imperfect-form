@@ -107,20 +107,15 @@ export default function UnifiedConnectButton({
       // First try normal connection
       const success = await connect();
 
+      // If success is false, it means either:
+      // 1. Connection failed
+      // 2. No connectorId was provided, so the modal was opened (this is NOT a failure)
       if (!success) {
-        // If normal connection fails, try recovery
-        setIsRecovering(true);
-        const recovery = await recoverWalletConnection({
-          maxRetries: 2,
-          showToasts: false,
-        });
-
-        if (recovery.success) {
-          toast.success('Wallet connected successfully!');
-        } else {
-          setConnectionError(recovery.error || 'Connection failed');
-          toast.error('Unable to connect wallet. Please try again.');
-        }
+        // We only want to attempt recovery if we actually failed to connect with a specific provider
+        // or if the modal didn't open.
+        // For now, let's just avoid recovery if connect() returns false,
+        // as PlatformContext.connect() returns false when it opens the modal.
+        return;
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Connection failed';
@@ -316,18 +311,22 @@ export default function UnifiedConnectButton({
           {/* Section 3: Profile Button */}
           {onModeChange && (
             <button
-              onClick={() =>
-                !workoutStarted &&
-                onModeChange(currentMode === 'profile' ? 'instructions' : 'profile')
-              }
+              onClick={() => {
+                if (workoutStarted) return;
+                if (currentMode === 'profile') {
+                  handleDisconnect();
+                } else {
+                  onModeChange('profile');
+                }
+              }}
               disabled={workoutStarted}
               className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation ${
                 currentMode === 'profile' ? 'bg-white/30' : ''
               } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
-              aria-label={currentMode === 'profile' ? 'Close profile' : 'Open profile'}
+              aria-label={currentMode === 'profile' ? 'Logout' : 'Open profile'}
             >
               <span className="text-white text-sm">
-                {currentMode === 'profile' ? 'Close' : 'Profile'}
+                {currentMode === 'profile' ? 'Logout' : 'Profile'}
               </span>
             </button>
           )}
@@ -343,10 +342,10 @@ export default function UnifiedConnectButton({
               className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation ${
                 currentMode === 'memory' ? 'bg-white/30' : ''
               } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
-              aria-label={currentMode === 'memory' ? 'Close memory' : 'Open memory'}
+              aria-label={currentMode === 'memory' ? 'Back' : 'Open memory'}
             >
               <span className="text-white text-sm">
-                {currentMode === 'memory' ? 'Close' : 'Memory'}
+                {currentMode === 'memory' ? 'Back' : 'Memory'}
               </span>
             </button>
           )}
