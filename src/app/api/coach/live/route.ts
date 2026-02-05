@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     // ===== STAGE 4: Try AI for enhanced feedback (optional) =====
     let finalResponse: CoachResponse;
-    let provider: AIProvider | string = 'local';
+    let provider: AIProvider | 'cached' = 'local';
     let latencyMs = 0;
     let estimatedCost = 0;
 
