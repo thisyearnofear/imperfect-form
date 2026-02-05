@@ -342,104 +342,89 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           <div className="space-y-4">
             {/* Celo-specific: Show submission choice directly in main dialog */}
             {chainId === 42220 && submissionStatus === 'idle' && submissionType === null && (
-              <div className="space-y-3 border-t border-gray-700/50 pt-4 px-1">
-                <p
-                  className={`text-[10px] uppercase tracking-wider text-center font-bold mb-1 ${
-                    isCelo ? 'text-green-200' : 'text-gray-500'
-                  }`}
-                >
-                  Submission Path
-                </p>
+              <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
+                <div className="flex items-center justify-between px-1 mb-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    Select Submission Type
+                  </span>
+                  {isCelo && (
+                    <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full font-bold border border-green-500/20">
+                      Celo Bonus Active
+                    </span>
+                  )}
+                </div>
 
                 {isVerified ? (
-                  // VERIFIED USER: Two submission options
-                  <div className="grid grid-cols-1 gap-3">
-                    {/* Verified Option - Primary */}
+                  // VERIFIED USER: Primary Verified Button + Subtle Basic Link
+                  <div className="flex flex-col gap-2">
                     <button
                       onClick={handleSubmitVerified}
-                      disabled={submissionStatus !== 'idle'}
-                      className="w-full p-4 rounded-xl border-2 border-green-500/50 bg-gradient-to-r from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-50 transition-all shadow-lg shadow-green-900/20 group"
+                      className="relative w-full p-4 rounded-xl bg-gradient-to-br from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white shadow-lg shadow-green-900/30 border border-green-500/30 transition-all active:scale-[0.98] group"
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span
-                          className={`text-base sm:text-lg font-bold group-active:scale-95 transition-transform ${
-                            isCelo ? 'text-white' : 'text-green-300'
-                          }`}
-                        >
-                          ✨ Verified Mode
-                        </span>
-                        <span className="text-xl sm:text-2xl font-black text-white">
+                      <div className="flex items-center justify-between">
+                        <div className="text-left">
+                          <div className="font-black text-lg sm:text-xl flex items-center gap-2">
+                            <span>Verified Score</span>
+                            <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                              +10%
+                            </span>
+                          </div>
+                          <div className="text-xs sm:text-sm text-green-100 font-medium opacity-90 mt-0.5">
+                            Submit with verified human badge
+                          </div>
+                        </div>
+                        <div className="text-3xl sm:text-4xl font-black tracking-tighter drop-shadow-md">
                           {verifiedScore}
-                        </span>
-                      </div>
-                      <div
-                        className={`text-[10px] sm:text-xs font-medium text-left flex items-center gap-1 ${
-                          isCelo ? 'text-green-100' : 'text-green-400'
-                        }`}
-                      >
-                        <span>Base {baseScore}</span>
-                        <span className="opacity-60">+</span>
-                        <span className="bg-green-500 text-black px-1 rounded-sm text-[9px]">
-                          {bonusPoints} Bonus
-                        </span>
+                        </div>
                       </div>
                     </button>
 
-                    {/* Basic Option - Secondary */}
                     <button
                       onClick={handleSubmitBasic}
-                      className="w-full p-3 rounded-xl border border-gray-700 bg-gray-800/40 hover:bg-gray-800/60 transition-all"
+                      className="w-full py-2 text-xs sm:text-sm text-gray-500 hover:text-gray-300 font-medium transition-colors"
                     >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`text-sm font-bold ${isCelo ? 'text-gray-200' : 'text-gray-400'}`}
-                        >
-                          Standard
-                        </span>
-                        <span
-                          className={`text-lg font-bold ${
-                            isCelo ? 'text-gray-100' : 'text-gray-300'
-                          }`}
-                        >
-                          {baseScore}
-                        </span>
-                      </div>
+                      or submit as{' '}
+                      <span className="underline decoration-gray-700 underline-offset-2">
+                        Standard Score ({baseScore})
+                      </span>
                     </button>
                   </div>
                 ) : (
-                  // UNVERIFIED USER: Verification option + fallback
-                  <div className="grid grid-cols-1 gap-3">
-                    {/* Verification Option - Primary CTA */}
+                  // UNVERIFIED USER: Prominent Verify CTA + Secondary Basic Button
+                  <div className="flex flex-col gap-2.5">
                     <button
                       onClick={handleStartVerification}
-                      className="w-full p-4 rounded-xl border-2 border-yellow-500/50 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-orange-500/30 transition-all shadow-lg shadow-yellow-900/20 group"
+                      className="relative w-full p-4 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white shadow-lg shadow-orange-900/30 border border-yellow-500/30 transition-all active:scale-[0.98] group overflow-hidden"
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-base sm:text-lg font-bold text-yellow-300 group-active:scale-95 transition-transform">
-                          🚀 Verify & Submit
-                        </span>
-                        <span className="text-xl sm:text-2xl font-black text-white">
-                          +{bonusPoints}
-                        </span>
-                      </div>
-                      <div className="text-[10px] sm:text-xs text-yellow-500 font-medium text-left">
-                        Unlock {verifiedScore} total pts (10% boost)
+                      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex items-center justify-between relative z-10">
+                        <div className="text-left">
+                          <div className="font-black text-lg sm:text-xl text-white flex items-center gap-2">
+                            <span>Verify & Submit</span>
+                            <span className="bg-black/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                              BONUS
+                            </span>
+                          </div>
+                          <div className="text-xs sm:text-sm text-yellow-50 font-medium opacity-90 mt-0.5">
+                            Get +{bonusPoints} points boost
+                          </div>
+                        </div>
+                        <div className="text-3xl sm:text-4xl font-black tracking-tighter drop-shadow-md">
+                          {verifiedScore}
+                        </div>
                       </div>
                     </button>
 
-                    {/* Fallback Option */}
                     <button
                       onClick={handleSubmitBasic}
-                      className="w-full p-3 rounded-xl border border-gray-700 bg-gray-800/40 hover:bg-gray-800/60 transition-all"
+                      className="w-full p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 active:bg-white/5 transition-all flex items-center justify-between group"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-gray-400 text-left">
-                          Standard (No Bonus)
-                        </span>
-                        <span className="text-lg font-bold text-gray-300 text-right">
-                          {baseScore}
-                        </span>
-                      </div>
+                      <span className="text-sm font-semibold text-gray-400 group-hover:text-gray-300 transition-colors">
+                        Submit Standard Score
+                      </span>
+                      <span className="text-base font-bold text-gray-500 group-hover:text-gray-400 transition-colors">
+                        {baseScore}
+                      </span>
                     </button>
                   </div>
                 )}

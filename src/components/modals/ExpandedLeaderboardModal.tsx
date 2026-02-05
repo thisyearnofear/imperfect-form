@@ -425,14 +425,13 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
         </div>
       </div>
 
-      {/* Enhanced User Breakdown Modal - With profile integration */}
       {selectedUser && breakdownType && (
         <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2002]"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[2002] transition-opacity duration-300"
           onClick={closeBreakdown}
         >
           <div
-            className="bg-black border-2 border-[#fcb131] rounded-lg p-6 max-w-md w-full mx-4 shadow-[0_0_25px_rgba(252,177,49,0.5)]"
+            className="bg-black/90 backdrop-blur-xl border border-[#fcb131]/30 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl shadow-[#fcb131]/10 transform transition-all scale-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center mb-6">
@@ -448,12 +447,12 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                   className="justify-center"
                 />
               </div>
-              <p className="text-[#fcb131]/80 text-sm font-medium">
-                {breakdownType === 'pushups' ? '💪 Push-ups' : '🏋️ Squats'} performance by network
+              <p className="text-[#fcb131] text-sm font-bold tracking-wide uppercase opacity-90">
+                {breakdownType === 'pushups' ? '💪 Push-ups' : '🏋️ Squats'} performance
               </p>
             </div>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-8">
               {Object.entries(
                 breakdownType === 'pushups'
                   ? pushupAggregated[selectedUser]?.networks || {}
@@ -463,15 +462,17 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                 return (
                   <div
                     key={network}
-                    className={`flex justify-between items-center bg-black/40 p-3 rounded border border-[#fcb131]/20 hover:bg-[#fcb131]/10 transition-all duration-200 ${getHoverEffects()}`}
+                    className={`flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5 hover:border-[#fcb131]/30 transition-all duration-200 group`}
                   >
                     <div className="flex items-center space-x-3">
                       <div
-                        className={`w-4 h-4 rounded-full ${networkStyle.bg} border border-white/20`}
+                        className={`w-3 h-3 rounded-full ${networkStyle.bg} shadow-lg shadow-${networkStyle.bg.replace('bg-', '')}/50`}
                       />
-                      <span className="text-white font-medium">{networkStyle.name}</span>
+                      <span className="text-gray-300 font-medium group-hover:text-white transition-colors">
+                        {networkStyle.name}
+                      </span>
                     </div>
-                    <span className="text-[#fcb131] font-bold text-lg">{score}</span>
+                    <span className="text-white font-black text-xl tracking-tight">{score}</span>
                   </div>
                 );
               })}
@@ -479,9 +480,9 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
 
             <button
               onClick={closeBreakdown}
-              className="w-full bg-[#fcb131] hover:bg-[#f39c12] text-black font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg border-2 border-[#fcb131] hover:shadow-[0_0_15px_rgba(252,177,49,0.5)] transform hover:scale-[1.02]"
+              className="w-full bg-gradient-to-r from-[#fcb131] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[#fcb131] text-black font-black py-4 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/20 active:scale-[0.98]"
             >
-              ✕ Close Breakdown
+              Close Breakdown
             </button>
           </div>
         </div>

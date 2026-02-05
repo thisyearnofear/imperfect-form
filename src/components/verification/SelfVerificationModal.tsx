@@ -113,91 +113,88 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
       description="Quick one-time setup with Self Protocol"
       maxWidth="400px"
     >
-      <div className="space-y-4 relative">
-        {/* Close button - prominent for mobile */}
-        <button
-          onClick={onClose}
-          className="absolute top-0 right-0 text-3xl text-gray-400 hover:text-white p-2 hover:bg-gray-700/50 rounded transition-all"
-          aria-label="Close verification modal"
-          title="Close"
-        >
-          ×
-        </button>
-
+      <div className="space-y-6 relative">
         {/* Verification Interface */}
         {isLoading ? (
-          <div className="text-center py-6">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-transparent border-t-cyan-400 mx-auto mb-3"></div>
-            <p className="text-sm text-gray-300">Generating verification...</p>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-white/10 border-t-cyan-400 mx-auto mb-4"></div>
+            <p className="text-sm text-gray-400 font-medium">Preparing secure verification...</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-6">
             {/* Mobile: Show deep link button */}
             {isMobile ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <button
                   onClick={openSelfApp}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-all text-sm"
+                  className="w-full relative p-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-blue-900/30 border border-blue-500/30 transition-all active:scale-[0.98] group overflow-hidden"
                 >
-                  📱 Open Self App
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex items-center justify-between relative z-10">
+                    <span className="text-lg font-bold">Open Self App</span>
+                    <span className="text-2xl">📱</span>
+                  </div>
                 </button>
-                <p className="text-xs text-gray-400 text-center">
+
+                <div className="text-center">
                   <a
                     href="https://self.id"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:underline text-cyan-400"
+                    className="text-xs text-center text-cyan-400 font-medium hover:text-cyan-300 transition-colors border-b border-transparent hover:border-cyan-400/50 pb-0.5"
                   >
-                    Don&apos;t have it? Download Self
+                    Don&apos;t have the app? Download here
                   </a>
-                </p>
+                </div>
               </div>
             ) : (
               /* Desktop: Show QR code */
-              <div className="space-y-3">
-                <p className="text-xs text-gray-300 text-center">Scan with Self app</p>
-                {selfApp && (
-                  <div className="flex justify-center p-3 bg-white rounded-lg">
-                    <SelfQRcodeWrapper
-                      selfApp={selfApp}
-                      onSuccess={handleSuccessfulVerification}
-                      onError={handleVerificationError}
-                      size={200}
-                      darkMode={true}
-                    />
+              <div className="space-y-4">
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                  <div className="flex justify-center p-3 bg-white rounded-lg shadow-inner">
+                    {selfApp && (
+                      <SelfQRcodeWrapper
+                        selfApp={selfApp}
+                        onSuccess={handleSuccessfulVerification}
+                        onError={handleVerificationError}
+                        size={220}
+                        darkMode={true}
+                      />
+                    )}
                   </div>
-                )}
-                <p className="text-xs text-gray-400 text-center">
-                  <a
-                    href="https://self.id"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline text-cyan-400"
-                  >
-                    Download Self
-                  </a>
-                </p>
+                  <p className="text-xs text-gray-400 text-center mt-3 font-medium">
+                    Scan with your mobile camera or Self App
+                  </p>
+                </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Privacy Notice - compact */}
-        <div className="p-2 rounded border border-cyan-400/30 bg-cyan-900/20">
-          <p className="text-xs text-gray-300">🔒 Verifies age 16+. No personal data stored.</p>
+        {/* Privacy Trust Badge */}
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+          <span className="text-lg">🔒</span>
+          <div>
+            <p className="text-xs font-bold text-cyan-200">Privacy First</p>
+            <p className="text-[10px] text-cyan-100/70 leading-relaxed">
+              We only verify that you are a unique human over 16. No personal identity data is
+              stored on our servers.
+            </p>
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
-          {!isMobile && universalLink && (
-            <button
-              onClick={() => window.open(universalLink, '_blank')}
-              className="flex-1 px-3 py-3 text-sm rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 transition-all font-medium"
-            >
-              Open App
-            </button>
-          )}
-        </div>
+        {/* Desktop Action Button (Universal Link fallback) */}
+        {!isMobile && universalLink && (
+          <button
+            onClick={() => window.open(universalLink, '_blank')}
+            className="w-full py-3 text-sm font-medium text-gray-500 hover:text-white transition-colors flex items-center justify-center gap-2 group"
+          >
+            <span>Problems scanning?</span>
+            <span className="underline decoration-gray-700 group-hover:decoration-gray-500">
+              Open in browser
+            </span>
+          </button>
+        )}
       </div>
     </AccessibleDialog>
   );
