@@ -6,7 +6,6 @@
 
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
-import '@tensorflow/tfjs-backend-cpu';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
 
 export interface PoseDetectionProgress {
@@ -136,6 +135,8 @@ export class PoseDetectionService {
     } catch (error) {
       console.warn('TensorFlow WebGL init failed, falling back to CPU:', error);
       try {
+        // Lazy-load CPU backend only when needed
+        await import('@tensorflow/tfjs-backend-cpu');
         const backend = 'cpu';
         await tf.setBackend(backend);
         await tf.ready();
