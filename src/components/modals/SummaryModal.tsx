@@ -102,6 +102,14 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [submissionType, setSubmissionType] = useState<'verified' | 'basic' | null>(null);
+  const [report, setReport] = useState<{
+    summary: string;
+    strengths: string[];
+    issues: string[];
+    recommendations: string[];
+    metrics: Record<string, number>;
+  } | null>(null);
+  const [reportStatus, setReportStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
   // Debug logging for submission status changes
   React.useEffect(() => {
@@ -119,6 +127,34 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       return () => clearTimeout(autoDismissTimer);
     }
   }, [shouldAutoDismiss, isOpen, onClose]);
+
+  // Post-session AI report (post mode)
+  const handleGenerateReport = () => {
+    const aiMode = process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() || 'post';
+    if (aiMode !== 'post') return;
+    if (!sessionSummary) return;
+    if (reportStatus === 'loading') return;
+
+    setReportStatus('loading');
+    fetch('/api/coach/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode,
+        sessionSummary,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.report) {
+          setReport(data.report);
+          setReportStatus('ready');
+        } else {
+          setReportStatus('error');
+        }
+      })
+      .catch(() => setReportStatus('error'));
+  };
 
   // Check verification status on Celo
   React.useEffect(() => {
@@ -450,6 +486,64 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   <p className={`text-xs ${STATUS_STYLES.error.className} mt-3 font-bold`}>
                     Connection Failed. Tap to Retry.
                   </p>
+                )}
+              </div>
+            )}
+
+            {/* Post-session report */}
+            {(sessionSummary || reportStatus !== 'idle') && (
+              <div className="rounded-xl bg-black/30 p-4 text-left border border-white/10 space-y-3">
+                <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">
+                  Session Analysis
+                </div>
+                {reportStatus === 'idle' && (
+                  <button
+                    onClick={handleGenerateReport}
+                    className="w-full px-3 py-2 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded text-xs hover:from-[#f39c12] hover:to-[#fcb131] transition-all"
+                  >
+                    Generate Report
+                  </button>
+                )}
+                {reportStatus === 'loading' && (
+                  <div className="text-sm text-gray-300">Generating report...</div>
+                )}
+                {reportStatus === 'error' && (
+                  <div className="text-sm text-red-400">Report failed to load.</div>
+                )}
+                {reportStatus === 'ready' && report && (
+                  <div className="space-y-3">
+                    <div className="text-sm text-white">{report.summary}</div>
+                    <div>
+                      <div className="text-[10px] uppercase text-green-300 font-bold mb-1">
+                        Strengths
+                      </div>
+                      <ul className="text-xs text-gray-200 list-disc list-inside">
+                        {report.strengths.map((s, i) => (
+                          <li key={`s-${i}`}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase text-yellow-300 font-bold mb-1">
+                        Issues
+                      </div>
+                      <ul className="text-xs text-gray-200 list-disc list-inside">
+                        {report.issues.map((s, i) => (
+                          <li key={`i-${i}`}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase text-blue-300 font-bold mb-1">
+                        Recommendations
+                      </div>
+                      <ul className="text-xs text-gray-200 list-disc list-inside">
+                        {report.recommendations.map((s, i) => (
+                          <li key={`r-${i}`}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

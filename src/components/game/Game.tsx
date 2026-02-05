@@ -831,7 +831,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                   {memoizedWebcam}
 
                   {/* Pose loading overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                     <UnifiedLoader
                       phase={
                         !poseState.hasCamera

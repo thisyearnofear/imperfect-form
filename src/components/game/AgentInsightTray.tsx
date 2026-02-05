@@ -80,7 +80,8 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
     'auto'
   );
   const [, startTransition] = useTransition();
-  const aiCoachingEnabled = process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() !== 'off';
+  const aiMode = process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() || 'post';
+  const aiLiveEnabled = aiMode === 'live';
   const aiIntervalMs = process.env.NODE_ENV === 'development' ? 15000 : 5000;
 
   // Keep metrics ref in sync (non-blocking)
@@ -169,7 +170,7 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
 
   // AI Coaching: Call API every 5 seconds for enhanced feedback (deferred, non-blocking)
   useEffect(() => {
-    if (!metrics || !aiEnabled || !aiCoachingEnabled) return;
+    if (!metrics || !aiEnabled || !aiLiveEnabled) return;
 
     // Gate AI calls until pose is stable for a short window
     if (!metrics.isStable) return;
@@ -228,16 +229,7 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
           setCurrentProvider('local');
         });
     });
-  }, [
-    metricsHash,
-    mode,
-    repCount,
-    speak,
-    aiEnabled,
-    aiCoachingEnabled,
-    aiIntervalMs,
-    startTransition,
-  ]);
+  }, [metricsHash, mode, repCount, speak, aiEnabled, aiLiveEnabled, aiIntervalMs, startTransition]);
 
   const config = FEEDBACK_CONFIG[feedback.type];
 

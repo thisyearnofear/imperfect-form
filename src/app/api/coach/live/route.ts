@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
-  AIProvider,
-  AI_PROVIDERS,
   CoachRequest,
   CoachResponse,
+  AIProvider,
   getAvailableProviders,
-  getNextProvider,
   isProviderConfigured,
-  recordProviderFailure,
-  recordProviderSuccess,
-  getBestAvailableProvider,
-  estimateCost,
 } from '@/config/aiProviders';
 import {
   getCachedFeedback,
@@ -23,6 +16,7 @@ import {
 } from '@/lib/cacheManager';
 import { analyzeForm, convertToLegacyFormat, CoachingAnalysis } from '@/lib/coachingEngine';
 import { getOrCreateSessionId, updateSessionMetrics } from '@/lib/sessionManager';
+import { callAIProvider } from '@/lib/aiCoachProviders';
 
 /**
  * Multi-Provider Live Coach API
@@ -39,34 +33,6 @@ import { getOrCreateSessionId, updateSessionMetrics } from '@/lib/sessionManager
  * - Circuit breaker pattern for provider reliability
  * - Cost tracking and optimization
  */
-
-/**
- * Call Gemini API
- */
-async function callGemini(
-  prompt: string
-): Promise<{ feedback: string; severity: string; shouldSpeak: boolean }> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
-
-  const providerConfig = AI_PROVIDERS.gemini;
-  if (!providerConfig) throw new Error('Gemini provider config not found');
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: providerConfig.model });
-
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  const text = response.text();
-
-  // Parse JSON response
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error('Invalid response format from Gemini');
-  }
-
-  return JSON.parse(jsonMatch[0]);
-}
 
 /**
  * Generate feedback using unified coaching engine
@@ -97,125 +63,7 @@ function generateCoachingFeedback(
   return convertToLegacyFormat(analysis);
 }
 
-/**
- * Call Venice AI (OpenAI-compatible)
- */
-async function callVenice(
-  prompt: string
-): Promise<{ feedback: string; severity: string; shouldSpeak: boolean }> {
-  const apiKey = process.env.VENICE_API_KEY;
-  if (!apiKey) throw new Error('VENICE_API_KEY not configured');
-
-  const config = AI_PROVIDERS.venice;
-  if (!config || !config.baseUrl) throw new Error('Venice provider config not found');
-
-  const response = await fetch(`${config.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a concise fitness coach. Always respond with valid JSON only.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 100,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Venice API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const text = data.choices[0].message.content;
-
-  // Parse JSON response
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error('Invalid response format from Venice');
-  }
-
-  return JSON.parse(jsonMatch[0]);
-}
-
-/**
- * Call AI provider with circuit breaker
- *
- * Features:
- * - Uses circuit breaker to prevent repeated failures
- * - Tracks provider success/failure
- * - Cost estimation
- * - Falls back to next available provider
- */
-async function callAIProvider(
-  prompt: string,
-  preferredProvider?: AIProvider
-): Promise<{ result: any; provider: AIProvider; latencyMs: number; estimatedCost: number }> {
-  const startTime = Date.now();
-  const failedProviders = new Set<AIProvider>();
-
-  // Get best available provider (considering circuit breaker)
-  let currentProvider: AIProvider | null = null;
-  let config = getBestAvailableProvider(preferredProvider);
-  currentProvider = config?.name || null;
-
-  if (!currentProvider) {
-    throw new Error('No AI providers available (all in cooldown or misconfigured)');
-  }
-
-  while (currentProvider && config) {
-    try {
-      console.log(`🤖 Attempting AI call with provider: ${currentProvider}`);
-
-      let result;
-      if (currentProvider === 'gemini') {
-        result = await callGemini(prompt);
-      } else if (currentProvider === 'venice') {
-        result = await callVenice(prompt);
-      } else {
-        throw new Error(`Unknown provider: ${currentProvider}`);
-      }
-
-      const latencyMs = Date.now() - startTime;
-
-      // Estimate cost (rough: ~150 input tokens + ~50 output tokens)
-      const estimatedCost = estimateCost(currentProvider, 150, 50);
-
-      // Record success
-      recordProviderSuccess(currentProvider);
-      console.log(
-        `✅ AI call successful with ${currentProvider} (${latencyMs}ms, cost: $${estimatedCost.toFixed(4)})`
-      );
-
-      return { result, provider: currentProvider, latencyMs, estimatedCost };
-    } catch (error) {
-      console.warn(`❌ ${currentProvider} failed:`, error);
-      failedProviders.add(currentProvider);
-      recordProviderFailure(currentProvider);
-
-      // Try next provider
-      const nextConfig = getNextProvider(currentProvider, failedProviders);
-      currentProvider = nextConfig?.name || null;
-      config = nextConfig || null;
-
-      if (currentProvider) {
-        console.log(`🔄 Falling back to ${currentProvider}`);
-      }
-    }
-  }
-
-  throw new Error('No AI providers available');
-}
+// callAIProvider moved to lib/aiCoachProviders (shared)
 
 export async function POST(request: NextRequest) {
   try {
