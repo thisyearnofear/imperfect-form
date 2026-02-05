@@ -44,7 +44,7 @@ export default function LazyWebcam(props: LazyWebcamProps) {
           if (!module.default) {
             throw new Error('Webcam module has no default export');
           }
-          setWebcamComponent(module.default as React.ComponentType<LazyWebcamProps>);
+          setWebcamComponent(() => module.default as React.ComponentType<LazyWebcamProps>);
           setIsLoading(false);
         })
         .catch((err) => {
