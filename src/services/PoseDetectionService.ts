@@ -119,7 +119,7 @@ export class PoseDetectionService {
     });
 
     try {
-      const backend = isMobile ? 'webgl' : 'webgl';
+      const backend = 'webgl';
       await tf.setBackend(backend);
       await tf.ready();
 
@@ -131,8 +131,21 @@ export class PoseDetectionService {
 
       return backend;
     } catch (error) {
-      console.error('TensorFlow initialization failed:', error);
-      throw new Error('Failed to initialize TensorFlow.js');
+      console.warn('TensorFlow WebGL init failed, falling back to CPU:', error);
+      try {
+        const backend = 'cpu';
+        await tf.setBackend(backend);
+        await tf.ready();
+        this.emitProgress({
+          phase: 'tensorflow-init',
+          message: `TensorFlow ready (${backend})`,
+          percentage: 30,
+        });
+        return backend;
+      } catch (cpuError) {
+        console.error('TensorFlow initialization failed:', cpuError);
+        throw new Error('Failed to initialize TensorFlow.js');
+      }
     }
   }
 
