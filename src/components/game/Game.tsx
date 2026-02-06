@@ -752,7 +752,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     timeLeft={timeLeft}
                     repCount={repCount}
                     formatTime={formatTime}
-                    isMobile={isMobile}
                   />
 
                   <GameLoadingOverlay
