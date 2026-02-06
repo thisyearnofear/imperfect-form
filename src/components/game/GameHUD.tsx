@@ -5,13 +5,24 @@ interface GameHUDProps {
   timeLeft: number;
   repCount: number;
   formatTime: (sec: number) => string;
+  isOverlay?: boolean;
 }
 
-export const GameHUD: React.FC<GameHUDProps> = ({ mode, timeLeft, repCount, formatTime }) => {
+export const GameHUD: React.FC<GameHUDProps> = ({
+  mode,
+  timeLeft,
+  repCount,
+  formatTime,
+  isOverlay = true,
+}) => {
   return (
     <div
-      className="absolute top-4 left-0 right-0 flex justify-center items-start gap-3 z-50 pointer-events-none"
-      style={{ transform: 'translate3d(0, 0, 10px)' }}
+      className={`${
+        isOverlay
+          ? 'absolute top-4 left-0 right-0 z-50 pointer-events-none'
+          : 'w-full flex justify-center items-center gap-3 py-2 z-10 relative'
+      } flex justify-center items-start gap-3`}
+      style={isOverlay ? { transform: 'translate3d(0, 0, 10px)' } : undefined}
     >
       <div className="timer bg-black/90 backdrop-blur-sm px-4 py-2 rounded-xl border-2 border-yellow-500 shadow-[0_0_15px_rgba(252,177,49,0.3)] flex flex-col items-center">
         <span className="text-[9px] uppercase text-yellow-500 font-black tracking-widest">

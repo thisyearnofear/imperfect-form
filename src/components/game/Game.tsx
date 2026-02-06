@@ -733,88 +733,88 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           {started && (
             <>
               {isMobile ? (
-                /* Mobile layout */
-                <div
-                  id="canvasContainerMobile"
-                  aria-label="Game Canvas Mobile"
-                  className="w-full relative"
-                  style={{
-                    height: '100%',
-                    minHeight: '300px',
-                    maxWidth: '100%',
-                    overflow: 'visible',
-                  }}
-                >
-                  {memoizedWebcam}
-
+                /* Mobile layout - HUD Block Layout (Stable) */
+                <div className="w-full flex flex-col items-center justify-start relative h-full">
+                  {/* HUD placed statically above the video to prevent z-index/layering issues on iOS */}
                   <GameHUD
                     mode={mode}
                     timeLeft={timeLeft}
                     repCount={repCount}
                     formatTime={formatTime}
+                    isOverlay={false}
                   />
 
-                  <GameLoadingOverlay
-                    phase={
-                      !poseState.hasCamera
-                        ? 'camera'
-                        : !poseState.hasPoseDetection
-                          ? 'ai'
-                          : !poseState.poseDetected
-                            ? 'positioning'
-                            : 'ready'
-                    }
-                    progress={detectionProgress?.percentage}
-                    isVisible={started && (!poseState.hasPoseDetection || !poseState.poseDetected)}
-                  />
+                  <div
+                    id="canvasContainerMobile"
+                    aria-label="Game Canvas Mobile"
+                    className="w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/50"
+                    style={{
+                      width: '100%',
+                      minHeight: '300px',
+                      // Allow container to fill remaining space but respect aspect ratio logic in Webcam
+                    }}
+                  >
+                    {memoizedWebcam}
 
-                  <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+                    <GameLoadingOverlay
+                      phase={
+                        !poseState.hasCamera
+                          ? 'camera'
+                          : !poseState.hasPoseDetection
+                            ? 'ai'
+                            : !poseState.poseDetected
+                              ? 'positioning'
+                              : 'ready'
+                      }
+                      progress={detectionProgress?.percentage}
+                      isVisible={
+                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
+                      }
+                    />
 
-                  <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
+                    <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+
+                    <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
+                  </div>
                 </div>
               ) : (
-                /* Desktop layout */
-                <div
-                  id="canvasContainerDesktop"
-                  aria-label="Game Canvas Desktop"
-                  className="w-full h-full relative"
-                >
-                  {memoizedWebcam}
-
-                  {/* Desktop HUD is overlaid on top of canvas as well to match mobile style for consistency, 
-                      or we can keep it outside if strictly required. 
-                      Based on prev code, desktop HUD was outside. 
-                      However, since GameHUD is absolute, we can place it here too. 
-                      Let's stick to the previous 'outside the canvas' div if we want to mimic exact structure,
-                      but putting it inside the relative container is cleaner if dimensions match. 
-                      Actually, let's keep the structure: Canvas Div + HUD Div.
-                  */}
-
-                  <GameLoadingOverlay
-                    phase={
-                      !poseState.hasCamera
-                        ? 'camera'
-                        : !poseState.hasPoseDetection
-                          ? 'ai'
-                          : !poseState.poseDetected
-                            ? 'positioning'
-                            : 'ready'
-                    }
-                    progress={detectionProgress?.percentage}
-                    isVisible={started && (!poseState.hasPoseDetection || !poseState.poseDetected)}
-                    isOverlay={true}
-                  />
-
-                  <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
-
-                  {/* Desktop HUD can overlay the webcam container just like mobile */}
+                /* Desktop layout - HUD Block Layout */
+                <div className="w-full h-full flex flex-col items-center justify-start relative">
                   <GameHUD
                     mode={mode}
                     timeLeft={timeLeft}
                     repCount={repCount}
                     formatTime={formatTime}
+                    isOverlay={false}
                   />
-                  <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+
+                  <div
+                    id="canvasContainerDesktop"
+                    aria-label="Game Canvas Desktop"
+                    className="w-full relative flex-grow rounded-lg overflow-hidden border border-white/10 bg-black/50"
+                  >
+                    {memoizedWebcam}
+
+                    <GameLoadingOverlay
+                      phase={
+                        !poseState.hasCamera
+                          ? 'camera'
+                          : !poseState.hasPoseDetection
+                            ? 'ai'
+                            : !poseState.poseDetected
+                              ? 'positioning'
+                              : 'ready'
+                      }
+                      progress={detectionProgress?.percentage}
+                      isVisible={
+                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
+                      }
+                      isOverlay={true}
+                    />
+
+                    <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
+                    <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+                  </div>
                 </div>
               )}
             </>
