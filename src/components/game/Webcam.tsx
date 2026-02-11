@@ -292,7 +292,7 @@ const Webcam: React.FC<WebcamProps> = ({
               // Mobile: Let the parent flex container control height, maintain aspect ratio via padding
               width: '100%',
               height: '100%', // Fill the flex-grow container from Game.tsx
-              maxHeight: '70vh',
+              maxHeight: '100%',
               minHeight: '300px',
             }
           : {
@@ -310,7 +310,7 @@ const Webcam: React.FC<WebcamProps> = ({
           // Mobile-specific video optimizations
           ...(isMobile
             ? {
-                objectFit: 'contain', // On mobile, show full video without cropping
+                objectFit: 'cover', // On mobile, crop to fill container completely (full screen experience)
                 transform: 'scaleX(-1)', // Mirror video on mobile for better UX
                 backgroundColor: '#000', // Black background for letterboxing if needed
               }

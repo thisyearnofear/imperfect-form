@@ -425,7 +425,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
         // Visual feedback
         setRepFeedback({ show: true, count });
-        setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 600);
+        setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 1000);
       }
 
       // Start the timer on the first rep if it hasn't started yet
@@ -741,13 +741,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     timeLeft={timeLeft}
                     repCount={repCount}
                     formatTime={formatTime}
-                    isOverlay={false}
+                    isOverlay={isFullscreen}
                   />
 
                   <div
                     id="canvasContainerMobile"
                     aria-label="Game Canvas Mobile"
-                    className="w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/50"
+                    className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/50 ${isFullscreen ? 'video-container-fs' : ''}`}
                     style={{
                       width: '100%',
                       minHeight: '300px',
@@ -775,6 +775,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
 
                     <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
+
+                    {/* Pose Detection Status Indicator */}
+                    <div
+                      className={`pose-status-indicator ${poseState.poseDetected ? 'detected' : 'not-detected'}`}
+                    >
+                      {poseState.poseDetected ? '👤 POSE DETECTED' : '⚠️ NO POSE DETECTED'}
+                    </div>
                   </div>
                 </div>
               ) : (

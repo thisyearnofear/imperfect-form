@@ -215,10 +215,12 @@ export function usePoseDetection(
 
     // Use worker if OffscreenCanvas is supported AND not on mobile
     // Mobile devices (even with OffscreenCanvas support) often struggle with createImageBitmap and worker overhead
+    // iOS Safari has a bug where OffscreenCanvas + worker often results in 0x0 or corrupted textures
     if (
       supportsOffscreenCanvas &&
       typeof canvas.transferControlToOffscreen === 'function' &&
-      !isMobile
+      !isMobile &&
+      !/iPhone|iPad|iPod/.test(navigator.userAgent)
     ) {
       // Worker-based approach (desktop)
       startWorkerBasedDetection();
@@ -246,9 +248,10 @@ export function usePoseDetection(
 
         const constraints = {
           video: {
-            width: isMobile ? 480 : 640,
-            height: isMobile ? 360 : 480,
+            width: isMobile ? { ideal: 640 } : 640,
+            height: isMobile ? { ideal: 480 } : 480,
             facingMode: 'user',
+            frameRate: { ideal: 30 },
           },
         };
 
@@ -347,18 +350,32 @@ export function usePoseDetection(
       console.log('Using main-thread pose detection (mobile fallback)');
 
       try {
+        // iOS Safari workaround: Try to ensure the video element is truly ready
+        // and not in a background/suspended state.
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('muted', 'true');
+
         // STEP 1: Initialize Camera FIRST (critical for iOS)
         const constraints = {
           video: {
-            width: isMobile ? 480 : 640,
-            height: isMobile ? 360 : 480,
+            width: isMobile ? { ideal: 640 } : 640,
+            height: isMobile ? { ideal: 480 } : 480,
             facingMode: 'user',
+            frameRate: { ideal: 30 },
           },
         };
 
-        streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = streamRef.current;
-        await video.play();
+        try {
+          streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
+          video.srcObject = streamRef.current;
+          await video.play();
+        } catch (streamError) {
+          console.error('Camera access failed:', streamError);
+          // Fallback for some iOS versions that are picky about constraints
+          streamRef.current = await navigator.mediaDevices.getUserMedia({ video: true });
+          video.srcObject = streamRef.current;
+          await video.play();
+        }
 
         notifyStateChange({ hasCamera: true });
         emitProgress({
@@ -376,7 +393,13 @@ export function usePoseDetection(
 
         // iOS Safari workaround: Try WebGL first, fall back to CPU
         try {
+          // High-performance mode for mobile
           await tf.setBackend('webgl');
+          if (isMobile) {
+            // Disable some features for better performance on mobile
+            tf.env().set('WEBGL_FORCE_F16_PIPELINES', true);
+            tf.env().set('WEBGL_PACK', true);
+          }
           await tf.ready();
           console.log('TensorFlow WebGL backend initialized');
         } catch (webglError) {
