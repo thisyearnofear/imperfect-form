@@ -6,6 +6,19 @@ import type { PoseDetector } from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import { createDetector, SupportedModels } from '@tensorflow-models/pose-detection';
+import {
+  requestCameraPermission,
+  cleanupCameraStream,
+  monitorCameraStream,
+  getFarcasterCameraConstraints,
+} from '../utils/cameraPermissions';
+import {
+  initializeTensorFlow,
+  monitorTensorFlowMemory,
+  disposeUnusedTensors,
+} from '../utils/tensorFlowInit';
+import { handleFarcasterError, ErrorCodes } from '../utils/farcasterErrors';
+import { isFarcasterMiniApp } from '../utils/farcasterMiniApp';
 
 type ExerciseMode = 'pushups' | 'squats';
 
@@ -125,6 +138,11 @@ export function usePoseDetection(
   onMetrics?: (state: BiomechanicalState) => void,
   onSessionEnd?: (summary: SessionSummary) => void
 ) {
+  // Platform detection variables - defined once at function level
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const isSafari =
+    /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
+
   // Defensive: handle unexpected null/undefined at runtime
   const safeMode: ExerciseMode = mode === 'squats' ? 'squats' : 'pushups';
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -132,7 +150,13 @@ export function usePoseDetection(
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<PoseDetector | null>(null);
   const animationRef = useRef<number | null>(null);
-  const [poseState, setPoseState] = useState({
+  const [poseState, setPoseState] = useState<{
+    hasCamera: boolean;
+    hasPoseDetection: boolean;
+    poseDetected: boolean;
+    isLoading: boolean;
+    lastError?: string;
+  }>({
     hasCamera: false,
     hasPoseDetection: false,
     poseDetected: false,
@@ -246,17 +270,50 @@ export function usePoseDetection(
           return;
         }
 
-        const constraints = {
-          video: {
-            width: isMobile ? { ideal: 640 } : 640,
-            height: isMobile ? { ideal: 480 } : 480,
-            facingMode: 'user',
-            frameRate: { ideal: 30 },
-          },
-        };
+        // Use Farcaster-aware camera permission request
+        const constraints = isFarcasterMiniApp()
+          ? getFarcasterCameraConstraints()
+          : {
+              video: {
+                width: isMobile ? { ideal: 640 } : 640,
+                height: isMobile ? { ideal: 480 } : 480,
+                facingMode: 'user',
+                frameRate: { ideal: 30 },
+              },
+            };
 
-        streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
+        const cameraResult = await requestCameraPermission(constraints);
+
+        if (!cameraResult.granted) {
+          const farcasterError = handleFarcasterError(
+            new Error(cameraResult.error || 'Camera permission failed'),
+            'camera-access'
+          );
+
+          notifyStateChange({
+            isLoading: false,
+            lastError: farcasterError.userMessage,
+          });
+
+          emitProgress({
+            phase: 'camera',
+            message: farcasterError.userMessage,
+            percentage: 0,
+          });
+
+          return;
+        }
+
+        streamRef.current = cameraResult.stream!;
         video.srcObject = streamRef.current;
+
+        // iOS Safari needs these attributes even in worker mode
+        if (isIOS) {
+          video.setAttribute('playsinline', 'true');
+          video.setAttribute('muted', 'true');
+          video.setAttribute('webkit-playsinline', 'true');
+        }
+
         await video.play();
 
         notifyStateChange({ hasCamera: true });
@@ -356,25 +413,75 @@ export function usePoseDetection(
         video.setAttribute('muted', 'true');
 
         // STEP 1: Initialize Camera FIRST (critical for iOS)
-        const constraints = {
-          video: {
-            width: isMobile ? { ideal: 640 } : 640,
-            height: isMobile ? { ideal: 480 } : 480,
-            facingMode: 'user',
-            frameRate: { ideal: 30 },
-          },
-        };
+        const isFarcaster = isFarcasterMiniApp();
+        const constraints = isFarcaster
+          ? getFarcasterCameraConstraints()
+          : {
+              video: {
+                width: isMobile ? { ideal: 640 } : 640,
+                height: isMobile ? { ideal: 480 } : 480,
+                facingMode: 'user',
+                frameRate: { ideal: 30 },
+              },
+            };
 
-        try {
-          streamRef.current = await navigator.mediaDevices.getUserMedia(constraints);
-          video.srcObject = streamRef.current;
-          await video.play();
-        } catch (streamError) {
-          console.error('Camera access failed:', streamError);
-          // Fallback for some iOS versions that are picky about constraints
-          streamRef.current = await navigator.mediaDevices.getUserMedia({ video: true });
-          video.srcObject = streamRef.current;
-          await video.play();
+        const cameraResult = await requestCameraPermission(constraints);
+
+        if (!cameraResult.granted) {
+          const farcasterError = handleFarcasterError(
+            new Error(cameraResult.error || 'Camera permission failed'),
+            'camera-access'
+          );
+
+          notifyStateChange({
+            isLoading: false,
+            lastError: farcasterError.userMessage,
+          });
+
+          emitProgress({
+            phase: 'camera',
+            message: farcasterError.userMessage,
+            percentage: 0,
+          });
+
+          return;
+        }
+
+        streamRef.current = cameraResult.stream!;
+        video.srcObject = streamRef.current;
+
+        // iOS Safari needs playsinline and muted attributes
+        if (isIOS) {
+          video.setAttribute('playsinline', 'true');
+          video.setAttribute('muted', 'true');
+          video.setAttribute('webkit-playsinline', 'true');
+        }
+
+        await video.play();
+
+        // Monitor camera stream for disconnections (common in Farcaster)
+        if (cameraResult.stream) {
+          const stopMonitoring = monitorCameraStream(cameraResult.stream, () => {
+            // Camera disconnected - common in mini apps
+            const farcasterError = handleFarcasterError(
+              new Error('Camera stream disconnected'),
+              'camera-disconnected'
+            );
+
+            notifyStateChange({
+              hasCamera: false,
+              lastError: farcasterError.userMessage,
+            });
+
+            emitProgress({
+              phase: 'camera',
+              message: farcasterError.userMessage,
+              percentage: 0,
+            });
+          });
+
+          // Store cleanup function
+          (streamRef.current as any)._stopMonitoring = stopMonitoring;
         }
 
         notifyStateChange({ hasCamera: true });
@@ -387,31 +494,93 @@ export function usePoseDetection(
         // STEP 2: Initialize TensorFlow AFTER camera is running
         emitProgress({
           phase: 'ai',
-          message: 'Initializing AI...',
+          message: isFarcaster ? 'Initializing AI for Farcaster...' : 'Initializing AI...',
           percentage: 40,
         });
 
-        // iOS Safari workaround: Try WebGL first, fall back to CPU
+        // Use Farcaster-optimized TensorFlow initialization
+        const tfResult = await initializeTensorFlow({
+          isFarcaster,
+          isMobile,
+          preferWebGL: true,
+          memoryLimit: isFarcaster ? 256 : 512,
+        });
+
+        if (!tfResult.success) {
+          const farcasterError = handleFarcasterError(
+            new Error('TensorFlow initialization failed'),
+            'tensorflow-init'
+          );
+
+          notifyStateChange({
+            isLoading: false,
+            lastError: farcasterError.userMessage,
+          });
+
+          emitProgress({
+            phase: 'ai',
+            message: farcasterError.userMessage,
+            percentage: 0,
+          });
+
+          return;
+        }
+
+        // Apply optimizations based on platform
         try {
-          // High-performance mode for mobile
-          await tf.setBackend('webgl');
-          if (isMobile) {
-            // Disable some features for better performance on mobile
+          if (isIOS) {
+            tf.env().set('WEBGL_CONV_MATH_WITH_OPTIMIZED_CHANNELS', true);
+            tf.env().set('WEBGL_MAX_TEXTURE_SIZE', 4096); // Limit texture size for iOS
+          } else if (isMobile) {
+            // General mobile optimizations
             tf.env().set('WEBGL_FORCE_F16_PIPELINES', true);
             tf.env().set('WEBGL_PACK', true);
           }
+
           await tf.ready();
-          console.log('TensorFlow WebGL backend initialized');
+          console.log(
+            `TensorFlow WebGL backend initialized (${isIOS && isSafari ? 'iOS Safari optimized' : 'standard'})`
+          );
+
+          // Warm up backend with small operations
+          if (isIOS) {
+            const dummyTensor = tf.tensor2d([
+              [1, 2],
+              [3, 4],
+            ]);
+            dummyTensor.mul(dummyTensor).dispose();
+            dummyTensor.dispose();
+          }
         } catch (webglError) {
-          console.warn('WebGL failed, trying CPU backend:', webglError);
+          console.warn(
+            `WebGL backend failed${isIOS && isSafari ? ' on iOS Safari' : ''}, falling back to CPU:`,
+            webglError
+          );
+
           try {
+            // Import CPU backend if not already loaded
             await import('@tensorflow/tfjs-backend-cpu');
             await tf.setBackend('cpu');
             await tf.ready();
             console.log('TensorFlow CPU backend initialized');
+
+            // iOS CPU optimization
+            if (isIOS) {
+              console.log('Applying iOS CPU optimizations');
+              tf.env().set('WEBGL_FORCE_FLOAT', false);
+            }
           } catch (cpuError) {
-            console.error('Both WebGL and CPU backends failed:', cpuError);
-            throw cpuError;
+            const errorMsg = `Failed to initialize TensorFlow backends. WebGL: ${webglError}, CPU: ${cpuError}`;
+            console.error(errorMsg);
+
+            // Provide user-friendly error for iOS Safari
+            if (isIOS && isSafari) {
+              throw new Error(
+                'Unable to initialize pose detection on iOS Safari. Please try: 1) Closing other tabs/apps, 2) Restarting Safari, or 3) Using a different browser.'
+              );
+            } else {
+              throw new Error(`Pose detection initialization failed: ${cpuError}`);
+            }
           }
         }
 
@@ -435,11 +604,24 @@ export function usePoseDetection(
           percentage: 100,
         });
 
-        // Set canvas dimensions
+        // Set canvas dimensions with iOS-specific handling
         if (isMobile) {
           const rect = canvas.getBoundingClientRect();
-          canvas.width = rect.width * window.devicePixelRatio;
-          canvas.height = rect.height * window.devicePixelRatio;
+          const dpr = window.devicePixelRatio || 1;
+
+          // iOS Safari: Limit DPR to save memory
+          const effectiveDPR = /iPhone|iPad|iPod/.test(navigator.userAgent) && dpr > 2 ? 2 : dpr;
+
+          canvas.width = rect.width * effectiveDPR;
+          canvas.height = rect.height * effectiveDPR;
+
+          // Store dimensions for orientation changes
+          (canvas as any)._lastDimensions = {
+            width: canvas.width,
+            height: canvas.height,
+            rectWidth: rect.width,
+            rectHeight: rect.height,
+          };
         } else {
           canvas.width = video.videoWidth || 640;
           canvas.height = video.videoHeight || 480;
@@ -454,6 +636,19 @@ export function usePoseDetection(
 
             const detected = poses.length > 0 && poses[0].keypoints.length > 0;
             notifyStateChange({ poseDetected: detected });
+
+            // Memory management: periodic cleanup for mini apps and mobile
+            const isFarcaster = isFarcasterMiniApp();
+
+            if ((isFarcaster || isIOS) && Math.random() < 0.01) {
+              // 1% chance per frame to check memory
+              const memoryCheck = monitorTensorFlowMemory();
+
+              if (memoryCheck.shouldDispose) {
+                console.log('Memory cleanup triggered:', memoryCheck.memoryInfo);
+                disposeUnusedTensors();
+              }
+            }
 
             if (poses.length > 0) {
               const keypoints = poses[0].keypoints as Keypoint[];
@@ -534,17 +729,63 @@ export function usePoseDetection(
         animationRef.current = requestAnimationFrame(detect);
       } catch (error) {
         console.error('Failed to start main-thread detection:', error);
+
+        let errorMessage = 'AI initialization failed';
+        if (isIOS && isSafari) {
+          errorMessage = 'iOS Safari: AI initialization failed. Try restarting the app.';
+        }
+
         notifyStateChange({ isLoading: false, hasPoseDetection: false });
         emitProgress({
           phase: 'ai',
-          message: 'AI initialization failed',
+          message: errorMessage,
           percentage: 0,
         });
       }
     }
 
+    // iOS Safari orientation change handler
+    const handleOrientationChange = () => {
+      if (!canvasRef.current || !videoRef.current || !isActive) return;
+
+      if (isIOS) {
+        // Delay to allow iOS Safari to update layout
+        setTimeout(() => {
+          if (canvasRef.current && videoRef.current) {
+            const rect = canvasRef.current.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const effectiveDPR = dpr > 2 ? 2 : dpr;
+
+            // Update canvas dimensions
+            canvasRef.current.width = rect.width * effectiveDPR;
+            canvasRef.current.height = rect.height * effectiveDPR;
+
+            console.log('iOS orientation change: Updated canvas dimensions', {
+              width: canvasRef.current.width,
+              height: canvasRef.current.height,
+            });
+          }
+        }, 300); // iOS Safari needs a longer delay
+      }
+    };
+
+    // Add orientation change listener
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    // Also listen for resize events (iOS Safari sometimes triggers these instead)
+    const handleResize = () => {
+      if (isIOS && isActive) {
+        handleOrientationChange();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
       console.log('🧹 Cleaning up pose detection');
+
+      // Remove event listeners
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleResize);
 
       // Calculate and trigger session end callback
       if (sessionLoggerRef.current) {
@@ -574,15 +815,33 @@ export function usePoseDetection(
         animationRef.current = null;
       }
 
-      // Stop camera
+      // Stop camera with cleanup
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+        // Stop monitoring first
+        if ((streamRef.current as any)._stopMonitoring) {
+          (streamRef.current as any)._stopMonitoring();
+        }
+
+        cleanupCameraStream(streamRef.current);
         streamRef.current = null;
       }
 
       // Reset canvas transfer flag
       if (canvasRef.current) {
         (canvasRef.current as any)._isTransferred = false;
+      }
+
+      // Clean up TensorFlow memory (especially important for Farcaster)
+      const isFarcaster = isFarcasterMiniApp();
+      if (isFarcaster || tf?.getBackend()) {
+        try {
+          // Force cleanup for mini apps
+          disposeUnusedTensors();
+          tf.disposeVariables();
+          console.log('Cleaned up TensorFlow memory on iOS');
+        } catch (e) {
+          console.warn('Error cleaning up TensorFlow memory:', e);
+        }
       }
 
       notifyStateChange({ hasCamera: false, hasPoseDetection: false, poseDetected: false });
