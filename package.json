@@ -51,6 +51,7 @@
     "@stablelib/random": "^1.0.2",
     "@stablelib/sha256": "^1.0.1",
     "@stablelib/x25519": "^1.0.3",
+    "@supabase/supabase-js": "^2.45.4",
     "@tanstack/react-query": "^5.85.5",
     "@tensorflow-models/pose-detection": "^0.0.1",
     "@tensorflow/tfjs": "^4.22.0",

@@ -45,7 +45,7 @@ class PerformanceMonitoringSystem {
   private errorCount = 0;
   private fallbacksTriggered = 0;
   private crashes = 0;
-  private lastReportTime = (number = 0);
+  private lastReportTime: number = 0;
   private metricsBuffer: PerformanceMetrics[] = [];
   private reportingThreshold = 30000; // Report every 30 seconds
 
@@ -130,7 +130,7 @@ class PerformanceMonitoringSystem {
 
     // Store metrics for aggregation
     const metrics = this.monitor.getMetrics();
-    this.metricsBuffer.push({ ...metrics, poseCount: poseCount as any });
+    this.metricsBuffer.push({ ...metrics });
 
     // Check for performance issues
     if (this.monitor.isPerformanceDegraded()) {
