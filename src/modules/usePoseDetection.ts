@@ -237,19 +237,25 @@ export function usePoseDetection(
     const canvas = canvasRef.current;
     const video = videoRef.current;
 
-    // Use worker if OffscreenCanvas is supported AND not on mobile
-    // Mobile devices (even with OffscreenCanvas support) often struggle with createImageBitmap and worker overhead
-    // iOS Safari has a bug where OffscreenCanvas + worker often results in 0x0 or corrupted textures
+    // Detect mobile/iOS directly from navigator to avoid race with useDeviceDetect hydration
+    // (isMobile prop may still be false on first render due to SSR/useEffect timing)
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(
+      navigator.userAgent
+    );
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isMobileDevice = isMobile || isMobileUA || (window.innerWidth < 768 && isTouchDevice);
+
+    // Use worker only on desktop — mobile devices (especially iOS Safari) struggle with
+    // OffscreenCanvas + worker (createImageBitmap failures, 0x0 textures, corrupted frames)
     if (
       supportsOffscreenCanvas &&
       typeof canvas.transferControlToOffscreen === 'function' &&
-      !isMobile &&
-      !/iPhone|iPad|iPod/.test(navigator.userAgent)
+      !isMobileDevice
     ) {
-      // Worker-based approach (desktop)
+      // Worker-based approach (desktop only)
       startWorkerBasedDetection();
     } else {
-      // Main-thread approach (mobile)
+      // Main-thread approach (mobile / iOS / touch devices)
       startMainThreadDetection();
     }
 
