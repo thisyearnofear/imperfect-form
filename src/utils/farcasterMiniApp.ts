@@ -362,13 +362,16 @@ export async function supportsBatchTransactions(): Promise<boolean> {
 /**
  * Send batch transactions using EIP-5792 wallet_sendCalls
  * Returns transaction IDs if successful
+ *
+ * Automatically includes Builder Code (ERC-8021) dataSuffix for attribution if configured
  */
 export async function sendBatchTransactions(
   calls: Array<{
     to: `0x${string}`;
     data?: `0x${string}`;
     value?: bigint;
-  }>
+  }>,
+  includeBuilderCode: boolean = true
 ): Promise<{ success: boolean; result?: string; error?: unknown }> {
   try {
     const provider = await getEthereumProvider();
@@ -376,18 +379,32 @@ export async function sendBatchTransactions(
       throw new Error('No Ethereum provider available');
     }
 
+    // Build params for wallet_sendCalls
+    const params: any = {
+      calls: calls.map((call) => ({
+        to: call.to,
+        data: call.data || '0x',
+        value: call.value ? `0x${call.value.toString(16)}` : undefined,
+      })),
+    };
+
+    // Add Builder Code dataSuffix capability if enabled
+    if (includeBuilderCode && process.env.NEXT_PUBLIC_BUILDER_CODE) {
+      try {
+        const { getBuilderCodeCapability } = await import('./builderCodes');
+        params.capabilities = getBuilderCodeCapability();
+        logger.info('🏷️ Builder Code capability added to batch transaction', {
+          builderCode: process.env.NEXT_PUBLIC_BUILDER_CODE,
+        });
+      } catch (error) {
+        logger.warn('Failed to add Builder Code capability, continuing without', error);
+      }
+    }
+
     // Use wallet_sendCalls for batch transactions
     const result = await provider.request({
       method: 'wallet_sendCalls',
-      params: [
-        {
-          calls: calls.map((call) => ({
-            to: call.to,
-            data: call.data || '0x',
-            value: call.value ? `0x${call.value.toString(16)}` : undefined,
-          })),
-        },
-      ],
+      params: [params],
     });
 
     logger.info('🎯 Batch transaction sent successfully:', result);

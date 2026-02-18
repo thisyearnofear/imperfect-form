@@ -91,6 +91,7 @@ const VERIFIED_ABI = [
 
 import { isFarcasterMiniApp, isBraveBrowser } from '@/utils/farcasterMiniApp';
 import { createRemoteLogger } from './remoteLogger';
+import { encodeBuilderCodeSuffix } from './builderCodes';
 
 const logger = createRemoteLogger('DirectSubmission');
 
@@ -396,18 +397,72 @@ export async function submitScoreDirect(
     }
 
     // Execute transaction based on contract type
+    // Add Builder Code dataSuffix for ERC-8021 attribution
+    const builderCodeSuffix = process.env.NEXT_PUBLIC_BUILDER_CODE
+      ? encodeBuilderCodeSuffix(process.env.NEXT_PUBLIC_BUILDER_CODE)
+      : null;
+
+    if (builderCodeSuffix) {
+      logger.info('🏷️ Adding Builder Code attribution', {
+        builderCode: process.env.NEXT_PUBLIC_BUILDER_CODE,
+        suffix: builderCodeSuffix,
+      });
+    }
+
+    // Ensure signer is available
+    if (!signer) {
+      return {
+        success: false,
+        error: 'Wallet signer not available. Please reconnect your wallet.',
+      };
+    }
+
     if (isVerified) {
       // For verified contracts (Celo only), submit each exercise type separately using submitScore
       if (safePushups > 0) {
-        tx = await contract.submitScore(safePushups, 'pushups', txOverrides);
+        // Encode the function call data and append Builder Code suffix
+        const encodedData = contract.interface.encodeFunctionData('submitScore', [
+          safePushups,
+          'pushups',
+        ]);
+        const finalData = builderCodeSuffix
+          ? ((encodedData + builderCodeSuffix.slice(2)) as `0x${string}`)
+          : encodedData;
+        tx = await signer.sendTransaction({
+          to: contractAddress,
+          data: finalData,
+          ...txOverrides,
+        });
       } else if (safeSquats > 0) {
-        tx = await contract.submitScore(safeSquats, 'squats', txOverrides);
+        const encodedData = contract.interface.encodeFunctionData('submitScore', [
+          safeSquats,
+          'squats',
+        ]);
+        const finalData = builderCodeSuffix
+          ? ((encodedData + builderCodeSuffix.slice(2)) as `0x${string}`)
+          : encodedData;
+        tx = await signer.sendTransaction({
+          to: contractAddress,
+          data: finalData,
+          ...txOverrides,
+        });
       } else {
         return { success: false, error: 'At least one exercise must be > 0' };
       }
     } else {
       // For standard contracts (Monad, Polygon, Base), use addScore with both values
-      tx = await contract.addScore(safePushups, safeSquats, txOverrides);
+      const encodedData = contract.interface.encodeFunctionData('addScore', [
+        safePushups,
+        safeSquats,
+      ]);
+      const finalData = builderCodeSuffix
+        ? ((encodedData + builderCodeSuffix.slice(2)) as `0x${string}`)
+        : encodedData;
+      tx = await signer.sendTransaction({
+        to: contractAddress,
+        data: finalData,
+        ...txOverrides,
+      });
     }
 
     logger.info('📤 Transaction sent', { hash: tx.hash });

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { WalletDiagnostics, TroubleshootingGuide } from '@/components/debug';
+import { WalletDiagnostics, TroubleshootingGuide, BuilderCodeDebug } from '@/components/debug';
 import { usePlatform } from '@/contexts/PlatformContext';
 import MemoryAPITester from '@/components/debug/MemoryAPITester';
 
@@ -77,6 +77,12 @@ export default function DebugWalletPage() {
                   Wallet Diagnostics
                 </button>
               </div>
+            </div>
+
+            {/* Builder Code Attribution */}
+            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+              <h3 className="font-semibold text-[#fcb131] mb-3">🏷️ Builder Code</h3>
+              <BuilderCodeDebug />
             </div>
 
             {/* Network Info - Compact */}
