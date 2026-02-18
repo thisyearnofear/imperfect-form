@@ -1,5 +1,14 @@
 import { useEffect, useRef, RefObject, useState, useCallback } from 'react';
 import { WorkerMessage, WorkerResponse, BiomechanicalState, Keypoint } from '../types/mediapipe';
+import {
+  Point,
+  ExerciseMode,
+  RepCounterState,
+  createInitialRepCounterState,
+  detectPushup,
+  detectSquat,
+  analyzeBiomechanics,
+} from '../utils/biomechanics';
 import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
 import { SessionLogger, SessionSummary } from '../services/sessionLogger';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
@@ -20,103 +29,11 @@ import {
 import { handleFarcasterError, ErrorCodes } from '../utils/farcasterErrors';
 import { isFarcasterMiniApp } from '../utils/farcasterMiniApp';
 
-type ExerciseMode = 'pushups' | 'squats';
+// Biomechanical types removed - consolidated into src/utils/biomechanics.ts
 
-interface Point {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;
-  name?: string;
-}
+// Biomechanical Helpers removed - consolidated into src/utils/biomechanics.ts
 
-// Biomechanical Helpers
-function getPoint(keypoints: Keypoint[], name: string): Point | null {
-  const kp = keypoints.find((k) => k.name === name);
-  return kp && kp.score > 0.3 ? kp : null;
-}
-
-function calculateTrunkLean(shoulder: Point, hip: Point): number {
-  return Math.abs(Math.atan2(shoulder.x - hip.x, shoulder.y - hip.y) * (180 / Math.PI));
-}
-
-function calculateKneeValgus(hip: Point, knee: Point, ankle: Point): number {
-  const lineX = hip.x + (ankle.x - hip.x) * ((knee.y - hip.y) / (ankle.y - hip.y));
-  return Math.abs(knee.x - lineX);
-}
-
-function calculateAngle(a: Point, b: Point, c: Point) {
-  if (!a || !b || !c) return 0;
-  const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-  let angle = Math.abs((radians * 180.0) / Math.PI);
-  if (angle > 180) angle = 360 - angle;
-  return angle;
-}
-
-let repState: 'up' | 'down' | 'middle' = 'middle';
-let repCount = 0;
-let lastRepTime = 0;
-const MIN_TIME_BETWEEN_REPS = 800; // ms
-
-function detectPushup(keypoints: Keypoint[]) {
-  const ls = getPoint(keypoints, 'left_shoulder');
-  const rs = getPoint(keypoints, 'right_shoulder');
-  const le = getPoint(keypoints, 'left_elbow');
-  const re = getPoint(keypoints, 'right_elbow');
-  const lw = getPoint(keypoints, 'left_wrist');
-  const rw = getPoint(keypoints, 'right_wrist');
-
-  if (!ls || !rs || !le || !re || !lw || !rw) return false;
-
-  const leftArmAngle = calculateAngle(ls, le, lw);
-  const rightArmAngle = calculateAngle(rs, re, rw);
-  const avgAngle = (leftArmAngle + rightArmAngle) / 2;
-
-  const isDown = avgAngle < 85;
-  const isUp = avgAngle > 155;
-  const currentTime = Date.now();
-
-  if (isDown && repState !== 'down') {
-    repState = 'down';
-    return false;
-  }
-  if (isUp && repState === 'down' && currentTime - lastRepTime > MIN_TIME_BETWEEN_REPS) {
-    repState = 'up';
-    lastRepTime = currentTime;
-    return true;
-  }
-  return false;
-}
-
-function detectSquat(keypoints: Keypoint[]) {
-  const lh = getPoint(keypoints, 'left_hip');
-  const rh = getPoint(keypoints, 'right_hip');
-  const lk = getPoint(keypoints, 'left_knee');
-  const rk = getPoint(keypoints, 'right_knee');
-  const la = getPoint(keypoints, 'left_ankle');
-  const ra = getPoint(keypoints, 'right_ankle');
-
-  if (!lh || !rh || !lk || !rk || !la || !ra) return false;
-
-  const leftAngle = calculateAngle(lh, lk, la);
-  const rightAngle = calculateAngle(rh, rk, ra);
-  const avgAngle = (leftAngle + rightAngle) / 2;
-
-  const isDown = avgAngle < 115;
-  const isUp = avgAngle > 165;
-  const currentTime = Date.now();
-
-  if (isDown && repState !== 'down') {
-    repState = 'down';
-    return false;
-  }
-  if (isUp && repState === 'down' && currentTime - lastRepTime > MIN_TIME_BETWEEN_REPS) {
-    repState = 'up';
-    lastRepTime = currentTime;
-    return true;
-  }
-  return false;
-}
+let repCounter: RepCounterState = createInitialRepCounterState();
 
 export function usePoseDetection(
   canvasRef: RefObject<HTMLCanvasElement | null>,
@@ -231,8 +148,7 @@ export function usePoseDetection(
     // Initialize session logger
     sessionLoggerRef.current = new SessionLogger(safeMode);
     lastRepCountRef.current = 0;
-    repCount = 0;
-    repState = 'middle';
+    repCounter = createInitialRepCounterState();
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
@@ -660,48 +576,17 @@ export function usePoseDetection(
               const keypoints = poses[0].keypoints as Keypoint[];
 
               // Biomechanical Analysis
-              const lh = getPoint(keypoints, 'left_hip');
-              const ls = getPoint(keypoints, 'left_shoulder');
-              const lk = getPoint(keypoints, 'left_knee');
-              const la = getPoint(keypoints, 'left_ankle');
-              const lw = getPoint(keypoints, 'left_wrist');
-
-              const metrics: BiomechanicalState = {
-                trunkLean: 0,
-                kneeValgus: 0,
-                ankleFlexion: 0,
-                depth: 0,
-                symmetry: 1,
-                isStable: true,
-                warnings: [],
-              };
-
-              if (ls && lh) metrics.trunkLean = calculateTrunkLean(ls, lh);
-
-              if (safeMode === 'squats' && lh && lk && la) {
-                metrics.kneeValgus = calculateKneeValgus(lh, lk, la);
-                metrics.ankleFlexion = calculateAngle(lk, la, { x: la.x + 10, y: la.y });
-                const currentAngle = calculateAngle(lh, lk, la);
-                metrics.depth = (170 - currentAngle) / (170 - 110);
-                if (metrics.kneeValgus > 40) metrics.warnings.push('KNEES IN');
-                if (metrics.trunkLean > 45) metrics.warnings.push('LEANING TOO FAR');
-              }
-
-              if (safeMode === 'pushups' && ls && lw) {
-                const le = getPoint(keypoints, 'left_elbow');
-                if (le) {
-                  const currentAngle = calculateAngle(ls, le, lw);
-                  metrics.depth = (160 - currentAngle) / (160 - 85);
-                }
-              }
+              const metrics = analyzeBiomechanics(keypoints, safeMode);
 
               // Rep detection
               const repIncremented =
-                safeMode === 'pushups' ? detectPushup(keypoints) : detectSquat(keypoints);
+                safeMode === 'pushups'
+                  ? detectPushup(keypoints, repCounter)
+                  : detectSquat(keypoints, repCounter);
               if (repIncremented) {
-                repCount += 1;
-                lastRepCountRef.current = repCount;
-                onRepCountRef.current(repCount);
+                repCounter.repCount += 1;
+                lastRepCountRef.current = repCounter.repCount;
+                onRepCountRef.current(repCounter.repCount);
               }
 
               onMetricsRef.current?.(metrics);
@@ -713,7 +598,13 @@ export function usePoseDetection(
                 if (ctx) {
                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                   drawSkeleton(ctx as any, keypoints, safeMode);
-                  drawFeedback(ctx as any, safeMode, repState, metrics.depth, metrics.warnings);
+                  drawFeedback(
+                    ctx as any,
+                    safeMode,
+                    repCounter.repState,
+                    metrics.depth,
+                    metrics.warnings
+                  );
                 }
               }
             } else {

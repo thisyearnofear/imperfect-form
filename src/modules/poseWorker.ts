@@ -3,41 +3,31 @@ import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
 import { Keypoint, WorkerMessage, BiomechanicalState } from '../types/mediapipe';
+import {
+  Point,
+  ExerciseMode,
+  RepCounterState,
+  createInitialRepCounterState,
+  detectPushup,
+  detectSquat,
+  analyzeBiomechanics,
+} from '../utils/biomechanics';
 import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
 
 let detector: PoseDetector;
 let ctx: OffscreenCanvasRenderingContext2D;
-let repState: 'up' | 'down' | 'middle' = 'middle';
-let repCount = 0;
-let mode: 'pushups' | 'squats' = 'pushups';
-let lastRepTime = 0;
+// Biomechanical Helpers removed - consolidated into src/utils/biomechanics.ts
+
+let repCounter: RepCounterState = createInitialRepCounterState();
+let workerMode: ExerciseMode = 'pushups';
 let lastProcessTime = 0;
 let workerIsMobile = false;
 const DESKTOP_FRAME_INTERVAL_MS = 66; // ~15fps for stability
 const MIN_TIME_BETWEEN_REPS = 800; // ms
 
-interface Point {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;
-  name?: string;
-}
+// Biomechanical Helpers removed - consolidated into src/utils/biomechanics.ts
 
-// Biomechanical Helpers
-function getPoint(keypoints: Keypoint[], name: string): Point | null {
-  const kp = keypoints.find((k) => k.name === name);
-  return kp && kp.score > 0.3 ? kp : null;
-}
-
-function calculateTrunkLean(shoulder: Point, hip: Point): number {
-  return Math.abs(Math.atan2(shoulder.x - hip.x, shoulder.y - hip.y) * (180 / Math.PI));
-}
-
-function calculateKneeValgus(hip: Point, knee: Point, ankle: Point): number {
-  const lineX = hip.x + (ankle.x - hip.x) * ((knee.y - hip.y) / (ankle.y - hip.y));
-  return Math.abs(knee.x - lineX);
-}
+// Point interface removed - consolidated into src/utils/biomechanics.ts
 
 // Initialize TF backend with WebGPU first then WebGL fallback
 async function initTfBackend(): Promise<'webgpu' | 'webgl'> {
@@ -60,73 +50,9 @@ async function initTfBackend(): Promise<'webgpu' | 'webgl'> {
   return 'webgl';
 }
 
-function calculateAngle(a: Point, b: Point, c: Point) {
-  if (!a || !b || !c) return 0;
-  const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-  let angle = Math.abs((radians * 180.0) / Math.PI);
-  if (angle > 180) angle = 360 - angle;
-  return angle;
-}
+// calculateAngle removed - consolidated into src/utils/biomechanics.ts
 
-function detectPushup(keypoints: Keypoint[]) {
-  const ls = getPoint(keypoints, 'left_shoulder');
-  const rs = getPoint(keypoints, 'right_shoulder');
-  const le = getPoint(keypoints, 'left_elbow');
-  const re = getPoint(keypoints, 'right_elbow');
-  const lw = getPoint(keypoints, 'left_wrist');
-  const rw = getPoint(keypoints, 'right_wrist');
-
-  if (!ls || !rs || !le || !re || !lw || !rw) return false;
-
-  const leftArmAngle = calculateAngle(ls, le, lw);
-  const rightArmAngle = calculateAngle(rs, re, rw);
-  const avgAngle = (leftArmAngle + rightArmAngle) / 2;
-
-  const isDown = avgAngle < 85;
-  const isUp = avgAngle > 155;
-  const currentTime = Date.now();
-
-  if (isDown && repState !== 'down') {
-    repState = 'down';
-    return false;
-  }
-  if (isUp && repState === 'down' && currentTime - lastRepTime > MIN_TIME_BETWEEN_REPS) {
-    repState = 'up';
-    lastRepTime = currentTime;
-    return true;
-  }
-  return false;
-}
-
-function detectSquat(keypoints: Keypoint[]) {
-  const lh = getPoint(keypoints, 'left_hip');
-  const rh = getPoint(keypoints, 'right_hip');
-  const lk = getPoint(keypoints, 'left_knee');
-  const rk = getPoint(keypoints, 'right_knee');
-  const la = getPoint(keypoints, 'left_ankle');
-  const ra = getPoint(keypoints, 'right_ankle');
-
-  if (!lh || !rh || !lk || !rk || !la || !ra) return false;
-
-  const leftAngle = calculateAngle(lh, lk, la);
-  const rightAngle = calculateAngle(rh, rk, ra);
-  const avgAngle = (leftAngle + rightAngle) / 2;
-
-  const isDown = avgAngle < 115;
-  const isUp = avgAngle > 165;
-  const currentTime = Date.now();
-
-  if (isDown && repState !== 'down') {
-    repState = 'down';
-    return false;
-  }
-  if (isUp && repState === 'down' && currentTime - lastRepTime > MIN_TIME_BETWEEN_REPS) {
-    repState = 'up';
-    lastRepTime = currentTime;
-    return true;
-  }
-  return false;
-}
+// detectPushup and detectSquat removed - consolidated into src/utils/biomechanics.ts
 
 let lastProgress = 0;
 
@@ -166,7 +92,7 @@ self.addEventListener('message', async (event) => {
     if (data.type === 'init') {
       const offscreen: OffscreenCanvas = data.canvas;
       // Defensive: ensure mode is never null/undefined
-      mode = (data.mode ?? 'pushups') as 'pushups' | 'squats';
+      workerMode = (data.mode ?? 'pushups') as ExerciseMode;
       workerIsMobile = !!data.isMobile;
 
       offscreen.width = data.width;
@@ -191,8 +117,7 @@ self.addEventListener('message', async (event) => {
       // Warm up the detector
       await warmupDetector(detector, data.width, data.height);
 
-      repState = 'middle';
-      repCount = 0;
+      repCounter = createInitialRepCounterState();
       lastProgress = 0;
 
       self.postMessage({ type: 'ready' });
@@ -217,65 +142,29 @@ self.addEventListener('message', async (event) => {
 
         if (poses.length > 0) {
           const keypoints = poses[0].keypoints as Keypoint[];
-          const warnings: string[] = [];
-          const metrics: BiomechanicalState = {
-            trunkLean: 0,
-            kneeValgus: 0,
-            ankleFlexion: 0,
-            depth: 0,
-            symmetry: 1,
-            isStable: true,
-            warnings: [],
-          };
 
           // Biomechanical Analysis
-          const lh = getPoint(keypoints, 'left_hip');
-          const ls = getPoint(keypoints, 'left_shoulder');
-          const lk = getPoint(keypoints, 'left_knee');
-          const la = getPoint(keypoints, 'left_ankle');
-          const lw = getPoint(keypoints, 'left_wrist');
-
-          if (ls && lh) metrics.trunkLean = calculateTrunkLean(ls, lh);
-
-          if (mode === 'squats' && lh && lk && la) {
-            metrics.kneeValgus = calculateKneeValgus(lh, lk, la);
-            metrics.ankleFlexion = calculateAngle(lk, la, { x: la.x + 10, y: la.y });
-
-            const currentAngle = calculateAngle(lh, lk, la);
-            metrics.depth = (170 - currentAngle) / (170 - 110);
-            lastProgress = metrics.depth;
-
-            if (metrics.kneeValgus > 40) warnings.push('KNEES IN');
-            if (metrics.trunkLean > 45) warnings.push('LEANING TOO FAR');
-          }
-
-          if (mode === 'pushups' && ls && lw) {
-            const le = getPoint(keypoints, 'left_elbow');
-            if (le) {
-              const currentAngle = calculateAngle(ls, le, lw);
-              metrics.depth = (160 - currentAngle) / (160 - 85);
-              lastProgress = metrics.depth;
-            }
-          }
-
-          metrics.warnings = warnings;
+          const metrics = analyzeBiomechanics(keypoints, workerMode);
+          lastProgress = metrics.depth;
 
           // Update Detection
           const repIncremented =
-            mode === 'pushups' ? detectPushup(keypoints) : detectSquat(keypoints);
+            workerMode === 'pushups'
+              ? detectPushup(keypoints, repCounter)
+              : detectSquat(keypoints, repCounter);
 
           if (repIncremented) {
-            repCount += 1;
-            self.postMessage({ type: 'rep', count: repCount });
+            repCounter.repCount += 1;
+            self.postMessage({ type: 'rep', count: repCounter.repCount });
           }
 
           // Render
-          drawSkeleton(ctx, keypoints, mode);
-          drawFeedback(ctx, mode, repState, lastProgress, warnings);
+          drawSkeleton(ctx, keypoints, workerMode);
+          drawFeedback(ctx, workerMode, repCounter.repState, lastProgress, metrics.warnings);
 
           self.postMessage({ type: 'result', state: metrics, keypoints });
         } else {
-          drawFeedback(ctx, mode, 'middle', 0, []);
+          drawFeedback(ctx, workerMode, 'middle', 0, []);
           self.postMessage({ type: 'result', state: null, keypoints: [] });
         }
       } catch (err) {
