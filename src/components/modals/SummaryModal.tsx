@@ -17,6 +17,7 @@ import { designTokens } from '@/lib/designTokens';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES } from '@/config/contract-addresses';
 import { verifiedFitnessContractABI } from '@/constants/contracts';
+import { markWorkoutSynced, getLocalWorkouts } from '@/services/integrations/WorkoutDataAdapter';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -314,10 +315,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     <AccessibleDialog
       isOpen={isOpen}
       onClose={onClose}
-      title={submissionStatus === 'success' ? '✅ Submitted' : '📊 Submit'}
+      title={
+        submissionStatus === 'success' ? '✅ Synced to Leaderboard' : '💪 Session Saved Locally'
+      }
       description={
         submissionStatus === 'success'
-          ? `${getMedalEmoji()} Leaderboard updated`
+          ? `${getMedalEmoji()} Rank updated on-chain`
           : `${getMedalEmoji()} ${repCount} ${mode} • ${120 - timeLeft}s`
       }
       preventClose={false}
@@ -459,6 +462,20 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   onSubmissionSuccess={(txHash, chainId) => {
                     setTransactionHash(txHash);
                     setSubmittedChainId(chainId);
+                    // Update local workout as synced for freemium model
+                    if (sessionSummary) {
+                      const networkName = getNetworkFromChainId(chainId);
+                      getLocalWorkouts().then((workouts) => {
+                        // Match by timestamp (startTime)
+                        const workout = workouts.find(
+                          (w) => w.timestamp === sessionSummary.startTime
+                        );
+                        if (workout) {
+                          markWorkoutSynced(workout.id, txHash, networkName as any);
+                          console.log('✅ Local workout marked as synced:', workout.id);
+                        }
+                      });
+                    }
                   }}
                 />
                 {/* Dynamic feedback message */}

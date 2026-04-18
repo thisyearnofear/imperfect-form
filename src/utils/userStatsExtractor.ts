@@ -4,6 +4,7 @@
  */
 
 import { Score } from '@/types';
+import { LocalWorkout } from '@/types/workout';
 
 export interface UserStats {
   totalSessions: number;
@@ -27,7 +28,8 @@ export interface UserStats {
 export function extractUserStats(
   userAddress: string,
   pushupLeaderboard: Score[],
-  squatLeaderboard: Score[]
+  squatLeaderboard: Score[],
+  localWorkouts: LocalWorkout[] = []
 ): UserStats {
   if (!userAddress) {
     return {
@@ -45,52 +47,70 @@ export function extractUserStats(
   // Normalize address for comparison
   const normalizedAddress = userAddress.toLowerCase();
 
-  console.log(`🔍 Looking for user stats for address: ${normalizedAddress}`);
-  console.log(
-    `📋 Available addresses in pushup leaderboard:`,
-    pushupLeaderboard.map((s) => s.user.toLowerCase())
-  );
-  console.log(
-    `📋 Available addresses in squat leaderboard:`,
-    squatLeaderboard.map((s) => s.user.toLowerCase())
-  );
+  // Convert local workouts to Score format for merging
+  const localScores: Score[] = localWorkouts
+    .filter((w) => !w.userAddress || w.userAddress.toLowerCase() === normalizedAddress)
+    .map((w) => ({
+      user: normalizedAddress,
+      score: w.reps,
+      network: w.network || 'celo',
+      timestamp: Math.floor(w.timestamp / 1000), // Leaderboard uses seconds
+    }));
 
-  // Find user's scores across all networks
-  const userPushupScores = pushupLeaderboard.filter(
-    (score) => score.user.toLowerCase() === normalizedAddress
-  );
-  const userSquatScores = squatLeaderboard.filter(
-    (score) => score.user.toLowerCase() === normalizedAddress
-  );
+  // Merge and deduplicate scores by timestamp and score
+  // We prioritize leaderboard scores if timestamps match
+  const mergeScores = (leaderboard: Score[], local: Score[], type: 'pushups' | 'squats') => {
+    const userLeaderboard = leaderboard.filter((s) => s.user.toLowerCase() === normalizedAddress);
+    const userLocal = local.filter((s) => {
+      // Find matching workout in localWorkouts to check type
+      const original = localWorkouts.find(
+        (lw) => lw.reps === s.score && Math.floor(lw.timestamp / 1000) === s.timestamp
+      );
+      return original?.type === type;
+    });
 
-  // Calculate best scores across all chains
+    const combined = [...userLeaderboard];
+
+    userLocal.forEach((l) => {
+      const alreadyExists = userLeaderboard.some(
+        (lb) => Math.abs((lb.timestamp || 0) - (l.timestamp || 0)) < 60 && lb.score === l.score
+      );
+      if (!alreadyExists) {
+        combined.push(l);
+      }
+    });
+
+    return combined;
+  };
+
+  const userPushupScores = mergeScores(pushupLeaderboard, localScores, 'pushups');
+  const userSquatScores = mergeScores(squatLeaderboard, localScores, 'squats');
+
+  // Calculate best scores across all sources
   const bestPushups =
     userPushupScores.length > 0 ? Math.max(...userPushupScores.map((s) => s.score)) : 0;
 
   const bestSquats =
     userSquatScores.length > 0 ? Math.max(...userSquatScores.map((s) => s.score)) : 0;
 
-  // Calculate total sessions (count unique workout submissions)
-  // Each entry represents a workout session, so total unique entries
+  // Calculate total sessions
   const allUserScores = [...userPushupScores, ...userSquatScores];
   const totalSessions = allUserScores.length;
 
-  console.log(`📊 User ${userAddress} stats:`, {
-    userPushupScores: userPushupScores.map((s) => `${s.score} on ${s.network}`),
-    userSquatScores: userSquatScores.map((s) => `${s.score} on ${s.network}`),
+  console.log(`📊 User ${userAddress} stats (merged):`, {
     bestPushups,
     bestSquats,
     totalSessions,
+    localCount: localWorkouts.length,
   });
 
   // Get active chains
   const activeChains = Array.from(new Set(allUserScores.map((score) => score.network)));
 
-  // Calculate total score (best pushups + best squats)
+  // Calculate total score
   const totalScore = bestPushups + bestSquats;
 
-  // Calculate rankings based on best scores
-  // Group by user and get their best scores for ranking
+  // Rankings stay based on on-chain leaderboard only (for fairness)
   const pushupsByUser = new Map<string, number>();
   pushupLeaderboard.forEach((score) => {
     const addr = score.user.toLowerCase();
@@ -109,7 +129,6 @@ export function extractUserStats(
     }
   });
 
-  // Calculate rankings based on best scores
   const pushupsRank =
     bestPushups > 0
       ? Array.from(pushupsByUser.entries())
@@ -124,14 +143,7 @@ export function extractUserStats(
           .findIndex(([addr]) => addr === normalizedAddress) + 1
       : null;
 
-  console.log(`🏆 User rankings:`, {
-    pushupsRank: pushupsRank ? `#${pushupsRank}` : 'N/A',
-    squatsRank: squatsRank ? `#${squatsRank}` : 'N/A',
-    bestPushups,
-    bestSquats,
-  });
-
-  // Calculate streak and days since last workout for motivational messaging
+  // Calculate streak and days since last workout using merged data
   const currentStreak = calculateWorkoutStreak(allUserScores);
   const daysSinceLastWorkout = calculateDaysSinceLastWorkout(allUserScores);
 
@@ -142,9 +154,9 @@ export function extractUserStats(
     currentStreak,
     activeChains,
     totalScore,
-    pushupsRank,
-    squatsRank,
-    daysSinceLastWorkout, // Add this for motivational text generation
+    pushupsRank: pushupsRank || null,
+    squatsRank: squatsRank || null,
+    daysSinceLastWorkout,
   };
 }
 

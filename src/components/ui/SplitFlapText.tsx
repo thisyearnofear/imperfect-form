@@ -10,6 +10,12 @@ import {
   ProfileComparison,
   ProfileActions,
 } from '@/components/profile';
+import { getLocalWorkouts, markWorkoutSynced } from '@/services/integrations/WorkoutDataAdapter';
+import { LocalWorkout } from '@/types/workout';
+import { submitScoreDirect } from '@/utils/directSubmission';
+import { getNetworkByChainId } from '@/config/networks';
+import { CONTRACT_ADDRESSES } from '@/config/contract-addresses';
+import toast from 'react-hot-toast';
 
 // Memory API integration is now handled inline
 
@@ -111,7 +117,82 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 }) => {
   const [animationStep, setAnimationStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const { wallet, user: farcasterUser } = usePlatform();
+  const { wallet, platform, farcasterProvider } = usePlatform();
+
+  const [unsyncedWorkouts, setUnsyncedWorkouts] = useState<LocalWorkout[]>([]);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'profile') {
+      getLocalWorkouts().then((workouts) => {
+        setUnsyncedWorkouts(workouts.filter((w) => !w.synced));
+      });
+    }
+  }, [mode]);
+
+  const handleSyncAll = async () => {
+    if (unsyncedWorkouts.length === 0 || !wallet.isConnected || isSyncingAll) return;
+
+    setIsSyncingAll(true);
+    let successCount = 0;
+
+    const chainId = wallet.chainId;
+    if (!chainId) {
+      toast.error('Network not detected');
+      setIsSyncingAll(false);
+      return;
+    }
+
+    const networkConfig = getNetworkByChainId(chainId);
+    const provider =
+      platform === 'farcaster' && farcasterProvider
+        ? farcasterProvider
+        : typeof window !== 'undefined'
+          ? (window as any).ethereum
+          : null;
+
+    if (!provider) {
+      toast.error('Wallet provider not available');
+      setIsSyncingAll(false);
+      return;
+    }
+
+    const loadingToast = toast.loading(`Syncing ${unsyncedWorkouts.length} sessions...`);
+
+    for (const workout of unsyncedWorkouts) {
+      try {
+        const pushups = workout.type === 'pushups' ? workout.reps : 0;
+        const squats = workout.type === 'squats' ? workout.reps : 0;
+
+        const result = await submitScoreDirect(
+          provider,
+          pushups,
+          squats,
+          networkConfig.contractAddress,
+          chainId,
+          false,
+          null
+        );
+
+        if (result.success) {
+          await markWorkoutSynced(workout.id, result.transactionHash!, networkConfig.name as any);
+          successCount++;
+        }
+      } catch (err) {
+        console.error('Failed to sync workout:', workout.id, err);
+      }
+    }
+
+    toast.dismiss(loadingToast);
+    if (successCount > 0) {
+      toast.success(`Successfully synced ${successCount} workouts!`);
+      const updated = await getLocalWorkouts();
+      setUnsyncedWorkouts(updated.filter((w) => !w.synced));
+    } else {
+      toast.error('Failed to sync workouts.');
+    }
+    setIsSyncingAll(false);
+  };
 
   // Use our new enhanced profile hook
   // Explicitly convert null to undefined to match hook expectations
@@ -183,6 +264,16 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           desc: isLoadingStats ? 'Loading...' : formattedStats?.streak || 'Start today!',
           hideKey: true,
         },
+        ...(unsyncedWorkouts.length > 0
+          ? [
+              {
+                key: 's',
+                text: 'PENDING',
+                desc: `${unsyncedWorkouts.length} to sync →`,
+                hideKey: true,
+              },
+            ]
+          : []),
         {
           key: 'd',
           text: 'MORE →',
@@ -217,7 +308,14 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
     };
 
     return instructionConfigs[mode];
-  }, [mode, formattedStats, isLoadingStats, autoFs, isFullscreenAvailable]);
+  }, [
+    mode,
+    formattedStats,
+    isLoadingStats,
+    autoFs,
+    isFullscreenAvailable,
+    unsyncedWorkouts.length,
+  ]);
 
   useEffect(() => {
     // Trigger animation when mode changes
@@ -268,6 +366,9 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         if (key === 'd') {
           // Switch to memory profile view
           onModeChange('memory');
+        } else if (key === 's') {
+          // Sync all unsynced workouts
+          handleSyncAll();
         }
         break;
 
@@ -473,7 +574,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           style={{
             cursor:
               (mode === 'settings' && (instruction.key === 'a' || instruction.key === 'd')) ||
-              (mode === 'profile' && instruction.key === 'd') ||
+              (mode === 'profile' && (instruction.key === 'd' || instruction.key === 's')) ||
               (mode === 'memory' && (instruction.key === 'd' || instruction.key === 'e')) ||
               (mode === 'profile-search' && instruction.key === 'd')
                 ? 'pointer'
@@ -571,7 +672,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
                         ? 'reset'
                         : instruction.key === '⚡'
                           ? 'fun-highlight'
-                          : instruction.key === 'd' &&
+                          : (instruction.key === 'd' || instruction.key === 's') &&
                               (mode === 'profile' || mode === 'memory-detail')
                             ? 'nav-highlight'
                             : ''
