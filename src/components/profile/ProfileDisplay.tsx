@@ -3,6 +3,8 @@
 import React from 'react';
 import { type EnhancedProfile } from '@/hooks/useEnhancedProfile';
 import { usePlatform } from '@/contexts/PlatformContext';
+import { useXpProgress } from '@/hooks/useXpProgress';
+import { XpProgressBar } from './XpProgressBar';
 
 interface ProfileDisplayProps {
   profile?: EnhancedProfile;
@@ -16,6 +18,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
   isCurrentUser = false,
 }) => {
   const { wallet, user: farcasterUser } = usePlatform();
+  const { progress, pbs, workouts } = useXpProgress();
 
   const LoadingSpinner = () => (
     <div className="inline-flex items-center space-x-1">
@@ -49,6 +52,41 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
       {/* Show profile data when available */}
       {!loading && profile && (
         <>
+          {/* XP & Leveling - Only for current user or if profile has XP data */}
+          {isCurrentUser && (
+            <div className="mb-6 mt-2 p-4 bg-black/40 border border-gray-800 rounded-xl backdrop-blur-sm">
+              <XpProgressBar
+                progress={progress.progressToNextLevel}
+                currentLevel={progress.currentLevel}
+                xpToNextLevel={progress.xpToNextLevel}
+              />
+
+              <div className="mt-4 pt-4 border-t border-gray-800 grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="text-[10px] text-gray-500 uppercase font-mono tracking-tighter">
+                    Personal Best: Pushups
+                  </div>
+                  <div className="text-lg font-bold text-[#fcb131]">
+                    {pbs.pushups} <span className="text-xs font-normal text-gray-400">reps</span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[10px] text-gray-500 uppercase font-mono tracking-tighter">
+                    Personal Best: Squats
+                  </div>
+                  <div className="text-lg font-bold text-[#fcb131]">
+                    {pbs.squats} <span className="text-xs font-normal text-gray-400">reps</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex justify-between items-center text-[10px] font-mono text-gray-400 uppercase">
+                <span>Total Workouts: {workouts.length}</span>
+                <span>Total XP: {progress.totalXp}</span>
+              </div>
+            </div>
+          )}
+
           {/* Social context */}
           {profile.mutualConnections && profile.mutualConnections.length > 0 && (
             <div className="profile-instruction">
