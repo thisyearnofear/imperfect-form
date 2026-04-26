@@ -16,6 +16,7 @@ import { submitScoreDirect } from '@/utils/directSubmission';
 import { getNetworkByChainId } from '@/config/networks';
 import { CONTRACT_ADDRESSES } from '@/config/contract-addresses';
 import toast from 'react-hot-toast';
+import { useXpProgress } from '@/hooks/useXpProgress';
 
 // Memory API integration is now handled inline
 
@@ -117,6 +118,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 }) => {
   const [animationStep, setAnimationStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const { progress } = useXpProgress();
   const { wallet, platform, farcasterProvider } = usePlatform();
 
   const [unsyncedWorkouts, setUnsyncedWorkouts] = useState<LocalWorkout[]>([]);
@@ -246,6 +248,12 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         { key: 'd', text: 'Back to profile!', desc: '' },
       ],
       profile: [
+        {
+          key: 'L',
+          text: 'LEVEL',
+          desc: isLoadingStats ? 'Loading...' : `Lvl ${progress.currentLevel}`,
+          hideKey: true,
+        },
         {
           key: 'a',
           text: 'WORKOUTS',

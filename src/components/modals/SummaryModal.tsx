@@ -18,6 +18,7 @@ import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES } from '@/config/contract-addresses';
 import { verifiedFitnessContractABI } from '@/constants/contracts';
 import { markWorkoutSynced, getLocalWorkouts } from '@/services/integrations/WorkoutDataAdapter';
+import { useXpProgress } from '@/hooks/useXpProgress';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -90,6 +91,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 }) => {
   const logger = createRemoteLogger('SummaryModal');
   const { platform, wallet, user } = usePlatform();
+  const { pbs } = useXpProgress();
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === 'farcaster';
 
@@ -306,6 +308,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     return '💪';
   };
 
+  const isPB = repCount > 0 && repCount === pbs[mode];
+
   // Calculate scores for Celo submission choice
   const baseScore = repCount;
   const bonusPoints = Math.floor(baseScore * 0.1);
@@ -319,9 +323,22 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         submissionStatus === 'success' ? '✅ Synced to Leaderboard' : '💪 Session Saved Locally'
       }
       description={
-        submissionStatus === 'success'
-          ? `${getMedalEmoji()} Rank updated on-chain`
-          : `${getMedalEmoji()} ${repCount} ${mode} • ${120 - timeLeft}s`
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-2">
+            <span>
+              {submissionStatus === 'success'
+                ? `${getMedalEmoji()} Rank updated on-chain`
+                : `${getMedalEmoji()} ${repCount} ${mode} • ${120 - timeLeft}s`}
+            </span>
+          </div>
+          {isPB && submissionStatus !== 'success' && (
+            <div className="mt-2 animate-bounce">
+              <span className="bg-[#fcb131] text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
+                🔥 NEW PERSONAL BEST!
+              </span>
+            </div>
+          )}
+        </div>
       }
       preventClose={false}
       maxWidth="520px"
