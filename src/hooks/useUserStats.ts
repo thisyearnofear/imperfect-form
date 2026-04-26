@@ -6,6 +6,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { extractUserStats, formatUserStatsForProfile, UserStats } from '@/utils/userStatsExtractor';
 import { getCachedLeaderboardData } from '@/utils/leaderboardCache';
+import { getLocalWorkouts, WORKOUT_KEYS } from '@/services/integrations/WorkoutDataAdapter';
+import { getDataSyncService } from '@/services/DataSyncService';
 
 interface UseUserStatsReturn {
   userStats: UserStats | null;
@@ -26,14 +28,16 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
   const [error, setError] = useState<string | null>(null);
 
   // Function to extract stats from cache
-  const extractStatsFromCache = useCallback(() => {
+  const extractStatsFromCache = useCallback(async () => {
     if (!userAddress) return null;
 
     const cachedData = getCachedLeaderboardData();
-    if (cachedData) {
-      const pushupLeaderboard = cachedData.pushups || [];
-      const squatLeaderboard = cachedData.squats || [];
-      return extractUserStats(userAddress, pushupLeaderboard, squatLeaderboard);
+    const localWorkouts = await getLocalWorkouts();
+
+    if (cachedData || localWorkouts.length > 0) {
+      const pushupLeaderboard = cachedData?.pushups || [];
+      const squatLeaderboard = cachedData?.squats || [];
+      return extractUserStats(userAddress, pushupLeaderboard, squatLeaderboard, localWorkouts);
     }
 
     return null;
@@ -53,7 +57,7 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
     setError(null);
 
     // First, try to get data from existing cache
-    const cachedStats = extractStatsFromCache();
+    const cachedStats = await extractStatsFromCache();
     if (cachedStats) {
       console.log('📦 Using cached leaderboard data for user stats');
       setUserStats(cachedStats);
@@ -68,9 +72,9 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
     let attempts = 0;
     const maxAttempts = 10; // 10 seconds max wait
 
-    const pollForCache = () => {
+    const pollForCache = async () => {
       attempts++;
-      const stats = extractStatsFromCache();
+      const stats = await extractStatsFromCache();
 
       if (stats) {
         console.log('📦 Found cached data after polling');
@@ -89,11 +93,11 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
     setTimeout(pollForCache, 500);
   }, [userAddress, extractStatsFromCache]);
 
-  // Listen for leaderboard cache updates via custom events
+  // Listen for updates via custom events and DataSyncService
   useEffect(() => {
-    const handleLeaderboardUpdate = () => {
-      console.log('🔄 Leaderboard cache updated, refreshing user stats');
-      const stats = extractStatsFromCache();
+    const handleUpdate = async () => {
+      console.log('🔄 Data updated, refreshing user stats');
+      const stats = await extractStatsFromCache();
       if (stats) {
         setUserStats(stats);
         setIsLoading(false);
@@ -101,8 +105,16 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
     };
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('leaderboardCacheUpdated', handleLeaderboardUpdate);
-      return () => window.removeEventListener('leaderboardCacheUpdated', handleLeaderboardUpdate);
+      window.addEventListener('leaderboardCacheUpdated', handleUpdate);
+
+      // Also subscribe to local workout updates
+      const service = getDataSyncService();
+      const unsubscribeWorkouts = service.subscribe(WORKOUT_KEYS.ALL, handleUpdate);
+
+      return () => {
+        window.removeEventListener('leaderboardCacheUpdated', handleUpdate);
+        unsubscribeWorkouts();
+      };
     }
   }, [extractStatsFromCache]);
 

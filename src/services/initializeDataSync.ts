@@ -6,6 +6,7 @@
  */
 
 import { initializeLeaderboardSources } from '@/services/integrations/LeaderboardDataAdapter';
+import { initializeWorkoutSources } from '@/services/integrations/WorkoutDataAdapter';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 
 const logger = createRemoteLogger('DataSyncInit');
@@ -24,6 +25,10 @@ export async function initializeDataSync(): Promise<void> {
     // Initialize leaderboard data sources
     await initializeLeaderboardSources();
     logger.info('✅ Leaderboard data sources initialized');
+
+    // Initialize workout data sources
+    await initializeWorkoutSources();
+    logger.info('✅ Workout data sources initialized');
 
     // TODO: Add more data sources as they're integrated
     // - User stats

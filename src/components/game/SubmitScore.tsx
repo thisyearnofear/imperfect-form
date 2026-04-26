@@ -439,10 +439,10 @@ export default function SubmitScore({
             }}
           >
             {submissionStatus === 'success'
-              ? 'Scores Submitted! 🎉'
+              ? 'Scores Synced! 🎉'
               : hasMultipleScores
-                ? `Submit Scores${supportsBatch && isFarcasterMiniApp() ? ' (Batch)' : ''}`
-                : `Submit Score (${effectivePushupsScore || effectiveSquatsScore} ${exerciseType})`}
+                ? `Sync to Leaderboard${supportsBatch && isFarcasterMiniApp() ? ' (Batch)' : ''}`
+                : `Sync to Leaderboard`}
           </button>
 
           {/* Enhanced: Show batch transaction status for Farcaster */}
@@ -477,7 +477,7 @@ export default function SubmitScore({
               className="text-lg font-semibold text-[#fcb131] mb-2"
               style={{ fontFamily: "'Press Start 2P', monospace" }}
             >
-              Confirm Submission
+              Confirm Sync
             </p>
             <div className="text-[#fcb131] opacity-80 space-y-1">
               {effectivePushupsScore > 0 && <p>Pushups: {effectivePushupsScore}</p>}

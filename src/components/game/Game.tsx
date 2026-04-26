@@ -26,6 +26,7 @@ import useOrientationLock from '../../hooks/useOrientationLock';
 import { useUserStats } from '../../hooks/useUserStats';
 import { isFarcasterMiniApp } from '../../utils/farcasterMiniApp';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
+import { saveLocalWorkout } from '@/services/integrations/WorkoutDataAdapter';
 
 import { Score } from '@/types';
 
@@ -80,8 +81,29 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     (summary: import('@/services/sessionLogger').SessionSummary) => {
       console.log('📊 Session ended with summary:', summary);
       setSessionSummary(summary);
+
+      // Auto-save workout locally for freemium model
+      if (summary.repCount > 0) {
+        const workoutId =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `session-${Date.now()}`;
+
+        saveLocalWorkout({
+          id: workoutId,
+          reps: summary.repCount,
+          timestamp: summary.startTime,
+          synced: false,
+          type: (summary.mode as 'pushups' | 'squats') || 'pushups',
+          userAddress: finalAddress,
+        })
+          .then(() => {
+            console.log('✅ Workout auto-saved locally:', workoutId);
+          })
+          .catch((err) => console.error('❌ Failed to auto-save workout:', err));
+      }
     },
-    []
+    [finalAddress]
   );
 
   // Swipe gesture handling for mobile
