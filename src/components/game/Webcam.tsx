@@ -31,6 +31,7 @@ interface WebcamProps {
   }) => void;
   onMetrics?: (state: import('@/types/mediapipe').BiomechanicalState) => void;
   onSessionEnd?: (summary: import('@/services/sessionLogger').SessionSummary) => void;
+  pbTrace?: import('@/types/workout').SessionSnapshot[];
 }
 
 // Initialize logger for the Webcam component
@@ -45,6 +46,7 @@ const Webcam: React.FC<WebcamProps> = ({
   onDetectionProgress,
   onMetrics,
   onSessionEnd,
+  pbTrace,
 }) => {
   // Defensive: default to pushups if mode is null/undefined at runtime
   const safeMode: 'pushups' | 'squats' = mode === 'squats' ? 'squats' : 'pushups';
@@ -60,7 +62,8 @@ const Webcam: React.FC<WebcamProps> = ({
     onPoseStateChange,
     onDetectionProgress,
     onMetrics,
-    onSessionEnd
+    onSessionEnd,
+    pbTrace
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
 

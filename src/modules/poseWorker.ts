@@ -22,6 +22,8 @@ let repCounter: RepCounterState = createInitialRepCounterState();
 let workerMode: ExerciseMode = 'pushups';
 let lastProcessTime = 0;
 let workerIsMobile = false;
+let workerPbTrace: import('../types/workout').SessionSnapshot[] | undefined;
+let workerStartTime = 0;
 const DESKTOP_FRAME_INTERVAL_MS = 66; // ~15fps for stability
 const MIN_TIME_BETWEEN_REPS = 800; // ms
 
@@ -94,6 +96,8 @@ self.addEventListener('message', async (event) => {
       // Defensive: ensure mode is never null/undefined
       workerMode = (data.mode ?? 'pushups') as ExerciseMode;
       workerIsMobile = !!data.isMobile;
+      workerPbTrace = data.pbTrace;
+      workerStartTime = Date.now();
 
       offscreen.width = data.width;
       offscreen.height = data.height;
@@ -140,6 +144,15 @@ self.addEventListener('message', async (event) => {
 
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+        // 👻 Render Ghost Mode trace if available
+        if (workerPbTrace && workerPbTrace.length > 0) {
+          const elapsed = Date.now() - workerStartTime;
+          const ghostSnapshot = workerPbTrace.find((s) => s.timestamp >= elapsed);
+          if (ghostSnapshot) {
+            drawSkeleton(ctx, ghostSnapshot.keypoints as any, workerMode, true);
+          }
+        }
+
         if (poses.length > 0) {
           const keypoints = poses[0].keypoints as Keypoint[];
 
@@ -164,6 +177,7 @@ self.addEventListener('message', async (event) => {
 
           self.postMessage({ type: 'result', state: metrics, keypoints });
         } else {
+          // If no user pose, still draw the ghost if available (already handled above clearRect)
           drawFeedback(ctx, workerMode, 'middle', 0, []);
           self.postMessage({ type: 'result', state: null, keypoints: [] });
         }

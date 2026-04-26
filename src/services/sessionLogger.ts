@@ -7,12 +7,7 @@
  */
 
 import { BiomechanicalState, Keypoint } from '../types/mediapipe';
-
-export interface SessionSnapshot {
-  timestamp: number;
-  metrics: BiomechanicalState;
-  keypoints: Keypoint[];
-}
+import { SessionSnapshot } from '../types/workout';
 
 export interface SessionSummary {
   startTime: number;
@@ -107,7 +102,7 @@ export class SessionLogger {
       maxKneeValgus,
       warningCount,
       anomalies: this.anomalies,
-      trace: this.buffer.filter((_, i) => i % 5 === 0), // Further downsample to 1fps for the summary
+      trace: [...this.buffer], // Return the full 5fps trace
     };
   }
 

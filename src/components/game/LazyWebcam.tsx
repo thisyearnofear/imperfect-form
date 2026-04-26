@@ -21,6 +21,7 @@ interface LazyWebcamProps {
   }) => void;
   onMetrics?: (state: import('@/types/mediapipe').BiomechanicalState) => void;
   onSessionEnd?: (summary: import('@/services/sessionLogger').SessionSummary) => void;
+  pbTrace?: import('@/types/workout').SessionSnapshot[];
 }
 
 /**
@@ -99,6 +100,7 @@ export default function LazyWebcam(props: LazyWebcamProps) {
         onDetectionProgress={props.onDetectionProgress}
         onMetrics={props.onMetrics}
         onSessionEnd={props.onSessionEnd}
+        pbTrace={props.pbTrace}
       />
     );
   }

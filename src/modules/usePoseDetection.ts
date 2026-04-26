@@ -53,7 +53,8 @@ export function usePoseDetection(
     percentage: number;
   }) => void,
   onMetrics?: (state: BiomechanicalState) => void,
-  onSessionEnd?: (summary: SessionSummary) => void
+  onSessionEnd?: (summary: SessionSummary) => void,
+  pbTrace?: import('../types/workout').SessionSnapshot[]
 ) {
   // Platform detection variables - defined once at function level
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -81,6 +82,7 @@ export function usePoseDetection(
   });
 
   const sessionLoggerRef = useRef<SessionLogger | null>(null);
+  const sessionStartTimeRef = useRef<number>(0);
   const lastRepCountRef = useRef(0);
 
   // Use refs for callbacks to avoid re-triggering the main effect
@@ -147,6 +149,7 @@ export function usePoseDetection(
 
     // Initialize session logger
     sessionLoggerRef.current = new SessionLogger(safeMode);
+    sessionStartTimeRef.current = Date.now();
     lastRepCountRef.current = 0;
     repCounter = createInitialRepCounterState();
 
@@ -255,6 +258,7 @@ export function usePoseDetection(
           width: video.videoWidth,
           height: video.videoHeight,
           isMobile,
+          pbTrace,
         };
         worker.postMessage(initMessage, [offscreen]);
 
@@ -597,6 +601,18 @@ export function usePoseDetection(
                 const ctx = canvasRef.current.getContext('2d');
                 if (ctx) {
                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+                  // 👻 Render Ghost Mode trace if available
+                  if (pbTrace && pbTrace.length > 0) {
+                    const elapsed = Date.now() - sessionStartTimeRef.current;
+                    // Find the snapshot closest to current elapsed time
+                    // We look for the first snapshot that is >= current elapsed time
+                    const ghostSnapshot = pbTrace.find((s) => s.timestamp >= elapsed);
+                    if (ghostSnapshot) {
+                      drawSkeleton(ctx as any, ghostSnapshot.keypoints, safeMode, true);
+                    }
+                  }
+
                   drawSkeleton(ctx as any, keypoints, safeMode);
                   drawFeedback(
                     ctx as any,
@@ -608,11 +624,20 @@ export function usePoseDetection(
                 }
               }
             } else {
-              // Clear canvas if no pose
+              // Clear canvas if no pose, but still render ghost if available
               if (canvasRef.current) {
                 const ctx = canvasRef.current.getContext('2d');
                 if (ctx) {
                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+                  // 👻 Render Ghost Mode trace even if user is not detected
+                  if (pbTrace && pbTrace.length > 0) {
+                    const elapsed = Date.now() - sessionStartTimeRef.current;
+                    const ghostSnapshot = pbTrace.find((s) => s.timestamp >= elapsed);
+                    if (ghostSnapshot) {
+                      drawSkeleton(ctx as any, ghostSnapshot.keypoints, safeMode, true);
+                    }
+                  }
                 }
               }
             }
