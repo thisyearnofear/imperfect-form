@@ -7,7 +7,7 @@
 
 import { getDataSyncService, createDataKey } from '@/services/DataSyncService';
 import { getOfflineDataStore } from '@/services/OfflineDataStore';
-import { LocalWorkout } from '@/types/workout';
+import { LocalWorkout, SessionSnapshot } from '@/types/workout';
 
 // Data keys for workout-related data
 export const WORKOUT_KEYS = {
@@ -101,6 +101,54 @@ export async function markWorkoutSynced(id: string, txHash: string, network?: an
       network: network || workout.network,
     });
   }
+}
+
+/**
+ * Save a workout trace separately
+ */
+export async function saveWorkoutTrace(workoutId: string, trace: SessionSnapshot[]): Promise<void> {
+  const offlineStore = getOfflineDataStore();
+  await offlineStore.set(`trace:${workoutId}`, trace);
+
+  // Update the workout record to indicate it has a trace
+  const workouts = await getLocalWorkouts();
+  const workout = workouts.find((w) => w.id === workoutId);
+  if (workout) {
+    await saveLocalWorkout({
+      ...workout,
+      hasTrace: true,
+    });
+  }
+}
+
+/**
+ * Get a workout trace
+ */
+export async function getWorkoutTrace(workoutId: string): Promise<SessionSnapshot[] | null> {
+  const offlineStore = getOfflineDataStore();
+  return await offlineStore.get<SessionSnapshot[]>(`trace:${workoutId}`);
+}
+
+/**
+ * Get the personal best workout for a user and mode
+ */
+export async function getPersonalBestWorkout(
+  userAddress: string | undefined,
+  mode: 'pushups' | 'squats'
+): Promise<LocalWorkout | null> {
+  const workouts = await getLocalWorkouts();
+
+  // Filter by mode and userAddress if provided
+  const relevantWorkouts = workouts.filter((w) => {
+    const modeMatch = w.type === mode;
+    const addressMatch = !userAddress || w.userAddress === userAddress;
+    return modeMatch && addressMatch;
+  });
+
+  if (relevantWorkouts.length === 0) return null;
+
+  // Find the one with max reps
+  return relevantWorkouts.reduce((prev, current) => (prev.reps > current.reps ? prev : current));
 }
 
 /**

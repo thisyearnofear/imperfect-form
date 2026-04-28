@@ -1,4 +1,4 @@
-// Types for MediaPipe and TensorFlow.js integrations
+import { SessionSnapshot } from './workout';
 
 // Keypoint type for pose detection
 export interface Keypoint {
@@ -50,6 +50,7 @@ export type WorkerMessage =
       width: number;
       height: number;
       isMobile?: boolean;
+      pbTrace?: SessionSnapshot[];
     }
   | { type: 'frame'; bitmap: ImageBitmap }
   | { type: 'stop' };

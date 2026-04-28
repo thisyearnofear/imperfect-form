@@ -3,7 +3,8 @@ import { Keypoint } from '../types/mediapipe';
 export function drawSkeleton(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   keypoints: Keypoint[],
-  mode: 'pushups' | 'squats'
+  mode: 'pushups' | 'squats',
+  isGhost: boolean = false
 ) {
   const confidenceThreshold = 0.3;
   const keypointMap = keypoints.reduce(
@@ -15,28 +16,35 @@ export function drawSkeleton(
   );
 
   // Styles
+  ctx.save();
+  if (isGhost) {
+    ctx.globalAlpha = 0.3;
+  }
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  const accentColor = mode === 'squats' ? '#00ffff' : '#00ff00';
+
+  const accentColor = isGhost ? '#c0c0c0' : mode === 'squats' ? '#00ffff' : '#00ff00';
+  const jointColor = isGhost ? '#e0e0e0' : '#ffffff';
+
   const connections = [
-    [['left_shoulder', 'right_shoulder'], '#ffffff', 4],
-    [['left_shoulder', 'left_hip'], '#ffffff', 4],
-    [['right_shoulder', 'right_hip'], '#ffffff', 4],
-    [['left_hip', 'right_hip'], '#ffffff', 4],
+    [['left_shoulder', 'right_shoulder'], jointColor, 4],
+    [['left_shoulder', 'left_hip'], jointColor, 4],
+    [['right_shoulder', 'right_hip'], jointColor, 4],
+    [['left_hip', 'right_hip'], jointColor, 4],
     // Arms
-    [['left_shoulder', 'left_elbow'], mode === 'pushups' ? accentColor : '#ffffff', 6],
-    [['left_elbow', 'left_wrist'], mode === 'pushups' ? accentColor : '#ffffff', 6],
-    [['right_shoulder', 'right_elbow'], mode === 'pushups' ? accentColor : '#ffffff', 6],
-    [['right_elbow', 'right_wrist'], mode === 'pushups' ? accentColor : '#ffffff', 6],
+    [['left_shoulder', 'left_elbow'], mode === 'pushups' ? accentColor : jointColor, 6],
+    [['left_elbow', 'left_wrist'], mode === 'pushups' ? accentColor : jointColor, 6],
+    [['right_shoulder', 'right_elbow'], mode === 'pushups' ? accentColor : jointColor, 6],
+    [['right_elbow', 'right_wrist'], mode === 'pushups' ? accentColor : jointColor, 6],
     // Legs
-    [['left_hip', 'left_knee'], mode === 'squats' ? accentColor : '#ffffff', 6],
-    [['left_knee', 'left_ankle'], mode === 'squats' ? accentColor : '#ffffff', 6],
-    [['right_hip', 'right_knee'], mode === 'squats' ? accentColor : '#ffffff', 6],
-    [['right_knee', 'right_ankle'], mode === 'squats' ? accentColor : '#ffffff', 6],
+    [['left_hip', 'left_knee'], mode === 'squats' ? accentColor : jointColor, 6],
+    [['left_knee', 'left_ankle'], mode === 'squats' ? accentColor : jointColor, 6],
+    [['right_hip', 'right_knee'], mode === 'squats' ? accentColor : jointColor, 6],
+    [['right_knee', 'right_ankle'], mode === 'squats' ? accentColor : jointColor, 6],
   ] as const;
 
   // Draw Glow
-  if ('shadowBlur' in ctx) {
+  if (!isGhost && 'shadowBlur' in ctx) {
     (ctx as any).shadowBlur = 15;
     (ctx as any).shadowColor = accentColor;
   }
@@ -70,6 +78,8 @@ export function drawSkeleton(
       ctx.stroke();
     }
   });
+
+  ctx.restore();
 }
 
 export function drawFeedback(

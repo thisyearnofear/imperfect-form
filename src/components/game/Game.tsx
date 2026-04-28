@@ -26,7 +26,12 @@ import useOrientationLock from '../../hooks/useOrientationLock';
 import { useUserStats } from '../../hooks/useUserStats';
 import { isFarcasterMiniApp } from '../../utils/farcasterMiniApp';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
-import { saveLocalWorkout } from '@/services/integrations/WorkoutDataAdapter';
+import {
+  saveLocalWorkout,
+  getPersonalBestWorkout,
+  getWorkoutTrace,
+  saveWorkoutTrace,
+} from '@/services/integrations/WorkoutDataAdapter';
 
 import { Score } from '@/types';
 
@@ -77,6 +82,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     import('@/services/sessionLogger').SessionSummary | null
   >(null);
 
+  const [pbTrace, setPbTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(null);
+
   const handleSessionEnd = useCallback(
     (summary: import('@/services/sessionLogger').SessionSummary) => {
       console.log('📊 Session ended with summary:', summary);
@@ -89,18 +96,30 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
             ? crypto.randomUUID()
             : `session-${Date.now()}`;
 
-        saveLocalWorkout({
-          id: workoutId,
-          reps: summary.repCount,
-          timestamp: summary.startTime,
-          synced: false,
-          type: (summary.mode as 'pushups' | 'squats') || 'pushups',
-          userAddress: finalAddress,
-        })
-          .then(() => {
-            console.log('✅ Workout auto-saved locally:', workoutId);
+        const exerciseMode = (summary.mode as 'pushups' | 'squats') || 'pushups';
+
+        // Check if this is a new PB BEFORE saving the current one
+        getPersonalBestWorkout(finalAddress, exerciseMode).then((pb) => {
+          const isNewPB = !pb || summary.repCount > pb.reps;
+
+          saveLocalWorkout({
+            id: workoutId,
+            reps: summary.repCount,
+            timestamp: summary.startTime,
+            synced: false,
+            type: exerciseMode,
+            userAddress: finalAddress,
           })
-          .catch((err) => console.error('❌ Failed to auto-save workout:', err));
+            .then(async () => {
+              console.log('✅ Workout auto-saved locally:', workoutId);
+
+              if (isNewPB) {
+                console.log('🔥 NEW PERSONAL BEST! Saving trace...');
+                await saveWorkoutTrace(workoutId, summary.trace);
+              }
+            })
+            .catch((err) => console.error('❌ Failed to auto-save workout:', err));
+        });
       }
     },
     [finalAddress]
@@ -561,7 +580,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     handleStopRef.current = handleStop;
   }, [handleStop]);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     // Use device detection hook's isMobile value
     // Only attempt fullscreen if it's available in the current context
     if (isMobile && autoFs && isFullscreenAvailable) {
@@ -575,6 +594,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     if (isMobile && (mode === 'pushups' || mode === 'squats')) {
       lockLandscape();
       setIsLandscapeLocked(true);
+    }
+
+    // Fetch PB trace for ghost mode
+    try {
+      const pb = await getPersonalBestWorkout(finalAddress, mode);
+      if (pb && pb.hasTrace) {
+        console.log('👻 Loading PB trace for Ghost Mode...');
+        const trace = await getWorkoutTrace(pb.id);
+        setPbTrace(trace);
+      } else {
+        setPbTrace(null);
+      }
+    } catch (err) {
+      console.error('❌ Failed to load PB trace:', err);
+      setPbTrace(null);
     }
 
     // Welcome component consolidated into InitializationScreen - setShowWelcome removed
@@ -621,6 +655,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         onDetectionProgress={handleDetectionProgress}
         onMetrics={handleMetrics}
         onSessionEnd={handleSessionEnd}
+        pbTrace={pbTrace || undefined}
       />
     ),
     [
@@ -631,6 +666,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       handleDetectionProgress,
       handleMetrics,
       handleSessionEnd,
+      pbTrace,
     ]
   );
 
