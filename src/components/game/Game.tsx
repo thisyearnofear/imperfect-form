@@ -24,6 +24,7 @@ import FullscreenExitButton from '../ui/FullscreenExitButton';
 import { SplitFlapInstructions } from '../ui/SplitFlapText';
 import useOrientationLock from '../../hooks/useOrientationLock';
 import { useUserStats } from '../../hooks/useUserStats';
+import { useXpProgress } from '../../hooks/useXpProgress';
 import { isFarcasterMiniApp } from '../../utils/farcasterMiniApp';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import {
@@ -156,6 +157,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
   // Fetch user statistics from leaderboard data
   const { formattedStats, isLoading: statsLoading } = useUserStats(finalAddress);
+
+  // Get user level for feature unlocking
+  const { progress: xpProgress } = useXpProgress();
 
   // Handle profile search
   const handleProfileSearch = useCallback((identifier: string) => {
@@ -596,14 +600,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       setIsLandscapeLocked(true);
     }
 
-    // Fetch PB trace for ghost mode
+    // Fetch PB trace for ghost mode if user level is 3+
     try {
-      const pb = await getPersonalBestWorkout(finalAddress, mode);
-      if (pb && pb.hasTrace) {
-        console.log('👻 Loading PB trace for Ghost Mode...');
-        const trace = await getWorkoutTrace(pb.id);
-        setPbTrace(trace);
+      if (xpProgress.currentLevel >= 3) {
+        const pb = await getPersonalBestWorkout(finalAddress, mode);
+        if (pb && pb.hasTrace) {
+          console.log('👻 Loading PB trace for Ghost Mode...');
+          const trace = await getWorkoutTrace(pb.id);
+          setPbTrace(trace);
+        } else {
+          setPbTrace(null);
+        }
       } else {
+        console.log('🔒 Ghost Mode locked (Level 3 required)');
         setPbTrace(null);
       }
     } catch (err) {

@@ -26,14 +26,15 @@ export const XP_CONSTANTS = {
   XP_PER_WORKOUT: 50,
   XP_PER_PB: 100,
   LEVEL_BASE_XP: 1000,
+  XP_PER_QUEST: 100, // Default reward if not specified
 };
 
 class XPServiceImpl {
   /**
    * Calculate XP for a set of workouts
    */
-  calculateTotalXp(workouts: LocalWorkout[]): number {
-    let totalXp = 0;
+  calculateTotalXp(workouts: LocalWorkout[], questXp: number = 0): number {
+    let totalXp = questXp;
     const pbs = { pushups: 0, squats: 0 };
 
     // Sort workouts by timestamp to detect PBs in order

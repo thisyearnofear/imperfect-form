@@ -7,6 +7,8 @@ export { walletDetectionService } from './WalletDetectionService';
 export { getMemoryClient } from './memoryApi';
 export { getDataSyncService, createDataKey } from './DataSyncService';
 export { getOfflineDataStore } from './OfflineDataStore';
+export { questService } from './QuestService';
+export { xpService } from './XPService';
 
 // Export service types
 export type {
