@@ -91,7 +91,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 }) => {
   const logger = createRemoteLogger('SummaryModal');
   const { platform, wallet, user } = usePlatform();
-  const { pbs } = useXpProgress();
+  const { progress, pbs } = useXpProgress();
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === 'farcaster';
 
@@ -465,48 +465,71 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               userAddress={effectiveAddress || ''}
             />
 
-            {/* Submit Score component - only show if not successfully submitted */}
+            {/* Submit Score component - only show if not successfully submitted and level is 5+ */}
             {submissionStatus !== 'success' && (
               <div className="rounded-xl bg-black/20 p-4 text-center border border-white/5">
-                {/* Use unified Wagmi-based submission for all networks */}
-                <SubmitScore
-                  score={repCount}
-                  exerciseType={mode}
-                  forceDirectSubmission={true}
-                  walletAddress={effectiveAddress}
-                  submissionStatus={submissionStatus}
-                  setSubmissionStatus={setSubmissionStatus}
-                  onSubmissionSuccess={(txHash, chainId) => {
-                    setTransactionHash(txHash);
-                    setSubmittedChainId(chainId);
-                    // Update local workout as synced for freemium model
-                    if (sessionSummary) {
-                      const networkName = getNetworkFromChainId(chainId);
-                      getLocalWorkouts().then((workouts) => {
-                        // Match by timestamp (startTime)
-                        const workout = workouts.find(
-                          (w) => w.timestamp === sessionSummary.startTime
-                        );
-                        if (workout) {
-                          markWorkoutSynced(workout.id, txHash, networkName as any);
-                          console.log('✅ Local workout marked as synced:', workout.id);
+                {progress.currentLevel >= 5 ? (
+                  <>
+                    {/* Use unified Wagmi-based submission for all networks */}
+                    <SubmitScore
+                      score={repCount}
+                      exerciseType={mode}
+                      forceDirectSubmission={true}
+                      walletAddress={effectiveAddress}
+                      submissionStatus={submissionStatus}
+                      setSubmissionStatus={setSubmissionStatus}
+                      onSubmissionSuccess={(txHash, chainId) => {
+                        setTransactionHash(txHash);
+                        setSubmittedChainId(chainId);
+                        // Update local workout as synced for freemium model
+                        if (sessionSummary) {
+                          const networkName = getNetworkFromChainId(chainId);
+                          getLocalWorkouts().then((workouts) => {
+                            // Match by timestamp (startTime)
+                            const workout = workouts.find(
+                              (w) => w.timestamp === sessionSummary.startTime
+                            );
+                            if (workout) {
+                              markWorkoutSynced(workout.id, txHash, networkName as any);
+                              console.log('✅ Local workout marked as synced:', workout.id);
+                            }
+                          });
                         }
-                      });
-                    }
-                  }}
-                />
-                {/* Dynamic feedback message */}
-                {submissionStatus === 'submitting' && (
-                  <p
-                    className={`text-xs ${STATUS_STYLES.submitting.className} mt-3 animate-pulse font-bold tracking-widest uppercase`}
-                  >
-                    Confirming Transaction...
-                  </p>
-                )}
-                {submissionStatus === 'error' && (
-                  <p className={`text-xs ${STATUS_STYLES.error.className} mt-3 font-bold`}>
-                    Connection Failed. Tap to Retry.
-                  </p>
+                      }}
+                    />
+                    {/* Dynamic feedback message */}
+                    {submissionStatus === 'submitting' && (
+                      <p
+                        className={`text-xs ${STATUS_STYLES.submitting.className} mt-3 animate-pulse font-bold tracking-widest uppercase`}
+                      >
+                        Confirming Transaction...
+                      </p>
+                    )}
+                    {submissionStatus === 'error' && (
+                      <p className={`text-xs ${STATUS_STYLES.error.className} mt-3 font-bold`}>
+                        Connection Failed. Tap to Retry.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-2 px-4">
+                    <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
+                      <span className="text-lg">🔒</span>
+                      <span className="text-sm font-bold uppercase tracking-widest">
+                        On-chain Sync Locked
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-gray-400">
+                      Reach <span className="text-[#fcb131] font-bold">Level 5</span> to sync your
+                      workouts to the blockchain.
+                    </p>
+                    <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gray-600"
+                        style={{ width: `${(progress.currentLevel / 5) * 100}%` }}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             )}

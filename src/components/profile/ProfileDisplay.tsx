@@ -5,6 +5,8 @@ import { type EnhancedProfile } from '@/hooks/useEnhancedProfile';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { XpProgressBar } from './XpProgressBar';
+import { DailyQuests } from './DailyQuests';
+import { Roadmap } from './Roadmap';
 
 interface ProfileDisplayProps {
   profile?: EnhancedProfile;
@@ -84,6 +86,13 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
                 <span>Total Workouts: {workouts.length}</span>
                 <span>Total XP: {progress.totalXp}</span>
               </div>
+            </div>
+          )}
+
+          {isCurrentUser && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <DailyQuests />
+              <Roadmap />
             </div>
           )}
 

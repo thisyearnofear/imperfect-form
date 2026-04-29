@@ -293,6 +293,12 @@ class DataSyncServiceImpl {
     };
   }
 
+  // Public: notify all subscribers manually
+  notify(key: DataKey | string, data: any): void {
+    const dataKey = typeof key === 'string' ? createDataKey(key) : key;
+    this.notifySubscribers(dataKey, data);
+  }
+
   // Private: notify all subscribers
   private notifySubscribers(key: DataKey, data: any): void {
     const callbacks = this.subscriptions.get(key);
