@@ -310,6 +310,80 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   const isPB = repCount > 0 && repCount === pbs[mode];
 
+  // Generate Highlight Card URL
+  const highlightCardUrl = React.useMemo(() => {
+    if (!sessionSummary?.bestPose) return null;
+
+    const reps = repCount;
+    const xpEarned = reps * 10 + 50 + (isPB ? 100 : 0);
+    const level = progress.currentLevel;
+
+    const kps = sessionSummary.bestPose.keypoints;
+    const indices = [5, 6, 11, 12, 7, 8, 9, 10, 13, 14, 15, 16];
+
+    // Map MoveNet indices
+    const moveNetIdxMap: Record<string, number> = {
+      left_shoulder: 5,
+      right_shoulder: 6,
+      left_hip: 11,
+      right_hip: 12,
+      left_elbow: 7,
+      right_elbow: 8,
+      left_wrist: 9,
+      right_wrist: 10,
+      left_knee: 13,
+      right_knee: 14,
+      left_ankle: 15,
+      right_ankle: 16,
+    };
+
+    const kpMap = kps.reduce(
+      (map, kp) => {
+        const moveNetIdx = moveNetIdxMap[kp.name];
+        if (moveNetIdx !== undefined) map[moveNetIdx] = kp;
+        return map;
+      },
+      {} as Record<number, (typeof kps)[0]>
+    );
+
+    // Filter to only included indices for normalization
+    const relevantKps = Object.values(kpMap);
+    if (relevantKps.length === 0) return null;
+
+    const minX = Math.min(...relevantKps.map((p) => p.x));
+    const maxX = Math.max(...relevantKps.map((p) => p.x));
+    const minY = Math.min(...relevantKps.map((p) => p.y));
+    const maxY = Math.max(...relevantKps.map((p) => p.y));
+
+    const pWidth = maxX - minX;
+    const pHeight = maxY - minY;
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const scale = 700 / Math.max(pWidth, pHeight || 1);
+
+    const kpString = indices
+      .map((idx) => {
+        const p = kpMap[idx];
+        if (!p) return '500,500';
+        const nx = Math.round(500 + (p.x - centerX) * scale);
+        const ny = Math.round(500 + (p.y - centerY) * scale);
+        return `${nx},${ny}`;
+      })
+      .join(',');
+
+    const params = new URLSearchParams({
+      type: 'highlight-card',
+      mode,
+      reps: reps.toString(),
+      level: level.toString(),
+      xp: xpEarned.toString(),
+      kp: kpString,
+    });
+
+    return `/api/screenshots?${params.toString()}`;
+  }, [sessionSummary, repCount, isPB, progress.currentLevel, mode]);
+
   // Calculate scores for Celo submission choice
   const baseScore = repCount;
   const bonusPoints = Math.floor(baseScore * 0.1);
@@ -531,6 +605,44 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Highlight Card */}
+            {highlightCardUrl && (
+              <div className="space-y-3">
+                <div className="text-xs uppercase tracking-widest text-gray-400 font-bold text-center">
+                  ✨ AI Highlight Card
+                </div>
+                <div className="relative group overflow-hidden rounded-xl border border-white/20 aspect-[9/16] max-h-[400px] mx-auto shadow-2xl">
+                  <img
+                    src={highlightCardUrl}
+                    alt="Workout Highlight"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-4">
+                    <button
+                      onClick={() => {
+                        const text = `Check out my ${repCount} ${mode} on Imperfect Form! 💪 #OnchainOlympics`;
+                        if (isInMiniApp) {
+                          // Farcaster mini-app share would go here if supported
+                          window.open(
+                            `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(window.location.origin + highlightCardUrl)}`,
+                            '_blank'
+                          );
+                        } else {
+                          window.open(
+                            `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.origin + highlightCardUrl)}`,
+                            '_blank'
+                          );
+                        }
+                      }}
+                      className="bg-white text-black font-bold px-4 py-2 rounded-full text-xs shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform"
+                    >
+                      Share Highlight
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
