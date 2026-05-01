@@ -21,11 +21,13 @@ export interface SessionSummary {
   warningCount: number;
   anomalies: SessionSnapshot[];
   trace: SessionSnapshot[]; // Downsampled trace
+  bestPose?: SessionSnapshot;
 }
 
 export class SessionLogger {
   private buffer: SessionSnapshot[] = [];
   private anomalies: SessionSnapshot[] = [];
+  private bestPose: SessionSnapshot | null = null;
   private startTime: number = 0;
   private mode: string = '';
   private lastCaptureTime: number = 0;
@@ -56,12 +58,18 @@ export class SessionLogger {
 
     // 2. Sparse Trace: Capture regular snapshots at defined intervals
     if (now - this.lastCaptureTime >= this.captureInterval) {
-      this.buffer.push({
+      const snapshot = {
         timestamp: now - this.startTime,
         metrics: { ...metrics },
         keypoints: [...keypoints],
-      });
+      };
+      this.buffer.push(snapshot);
       this.lastCaptureTime = now;
+
+      // 3. Best Pose: Track max depth
+      if (!this.bestPose || metrics.depth > this.bestPose.metrics.depth) {
+        this.bestPose = snapshot;
+      }
 
       // Keep buffer manageable (max ~10 mins at 5fps = 3000 snapshots)
       if (this.buffer.length > 3000) {
@@ -103,11 +111,13 @@ export class SessionLogger {
       warningCount,
       anomalies: this.anomalies,
       trace: [...this.buffer], // Return the full 5fps trace
+      bestPose: this.bestPose || undefined,
     };
   }
 
   public clear() {
     this.buffer = [];
     this.anomalies = [];
+    this.bestPose = null;
   }
 }
