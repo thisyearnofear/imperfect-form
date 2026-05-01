@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import { UnifiedLoader } from '@/components/ui';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { useLoadingPhase } from '@/hooks/useLoadingPhase';
@@ -33,6 +34,7 @@ import {
   getWorkoutTrace,
   saveWorkoutTrace,
 } from '@/services/integrations/WorkoutDataAdapter';
+import { ghostService } from '@/services/GhostService';
 
 import { Score } from '@/types';
 
@@ -84,6 +86,36 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   >(null);
 
   const [pbTrace, setPbTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(null);
+  const [raceTrace, setRaceTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(
+    null
+  );
+  const [isRace, setIsRace] = useState(false);
+
+  // Extract race trace from URL on mount
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const raceParam = searchParams.get('race');
+    const modeParam = searchParams.get('mode') as 'pushups' | 'squats' | null;
+
+    if (raceParam) {
+      try {
+        const decodedTrace = ghostService.decompress(raceParam);
+        if (decodedTrace && decodedTrace.length > 0) {
+          console.log('👻 Race trace loaded from URL:', decodedTrace.length, 'frames');
+          setRaceTrace(decodedTrace);
+          setIsRace(true);
+
+          // Override mode if specified in URL
+          if (modeParam && (modeParam === 'pushups' || modeParam === 'squats')) {
+            setMode(modeParam);
+            console.log('🎮 Race mode set to:', modeParam);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to decode race trace from URL:', error);
+      }
+    }
+  }, [searchParams]);
 
   const handleSessionEnd = useCallback(
     (summary: import('@/services/sessionLogger').SessionSummary) => {
@@ -654,6 +686,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   // Handle filter change removed (consolidated)
 
   // Memoize the webcam component to prevent re-renders when timer updates
+  // When racing against a ghost, prioritize raceTrace over pbTrace
+  const activeTrace = raceTrace || pbTrace;
+
   const memoizedWebcam = useMemo(
     () => (
       <LazyWebcam
@@ -664,7 +699,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         onDetectionProgress={handleDetectionProgress}
         onMetrics={handleMetrics}
         onSessionEnd={handleSessionEnd}
-        pbTrace={pbTrace || undefined}
+        pbTrace={activeTrace || undefined}
       />
     ),
     [
@@ -675,7 +710,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       handleDetectionProgress,
       handleMetrics,
       handleSessionEnd,
-      pbTrace,
+      activeTrace,
     ]
   );
 
@@ -809,6 +844,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     repCount={repCount}
                     formatTime={formatTime}
                     isOverlay={isFullscreen}
+                    isRace={isRace}
                   />
 
                   <div
@@ -860,6 +896,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                     repCount={repCount}
                     formatTime={formatTime}
                     isOverlay={false}
+                    isRace={isRace}
                   />
 
                   <div

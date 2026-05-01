@@ -23,6 +23,7 @@ import { useAchievements } from '@/hooks/useAchievements';
 import { xpService, StreakInfo } from '@/services/XPService';
 import { Achievement } from '@/services/AchievementService';
 import { useScaleTransition } from '@/hooks';
+import { ghostService } from '@/services/GhostService';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -249,6 +250,31 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     setShowVerificationModal(false);
     // After successful verification, auto-select verified submission
     setSubmissionType('verified');
+  };
+
+  // Handle sharing a ghost challenge trace
+  const handleChallengeShare = (platform: 'warpcast' | 'twitter') => {
+    if (!sessionSummary?.trace || sessionSummary.trace.length === 0) {
+      console.warn('No trace available for sharing');
+      return;
+    }
+
+    try {
+      const shareUrl = ghostService.generateShareUrl(sessionSummary.trace, mode);
+      const text = `🏃 I just did ${repCount} ${mode}! Can you beat my ghost? 👻 #OnchainOlympics #ImperfectForm`;
+
+      if (platform === 'warpcast') {
+        // Warpcast share URL
+        const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
+        window.open(warpcastUrl, '_blank');
+      } else {
+        // Twitter/X share URL
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+        window.open(twitterUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Failed to share challenge:', error);
+    }
   };
 
   // Map chainId to network name using centralized config
@@ -866,6 +892,36 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               <div className="text-center space-y-3">
                 <p className="text-xs text-purple-300 font-medium">📌 Pin app</p>
                 <AddMiniAppButton variant="secondary" showAfterWorkout={true} className="w-full" />
+              </div>
+            </div>
+          )}
+
+          {/* Challenge Friends - Ghost Challenge Sharing */}
+          {repCount > 0 && sessionSummary?.trace && sessionSummary.trace.length > 0 && (
+            <div className="border-t border-gray-700 pt-4">
+              <div className="flex flex-col items-center space-y-3">
+                <div className="text-xs uppercase tracking-widest text-gray-400 font-bold text-center">
+                  👻 Challenge Friends
+                </div>
+                <p className="text-[10px] text-gray-500 text-center px-2">
+                  Share your workout as a ghost trace for friends to race against
+                </p>
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={() => handleChallengeShare('warpcast')}
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>🟣</span>
+                    <span>Warpcast</span>
+                  </button>
+                  <button
+                    onClick={() => handleChallengeShare('twitter')}
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>𝕏</span>
+                    <span>Twitter</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

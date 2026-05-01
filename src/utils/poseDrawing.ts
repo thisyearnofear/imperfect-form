@@ -26,6 +26,17 @@ export function drawSkeleton(
   const accentColor = isGhost ? '#c0c0c0' : mode === 'squats' ? '#00ffff' : '#00ff00';
   const jointColor = isGhost ? '#e0e0e0' : '#ffffff';
 
+  // Check if coordinates are normalized (0.0 to 1.0)
+  // If all visible keypoints have values <= 1.5, assume normalized
+  const sampleKeypoints = Object.values(keypointMap).slice(0, 5);
+  const isNormalized =
+    sampleKeypoints.length > 0 &&
+    sampleKeypoints.every((kp) => kp.score > confidenceThreshold && kp.x <= 1.5 && kp.y <= 1.5);
+
+  // Scale factor for normalized coordinates
+  const scaleX = isNormalized ? ctx.canvas.width : 1;
+  const scaleY = isNormalized ? ctx.canvas.height : 1;
+
   const connections = [
     [['left_shoulder', 'right_shoulder'], jointColor, 4],
     [['left_shoulder', 'left_hip'], jointColor, 4],
@@ -56,8 +67,8 @@ export function drawSkeleton(
       ctx.beginPath();
       ctx.strokeStyle = color;
       ctx.lineWidth = width;
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
+      ctx.moveTo(p1.x * scaleX, p1.y * scaleY);
+      ctx.lineTo(p2.x * scaleX, p2.y * scaleY);
       ctx.stroke();
     }
   });
@@ -70,7 +81,7 @@ export function drawSkeleton(
   keypoints.forEach((kp) => {
     if (kp.score > confidenceThreshold) {
       ctx.beginPath();
-      ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
+      ctx.arc(kp.x * scaleX, kp.y * scaleY, 5, 0, 2 * Math.PI);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
       ctx.strokeStyle = accentColor;
