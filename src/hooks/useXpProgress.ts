@@ -94,6 +94,6 @@ export const useXpProgress = () => {
     progress,
     pbs,
     loading,
-    refresh: fetchWorkouts,
+    refresh: fetchData,
   };
 };
