@@ -60,6 +60,7 @@ const DEFAULT_THEME_OPTIONS: ThemeOptions = {
   enableTransitions: true,
   respectReducedMotion: true,
   enableHighContrast: false,
+  forcedThemeId: undefined,
 };
 
 // Context
@@ -230,7 +231,9 @@ export const EnhancedChainThemeProvider: React.FC<EnhancedChainThemeProviderProp
 
   // Get current theme with validation and fallback
   const currentTheme = useMemo(() => {
-    const theme = getThemeByChainId(chainId);
+    // Prioritize forcedThemeId if it exists
+    const effectiveChainId = themeOptions.forcedThemeId || chainId;
+    const theme = getThemeByChainId(effectiveChainId);
 
     // Apply custom overrides if any
     if (themeOptions.customOverrides) {
@@ -238,7 +241,7 @@ export const EnhancedChainThemeProvider: React.FC<EnhancedChainThemeProviderProp
     }
 
     return theme;
-  }, [chainId, themeOptions.customOverrides]);
+  }, [chainId, themeOptions.forcedThemeId, themeOptions.customOverrides]);
 
   // Initialize theme from storage
   useEffect(() => {
@@ -248,7 +251,7 @@ export const EnhancedChainThemeProvider: React.FC<EnhancedChainThemeProviderProp
     setChainId(storedChain);
     setThemeOptions((prev) => ({ ...prev, ...storedOptions }));
 
-    updateBodyAttribute(storedChain);
+    updateBodyAttribute(storedOptions.forcedThemeId || storedChain);
     injectEnhancedThemeCSS();
 
     setIsHydrated(true);
@@ -260,7 +263,8 @@ export const EnhancedChainThemeProvider: React.FC<EnhancedChainThemeProviderProp
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === LOCAL_STORAGE_KEY && e.newValue && isValidChainId(e.newValue)) {
         setChainId(e.newValue);
-        updateBodyAttribute(e.newValue);
+        // Prioritize forcedThemeId if it exists in current state
+        updateBodyAttribute(themeOptions.forcedThemeId || e.newValue);
       } else if (e.key === THEME_OPTIONS_KEY && e.newValue) {
         try {
           const newOptions = JSON.parse(e.newValue);
@@ -275,13 +279,13 @@ export const EnhancedChainThemeProvider: React.FC<EnhancedChainThemeProviderProp
       window.addEventListener('storage', handleStorageChange);
       return () => window.removeEventListener('storage', handleStorageChange);
     }
-  }, []);
+  }, [themeOptions]);
 
   // Apply theme when it changes
   useEffect(() => {
     if (!isHydrated) return;
 
-    updateBodyAttribute(chainId);
+    updateBodyAttribute(currentTheme.id);
     debouncedApplyTheme(currentTheme, themeOptions);
 
     // Store current properties for cleanup
@@ -316,9 +320,9 @@ export const EnhancedChainThemeProvider: React.FC<EnhancedChainThemeProviderProp
 
       setChainId(id);
       writeChainToStorage(id);
-      updateBodyAttribute(id);
+      updateBodyAttribute(themeOptions.forcedThemeId || id);
     },
-    [chainId]
+    [chainId, themeOptions.forcedThemeId]
   );
 
   // Theme options setter

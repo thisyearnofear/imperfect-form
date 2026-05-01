@@ -387,6 +387,7 @@ export interface ThemeOptions {
   respectReducedMotion: boolean;
   enableHighContrast: boolean;
   customOverrides?: Partial<ChainTheme>;
+  forcedThemeId?: ChainId;
 }
 
 // Theme validation types

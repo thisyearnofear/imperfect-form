@@ -8,6 +8,7 @@ import { useAchievements } from '@/hooks/useAchievements';
 import { xpService } from '@/services/XPService';
 import { ACHIEVEMENTS } from '@/services/AchievementService';
 import { XpProgressBar } from './XpProgressBar';
+import { ThemeSwitcher } from './ThemeSwitcher';
 import { DailyQuests } from './DailyQuests';
 import { Roadmap } from './Roadmap';
 
@@ -68,6 +69,8 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
                 currentLevel={progress.currentLevel}
                 xpToNextLevel={progress.xpToNextLevel}
               />
+
+              <ThemeSwitcher />
 
               <div className="mt-4 pt-4 border-t border-gray-800 grid grid-cols-2 gap-4">
                 <div className="space-y-1">
