@@ -6,6 +6,7 @@ interface GameHUDProps {
   repCount: number;
   formatTime: (sec: number) => string;
   isOverlay?: boolean;
+  isRace?: boolean;
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -14,6 +15,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   repCount,
   formatTime,
   isOverlay = true,
+  isRace = false,
 }) => {
   // Logic for scaling based on rep count to create "delight"
   // Calculate a "beat" effect based on time to make the UI feel alive
@@ -31,6 +33,17 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
   return (
     <div className={`game-hud-container ${isOverlay ? 'hud-overlay-fs' : ''}`}>
+      {/* Race/Ghost Challenge Badge */}
+      {isRace && (
+        <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-30">
+          <div className="bg-gradient-to-r from-purple-600 to-violet-600 px-3 py-1 rounded-b-lg shadow-lg border-t border-purple-500/50 animate-pulse">
+            <span className="text-[10px] font-black text-white tracking-widest uppercase">
+              👻 GHOST CHALLENGE
+            </span>
+          </div>
+        </div>
+      )}
+
       <div
         className="hud-block timer"
         style={{
