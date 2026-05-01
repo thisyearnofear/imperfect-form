@@ -4,6 +4,9 @@ import React from 'react';
 import { type EnhancedProfile } from '@/hooks/useEnhancedProfile';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { useXpProgress } from '@/hooks/useXpProgress';
+import { useAchievements } from '@/hooks/useAchievements';
+import { xpService } from '@/services/XPService';
+import { ACHIEVEMENTS } from '@/services/AchievementService';
 import { XpProgressBar } from './XpProgressBar';
 import { DailyQuests } from './DailyQuests';
 import { Roadmap } from './Roadmap';
@@ -21,6 +24,9 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
 }) => {
   const { wallet, user: farcasterUser } = usePlatform();
   const { progress, pbs, workouts } = useXpProgress();
+  const { unlockedAchievements } = useAchievements();
+
+  const streakInfo = React.useMemo(() => xpService.getStreakInfo(workouts), [workouts]);
 
   const LoadingSpinner = () => (
     <div className="inline-flex items-center space-x-1">
@@ -82,7 +88,55 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
                 </div>
               </div>
 
-              <div className="mt-3 flex justify-between items-center text-[10px] font-mono text-gray-400 uppercase">
+              {/* Streak Info */}
+              <div className="mt-4 pt-4 border-t border-gray-800 grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="text-[10px] text-gray-500 uppercase font-mono tracking-tighter">
+                    Current Streak
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-lg font-bold text-orange-500">
+                      🔥 {streakInfo.currentStreak}
+                    </span>
+                    <span className="text-[10px] text-gray-500 font-mono">DAYS</span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[10px] text-gray-500 uppercase font-mono tracking-tighter">
+                    Best Streak
+                  </div>
+                  <div className="text-lg font-bold text-gray-300">
+                    {streakInfo.bestStreak}{' '}
+                    <span className="text-xs font-normal text-gray-500 font-sans">DAYS</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Achievements Grid */}
+              <div className="mt-6">
+                <div className="text-[10px] text-gray-500 uppercase font-mono tracking-widest mb-3 flex items-center gap-2">
+                  <span>Achievements</span>
+                  <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-[8px]">
+                    {unlockedAchievements.length} / {ACHIEVEMENTS.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {ACHIEVEMENTS.map((achievement) => {
+                    const isUnlocked = unlockedAchievements.some((a) => a.id === achievement.id);
+                    return (
+                      <div
+                        key={achievement.id}
+                        className={`aspect-square rounded-lg flex items-center justify-center text-xl transition-all duration-300 ${isUnlocked ? 'bg-[#fcb131]/20 border border-[#fcb131]/30 shadow-[0_0_10px_rgba(252,177,49,0.15)]' : 'bg-white/5 border border-white/5 grayscale opacity-30'}`}
+                        title={achievement.name + ': ' + achievement.description}
+                      >
+                        {achievement.icon}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-between items-center text-[10px] font-mono text-gray-400 uppercase">
                 <span>Total Workouts: {workouts.length}</span>
                 <span>Total XP: {progress.totalXp}</span>
               </div>
