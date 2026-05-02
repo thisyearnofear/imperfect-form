@@ -81,6 +81,7 @@ export interface SummaryModalProps {
   mode?: 'pushups' | 'squats';
   address?: string; // Optional wallet address
   sessionSummary?: import('@/services/sessionLogger').SessionSummary | null;
+  isRace?: boolean;
 }
 
 const SummaryModal: React.FC<SummaryModalProps> = ({
@@ -93,6 +94,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   mode = 'pushups',
   address,
   sessionSummary,
+  isRace = false,
 }) => {
   const logger = createRemoteLogger('SummaryModal');
   const { platform, wallet, user } = usePlatform();
@@ -467,6 +469,13 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   : `${getMedalEmoji()} ${repCount} ${mode} • ${120 - timeLeft}s`}
               </span>
             </div>
+            {isRace && (
+              <div className="mt-2">
+                <span className="bg-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(147,51,234,0.5)] uppercase tracking-tighter">
+                  👻 Ghost Challenge Completed
+                </span>
+              </div>
+            )}
             {isPB && submissionStatus !== 'success' && (
               <div className="mt-2 animate-bounce">
                 <span className="bg-[#fcb131] text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
