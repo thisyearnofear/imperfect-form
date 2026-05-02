@@ -1008,6 +1008,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         mode={mode}
         address={finalAddress}
         sessionSummary={sessionSummary}
+        isRace={isRace}
       />
 
       {/* Expanded Leaderboard Modal */}

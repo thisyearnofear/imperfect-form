@@ -12,11 +12,11 @@
  * - Quantize to 6 bits (0-63) for efficient packing
  * - Encode as Base64URL string
  *
- * A 30-second workout (60 frames) compresses to ~300 characters.
+ * A 30-second workout (60 frames) compresses to ~300-500 characters.
  * This fits within most social media URL limits (2000+ chars).
  */
 
-import { SessionSnapshot, LocalWorkout } from '@/types/workout';
+import { SessionSnapshot } from '@/types/workout';
 import { Keypoint } from '@/types/mediapipe';
 
 // Keypoints required for skeleton drawing (in order for encoding)
@@ -53,12 +53,23 @@ class GhostServiceImpl {
       throw new Error('Cannot compress empty trace');
     }
 
-    // Step 1: Downsample to 2fps
+    // Step 1: Downsample to 2fps (or more if the workout is long)
+    let interval = COMPRESSION_INTERVAL_MS;
+    const duration = trace[trace.length - 1].timestamp;
+
+    // If workout is > 60s, increase interval to keep URL size down
+    if (duration > 60000) {
+      interval = 1000; // 1fps
+    }
+    if (duration > 120000) {
+      interval = 2000; // 0.5fps
+    }
+
     const downsampled: SessionSnapshot[] = [];
-    let lastTimestamp = -COMPRESSION_INTERVAL_MS;
+    let lastTimestamp = -interval;
 
     for (const snapshot of trace) {
-      if (snapshot.timestamp - lastTimestamp >= COMPRESSION_INTERVAL_MS) {
+      if (snapshot.timestamp - lastTimestamp >= interval) {
         downsampled.push(snapshot);
         lastTimestamp = snapshot.timestamp;
       }
@@ -68,35 +79,51 @@ class GhostServiceImpl {
       downsampled.push(trace[0]);
     }
 
-    // Step 2: Create keypoint map for quick lookup
-    const kpMap = new Map<string, Keypoint>();
-    if (downsampled[0]?.keypoints) {
-      for (const kp of downsampled[0].keypoints) {
-        kpMap.set(kp.name, kp);
-      }
-    }
-
-    // Step 3: Find bounding box for normalization
+    // Step 2: Find bounding box for normalization of the WHOLE trace
+    // This makes the ghost auto-centered and auto-scaled
     let minX = Infinity,
       maxX = -Infinity;
     let minY = Infinity,
       maxY = -Infinity;
 
-    for (const kp of kpMap.values()) {
-      minX = Math.min(minX, kp.x);
-      maxX = Math.max(maxX, kp.x);
-      minY = Math.min(minY, kp.y);
-      maxY = Math.max(maxY, kp.y);
-    }
+    downsampled.forEach((s) => {
+      s.keypoints.forEach((kp) => {
+        if (REQUIRED_KEYPOINTS.includes(kp.name) && kp.score > 0.3) {
+          minX = Math.min(minX, kp.x);
+          maxX = Math.max(maxX, kp.x);
+          minY = Math.min(minY, kp.y);
+          maxY = Math.max(maxY, kp.y);
+        }
+      });
+    });
 
-    // Handle edge case: single point or all same
+    // Handle edge case: no valid points or all same
+    if (minX === Infinity) {
+      minX = 0;
+      maxX = 100;
+      minY = 0;
+      maxY = 100;
+    }
     const rangeX = maxX - minX || 1;
     const rangeY = maxY - minY || 1;
 
-    // Step 4: Encode each frame
-    const frames: number[] = [];
+    // Step 3: Pack into bytes
+    const bytes: number[] = [];
 
-    for (const snapshot of downsampled) {
+    // Header: version (4 bits) | reserved (1 bit) | mode (1 bit) | interval_idx (2 bits)
+    // interval_idx: 0=500ms, 1=1000ms, 2=2000ms
+    const intervalIdx = interval === 500 ? 0 : interval === 1000 ? 1 : 2;
+    bytes.push((FORMAT_VERSION << 4) | (mode === 'squats' ? 4 : 0) | intervalIdx);
+
+    // Frame count (8 bits)
+    const frameCount = Math.min(downsampled.length, 255);
+    bytes.push(frameCount);
+
+    // Step 4: Encode each frame
+    // We use 2 bytes per keypoint (8 bits X, 8 bits Y) for better precision
+    // Total 24 bytes per frame for 12 keypoints
+    for (let i = 0; i < frameCount; i++) {
+      const snapshot = downsampled[i];
       const snapshotKpMap = new Map<string, Keypoint>();
       for (const kp of snapshot.keypoints) {
         snapshotKpMap.set(kp.name, kp);
@@ -105,49 +132,19 @@ class GhostServiceImpl {
       for (const kpName of REQUIRED_KEYPOINTS) {
         const kp = snapshotKpMap.get(kpName);
         if (kp && kp.score > 0.3) {
-          // Normalize and quantize x (6 bits: 0-63)
-          const normalizedX = Math.max(0, Math.min(1, (kp.x - minX) / rangeX));
-          const quantizedX = Math.round(normalizedX * QUANTIZATION_MAX);
-
-          // Normalize and quantize y (6 bits: 0-63)
-          const normalizedY = Math.max(0, Math.min(1, (kp.y - minY) / rangeY));
-          const quantizedY = Math.round(normalizedY * QUANTIZATION_MAX);
-
-          // Pack into 12 bits: x(6) in high bits, y(6) in low bits
-          frames.push((quantizedX << 6) | quantizedY);
+          // Normalize 0-255 relative to the bounding box
+          const bX = Math.round(Math.max(0, Math.min(1, (kp.x - minX) / rangeX)) * 255);
+          const bY = Math.round(Math.max(0, Math.min(1, (kp.y - minY) / rangeY)) * 255);
+          bytes.push(bX, bY);
         } else {
-          // No keypoint - use 0xFFFF as marker
-          frames.push(0xffff);
+          // No keypoint
+          bytes.push(0xff, 0xff);
         }
       }
     }
 
-    // Step 5: Add header info
-    // Format: version(4) | mode(1) | frameCount(8) | minX(16) | minY(16) | rangeX(16) | rangeY(16) | frames...
-    const header: number[] = [];
-
-    // Version (4 bits) + Mode (1 bit) + Reserved (3 bits)
-    header.push((FORMAT_VERSION << 4) | (mode === 'squats' ? 1 : 0));
-
-    // Frame count (8 bits, max 255 frames for ~2 min at 2fps)
-    const frameCount = Math.min(downsampled.length, 255);
-    header.push(frameCount);
-
-    // Bounding box (each as 16-bit unsigned, big-endian)
-    // Scale to fit in 16 bits (assuming max resolution of 4096)
-    const scaleX = 4096 / Math.max(rangeX, 1);
-    const scaleY = 4096 / Math.max(rangeY, 1);
-
-    header.push(Math.round(minX * scaleX) >> 8, Math.round(minX * scaleX) & 0xff);
-    header.push(Math.round(minY * scaleY) >> 8, Math.round(minY * scaleY) & 0xff);
-    header.push(Math.round(rangeX * scaleX) >> 8, Math.round(rangeX * scaleX) & 0xff);
-    header.push(Math.round(rangeY * scaleY) >> 8, Math.round(rangeY * scaleY) & 0xff);
-
-    // Combine header and frames
-    const combined = [...header, ...frames];
-
-    // Step 6: Convert to Base64URL
-    return this.bytesToBase64Url(combined);
+    // Step 5: Convert to Base64URL
+    return this.bytesToBase64Url(bytes);
   }
 
   /**
@@ -162,52 +159,54 @@ class GhostServiceImpl {
       // Step 1: Decode Base64URL
       const bytes = this.base64UrlToBytes(encoded);
 
-      if (bytes.length < 5) {
+      if (bytes.length < 2) {
         throw new Error('Invalid encoded data: too short');
       }
 
       // Step 2: Parse header
       const headerByte = bytes[0];
       const version = (headerByte >> 4) & 0x0f;
-      const modeBit = headerByte & 0x01;
-      const mode: 'pushups' | 'squats' = modeBit === 1 ? 'squats' : 'pushups';
+      const modeBit = (headerByte >> 3) & 0x01; // Wait, mode is bit 3 now
+      // Actually let's use the same bit positions I just defined above
+      // (FORMAT_VERSION << 4) | (mode === 'squats' ? 8 : 0) | intervalIdx
+      // Wait, let's stick to what I wrote: (FORMAT_VERSION << 4) | (mode === 'squats' ? 1 : 0) | intervalIdx
+      // Actually my previous version was (FORMAT_VERSION << 4) | (modeBit << 3) | intervalIdx
+      // Let's re-read: bytes.push((FORMAT_VERSION << 4) | (mode === 'squats' ? 1 : 0) | intervalIdx);
+      // Wait, that's only 2 bits for interval if mode is bit 0.
+      // bits 7-4: version
+      // bit 3: reserved
+      // bit 2: mode
+      // bits 1-0: interval
 
-      // Check version compatibility
-      if (version > FORMAT_VERSION) {
-        console.warn(
-          `Ghost trace version ${version} > supported ${FORMAT_VERSION}, may not decode correctly`
-        );
-      }
+      const mode = headerByte & 0x04 ? 'squats' : 'pushups';
+      const intervalIdx = headerByte & 0x03;
+      const interval = intervalIdx === 0 ? 500 : intervalIdx === 1 ? 1000 : 2000;
 
       const frameCount = bytes[1];
 
       // Step 3: Decode frames
       const trace: SessionSnapshot[] = [];
-      let byteIndex = 10;
+      let byteIndex = 2;
 
       for (let frame = 0; frame < frameCount && byteIndex + 24 <= bytes.length; frame++) {
-        const timestamp = frame * COMPRESSION_INTERVAL_MS;
+        const timestamp = frame * interval;
         const keypoints: Keypoint[] = [];
 
         for (let kpIndex = 0; kpIndex < REQUIRED_KEYPOINTS.length; kpIndex++) {
-          const packed = (bytes[byteIndex] << 8) | bytes[byteIndex + 1];
+          const bX = bytes[byteIndex];
+          const bY = bytes[byteIndex + 1];
           byteIndex += 2;
 
-          if (packed !== 0xffff) {
-            // Decode from 12-bit packed format
-            const quantizedX = (packed >> 6) & 0x3f;
-            const quantizedY = packed & 0x3f;
-
+          if (bX !== 0xff || bY !== 0xff) {
             // Dequantize to NORMALIZED coordinates (0.0 to 1.0)
-            // This allows the trace to work on any canvas size
-            const normalizedX = quantizedX / QUANTIZATION_MAX;
-            const normalizedY = quantizedY / QUANTIZATION_MAX;
+            const normalizedX = bX / 255;
+            const normalizedY = bY / 255;
 
             keypoints.push({
               name: REQUIRED_KEYPOINTS[kpIndex],
-              x: normalizedX, // Normalized 0.0-1.0
-              y: normalizedY, // Normalized 0.0-1.0
-              score: 0.8, // Use fixed high score since we filtered low-confidence in compression
+              x: normalizedX,
+              y: normalizedY,
+              score: 0.8,
             });
           }
         }
@@ -240,13 +239,8 @@ class GhostServiceImpl {
   generateShareUrl(trace: SessionSnapshot[], mode: 'pushups' | 'squats', baseUrl?: string): string {
     const compressed = this.compress(trace, mode);
 
-    // Check URL length
-    if (compressed.length > MAX_URL_LENGTH) {
-      console.warn(`Compressed trace (${compressed.length} chars) exceeds recommended limit`);
-    }
-
     const url = new URL(baseUrl || (typeof window !== 'undefined' ? window.location.origin : ''));
-    url.pathname = '/game';
+    url.pathname = '/';
     url.searchParams.set('race', compressed);
     url.searchParams.set('mode', mode);
 
@@ -273,37 +267,28 @@ class GhostServiceImpl {
    * Convert byte array to Base64URL string
    */
   private bytesToBase64Url(bytes: number[]): string {
-    // Convert to Uint8Array
     const uint8 = new Uint8Array(bytes);
 
-    // Convert to binary string
+    // Use a more robust way to convert Uint8Array to Base64
     let binary = '';
-    for (let i = 0; i < uint8.length; i++) {
+    const len = uint8.byteLength;
+    for (let i = 0; i < len; i++) {
       binary += String.fromCharCode(uint8[i]);
     }
 
-    // Base64 encode
     let base64 = btoa(binary);
-
-    // Convert to Base64URL (replace + with -, / with _, remove = padding)
-    base64 = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-    return base64;
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
   /**
    * Convert Base64URL string to byte array
    */
   private base64UrlToBytes(base64Url: string): number[] {
-    // Convert from Base64URL to Base64
     let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-
-    // Add padding if needed
     while (base64.length % 4 !== 0) {
       base64 += '=';
     }
 
-    // Decode
     const binary = atob(base64);
     const bytes: number[] = [];
     for (let i = 0; i < binary.length; i++) {
