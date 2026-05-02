@@ -35,6 +35,7 @@ import {
   saveWorkoutTrace,
 } from '@/services/integrations/WorkoutDataAdapter';
 import { ghostService } from '@/services/GhostService';
+import { getChampionTrace, isChampion } from '@/constants/championTraces';
 
 import { Score } from '@/types';
 
@@ -90,6 +91,56 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     null
   );
   const [isRace, setIsRace] = useState(false);
+
+  // Handle raceGhost custom event from Leaderboard
+  useEffect(() => {
+    const handleRaceGhost = async (event: any) => {
+      const { address: targetAddress, mode: targetMode } = event.detail;
+      console.log(`👻 Game received raceGhost event for ${targetAddress} in ${targetMode}`);
+
+      let traceToLoad = null;
+
+      // 1. Check if it's a champion trace
+      if (isChampion(targetAddress)) {
+        console.log('🏆 Loading Champion trace...');
+        const compressedTrace = getChampionTrace(targetAddress);
+        if (compressedTrace) {
+          traceToLoad = ghostService.decompress(compressedTrace);
+        }
+      }
+      // 2. Check if it's the current user and fetch local PB trace
+      else if (finalAddress && targetAddress.toLowerCase() === finalAddress.toLowerCase()) {
+        console.log('👤 Loading Personal Best trace...');
+        try {
+          const pb = await getPersonalBestWorkout(finalAddress, targetMode);
+          if (pb) {
+            const pbTraceData = await getWorkoutTrace(pb.id);
+            if (pbTraceData) {
+              traceToLoad = pbTraceData;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load PB trace:', error);
+        }
+      }
+
+      if (traceToLoad && traceToLoad.length > 0) {
+        console.log('✅ Ghost trace loaded, starting race!');
+        setRaceTrace(traceToLoad);
+        setIsRace(true);
+        setMode(targetMode);
+        // Trigger game start
+        setStarted(true);
+        setTimeLeft(120);
+        setRepCount(0);
+      } else {
+        console.error('❌ Failed to load ghost trace');
+      }
+    };
+
+    window.addEventListener('raceGhost', handleRaceGhost);
+    return () => window.removeEventListener('raceGhost', handleRaceGhost);
+  }, [finalAddress]);
 
   // Extract race trace from URL on mount
   const searchParams = useSearchParams();
@@ -672,6 +723,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     setRepCount(0);
     setTimeLeft(120);
     setStarted(false);
+    setIsRace(false);
+    setRaceTrace(null);
     // Welcome component consolidated into InitializationScreen - no need to reset welcome state
     setShowTutorial(true);
     setShowSummary(false);
