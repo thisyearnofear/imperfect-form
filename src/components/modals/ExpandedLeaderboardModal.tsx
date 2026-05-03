@@ -10,6 +10,8 @@ import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
 import { useFadeTransition } from '@/hooks';
 import VerificationBadge from '@/components/verification/VerificationBadge';
 import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
+import { usePlatform } from '@/contexts/PlatformContext';
+import { isChampion } from '@/constants/championTraces';
 import {
   getNetworkStyling,
   getMedalStyle,
@@ -39,40 +41,17 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
   onViewProfile,
 }) => {
   const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
+  const { wallet } = usePlatform();
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [breakdownType, setBreakdownType] = useState<'pushups' | 'squats' | null>(null);
-  const [progressiveDisplayNames, setProgressiveDisplayNames] =
-    useState<Record<string, string>>(displayNames);
-  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
-  const [farcasterProfiles, setFarcasterProfiles] = useState<
-    Record<string, FarcasterProfile | null>
-  >({});
-
-  // Get all unique user addresses for verification checking
-  const allUserAddresses = React.useMemo(() => {
-    const addresses = new Set<string>();
-    [...pushupLeaderboard, ...squatLeaderboard].forEach((entry) => {
-      addresses.add(entry.user);
+  // ...
+  const handleRaceClick = (userAddress: string, mode: 'pushups' | 'squats') => {
+    console.log(`👻 Triggering race against: ${userAddress} in ${mode} mode`);
+    const event = new CustomEvent('raceGhost', {
+      detail: { address: userAddress, mode },
     });
-    return Array.from(addresses);
-  }, [pushupLeaderboard, squatLeaderboard]);
-
-  // Check verification status for all users
-  const { verificationStatuses } = useBatchVerificationStatus(allUserAddresses);
-
-  // Progressive ENS resolution - update names as they come in
-  React.useEffect(() => {
-    setProgressiveDisplayNames(displayNames);
-  }, [displayNames]);
-
-  // Resolve Farcaster profiles for all users
-  React.useEffect(() => {
-    if (isOpen && allUserAddresses.length > 0) {
-      batchResolveFarcasterProfiles(allUserAddresses).then((profilesMap) => {
-        setFarcasterProfiles(Object.fromEntries(profilesMap));
-      });
-    }
-  }, [isOpen, allUserAddresses]);
+    window.dispatchEvent(event);
+    onClose();
+  };
 
   if (!isVisible) return null;
 
@@ -214,6 +193,20 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                     <td className={`score-cell ${medalStyle.textColor}`}>
                       <div className="score-display">{entry.totalScore}</div>
                     </td>
+                    <td className="ghost-cell px-2">
+                      {(isChampion(entry.user) ||
+                        wallet.address?.toLowerCase() === entry.user.toLowerCase()) && (
+                        <button
+                          onClick={() => handleRaceClick(entry.user, 'pushups')}
+                          className="p-1 hover:bg-white/10 rounded-full transition-colors group relative"
+                          title="Race against ghost"
+                        >
+                          <span className="text-lg group-hover:scale-125 transition-transform inline-block">
+                            👻
+                          </span>
+                        </button>
+                      )}
+                    </td>
                     <td className="network-cell">
                       <div className="network-indicator">
                         <div className={`network-dot ${networkStyle.bg}`} />
@@ -279,10 +272,22 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                       <span className={networkStyle.text}>{networkStyle.name}</span>
                     </div>
                   </div>
-                  <div className="score-section">
+                  <div className="score-section flex items-center space-x-2">
                     <div className={`score-display ${medalStyle.textColor}`}>
                       {entry.totalScore}
                     </div>
+                    {(isChampion(entry.user) ||
+                      wallet.address?.toLowerCase() === entry.user.toLowerCase()) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRaceClick(entry.user, 'pushups');
+                        }}
+                        className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                      >
+                        <span className="text-lg">👻</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -343,6 +348,20 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                       <div className="flex items-center justify-center">
                         <span className="text-sm font-bold">{entry.totalScore}</span>
                       </div>
+                    </td>
+                    <td className="px-2 py-1 text-center">
+                      {(isChampion(entry.user) ||
+                        wallet.address?.toLowerCase() === entry.user.toLowerCase()) && (
+                        <button
+                          onClick={() => handleRaceClick(entry.user, 'squats')}
+                          className="p-1 hover:bg-white/10 rounded-full transition-colors group"
+                          title="Race against ghost"
+                        >
+                          <span className="text-lg group-hover:scale-125 transition-transform inline-block">
+                            👻
+                          </span>
+                        </button>
+                      )}
                     </td>
                     <td className="px-1 py-1">
                       <div className="flex items-center justify-end space-x-1">
@@ -413,10 +432,22 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                       <span className={networkStyle.text}>{networkStyle.name}</span>
                     </div>
                   </div>
-                  <div className="score-section">
+                  <div className="score-section flex items-center space-x-2">
                     <div className={`score-display ${medalStyle.textColor}`}>
                       {entry.totalScore}
                     </div>
+                    {(isChampion(entry.user) ||
+                      wallet.address?.toLowerCase() === entry.user.toLowerCase()) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRaceClick(entry.user, 'squats');
+                        }}
+                        className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                      >
+                        <span className="text-lg">👻</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

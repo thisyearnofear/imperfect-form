@@ -46,6 +46,7 @@ import VerificationBadge from '@/components/verification/VerificationBadge';
 import VerifiedLeaderboard from '@/components/leaderboard/VerifiedLeaderboard';
 import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
 import { usePlatform } from '@/contexts/PlatformContext';
+import { isChampion } from '@/constants/championTraces';
 
 interface LeaderboardProps {
   limit?: number;
@@ -599,6 +600,16 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   //     ? activeLeaderboard.slice(0, limit)
   //     : activeLeaderboard;
 
+  // Handle ghost race click
+  const handleRaceClick = (userAddress: string, mode: 'pushups' | 'squats') => {
+    console.log(`👻 Triggering race against: ${userAddress} in ${mode} mode`);
+    const event = new CustomEvent('raceGhost', {
+      detail: { address: userAddress, mode },
+    });
+    window.dispatchEvent(event);
+    toast.success(`Starting race against ${displayNames[userAddress] || 'ghost'}!`);
+  };
+
   if (isLoading) {
     return (
       <div className="py-4">
@@ -741,7 +752,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               {/* Push-ups Section */}
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   style={{
                     backgroundColor: '#fcb131',
                     textAlign: 'center',
@@ -755,6 +766,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               {pushupLeaderboard.slice(0, limit || 2).map((entry, i) => {
                 const medalStyle = getMedalStyle(i);
                 const networkStyle = getNetworkStyling(entry.network);
+                const isCurrentUser = wallet.address?.toLowerCase() === entry.user.toLowerCase();
+                const canRace = isChampion(entry.user) || isCurrentUser;
 
                 return (
                   <tr
@@ -781,6 +794,22 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                     <td className={`px-3 py-3 font-bold text-lg ${medalStyle.textColor}`}>
                       {entry.score}
                     </td>
+                    <td className="px-3 py-3 text-center">
+                      {canRace && (
+                        <button
+                          onClick={() => handleRaceClick(entry.user, 'pushups')}
+                          className="p-2 hover:bg-white/10 rounded-full transition-colors group relative"
+                          title={`Race against ${isCurrentUser ? 'your PB' : 'this champion'}`}
+                        >
+                          <span className="text-xl group-hover:scale-125 transition-transform inline-block">
+                            👻
+                          </span>
+                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-[#fcb131] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            RACE
+                          </span>
+                        </button>
+                      )}
+                    </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center justify-center space-x-2">
                         <span className={`font-bold ${networkStyle.text}`}>
@@ -798,7 +827,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               {/* Squats Section */}
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   style={{
                     backgroundColor: '#00a651',
                     textAlign: 'center',
@@ -812,6 +841,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
               {squatLeaderboard.slice(0, limit || 2).map((entry, i) => {
                 const medalStyle = getMedalStyle(i);
                 const networkStyle = getNetworkStyling(entry.network);
+                const isCurrentUser = wallet.address?.toLowerCase() === entry.user.toLowerCase();
+                const canRace = isChampion(entry.user) || isCurrentUser;
 
                 return (
                   <tr
@@ -837,6 +868,22 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                     </td>
                     <td className={`px-3 py-3 font-bold text-lg ${medalStyle.textColor}`}>
                       {entry.score}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {canRace && (
+                        <button
+                          onClick={() => handleRaceClick(entry.user, 'squats')}
+                          className="p-2 hover:bg-white/10 rounded-full transition-colors group relative"
+                          title={`Race against ${isCurrentUser ? 'your PB' : 'this champion'}`}
+                        >
+                          <span className="text-xl group-hover:scale-125 transition-transform inline-block">
+                            👻
+                          </span>
+                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-[#00a651] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            RACE
+                          </span>
+                        </button>
+                      )}
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center justify-center space-x-2">
