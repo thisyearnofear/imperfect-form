@@ -36,9 +36,10 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       {/* Race/Ghost Challenge Badge */}
       {isRace && (
         <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-30">
-          <div className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 px-4 py-1.5 rounded-b-xl shadow-[0_4px_15px_rgba(251,191,36,0.5)] border-t border-yellow-400/50 animate-pulse">
-            <span className="text-[11px] font-black text-black tracking-[0.2em] uppercase flex items-center gap-2">
-              <span className="animate-bounce">🏁</span> RACING{' '}
+          <div className="bg-gradient-to-r from-[#fcb131] via-[#f59e0b] to-[#ea580c] px-6 py-2 rounded-b-2xl shadow-[0_4px_20px_rgba(252,177,49,0.6)] border-x-2 border-b-2 border-white/40 animate-pulse">
+            <span className="text-[12px] font-black text-black tracking-[0.25em] uppercase flex items-center gap-3">
+              <span className="animate-bounce">🏁</span>
+              <span className="drop-shadow-sm">RACING</span>
               <span className="animate-bounce">🏁</span>
             </span>
           </div>
