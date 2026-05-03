@@ -129,10 +129,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
         setRaceTrace(traceToLoad);
         setIsRace(true);
         setMode(targetMode);
-        // Trigger game start
-        setStarted(true);
-        setTimeLeft(120);
-        setRepCount(0);
+
+        // Trigger game start using the official handleStart
+        handleStart({ trace: traceToLoad, isRace: true });
       } else {
         console.error('❌ Failed to load ghost trace');
       }
@@ -140,7 +139,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
     window.addEventListener('raceGhost', handleRaceGhost);
     return () => window.removeEventListener('raceGhost', handleRaceGhost);
-  }, [finalAddress]);
+  }, [finalAddress, handleStart]);
 
   // Extract race trace from URL on mount
   const searchParams = useSearchParams();
@@ -519,88 +518,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Moved memoized webcam after handler functions are defined
-
-  // Function to start the timer
-  const startTimer = () => {
-    if (timerRef.current) return; // Don't start if already running
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        const newTime = prev <= 1 ? 0 : prev - 1;
-        timeLeftRef.current = newTime; // Update ref to keep it in sync
-        if (newTime <= 0) {
-          // Use the ref to call the latest version of handleStop
-          if (handleStopRef.current) {
-            handleStopRef.current();
-          }
-        }
-        return newTime;
-      });
-    }, 1000);
-  };
-
-  // Handle rep counting from webcam component
-  const handleRepCount = useCallback(
-    (count: number) => {
-      const prevCount = repCount;
-      setRepCount(count);
-
-      // Trigger feedback when rep count increases
-      if (count > prevCount && count > 0) {
-        // Haptic feedback
-        triggerRepFeedback();
-
-        // Visual feedback
-        setRepFeedback({ show: true, count });
-        setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 1000);
-      }
-
-      // Start the timer on the first rep if it hasn't started yet
-      if (count === 1 && started && !timerRef.current) {
-        startTimer();
-      }
-
-      // Track workout progress
-      if (count > 0 && user?.fid) {
-        fetch('/api/analytics/engagement', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fid: user.fid,
-            eventType: 'workout_completed',
-            metadata: {
-              reps: count,
-              exerciseMode: mode,
-              duration: 120 - timeLeftRef.current, // Use ref instead of state to avoid re-renders
-            },
-          }),
-        }).catch((err) => console.warn('Failed to track workout:', err));
-      }
-    },
-    [started, mode, user?.fid, repCount, triggerRepFeedback] // Remove timeLeft from dependencies
-  );
-
-  // Keep timeLeftRef in sync with timeLeft state
-  useEffect(() => {
-    timeLeftRef.current = timeLeft;
-  }, [timeLeft]);
-
-  useEffect(() => {
-    if (started) {
-      // Ensure tutorial is hidden when game starts
-      setShowTutorial(false);
-
-      // Timer will start on first rep, not immediately
-    }
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [started]);
-
   // Enhanced function to aggressively stop all cameras using the camera manager
   const stopAllCameras = useCallback(() => {
     console.log('🛑 Stopping all cameras - using enhanced camera manager');
@@ -667,50 +584,132 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     handleStopRef.current = handleStop;
   }, [handleStop]);
 
-  const handleStart = async () => {
-    // Use device detection hook's isMobile value
-    // Only attempt fullscreen if it's available in the current context
-    if (isMobile && autoFs && isFullscreenAvailable) {
-      enterFullscreen(); // Must be synchronous with user gesture
-    } else if (isMobile && autoFs && !isFullscreenAvailable) {
-      // Log for debugging - fullscreen not available (likely Farcaster Mini App)
-      console.log(
-        'Fullscreen requested but not available in current context (likely iframe restriction)'
-      );
-    }
-    if (isMobile && (mode === 'pushups' || mode === 'squats')) {
-      lockLandscape();
-      setIsLandscapeLocked(true);
-    }
+  const handleStart = useCallback(
+    async (options?: { trace?: any; isRace?: boolean }) => {
+      // Use device detection hook's isMobile value
+      // Only attempt fullscreen if it's available in the current context
+      if (isMobile && autoFs && isFullscreenAvailable) {
+        enterFullscreen(); // Must be synchronous with user gesture
+      } else if (isMobile && autoFs && !isFullscreenAvailable) {
+        // Log for debugging - fullscreen not available (likely Farcaster Mini App)
+        console.log(
+          'Fullscreen requested but not available in current context (likely iframe restriction)'
+        );
+      }
+      if (isMobile && (mode === 'pushups' || mode === 'squats')) {
+        lockLandscape();
+        setIsLandscapeLocked(true);
+      }
 
-    // Fetch PB trace for ghost mode if user level is 3+
-    try {
-      if (xpProgress.currentLevel >= 3) {
-        const pb = await getPersonalBestWorkout(finalAddress, mode);
-        if (pb && pb.hasTrace) {
-          console.log('👻 Loading PB trace for Ghost Mode...');
-          const trace = await getWorkoutTrace(pb.id);
-          setPbTrace(trace);
+      // Fetch PB trace for ghost mode if user level is 3+ AND we're not already in a race
+      const effectiveIsRace = options?.isRace ?? isRace;
+      const effectiveRaceTrace = options?.trace ?? raceTrace;
+
+      try {
+        if (xpProgress.currentLevel >= 3 && !effectiveIsRace && !effectiveRaceTrace) {
+          const pb = await getPersonalBestWorkout(finalAddress, mode);
+          if (pb && pb.hasTrace) {
+            console.log('👻 Loading PB trace for Ghost Mode...');
+            const trace = await getWorkoutTrace(pb.id);
+            setPbTrace(trace);
+          } else {
+            setPbTrace(null);
+          }
+        } else if (effectiveIsRace || effectiveRaceTrace) {
+          console.log('🏁 Racing against a ghost trace, skipping standard PB load');
+          setPbTrace(null);
         } else {
+          console.log('🔒 Ghost Mode locked (Level 3 required)');
           setPbTrace(null);
         }
-      } else {
-        console.log('🔒 Ghost Mode locked (Level 3 required)');
+      } catch (err) {
+        console.error('❌ Failed to load PB trace:', err);
         setPbTrace(null);
       }
-    } catch (err) {
-      console.error('❌ Failed to load PB trace:', err);
-      setPbTrace(null);
-    }
 
-    // Welcome component consolidated into InitializationScreen - setShowWelcome removed
-    setShowTutorial(false); // Hide tutorial when starting
-    setStarted(true);
+      // Welcome component consolidated into InitializationScreen - setShowWelcome removed
+      setShowTutorial(false); // Hide tutorial when starting
+      setStarted(true);
 
-    // Reset counters
-    setRepCount(0);
-    setTimeLeft(120);
-  };
+      // Reset counters
+      setRepCount(0);
+      setTimeLeft(120);
+    },
+    [
+      isMobile,
+      autoFs,
+      isFullscreenAvailable,
+      enterFullscreen,
+      mode,
+      lockLandscape,
+      xpProgress.currentLevel,
+      isRace,
+      raceTrace,
+      finalAddress,
+    ]
+  );
+
+  // Moved memoized webcam after handler functions are defined
+
+  // Function to start the timer
+  const startTimer = useCallback(() => {
+    if (timerRef.current) return; // Don't start if already running
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        const newTime = prev <= 1 ? 0 : prev - 1;
+        timeLeftRef.current = newTime; // Update ref to keep it in sync
+        if (newTime <= 0) {
+          // Use the ref to call the latest version of handleStop
+          if (handleStopRef.current) {
+            handleStopRef.current();
+          }
+        }
+        return newTime;
+      });
+    }, 1000);
+  }, [handleStop]);
+
+  // Handle rep counting from webcam component
+  const handleRepCount = useCallback(
+    (count: number) => {
+      const prevCount = repCount;
+      setRepCount(count);
+
+      // Trigger feedback when rep count increases
+      if (count > prevCount && count > 0) {
+        // Haptic feedback
+        triggerRepFeedback();
+
+        // Visual feedback
+        setRepFeedback({ show: true, count });
+        setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 1000);
+      }
+
+      // Start the timer on the first rep if it hasn't started yet
+      if (count === 1 && started && !timerRef.current) {
+        startTimer();
+      }
+
+      // Track workout progress
+      if (count > 0 && user?.fid) {
+        fetch('/api/analytics/engagement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fid: user.fid,
+            eventType: 'workout_completed',
+            metadata: {
+              reps: count,
+              exerciseMode: mode,
+              duration: 120 - timeLeftRef.current, // Use ref instead of state to avoid re-renders
+            },
+          }),
+        }).catch((err) => console.warn('Failed to track workout:', err));
+      }
+    },
+    [started, mode, user?.fid, repCount, triggerRepFeedback, startTimer]
+  );
 
   // This useEffect is already handled by the one above
   // Removing duplicate effect
