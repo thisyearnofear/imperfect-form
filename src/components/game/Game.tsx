@@ -67,6 +67,11 @@ interface GameProps {
 }
 
 const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => {
+  // Get universal wallet context first
+  const { wallet, user } = usePlatform();
+  const { address } = wallet;
+  const finalAddress = address || thirdwebAddress;
+
   // --- Fullscreen integration ---
   const gameRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreen(gameRef);
@@ -91,81 +96,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     null
   );
   const [isRace, setIsRace] = useState(false);
-
-  // Handle raceGhost custom event from Leaderboard
-  useEffect(() => {
-    const handleRaceGhost = async (event: any) => {
-      const { address: targetAddress, mode: targetMode } = event.detail;
-      console.log(`👻 Game received raceGhost event for ${targetAddress} in ${targetMode}`);
-
-      let traceToLoad = null;
-
-      // 1. Check if it's a champion trace
-      if (isChampion(targetAddress)) {
-        console.log('🏆 Loading Champion trace...');
-        const compressedTrace = getChampionTrace(targetAddress);
-        if (compressedTrace) {
-          traceToLoad = ghostService.decompress(compressedTrace);
-        }
-      }
-      // 2. Check if it's the current user and fetch local PB trace
-      else if (finalAddress && targetAddress.toLowerCase() === finalAddress.toLowerCase()) {
-        console.log('👤 Loading Personal Best trace...');
-        try {
-          const pb = await getPersonalBestWorkout(finalAddress, targetMode);
-          if (pb) {
-            const pbTraceData = await getWorkoutTrace(pb.id);
-            if (pbTraceData) {
-              traceToLoad = pbTraceData;
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load PB trace:', error);
-        }
-      }
-
-      if (traceToLoad && traceToLoad.length > 0) {
-        console.log('✅ Ghost trace loaded, starting race!');
-        setRaceTrace(traceToLoad);
-        setIsRace(true);
-        setMode(targetMode);
-
-        // Trigger game start using the official handleStart
-        handleStart({ trace: traceToLoad, isRace: true });
-      } else {
-        console.error('❌ Failed to load ghost trace');
-      }
-    };
-
-    window.addEventListener('raceGhost', handleRaceGhost);
-    return () => window.removeEventListener('raceGhost', handleRaceGhost);
-  }, [finalAddress, handleStart]);
-
-  // Extract race trace from URL on mount
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    const raceParam = searchParams.get('race');
-    const modeParam = searchParams.get('mode') as 'pushups' | 'squats' | null;
-
-    if (raceParam) {
-      try {
-        const decodedTrace = ghostService.decompress(raceParam);
-        if (decodedTrace && decodedTrace.length > 0) {
-          console.log('👻 Race trace loaded from URL:', decodedTrace.length, 'frames');
-          setRaceTrace(decodedTrace);
-          setIsRace(true);
-
-          // Override mode if specified in URL
-          if (modeParam && (modeParam === 'pushups' || modeParam === 'squats')) {
-            setMode(modeParam);
-            console.log('🎮 Race mode set to:', modeParam);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to decode race trace from URL:', error);
-      }
-    }
-  }, [searchParams]);
 
   const handleSessionEnd = useCallback(
     (summary: import('@/services/sessionLogger').SessionSummary) => {
@@ -221,15 +151,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   const { lockLandscape, unlock } = useOrientationLock();
   const [isLandscapeLocked, setIsLandscapeLocked] = useState(false);
 
-  // Get universal wallet context first
-  const { wallet, user } = usePlatform();
-  const { address } = wallet;
-
   // Get onboarding context
   const { setShouldShowTour } = useOnboarding();
-
-  // Use the universal address - no more complex network-specific logic needed!
-  const finalAddress = address || thirdwebAddress;
 
   // Smart default mode based on user state
   const getDefaultMode = useCallback((): 'instructions' | 'settings' | 'profile' => {
@@ -648,6 +571,83 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       finalAddress,
     ]
   );
+
+  // --- Ghost Mode & Race Integration ---
+
+  // Handle raceGhost custom event from Leaderboard
+  useEffect(() => {
+    const handleRaceGhost = async (event: any) => {
+      const { address: targetAddress, mode: targetMode } = event.detail;
+      console.log(`👻 Game received raceGhost event for ${targetAddress} in ${targetMode}`);
+
+      let traceToLoad = null;
+
+      // 1. Check if it's a champion trace
+      if (isChampion(targetAddress)) {
+        console.log('🏆 Loading Champion trace...');
+        const compressedTrace = getChampionTrace(targetAddress);
+        if (compressedTrace) {
+          traceToLoad = ghostService.decompress(compressedTrace);
+        }
+      }
+      // 2. Check if it's the current user and fetch local PB trace
+      else if (finalAddress && targetAddress.toLowerCase() === finalAddress.toLowerCase()) {
+        console.log('👤 Loading Personal Best trace...');
+        try {
+          const pb = await getPersonalBestWorkout(finalAddress, targetMode);
+          if (pb) {
+            const pbTraceData = await getWorkoutTrace(pb.id);
+            if (pbTraceData) {
+              traceToLoad = pbTraceData;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load PB trace:', error);
+        }
+      }
+
+      if (traceToLoad && traceToLoad.length > 0) {
+        console.log('✅ Ghost trace loaded, starting race!');
+        setRaceTrace(traceToLoad);
+        setIsRace(true);
+        setMode(targetMode);
+
+        // Trigger game start using the official handleStart
+        handleStart({ trace: traceToLoad, isRace: true });
+      } else {
+        console.error('❌ Failed to load ghost trace');
+      }
+    };
+
+    window.addEventListener('raceGhost', handleRaceGhost);
+    return () => window.removeEventListener('raceGhost', handleRaceGhost);
+  }, [finalAddress, handleStart]);
+
+  // Extract race trace from URL on mount
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const raceParam = searchParams.get('race');
+    const modeParam = searchParams.get('mode') as 'pushups' | 'squats' | null;
+
+    if (raceParam) {
+      try {
+        const decodedTrace = ghostService.decompress(raceParam);
+        if (decodedTrace && decodedTrace.length > 0) {
+          console.log('👻 Race trace loaded from URL:', decodedTrace.length, 'frames');
+          setRaceTrace(decodedTrace);
+          setIsRace(true);
+
+          // Override mode if specified in URL
+          if (modeParam && (modeParam === 'pushups' || modeParam === 'squats')) {
+            setMode(modeParam);
+            console.log('🎮 Race mode set to:', modeParam);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to decode race trace from URL:', error);
+      }
+    }
+  }, [searchParams]);
 
   // Moved memoized webcam after handler functions are defined
 

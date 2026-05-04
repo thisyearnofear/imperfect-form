@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import '@/styles/leaderboard.css';
 import '@/styles/expanded-leaderboard.css';
 import { shortenAddress } from '@/utils/formatters';
@@ -43,7 +43,49 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
   const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
   const { wallet } = usePlatform();
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  // ...
+  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [breakdownType, setBreakdownType] = useState<'pushups' | 'squats' | null>(null);
+
+  // Progressive display names and profiles
+  const [progressiveDisplayNames, setProgressiveDisplayNames] =
+    useState<Record<string, string>>(displayNames);
+  const [farcasterProfiles, setFarcasterProfiles] = useState<Record<string, FarcasterProfile>>({});
+
+  // Get all user addresses for verification check
+  const allAddresses = useMemo(() => {
+    const addresses = new Set<string>();
+    pushupLeaderboard.forEach((entry) => addresses.add(entry.user));
+    squatLeaderboard.forEach((entry) => addresses.add(entry.user));
+    return Array.from(addresses);
+  }, [pushupLeaderboard, squatLeaderboard]);
+
+  const { verificationStatuses } = useBatchVerificationStatus(allAddresses);
+
+  // Resolve profiles when modal opens
+  useEffect(() => {
+    if (isOpen && allAddresses.length > 0) {
+      batchResolveFarcasterProfiles(allAddresses).then((profilesMap) => {
+        // Convert Map to Record
+        const profilesRecord: Record<string, FarcasterProfile> = {};
+        profilesMap.forEach((profile, address) => {
+          if (profile) {
+            profilesRecord[address] = profile;
+          }
+        });
+        setFarcasterProfiles(profilesRecord);
+
+        // Update display names with Farcaster names if available
+        const updatedNames = { ...displayNames };
+        profilesMap.forEach((profile, address) => {
+          if (profile?.displayName) {
+            updatedNames[address] = profile.displayName;
+          }
+        });
+        setProgressiveDisplayNames(updatedNames);
+      });
+    }
+  }, [isOpen, allAddresses, displayNames]);
+
   const handleRaceClick = (userAddress: string, mode: 'pushups' | 'squats') => {
     console.log(`👻 Triggering race against: ${userAddress} in ${mode} mode`);
     const event = new CustomEvent('raceGhost', {

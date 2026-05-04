@@ -170,14 +170,14 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           provider,
           pushups,
           squats,
-          networkConfig.contractAddress,
+          networkConfig?.contractAddress || '',
           chainId,
           false,
           null
         );
 
         if (result.success) {
-          await markWorkoutSynced(workout.id, result.transactionHash!, networkConfig.name as any);
+          await markWorkoutSynced(workout.id, result.transactionHash!, networkConfig?.name as any);
           successCount++;
         }
       } catch (err) {

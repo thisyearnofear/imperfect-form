@@ -11,7 +11,7 @@ interface AccessibleDialogProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   children: React.ReactNode;
   maxWidth?: string;
   showTitle?: boolean;

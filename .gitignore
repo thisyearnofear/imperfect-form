@@ -137,3 +137,4 @@ temp/
 
 # Mini app data persistence (runtime-generated)
 data/
+.blackboxcli/
