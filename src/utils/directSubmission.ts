@@ -89,11 +89,48 @@ const VERIFIED_ABI = [
   },
 ];
 
+// STANDARDIZED ABI for Achievement Minting
+const ACHIEVEMENT_ABI = [
+  {
+    inputs: [{ internalType: 'string', name: 'achievementId', type: 'string' }],
+    name: 'mintAchievement',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+];
+
 import { isFarcasterMiniApp, isBraveBrowser } from '@/utils/farcasterMiniApp';
 import { createRemoteLogger } from './remoteLogger';
 import { encodeBuilderCodeSuffix } from './builderCodes';
 
 const logger = createRemoteLogger('DirectSubmission');
+
+/**
+ * Unified Provider Selection
+ * Single source of truth for provider selection logic
+ */
+export function getValidatedProvider(
+  platform: string,
+  farcasterProvider: any,
+  wallet: { isConnected: boolean; address: string | null }
+): any | null {
+  // Priority 1: Farcaster provider for Farcaster platform
+  if (platform === 'farcaster' && farcasterProvider) {
+    return farcasterProvider;
+  }
+
+  // Priority 2: Browser ethereum provider (for all platforms including Farcaster fallback)
+  if (typeof window !== 'undefined' && (window as any).ethereum) {
+    // Validate that wallet is actually connected
+    if (wallet.isConnected && wallet.address) {
+      return (window as any).ethereum;
+    }
+  }
+
+  // Priority 3: No valid provider found
+  return null;
+}
 
 /**
  * CONSOLIDATION: Unified Provider Validation
@@ -543,6 +580,64 @@ export async function submitScoreDirect(
     }
 
     return { success: false, error: errorMessage };
+  }
+}
+
+export async function mintAchievementDirect(
+  provider: any,
+  achievementId: string,
+  contractAddress: string,
+  chainId: number
+): Promise<{ success: boolean; error?: string; transactionHash?: string }> {
+  try {
+    logger.info('🚀 Starting achievement minting', {
+      achievementId,
+      contractAddress,
+      chainId,
+    });
+
+    const validationResult = await validateProviderConnection(provider, chainId);
+    if (!validationResult.isValid) {
+      return { success: false, error: validationResult.error };
+    }
+
+    const { signer } = validationResult;
+
+    const contract = new ethers.Contract(contractAddress, ACHIEVEMENT_ABI, signer);
+
+    // Prepare transaction
+    const encodedData = contract.interface.encodeFunctionData('mintAchievement', [achievementId]);
+
+    // Add Builder Code suffix if available
+    const builderCodeSuffix = process.env.NEXT_PUBLIC_BUILDER_CODE
+      ? encodeBuilderCodeSuffix(process.env.NEXT_PUBLIC_BUILDER_CODE)
+      : null;
+
+    const finalData = builderCodeSuffix
+      ? ((encodedData + builderCodeSuffix.slice(2)) as `0x${string}`)
+      : encodedData;
+
+    const tx = await signer.sendTransaction({
+      to: contractAddress,
+      data: finalData,
+    });
+
+    logger.info('📤 Minting transaction sent', { hash: tx.hash });
+
+    const receipt = await tx.wait();
+
+    if (receipt && receipt.status === 1) {
+      logger.info('✅ Minting successful', { hash: receipt.hash });
+      return { success: true, transactionHash: receipt.hash };
+    } else {
+      return { success: false, error: 'Minting failed' };
+    }
+  } catch (error) {
+    logger.error('❌ Minting error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Minting failed',
+    };
   }
 }
 

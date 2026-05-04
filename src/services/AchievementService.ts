@@ -15,6 +15,9 @@ export interface Achievement {
   description: string;
   icon: string;
   unlockedAt?: number;
+  mintedAt?: number;
+  txHash?: string;
+  chain?: 'base' | 'celo';
 }
 
 export const ACHIEVEMENTS: Achievement[] = [
@@ -58,12 +61,22 @@ class AchievementServiceImpl {
    */
   async getUnlockedAchievements(): Promise<Achievement[]> {
     const offlineStore = getOfflineDataStore();
-    const unlockedIds = (await offlineStore.get<string[]>(this.STORAGE_KEY)) || [];
+    const data = await offlineStore.get<any>(this.STORAGE_KEY);
+
+    let unlockedData: Record<string, any> = {};
+    if (Array.isArray(data)) {
+      // Migration from old format
+      data.forEach((id) => {
+        unlockedData[id] = { unlockedAt: Date.now() };
+      });
+    } else if (data) {
+      unlockedData = data;
+    }
 
     return ACHIEVEMENTS.map((a) => {
-      const unlockedAt = unlockedIds.find((id) => id === a.id);
-      return unlockedAt ? { ...a, unlockedAt: Date.now() } : a; // Note: We don't store the exact time currently, just that it's unlocked
-    }).filter((a) => unlockedIds.includes(a.id));
+      const info = unlockedData[a.id];
+      return info ? { ...a, ...info } : a;
+    }).filter((a) => unlockedData[a.id] !== undefined);
   }
 
   /**
@@ -71,7 +84,14 @@ class AchievementServiceImpl {
    */
   async checkAchievements(workouts: LocalWorkout[]): Promise<Achievement[]> {
     const offlineStore = getOfflineDataStore();
-    const unlockedIds = (await offlineStore.get<string[]>(this.STORAGE_KEY)) || [];
+    const data = (await offlineStore.get<any>(this.STORAGE_KEY)) || {};
+    let unlockedData: Record<string, any> = Array.isArray(data) ? {} : data;
+    if (Array.isArray(data)) {
+      data.forEach((id) => {
+        unlockedData[id] = { unlockedAt: Date.now() };
+      });
+    }
+
     const newlyUnlocked: Achievement[] = [];
 
     const streakInfo = xpService.getStreakInfo(workouts);
@@ -79,10 +99,11 @@ class AchievementServiceImpl {
     const maxRepsSingle = workouts.reduce((max, w) => Math.max(max, w.reps), 0);
 
     const checkAndUnlock = (id: string) => {
-      if (!unlockedIds.includes(id)) {
-        unlockedIds.push(id);
+      if (!unlockedData[id]) {
+        unlockedData[id] = { unlockedAt: Date.now() };
         const achievement = ACHIEVEMENTS.find((a) => a.id === id);
-        if (achievement) newlyUnlocked.push(achievement);
+        if (achievement)
+          newlyUnlocked.push({ ...achievement, unlockedAt: unlockedData[id].unlockedAt });
       }
     };
 
@@ -110,10 +131,34 @@ class AchievementServiceImpl {
     }
 
     if (newlyUnlocked.length > 0) {
-      await offlineStore.set(this.STORAGE_KEY, unlockedIds);
+      await offlineStore.set(this.STORAGE_KEY, unlockedData);
     }
 
     return newlyUnlocked;
+  }
+
+  /**
+   * Mark an achievement as minted
+   */
+  async markAsMinted(achievementId: string, txHash: string, chain: 'base' | 'celo'): Promise<void> {
+    const offlineStore = getOfflineDataStore();
+    const data = (await offlineStore.get<any>(this.STORAGE_KEY)) || {};
+    let unlockedData: Record<string, any> = Array.isArray(data) ? {} : data;
+    if (Array.isArray(data)) {
+      data.forEach((id) => {
+        unlockedData[id] = { unlockedAt: Date.now() };
+      });
+    }
+
+    if (unlockedData[achievementId]) {
+      unlockedData[achievementId] = {
+        ...unlockedData[achievementId],
+        mintedAt: Date.now(),
+        txHash,
+        chain,
+      };
+      await offlineStore.set(this.STORAGE_KEY, unlockedData);
+    }
   }
 }
 

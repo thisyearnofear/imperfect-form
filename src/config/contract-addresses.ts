@@ -11,6 +11,7 @@ export const CONTRACT_ADDRESSES = {
     verified:
       process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT ||
       '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03', // Self Protocol integrated
+    achievements: '0x1234567890123456789012345678901234567890', // Placeholder Soulbound Achievements
   },
 
   // Standard contracts (no verification) - DEPLOYED!
@@ -20,6 +21,7 @@ export const CONTRACT_ADDRESSES = {
 
   base: {
     standard: '0x58DC4867f87473BF9874892dE8e62C48958c8d96', // StandardFitnessLeaderboard deployed
+    achievements: '0x0987654321098765432109876543210987654321', // Placeholder Soulbound Achievements
   },
 
   monad: {
@@ -32,19 +34,21 @@ export const CONTRACT_ADDRESSES = {
  */
 export function getContractAddress(
   chainId: number,
-  type: 'standard' | 'verified' = 'standard'
+  type: 'standard' | 'verified' | 'achievements' = 'standard'
 ): string | null {
   switch (chainId) {
     case 42220: // Celo
-      return type === 'verified'
-        ? CONTRACT_ADDRESSES.celo.verified
-        : CONTRACT_ADDRESSES.celo.standard;
+      if (type === 'verified') return CONTRACT_ADDRESSES.celo.verified;
+      if (type === 'achievements') return CONTRACT_ADDRESSES.celo.achievements;
+      return CONTRACT_ADDRESSES.celo.standard;
     case 137: // Polygon
-      return CONTRACT_ADDRESSES.polygon.standard;
+      return type === 'achievements' ? null : CONTRACT_ADDRESSES.polygon.standard;
     case 8453: // Base
-      return CONTRACT_ADDRESSES.base.standard;
+      return type === 'achievements'
+        ? CONTRACT_ADDRESSES.base.achievements
+        : CONTRACT_ADDRESSES.base.standard;
     case 143: // Monad Mainnet
-      return CONTRACT_ADDRESSES.monad.standard;
+      return type === 'achievements' ? null : CONTRACT_ADDRESSES.monad.standard;
     default:
       return null;
   }

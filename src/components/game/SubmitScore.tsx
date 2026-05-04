@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Spinner } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 // Removed: useAccount - using unified PlatformContext only
-import { submitScoreDirect } from '@/utils/directSubmission';
+import { submitScoreDirect, getValidatedProvider } from '@/utils/directSubmission';
 import { getNetworkByChainId } from '@/config/networks';
 // Removed: useEnhancedWalletConnection - using unified PlatformContext only
 import toast from 'react-hot-toast';
@@ -13,32 +13,6 @@ import type { WalletState } from '@/contexts/PlatformContext';
 import { CONTRACT_ADDRESSES } from '@/config/contract-addresses';
 import { verifiedFitnessContractABI } from '@/constants/contracts';
 import { ethers } from 'ethers';
-
-/**
- * CONSOLIDATION: Unified Provider Selection
- * Single source of truth for provider selection logic
- */
-function getValidatedProvider(
-  platform: string,
-  farcasterProvider: any,
-  wallet: WalletState
-): any | null {
-  // Priority 1: Farcaster provider for Farcaster platform
-  if (platform === 'farcaster' && farcasterProvider) {
-    return farcasterProvider;
-  }
-
-  // Priority 2: Browser ethereum provider (for all platforms including Farcaster fallback)
-  if (typeof window !== 'undefined' && window.ethereum) {
-    // Validate that wallet is actually connected
-    if (wallet.isConnected && wallet.address) {
-      return window.ethereum;
-    }
-  }
-
-  // Priority 3: No valid provider found
-  return null;
-}
 
 /**
  * CONSOLIDATION: Unified Error Classification

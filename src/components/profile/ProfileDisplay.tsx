@@ -25,9 +25,23 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
 }) => {
   const { wallet, user: farcasterUser } = usePlatform();
   const { progress, pbs, workouts } = useXpProgress();
-  const { unlockedAchievements } = useAchievements();
+  const { unlockedAchievements, mintAchievement, isMinting } = useAchievements();
 
   const streakInfo = React.useMemo(() => xpService.getStreakInfo(workouts), [workouts]);
+
+  const getExplorerLink = (txHash: string, chain: string) => {
+    if (chain === 'base') return `https://basescan.org/tx/${txHash}`;
+    if (chain === 'celo') return `https://celoscan.io/tx/${txHash}`;
+    return '#';
+  };
+
+  const handleMint = (achievementId: string) => {
+    if (!wallet.chainId) return;
+    // Use current chain if it's Base or Celo, otherwise default to Base
+    const targetChainId =
+      wallet.chainId === 8453 || wallet.chainId === 42220 ? wallet.chainId : 8453;
+    mintAchievement(achievementId, targetChainId);
+  };
 
   const LoadingSpinner = () => (
     <div className="inline-flex items-center space-x-1">
@@ -125,14 +139,68 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {ACHIEVEMENTS.map((achievement) => {
-                    const isUnlocked = unlockedAchievements.some((a) => a.id === achievement.id);
+                    const unlockedInfo = unlockedAchievements.find((a) => a.id === achievement.id);
+                    const isUnlocked = !!unlockedInfo;
+                    const isMinted = !!unlockedInfo?.txHash;
+                    const isCurrentlyMinting = isMinting === achievement.id;
+
                     return (
                       <div
                         key={achievement.id}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-xl transition-all duration-300 ${isUnlocked ? 'bg-[#fcb131]/20 border border-[#fcb131]/30 shadow-[0_0_10px_rgba(252,177,49,0.15)]' : 'bg-white/5 border border-white/5 grayscale opacity-30'}`}
-                        title={achievement.name + ': ' + achievement.description}
+                        onClick={() =>
+                          isUnlocked &&
+                          !isMinted &&
+                          !isCurrentlyMinting &&
+                          isCurrentUser &&
+                          handleMint(achievement.id)
+                        }
+                        className={`group relative aspect-square rounded-lg flex items-center justify-center text-xl transition-all duration-300
+                          ${
+                            isUnlocked
+                              ? 'bg-[#fcb131]/20 border border-[#fcb131]/30 shadow-[0_0_10px_rgba(252,177,49,0.15)] hover:scale-105 cursor-pointer'
+                              : 'bg-white/5 border border-white/5 grayscale opacity-30 cursor-not-allowed'
+                          }
+                          ${isMinted ? 'border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : ''}
+                        `}
                       >
-                        {achievement.icon}
+                        {isCurrentlyMinting ? (
+                          <div className="animate-spin text-sm">⚡</div>
+                        ) : (
+                          achievement.icon
+                        )}
+
+                        {/* Status badges */}
+                        {isUnlocked && isCurrentUser && !isMinted && !isCurrentlyMinting && (
+                          <div className="absolute -top-1 -right-1 bg-blue-500 text-[8px] px-1 rounded-full text-white font-mono animate-pulse">
+                            MINT
+                          </div>
+                        )}
+
+                        {isMinted && (
+                          <div className="absolute -top-1 -right-1 bg-green-500 text-[8px] px-1 rounded-full text-white font-mono">
+                            ON-CHAIN
+                          </div>
+                        )}
+
+                        {/* Tooltip / Explorer link */}
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 p-2 bg-black border border-gray-800 rounded text-[8px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-2xl">
+                          <p className="font-bold text-[#fcb131]">{achievement.name}</p>
+                          <p className="text-gray-400 mt-0.5">{achievement.description}</p>
+                          {isMinted && unlockedInfo?.txHash && unlockedInfo?.chain && (
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(
+                                  getExplorerLink(unlockedInfo.txHash!, unlockedInfo.chain!),
+                                  '_blank'
+                                );
+                              }}
+                              className="mt-1 text-blue-400 pointer-events-auto hover:underline flex items-center gap-1"
+                            >
+                              View On Explorer 🔗
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
