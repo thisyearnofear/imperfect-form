@@ -80,7 +80,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
       aria-modal="true"
       aria-label="Welcome to Imperfect Form"
     >
-      <div className="relative w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="relative w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden shadow-2xl animate-slide-up">
         {/* Skip button */}
         <button
           onClick={handleSkip}

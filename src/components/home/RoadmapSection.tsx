@@ -67,7 +67,7 @@ export const RoadmapSection: React.FC<RoadmapSectionProps> = ({ onViewAll }) => 
 
       {/* Current Level Indicator */}
       <div className="mb-4 flex items-center gap-3 p-3 bg-white/5 rounded-lg">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30 animate-level-up">
           <span className="text-2xl font-black text-black">{currentLevel}</span>
         </div>
         <div className="flex-1">

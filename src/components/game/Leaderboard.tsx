@@ -737,7 +737,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
       </div>
 
       {activeTab === 'all' ? (
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto"
+          style={{ contentVisibility: 'auto', containIntrinsicSize: '0 600px' }}
+        >
           <table id="leaderboardTable">
             <tbody id="leaderboardBody">
               {/* Push-ups Section */}

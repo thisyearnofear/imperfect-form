@@ -1183,6 +1183,71 @@ div[data-backdrop],
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MICRO-ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Quest completion pop */
+@keyframes quest-complete {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.15); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+.animate-quest-complete {
+  animation: quest-complete 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* XP gain flash */
+@keyframes xp-flash {
+  0% { opacity: 1; transform: translateY(0); }
+  60% { opacity: 1; transform: translateY(-8px); }
+  100% { opacity: 0; transform: translateY(-16px); }
+}
+.animate-xp-flash {
+  animation: xp-flash 0.8s ease-out forwards;
+}
+
+/* Level-up celebration */
+@keyframes level-up {
+  0% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 0 rgba(252, 177, 49, 0.7); }
+  30% { transform: scale(1.2) rotate(-3deg); box-shadow: 0 0 0 10px rgba(252, 177, 49, 0); }
+  60% { transform: scale(1.1) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 0 rgba(252, 177, 49, 0); }
+}
+.animate-level-up {
+  animation: level-up 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Slide-in from bottom (for modals/toasts) */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+/* Fade-in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out forwards;
+}
+
+/* Shimmer for skeleton loaders */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
 /* Larger touch targets for buttons on touch devices */
 @media (hover: none) and (pointer: coarse) {
   button {

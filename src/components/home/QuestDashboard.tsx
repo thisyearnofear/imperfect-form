@@ -58,7 +58,7 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
           {quests.slice(0, 3).map((quest) => (
             <div key={quest.id} className="flex items-center gap-2 text-xs">
               {quest.completed ? (
-                <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0" />
+                <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0 animate-quest-complete" />
               ) : (
                 <Circle className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
               )}
@@ -120,14 +120,14 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
             key={quest.id}
             className={`p-3 rounded-lg border transition-all ${
               quest.completed
-                ? 'bg-green-500/5 border-green-500/20'
+                ? 'bg-green-500/5 border-green-500/20 animate-fade-in'
                 : 'bg-white/5 border-white/5 hover:border-white/10'
             }`}
           >
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
                 {quest.completed ? (
-                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <CheckCircle className="w-5 h-5 text-green-400 animate-quest-complete" />
                 ) : (
                   <Circle className="w-5 h-5 text-gray-600" />
                 )}
