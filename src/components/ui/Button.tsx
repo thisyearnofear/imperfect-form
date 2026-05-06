@@ -45,14 +45,14 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
 // Default variant styles (app branding: gold/yellow theme)
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: [
-    'bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black',
-    'hover:from-[#f39c12] hover:to-[#fcb131] border-[#fcb131]',
-    'hover:shadow-[0_0_20px_rgba(252,177,49,0.5)] focus:ring-[#fcb131]',
+    'bg-gradient-to-r from-[primary] to-[primary-dark] text-black',
+    'hover:from-[primary-dark] hover:to-[primary] border-[primary]',
+    'hover:shadow-[0_0_20px_rgba(252,177,49,0.5)] focus:ring-[primary]',
   ].join(' '),
   secondary: [
-    'bg-gray-800 text-[#fcb131] border-[#fcb131]',
-    'hover:bg-[#fcb131] hover:text-black',
-    'hover:shadow-[0_0_15px_rgba(252,177,49,0.3)] focus:ring-[#fcb131]',
+    'bg-gray-800 text-[primary] border-[primary]',
+    'hover:bg-[primary] hover:text-black',
+    'hover:shadow-[0_0_15px_rgba(252,177,49,0.3)] focus:ring-[primary]',
   ].join(' '),
   success: [
     'bg-gradient-to-r from-green-600 to-green-700 text-white',

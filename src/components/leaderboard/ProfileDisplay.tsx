@@ -77,15 +77,15 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
           alt="Profile"
           width={size === 'sm' ? 24 : 32}
           height={size === 'sm' ? 24 : 32}
-          className={`${sizeClasses[size]} rounded-full border-2 border-white/20 hover:border-[#fcb131] transition-all duration-200`}
+          className={`${sizeClasses[size]} rounded-full border-2 border-white/20 hover:border-[primary] transition-all duration-200`}
           onError={handleImageError}
           unoptimized={true} // Disable Next.js image optimization for external URLs
         />
       ) : (
         <div
-          className={`${sizeClasses[size]} rounded-full border-2 border-white/20 bg-gradient-to-br from-[#fcb131]/20 to-[#fcb131]/40 flex items-center justify-center`}
+          className={`${sizeClasses[size]} rounded-full border-2 border-white/20 bg-gradient-to-br from-[primary]/20 to-[primary]/40 flex items-center justify-center`}
         >
-          <span className="text-[#fcb131] font-bold text-xs">
+          <span className="text-[primary] font-bold text-xs">
             {displayName?.charAt(0)?.toUpperCase() || '👤'}
           </span>
         </div>
@@ -96,7 +96,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
         className={`font-bold cursor-pointer hover:underline transition-all duration-200 transform hover:scale-105 ${
           isFarcasterUser
             ? 'text-purple-600 hover:text-purple-400'
-            : 'text-[#fcb131] hover:text-yellow-300'
+            : 'text-[primary] hover:text-yellow-300'
         } ${textSizeClasses[size]}`}
         onClick={handleProfileClick}
         title="View profile"

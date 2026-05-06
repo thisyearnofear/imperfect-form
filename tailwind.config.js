@@ -26,12 +26,25 @@ export default {
         'network-monad': designTokens.colors.network.monad,
         'network-celo': designTokens.colors.network.celo,
         // Neutrals
-        black: designTokens.colors.neutral.black,
-        white: designTokens.colors.neutral.white,
-        // Backgrounds
-        bg: designTokens.colors.background,
-        // Text colors
-        text: designTokens.colors.text,
+        neutral: designTokens.colors.neutral,
+        // Semantic surface colors
+        surface: {
+          primary: designTokens.colors.background.primary,
+          secondary: designTokens.colors.background.secondary,
+          tertiary: designTokens.colors.background.tertiary,
+        },
+        // Semantic border colors
+        'border-color': {
+          DEFAULT: designTokens.colors.border.light,
+          strong: designTokens.colors.border.strong,
+        },
+        // Interactive states
+        interactive: {
+          hover: designTokens.colors.interactive.hover,
+          active: designTokens.colors.interactive.active,
+          disabled: designTokens.colors.interactive.disabled,
+          focus: designTokens.colors.interactive.focus,
+        },
       },
       // Spacing from design tokens
       spacing: {

@@ -73,7 +73,7 @@ export default function InitializationScreen({
           font-family: 'PressStart2P', monospace;
           font-size: clamp(1rem, 3vw, 1.5rem);
           margin: 0;
-          background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+          background: linear-gradient(45deg, #ffd700, primary-light, #ffd700);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;

@@ -404,7 +404,7 @@ export default function SubmitScore({
       <div className="flex flex-col items-center space-y-4">
         <button
           onClick={() => actions.connect()}
-          className="px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
+          className="px-6 py-3 bg-gradient-to-r from-[primary] to-[primary-dark] text-black font-bold rounded-lg hover:from-[primary-dark] hover:to-[primary] transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[primary]"
           style={{
             fontFamily: "'Press Start 2P', monospace",
             fontSize: '12px',
@@ -431,7 +431,7 @@ export default function SubmitScore({
           <button
             onClick={() => setConfirmStep(true)}
             disabled={isLoading || submissionStatus === 'success'}
-            className="px-6 py-3 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded-lg hover:from-[#f39c12] hover:to-[#fcb131] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[#fcb131]"
+            className="px-6 py-3 bg-gradient-to-r from-[primary] to-[primary-dark] text-black font-bold rounded-lg hover:from-[primary-dark] hover:to-[primary] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-[primary]"
             style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: '12px',
@@ -447,7 +447,7 @@ export default function SubmitScore({
 
           {/* Enhanced: Show batch transaction status for Farcaster */}
           {isFarcasterMiniApp() && supportsBatch !== null && hasMultipleScores && (
-            <p className="text-xs text-[#fcb131] opacity-70 text-center">
+            <p className="text-xs text-[primary] opacity-70 text-center">
               {supportsBatch
                 ? '✨ Batch transactions supported - submit both scores in one action!'
                 : 'Will submit scores individually'}
@@ -456,7 +456,7 @@ export default function SubmitScore({
 
           {/* Enhanced: Show score breakdown and connection status */}
           {hasMultipleScores && (
-            <div className="text-xs text-[#fcb131] opacity-60 text-center">
+            <div className="text-xs text-[primary] opacity-60 text-center">
               {effectivePushupsScore > 0 && `${effectivePushupsScore} pushups`}
               {effectivePushupsScore > 0 && effectiveSquatsScore > 0 && ' + '}
               {effectiveSquatsScore > 0 && `${effectiveSquatsScore} squats`}
@@ -465,7 +465,7 @@ export default function SubmitScore({
 
           {/* Show wallet connection info */}
           {wallet.provider && (
-            <div className="text-xs text-[#fcb131] opacity-50 text-center">
+            <div className="text-xs text-[primary] opacity-50 text-center">
               Connected via {wallet.provider}
             </div>
           )}
@@ -474,12 +474,12 @@ export default function SubmitScore({
         <div className="flex flex-col items-center space-y-4">
           <div className="text-center">
             <p
-              className="text-lg font-semibold text-[#fcb131] mb-2"
+              className="text-lg font-semibold text-[primary] mb-2"
               style={{ fontFamily: "'Press Start 2P', monospace" }}
             >
               Confirm Sync
             </p>
-            <div className="text-[#fcb131] opacity-80 space-y-1">
+            <div className="text-[primary] opacity-80 space-y-1">
               {effectivePushupsScore > 0 && <p>Pushups: {effectivePushupsScore}</p>}
               {effectiveSquatsScore > 0 && <p>Squats: {effectiveSquatsScore}</p>}
               {isVerifiedUser && chainId === 42220 && (

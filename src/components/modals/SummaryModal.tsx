@@ -478,7 +478,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             )}
             {isPB && submissionStatus !== 'success' && (
               <div className="mt-2 animate-bounce">
-                <span className="bg-[#fcb131] text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
+                <span className="bg-[primary] text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
                   🔥 NEW PERSONAL BEST!
                 </span>
               </div>
@@ -677,7 +677,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         </span>
                       </div>
                       <p className="text-[10px] text-gray-400">
-                        Reach <span className="text-[#fcb131] font-bold">Level 5</span> to sync your
+                        Reach <span className="text-[primary] font-bold">Level 5</span> to sync your
                         workouts to the blockchain.
                       </p>
                       <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
@@ -738,7 +738,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   {reportStatus === 'idle' && (
                     <button
                       onClick={handleGenerateReport}
-                      className="w-full px-3 py-2 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded text-xs hover:from-[#f39c12] hover:to-[#fcb131] transition-all"
+                      className="w-full px-3 py-2 bg-gradient-to-r from-[primary] to-[primary-dark] text-black font-bold rounded text-xs hover:from-[primary-dark] hover:to-[primary] transition-all"
                     >
                       Generate Report
                     </button>
@@ -888,7 +888,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     onClose();
                   }
                 }}
-                className="w-full px-3 py-2 bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black font-bold rounded text-xs hover:from-[#f39c12] hover:to-[#fcb131] transition-all"
+                className="w-full px-3 py-2 bg-gradient-to-r from-[primary] to-[primary-dark] text-black font-bold rounded text-xs hover:from-[primary-dark] hover:to-[primary] transition-all"
               >
                 {onViewLeaderboard ? '🏆 LEADERBOARD' : '← BACK TO MENU'}
               </button>
@@ -946,12 +946,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             {newAchievements.map((achievement, index) => (
               <div
                 key={achievement.id}
-                className="bg-black/80 backdrop-blur-md border-2 border-[#fcb131] rounded-2xl p-6 flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(252,177,49,0.4)] max-w-sm animate-fade-in animate-slide-up"
+                className="bg-black/80 backdrop-blur-md border-2 border-[primary] rounded-2xl p-6 flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(252,177,49,0.4)] max-w-sm animate-fade-in animate-slide-up"
                 style={{ animationDelay: `${index * 200}ms` }}
               >
                 <span className="text-5xl">{achievement.icon}</span>
                 <div className="text-center">
-                  <div className="text-[#fcb131] font-black text-xl uppercase tracking-tighter">
+                  <div className="text-[primary] font-black text-xl uppercase tracking-tighter">
                     Achievement Unlocked!
                   </div>
                   <div className="text-white font-bold text-lg">{achievement.name}</div>

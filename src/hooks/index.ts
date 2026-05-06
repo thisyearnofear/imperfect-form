@@ -25,3 +25,14 @@ export type { NotificationType } from './useNotification';
 
 // Haptic feedback for mobile UX enhancement
 export { useHapticFeedback } from './useHapticFeedback';
+
+// Game state management
+export { useGameState, useWorkoutTimer } from './useGameState';
+
+// Pose detection state
+export { usePoseDetection } from './usePoseDetection';
+export type { PoseState, DetectionProgress, DetectionPhase } from './usePoseDetection';
+
+// Accessibility helpers
+export { useAccessibility } from './useAccessibility';
+export { useCameraSetup } from './useCameraSetup';

@@ -29,7 +29,7 @@ function MemoryButton({
     'font-bold rounded-lg transition-all duration-200 transform hover:scale-105',
     'shadow-lg border-2 disabled:opacity-50 disabled:cursor-not-allowed',
     'disabled:transform-none disabled:hover:scale-100',
-    'focus:outline-none focus:ring-2 focus:ring-[#fcb131] focus:ring-opacity-50',
+    'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50',
     fullWidth ? 'w-full' : '',
     loading ? 'cursor-wait' : '',
   ]
@@ -46,14 +46,14 @@ function MemoryButton({
   // Variant classes - using the app's established color scheme and gradients
   const variantClasses = {
     primary: [
-      'bg-gradient-to-r from-[#fcb131] to-[#f39c12] text-black',
-      'hover:from-[#f39c12] hover:to-[#fcb131] border-[#fcb131]',
-      'hover:shadow-[0_0_20px_rgba(252,177,49,0.5)]',
+      'bg-gradient-to-r from-primary to-primary-dark text-black',
+      'hover:from-primary-dark hover:to-primary border-primary',
+      'hover:shadow-primary',
     ].join(' '),
     secondary: [
-      'bg-gray-800 text-[#fcb131] border-[#fcb131]',
-      'hover:bg-[#fcb131] hover:text-black',
-      'hover:shadow-[0_0_15px_rgba(252,177,49,0.3)]',
+      'bg-gray-800 text-primary border-primary',
+      'hover:bg-primary hover:text-black',
+      'hover:shadow-primary-sm',
     ].join(' '),
     success: [
       'bg-gradient-to-r from-green-600 to-green-700 text-white',

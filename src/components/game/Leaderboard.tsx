@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
 import Image from 'next/image';
 import '@/styles/leaderboard.css';
+import { EmptyLeaderboard } from '@/components/ui/EmptyState';
 import '@/styles/mobile-optimizations.css';
 import { ethers } from 'ethers';
 import {
@@ -638,11 +639,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   }
 
   if (pushupLeaderboard.length === 0 && squatLeaderboard.length === 0) {
-    return (
-      <div className="text-center py-4">
-        <p>No leaderboard data available</p>
-      </div>
-    );
+    return <EmptyLeaderboard />;
   }
 
   return (
@@ -655,13 +652,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           <button
             className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
               activeTab === 'all'
-                ? 'bg-fcb131 text-black shadow-lg'
-                : 'bg-gray-800 text-fcb131 border border-fcb131 hover:bg-fcb131 hover:text-black'
+                ? 'bg-primary text-black shadow-lg'
+                : 'bg-gray-800 text-primary border border-primary hover:bg-primary hover:text-black'
             }`}
             style={{
-              backgroundColor: activeTab === 'all' ? '#fcb131' : 'rgba(17, 17, 17, 0.8)',
-              color: activeTab === 'all' ? 'black' : '#fcb131',
-              border: activeTab === 'all' ? '2px solid #fcb131' : '2px solid #fcb131',
               textShadow: activeTab === 'all' ? 'none' : '0 0 5px rgba(252, 177, 49, 0.5)',
               boxShadow: activeTab === 'all' ? '0 0 10px rgba(252, 177, 49, 0.5)' : 'none',
             }}
@@ -672,13 +666,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
           <button
             className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
               activeTab === 'verified'
-                ? 'bg-fcb131 text-black shadow-lg'
-                : 'bg-gray-800 text-fcb131 border border-fcb131 hover:bg-fcb131 hover:text-black'
+                ? 'bg-primary text-black shadow-lg'
+                : 'bg-gray-800 text-primary border border-primary hover:bg-primary hover:text-black'
             }`}
             style={{
-              backgroundColor: activeTab === 'verified' ? '#fcb131' : 'rgba(17, 17, 17, 0.8)',
-              color: activeTab === 'verified' ? 'black' : '#fcb131',
-              border: activeTab === 'verified' ? '2px solid #fcb131' : '2px solid #fcb131',
               textShadow: activeTab === 'verified' ? 'none' : '0 0 5px rgba(252, 177, 49, 0.5)',
               boxShadow: activeTab === 'verified' ? '0 0 10px rgba(252, 177, 49, 0.5)' : 'none',
             }}
@@ -804,7 +795,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           <span className="text-xl group-hover:scale-125 transition-transform inline-block">
                             👻
                           </span>
-                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-[#fcb131] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             RACE
                           </span>
                         </button>
@@ -923,4 +914,4 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
   );
 };
 
-export default Leaderboard;
+export default React.memo(Leaderboard);

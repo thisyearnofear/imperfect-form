@@ -59,9 +59,9 @@ export const getMedalStyle = (position: number) => {
     case 0: // Gold
       return {
         medal: '🥇',
-        bg: 'bg-[#fcb131]/20',
-        textColor: 'text-[#fcb131]',
-        border: 'border-[#fcb131]',
+        bg: 'bg-primary/20',
+        textColor: 'text-primary',
+        border: 'border-primary',
         shadow: 'shadow-[0_0_10px_rgba(252,177,49,0.3)]',
       };
     case 1: // Silver

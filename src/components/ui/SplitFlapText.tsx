@@ -423,12 +423,12 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           {/* Contextual breadcrumb for profile search */}
           {targetUser && targetUser !== wallet?.address && (
             <div className="profile-instruction">
-              <span className="text-[#fcb131]/70 text-xs">← Viewing profile from search</span>
+              <span className="text-[primary]/70 text-xs">← Viewing profile from search</span>
             </div>
           )}
 
           {memoryData && (
-            <div className="space-y-1 pt-2 border-t border-[#fcb131]/20">
+            <div className="space-y-1 pt-2 border-t border-[primary]/20">
               <div className="profile-instruction">
                 <span className="button-text start">FOUND</span> ={' '}
                 <span
@@ -451,7 +451,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
               {/* Loading shimmer effect */}
               {loadingMemory && (
-                <div className="h-2 bg-gradient-to-r from-[#fcb131]/20 via-[#fcb131]/40 to-[#fcb131]/20 rounded animate-pulse"></div>
+                <div className="h-2 bg-gradient-to-r from-[primary]/20 via-[primary]/40 to-[primary]/20 rounded animate-pulse"></div>
               )}
             </div>
           )}
@@ -464,7 +464,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           {/* Contextual breadcrumb */}
           {targetUser && targetUser !== wallet?.address && (
             <div className="profile-instruction">
-              <span className="text-[#fcb131]/70 text-xs">← Viewing profile from search</span>
+              <span className="text-[primary]/70 text-xs">← Viewing profile from search</span>
             </div>
           )}
 
@@ -495,7 +495,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
               <p key={`solana-${idx}`} className="profile-instruction">
                 <span className="button-text start">SOLANA</span> ={' '}
                 <span
-                  className="text-[#fcb131] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
+                  className="text-[primary] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
                   onClick={() => navigator.clipboard.writeText(identity.id)}
                 >
                   {identity.id.slice(0, 10)}...{identity.id.slice(-4)}
@@ -508,7 +508,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
               <p key={`ens-${idx}`} className="profile-instruction">
                 <span className="button-text stop">ENS</span> ={' '}
                 <span
-                  className="text-[#fcb131] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
+                  className="text-[primary] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
                   onClick={() => navigator.clipboard.writeText(identity.id)}
                 >
                   {identity.id}
@@ -521,7 +521,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
               <p key={`basename-${idx}`} className="profile-instruction">
                 <span className="button-text reset">BASENAME</span> ={' '}
                 <span
-                  className="text-[#fcb131] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
+                  className="text-[primary] font-mono cursor-pointer hover:text-yellow-400 transition-colors px-2 py-1 bg-yellow-900/20 hover:bg-yellow-700/30 rounded border border-yellow-600/30"
                   onClick={() => navigator.clipboard.writeText(identity.id)}
                 >
                   {identity.id}
@@ -613,7 +613,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
               </span>
               <span className="text-gray-500 select-none px-1">|</span>
               <span
-                className={`px-3 py-1 border rounded text-xs cursor-pointer min-w-[70px] text-center border-[#fcb131]/50 text-[#fcb131] hover:bg-[#fcb131]/20`}
+                className={`px-3 py-1 border rounded text-xs cursor-pointer min-w-[70px] text-center border-[primary]/50 text-[primary] hover:bg-[primary]/20`}
                 onClick={() => onModeChange('profile-search')}
               >
                 <SplitFlapText

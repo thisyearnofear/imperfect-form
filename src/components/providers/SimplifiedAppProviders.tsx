@@ -230,8 +230,8 @@ const toastConfig = {
   toastOptions: {
     style: {
       background: '#111',
-      color: '#fcb131',
-      border: '2px solid #fcb131',
+      color: 'primary',
+      border: '2px solid primary',
       fontFamily: '"Press Start 2P", cursive',
       fontSize: '12px',
       padding: '16px',

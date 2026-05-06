@@ -3,9 +3,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { UnifiedLoader } from '@/components/ui';
+import { usePoseDetection } from '@/hooks/usePoseDetection';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { useLoadingPhase } from '@/hooks/useLoadingPhase';
-import { cameraManager, stopAllCameras as stopAllCamerasUtil } from '@/utils/cameraManager';
 import { SummaryModal, ExpandedLeaderboardModal } from '@/components/modals';
 // Welcome component consolidated into InitializationScreen - import removed
 import { UniversalConnectButton } from '@/components/wallet';
@@ -17,8 +17,6 @@ import useSwipeGesture from '@/hooks/useSwipeGesture';
 import { GameControls } from './GameControls';
 
 import IntroDialog from '@/components/auth/IntroDialog';
-import { GameHUD, RepFeedbackOverlay } from './GameHUD';
-import { GameLoadingOverlay, DebugOverlay } from './GameOverlay';
 
 import { useFullscreen } from '../../hooks/useFullscreen';
 import FullscreenExitButton from '../ui/FullscreenExitButton';
@@ -27,7 +25,9 @@ import useOrientationLock from '../../hooks/useOrientationLock';
 import { useUserStats } from '../../hooks/useUserStats';
 import { useXpProgress } from '../../hooks/useXpProgress';
 import { isFarcasterMiniApp } from '../../utils/farcasterMiniApp';
-import { useHapticFeedback } from '../../hooks/useHapticFeedback';
+import { useRepCounter } from '../../hooks/useRepCounter';
+import { useCameraSetup } from '../../hooks/useCameraSetup';
+import { GameCanvas } from './GameCanvas';
 import {
   saveLocalWorkout,
   getPersonalBestWorkout,
@@ -218,24 +218,37 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   const [, setShowTutorial] = useState(true);
   const [started, setStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
-  const [repCount, setRepCount] = useState(0);
+  // repCount managed by useRepCounter below
   const [mode, setMode] = useState<'pushups' | 'squats'>('pushups');
   const [showSummary, setShowSummary] = useState(false);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
 
-  // Real-time biomechanical state for AI Agent feedback
-  const [metrics, setMetrics] = useState<import('@/types/mediapipe').BiomechanicalState | null>(
-    null
+  // Rep counting, haptic + visual feedback via hook
+  const {
+    repCount,
+    repFeedback,
+    onRepDetected: handleRepCount,
+    resetReps,
+  } = useRepCounter(
+    () => {
+      if (!timerRef.current) startTimer();
+    },
+    (count, exerciseMode) => {
+      if (user?.fid) {
+        fetch('/api/analytics/engagement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fid: user.fid,
+            eventType: 'workout_completed',
+            metadata: { reps: count, exerciseMode, duration: 120 - timeLeftRef.current },
+          }),
+        }).catch((err) => console.warn('Failed to track workout:', err));
+      }
+    },
+    started,
+    mode
   );
-
-  // Haptic feedback for rep counting
-  const { triggerRepFeedback } = useHapticFeedback();
-
-  // Visual rep feedback state
-  const [repFeedback, setRepFeedback] = useState<{ show: boolean; count: number }>({
-    show: false,
-    count: 0,
-  });
   // Intro dialog state - now finalAddress is available
   const [showIntroDialog, setShowIntroDialog] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -254,68 +267,16 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     }
   }, [finalAddress]);
 
-  // Loading overlay for desktop pose detection
-  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
-
-  // Pose detection state
-  const [poseState, setPoseState] = useState({
-    hasCamera: false,
-    hasPoseDetection: false,
-    poseDetected: false,
-    isLoading: false,
-  });
-  const [detectionProgress, setDetectionProgress] = useState<{
-    phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
-    message: string;
-    percentage: number;
-  } | null>(null);
-
-  // Handle pose detection progress updates
-  const handleDetectionProgress = useCallback(
-    (progress: {
-      phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
-      message: string;
-      percentage: number;
-    }) => {
-      console.log('⚙️  Pose detection progress:', progress);
-      if (progress.phase !== 'ready') {
-        setShowLoadingOverlay(true);
-      } else {
-        setShowLoadingOverlay(false);
-      }
-      setDetectionProgress(progress);
-    },
-    []
-  );
-
-  // Handle pose detection state changes
-  const handlePoseStateChange = useCallback(
-    (state: {
-      hasCamera: boolean;
-      hasPoseDetection: boolean;
-      poseDetected: boolean;
-      isLoading: boolean;
-    }) => {
-      // Only update showLoadingOverlay if it's actually changing to avoid unnecessary re-renders
-      setPoseState((prev) => {
-        // Comparison to avoid state updates if nothing changed
-        if (
-          prev.isLoading === state.isLoading &&
-          prev.hasCamera === state.hasCamera &&
-          prev.hasPoseDetection === state.hasPoseDetection &&
-          prev.poseDetected === state.poseDetected
-        ) {
-          return prev;
-        }
-        return state;
-      });
-    },
-    []
-  );
-
-  const handleMetrics = useCallback((state: import('@/types/mediapipe').BiomechanicalState) => {
-    setMetrics(state);
-  }, []);
+  // Pose detection — extracted into usePoseDetection hook
+  const {
+    poseState,
+    detectionProgress,
+    metrics,
+    showLoadingOverlay,
+    handlePoseStateChange,
+    handleDetectionProgress,
+    handleMetrics,
+  } = usePoseDetection();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
@@ -370,48 +331,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     return hasFullscreenAPI;
   }, []);
 
-  // Safe state for viewport dimensions
-  const [viewportDimensions, setViewportDimensions] = useState({
-    height: 0,
-    width: 0,
-  });
-
-  // Simplified viewport dimensions effect
-  useEffect(() => {
-    // Safely get viewport dimensions
-    if (typeof window !== 'undefined') {
-      const handleResize = () => {
-        setViewportDimensions({
-          height: window.innerHeight,
-          width: window.innerWidth,
-        });
-      };
-
-      // Initial measurement
-      handleResize();
-
-      // Update on resize
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('orientationchange', handleResize);
-
-      // Handle profile search events from leaderboard clicks
-      const handleProfileSearchEvent = (event: Event) => {
-        const customEvent = event as CustomEvent;
-        if (customEvent.detail?.identifier) {
-          console.log('🔍 Profile search event received:', customEvent.detail.identifier);
-          handleProfileSearch(customEvent.detail.identifier);
-        }
-      };
-
-      window.addEventListener('profileSearch', handleProfileSearchEvent);
-
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('orientationchange', handleResize);
-        window.removeEventListener('profileSearch', handleProfileSearchEvent);
-      };
-    }
-  }, []);
+  // Camera setup, viewport tracking, and profile search events
+  const { stopAllCameras } = useCameraSetup(handleProfileSearch);
 
   // Log address changes for debugging
   useEffect(() => {
@@ -440,42 +361,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     const secs = (120 - sec) % 60;
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
-  // Enhanced function to aggressively stop all cameras using the camera manager
-  const stopAllCameras = useCallback(() => {
-    console.log('🛑 Stopping all cameras - using enhanced camera manager');
-
-    // Use the enhanced camera manager for comprehensive cleanup
-    const stoppedTracks = stopAllCamerasUtil();
-
-    // Additional cleanup methods (client-side only)
-    if (typeof window !== 'undefined') {
-      // Cancel any animation frames that might be running
-      if (window.requestAnimationFrame) {
-        const highestId = window.requestAnimationFrame(() => {});
-        for (let i = 0; i < highestId; i++) {
-          window.cancelAnimationFrame(i);
-        }
-        console.log('🎬 Cancelled animation frames up to ID:', highestId);
-      }
-
-      // Force garbage collection if available (development only)
-      if (process.env.NODE_ENV === 'development' && 'gc' in window) {
-        try {
-          (window as typeof window & { gc?: () => void }).gc?.();
-          console.log('🗑️ Forced garbage collection');
-        } catch {
-          console.log('Garbage collection not available');
-        }
-      }
-    }
-
-    // Log camera status after cleanup
-    const status = cameraManager.getCameraStatus();
-    console.log('📊 Camera status after cleanup:', status);
-
-    console.log(`🎯 Camera cleanup complete. Stopped ${stoppedTracks} video tracks.`);
-  }, []);
 
   const handleStop = useCallback(() => {
     exitFullscreen();
@@ -555,7 +440,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       setStarted(true);
 
       // Reset counters
-      setRepCount(0);
+      resetReps();
       setTimeLeft(120);
     },
     [
@@ -670,56 +555,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     }, 1000);
   }, [handleStop]);
 
-  // Handle rep counting from webcam component
-  const handleRepCount = useCallback(
-    (count: number) => {
-      const prevCount = repCount;
-      setRepCount(count);
-
-      // Trigger feedback when rep count increases
-      if (count > prevCount && count > 0) {
-        // Haptic feedback
-        triggerRepFeedback();
-
-        // Visual feedback
-        setRepFeedback({ show: true, count });
-        setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 1000);
-      }
-
-      // Start the timer on the first rep if it hasn't started yet
-      if (count === 1 && started && !timerRef.current) {
-        startTimer();
-      }
-
-      // Track workout progress
-      if (count > 0 && user?.fid) {
-        fetch('/api/analytics/engagement', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fid: user.fid,
-            eventType: 'workout_completed',
-            metadata: {
-              reps: count,
-              exerciseMode: mode,
-              duration: 120 - timeLeftRef.current, // Use ref instead of state to avoid re-renders
-            },
-          }),
-        }).catch((err) => console.warn('Failed to track workout:', err));
-      }
-    },
-    [started, mode, user?.fid, repCount, triggerRepFeedback, startTimer]
-  );
-
-  // This useEffect is already handled by the one above
-  // Removing duplicate effect
+  // handleRepCount is provided by useRepCounter as onRepDetected
 
   const handleReset = useCallback(() => {
     exitFullscreen();
     unlock();
     setIsLandscapeLocked(false);
     if (timerRef.current) clearInterval(timerRef.current);
-    setRepCount(0);
+    resetReps();
     setTimeLeft(120);
     setStarted(false);
     setIsRace(false);
@@ -885,102 +728,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           )}
 
           {started && (
-            <>
-              {isMobile ? (
-                /* Mobile layout - HUD Block Layout (Stable) */
-                <div className="w-full flex flex-col items-center justify-start relative h-full">
-                  {/* HUD placed statically above the video to prevent z-index/layering issues on iOS */}
-                  <GameHUD
-                    mode={mode}
-                    timeLeft={timeLeft}
-                    repCount={repCount}
-                    formatTime={formatTime}
-                    isOverlay={isFullscreen}
-                    isRace={isRace}
-                  />
-
-                  <div
-                    id="canvasContainerMobile"
-                    aria-label="Game Canvas Mobile"
-                    className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/50 ${isFullscreen ? 'video-container-fs' : ''}`}
-                    style={{
-                      width: '100%',
-                      minHeight: '300px',
-                      // Allow container to fill remaining space but respect aspect ratio logic in Webcam
-                    }}
-                  >
-                    {memoizedWebcam}
-
-                    <GameLoadingOverlay
-                      phase={
-                        !poseState.hasCamera
-                          ? 'camera'
-                          : !poseState.hasPoseDetection
-                            ? 'ai'
-                            : !poseState.poseDetected
-                              ? 'positioning'
-                              : 'ready'
-                      }
-                      progress={detectionProgress?.percentage}
-                      isVisible={
-                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
-                      }
-                    />
-
-                    <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
-
-                    <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
-
-                    {/* Pose Detection Status Indicator */}
-                    <div
-                      className={`pose-status-indicator ${poseState.poseDetected ? 'detected' : 'not-detected'}`}
-                    >
-                      {poseState.poseDetected ? '👤 POSE DETECTED' : '⚠️ NO POSE DETECTED'}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* Desktop layout - HUD Block Layout */
-                <div className="w-full h-full flex flex-col items-center justify-start relative">
-                  <GameHUD
-                    mode={mode}
-                    timeLeft={timeLeft}
-                    repCount={repCount}
-                    formatTime={formatTime}
-                    isOverlay={false}
-                    isRace={isRace}
-                  />
-
-                  <div
-                    id="canvasContainerDesktop"
-                    aria-label="Game Canvas Desktop"
-                    className="w-full relative flex-grow rounded-lg overflow-hidden border border-white/10 bg-black/50"
-                  >
-                    {memoizedWebcam}
-
-                    <GameLoadingOverlay
-                      phase={
-                        !poseState.hasCamera
-                          ? 'camera'
-                          : !poseState.hasPoseDetection
-                            ? 'ai'
-                            : !poseState.poseDetected
-                              ? 'positioning'
-                              : 'ready'
-                      }
-                      progress={detectionProgress?.percentage}
-                      isVisible={
-                        started && (!poseState.hasPoseDetection || !poseState.poseDetected)
-                      }
-                      isOverlay={true}
-                    />
-
-                    <DebugOverlay started={started} poseDetected={poseState.poseDetected} />
-                    <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
-                  </div>
-                </div>
-              )}
-            </>
+            <GameCanvas
+              mode={mode}
+              timeLeft={timeLeft}
+              repCount={repCount}
+              repFeedback={repFeedback}
+              formatTime={formatTime}
+              isFullscreen={isFullscreen}
+              isRace={isRace}
+              isMobile={isMobile}
+              poseState={poseState}
+              detectionProgress={detectionProgress}
+              webcam={memoizedWebcam}
+            />
           )}
         </div>
 

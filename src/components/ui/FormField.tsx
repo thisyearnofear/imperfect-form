@@ -76,7 +76,7 @@ const sizeClasses: Record<FieldSize, string> = {
 
 const variantClasses: Record<FieldVariant, string> = {
   primary:
-    'bg-gray-800 border border-gray-600 focus:border-[#fcb131] focus:ring-1 focus:ring-[#fcb131]',
+    'bg-gray-800 border border-gray-600 focus:border-[primary] focus:ring-1 focus:ring-[primary]',
   secondary:
     'bg-gray-900 border border-gray-700 focus:border-gray-500 focus:ring-1 focus:ring-gray-500',
   error: 'bg-gray-800 border border-red-500 focus:border-red-400 focus:ring-1 focus:ring-red-400',
@@ -290,8 +290,8 @@ export const FormCheckbox = forwardRef<HTMLInputElement, CheckboxProps>(
           type="checkbox"
           disabled={disabled}
           className={`
-            w-4 h-4 rounded border-gray-600 text-[#fcb131] bg-gray-800
-            focus:ring-[#fcb131] focus:ring-offset-0
+            w-4 h-4 rounded border-gray-600 text-[primary] bg-gray-800
+            focus:ring-[primary] focus:ring-offset-0
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${className}
           `}
@@ -327,8 +327,8 @@ export const FormRadio = forwardRef<HTMLInputElement, RadioProps>(
           type="radio"
           disabled={disabled}
           className={`
-            w-4 h-4 border-gray-600 text-[#fcb131] bg-gray-800
-            focus:ring-[#fcb131] focus:ring-offset-0
+            w-4 h-4 border-gray-600 text-[primary] bg-gray-800
+            focus:ring-[primary] focus:ring-offset-0
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             ${className}
           `}

@@ -6,6 +6,31 @@ import prettierConfig from 'eslint-config-prettier';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 
+// Known design token colors that are allowed
+const ALLOWED_COLORS = new Set([
+  'transparent',
+  'currentColor',
+  'inherit',
+  // Hex patterns that match design tokens
+  '#000000',
+  '#ffffff',
+  '#0a0a0a',
+  '#1a1a1a',
+  '#fcb131',
+  '#f39c12',
+  '#ffed4e', // Primary
+  '#10b981',
+  '#059669',
+  '#6ee7b7', // Success
+  '#ef4444',
+  '#dc2626',
+  '#fecaca', // Error
+  '#f59e0b',
+  '#d97706', // Warning
+  '#3b82f6',
+  '#1d4ed8', // Info
+]);
+
 export default [
   {
     ignores: [
@@ -69,6 +94,23 @@ export default [
       // React rules
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+
+      // No hardcoded colors in JSX (allow design tokens)
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'JSXAttribute[name.name="style"] > JSXElement > Literal[value=/:[\\s\\S]*#[a-fA-F0-9]{6}/]',
+          message:
+            'Use designTokens or Tailwind classes instead of hardcoded colors in style attributes',
+        },
+      ],
+
+      // Warn on specific hardcoded hex colors
+      'no-warning-comments': [
+        'warn',
+        { terms: ['TODO:.*#fcb131', 'TODO:.*#[a-fA-F0-9]{6}'], location: 'any' },
+      ],
     },
   },
 ];

@@ -30,7 +30,7 @@ export const ProfileComparison: React.FC<ProfileComparisonProps> = ({
   const diff = targetFollowers - currentFollowers;
 
   return (
-    <div className="profile-instruction pt-2 border-t border-[#fcb131]/20">
+    <div className="profile-instruction pt-2 border-t border-[primary]/20">
       <div className="bg-black/50 rounded p-2 text-xs">
         <span className="button-text start">COMPARISON</span>
         <div className="mt-1 space-y-1">
