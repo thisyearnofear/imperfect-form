@@ -5,7 +5,8 @@ drives the twin once the SDK is installed (`uv sync --extra cyberwave`).
 Uses joints.set(..., degrees=True) per Cyberwave Python SDK docs.
 
 Live (Milestone 2): COACH_AFFECT=live requires COACH_LIVE_CONFIRM=1 plus a
-physical dead-man — never arm live by env typo alone.
+physical dead-man — never arm live by env typo alone. Command path re-clamps
+every waypoint via safety limits (defense in depth).
 """
 
 from __future__ import annotations
@@ -15,7 +16,11 @@ import logging
 import os
 
 from .primitives import Demonstration
+from .safety import clamp_elbow_deg, load_safety_limits, resolve_affect
 from .trajectory import iter_trajectory
+
+# Re-export for callers/tests that imported resolve_affect from arm
+__all__ = ["ConsoleArm", "CyberwaveArm", "create_arm", "resolve_affect"]
 
 logger = logging.getLogger("coach_station.arm")
 
@@ -23,39 +28,23 @@ logger = logging.getLogger("coach_station.arm")
 SO101_TWIN = os.environ.get("COACH_TWIN", "the-robot-studio/so101")
 
 
-def resolve_affect() -> str:
-    """Return simulation | live. Live requires explicit confirm env."""
-    raw = os.environ.get("COACH_AFFECT", "simulation").strip().lower()
-    if raw not in ("simulation", "live", "sim"):
-        logger.warning("Unknown COACH_AFFECT=%s — using simulation", raw)
-        return "simulation"
-    if raw == "sim":
-        return "simulation"
-    if raw == "live":
-        if os.environ.get("COACH_LIVE_CONFIRM", "").strip() != "1":
-            logger.error(
-                "COACH_AFFECT=live refused: set COACH_LIVE_CONFIRM=1 only with a "
-                "physical dead-man armed — falling back to simulation"
-            )
-            return "simulation"
-        return "live"
-    return "simulation"
-
-
 class ConsoleArm:
     """Zero-dependency backend: logs the motion the real arm would perform."""
 
     async def demonstrate(self, demo: Demonstration) -> None:
-        waypoints = list(iter_trajectory(demo))
+        limits = load_safety_limits()
+        waypoints = list(iter_trajectory(demo, limits))
         total = sum(s for _, s in waypoints)
         logger.info(
-            "[SIM] %s: %s %.0f° -> %.0f° | %d waypoints · %.1fs | %s",
+            "[SIM] %s: %s %.0f° -> %.0f° | %d waypoints · %.1fs | speed≤%.0f°/s step≤%.1f° | %s",
             demo.name,
             demo.joint,
             demo.from_deg,
             demo.to_deg,
             len(waypoints),
             total,
+            limits.max_speed_deg_s,
+            limits.max_step_deg,
             demo.narration,
         )
         # Compress wall-clock in console mode: sleep proportional but capped
@@ -79,15 +68,26 @@ class CyberwaveArm:
         self._cw = Cyberwave()
         affect = resolve_affect()
         self._affect = affect
+        self._limits = load_safety_limits(live=(affect == "live"))
         self._cw.affect(affect)
         self._twin = self._cw.twin(SO101_TWIN)
         self._joint_api = self._twin.joints
-        logger.info("Cyberwave twin %s ready (affect=%s)", SO101_TWIN, affect)
+        logger.info(
+            "Cyberwave twin %s ready (affect=%s elbow=[%.0f,%.0f] max_speed=%.0f max_step=%.1f)",
+            SO101_TWIN,
+            affect,
+            self._limits.elbow_min_deg,
+            self._limits.elbow_max_deg,
+            self._limits.max_speed_deg_s,
+            self._limits.max_step_deg,
+        )
 
     async def demonstrate(self, demo: Demonstration) -> None:
         try:
-            for deg, sleep_s in iter_trajectory(demo):
-                self._joint_api.set(demo.joint, deg, degrees=True)
+            for deg, sleep_s in iter_trajectory(demo, self._limits):
+                # Defense in depth: re-clamp at the wire even if trajectory drifts
+                cmd = clamp_elbow_deg(deg, self._limits) if demo.joint == "elbow_flex" else deg
+                self._joint_api.set(demo.joint, cmd, degrees=True)
                 await asyncio.sleep(sleep_s)
         except Exception as exc:
             # Fail soft: one bad demo must not take down the websocket server.

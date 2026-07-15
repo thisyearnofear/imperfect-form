@@ -97,8 +97,9 @@ wallet popup on stage.
    `demonstrate_strict_curl` (cohort flagship), `demonstrate_extension`,
    `demonstrate_tempo`, `mirror_asymmetry` — each with per-persona motion
    profiles and narration. Station emits `demonstration` for voice sync;
-   web TTS is provider-agnostic (ElevenLabs → Polly → browser). Demo CLI:
-   `python -m coach_station.demo`.
+   web TTS is provider-agnostic (ElevenLabs → Polly → browser). Safety layer
+   caps elbow workspace / speed / step (tighter live defaults). Demo CLI:
+   `python -m coach_station.demo`. Live bring-up: `coach-station/LIVE.md`.
 3. **Hardware bring-up:** `cyberwave pair` on edge hardware, `affect("live")`,
    torque / reach clamps (elbow angle clamps already in trajectory layer).
 4. **Flywheel:** record every session via Cyberwave (built-in face

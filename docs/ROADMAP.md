@@ -69,7 +69,7 @@ doorways fail web acquisition.
   TTS cascade ElevenLabs → Amazon Polly → browser Web Speech; user preference
   via settings VOICE ENGINE (`prefTtsProvider`); not Nova-locked
 - Demo CLI: `cd coach-station && uv run python -m coach_station.demo --demo all`
-- Station tests: `uv sync --extra dev && uv run pytest` (15 passing)
+- Station tests: `uv sync --extra dev && uv run pytest` (21 passing)
 - Soft dry-run: `./scripts/cohort-dry-run.sh`
 
 ## What's next
@@ -100,16 +100,19 @@ Demo without the browser: `cd coach-station && uv run python -m coach_station.de
 
 ### Milestone 2 — Hardware bring-up (SO-101 "Coach")
 
+Runbook: [`coach-station/LIVE.md`](../coach-station/LIVE.md).
+
 - [ ] `cyberwave pair` on the edge machine
 - [~] `affect("live")` behind dead-man — software gate shipped:
   `COACH_AFFECT=live` requires `COACH_LIVE_CONFIRM=1` else falls back to
-  simulation (`resolve_affect` in `arm.py`); physical dead-man still required
-- [~] Workspace limits — elbow angle clamps shipped in
-  `coach_station/trajectory.py` (`COACH_ELBOW_MIN` / `COACH_ELBOW_MAX`);
-  torque / reach clamps still open for live
+  simulation (`resolve_affect`); physical dead-man still required
+- [~] Workspace + motion clamps — `coach_station/safety.py`:
+  elbow min/max, `COACH_MAX_SPEED_DEG_S`, `COACH_MAX_STEP_DEG` (live
+  defaults tighter than sim); CyberwaveArm re-clamps every waypoint.
+  True torque/current limits still open until SDK exposes them
 - [x] One-primitive-at-a-time policy (server lock + demo cooldown already in
       `coach_station/server.py`)
-- [ ] Validate sim → hardware transfer before compound motions
+- [ ] Validate sim → hardware transfer before compound motions (curl-first)
 
 ### Milestone 3 — Data flywheel (SmolVLA)
 

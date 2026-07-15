@@ -51,10 +51,13 @@ Twin slug default: `the-robot-studio/so101` (override with `COACH_TWIN`).
 Joint commands use `twin.joints.set(name, deg, degrees=True)` with an
 interpolated trajectory (see `coach_station/trajectory.py`).
 
-Elbow workspace clamps (env-overridable):
+Elbow workspace + motion clamps (env-overridable; live defaults tighter):
 
-- `COACH_ELBOW_MIN` (default `0`)
-- `COACH_ELBOW_MAX` (default `180`)
+- `COACH_ELBOW_MIN` / `COACH_ELBOW_MAX` — position workspace
+- `COACH_MAX_SPEED_DEG_S` — persona speed ceiling
+- `COACH_MAX_STEP_DEG` — max |Δθ| per command tick (jerk/torque proxy)
+
+See [`LIVE.md`](./LIVE.md) for Milestone 2 hardware bring-up.
 
 ## Tests
 
@@ -84,19 +87,23 @@ From repo root, automated software dry-run (vitest + pytest + demo CLI):
 
 ## Live mode (Milestone 2)
 
+Full checklist: [`LIVE.md`](./LIVE.md).
+
 ```sh
 # Refuses live without confirm — falls back to simulation
 COACH_AFFECT=live uv run python -m coach_station
 
-# Only when dead-man is armed:
+# Only when dead-man is armed (tighter speed/step via safety.py defaults):
 COACH_AFFECT=live COACH_LIVE_CONFIRM=1 uv run python -m coach_station
 ```
 
 ## Layout
 
+- `coach_station/safety.py` — affect resolve + workspace/speed/step limits
 - `coach_station/schema.py` — FormEvent contract (mirrors `src/services/coachStation.ts`)
 - `coach_station/primitives.py` — form issue → demonstration, persona motion profiles
-- `coach_station/trajectory.py` — interpolated joint waypoints + workspace clamps
+- `coach_station/trajectory.py` — interpolated joint waypoints + safety clamps
 - `coach_station/arm.py` — Cyberwave twin backend (`joints.set`) + console sim
 - `coach_station/demo.py` — CLI to fire primitives without the web app
 - `coach_station/server.py` — WebSocket server, cooldowns, one-demo-at-a-time
+- `LIVE.md` — Milestone 2 hardware bring-up runbook

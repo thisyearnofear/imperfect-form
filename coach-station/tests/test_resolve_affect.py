@@ -1,6 +1,6 @@
 """Live-mode gate: never arm hardware without explicit confirm."""
 
-from coach_station.arm import resolve_affect
+from coach_station.safety import resolve_affect
 
 
 class TestResolveAffect:
