@@ -92,7 +92,6 @@ const NETWORK_STYLES = {
 - `src/services/DataSyncService.ts` - Unified data management with caching, mutations, subscriptions
 - `src/services/OfflineDataStore.ts` - IndexedDB-backed offline persistence with sync queue
 - `src/hooks/useDataSync.ts` - React integration (useDataSync, useQuery, useMutation)
-- `src/services/memoryApi.ts` - Enhanced Memory Protocol client (already existed)
 
 **Architecture**:
 
@@ -115,7 +114,7 @@ const NETWORK_STYLES = {
     ┌───▼──────┐  ┌────▼────┐  ┌────▼─────┐
     │  API     │  │  Local  │  │ Offline  │
     │  Services│  │  Cache  │  │  Store   │
-    │(Memory)  │  │         │  │ (IDBx)   │
+    │(Contracts)│  │         │  │ (IDBx)   │
     └──────────┘  └─────────┘  └──────────┘
 ```
 
@@ -195,19 +194,16 @@ const cached = await store.get('key');
 const pending = await store.getPendingSync();
 ```
 
-## Phase 6: Farcaster Mini Apps & Memory Protocol
+## Phase 6: Farcaster Mini Apps
 
-**Status**: ✅ Complete - Wallet-first integration with cross-platform identity
+**Status**: ✅ Complete - Wallet-first mini app with cross-chain score submission
 
 **Key Files**:
 
 - `public/.well-known/farcaster.json` - Mini app manifest (JFS-signed)
 - `src/utils/farcasterMiniApp.ts` - SDK integration, provider detection, chain switching
 - `src/contexts/PlatformContext.tsx` - Unified platform detection (Farcaster, mobile, desktop, PWA)
-- `src/services/memoryApi.ts` - Identity graphs, data upload, earnings tracking
-- `src/hooks/useEnhancedProfile.ts` - Cross-platform profile resolution
-- `src/components/challenges/SocialChallengeCreator.tsx` - Challenge creation with Memory Protocol
-- `src/components/monetization/FitnessDataUploader.tsx` - Data monetization via Memory Protocol
+- `src/hooks/useEnhancedProfile.ts` - Local-only profile stub (Memory Protocol descoped)
 - `src/app/api/miniapp/webhook/route.ts` - Mini app event handling
 
 **Mini App Flow**:
@@ -218,28 +214,11 @@ const pending = await store.getPendingSync();
 // → Can submit score immediately (wallet-first)
 // → Claims rewards on Base/Celo/Polygon
 // → Optionally shares to Farcaster feed
-// → Can monetize data via Memory Protocol
 ```
 
-**Memory Protocol Integration**:
-
-```typescript
-// Resolve cross-platform identities
-const client = getMemoryClient();
-const identities = await client.getIdentityGraphByWallet('0x...');
-// → Farcaster, Twitter, ENS, GitHub, Lens profiles
-
-// Upload fitness data for monetization
-await client.uploadFitnessData({
-  userId: userAddress,
-  dataType: 'structured',
-  data: fitnessMetrics,
-  metadata: { description, tags, quality },
-});
-
-// Track earnings
-const earnings = await client.getEarnings(userAddress);
-```
+**Cross-Platform Identity (descoped)**: The Memory Protocol integration
+was removed after upstream `memoryproto.co` went dark. See
+`docs/ROADMAP.md` for the current "not doing" list.
 
 ## Security
 

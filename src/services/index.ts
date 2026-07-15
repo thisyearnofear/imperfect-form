@@ -4,7 +4,6 @@
  */
 
 export { walletDetectionService } from './WalletDetectionService';
-export { getMemoryClient } from './memoryApi';
 export { getDataSyncService, createDataKey } from './DataSyncService';
 export { getOfflineDataStore } from './OfflineDataStore';
 export { questService } from './QuestService';
@@ -21,8 +20,6 @@ export type {
 } from './DataSyncService';
 
 export type { StoredData, SyncRecord } from './OfflineDataStore';
-
-export type { IdentityNode, IdentityGraph, SocialProfile } from './memoryApi';
 
 // Re-export types for convenience
 export type {

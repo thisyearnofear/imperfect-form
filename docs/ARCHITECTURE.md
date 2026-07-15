@@ -175,9 +175,9 @@ async function submitScore(pushups, squats) {
 - Offline persistence via IndexedDB
 - Single cache invalidation point
 
-## Farcaster Mini Apps & Memory Protocol Integration (Phase 6)
+## Farcaster Mini Apps Integration (Phase 6)
 
-**Status**: ✅ Complete - Wallet-first strategy implementation with cross-platform identity
+**Status**: ✅ Complete - Wallet-first mini app with cross-chain score submission
 
 ### Mini App Foundation
 
@@ -205,23 +205,14 @@ Farcaster Mini App is live and fully integrated:
 2. window.ethereum (browser extension)
 3. Wagmi fallback (connected wallet)
 
-### Memory Protocol Integration
+### Cross-Platform Identity (Descoped)
 
-**Live Features**:
-
-- **Identity Graphs** - Resolve user identities across Web2/Web3 (Farcaster, Twitter, ENS, GitHub, Lens)
-- **Cross-Platform Profiles** - Display unified social identities in leaderboard
-- **Data Monetization** - Users upload fitness datasets, earn $MEM tokens
-- **Social Challenges** - Create challenges with cross-platform followers
-- **Earnings Tracking** - View data query rewards via Memory Protocol
-
-**Implemented Components**:
-
-- `MemoryAPIClient` - Identity graph queries, data upload, earnings lookup
-- `useEnhancedProfile` - Cross-platform profile fetching with caching
-- `FitnessDataUploader` - Structured/unstructured fitness data upload interface
-- `SocialChallengeCreator` - Challenge creation with identity graph resolution
-- `useMemoryRewards` - Earnings dashboard
+The Memory Protocol integration was removed after upstream
+`memoryproto.co` returned `402 DEPLOYMENT_DISABLED`. `useEnhancedProfile`
+now returns a minimal profile shape locally so the UI keeps rendering
+without any external identity graph. If we revisit cross-platform
+identity, the replacement path is Farcaster/Neynar first, ENS/Basename
+second — see `docs/ROADMAP.md` for the current "not doing" list.
 
 ### Social & Notifications
 

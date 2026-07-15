@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react';
-import { WalletDiagnostics, TroubleshootingGuide, BuilderCodeDebug } from '@/components/debug';
+import { WalletDiagnostics, BuilderCodeDebug } from '@/components/debug';
 import { usePlatform } from '@/contexts/PlatformContext';
-import MemoryAPITester from '@/components/debug/MemoryAPITester';
 
 export default function DebugWalletPage() {
   const { platform, wallet } = usePlatform();
@@ -18,7 +17,7 @@ export default function DebugWalletPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Status & Memory API */}
+          {/* Left Column - Status */}
           <div className="lg:col-span-2 space-y-6">
             {/* Quick Status */}
             <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
@@ -56,9 +55,6 @@ export default function DebugWalletPage() {
                 </div>
               )}
             </div>
-
-            {/* Memory API Tester - Prominent */}
-            <MemoryAPITester />
           </div>
 
           {/* Right Column - Diagnostics & Help */}
@@ -117,9 +113,6 @@ export default function DebugWalletPage() {
                 </a>
                 <a href="https://docs.base.org/" className="block text-blue-400 hover:underline">
                   Base Network
-                </a>
-                <a href="https://memoryproto.co" className="block text-blue-400 hover:underline">
-                  Memory Protocol
                 </a>
               </div>
             </div>
