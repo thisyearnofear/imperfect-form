@@ -2,9 +2,10 @@
  * AI Provider Configuration
  *
  * Manages multiple AI providers with automatic fallback:
- * 1. Gemini 2.0 Flash (Primary) - Fast, accurate, cost-effective
- * 2. Venice AI (Fallback) - Privacy-focused, uncensored alternative
- * 3. AWS Bedrock Nova 2 Lite (Fallback / premium analysis) - ported from imperfectcoach
+ * 1. Gemini Flash (Primary)
+ * 2. Groq Llama (fast live-coaching fallback)
+ * 3. Venice AI (privacy-focused)
+ * 4. AWS Bedrock Nova 2 Lite (optional, if AWS creds present)
  *
  * Features:
  * - Automatic provider rotation on failure
@@ -15,7 +16,7 @@
 
 import type { CoachPersonality } from '@/lib/coachPersonalities';
 
-export type AIProvider = 'gemini' | 'venice' | 'bedrock' | 'local';
+export type AIProvider = 'gemini' | 'groq' | 'venice' | 'bedrock' | 'local';
 
 export interface AIProviderConfig {
   name: AIProvider;
@@ -54,10 +55,29 @@ export const AI_PROVIDERS: Partial<Record<AIProvider, AIProviderConfig>> = {
       maxTokens: 1000000, // 1M token context, 2000 RPM, 90% caching discount available
     },
   },
+  groq: {
+    name: 'groq',
+    enabled: true,
+    priority: 2,
+    // Fast live-coaching default; override with GROQ_MODEL_ID (e.g. llama-3.3-70b-versatile)
+    model: process.env.GROQ_MODEL_ID || 'llama-3.1-8b-instant',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    apiKeyEnvVar: 'GROQ_API_KEY',
+    costPer1kTokens: {
+      input: 0.00005, // ~$0.05 / 1M (8b instant class)
+      output: 0.00008,
+    },
+    features: {
+      streaming: true,
+      vision: false,
+      toolCalling: true,
+      maxTokens: 131072,
+    },
+  },
   venice: {
     name: 'venice',
     enabled: true,
-    priority: 2,
+    priority: 3,
     model: 'qwen3-4b', // Venice Small - fast, efficient
     baseUrl: 'https://api.venice.ai/api/v1',
     apiKeyEnvVar: 'VENICE_API_KEY',
@@ -75,7 +95,7 @@ export const AI_PROVIDERS: Partial<Record<AIProvider, AIProviderConfig>> = {
   bedrock: {
     name: 'bedrock',
     enabled: true,
-    priority: 3,
+    priority: 4,
     // Nova 2 Lite is cross-region-inference only: the bare model ID
     // (amazon.nova-2-lite-v1:0) is rejected at invoke time. Always use an
     // inference profile ID ('global.' works from any region).

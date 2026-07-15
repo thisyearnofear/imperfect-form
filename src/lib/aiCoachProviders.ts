@@ -82,6 +82,58 @@ async function callVenice(prompt: string): Promise<any> {
   return JSON.parse(jsonMatch[0]);
 }
 
+async function callGroq(prompt: string): Promise<any> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error('GROQ_API_KEY not configured');
+
+  const config = AI_PROVIDERS.groq;
+  if (!config || !config.baseUrl) throw new Error('Groq provider config not found');
+
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a concise fitness coach. Always respond with valid JSON only.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 300,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(
+      `Groq API error: ${response.status}${detail ? ` — ${detail.slice(0, 200)}` : ''}`
+    );
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (!text || typeof text !== 'string') {
+    throw new Error('Empty response from Groq');
+  }
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('Invalid response format from Groq');
+  }
+
+  return JSON.parse(jsonMatch[0]);
+}
+
 let bedrockClient: BedrockRuntimeClient | null = null;
 
 function getBedrockClient(): BedrockRuntimeClient {
@@ -141,6 +193,8 @@ export async function callAIProvider(
       let result;
       if (currentProvider === 'gemini') {
         result = await callGemini(prompt);
+      } else if (currentProvider === 'groq') {
+        result = await callGroq(prompt);
       } else if (currentProvider === 'venice') {
         result = await callVenice(prompt);
       } else if (currentProvider === 'bedrock') {

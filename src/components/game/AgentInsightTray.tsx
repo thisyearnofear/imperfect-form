@@ -78,9 +78,9 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
   const metricsRef = useRef<BiomechanicalState | null>(metrics);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [currentProvider, setCurrentProvider] = useState<string>('local');
-  const [providerPreference, setProviderPreference] = useState<'gemini' | 'venice' | 'auto'>(
-    'auto'
-  );
+  const [providerPreference, setProviderPreference] = useState<
+    'gemini' | 'groq' | 'venice' | 'auto'
+  >('auto');
   const [, startTransition] = useTransition();
   const [personality] = useCoachPersonality();
   const aiMode = process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() || 'post';
@@ -213,6 +213,7 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
           repCount,
           userId, // Pass userId for persistent sessions
           personality, // Coach persona drives feedback tone
+          preferredProvider: providerPreference === 'auto' ? undefined : providerPreference,
         }),
       })
         .then((res) => res.json())
@@ -258,6 +259,8 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
     aiLiveEnabled,
     aiIntervalMs,
     startTransition,
+    providerPreference,
+    userId,
   ]);
 
   const config = FEEDBACK_CONFIG[feedback.type];
@@ -300,12 +303,13 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
             <select
               value={providerPreference}
               onChange={(e) =>
-                setProviderPreference(e.target.value as 'gemini' | 'venice' | 'auto')
+                setProviderPreference(e.target.value as 'gemini' | 'groq' | 'venice' | 'auto')
               }
               className="coachy-select"
             >
-              <option value="auto">Auto (Gemini → Venice)</option>
+              <option value="auto">Auto (Gemini → Groq → Venice)</option>
               <option value="gemini">Gemini Only</option>
+              <option value="groq">Groq Only (Fast)</option>
               <option value="venice">Venice Only (Private)</option>
             </select>
           </div>
