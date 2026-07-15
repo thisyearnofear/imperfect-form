@@ -69,13 +69,14 @@ doorways fail web acquisition.
   TTS cascade ElevenLabs → Amazon Polly → browser Web Speech; user preference
   via settings VOICE ENGINE (`prefTtsProvider`); not Nova-locked
 - Demo CLI: `cd coach-station && uv run python -m coach_station.demo --demo all`
-- Station tests: `uv sync --extra dev && uv run pytest` (10+ passing)
+- Station tests: `uv sync --extra dev && uv run pytest` (15 passing)
+- Soft dry-run: `./scripts/cohort-dry-run.sh`
 
 ## What's next
 
-### Milestone 1 — Sim choreography (almost done — cohort demo)
+### Milestone 1 — Sim choreography ✅ (cohort-ready)
 
-Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
+Goal: camera on, curls, arm moves in MuJoCo (or console [SIM]), voice narrates.
 
 - [x] Wire `coach-station/` to FormEvent stream at `ws://localhost:8765`
       (client tap live; station server receives + dispatches primitives)
@@ -91,13 +92,18 @@ Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
       smooth-centered, RASTA fast-energetic
 - [x] Demo voice sync (station `demonstration` event + provider-agnostic TTS:
       ElevenLabs → Polly → browser; user preference in settings)
+- [x] Software dry-run: `./scripts/cohort-dry-run.sh`
+- [ ] Manual stage: browser + optional Cyberwave twin (see
+      `coach-station/README.md` cohort checklist)
 
 Demo without the browser: `cd coach-station && uv run python -m coach_station.demo --demo all`
 
 ### Milestone 2 — Hardware bring-up (SO-101 "Coach")
 
 - [ ] `cyberwave pair` on the edge machine
-- [ ] `affect("live")` behind a physical dead-man switch
+- [~] `affect("live")` behind dead-man — software gate shipped:
+  `COACH_AFFECT=live` requires `COACH_LIVE_CONFIRM=1` else falls back to
+  simulation (`resolve_affect` in `arm.py`); physical dead-man still required
 - [~] Workspace limits — elbow angle clamps shipped in
   `coach_station/trajectory.py` (`COACH_ELBOW_MIN` / `COACH_ELBOW_MAX`);
   torque / reach clamps still open for live

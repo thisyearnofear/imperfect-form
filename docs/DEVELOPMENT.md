@@ -17,6 +17,12 @@ pnpm install
 pnpm dev
 ```
 
+Cohort / coach-station software gate (no camera required):
+
+```sh
+./scripts/cohort-dry-run.sh
+```
+
 ## Build
 
 ```sh

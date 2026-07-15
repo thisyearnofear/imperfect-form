@@ -63,6 +63,35 @@ uv sync --extra dev
 uv run pytest
 ```
 
+From repo root, automated software dry-run (vitest + pytest + demo CLI):
+
+```sh
+./scripts/cohort-dry-run.sh
+```
+
+## Cohort day checklist
+
+**Software (this script):** station bridge tests, TTS prefs, all primitives in console.
+
+**Stage (manual):**
+
+1. `cd coach-station && uv run python -m coach_station` (console or Cyberwave sim)
+2. `NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev`
+3. Browser: **Train** → curls → bad form → station logs demo + browser speaks narration
+4. Optional twin: `uv sync --extra cyberwave`, `COACH_AFFECT=simulation`
+5. **Live hardware never** without `COACH_AFFECT=live` **and** `COACH_LIVE_CONFIRM=1`
+   **and** a physical dead-man (Milestone 2)
+
+## Live mode (Milestone 2)
+
+```sh
+# Refuses live without confirm — falls back to simulation
+COACH_AFFECT=live uv run python -m coach_station
+
+# Only when dead-man is armed:
+COACH_AFFECT=live COACH_LIVE_CONFIRM=1 uv run python -m coach_station
+```
+
 ## Layout
 
 - `coach_station/schema.py` — FormEvent contract (mirrors `src/services/coachStation.ts`)

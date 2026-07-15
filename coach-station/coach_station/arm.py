@@ -3,6 +3,9 @@
 Sim-first: ConsoleArm needs no deps and prints the choreography; CyberwaveArm
 drives the twin once the SDK is installed (`uv sync --extra cyberwave`).
 Uses joints.set(..., degrees=True) per Cyberwave Python SDK docs.
+
+Live (Milestone 2): COACH_AFFECT=live requires COACH_LIVE_CONFIRM=1 plus a
+physical dead-man — never arm live by env typo alone.
 """
 
 from __future__ import annotations
@@ -18,6 +21,25 @@ logger = logging.getLogger("coach_station.arm")
 
 # Catalog slug from Cyberwave docs (SO-101). Override after `cyberwave pair`.
 SO101_TWIN = os.environ.get("COACH_TWIN", "the-robot-studio/so101")
+
+
+def resolve_affect() -> str:
+    """Return simulation | live. Live requires explicit confirm env."""
+    raw = os.environ.get("COACH_AFFECT", "simulation").strip().lower()
+    if raw not in ("simulation", "live", "sim"):
+        logger.warning("Unknown COACH_AFFECT=%s — using simulation", raw)
+        return "simulation"
+    if raw == "sim":
+        return "simulation"
+    if raw == "live":
+        if os.environ.get("COACH_LIVE_CONFIRM", "").strip() != "1":
+            logger.error(
+                "COACH_AFFECT=live refused: set COACH_LIVE_CONFIRM=1 only with a "
+                "physical dead-man armed — falling back to simulation"
+            )
+            return "simulation"
+        return "live"
+    return "simulation"
 
 
 class ConsoleArm:
@@ -48,14 +70,15 @@ class CyberwaveArm:
     """Drives the SO-101 twin through the Cyberwave SDK.
 
     Default COACH_AFFECT=simulation (MuJoCo / Playground twin). Set
-    COACH_AFFECT=live only behind a physical dead-man (Milestone 2).
+    COACH_AFFECT=live + COACH_LIVE_CONFIRM=1 only behind a physical dead-man.
     """
 
     def __init__(self) -> None:
         from cyberwave import Cyberwave  # optional dependency
 
         self._cw = Cyberwave()
-        affect = os.environ.get("COACH_AFFECT", "simulation")
+        affect = resolve_affect()
+        self._affect = affect
         self._cw.affect(affect)
         self._twin = self._cw.twin(SO101_TWIN)
         self._joint_api = self._twin.joints
