@@ -149,7 +149,7 @@ export default function FarcasterShare({
             <button
               onClick={handleSmartShare}
               className={`
-                w-full bg-gradient-to-r from-[primary] via-[primary-dark] to-[primary]
+                w-full bg-gradient-to-r from-primary via-primary-dark to-primary
                 text-black font-black py-4 px-6 rounded-xl flex items-center justify-center
                 shadow-[0_4px_20px_rgba(252,177,49,0.2)] hover:shadow-[0_6px_25px_rgba(252,177,49,0.4)]
                 active:scale-95 transition-all group overflow-hidden relative

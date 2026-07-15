@@ -42,7 +42,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
       <div className="space-y-1">
         <div className="profile-instruction">
           <span className="button-text start">LOADING</span> ={' '}
-          <span className="text-[primary]">Retrieving profile data...</span>
+          <span className="text-primary">Retrieving profile data...</span>
         </div>
       </div>
     );
@@ -54,7 +54,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
       {loading && (
         <div className="profile-instruction">
           <span className="button-text start">LOADING</span> ={' '}
-          <span className="text-[primary]">Retrieving profile data...</span>
+          <span className="text-primary">Retrieving profile data...</span>
         </div>
       )}
 
@@ -77,7 +77,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
                   <div className="text-[10px] text-gray-500 uppercase font-mono tracking-tighter">
                     Personal Best: Pushups
                   </div>
-                  <div className="text-lg font-bold text-[primary]">
+                  <div className="text-lg font-bold text-primary">
                     {pbs.pushups} <span className="text-xs font-normal text-gray-400">reps</span>
                   </div>
                 </div>
@@ -85,7 +85,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
                   <div className="text-[10px] text-gray-500 uppercase font-mono tracking-tighter">
                     Personal Best: Squats
                   </div>
-                  <div className="text-lg font-bold text-[primary]">
+                  <div className="text-lg font-bold text-primary">
                     {pbs.squats} <span className="text-xs font-normal text-gray-400">reps</span>
                   </div>
                 </div>
@@ -129,7 +129,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
                     return (
                       <div
                         key={achievement.id}
-                        className={`aspect-square rounded-lg flex items-center justify-center text-xl transition-all duration-300 ${isUnlocked ? 'bg-[primary]/20 border border-[primary]/30 shadow-[0_0_10px_rgba(252,177,49,0.15)]' : 'bg-white/5 border border-white/5 grayscale opacity-30'}`}
+                        className={`aspect-square rounded-lg flex items-center justify-center text-xl transition-all duration-300 ${isUnlocked ? 'bg-primary/20 border border-primary/30 shadow-[0_0_10px_rgba(252,177,49,0.15)]' : 'bg-white/5 border border-white/5 grayscale opacity-30'}`}
                         title={achievement.name + ': ' + achievement.description}
                       >
                         {achievement.icon}
@@ -166,7 +166,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
           <p className="profile-instruction">
             <span className="button-text start">WALLET</span> ={' '}
             <span
-              className="text-[primary] font-mono cursor-pointer hover:text-yellow-400 transition-all duration-200 transform hover:scale-105"
+              className="text-primary font-mono cursor-pointer hover:text-yellow-400 transition-all duration-200 transform hover:scale-105"
               onClick={() =>
                 navigator.clipboard.writeText(
                   profile.walletInfo?.address ||

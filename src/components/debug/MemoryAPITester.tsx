@@ -68,7 +68,7 @@ export default function MemoryAPITester({ className = '' }: MemoryAPITesterProps
 
   return (
     <div className={`bg-gray-900 rounded-lg p-5 border border-gray-700 ${className}`}>
-      <h2 className="text-lg font-bold text-[primary] mb-4">Memory API Tester</h2>
+      <h2 className="text-lg font-bold text-primary mb-4">Memory API Tester</h2>
 
       {/* Test Identifier Input */}
       <div className="mb-4">
@@ -120,7 +120,7 @@ export default function MemoryAPITester({ className = '' }: MemoryAPITesterProps
       {results && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-[primary]">
+            <h3 className="text-sm font-semibold text-primary">
               Results:{' '}
               {results.testType.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
             </h3>

@@ -147,30 +147,30 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
   return (
     <div className={`${className}`}>
       {/* Enhanced Header with consistent theming */}
-      <div className="bg-black/80 border-2 border-[primary] rounded-lg p-4 mb-6 shadow-[0_0_20px_rgba(252,177,49,0.5)]">
-        <h2 className="text-[primary] font-bold text-center text-xl mb-2">
+      <div className="bg-black/80 border-2 border-primary rounded-lg p-4 mb-6 shadow-[0_0_20px_rgba(252,177,49,0.5)]">
+        <h2 className="text-primary font-bold text-center text-xl mb-2">
           🏆 Verified Champions 🏆
         </h2>
-        <p className="text-[primary]/80 text-center text-sm">
+        <p className="text-primary/80 text-center text-sm">
           Self Protocol verified athletes on Celo network
         </p>
       </div>
 
       {/* Enhanced Leaderboard Table */}
-      <div className="bg-black/20 rounded-lg p-4 md:p-6 border border-[primary]/30 shadow-[0_0_15px_rgba(252,177,49,0.3)]">
-        <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-[primary] text-center border-b-2 border-[primary] pb-2">
+      <div className="bg-black/20 rounded-lg p-4 md:p-6 border border-primary/30 shadow-[0_0_15px_rgba(252,177,49,0.3)]">
+        <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-primary text-center border-b-2 border-primary pb-2">
           🏅 Elite Verified Performers 🏅
         </h3>
 
         {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto bg-black/60 border border-[primary]/30 rounded-lg">
+        <div className="hidden md:block overflow-x-auto bg-black/60 border border-primary/30 rounded-lg">
           <table className="min-w-full">
             <thead>
-              <tr className="border-b-2 border-[primary]">
-                <th className="px-4 py-3 text-[primary] font-bold">#</th>
-                <th className="px-4 py-3 text-[primary] font-bold">Verified Athlete</th>
-                <th className="px-4 py-3 text-[primary] font-bold">Total Score</th>
-                <th className="px-4 py-3 text-[primary] font-bold">Performance Breakdown</th>
+              <tr className="border-b-2 border-primary">
+                <th className="px-4 py-3 text-primary font-bold">#</th>
+                <th className="px-4 py-3 text-primary font-bold">Verified Athlete</th>
+                <th className="px-4 py-3 text-primary font-bold">Total Score</th>
+                <th className="px-4 py-3 text-primary font-bold">Performance Breakdown</th>
               </tr>
             </thead>
             <tbody>
@@ -182,17 +182,17 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
                 return (
                   <tr
                     key={`${score.user}-${index}`}
-                    className={`text-center border-b border-[primary]/20 last:border-none hover:bg-[primary]/10 transition-colors ${
+                    className={`text-center border-b border-primary/20 last:border-none hover:bg-primary/10 transition-colors ${
                       index === 0
-                        ? 'bg-[primary]/20 border-l-4 border-l-[primary]'
+                        ? 'bg-primary/20 border-l-4 border-l-primary'
                         : index === 1
-                          ? 'bg-[primary]/15 border-l-4 border-l-[#10b981]'
+                          ? 'bg-primary/15 border-l-4 border-l-[#10b981]'
                           : index === 2
-                            ? 'bg-[primary]/10 border-l-4 border-l-[#10b981]'
+                            ? 'bg-primary/10 border-l-4 border-l-[#10b981]'
                             : 'bg-[#10b981]/10 border-l-4 border-l-[#10b981]'
                     }`}
                   >
-                    <td className="px-4 py-3 font-bold text-[primary]" style={{ color: 'primary' }}>
+                    <td className="px-4 py-3 font-bold text-primary" style={{ color: 'primary' }}>
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                     </td>
                     <td className="px-4 py-3">
@@ -218,7 +218,7 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
                         <VerificationBadge isVerified={true} size="sm" />
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-bold text-[primary] text-lg">{totalScore}</td>
+                    <td className="px-4 py-3 font-bold text-primary text-lg">{totalScore}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center space-x-4 text-sm">
                         <span className="text-orange-400 font-medium">
@@ -244,9 +244,9 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
             return (
               <div
                 key={`${score.user}-${index}`}
-                className={`bg-black/80 border rounded-lg p-3 cursor-pointer hover:bg-[primary]/10 transition-colors ${
+                className={`bg-black/80 border rounded-lg p-3 cursor-pointer hover:bg-primary/10 transition-colors ${
                   index === 0
-                    ? 'border-[primary] bg-[primary]/10 shadow-[0_0_10px_rgba(252,177,49,0.5)]'
+                    ? 'border-primary bg-primary/10 shadow-[0_0_10px_rgba(252,177,49,0.5)]'
                     : index === 1
                       ? 'border-[#10b981] bg-[#10b981]/10 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
                       : index === 2
@@ -257,7 +257,7 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
                 <div className="flex justify-between items-center w-full">
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
                     <span
-                      className="text-lg flex-shrink-0 text-[primary] font-bold"
+                      className="text-lg flex-shrink-0 text-primary font-bold"
                       style={{ color: 'primary' }}
                     >
                       {index === 0
@@ -290,7 +290,7 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
                       </div>
                     </div>
                   </div>
-                  <div className="text-[primary] font-bold text-lg flex-shrink-0 ml-2">
+                  <div className="text-primary font-bold text-lg flex-shrink-0 ml-2">
                     {totalScore}
                   </div>
                 </div>
@@ -305,16 +305,16 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
       </div>
 
       {/* Enhanced Stats Footer */}
-      <div className="bg-black/20 rounded-lg p-4 md:p-6 border border-[primary]/30 mt-6 shadow-[0_0_15px_rgba(252,177,49,0.3)]">
+      <div className="bg-black/20 rounded-lg p-4 md:p-6 border border-primary/30 mt-6 shadow-[0_0_15px_rgba(252,177,49,0.3)]">
         <div className="text-center">
-          <h4 className="text-[primary] font-bold text-lg mb-2">
+          <h4 className="text-primary font-bold text-lg mb-2">
             🏆 {verifiedScores.length} Elite Verified Athletes 🏆
           </h4>
           <p className="text-[#10b981] text-sm mb-3">
             Self Protocol verified users earn enhanced recognition and exclusive rewards
           </p>
           <div className="flex justify-center space-x-4 text-xs">
-            <span className="text-[primary] font-medium">🌟 Bonus Recognition</span>
+            <span className="text-primary font-medium">🌟 Bonus Recognition</span>
             <span className="text-[#10b981] font-medium">💎 Enhanced Rewards</span>
             <span className="text-purple-400 font-medium">🏅 Elite Status</span>
           </div>

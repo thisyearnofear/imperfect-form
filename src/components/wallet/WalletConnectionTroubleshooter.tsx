@@ -120,16 +120,16 @@ export default function WalletConnectionTroubleshooter({
   const environmentIssues = getEnvironmentIssues();
 
   return (
-    <div className={`bg-black border-2 border-[primary] rounded-lg p-6 space-y-6 ${className}`}>
+    <div className={`bg-black border-2 border-primary rounded-lg p-6 space-y-6 ${className}`}>
       {showTitle && (
         <div className="text-center">
           <h3
-            className="text-lg font-bold text-[primary] mb-2"
+            className="text-lg font-bold text-primary mb-2"
             style={{ fontFamily: "'Press Start 2P', monospace" }}
           >
             Wallet Connection Issues?
           </h3>
-          <p className="text-sm text-[primary] opacity-80">
+          <p className="text-sm text-primary opacity-80">
             Let's get you connected with the best method for your setup
           </p>
         </div>
@@ -138,7 +138,7 @@ export default function WalletConnectionTroubleshooter({
       {/* Current Status */}
       <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-[primary]">Current Status:</span>
+          <span className="text-sm font-semibold text-primary">Current Status:</span>
           <span
             className={`text-xs px-2 py-1 rounded ${
               wallet.isConnected ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
@@ -162,7 +162,7 @@ export default function WalletConnectionTroubleshooter({
       {/* Environment Issues */}
       {environmentIssues.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-[primary]">Detected Issues:</h4>
+          <h4 className="text-sm font-semibold text-primary">Detected Issues:</h4>
           {environmentIssues.map((issue, index) => (
             <div
               key={index}
@@ -172,9 +172,9 @@ export default function WalletConnectionTroubleshooter({
                   : 'bg-yellow-900/20 border-yellow-700'
               }`}
             >
-              <h5 className="text-sm font-semibold text-[primary] mb-1">{issue.title}</h5>
+              <h5 className="text-sm font-semibold text-primary mb-1">{issue.title}</h5>
               <p className="text-xs text-gray-300 mb-2">{issue.description}</p>
-              <p className="text-xs text-[primary] opacity-80">{issue.solution}</p>
+              <p className="text-xs text-primary opacity-80">{issue.solution}</p>
             </div>
           ))}
         </div>
@@ -182,13 +182,13 @@ export default function WalletConnectionTroubleshooter({
 
       {/* Connection Options */}
       <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-[primary]">Try These Solutions:</h4>
+        <h4 className="text-sm font-semibold text-primary">Try These Solutions:</h4>
 
         {/* Quick Fix Button */}
         <button
           onClick={() => attemptConnection('auto')}
           disabled={isAttempting !== null}
-          className="w-full px-4 py-3 bg-gradient-to-r from-[primary] to-[primary-dark] text-black font-bold rounded-lg hover:from-[primary-dark] hover:to-[primary] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
+          className="w-full px-4 py-3 bg-gradient-to-r from-primary to-primary-dark text-black font-bold rounded-lg hover:from-primary-dark hover:to-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
           style={{
             fontFamily: "'Press Start 2P', monospace",
             fontSize: '11px',
@@ -218,7 +218,7 @@ export default function WalletConnectionTroubleshooter({
         {/* Platform-specific recommendations */}
         {isFarcaster && (
           <div className="p-3 bg-purple-900/20 border border-purple-700 rounded">
-            <h5 className="text-sm font-semibold text-[primary] mb-2">🎯 Farcaster Users:</h5>
+            <h5 className="text-sm font-semibold text-primary mb-2">🎯 Farcaster Users:</h5>
             <p className="text-xs text-gray-300 mb-2">
               Make sure your wallet is connected in the main Farcaster app first.
             </p>
@@ -235,7 +235,7 @@ export default function WalletConnectionTroubleshooter({
 
         {isBrave && (
           <div className="p-3 bg-orange-900/20 border border-orange-700 rounded">
-            <h5 className="text-sm font-semibold text-[primary] mb-2">🦁 Brave Browser:</h5>
+            <h5 className="text-sm font-semibold text-primary mb-2">🦁 Brave Browser:</h5>
             <p className="text-xs text-gray-300 mb-2">
               Brave's privacy features can interfere with wallet connections. WalletConnect usually
               works better.
@@ -256,7 +256,7 @@ export default function WalletConnectionTroubleshooter({
         {/* Advanced Options */}
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="w-full text-xs text-[primary] opacity-60 hover:opacity-80 transition-opacity"
+          className="w-full text-xs text-primary opacity-60 hover:opacity-80 transition-opacity"
         >
           {showAdvanced ? '▼' : '▶'} Advanced Options
         </button>
@@ -324,7 +324,7 @@ export default function WalletConnectionTroubleshooter({
                 duration: 4000,
               });
             }}
-            className="text-[primary] hover:underline"
+            className="text-primary hover:underline"
           >
             Get additional help
           </button>

@@ -207,7 +207,7 @@ export default function SocialChallengeCreator({
 
   return (
     <div className={`bg-gray-900 rounded-lg p-6 border border-gray-700 ${className}`}>
-      <h2 className="text-xl font-bold text-[primary] mb-6">Create Social Challenge</h2>
+      <h2 className="text-xl font-bold text-primary mb-6">Create Social Challenge</h2>
 
       {/* Challenge Details */}
       <div className="space-y-4 mb-6">
@@ -280,7 +280,7 @@ export default function SocialChallengeCreator({
 
       {/* Friends Selection */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-[primary] mb-3">
+        <h3 className="text-lg font-semibold text-primary mb-3">
           Invite Friends ({selectedFriends.size} selected)
         </h3>
 
@@ -300,7 +300,7 @@ export default function SocialChallengeCreator({
                 key={friend.id}
                 className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
                   selectedFriends.has(friend.id)
-                    ? 'bg-[primary]/10 border-[primary]'
+                    ? 'bg-primary/10 border-primary'
                     : 'bg-gray-800 border-gray-600 hover:border-gray-500'
                 }`}
                 onClick={() => toggleFriendSelection(friend.id)}
@@ -324,9 +324,7 @@ export default function SocialChallengeCreator({
                 </div>
                 <div
                   className={`w-5 h-5 border-2 rounded ${
-                    selectedFriends.has(friend.id)
-                      ? 'bg-[primary] border-[primary]'
-                      : 'border-gray-500'
+                    selectedFriends.has(friend.id) ? 'bg-primary border-primary' : 'border-gray-500'
                   }`}
                 >
                   {selectedFriends.has(friend.id) && <span className="text-black text-xs">✓</span>}
@@ -356,7 +354,7 @@ export default function SocialChallengeCreator({
           href="https://memoryproto.co"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[primary] hover:underline"
+          className="text-primary hover:underline"
         >
           Memory Protocol
         </a>

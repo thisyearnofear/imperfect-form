@@ -227,11 +227,11 @@ export default function FarcasterWalletDiagnostic({
   };
 
   return (
-    <div className={`bg-black border-2 border-[primary] rounded-lg p-6 space-y-6 ${className}`}>
+    <div className={`bg-black border-2 border-primary rounded-lg p-6 space-y-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3
-          className="text-lg font-bold text-[primary]"
+          className="text-lg font-bold text-primary"
           style={{ fontFamily: "'Press Start 2P', monospace" }}
         >
           🎯 Farcaster Wallet Diagnostic
@@ -239,7 +239,7 @@ export default function FarcasterWalletDiagnostic({
         {onClose && (
           <button
             onClick={onClose}
-            className="text-[primary] hover:text-white transition-colors text-xl"
+            className="text-primary hover:text-white transition-colors text-xl"
           >
             ×
           </button>
@@ -260,7 +260,7 @@ export default function FarcasterWalletDiagnostic({
 
       {/* Enhanced Wallet Status */}
       <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-        <h4 className="font-semibold text-[primary] mb-2">Enhanced Wallet Status:</h4>
+        <h4 className="font-semibold text-primary mb-2">Enhanced Wallet Status:</h4>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-400">Connected:</span>
@@ -276,7 +276,7 @@ export default function FarcasterWalletDiagnostic({
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Source:</span>
-            <span className="text-[primary]">{wallet.provider || 'None'}</span>
+            <span className="text-primary">{wallet.provider || 'None'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Address:</span>
@@ -292,7 +292,7 @@ export default function FarcasterWalletDiagnostic({
         <div className="space-y-3">
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="text-sm text-[primary] hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             {showDetails ? '▼' : '▶'} Detailed Results
           </button>
@@ -329,7 +329,7 @@ export default function FarcasterWalletDiagnostic({
               {/* User Context */}
               {diagnostic.userContext && (
                 <div className="p-3 bg-blue-900/20 border border-blue-700 rounded">
-                  <h5 className="font-semibold text-[primary] mb-2">👤 User Context:</h5>
+                  <h5 className="font-semibold text-primary mb-2">👤 User Context:</h5>
                   <div className="text-xs space-y-1">
                     <p className="text-gray-300">FID: {diagnostic.userContext.fid}</p>
                     <p className="text-gray-300">Username: @{diagnostic.userContext.username}</p>
@@ -341,7 +341,7 @@ export default function FarcasterWalletDiagnostic({
               {/* Supported Chains */}
               {diagnostic.supportedChains && (
                 <div className="p-3 bg-purple-900/20 border border-purple-700 rounded">
-                  <h5 className="font-semibold text-[primary] mb-2">⛓️ Supported Chains:</h5>
+                  <h5 className="font-semibold text-primary mb-2">⛓️ Supported Chains:</h5>
                   <div className="text-xs">
                     {diagnostic.supportedChains.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
@@ -361,7 +361,7 @@ export default function FarcasterWalletDiagnostic({
               {/* Capabilities */}
               {diagnostic.capabilities && (
                 <div className="p-3 bg-green-900/20 border border-green-700 rounded">
-                  <h5 className="font-semibold text-[primary] mb-2">🔧 Capabilities:</h5>
+                  <h5 className="font-semibold text-primary mb-2">🔧 Capabilities:</h5>
                   <div className="text-xs max-h-32 overflow-y-auto">
                     {diagnostic.capabilities.length > 0 ? (
                       <div className="space-y-1">
@@ -380,7 +380,7 @@ export default function FarcasterWalletDiagnostic({
 
               {/* Environment Info */}
               <div className="p-3 bg-gray-800 rounded">
-                <h5 className="font-semibold text-[primary] mb-2">🌐 Environment:</h5>
+                <h5 className="font-semibold text-primary mb-2">🌐 Environment:</h5>
                 <div className="text-xs space-y-1">
                   <p className="text-gray-300">
                     Farcaster Mini App: {isFarcasterMiniApp() ? 'Yes' : 'No'}
@@ -398,7 +398,7 @@ export default function FarcasterWalletDiagnostic({
       {/* Troubleshooting Tips */}
       {diagnostic && status !== 'success' && (
         <div className="bg-yellow-900/20 border border-yellow-700 rounded p-4">
-          <h4 className="font-semibold text-[primary] mb-2">💡 Troubleshooting Tips:</h4>
+          <h4 className="font-semibold text-primary mb-2">💡 Troubleshooting Tips:</h4>
           <div className="text-sm space-y-2">
             {!diagnostic.sdkAvailable && (
               <p className="text-gray-300">
@@ -420,7 +420,7 @@ export default function FarcasterWalletDiagnostic({
                 • Network issues - check internet connection and RPC endpoints
               </p>
             )}
-            <p className="text-[primary]">
+            <p className="text-primary">
               • Try using WalletConnect as an alternative connection method
             </p>
           </div>
@@ -432,7 +432,7 @@ export default function FarcasterWalletDiagnostic({
         <button
           onClick={runDiagnostic}
           disabled={isRunning}
-          className="px-4 py-2 bg-[primary] text-black rounded font-semibold hover:bg-[primary-dark] disabled:opacity-50 transition-colors flex items-center space-x-2"
+          className="px-4 py-2 bg-primary text-black rounded font-semibold hover:bg-primary-dark disabled:opacity-50 transition-colors flex items-center space-x-2"
         >
           {isRunning && <Spinner className="w-4 h-4" />}
           <span>{isRunning ? 'Running...' : 'Run Again'}</span>

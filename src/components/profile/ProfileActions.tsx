@@ -67,7 +67,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({ profile }) => {
     <div className="profile-instruction pt-2">
       <div className="flex gap-2 justify-center">
         <button
-          className="bg-[primary]/10 hover:bg-[primary]/20 border border-[primary]/30 rounded px-2 py-1 text-xs transition-all duration-200 transform hover:scale-105"
+          className="bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded px-2 py-1 text-xs transition-all duration-200 transform hover:scale-105"
           onClick={handleFollow}
         >
           Follow 🟣

@@ -148,10 +148,10 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
     >
       {/* Compact Header with main leaderboard aesthetic */}
       <div
-        className={`bg-black/80 border-2 border-[primary] rounded-lg p-4 mb-4 shadow-[0_0_20px_rgba(252,177,49,0.5)] ${transitionClass}`}
+        className={`bg-black/80 border-2 border-primary rounded-lg p-4 mb-4 shadow-[0_0_20px_rgba(252,177,49,0.5)] ${transitionClass}`}
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-[primary]">🏆 Leaderboard</h2>
+          <h2 className="text-xl font-bold text-primary">🏆 Leaderboard</h2>
           <div className="flex space-x-2">
             <button
               onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
@@ -175,7 +175,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                   window.location.reload();
                 }
               }}
-              className="bg-[primary] hover:bg-[primary-dark] text-black px-3 py-1 rounded font-bold transition-all duration-200 text-xs shadow border border-[primary]"
+              className="bg-primary hover:bg-primary-dark text-black px-3 py-1 rounded font-bold transition-all duration-200 text-xs shadow border border-primary"
               title="Refresh leaderboard"
             >
               🔄 Refresh
@@ -185,8 +185,8 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
       </div>
 
       {/* Push-ups Leaderboard - Compact styling */}
-      <div className="mb-4 bg-black/20 rounded-lg p-2 md:p-3 border border-[primary]/30 shadow-[0_0_10px_rgba(252,177,49,0.3)] expanded-leaderboard-container">
-        <h3 className="text-sm md:text-base font-bold mb-2 text-[primary] text-center border-b border-[primary]/50 pb-1 section-header section-title">
+      <div className="mb-4 bg-black/20 rounded-lg p-2 md:p-3 border border-primary/30 shadow-[0_0_10px_rgba(252,177,49,0.3)] expanded-leaderboard-container">
+        <h3 className="text-sm md:text-base font-bold mb-2 text-primary text-center border-b border-primary/50 pb-1 section-header section-title">
           💪 Push-ups Champions 💪
         </h3>
 
@@ -504,7 +504,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
           onClick={closeBreakdown}
         >
           <div
-            className="bg-black/90 backdrop-blur-xl border border-[primary]/30 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl shadow-[primary]/10 transform transition-all scale-100"
+            className="bg-black/90 backdrop-blur-xl border border-primary/30 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl shadow-primary/10 transform transition-all scale-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center mb-6">
@@ -520,7 +520,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                   className="justify-center"
                 />
               </div>
-              <p className="text-[primary] text-sm font-bold tracking-wide uppercase opacity-90">
+              <p className="text-primary text-sm font-bold tracking-wide uppercase opacity-90">
                 {breakdownType === 'pushups' ? '💪 Push-ups' : '🏋️ Squats'} performance
               </p>
             </div>
@@ -535,7 +535,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                 return (
                   <div
                     key={network}
-                    className={`flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5 hover:border-[primary]/30 transition-all duration-200 group`}
+                    className={`flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/5 hover:border-primary/30 transition-all duration-200 group`}
                   >
                     <div className="flex items-center space-x-3">
                       <div
@@ -553,7 +553,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
 
             <button
               onClick={closeBreakdown}
-              className="w-full bg-gradient-to-r from-[primary] to-[#f59e0b] hover:from-[#f59e0b] hover:to-[primary] text-black font-black py-4 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/20 active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-primary to-[#f59e0b] hover:from-[#f59e0b] hover:to-primary text-black font-black py-4 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/20 active:scale-[0.98]"
             >
               Close Breakdown
             </button>

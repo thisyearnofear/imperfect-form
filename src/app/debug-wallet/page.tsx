@@ -13,7 +13,7 @@ export default function DebugWalletPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-[primary] mb-1">Debug Center</h1>
+          <h1 className="text-2xl font-bold text-primary mb-1">Debug Center</h1>
           <p className="text-gray-400 text-sm">Wallet & API Diagnostics</p>
         </div>
 
@@ -22,7 +22,7 @@ export default function DebugWalletPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Quick Status */}
             <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-              <h2 className="text-lg font-semibold text-[primary] mb-3">Quick Status</h2>
+              <h2 className="text-lg font-semibold text-primary mb-3">Quick Status</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <div className="text-center">
                   <div className="text-gray-400 text-xs">Platform</div>
@@ -68,7 +68,7 @@ export default function DebugWalletPage() {
 
             {/* Quick Troubleshooting */}
             <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-              <h3 className="font-semibold text-[primary] mb-3">Quick Actions</h3>
+              <h3 className="font-semibold text-primary mb-3">Quick Actions</h3>
               <div className="space-y-2">
                 <button className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded transition-colors">
                   Refresh Page
@@ -81,13 +81,13 @@ export default function DebugWalletPage() {
 
             {/* Builder Code Attribution */}
             <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-              <h3 className="font-semibold text-[primary] mb-3">🏷️ Builder Code</h3>
+              <h3 className="font-semibold text-primary mb-3">🏷️ Builder Code</h3>
               <BuilderCodeDebug />
             </div>
 
             {/* Network Info - Compact */}
             <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-              <h3 className="font-semibold text-[primary] mb-3">Networks</h3>
+              <h3 className="font-semibold text-primary mb-3">Networks</h3>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-blue-400">Base</span>
@@ -110,7 +110,7 @@ export default function DebugWalletPage() {
 
             {/* Help Links - Compact */}
             <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-              <h3 className="font-semibold text-[primary] mb-3">Help</h3>
+              <h3 className="font-semibold text-primary mb-3">Help</h3>
               <div className="space-y-1 text-xs">
                 <a href="https://metamask.io/" className="block text-blue-400 hover:underline">
                   MetaMask Setup
@@ -130,7 +130,7 @@ export default function DebugWalletPage() {
         <div className="text-center mt-6">
           <a
             href="/"
-            className="inline-block px-4 py-2 bg-[primary] text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors text-sm"
+            className="inline-block px-4 py-2 bg-primary text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors text-sm"
           >
             ← Back to App
           </a>
