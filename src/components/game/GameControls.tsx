@@ -85,10 +85,8 @@ export const GameControls: React.FC<GameControlsProps> = ({
               style={{ minHeight: isMobile ? '50px' : 'auto' }}
               aria-label="Start game"
               onClick={onStart}
-              disabled={started || !finalAddress}
-              title={
-                !finalAddress ? 'Sign in to start' : started ? 'Game already started' : 'Start game'
-              }
+              disabled={started}
+              title={started ? 'Game already started' : 'Start game'}
             >
               START
             </button>

@@ -63,6 +63,28 @@ Browser (Next.js, MoveNet/TFJS)            coach-station/ (Python)
 Sim-first: everything develops against the MuJoCo twin
 (`cw.affect("simulation")`) before touching hardware.
 
+## Product shape: three rings
+
+Hard lesson from past projects: gating actions on-chain kills adoption.
+On-chain is an earned delight, never a prerequisite.
+
+- **Ring 0 — just train (no account):** the full loop - camera, all five
+  exercises, AI coach, personas, recovery, robot demos - plus all progression
+  (XP, quests, streaks, PBs, ghosts) keyed to a local guest ID
+  (`imf_guestId`). A user can reach level 5 without ever seeing a wallet.
+- **Ring 1 — connect (free, zero transactions):** identity and social. Names
+  on things, global rank preview, Farcaster sharing, cross-device continuity.
+  Guest data merges into the address on connect (`migrateGuestWorkouts`).
+- **Ring 2 — on-chain delights, catered to chain primitives:** permanence
+  (etch a PB - offered at the PB moment, when the user is euphoric), global
+  competition (leaderboard submission), provable humanity (verified board),
+  collectibility (mint the AI highlight card), and later social stakes
+  (wager on beating a friend's ghost). Rewards you've earned the right to
+  take - never tolls.
+
+The cohort demo is Ring 0 by design: camera on, curls, robot moves. No
+wallet popup on stage.
+
 ## Phases
 
 1. **Bridge (now):** `coach-station/` scaffold + FormEvent schema + web tap.

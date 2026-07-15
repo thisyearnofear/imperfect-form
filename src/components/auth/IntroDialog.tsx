@@ -11,7 +11,15 @@ interface IntroDialogProps {
   onSkip: () => void;
 }
 
+// Training first - no sign-in required for the core loop (see docs/NORTH_STAR.md
+// "three rings": wallet is an optional upgrade, never a prerequisite).
 const OPTIONS = [
+  {
+    key: 'demo',
+    label: 'Just Start Training',
+    desc: 'No sign-in needed. Your progress saves on this device.',
+    onClickProp: 'onSkip',
+  },
   {
     key: 'farcaster',
     label: 'Login with Farcaster',
@@ -21,14 +29,8 @@ const OPTIONS = [
   {
     key: 'wallet',
     label: 'Connect Wallet',
-    desc: 'Coinbase Smart Wallet supports passkeys (no seed phrase).',
+    desc: 'For on-chain leaderboards. Passkey support, no seed phrase.',
     onClickProp: 'onWallet',
-  },
-  {
-    key: 'demo',
-    label: 'Demo Mode',
-    desc: 'Try without signing in.',
-    onClickProp: 'onSkip',
   },
 ];
 

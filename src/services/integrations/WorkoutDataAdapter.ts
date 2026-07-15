@@ -152,6 +152,26 @@ export async function getPersonalBestWorkout(
 }
 
 /**
+ * One-time merge of guest-era workouts into a newly connected wallet address.
+ * Safe to call repeatedly - once migrated, no workouts match the guest ID.
+ */
+export async function migrateGuestWorkouts(address: string): Promise<number> {
+  const { getGuestId } = await import('../guestIdentity');
+  const guestId = getGuestId();
+  if (!address || address === guestId) return 0;
+
+  const workouts = await getLocalWorkouts();
+  const guestWorkouts = workouts.filter((w) => w.userAddress === guestId);
+  for (const workout of guestWorkouts) {
+    await saveLocalWorkout({ ...workout, userAddress: address });
+  }
+  if (guestWorkouts.length > 0) {
+    console.log(`🔗 Merged ${guestWorkouts.length} guest workout(s) into ${address}`);
+  }
+  return guestWorkouts.length;
+}
+
+/**
  * Invalidate workout cache to trigger re-renders
  */
 export function invalidateWorkouts(): void {

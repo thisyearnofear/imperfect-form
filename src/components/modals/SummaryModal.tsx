@@ -489,6 +489,16 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </span>
               </div>
             )}
+            {/* Value-moment wallet ask: only at a PB, only when no wallet -
+                on-chain is an earned upgrade, never a prerequisite */}
+            {isPB && !effectiveAddress && ONCHAIN_MODES.includes(mode) && (
+              <div className="mt-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-3 text-center space-y-2">
+                <p className="text-xs text-yellow-200/90 font-sans">
+                  Make this record permanent — etch it on-chain and join the global leaderboard.
+                </p>
+                <UniversalConnectButton />
+              </div>
+            )}
             {streakInfo && streakInfo.currentStreak > 1 && (
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="text-orange-500 font-bold">

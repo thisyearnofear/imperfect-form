@@ -37,7 +37,9 @@ import {
   getPersonalBestWorkout,
   getWorkoutTrace,
   saveWorkoutTrace,
+  migrateGuestWorkouts,
 } from '@/services/integrations/WorkoutDataAdapter';
+import { getEffectiveUserId } from '@/services/guestIdentity';
 import { ghostService } from '@/services/GhostService';
 import { getChampionTrace, isChampion } from '@/constants/championTraces';
 
@@ -115,8 +117,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
         const exerciseMode = (summary.mode as 'pushups' | 'squats') || 'pushups';
 
+        // Guests get a stable local ID so PBs/XP/ghosts work without a wallet
+        const effectiveUserId = getEffectiveUserId(finalAddress);
+
         // Check if this is a new PB BEFORE saving the current one
-        getPersonalBestWorkout(finalAddress, exerciseMode).then((pb) => {
+        getPersonalBestWorkout(effectiveUserId, exerciseMode).then((pb) => {
           const isNewPB = !pb || summary.repCount > pb.reps;
 
           saveLocalWorkout({
@@ -125,7 +130,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
             timestamp: summary.startTime,
             synced: false,
             type: exerciseMode,
-            userAddress: finalAddress,
+            userAddress: effectiveUserId,
           })
             .then(async () => {
               console.log('✅ Workout auto-saved locally:', workoutId);
@@ -265,11 +270,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     return false;
   });
 
-  // Update intro dialog visibility when wallet connection changes
+  // Update intro dialog visibility when wallet connection changes,
+  // and merge any guest-era workouts into the connected address (Ring 0 -> 1)
   useEffect(() => {
     if (finalAddress) {
       // Hide intro dialog if user connects wallet
       setShowIntroDialog(false);
+      migrateGuestWorkouts(finalAddress).catch((err) =>
+        console.warn('Guest workout migration failed:', err)
+      );
     }
   }, [finalAddress]);
 
@@ -430,7 +439,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
       try {
         if (xpProgress.currentLevel >= 3 && !effectiveIsRace && !effectiveRaceTrace) {
-          const pb = await getPersonalBestWorkout(finalAddress, mode);
+          const pb = await getPersonalBestWorkout(getEffectiveUserId(finalAddress), mode);
           if (pb && pb.hasTrace) {
             console.log('👻 Loading PB trace for Ghost Mode...');
             const trace = await getWorkoutTrace(pb.id);
@@ -494,7 +503,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
       else if (finalAddress && targetAddress.toLowerCase() === finalAddress.toLowerCase()) {
         console.log('👤 Loading Personal Best trace...');
         try {
-          const pb = await getPersonalBestWorkout(finalAddress, targetMode);
+          const pb = await getPersonalBestWorkout(getEffectiveUserId(finalAddress), targetMode);
           if (pb) {
             const pbTraceData = await getWorkoutTrace(pb.id);
             if (pbTraceData) {
