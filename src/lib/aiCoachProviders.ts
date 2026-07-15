@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import {
   AIProvider,
@@ -22,12 +22,12 @@ async function callGemini(prompt: string): Promise<any> {
   const providerConfig = AI_PROVIDERS.gemini;
   if (!providerConfig) throw new Error('Gemini provider config not found');
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: providerConfig.model });
-
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  const text = response.text();
+  const ai = new GoogleGenAI({ apiKey });
+  const response = await ai.models.generateContent({
+    model: providerConfig.model,
+    contents: prompt,
+  });
+  const text = response.text ?? '';
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
