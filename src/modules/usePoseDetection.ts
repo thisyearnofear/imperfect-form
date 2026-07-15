@@ -4,9 +4,14 @@ import {
   Point,
   ExerciseMode,
   RepCounterState,
+  EngineRepDetectorState,
   createInitialRepCounterState,
+  createEngineRepDetectorState,
   detectPushup,
   detectSquat,
+  detectEngineRep,
+  engineDisplayRepState,
+  isEngineMode,
   analyzeBiomechanics,
 } from '../utils/biomechanics';
 import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
@@ -34,6 +39,7 @@ import { isFarcasterMiniApp } from '../utils/farcasterMiniApp';
 // Biomechanical Helpers removed - consolidated into src/utils/biomechanics.ts
 
 let repCounter: RepCounterState = createInitialRepCounterState();
+let engineDetector: EngineRepDetectorState | null = null;
 
 export function usePoseDetection(
   canvasRef: RefObject<HTMLCanvasElement | null>,
@@ -62,7 +68,8 @@ export function usePoseDetection(
     /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
 
   // Defensive: handle unexpected null/undefined at runtime
-  const safeMode: ExerciseMode = mode === 'squats' ? 'squats' : 'pushups';
+  const safeMode: ExerciseMode =
+    mode === 'squats' || mode === 'pullups' || mode === 'jumps' ? mode : 'pushups';
   const videoRef = useRef<HTMLVideoElement>(null);
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -152,6 +159,7 @@ export function usePoseDetection(
     sessionStartTimeRef.current = Date.now();
     lastRepCountRef.current = 0;
     repCounter = createInitialRepCounterState();
+    engineDetector = isEngineMode(safeMode) ? createEngineRepDetectorState(safeMode) : null;
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
@@ -586,7 +594,11 @@ export function usePoseDetection(
               const repIncremented =
                 safeMode === 'pushups'
                   ? detectPushup(keypoints, repCounter)
-                  : detectSquat(keypoints, repCounter);
+                  : safeMode === 'squats'
+                    ? detectSquat(keypoints, repCounter)
+                    : engineDetector
+                      ? detectEngineRep(keypoints, safeMode, engineDetector)
+                      : false;
               if (repIncremented) {
                 repCounter.repCount += 1;
                 lastRepCountRef.current = repCounter.repCount;
@@ -617,7 +629,7 @@ export function usePoseDetection(
                   drawFeedback(
                     ctx as any,
                     safeMode,
-                    repCounter.repState,
+                    engineDetector ? engineDisplayRepState(engineDetector) : repCounter.repState,
                     metrics.depth,
                     metrics.warnings
                   );

@@ -7,9 +7,14 @@ import {
   Point,
   ExerciseMode,
   RepCounterState,
+  EngineRepDetectorState,
   createInitialRepCounterState,
+  createEngineRepDetectorState,
   detectPushup,
   detectSquat,
+  detectEngineRep,
+  engineDisplayRepState,
+  isEngineMode,
   analyzeBiomechanics,
 } from '../utils/biomechanics';
 import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
@@ -19,6 +24,7 @@ let ctx: OffscreenCanvasRenderingContext2D;
 // Biomechanical Helpers removed - consolidated into src/utils/biomechanics.ts
 
 let repCounter: RepCounterState = createInitialRepCounterState();
+let engineDetector: EngineRepDetectorState | null = null;
 let workerMode: ExerciseMode = 'pushups';
 let lastProcessTime = 0;
 let workerIsMobile = false;
@@ -122,6 +128,7 @@ self.addEventListener('message', async (event) => {
       await warmupDetector(detector, data.width, data.height);
 
       repCounter = createInitialRepCounterState();
+      engineDetector = isEngineMode(workerMode) ? createEngineRepDetectorState(workerMode) : null;
       lastProgress = 0;
 
       self.postMessage({ type: 'ready' });
@@ -164,7 +171,11 @@ self.addEventListener('message', async (event) => {
           const repIncremented =
             workerMode === 'pushups'
               ? detectPushup(keypoints, repCounter)
-              : detectSquat(keypoints, repCounter);
+              : workerMode === 'squats'
+                ? detectSquat(keypoints, repCounter)
+                : engineDetector
+                  ? detectEngineRep(keypoints, workerMode, engineDetector)
+                  : false;
 
           if (repIncremented) {
             repCounter.repCount += 1;
@@ -172,8 +183,11 @@ self.addEventListener('message', async (event) => {
           }
 
           // Render
+          const displayRepState = engineDetector
+            ? engineDisplayRepState(engineDetector)
+            : repCounter.repState;
           drawSkeleton(ctx, keypoints, workerMode);
-          drawFeedback(ctx, workerMode, repCounter.repState, lastProgress, metrics.warnings);
+          drawFeedback(ctx, workerMode, displayRepState, lastProgress, metrics.warnings);
 
           self.postMessage({ type: 'result', state: metrics, keypoints });
         } else {

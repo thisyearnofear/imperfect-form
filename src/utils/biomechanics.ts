@@ -1,4 +1,13 @@
 import { Keypoint, BiomechanicalState } from '../types/mediapipe';
+import {
+  createJumpState,
+  createPullupState,
+  processJumps,
+  processPullups,
+  type JumpState,
+  type PullupState,
+  type RepState as EngineRepState,
+} from '../lib/exercise-engine';
 
 export interface Point {
   x: number;
@@ -8,7 +17,14 @@ export interface Point {
   name?: string;
 }
 
-export type ExerciseMode = 'pushups' | 'squats';
+export type ExerciseMode = 'pushups' | 'squats' | 'pullups' | 'jumps';
+
+/** Modes counted by the ported exercise engine rather than the local detectors. */
+export type EngineMode = 'pullups' | 'jumps';
+
+export function isEngineMode(mode: ExerciseMode): mode is EngineMode {
+  return mode === 'pullups' || mode === 'jumps';
+}
 
 export function getPoint(keypoints: Keypoint[], name: string): Point | null {
   const kp = keypoints.find((k) => k.name === name);
@@ -116,6 +132,58 @@ export function detectSquat(keypoints: Keypoint[], state: RepCounterState): bool
   return false;
 }
 
+/**
+ * Adapter state for the exercise-engine processors (pull-ups / jumps),
+ * mirroring RepCounterState's role for the local detectors.
+ */
+export interface EngineRepDetectorState {
+  engineRepState: EngineRepState;
+  pullupState: PullupState;
+  jumpState: JumpState;
+  lastFeedback?: string;
+  lastRepScore?: number;
+}
+
+export function createEngineRepDetectorState(mode: EngineMode): EngineRepDetectorState {
+  return {
+    engineRepState: mode === 'jumps' ? 'GROUNDED' : 'DOWN',
+    pullupState: createPullupState(),
+    jumpState: createJumpState(),
+  };
+}
+
+/** Returns true when a rep completes, matching detectPushup/detectSquat's contract. */
+export function detectEngineRep(
+  keypoints: Keypoint[],
+  mode: EngineMode,
+  state: EngineRepDetectorState
+): boolean {
+  const params = {
+    keypoints,
+    repState: state.engineRepState,
+    internalReps: 0,
+    lastRepIssues: [] as string[],
+  };
+  const result =
+    mode === 'pullups'
+      ? processPullups({ ...params, pullupState: state.pullupState })
+      : processJumps({ ...params, jumpState: state.jumpState });
+
+  if (!result) return false;
+  if (result.newRepState) state.engineRepState = result.newRepState;
+  if (result.feedback) state.lastFeedback = result.feedback;
+  if (result.isRepCompleted) {
+    state.lastRepScore = result.repCompletionData?.score;
+    return true;
+  }
+  return false;
+}
+
+/** Maps engine rep state onto the 'up'/'down' display states used by drawFeedback. */
+export function engineDisplayRepState(state: EngineRepDetectorState): 'up' | 'down' {
+  return state.engineRepState === 'UP' || state.engineRepState === 'AIRBORNE' ? 'up' : 'down';
+}
+
 export function analyzeBiomechanics(keypoints: Keypoint[], mode: ExerciseMode): BiomechanicalState {
   const lh = getPoint(keypoints, 'left_hip');
   const ls = getPoint(keypoints, 'left_shoulder');
@@ -150,6 +218,31 @@ export function analyzeBiomechanics(keypoints: Keypoint[], mode: ExerciseMode): 
       const currentAngle = calculateAngle(ls, le, lw);
       metrics.depth = (160 - currentAngle) / (160 - 85);
     }
+  }
+
+  if (mode === 'pullups' && ls && lw) {
+    const le = getPoint(keypoints, 'left_elbow');
+    const rs = getPoint(keypoints, 'right_shoulder');
+    const re = getPoint(keypoints, 'right_elbow');
+    const rw = getPoint(keypoints, 'right_wrist');
+    if (le) {
+      const leftAngle = calculateAngle(ls, le, lw);
+      // Pull progress: 180° dead hang -> 60° chin over bar
+      metrics.depth = Math.max(0, Math.min(1, (180 - leftAngle) / (180 - 60)));
+      if (rs && re && rw) {
+        const rightAngle = calculateAngle(rs, re, rw);
+        metrics.symmetry = Math.max(0, 1 - Math.abs(leftAngle - rightAngle) / 45);
+        if (Math.abs(leftAngle - rightAngle) > 30) metrics.warnings.push('PULL EVENLY');
+      }
+    }
+  }
+
+  if (mode === 'jumps' && lh && lk && la) {
+    metrics.kneeValgus = calculateKneeValgus(lh, lk, la);
+    const currentAngle = calculateAngle(lh, lk, la);
+    // Crouch loading before takeoff: 180° standing -> 120° loaded
+    metrics.depth = Math.max(0, Math.min(1, (180 - currentAngle) / (180 - 120)));
+    if (metrics.kneeValgus > 40) metrics.warnings.push('KNEES IN');
   }
 
   return metrics;

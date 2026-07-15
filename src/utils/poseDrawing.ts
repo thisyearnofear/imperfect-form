@@ -1,9 +1,17 @@
 import { Keypoint } from '../types/mediapipe';
+import type { ExerciseMode } from './biomechanics';
+
+const MODE_ACCENT: Record<ExerciseMode, string> = {
+  pushups: '#00ff00',
+  squats: '#00ffff',
+  pullups: '#fcb131',
+  jumps: '#ff69b4',
+};
 
 export function drawSkeleton(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   keypoints: Keypoint[],
-  mode: 'pushups' | 'squats',
+  mode: ExerciseMode,
   isGhost: boolean = false
 ) {
   const confidenceThreshold = 0.3;
@@ -23,8 +31,11 @@ export function drawSkeleton(
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  const accentColor = isGhost ? '#c0c0c0' : mode === 'squats' ? '#00ffff' : '#00ff00';
+  const accentColor = isGhost ? '#c0c0c0' : MODE_ACCENT[mode];
   const jointColor = isGhost ? '#e0e0e0' : '#ffffff';
+  // Arm-driven modes highlight the arms; leg-driven modes highlight the legs
+  const armsAccented = mode === 'pushups' || mode === 'pullups';
+  const legsAccented = mode === 'squats' || mode === 'jumps';
 
   // Check if coordinates are normalized (0.0 to 1.0)
   // If all visible keypoints have values <= 1.5, assume normalized
@@ -43,15 +54,15 @@ export function drawSkeleton(
     [['right_shoulder', 'right_hip'], jointColor, 4],
     [['left_hip', 'right_hip'], jointColor, 4],
     // Arms
-    [['left_shoulder', 'left_elbow'], mode === 'pushups' ? accentColor : jointColor, 6],
-    [['left_elbow', 'left_wrist'], mode === 'pushups' ? accentColor : jointColor, 6],
-    [['right_shoulder', 'right_elbow'], mode === 'pushups' ? accentColor : jointColor, 6],
-    [['right_elbow', 'right_wrist'], mode === 'pushups' ? accentColor : jointColor, 6],
+    [['left_shoulder', 'left_elbow'], armsAccented ? accentColor : jointColor, 6],
+    [['left_elbow', 'left_wrist'], armsAccented ? accentColor : jointColor, 6],
+    [['right_shoulder', 'right_elbow'], armsAccented ? accentColor : jointColor, 6],
+    [['right_elbow', 'right_wrist'], armsAccented ? accentColor : jointColor, 6],
     // Legs
-    [['left_hip', 'left_knee'], mode === 'squats' ? accentColor : jointColor, 6],
-    [['left_knee', 'left_ankle'], mode === 'squats' ? accentColor : jointColor, 6],
-    [['right_hip', 'right_knee'], mode === 'squats' ? accentColor : jointColor, 6],
-    [['right_knee', 'right_ankle'], mode === 'squats' ? accentColor : jointColor, 6],
+    [['left_hip', 'left_knee'], legsAccented ? accentColor : jointColor, 6],
+    [['left_knee', 'left_ankle'], legsAccented ? accentColor : jointColor, 6],
+    [['right_hip', 'right_knee'], legsAccented ? accentColor : jointColor, 6],
+    [['right_knee', 'right_ankle'], legsAccented ? accentColor : jointColor, 6],
   ] as const;
 
   // Draw Glow
@@ -109,8 +120,8 @@ export function drawFeedback(
   ctx.setTransform(-1, 0, 0, 1, width, 0);
 
   // Rep State Text
-  let statusText = state === 'down' ? 'GO UP!' : state === 'up' ? 'GO DOWN!' : 'READY';
-  let statusColor = state === 'down' ? '#ff3366' : state === 'up' ? '#00ffcc' : '#ffffff';
+  const statusText = state === 'down' ? 'GO UP!' : state === 'up' ? 'GO DOWN!' : 'READY';
+  const statusColor = state === 'down' ? '#ff3366' : state === 'up' ? '#00ffcc' : '#ffffff';
 
   const statusBoxX = 20;
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
