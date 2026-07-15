@@ -21,6 +21,7 @@ import { markWorkoutSynced, getLocalWorkouts } from '@/services/integrations/Wor
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import LabAnalysisCard from '@/components/coach/LabAnalysisCard';
+import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useAchievements } from '@/hooks/useAchievements';
 import { xpService, StreakInfo } from '@/services/XPService';
 import { Achievement } from '@/services/AchievementService';
@@ -732,6 +733,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Recovery register: optional breath cooldown + stretch */}
+              {repCount > 0 && <RecoveryCard mode={mode} />}
 
               {/* Post-session report - the "lab register" clinical card */}
               {(sessionSummary || reportStatus !== 'idle') && (
