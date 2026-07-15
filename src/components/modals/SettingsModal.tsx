@@ -1,6 +1,7 @@
 import React from 'react';
 import { AccessibleDialog } from '@/components/ui';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import CoachPersonalitySelector from '@/components/coach/CoachPersonalitySelector';
 import { useFadeTransition } from '@/hooks';
 
 interface SettingsModalProps {
@@ -31,6 +32,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, autoFs, 
             onChange={handleToggle}
             label="Start workouts in fullscreen"
           />
+          <div className="border-t border-white/10 pt-5">
+            <CoachPersonalitySelector />
+          </div>
           {/* Example row for orientation lock (not hooked up to logic) */}
           {/* <ToggleSwitch
             checked={false}

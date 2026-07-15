@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback, useTransition } from 'react';
 import { BiomechanicalState } from '@/types/mediapipe';
 import { analyzeForm, CoachingAnalysis } from '@/lib/coachingEngine';
+import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import '@/styles/agent-insights.css';
 
 interface AgentInsightTrayProps {
@@ -80,6 +81,7 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
     'auto'
   );
   const [, startTransition] = useTransition();
+  const [personality] = useCoachPersonality();
   const aiMode = process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() || 'post';
   const aiLiveEnabled = aiMode === 'live';
   const aiIntervalMs = process.env.NODE_ENV === 'development' ? 15000 : 5000;
@@ -193,6 +195,7 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
           metrics: metricsRef.current,
           repCount,
           userId, // Pass userId for persistent sessions
+          personality, // Coach persona drives feedback tone
         }),
       })
         .then((res) => res.json())
@@ -228,7 +231,17 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
           setCurrentProvider('local');
         });
     });
-  }, [metricsHash, mode, repCount, speak, aiEnabled, aiLiveEnabled, aiIntervalMs, startTransition]);
+  }, [
+    metricsHash,
+    mode,
+    repCount,
+    personality,
+    speak,
+    aiEnabled,
+    aiLiveEnabled,
+    aiIntervalMs,
+    startTransition,
+  ]);
 
   const config = FEEDBACK_CONFIG[feedback.type];
 

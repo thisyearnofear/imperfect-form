@@ -19,6 +19,8 @@ import { CONTRACT_ADDRESSES } from '@/config/contract-addresses';
 import { verifiedFitnessContractABI } from '@/constants/contracts';
 import { markWorkoutSynced, getLocalWorkouts } from '@/services/integrations/WorkoutDataAdapter';
 import { useXpProgress } from '@/hooks/useXpProgress';
+import { useCoachPersonality } from '@/hooks/useCoachPersonality';
+import LabAnalysisCard from '@/components/coach/LabAnalysisCard';
 import { useAchievements } from '@/hooks/useAchievements';
 import { xpService, StreakInfo } from '@/services/XPService';
 import { Achievement } from '@/services/AchievementService';
@@ -125,6 +127,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     metrics: Record<string, number>;
   } | null>(null);
   const [reportStatus, setReportStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [personality] = useCoachPersonality();
 
   // Debug logging for submission status changes
   React.useEffect(() => {
@@ -178,6 +181,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       body: JSON.stringify({
         mode,
         sessionSummary,
+        personality,
       }),
     })
       .then((res) => res.json())
@@ -729,62 +733,14 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
-              {/* Post-session report */}
+              {/* Post-session report - the "lab register" clinical card */}
               {(sessionSummary || reportStatus !== 'idle') && (
-                <div className="rounded-xl bg-black/30 p-4 text-left border border-white/10 space-y-3">
-                  <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">
-                    Session Analysis
-                  </div>
-                  {reportStatus === 'idle' && (
-                    <button
-                      onClick={handleGenerateReport}
-                      className="w-full px-3 py-2 bg-gradient-to-r from-[primary] to-[primary-dark] text-black font-bold rounded text-xs hover:from-[primary-dark] hover:to-[primary] transition-all"
-                    >
-                      Generate Report
-                    </button>
-                  )}
-                  {reportStatus === 'loading' && (
-                    <div className="text-sm text-gray-300">Generating report...</div>
-                  )}
-                  {reportStatus === 'error' && (
-                    <div className="text-sm text-red-400">Report failed to load.</div>
-                  )}
-                  {reportStatus === 'ready' && report && (
-                    <div className="space-y-3">
-                      <div className="text-sm text-white">{report.summary}</div>
-                      <div>
-                        <div className="text-[10px] uppercase text-green-300 font-bold mb-1">
-                          Strengths
-                        </div>
-                        <ul className="text-xs text-gray-200 list-disc list-inside">
-                          {report.strengths.map((s, i) => (
-                            <li key={`s-${i}`}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase text-yellow-300 font-bold mb-1">
-                          Issues
-                        </div>
-                        <ul className="text-xs text-gray-200 list-disc list-inside">
-                          {report.issues.map((s, i) => (
-                            <li key={`i-${i}`}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase text-blue-300 font-bold mb-1">
-                          Recommendations
-                        </div>
-                        <ul className="text-xs text-gray-200 list-disc list-inside">
-                          {report.recommendations.map((s, i) => (
-                            <li key={`r-${i}`}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <LabAnalysisCard
+                  report={report}
+                  status={reportStatus}
+                  personality={personality}
+                  onGenerate={handleGenerateReport}
+                />
               )}
 
               {/* Success message - show when successfully submitted */}
