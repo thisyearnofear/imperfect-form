@@ -1,33 +1,28 @@
-# Imperfect Form - AI Fitness Tracking
+# Imperfect Form - Physical AI Fitness Coaching
 
-A Next.js fitness tracking application featuring AI-powered pose detection, blockchain integration, and privacy-first human verification through Self Protocol.
+AI watches you exercise, understands your form, and a robot arm physically
+demonstrates the correction. Many apps do pose detection — almost none close
+the feedback loop with physical AI.
+
+⭐ **[North Star](./docs/NORTH_STAR.md)** — Cyberwave builders cohort · SO-101 arm ("Coach") · pose detection → joint-angle analysis → physical demonstration → SmolVLA data flywheel.
 
 **✅ Self Protocol**: Live on Celo Mainnet - Real passport verification with zero-knowledge proofs.
-**🚀 Memory API Integration**: Unified cross-platform identity and social features (In Development)
 
 ## Features
 
-- **AI Pose Detection**: Real-time fitness tracking using MediaPipe/TensorFlow.js
-- **Multi-Chain Support**: Base, Celo, Polygon, and Monad blockchain integration
+- **AI Pose Detection**: Real-time rep counting and form analysis (MoveNet/TensorFlow.js, in-browser — no video leaves your device)
+- **Physical AI Coach** _(in development)_: SO-101 robot arm demonstrates correct joint angles via the [coach station](./coach-station/)
+- **AI Coaching**: Multi-provider (Gemini / Venice / AWS Bedrock Nova 2) with coach personas 🐌 SNEL · 🐢 STEDDIE · 🐙 RASTA
+- **Exercises**: Push-ups, squats, pull-ups, and jumps (engine-verified rep counting with per-rep form scoring)
+- **Recovery**: Optional guided breathing cooldown and per-exercise stretches
+- **Multi-Chain Support**: Base, Celo, Polygon, and Monad leaderboards
 - **Human Verification**: Self Protocol integration for verified leaderboards
-- **Dynamic Theming**: Chain-specific UI/UX with performance optimization
-- **Social Integration**: Farcaster sharing and community features
+- **Social Integration**: Farcaster mini-app, ghost replays, quests and XP
 - **Mobile-First**: Responsive design optimized for mobile fitness tracking
-- **Unified Identity** _(Coming Soon)_: Memory API integration for cross-platform profiles
 
 ## Live Demo
 
 🌐 **[imperfectform.fun](https://imperfectform.fun)** - Try the AI fitness tracker with blockchain verification
-
-## Memory API Builder Program
-
-This app is being enhanced for the Memory API Builder program with unified identity features:
-
-- **Cross-Platform Profiles**: Link wallets to Farcaster, Twitter/X, and ENS identities
-- **Social Insights**: Personality archetypes and follow recommendations based on fitness interests
-- **Enhanced Leaderboards**: Unified follower counts and social graph analysis
-
-📋 **[Integration Roadmap](./docs/ROADMAP.md)** - 2-week implementation plan
 
 ## Quick Start
 

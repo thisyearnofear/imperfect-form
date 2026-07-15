@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback, useTransition
 import { BiomechanicalState } from '@/types/mediapipe';
 import { analyzeForm, CoachingAnalysis } from '@/lib/coachingEngine';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
+import { coachStation } from '@/services/coachStation';
 import '@/styles/agent-insights.css';
 
 interface AgentInsightTrayProps {
@@ -154,6 +155,22 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
       const analysis = analyzeForm(metrics, mode);
       const newFeedback = getFeedbackFromAnalysis(analysis, mode);
 
+      // Physical AI bridge: stream the primary form issue to the coach
+      // station (SO-101) so the arm can demonstrate the correction.
+      // No-op unless NEXT_PUBLIC_COACH_STATION is configured.
+      if (analysis.primaryIssue) {
+        coachStation.sendFormEvent({
+          mode,
+          issue: analysis.primaryIssue.type,
+          severity: analysis.primaryIssue.severity,
+          current: analysis.primaryIssue.current,
+          target: analysis.primaryIssue.target,
+          cue: analysis.primaryIssue.cue,
+          personality,
+          repCount,
+        });
+      }
+
       // Speak critical/warning issues (immediate, not deferred)
       if (newFeedback.analysis?.primaryIssue?.severity === 'critical') {
         speak(newFeedback.message);
@@ -167,7 +184,7 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
         lastMessageRef.current = newFeedback.message;
       }
     });
-  }, [metricsHash, mode, speak, startTransition]);
+  }, [metricsHash, mode, personality, repCount, speak, startTransition]);
 
   // AI Coaching: Call API every 5 seconds for enhanced feedback (deferred, non-blocking)
   useEffect(() => {
