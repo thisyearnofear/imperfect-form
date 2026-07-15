@@ -138,7 +138,7 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
 
                 <div className="text-center">
                   <a
-                    href="https://self.id"
+                    href="https://self.xyz"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-center text-cyan-400 font-medium hover:text-cyan-300 transition-colors border-b border-transparent hover:border-cyan-400/50 pb-0.5"
