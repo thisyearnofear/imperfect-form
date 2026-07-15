@@ -9,6 +9,7 @@ import { submitScoreDirect } from '@/utils/directSubmission';
 import { getNetworkByChainId } from '@/config/networks';
 import toast from 'react-hot-toast';
 import { useXpProgress } from '@/hooks/useXpProgress';
+import { PreStartFoyer } from '@/components/home/PreStartFoyer';
 
 interface SplitFlapTextProps {
   text: string;
@@ -175,32 +176,8 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
   const currentInstructions = useMemo(() => {
     const instructionConfigs: Record<InstructionMode, InstructionItem[]> = {
-      instructions: [
-        {
-          key: '🏋️',
-          text: 'Real-time pose detection',
-          desc: 'AI-powered form analysis',
-          hideKey: true,
-        },
-        {
-          key: '🏆',
-          text: 'Onchain leaderboards',
-          desc: 'Transparent competition',
-          hideKey: true,
-        },
-        {
-          key: '🎯',
-          text: 'Pushups & Squats',
-          desc: 'Tracked challenges',
-          hideKey: true,
-        },
-        {
-          key: '⚡',
-          text: 'HAVE FUN!',
-          desc: 'Stay hard',
-          hideKey: true,
-        },
-      ],
+      // Day-0 foyer is PreStartFoyer — no puerile feature list.
+      instructions: [],
       settings: [
         {
           key: 'a',
@@ -306,17 +283,17 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
     }
   };
 
+  if (mode === 'instructions') {
+    return <PreStartFoyer />;
+  }
+
   return (
     <div id="instructions" style={{ display: 'flex', flexDirection: 'column' }}>
       {currentInstructions.map((instruction, index) => (
         <p
-          key={instruction.key}
+          key={`${instruction.key}-${instruction.text}`}
           className={`feature-instruction ${
-            mode === 'profile'
-              ? 'profile-instruction clickable'
-              : mode === 'settings'
-                ? 'settings-instruction clickable'
-                : ''
+            mode === 'profile' ? 'profile-instruction clickable' : 'settings-instruction clickable'
           } ${!instruction.desc && mode === 'profile' ? 'single-action' : ''}`}
           onClick={() => handleItemClick(instruction.key)}
           style={{
@@ -326,17 +303,10 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
                 ? 'pointer'
                 : 'default',
             transition: 'all 0.3s ease',
-            animation:
-              mode === 'instructions'
-                ? `slideInFeature 0.6s ease-out ${index * 0.2}s forwards`
-                : 'none',
-            opacity: mode === 'instructions' ? 0 : 1,
+            opacity: 1,
           }}
         >
           {!instruction.hideKey && `${instruction.key}) `}
-          {instruction.hideKey && mode === 'instructions' && (
-            <span className="feature-emoji">{instruction.key}</span>
-          )}
           <span
             className={`button-text ${
               instruction.key === 'a'
@@ -345,11 +315,9 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
                   ? 'stop'
                   : instruction.key === 'c'
                     ? 'reset'
-                    : instruction.key === '⚡'
-                      ? 'fun-highlight'
-                      : instruction.key === 's' && mode === 'profile'
-                        ? 'nav-highlight'
-                        : ''
+                    : instruction.key === 's' && mode === 'profile'
+                      ? 'nav-highlight'
+                      : ''
             }`}
           >
             <SplitFlapText
@@ -361,17 +329,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           {instruction.desc && instruction.desc.trim() && (
             <>
               {' '}
-              <span
-                className={`feature-desc ${
-                  instruction.key === '🏋️'
-                    ? 'ai-highlight'
-                    : instruction.key === '🏆'
-                      ? 'blockchain-highlight'
-                      : instruction.key === '🎯'
-                        ? 'challenge-highlight'
-                        : ''
-                }`}
-              >
+              <span className="feature-desc">
                 <SplitFlapText
                   text={instruction.desc}
                   isAnimating={isAnimating && animationStep > index}
@@ -382,21 +340,6 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           )}
         </p>
       ))}
-
-      {mode === 'instructions' && (
-        <p
-          className="built-by feature-instruction"
-          style={{
-            animation: 'slideInFeature 0.6s ease-out 1s forwards',
-            opacity: 0,
-          }}
-        >
-          Built by{' '}
-          <a href="https://warpcast.com/papa" target="_blank" className="highlight">
-            <SplitFlapText text="PAPA" isAnimating={isAnimating && animationStep > 3} delay={400} />
-          </a>
-        </p>
-      )}
     </div>
   );
 };

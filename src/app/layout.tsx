@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Press_Start_2P } from 'next/font/google';
 import './globals.css';
 import '@/styles/animations.css';
+import { BRAND } from '@/lib/brandPositioning';
 // Removed static import of network-elements.css in favor of dynamic loading
 
 const pressStart2P = Press_Start_2P({
@@ -11,34 +12,28 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
-  title: 'Imperfect Form | Onchain Olympians',
-  description: 'Track your fitness with real-time pose detection and have fun competing onchain',
-  // Note: favicon.ico is automatically handled by Next.js App Router
-  // The favicon.ico file in this directory (src/app/) will be served at /favicon.ico
-
-  // Open Graph metadata for social sharing
+  title: `${BRAND.name} | Move better`,
+  description: BRAND.tagline,
   openGraph: {
-    title: 'Imperfect Form | Onchain Olympians',
-    description: 'Track your fitness with real-time pose detection and have fun competing onchain',
+    title: `${BRAND.name} | Move better`,
+    description: BRAND.tagline,
     url: 'https://imperfectform.fun',
-    siteName: 'Imperfect Form',
+    siteName: BRAND.name,
     images: [
       {
         url: 'https://imperfectform.fun/embed.png',
         width: 1200,
         height: 630,
-        alt: 'Imperfect Form - Onchain Fitness Challenge',
+        alt: `${BRAND.name} — private camera coaching with a path into physical AI`,
       },
     ],
     locale: 'en_US',
     type: 'website',
   },
-
-  // Twitter Card metadata
   twitter: {
     card: 'summary_large_image',
-    title: 'Imperfect Form | Onchain Olympians',
-    description: 'Track your fitness with real-time pose detection and have fun competing onchain',
+    title: `${BRAND.name} | Move better`,
+    description: BRAND.tagline,
     images: ['https://imperfectform.fun/embed.png'],
   },
 };
@@ -71,13 +66,13 @@ export default function RootLayout({
         {/* Farcaster Mini App Frame metadata - Latest v1 standard */}
         <meta
           name="fc:frame"
-          content='{"version":"next","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"🏋️ Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
+          content='{"version":"next","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
         />
 
         {/* Mini App specific metadata - Current standard */}
         <meta
           name="fc:miniapp"
-          content='{"version":"1","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"🏋️ Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
+          content='{"version":"1","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
         />
 
         {/* Dynamic CSS loading script - client-side only */}

@@ -26,6 +26,14 @@
   `@import "tailwindcss"` + `@config` compat; fixed design-token spacing
   collision that was silently breaking `max-w-sm`, `max-w-md`, and other
   named-scale utilities; Google Fonts moved to `<link>` in `layout.tsx`
+- Day-0 foyer / onboarding pass — brand-first pre-start (`PreStartFoyer`),
+  positioning-aligned onboarding (`brandPositioning.ts`), game-loop chrome
+  demoted until first XP; see company posture in NORTH_STAR
+
+**Next (product surface, after this lands):** evaluate whether a dedicated
+marketing/landing route is still needed, or whether the app foyer + refined
+onboarding is enough for web acquisition. Prefer deepening the in-app first
+10 seconds over spinning a separate site until data says otherwise.
 
 **Shipped (Ring 1/2 — earned upgrades):**
 

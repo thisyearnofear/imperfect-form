@@ -51,6 +51,9 @@ export default function Home() {
   const [showDashboard, setShowDashboard] = useState(true);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
 
+  // Game-loop chrome is earned after the first coached feel — not the day-0 foyer.
+  const hasTrained = progress.totalXp > 0;
+
   const [leaderboardData, setLeaderboardData] = useState<{
     pushups: Score[];
     squats: Score[];
@@ -120,133 +123,136 @@ export default function Home() {
       <ThemeSync />
 
       <div className="flex flex-col min-h-screen bg-black">
-        {/* Top Navigation Bar - Feature Showcase */}
-        <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/5">
-          {/* Level & Quick Stats Bar */}
-          <div className="px-4 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
-                <span className="text-lg font-black text-black">{progress.currentLevel}</span>
-              </div>
-              <div>
-                <div className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-                  Level {progress.currentLevel}
+        {/* Top Navigation — full chrome only after first trained session */}
+        {hasTrained ? (
+          <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/5">
+            <div className="px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
+                  <span className="text-lg font-black text-black">{progress.currentLevel}</span>
                 </div>
-                <div className="text-white font-bold text-sm">
-                  {progress.totalXp.toLocaleString()} XP
+                <div>
+                  <div className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
+                    Level {progress.currentLevel}
+                  </div>
+                  <div className="text-white font-bold text-sm">
+                    {progress.totalXp.toLocaleString()} XP
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Tab Navigation */}
-            <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
-              {[
-                { id: 'workout', label: 'Workout', icon: '💪' },
-                { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-                { id: 'challenges', label: 'Challenges', icon: '👻' },
-                { id: 'roadmap', label: 'Roadmap', icon: '🗺️' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as ActiveTab)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    activeTab === tab.id
-                      ? 'bg-yellow-500 text-black'
-                      : 'text-gray-400 hover:text-white hover:bg-white/10'
-                  }`}
-                  aria-label={`Switch to ${tab.label} tab`}
-                  aria-current={activeTab === tab.id ? 'page' : undefined}
-                >
-                  <span>{tab.icon}</span>
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              ))}
+              <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+                {[
+                  { id: 'workout', label: 'Workout', icon: 'W' },
+                  { id: 'dashboard', label: 'Dashboard', icon: 'S' },
+                  { id: 'challenges', label: 'Challenges', icon: 'G' },
+                  { id: 'roadmap', label: 'Roadmap', icon: 'R' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as ActiveTab)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      activeTab === tab.id
+                        ? 'bg-yellow-500 text-black'
+                        : 'text-gray-400 hover:text-white hover:bg-white/10'
+                    }`}
+                    aria-label={`Switch to ${tab.label} tab`}
+                    aria-current={activeTab === tab.id ? 'page' : undefined}
+                  >
+                    <span className="font-mono text-[10px] opacity-70">{tab.icon}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-teal-500/10">
+            <div className="px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-teal-300/50 font-medium font-sans">
+                Imperfect Form
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Workout Tab - Game Area */}
-          {activeTab === 'workout' && (
+          {(activeTab === 'workout' || !hasTrained) && (
             <div className="flex-1 flex flex-col">
-              {/* Game Area */}
               <div className="relative z-10 flex-grow">
                 <GameWrapper />
               </div>
 
-              {/* Feature Showcase Cards - Below Game */}
-              <div className="md:hidden px-4 pb-20 pt-4 space-y-4">
-                <QuestDashboard />
-                <ChallengeWidget />
-                <AchievementShowcase />
-              </div>
+              {hasTrained && (
+                <>
+                  <div className="md:hidden px-4 pb-20 pt-4 space-y-4">
+                    <QuestDashboard />
+                    <ChallengeWidget />
+                    <AchievementShowcase />
+                  </div>
 
-              {/* Desktop: Collapsible Feature Panel */}
-              <div className="hidden md:block fixed bottom-0 left-0 right-0 z-0">
-                <button
-                  onClick={() => setShowDashboard(!showDashboard)}
-                  className="absolute -top-10 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-2 rounded-t-lg font-bold text-xs flex items-center gap-2 shadow-lg hover:bg-yellow-400 transition-colors"
-                >
-                  {showDashboard ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-                  {showDashboard ? 'Hide Features' : 'Show Features'}
-                </button>
-                <div
-                  className={`bg-black/95 backdrop-blur-md border-t border-gray-800 transition-all duration-300 ${
-                    showDashboard ? 'max-h-[40vh] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
-                  }`}
-                >
-                  <div className="grid grid-cols-4 gap-4 p-4 overflow-y-auto max-h-[40vh]">
-                    <div>
-                      <QuestDashboard compact />
-                    </div>
-                    <div>
-                      <AchievementShowcase compact />
-                    </div>
-                    <div>
-                      <ChallengeWidget />
-                    </div>
-                    <div>
-                      <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Activity className="w-4 h-4 text-green-400" />
-                          <span className="text-xs font-bold text-white uppercase tracking-wider">
-                            Quick Actions
-                          </span>
+                  <div className="hidden md:block fixed bottom-0 left-0 right-0 z-0">
+                    <button
+                      onClick={() => setShowDashboard(!showDashboard)}
+                      className="absolute -top-10 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-2 rounded-t-lg font-bold text-xs flex items-center gap-2 shadow-lg hover:bg-yellow-400 transition-colors"
+                    >
+                      {showDashboard ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                      {showDashboard ? 'Hide Features' : 'Show Features'}
+                    </button>
+                    <div
+                      className={`bg-black/95 backdrop-blur-md border-t border-gray-800 transition-all duration-300 ${
+                        showDashboard
+                          ? 'max-h-[40vh] opacity-100'
+                          : 'max-h-0 opacity-0 overflow-hidden'
+                      }`}
+                    >
+                      <div className="grid grid-cols-4 gap-4 p-4 overflow-y-auto max-h-[40vh]">
+                        <div>
+                          <QuestDashboard compact />
                         </div>
-                        <div className="space-y-2">
-                          <button className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
-                            View Leaderboard
-                          </button>
-                          <button className="w-full px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg transition-colors">
-                            Share Ghost
-                          </button>
+                        <div>
+                          <AchievementShowcase compact />
+                        </div>
+                        <div>
+                          <ChallengeWidget />
+                        </div>
+                        <div>
+                          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Activity className="w-4 h-4 text-green-400" />
+                              <span className="text-xs font-bold text-white uppercase tracking-wider">
+                                Quick Actions
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              <button className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
+                                View Leaderboard
+                              </button>
+                              <button className="w-full px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold rounded-lg transition-colors">
+                                Share Ghost
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           )}
 
-          {/* Dashboard Tab */}
-          {activeTab === 'dashboard' && (
+          {hasTrained && activeTab === 'dashboard' && (
             <div className="flex-1 px-4 py-6 space-y-6 overflow-y-auto pb-24">
               <div className="max-w-2xl mx-auto space-y-6">
-                {/* Hero Stats */}
                 <HeroSection />
-
-                {/* Quests */}
                 <QuestDashboard />
-
-                {/* Achievements */}
                 <AchievementShowcase />
-
-                {/* Leaderboard */}
                 <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                    🏆 Top Performers
+                    Top Performers
                   </h3>
                   <Leaderboard limit={5} onViewMore={handleViewMore} />
                 </div>
@@ -254,8 +260,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Challenges Tab */}
-          {activeTab === 'challenges' && (
+          {hasTrained && activeTab === 'challenges' && (
             <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
               <div className="max-w-2xl mx-auto">
                 <ChallengeWidget />
@@ -263,8 +268,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Roadmap Tab */}
-          {activeTab === 'roadmap' && (
+          {hasTrained && activeTab === 'roadmap' && (
             <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
               <div className="max-w-2xl mx-auto">
                 <RoadmapSection />
@@ -273,32 +277,33 @@ export default function Home() {
           )}
         </div>
 
-        {/* Mobile: Bottom Tab Bar */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10">
-          <div className="grid grid-cols-4 gap-1 p-2">
-            {[
-              { id: 'workout', label: 'Workout', emoji: '💪' },
-              { id: 'dashboard', label: 'Stats', emoji: '📊' },
-              { id: 'challenges', label: 'Ghost', emoji: '👻' },
-              { id: 'roadmap', label: 'Progress', emoji: '🗺️' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as ActiveTab)}
-                className={`flex flex-col items-center py-2 rounded-lg transition-all ${
-                  activeTab === tab.id
-                    ? 'text-yellow-400 bg-yellow-500/10'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                <span className="text-lg">{tab.emoji}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider mt-1">
-                  {tab.label}
-                </span>
-              </button>
-            ))}
+        {/* Mobile bottom tabs — only after first session */}
+        {hasTrained && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10">
+            <div className="grid grid-cols-4 gap-1 p-2">
+              {[
+                { id: 'workout', label: 'Workout' },
+                { id: 'dashboard', label: 'Stats' },
+                { id: 'challenges', label: 'Ghost' },
+                { id: 'roadmap', label: 'Progress' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as ActiveTab)}
+                  className={`flex flex-col items-center py-2 rounded-lg transition-all ${
+                    activeTab === tab.id
+                      ? 'text-yellow-400 bg-yellow-500/10'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-wider">
+                    {tab.label}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Expanded Leaderboard Modal */}

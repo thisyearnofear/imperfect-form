@@ -108,5 +108,15 @@ angle. It's a 3D reference that a screen can't provide. Most AI fitness
 coaches only give on-screen feedback — Imperfect Form turns AI corrections
 into physical demonstration, closing the feedback loop.
 
+**Company posture (imperfectform.fun):** Approachable physical AI for
+movement. Better form for millions through crafted game design and UI —
+not gym-bro slogans, not a sterile robotics brochure. Screens coach first;
+robots prove the category and become the gym-station wedge. Game-loop
+chrome (XP, ghosts, chain) is earned after the first coached feel.
+
+**App one-liner:** Private camera coaching with game-quality feedback, and
+a path into physical AI that can show the correction. (See
+`src/lib/brandPositioning.ts`.)
+
 **Stack:** Python, MediaPipe (station) / MoveNet (browser), MuJoCo, Cyberwave
 SDK, Nova 2, SmolVLA, SO-101.

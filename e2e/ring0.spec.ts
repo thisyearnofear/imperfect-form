@@ -4,6 +4,8 @@ import { test, expect } from '@playwright/test';
  * Ring 0 guard - the product's most important invariant (docs/NORTH_STAR.md):
  * the core loop must be fully usable with NO wallet, NO sign-in, NOTHING.
  * If any of these fail, someone has re-gated the front door.
+ *
+ * Also locks the day-0 foyer: brand + vision before XP/emoji chrome.
  */
 
 test.describe('Ring 0 - wallet-free core loop', () => {
@@ -14,6 +16,19 @@ test.describe('Ring 0 - wallet-free core loop', () => {
       localStorage.setItem('imf_seenOnboarding_v1', '1'); // skip onboarding modal
       localStorage.setItem('imf_skipWalletIntro', '1'); // skip intro dialog
     });
+  });
+
+  test('day-0 foyer sells form understanding, not XP chrome', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByText('Imperfect Form').first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/Your camera understands your form/i)).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByText(/Pose runs on your device/i)).toBeVisible();
+    // Game-loop tabs stay earned — not the foyer
+    await expect(page.getByRole('button', { name: /Switch to Dashboard/i })).toHaveCount(0);
+    const start = page.locator('#startButton');
+    await expect(start).toBeEnabled();
   });
 
   test('START is enabled for a guest with no wallet', async ({ page }) => {

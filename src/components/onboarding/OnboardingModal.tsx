@@ -1,50 +1,36 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Activity, Trophy, Zap, ChevronRight, X } from 'lucide-react';
+import { Eye, Hand, Sparkles, ChevronRight, X } from 'lucide-react';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { BRAND, ONBOARDING_STEPS } from '@/lib/brandPositioning';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ONBOARDING STEPS
-//
-// First-touch surface, calm register ("night studio"): readable, unhurried,
-// trust-first. Each step's accent previews one of the app's three registers -
-// teal (recovery/trust), gold (arcade), purple (lab).
-// ═══════════════════════════════════════════════════════════════════════════
+/**
+ * First-touch surface — calm "night studio" register.
+ * Beats follow brand positioning: understand → show → progress (crafted play).
+ * Never leads with XP, wallets, or chain.
+ */
 
-const STEPS = [
+const STEP_UI = [
   {
-    icon: Activity,
-    title: 'Your camera coaches you',
-    description:
-      'Push-ups and squats are counted in real time using pose detection that runs entirely on your device. No video is recorded or uploaded — no wearables, just you.',
+    icon: Eye,
     accent: 'text-teal-300',
     bg: 'bg-teal-400/10',
     border: 'border-teal-400/20',
   },
   {
-    icon: Trophy,
-    title: 'Compete when you want to',
-    description:
-      'Save reps to on-chain leaderboards, race ghost replays of top performers, and climb the ranks — or just train for yourself.',
-    accent: 'text-yellow-400',
-    bg: 'bg-yellow-400/10',
-    border: 'border-yellow-400/20',
+    icon: Hand,
+    accent: 'text-amber-300',
+    bg: 'bg-amber-400/10',
+    border: 'border-amber-400/20',
   },
   {
-    icon: Zap,
-    title: 'Grow a little every day',
-    description:
-      'Earn XP, complete daily quests, unlock achievements, and get AI form analysis after each session. Your streak keeps you honest.',
-    accent: 'text-purple-400',
-    bg: 'bg-purple-400/10',
-    border: 'border-purple-400/20',
+    icon: Sparkles,
+    accent: 'text-violet-300',
+    bg: 'bg-violet-400/10',
+    border: 'border-violet-400/20',
   },
-];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ONBOARDING MODAL
-// ═══════════════════════════════════════════════════════════════════════════
+] as const;
 
 interface OnboardingModalProps {
   onComplete?: () => void;
@@ -57,24 +43,20 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
 
   if (hasSeen || dismissed) return null;
 
-  const current = STEPS[step];
-  const isLast = step === STEPS.length - 1;
-  const Icon = current.icon;
+  const copy = ONBOARDING_STEPS[step];
+  const ui = STEP_UI[step];
+  const isLast = step === ONBOARDING_STEPS.length - 1;
+  const Icon = ui.icon;
 
-  const handleNext = () => {
-    if (isLast) {
-      markSeen();
-      setDismissed(true);
-      onComplete?.();
-    } else {
-      setStep((s) => s + 1);
-    }
-  };
-
-  const handleSkip = () => {
+  const finish = () => {
     markSeen();
     setDismissed(true);
     onComplete?.();
+  };
+
+  const handleNext = () => {
+    if (isLast) finish();
+    else setStep((s) => s + 1);
   };
 
   return (
@@ -82,40 +64,42 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 font-sans"
       role="dialog"
       aria-modal="true"
-      aria-label="Welcome to Imperfect Form"
+      aria-label={`Welcome to ${BRAND.name}`}
     >
       <div className="relative w-full max-w-sm bg-teal-500/5 border border-teal-500/20 backdrop-blur-xl rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(45,212,191,0.1)] animate-slide-up">
-        {/* Skip button */}
         <button
-          onClick={handleSkip}
+          onClick={finish}
           className="absolute top-3 right-3 p-1.5 rounded-full text-teal-300/40 hover:text-teal-200 hover:bg-white/5 transition-colors"
           aria-label="Skip onboarding"
         >
           <X size={16} />
         </button>
 
-        {/* Step indicator */}
-        <div className="flex gap-1.5 px-6 pt-6 pb-0">
-          {STEPS.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                i <= step ? 'bg-teal-400/70' : 'bg-white/10'
-              }`}
-            />
-          ))}
+        <div className="px-6 pt-6 pb-0 space-y-3">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-teal-300/50 font-medium">
+            {BRAND.name}
+          </p>
+          <div className="flex gap-1.5">
+            {ONBOARDING_STEPS.map((_, i) => (
+              <div
+                key={ONBOARDING_STEPS[i].id}
+                className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                  i <= step ? 'bg-teal-400/70' : 'bg-white/10'
+                }`}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Content */}
         <div className="px-6 py-8 flex flex-col items-center text-center gap-5">
-          <div className={`p-4 rounded-2xl ${current.bg} border ${current.border}`}>
-            <Icon size={36} className={current.accent} aria-hidden="true" />
+          <div className={`p-4 rounded-2xl ${ui.bg} border ${ui.border}`}>
+            <Icon size={36} className={ui.accent} aria-hidden="true" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-lg font-light tracking-wide text-teal-50">{current.title}</h2>
+            <h2 className="text-lg font-light tracking-wide text-teal-50">{copy.title}</h2>
             <p className="text-sm font-light text-teal-100/60 leading-relaxed">
-              {current.description}
+              {copy.description}
             </p>
           </div>
 
@@ -125,13 +109,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
               className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-50 text-sm font-medium hover:bg-teal-500/30 transition-colors"
               aria-label={isLast ? 'Get started' : 'Next step'}
             >
-              {isLast ? "Let's begin" : 'Next'}
+              {isLast ? 'Begin' : 'Next'}
               <ChevronRight size={16} aria-hidden="true" />
             </button>
 
             {!isLast && (
               <button
-                onClick={handleSkip}
+                onClick={finish}
                 className="w-full py-2 text-xs font-light text-teal-300/40 hover:text-teal-200 transition-colors"
                 aria-label="Skip tutorial"
               >
@@ -141,10 +125,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
           </div>
         </div>
 
-        {/* Step counter */}
         <div className="pb-4 text-center">
           <span className="text-xs font-light text-teal-300/30">
-            {step + 1} of {STEPS.length}
+            {step + 1} of {ONBOARDING_STEPS.length}
           </span>
         </div>
       </div>
