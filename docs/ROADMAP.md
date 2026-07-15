@@ -17,8 +17,15 @@
   sign-in; workouts merge into a wallet on connect
 - Recovery register (breath cooldown + per-exercise stretches)
 - Staged post-workout flow: celebrate → recover → analyze
-- Ring 0 e2e guard (`e2e/ring0.spec.ts`) — START, camera primer, and the
-  workout boot sequence are asserted to work without a wallet
+- Ring 0 e2e guard (`e2e/ring0.spec.ts`) — 4/4 passing ✅:
+  - START is enabled for a guest with no wallet
+  - first START shows the camera primer before any permission prompt
+  - primer "not now" backs out without starting
+  - returning guest (primer seen) starts directly
+- Tailwind v4 (`@tailwindcss/postcss`) — migrated `globals.css` to
+  `@import "tailwindcss"` + `@config` compat; fixed design-token spacing
+  collision that was silently breaking `max-w-sm`, `max-w-md`, and other
+  named-scale utilities; Google Fonts moved to `<link>` in `layout.tsx`
 
 **Shipped (Ring 1/2 — earned upgrades):**
 

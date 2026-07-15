@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
 @import "../styles/leaderboard.css";
 @import "../styles/filters.css";
 @import "../styles/network-selector.css";
@@ -6,10 +8,6 @@
 @import "../styles/split-flap.css";
 @import "../styles/mobile-optimizations.css";
 @import "../styles/chain-effects.css";
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* Base styles */
 body,

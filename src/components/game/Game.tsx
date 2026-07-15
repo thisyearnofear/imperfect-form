@@ -630,7 +630,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className={isMobile ? 'touch-manipulation' : ''}
+        className={`${isMobile ? 'touch-manipulation' : ''}${showCameraPrimer ? ' pointer-events-none' : ''}`}
       >
         {/* Top-right control buttons - orientation lock only */}
         <div className="absolute top-2 right-2 flex gap-1 z-20">
@@ -766,8 +766,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         />
       </div>
       {showCameraPrimer && (
-        <div className="fixed inset-0 z-[90] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-teal-500/20 bg-teal-500/5 overflow-hidden">
+        <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-teal-500/20 bg-teal-500/5 overflow-y-auto max-h-[calc(100vh-2rem)]">
             <CameraPrimer
               onEnable={() => {
                 markCameraPrimerSeen();

@@ -1,6 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 import { designTokens } from './src/lib/designTokens.ts';
 
+// Only the numeric spacing keys (0,1,2,3...) are safe to merge into Tailwind's
+// core spacing scale. The semantic names (xs, sm, md, lg, xl) must be kept
+// separate — Tailwind uses those same names for built-in size presets
+// (max-w-sm, text-sm, etc.) and spreading them would override those defaults.
+const numericSpacing = Object.fromEntries(
+  Object.entries(designTokens.spacing).filter(([k]) => /^\d+$/.test(k))
+);
+
 export default {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
@@ -46,9 +54,11 @@ export default {
           focus: designTokens.colors.interactive.focus,
         },
       },
-      // Spacing from design tokens
+      // Spacing from design tokens — numeric keys only.
+      // Semantic names (xs/sm/md/lg/xl) are intentionally excluded to avoid
+      // overriding Tailwind's built-in named size presets (max-w-sm, text-sm…)
       spacing: {
-        ...designTokens.spacing,
+        ...numericSpacing,
       },
       // Font sizes
       fontSize: {

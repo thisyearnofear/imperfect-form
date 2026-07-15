@@ -23,7 +23,7 @@ const REASSURANCES = [
 
 const CameraPrimer: React.FC<CameraPrimerProps> = ({ onEnable, onCancel }) => {
   return (
-    <div className="flex flex-col items-center justify-center gap-6 p-6 h-full min-h-[320px] bg-black font-sans text-center">
+    <div className="flex flex-col items-center justify-center gap-4 p-6 min-h-[320px] bg-black font-sans text-center">
       <div className="relative flex items-center justify-center">
         <div className="absolute h-20 w-20 rounded-full bg-teal-400/10 blur-2xl" />
         <span className="text-4xl" aria-hidden>

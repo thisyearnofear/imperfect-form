@@ -48,7 +48,7 @@ All tokens centralized in `src/lib/designTokens.ts` with utilities:
 
 ### Tailwind Mapping
 
-Complete Tailwind v3 configuration maps all design tokens:
+Tailwind v4 configuration (compat mode via `@config`) maps all design tokens:
 
 - Colors: `bg-primary`, `text-success`, `border-error`, network colors
 - Spacing: Direct scale mapping (p-2, m-4, gap-6, etc.)

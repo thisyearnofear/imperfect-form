@@ -47,8 +47,14 @@ pnpm lint:fix
 
 - `src/lib/designTokens.ts` - Single source of truth (colors, spacing, typography, shadows, transitions, z-index, sizes, breakpoints)
 - `src/hooks/useDesignTokens.ts` - Type-safe token access
-- `tailwind.config.js` - Full Tailwind v3 mapping
+- `tailwind.config.js` - Tailwind v4 compat config (loaded via `@config` in `globals.css`)
 - `src/lib/designTokens.ts` - Includes `validateTokenUsage()` for color migration guidance
+
+> **⚠️ Spacing token caution:** Only numeric keys from `designTokens.spacing`
+> (`0, 1, 2, 3…`) are spread into `theme.extend.spacing` via the `numericSpacing`
+> filter in `tailwind.config.js`. The semantic names (`xs/sm/md/lg/xl`) are
+> intentionally excluded — they override Tailwind's built-in named-scale
+> utilities (`max-w-sm`, `text-sm`, etc.) with wrong values.
 
 **Implementation Pattern**:
 
