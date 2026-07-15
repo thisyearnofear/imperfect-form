@@ -41,7 +41,8 @@
   Marketing landing deferred until acquisition needs category copy outside the cabinet.
 
 **Next (product surface):** Dedicated marketing/landing route only if foyer
-doorways fail web acquisition.
+doorways fail web acquisition. Progress spark + Arcade UI cues are earned
+surfaces (Celebrate / dashboard) — keep charts out of the day-0 foyer.
 
 **Shipped (Ring 1/2 — earned upgrades):**
 

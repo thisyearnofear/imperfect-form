@@ -6,6 +6,7 @@
 export {
   speakCoachLine,
   stopCoachSpeech,
+  isCoachSpeaking,
   getStoredTtsPreference,
   setStoredTtsPreference,
 } from './speakCoachLine';

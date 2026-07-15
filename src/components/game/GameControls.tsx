@@ -4,6 +4,7 @@ import { AgentInsightTray } from './AgentInsightTray';
 import { BiomechanicalState } from '@/types/mediapipe';
 import { getIntentDef } from '@/lib/brandPositioning';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
+import { playUiCue } from '@/lib/uiSound';
 
 interface GameControlsProps {
   started: boolean;
@@ -41,6 +42,11 @@ export const GameControls: React.FC<GameControlsProps> = ({
   const { controls, register } = getIntentDef(intent);
   const busy = started || calmSessionActive;
 
+  const handleStart = () => {
+    playUiCue('press', { register });
+    onStart();
+  };
+
   return (
     <div
       id="controls"
@@ -61,7 +67,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
           </div>
           <button
             id="stopButton"
-            className={`touch-manipulation font-bold touch-target stop-button-discrete transition-all duration-200 hover:scale-105 active:scale-95 ${
+            className={`touch-manipulation font-bold touch-target stop-button-discrete ${
               isMobile
                 ? 'py-4 px-6 text-base min-h-[56px] min-w-[80px] rounded-xl shadow-lg'
                 : 'py-3 px-5 text-sm'
@@ -98,10 +104,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
           <div className="flex gap-2">
             <button
               id="startButton"
-              className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
+              className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target feel-press"
               style={{ minHeight: isMobile ? '50px' : 'auto' }}
               aria-label={controls.primaryAria}
-              onClick={onStart}
+              onClick={handleStart}
               disabled={busy}
               title={busy ? 'Already in session' : controls.primaryAria}
             >
@@ -109,7 +115,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
             </button>
             <button
               id="resetButton"
-              className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
+              className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target feel-press"
               style={{ minHeight: isMobile ? '50px' : 'auto' }}
               aria-label={controls.secondaryAria}
               onClick={onReset}

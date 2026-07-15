@@ -16,6 +16,7 @@ import {
   type TtsProviderPreference,
 } from '@/config/ttsProviders';
 import { getStoredTtsPreference, setStoredTtsPreference } from '@/lib/tts';
+import { getUiSoundPreferred, setUiSoundPreferred } from '@/lib/uiSound';
 
 interface SplitFlapTextProps {
   text: string;
@@ -103,6 +104,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   const [animationStep, setAnimationStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [ttsPref, setTtsPref] = useState<TtsProviderPreference>('auto');
+  const [uiSoundOn, setUiSoundOn] = useState(true);
   const { progress } = useXpProgress();
   const { wallet, platform, farcasterProvider } = usePlatform();
 
@@ -116,6 +118,10 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
       });
     }
   }, [mode]);
+
+  useEffect(() => {
+    setUiSoundOn(getUiSoundPreferred());
+  }, []);
 
   useEffect(() => {
     setTtsPref(getStoredTtsPreference());
@@ -197,7 +203,8 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         },
         { key: 'b', text: 'VOICE COACH', desc: voiceEnabled ? 'enabled' : 'disabled' },
         { key: 'c', text: 'VOICE ENGINE', desc: ttsPreferenceLabel(ttsPref) },
-        { key: 'd', text: 'Back to profile!', desc: '' },
+        { key: 'd', text: 'UI SOUND', desc: uiSoundOn ? 'enabled' : 'disabled' },
+        { key: 'e', text: 'Back to profile!', desc: '' },
       ],
       profile: [
         {
@@ -248,6 +255,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
     progress.currentLevel,
     voiceEnabled,
     ttsPref,
+    uiSoundOn,
   ]);
 
   useEffect(() => {
@@ -284,6 +292,10 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           setTtsPref(next);
           setStoredTtsPreference(next);
         } else if (key === 'd') {
+          const next = !uiSoundOn;
+          setUiSoundOn(next);
+          setUiSoundPreferred(next);
+        } else if (key === 'e') {
           onModeChange('profile');
         }
         break;
@@ -314,11 +326,16 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           onClick={() => handleItemClick(instruction.key)}
           style={{
             cursor:
-              (mode === 'settings' && (instruction.key === 'a' || instruction.key === 'd')) ||
+              (mode === 'settings' &&
+                (instruction.key === 'a' ||
+                  instruction.key === 'b' ||
+                  instruction.key === 'c' ||
+                  instruction.key === 'd' ||
+                  instruction.key === 'e')) ||
               (mode === 'profile' && instruction.key === 's')
                 ? 'pointer'
                 : 'default',
-            transition: 'all 0.3s ease',
+            transition: 'opacity 0.3s ease, transform 0.2s ease',
             opacity: 1,
           }}
         >

@@ -105,6 +105,14 @@ export async function speakCoachLine(
   }
 }
 
+/** True while TTS audio or browser speech is actively playing. */
+export function isCoachSpeaking(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (window.speechSynthesis?.speaking) return true;
+  if (currentAudio && !currentAudio.paused && !currentAudio.ended) return true;
+  return false;
+}
+
 /** Cancel any in-flight browser or audio speech. */
 export function stopCoachSpeech(): void {
   if (typeof window !== 'undefined' && window.speechSynthesis) {

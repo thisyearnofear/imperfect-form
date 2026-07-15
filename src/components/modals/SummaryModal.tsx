@@ -28,6 +28,9 @@ import { xpService, StreakInfo } from '@/services/XPService';
 import { Achievement } from '@/services/AchievementService';
 import { useScaleTransition } from '@/hooks';
 import { ghostService } from '@/services/GhostService';
+import { ProgressSpark } from '@/components/progress';
+import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/recentProgress';
+import { playUiCue } from '@/lib/uiSound';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -105,6 +108,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const { progress, pbs } = useXpProgress();
   const { checkNewAchievements } = useAchievements();
   const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
+  const [progressSeries, setProgressSeries] = useState<ProgressSeries | null>(null);
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === 'farcaster';
@@ -163,7 +167,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     }
   }, [shouldAutoDismiss, isOpen, onClose]);
 
-  // Calculate streak and achievements when modal opens
+  // Calculate streak, achievements, and progress spark when modal opens
   React.useEffect(() => {
     if (isOpen) {
       getLocalWorkouts().then(async (workouts) => {
@@ -179,10 +183,15 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           }, 5000);
         }
       });
+      getRecentProgressSeries().then(setProgressSeries);
+      if (sessionRegister === 'arcade') {
+        playUiCue('success', { register: sessionRegister });
+      }
     } else {
       setNewAchievements([]);
+      setProgressSeries(null);
     }
-  }, [isOpen, checkNewAchievements]);
+  }, [isOpen, checkNewAchievements, sessionRegister]);
 
   // Post-session AI report (post mode)
   const handleGenerateReport = () => {
@@ -500,7 +509,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               </div>
             )}
             {isPB && submissionStatus !== 'success' && (
-              <div className="mt-2 animate-bounce">
+              <div className="mt-2 summary-pb-badge">
                 <span className="bg-primary text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
                   🔥 NEW PERSONAL BEST!
                 </span>
@@ -557,7 +566,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   role="tab"
                   aria-selected={effectiveStage === s.key}
                   onClick={() => setStage(s.key)}
-                  className={`summary-stage-tab px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
+                  className={`summary-stage-tab px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                     effectiveStage === s.key ? 'is-active' : ''
                   }`}
                 >
@@ -782,6 +791,22 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           {/* ===== CELEBRATE: the trophy moment ===== */}
           {effectiveStage === 'celebrate' && (
             <>
+              {repCount > 0 && progressSeries && (
+                <ProgressSpark
+                  points={progressSeries.points}
+                  register={
+                    sessionRegister === 'studio'
+                      ? 'studio'
+                      : sessionRegister === 'calm'
+                        ? 'calm'
+                        : 'arcade'
+                  }
+                  title={sessionRegister === 'studio' ? 'Form signal' : 'Recent progress'}
+                  animate={!isPB}
+                  className="summary-progress-spark"
+                />
+              )}
+
               {/* Highlight Card */}
               {highlightCardUrl && (
                 <div className="space-y-3">
@@ -822,7 +847,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
               <button
                 onClick={() => setStage('recover')}
-                className="w-full px-4 py-3 bg-gradient-to-r from-teal-600/60 to-teal-700/60 hover:from-teal-500/60 hover:to-teal-600/60 text-teal-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-teal-400/20"
+                className="w-full px-4 py-3 bg-gradient-to-r from-teal-600/60 to-teal-700/60 hover:from-teal-500/60 hover:to-teal-600/60 text-teal-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-[transform,background-color,border-color] duration-200 border border-teal-400/20 active:scale-[0.96]"
               >
                 🌬️ Cool Down →
               </button>

@@ -193,6 +193,14 @@ class QuestServiceImpl {
 
       // Notify about quest completion to refresh XP
       getDataSyncService().notify('quests_completed', history);
+
+      // Arcade tactile confirm — gated inside playUiCue
+      try {
+        const { playUiCue } = await import('@/lib/uiSound');
+        playUiCue('success', { register: 'arcade' });
+      } catch {
+        // Fail silent
+      }
     }
   }
 

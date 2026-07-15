@@ -85,6 +85,24 @@ See [NORTH_STAR.md](./NORTH_STAR.md) (UI optionality).
 | Coach   | Studio   | Form coaching Begin; summary opens on Analyze      |
 | Breathe | Calm     | Camera-free RecoveryCard panel (breathe + stretch) |
 
+### Delight / progress (register-aware)
+
+Progress is a **curve**, not the live HUD counter. Charts belong on Celebrate
+and the earned home dashboard (`totalXp > 0`) — never the day-0 foyer.
+
+- **Data:** `getRecentProgressSeries()` in `src/lib/progress/recentProgress.ts`
+  (last ~7 local sessions → XP estimate series).
+- **Viz:** lightweight `ProgressSpark` (`src/components/progress/`) — SVG/CSS,
+  register language (arcade gold / studio teal / calm muted). No chart-kit
+  vendor lock until it proves sticky.
+- **UI sound:** Cuelume via `src/lib/uiSound.ts` — Arcade Train only (`press` on
+  START, `success` on celebrate open / quest complete). Gated by `prefUiSound`
+  (settings **UI SOUND**) and muted while coach TTS is speaking. Never during
+  Calm breathe phases.
+- **Feel:** `tabular-nums` on HUD, `active:scale(0.96)` ≤300ms on primary
+  controls, specific transition properties (not `transition: all`), concentric
+  radii on summary stage tabs / spark.
+
 ### Coach TTS (demo voice sync)
 
 **Source of truth:** `src/config/ttsProviders.ts` + `src/lib/tts/speakCoachLine.ts`.
