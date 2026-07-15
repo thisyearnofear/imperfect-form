@@ -1,10 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
+
+// Override when localhost:3000 is occupied: PW_BASE_URL=http://localhost:3100
+const baseURL = process.env.PW_BASE_URL || 'http://localhost:3000';
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 60000,
   retries: 1,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -37,7 +41,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:3000',
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
   },
 });

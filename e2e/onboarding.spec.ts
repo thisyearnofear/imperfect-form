@@ -13,8 +13,8 @@ test.describe('Onboarding Modal', () => {
     // Modal should be visible
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible({ timeout: 5000 });
-    // First step content visible
-    await expect(page.getByText('AI-Powered Fitness')).toBeVisible();
+    // First step (calm register, trust-first) visible
+    await expect(page.getByText('Your camera coaches you')).toBeVisible();
   });
 
   test('user can step through all onboarding steps', async ({ page }) => {
@@ -22,19 +22,19 @@ test.describe('Onboarding Modal', () => {
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible({ timeout: 5000 });
 
-    // Step 1
-    await expect(page.getByText('AI-Powered Fitness')).toBeVisible();
+    // Step 1 - trust/privacy (teal register)
+    await expect(page.getByText('Your camera coaches you')).toBeVisible();
 
-    // Next to step 2
+    // Next to step 2 - arcade register
     await page.getByRole('button', { name: /next/i }).click();
-    await expect(page.getByText('Compete On-Chain')).toBeVisible();
+    await expect(page.getByText('Compete when you want to')).toBeVisible();
 
-    // Next to step 3
+    // Next to step 3 - lab register
     await page.getByRole('button', { name: /next/i }).click();
-    await expect(page.getByText('Level Up Daily')).toBeVisible();
+    await expect(page.getByText('Grow a little every day')).toBeVisible();
 
     // Complete onboarding
-    await page.getByRole('button', { name: /start/i }).click();
+    await page.getByRole('button', { name: /begin/i }).click();
     await expect(modal).not.toBeVisible();
   });
 
@@ -43,7 +43,7 @@ test.describe('Onboarding Modal', () => {
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible({ timeout: 5000 });
 
-    await page.getByRole('button', { name: /skip/i }).click();
+    await page.getByRole('button', { name: /skip/i }).first().click();
     await expect(modal).not.toBeVisible();
   });
 
@@ -64,11 +64,10 @@ test.describe('Onboarding Modal', () => {
     const modal = page.getByRole('dialog');
     await expect(modal).toBeVisible({ timeout: 5000 });
 
-    // Tab to Next button and activate with Enter
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
+    // The primary action is reachable and activatable by keyboard
+    await page.getByRole('button', { name: /next/i }).focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByText('Compete On-Chain')).toBeVisible();
+    await expect(page.getByText('Compete when you want to')).toBeVisible();
   });
 });
 

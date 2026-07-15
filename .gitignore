@@ -143,3 +143,6 @@ data/
 test-results/
 test-report.json
 playwright-report/
+
+# Qoder CLI local settings
+.qoder/settings.local.json

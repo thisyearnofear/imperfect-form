@@ -11,7 +11,6 @@ import { ONCHAIN_MODES } from '@/components/game/ModeSwitch';
 import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
 import { VerificationIntegration } from '@/components/verification';
 import SelfVerificationModal from '@/components/verification/SelfVerificationModal';
-import { getMemoryClient } from '@/services/memoryApi';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 import { useFadeTransition } from '@/hooks';
 import { designTokens } from '@/lib/designTokens';
@@ -131,6 +130,15 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [reportStatus, setReportStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [personality] = useCoachPersonality();
 
+  // Staged post-workout flow: celebrate -> recover -> analyze.
+  // Each stage gets its own emotional register instead of one long scroll.
+  const [stage, setStage] = useState<'celebrate' | 'recover' | 'analyze'>('celebrate');
+  React.useEffect(() => {
+    if (isOpen) setStage('celebrate');
+  }, [isOpen]);
+  // A successful submission always shows the analyze stage (success lives there)
+  const effectiveStage = submissionStatus === 'success' ? 'analyze' : stage;
+
   // Debug logging for submission status changes
   React.useEffect(() => {
     if (process.env.NODE_ENV !== 'production') {
@@ -223,7 +231,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         const verified = await contract.isVerifiedHuman(walletAddress);
         if (isMounted) {
           setIsVerified(verified);
-          console.log('SummaryModal: User verification status on Celo:', verified);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('SummaryModal: User verification status on Celo:', verified);
+          }
         }
       } catch (err) {
         console.error('SummaryModal: Error checking verification status:', err);
@@ -484,7 +494,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             )}
             {isPB && submissionStatus !== 'success' && (
               <div className="mt-2 animate-bounce">
-                <span className="bg-[primary] text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
+                <span className="bg-primary text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
                   🔥 NEW PERSONAL BEST!
                 </span>
               </div>
@@ -516,22 +526,52 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         preventClose={false}
         maxWidth="520px"
       >
-        <div className={`space-y-6 ${transitionClass}`}>
-          {/* Network Info - Minimal badge */}
-          <div className="text-center">
-            <span
-              className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${
-                NETWORK_STYLES[networkType].bg
-              } ${NETWORK_STYLES[networkType].text} ${isCelo ? 'text-green-100' : ''}`}
-            >
-              {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
-            </span>
-          </div>
+        <div className={`space-y-5 ${transitionClass}`}>
+          {/* Stage stepper: celebrate -> recover -> analyze */}
+          {submissionStatus !== 'success' && (
+            <div className="flex justify-center gap-1.5" role="tablist" aria-label="Summary stages">
+              {(
+                [
+                  { key: 'celebrate', label: 'Score', emoji: '🏆' },
+                  { key: 'recover', label: 'Recover', emoji: '🌬️' },
+                  { key: 'analyze', label: 'Analyze', emoji: '🧪' },
+                ] as const
+              ).map((s) => (
+                <button
+                  key={s.key}
+                  role="tab"
+                  aria-selected={effectiveStage === s.key}
+                  onClick={() => setStage(s.key)}
+                  className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
+                    effectiveStage === s.key
+                      ? 'bg-yellow-500 text-black shadow-[0_0_10px_rgba(252,177,49,0.4)]'
+                      : 'bg-white/5 text-gray-400 hover:text-gray-200'
+                  }`}
+                >
+                  {s.emoji} {s.label}
+                </button>
+              ))}
+            </div>
+          )}
 
-          {/* Wallet Connection */}
-          {!effectiveAddress ? (
+          {/* Network Info - Minimal badge (analyze: on-chain context) */}
+          {effectiveStage === 'analyze' && (
+            <div className="text-center">
+              <span
+                className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${
+                  NETWORK_STYLES[networkType].bg
+                } ${NETWORK_STYLES[networkType].text} ${isCelo ? 'text-green-100' : ''}`}
+              >
+                {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
+              </span>
+            </div>
+          )}
+
+          {/* Wallet connect lives ONLY in analyze - the rest of the modal is Ring 0 */}
+          {effectiveStage === 'analyze' && !effectiveAddress && ONCHAIN_MODES.includes(mode) && (
             <UniversalConnectButton size="lg" />
-          ) : (
+          )}
+          {effectiveStage === 'analyze' && effectiveAddress && (
             <div className="space-y-4">
               {/* Celo-specific: Show submission choice directly in main dialog */}
               {chainId === 42220 && submissionStatus === 'idle' && submissionType === null && (
@@ -624,29 +664,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
-              {/* Self Verification Modal */}
-              <SelfVerificationModal
-                isOpen={showVerificationModal}
-                onClose={() => {
-                  setShowVerificationModal(false);
-                }}
-                onSuccess={handleVerificationSuccess}
-                onError={(error) => {
-                  console.error('Verification failed:', error);
-                  setShowVerificationModal(false);
-                }}
-                userAddress={effectiveAddress || ''}
-              />
-
-              {/* Local-only modes (no leaderboard contracts yet) skip submission */}
-              {!ONCHAIN_MODES.includes(mode) && submissionStatus !== 'success' && (
-                <div className="rounded-xl bg-black/20 p-3 text-center border border-white/5">
-                  <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-                    💾 Saved locally — on-chain leaderboards coming for this exercise
-                  </span>
-                </div>
-              )}
-
               {/* Submit Score component - only show if not successfully submitted and level is 5+ */}
               {ONCHAIN_MODES.includes(mode) && submissionStatus !== 'success' && (
                 <div className="rounded-xl bg-black/20 p-4 text-center border border-white/5">
@@ -673,7 +690,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                               );
                               if (workout) {
                                 markWorkoutSynced(workout.id, txHash, networkName as any);
-                                console.log('✅ Local workout marked as synced:', workout.id);
+                                if (process.env.NODE_ENV !== 'production') {
+                                  console.log('✅ Local workout marked as synced:', workout.id);
+                                }
                               }
                             });
                           }
@@ -702,7 +721,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         </span>
                       </div>
                       <p className="text-[10px] text-gray-400">
-                        Reach <span className="text-[primary] font-bold">Level 5</span> to sync your
+                        Reach <span className="text-primary font-bold">Level 5</span> to sync your
                         workouts to the blockchain.
                       </p>
                       <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
@@ -716,6 +735,40 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
+              {/* Success message - show when successfully submitted */}
+              {submissionStatus === 'success' && (
+                <div className="rounded-xl bg-green-500/10 p-6 text-center space-y-4 border border-green-500/30 animate-in fade-in zoom-in duration-300">
+                  <div className="text-green-400 text-xl font-black tracking-tight">
+                    MISSION SUCCESSFUL
+                  </div>
+                  <div className="text-[10px] text-green-400/60 uppercase font-black tracking-widest">
+                    Onchain data stored
+                  </div>
+                  {/* Play Again Button */}
+                  {onPlayAgain && (
+                    <button
+                      onClick={() => {
+                        onPlayAgain();
+                        onClose();
+                      }}
+                      className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-blue-500 flex items-center justify-center gap-2"
+                      style={{
+                        fontFamily: "'Press Start 2P', monospace",
+                        fontSize: '11px',
+                      }}
+                    >
+                      <span>🎮</span>
+                      <span>PLAY AGAIN</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ===== CELEBRATE: the trophy moment ===== */}
+          {effectiveStage === 'celebrate' && (
+            <>
               {/* Highlight Card */}
               {highlightCardUrl && (
                 <div className="space-y-3">
@@ -754,52 +807,62 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
-              {/* Recovery register: optional breath cooldown + stretch */}
-              {repCount > 0 && <RecoveryCard mode={mode} />}
-
-              {/* Post-session report - the "lab register" clinical card */}
-              {(sessionSummary || reportStatus !== 'idle') && (
-                <LabAnalysisCard
-                  report={report}
-                  status={reportStatus}
-                  personality={personality}
-                  onGenerate={handleGenerateReport}
-                />
-              )}
-
-              {/* Success message - show when successfully submitted */}
-              {submissionStatus === 'success' && (
-                <div className="rounded-xl bg-green-500/10 p-6 text-center space-y-4 border border-green-500/30 animate-in fade-in zoom-in duration-300">
-                  <div className="text-green-400 text-xl font-black tracking-tight">
-                    MISSION SUCCESSFUL
-                  </div>
-                  <div className="text-[10px] text-green-400/60 uppercase font-black tracking-widest">
-                    Onchain data stored
-                  </div>
-                  {/* Play Again Button */}
-                  {onPlayAgain && (
-                    <button
-                      onClick={() => {
-                        onPlayAgain();
-                        onClose();
-                      }}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-blue-500 flex items-center justify-center gap-2"
-                      style={{
-                        fontFamily: "'Press Start 2P', monospace",
-                        fontSize: '11px',
-                      }}
-                    >
-                      <span>🎮</span>
-                      <span>PLAY AGAIN</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+              <button
+                onClick={() => setStage('recover')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-teal-600/60 to-teal-700/60 hover:from-teal-500/60 hover:to-teal-600/60 text-teal-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-teal-400/20"
+              >
+                🌬️ Cool Down →
+              </button>
+            </>
           )}
 
-          {/* Social sharing buttons - Enhanced for mini app context */}
-          {typeof window !== 'undefined' && window.transactionHash && (
+          {/* ===== RECOVER: the night studio ===== */}
+          {effectiveStage === 'recover' && (
+            <>
+              {repCount > 0 && <RecoveryCard mode={mode} />}
+              <button
+                onClick={() => setStage('analyze')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600/60 to-violet-700/60 hover:from-purple-500/60 hover:to-violet-600/60 text-purple-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-purple-400/20"
+              >
+                🧪 Analyze →
+              </button>
+            </>
+          )}
+
+          {/* ===== ANALYZE: the lab (works for guests too) ===== */}
+          {effectiveStage === 'analyze' && (sessionSummary || reportStatus !== 'idle') && (
+            <LabAnalysisCard
+              report={report}
+              status={reportStatus}
+              personality={personality}
+              onGenerate={handleGenerateReport}
+            />
+          )}
+          {effectiveStage === 'analyze' &&
+            !ONCHAIN_MODES.includes(mode) &&
+            submissionStatus !== 'success' && (
+              <div className="rounded-xl bg-black/20 p-3 text-center border border-white/5">
+                <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+                  💾 Saved locally — on-chain leaderboards coming for this exercise
+                </span>
+              </div>
+            )}
+          {effectiveStage === 'analyze' && submissionStatus !== 'success' && onPlayAgain && (
+            <button
+              onClick={() => {
+                onPlayAgain();
+                onClose();
+              }}
+              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-200 shadow-lg border-2 border-blue-500 flex items-center justify-center gap-2"
+              style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '11px' }}
+            >
+              <span>🎮</span>
+              <span>PLAY AGAIN</span>
+            </button>
+          )}
+
+          {/* Social sharing - available to Ring 0 guests too, not gated on tx */}
+          {effectiveStage === 'analyze' && repCount > 0 && (
             <div className="border-t border-gray-700 pt-4">
               <div className="flex flex-col items-center space-y-4">
                 {/* Enhanced Farcaster integration */}
@@ -868,7 +931,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     onClose();
                   }
                 }}
-                className="w-full px-3 py-2 bg-gradient-to-r from-[primary] to-[primary-dark] text-black font-bold rounded text-xs hover:from-[primary-dark] hover:to-[primary] transition-all"
+                className="w-full px-3 py-2 bg-gradient-to-r from-primary to-primary-dark text-black font-bold rounded text-xs hover:from-primary-dark hover:to-primary transition-all"
               >
                 {onViewLeaderboard ? '🏆 LEADERBOARD' : '← BACK TO MENU'}
               </button>
@@ -876,7 +939,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           )}
 
           {/* Add Mini App prompt - show after successful workout in Farcaster only */}
-          {isInMiniApp && repCount > 0 && (
+          {effectiveStage === 'celebrate' && isInMiniApp && repCount > 0 && (
             <div className="border-t border-gray-700 pt-4">
               <div className="text-center space-y-3">
                 <p className="text-xs text-purple-300 font-medium">📌 Pin app</p>
@@ -886,34 +949,51 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           )}
 
           {/* Challenge Friends - Ghost Challenge Sharing */}
-          {repCount > 0 && sessionSummary?.trace && sessionSummary.trace.length > 0 && (
-            <div className="border-t border-gray-700 pt-4">
-              <div className="flex flex-col items-center space-y-3">
-                <div className="text-xs uppercase tracking-widest text-gray-400 font-bold text-center">
-                  👻 Challenge Friends
-                </div>
-                <p className="text-[10px] text-gray-500 text-center px-2">
-                  Share your workout as a ghost trace for friends to race against
-                </p>
-                <div className="flex gap-2 w-full">
-                  <button
-                    onClick={() => handleChallengeShare('warpcast')}
-                    className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>🟣</span>
-                    <span>Warpcast</span>
-                  </button>
-                  <button
-                    onClick={() => handleChallengeShare('twitter')}
-                    className="flex-1 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>𝕏</span>
-                    <span>Twitter</span>
-                  </button>
+          {effectiveStage === 'celebrate' &&
+            repCount > 0 &&
+            sessionSummary?.trace &&
+            sessionSummary.trace.length > 0 && (
+              <div className="border-t border-gray-700 pt-4">
+                <div className="flex flex-col items-center space-y-3">
+                  <div className="text-xs uppercase tracking-widest text-gray-400 font-bold text-center">
+                    👻 Challenge Friends
+                  </div>
+                  <p className="text-[10px] text-gray-500 text-center px-2">
+                    Share your workout as a ghost trace for friends to race against
+                  </p>
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={() => handleChallengeShare('warpcast')}
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>🟣</span>
+                      <span>Warpcast</span>
+                    </button>
+                    <button
+                      onClick={() => handleChallengeShare('twitter')}
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>𝕏</span>
+                      <span>Twitter</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+          {/* Self Verification Modal - mounted regardless of stage/wallet branch */}
+          <SelfVerificationModal
+            isOpen={showVerificationModal}
+            onClose={() => {
+              setShowVerificationModal(false);
+            }}
+            onSuccess={handleVerificationSuccess}
+            onError={(error) => {
+              console.error('Verification failed:', error);
+              setShowVerificationModal(false);
+            }}
+            userAddress={effectiveAddress || ''}
+          />
         </div>
       </AccessibleDialog>
 
@@ -926,12 +1006,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             {newAchievements.map((achievement, index) => (
               <div
                 key={achievement.id}
-                className="bg-black/80 backdrop-blur-md border-2 border-[primary] rounded-2xl p-6 flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(252,177,49,0.4)] max-w-sm animate-fade-in animate-slide-up"
+                className="bg-black/80 backdrop-blur-md border-2 border-primary rounded-2xl p-6 flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(252,177,49,0.4)] max-w-sm animate-fade-in animate-slide-up"
                 style={{ animationDelay: `${index * 200}ms` }}
               >
                 <span className="text-5xl">{achievement.icon}</span>
                 <div className="text-center">
-                  <div className="text-[primary] font-black text-xl uppercase tracking-tighter">
+                  <div className="text-primary font-black text-xl uppercase tracking-tighter">
                     Achievement Unlocked!
                   </div>
                   <div className="text-white font-bold text-lg">{achievement.name}</div>
