@@ -1,115 +1,105 @@
-# Memory API Integration Roadmap
+# Roadmap: Physical AI Coaching
 
-## Overview
+> The north star (see [NORTH_STAR.md](./NORTH_STAR.md)): AI watches you
+> exercise, understands your form, and a robot arm physically demonstrates the
+> correction. Everything on this roadmap serves that loop.
 
-**App**: [Imperfect Form](https://imperfectform.fun) - AI Fitness Tracking with Blockchain Verification
-**Goal**: Integrate Memory API for unified cross-platform identity and social features
-**Timeline**: 2 weeks to demo-ready implementation
-**Current Status**: Strong foundation with existing Farcaster/Neynar integration
+## Where we are
 
-## Week 1: Core Memory API Integration
+**Shipped (Ring 0 — wallet-free core loop):**
 
-### Day 1-2: Setup & Dependencies
+- MoveNet pose detection in-browser (no video leaves the device)
+- Exercise engine with per-rep form scoring: push-ups, squats, pull-ups,
+  jumps, bicep curls
+- AI coaching (Gemini / Venice / AWS Bedrock Nova 2) with three personas
+  (SNEL / STEDDIE / RASTA)
+- Guest identity (`imf_guestId`) — PBs, XP, streaks, ghosts work with no
+  sign-in; workouts merge into a wallet on connect
+- Recovery register (breath cooldown + per-exercise stretches)
+- Staged post-workout flow: celebrate → recover → analyze
+- Ring 0 e2e guard (`e2e/ring0.spec.ts`) — START, camera primer, and the
+  workout boot sequence are asserted to work without a wallet
 
-- [ ] Add Memory SDK: `pnpm add @memoryxyz/sdk`
-- [ ] Create Memory API service (`src/services/memoryApi.ts`)
-  - Unified profile endpoint wrapper
-  - Response caching layer
-  - Rate limiting & error handling
-- [ ] Add environment variables for Memory API keys
+**Shipped (Ring 1/2 — earned upgrades):**
 
-### Day 3-4: Identity Graph Integration
+- Multi-chain leaderboards (Base, Celo, Polygon, Monad)
+- Self Protocol verified leaderboard on Celo mainnet
+- Farcaster mini-app + Farcaster / Twitter sharing
+- AI Highlight Card at the celebrate moment
+- Ghost challenges (URL-safe trace compression)
 
-- [ ] Extend `src/utils/neynarResolver.ts` with Memory API calls
-- [ ] Create unified profile resolver combining:
-  - Farcaster profiles (existing)
-  - Twitter/X profiles (via Memory)
-  - ENS/Basenames (via Memory)
-  - Cross-platform follower counts
-- [ ] Update profile caching to include Memory data
+**Scaffolded, not yet live:**
 
-### Day 5-7: Enhanced Social Features
+- `coach-station/` — Python websocket bridge from browser FormEvents to a
+  local station (see NORTH_STAR § Architecture)
+- Web tap into `WorkoutEventBridge` — the exercise engine already emits form
+  issues with current + target joint angles
 
-- [ ] Update `src/components/game/Leaderboard.tsx`
-  - Add "Unified Profile" tab
-  - Display cross-platform follower counts
-  - Show personality archetypes from social graphs
-- [ ] Enhance wallet connection UI (`src/components/wallet/UnifiedConnectButton.tsx`)
-  - Display unified identity badges
-  - Show cross-platform verification status
+## What's next
 
-## Week 2: Demo & Polish
+### Milestone 1 — Sim choreography (this milestone is the demo)
 
-### Day 8-10: Memory API Demo Page
+Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
 
-- [ ] Create `src/app/memory-demo/page.tsx`
-  - Live unified profile viewer
-  - Suggested follows based on fitness interests
-  - Personality archetype badges
-  - Follow-graph leaderboard visualization
-- [ ] Add demo API routes:
-  - `/api/memory/unified-profile` - Serverless wrapper
-  - `/api/memory/follow-recommendations` - AI-powered suggestions
+- [ ] Wire `coach-station/` to FormEvent stream at `ws://localhost:8765`
+- [ ] Fail-silent client behavior when no station is running (already the
+      product-design intent — verify in-browser code)
+- [ ] Three demonstration primitives against the MuJoCo twin
+      (`cw.affect("simulation")`):
+  - [ ] `demonstrate_extension(target_deg)` — pull-up extension 150° → 155°
+  - [ ] `demonstrate_tempo()` — pace correction
+  - [ ] `mirror_asymmetry()` — L/R asymmetry >30°
+- [ ] Per-persona motion profiles: SNEL slow-deliberate, STEDDIE
+      smooth-centered, RASTA fast-energetic
+- [ ] Nova 2 voice track synced to the primitive being demonstrated
 
-### Day 11-12: Testing & Optimization
+### Milestone 2 — Hardware bring-up (SO-101 "Coach")
 
-- [ ] Implement caching for Memory API responses
-- [ ] Add graceful fallbacks when API unavailable
-- [ ] Test cross-platform identity resolution
-- [ ] Performance optimization for leaderboard queries
+- [ ] `cyberwave pair` on the edge machine
+- [ ] `affect("live")` behind a physical dead-man switch
+- [ ] Workspace limits (joint range, torque, reach clamps)
+- [ ] One-primitive-at-a-time policy (no compound motions until sim →
+      hardware transfer is validated)
 
-### Day 13-14: Documentation & Deployment
+### Milestone 3 — Data flywheel (SmolVLA)
 
-- [ ] Update README.md with Memory integration details
-- [ ] Create architecture diagram showing Memory API usage
-- [ ] Deploy to Vercel with demo URL
-- [ ] Record 2-minute demo video
-- [ ] Prepare submission package for Memory API Builder program
+- [ ] Every coached session records to Cyberwave in LeRobot-format episodes
+- [ ] Built-in face anonymization on-device (privacy-first stays true)
+- [ ] Episode slicing per exercise / per persona / per form-issue class
+- [ ] SmolVLA fine-tuning experiment #1: extension-cue → arm motion
+      end-to-end (small closed dataset, sim-only first)
 
-## Technical Implementation Details
+### Milestone 4 — Coach station wedge
 
-### Memory API Endpoints to Use
+- [ ] Kiosk mode for a paired camera + arm at a gym
+- [ ] Per-station telemetry back to Cyberwave
+- [ ] Persona selection for the station (matches app)
 
-1. **Identity Graph Query**: Get unified profile from wallet address
-2. **Social Graph Query**: Access follow relationships across platforms
-3. **Metadata Query**: Retrieve follower counts, verification status
+## What we're deliberately not doing
 
-### Key Components to Modify
+- **Cross-platform identity aggregation.** The Memory Protocol integration
+  (Phase 6) is descoped: upstream `memoryproto.co` returns
+  `DEPLOYMENT_DISABLED`, our API key 500s, and the graceful-degradation path
+  already covers what users actually see. The Farcaster + Neynar path we
+  already own delivers the identity slice we need. If a cross-platform graph
+  becomes a real requirement, we'll pick a live provider then.
+- **Gating training on-chain.** Ring 0 stays wallet-free. On-chain is an
+  earned upgrade at value moments (PB, streak milestone, verified board).
+- **Lower-body demonstrations on SO-101.** A desk arm can't credibly show
+  squat depth or jump form. The flagship demos stay upper-body: push-ups and
+  pull-ups.
 
-- `src/utils/neynarResolver.ts` - Add Memory API calls
-- `src/components/game/Leaderboard.tsx` - Enhanced social features
-- `src/components/wallet/UnifiedConnectButton.tsx` - Unified identity display
+## Success criteria
 
-### Privacy & Compliance
-
-- User consent flows for cross-platform data access
-- Data minimization (only query necessary identity data)
-- Clear opt-in/opt-out mechanisms
-- Rate limiting to prevent abuse
-
-## Success Metrics
-
-- [ ] Unified profile resolution working for 95%+ of users
-- [ ] Demo page showing cross-platform identity graphs
-- [ ] Leaderboard displaying social insights and archetypes
-- [ ] <2s response times for profile queries
-- [ ] Clean submission package ready for Memory API Builder program
-
-## Risk Mitigation
-
-- **Fallback Strategy**: Graceful degradation to existing Farcaster-only profiles
-- **Caching**: Redis/memory cache to reduce API calls and improve performance
-- **Error Handling**: Comprehensive error boundaries and user-friendly messages
-- **Rate Limiting**: Built-in throttling to respect API limits
-
-## Dependencies
-
-- `@memoryxyz/sdk` - Memory Protocol SDK
-- Existing Neynar integration (already implemented)
-- Multi-chain wallet support (already implemented)
+- **Cohort demo:** camera on, curls, robot moves in MuJoCo. No wallet
+  popup on stage. Ring 0 e2e still passes.
+- **Post-demo:** at least one paired hardware session recorded to Cyberwave
+  in LeRobot format.
+- **Post-post-demo:** SmolVLA fine-tune on real recorded episodes runs
+  end-to-end in sim, even if quality is poor.
 
 ---
 
-**Live App**: https://imperfectform.fun
-**GitHub**: [Repository Link]
-**Demo**: https://imperfectform.fun/memory-demo (post-implementation)
+**Live app:** https://imperfectform.fun
+**North star:** [NORTH_STAR.md](./NORTH_STAR.md)
+**Station scaffold:** [`coach-station/`](../coach-station/)

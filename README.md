@@ -35,7 +35,8 @@ Visit `http://localhost:3000` to see the app running.
 
 ## Documentation
 
-- [Development Guide](./docs/DEVELOPMENT.md) - Setup, testing, and security
+- [North Star](./docs/NORTH_STAR.md) - Physical AI coaching, the three rings, the data flywheel
+- [Roadmap](./docs/ROADMAP.md) - Physical AI milestones: sim → hardware → SmolVLA
 - [Architecture Overview](./docs/ARCHITECTURE.md) - Self Protocol, theming, and cross-chain UX
+- [Development Guide](./docs/DEVELOPMENT.md) - Setup, testing, and security
 - [Deployment Guide](./docs/DEPLOYMENT.md) - Smart contracts and network configuration
-- [Memory Integration Roadmap](./docs/ROADMAP.md) - Memory API implementation plan
