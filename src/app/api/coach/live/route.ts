@@ -17,6 +17,11 @@ import {
 import { analyzeForm, convertToLegacyFormat, CoachingAnalysis } from '@/lib/coachingEngine';
 import { getOrCreateSessionId, updateSessionMetrics } from '@/lib/sessionManager';
 import { callAIProvider } from '@/lib/aiCoachProviders';
+import {
+  getCoachInfo,
+  getDefaultPersonality,
+  getPersonalityPromptStyle,
+} from '@/lib/coachPersonalities';
 
 /**
  * Multi-Provider Live Coach API
@@ -68,7 +73,7 @@ function generateCoachingFeedback(
 export async function POST(request: NextRequest) {
   try {
     const body: CoachRequest = await request.json();
-    const { mode, metrics, repCount, preferredProvider, userId } = body;
+    const { mode, metrics, repCount, preferredProvider, userId, personality } = body;
 
     // Validate input
     if (!mode || !metrics) {
@@ -151,7 +156,9 @@ export async function POST(request: NextRequest) {
     if (!hasCriticalIssues) {
       try {
         // Build prompt for AI enhancement
-        const COACHING_PROMPT = `You are Coachy, an expert biomechanics coach analyzing real-time exercise form.
+        const coach = getCoachInfo(personality || getDefaultPersonality());
+        const COACHING_PROMPT = `You are ${coach.name} ${coach.emoji}, an expert biomechanics coach analyzing real-time exercise form.
+Persona: ${coach.theme} — ${getPersonalityPromptStyle(coach.personality)}.
 Current Analysis:
 - Mode: ${mode}
 - Rep: ${repCount}

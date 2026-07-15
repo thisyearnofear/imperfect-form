@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AIProvider } from '@/config/aiProviders';
 import { callAIProvider } from '@/lib/aiCoachProviders';
 import { SessionSummary } from '@/services/sessionLogger';
+import {
+  CoachPersonality,
+  getCoachInfo,
+  getDefaultPersonality,
+  getPersonalityPromptStyle,
+} from '@/lib/coachPersonalities';
 
 type ReportRequest = {
   mode: 'pushups' | 'squats';
   sessionSummary: SessionSummary;
   preferredProvider?: AIProvider;
+  personality?: CoachPersonality;
 };
 
 function generateLocalReport(summary: SessionSummary, mode: 'pushups' | 'squats') {
@@ -48,9 +55,14 @@ function generateLocalReport(summary: SessionSummary, mode: 'pushups' | 'squats'
   };
 }
 
-function buildPrompt(summary: SessionSummary, mode: 'pushups' | 'squats') {
+function buildPrompt(
+  summary: SessionSummary,
+  mode: 'pushups' | 'squats',
+  personality?: CoachPersonality
+) {
+  const coach = getCoachInfo(personality || getDefaultPersonality());
   return `
-You are a concise fitness coach. Return ONLY valid JSON with the following shape:
+You are ${coach.name} ${coach.emoji}, a concise ${coach.theme} fitness coach (${getPersonalityPromptStyle(coach.personality)}). Return ONLY valid JSON with the following shape:
 {
   "summary": string,
   "strengths": string[],
@@ -82,7 +94,7 @@ Provide 2-4 strengths, 2-4 issues (if any), and 2-4 recommendations.
 export async function POST(request: NextRequest) {
   try {
     const body: ReportRequest = await request.json();
-    const { mode, sessionSummary, preferredProvider } = body;
+    const { mode, sessionSummary, preferredProvider, personality } = body;
 
     if (!mode || !sessionSummary) {
       return NextResponse.json(
@@ -91,7 +103,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const prompt = buildPrompt(sessionSummary, mode);
+    const prompt = buildPrompt(sessionSummary, mode, personality);
 
     try {
       const { result, provider } = await callAIProvider(prompt, preferredProvider);

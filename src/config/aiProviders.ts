@@ -4,6 +4,7 @@
  * Manages multiple AI providers with automatic fallback:
  * 1. Gemini 2.0 Flash (Primary) - Fast, accurate, cost-effective
  * 2. Venice AI (Fallback) - Privacy-focused, uncensored alternative
+ * 3. AWS Bedrock Nova 2 Lite (Fallback / premium analysis) - ported from imperfectcoach
  *
  * Features:
  * - Automatic provider rotation on failure
@@ -12,7 +13,9 @@
  * - Privacy-first option via Venice
  */
 
-export type AIProvider = 'gemini' | 'venice' | 'local';
+import type { CoachPersonality } from '@/lib/coachPersonalities';
+
+export type AIProvider = 'gemini' | 'venice' | 'bedrock' | 'local';
 
 export interface AIProviderConfig {
   name: AIProvider;
@@ -69,6 +72,26 @@ export const AI_PROVIDERS: Partial<Record<AIProvider, AIProviderConfig>> = {
       maxTokens: 32000,
     },
   },
+  bedrock: {
+    name: 'bedrock',
+    enabled: true,
+    priority: 3,
+    // Nova 2 Lite is cross-region-inference only: the bare model ID
+    // (amazon.nova-2-lite-v1:0) is rejected at invoke time. Always use an
+    // inference profile ID ('global.' works from any region).
+    model: process.env.BEDROCK_MODEL_ID || 'global.amazon.nova-2-lite-v1:0',
+    apiKeyEnvVar: 'AWS_ACCESS_KEY_ID',
+    costPer1kTokens: {
+      input: 0.00006, // Nova Lite-class pricing (approximate)
+      output: 0.00024,
+    },
+    features: {
+      streaming: true,
+      vision: true,
+      toolCalling: true,
+      maxTokens: 300000,
+    },
+  },
 };
 
 export interface CoachRequest {
@@ -85,6 +108,7 @@ export interface CoachRequest {
   };
   repCount: number;
   preferredProvider?: AIProvider;
+  personality?: CoachPersonality; // Coach persona driving feedback tone (default RASTA)
   sessionId?: string; // Persistent session ID from client
 }
 
@@ -146,6 +170,13 @@ export function getAvailableProviders(): AIProviderConfig[] {
 export function isProviderConfigured(provider: AIProvider): boolean {
   const config = AI_PROVIDERS[provider];
   if (!config) return false;
+  if (provider === 'bedrock') {
+    // Bedrock accepts either an IAM key pair or a Bedrock API key
+    return Boolean(
+      (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) ||
+      process.env.AWS_BEARER_TOKEN_BEDROCK
+    );
+  }
   const apiKey = process.env[config.apiKeyEnvVar];
   return !!apiKey && apiKey.length > 0;
 }

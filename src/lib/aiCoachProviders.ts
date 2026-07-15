@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import {
   AIProvider,
   AI_PROVIDERS,
@@ -81,6 +82,45 @@ async function callVenice(prompt: string): Promise<any> {
   return JSON.parse(jsonMatch[0]);
 }
 
+let bedrockClient: BedrockRuntimeClient | null = null;
+
+function getBedrockClient(): BedrockRuntimeClient {
+  if (!bedrockClient) {
+    bedrockClient = new BedrockRuntimeClient({
+      region: process.env.AWS_REGION || 'us-east-1',
+    });
+  }
+  return bedrockClient;
+}
+
+async function callBedrock(prompt: string): Promise<any> {
+  const config = AI_PROVIDERS.bedrock;
+  if (!config) throw new Error('Bedrock provider config not found');
+
+  const response = await getBedrockClient().send(
+    new ConverseCommand({
+      modelId: config.model,
+      system: [{ text: 'You are a concise fitness coach. Always respond with valid JSON only.' }],
+      messages: [{ role: 'user', content: [{ text: prompt }] }],
+      inferenceConfig: { maxTokens: 512, temperature: 0.7 },
+    })
+  );
+
+  const text = (response.output?.message?.content ?? [])
+    .map((block) => ('text' in block && block.text) || '')
+    .join('');
+  if (!text) {
+    throw new Error(`Empty response from Bedrock (stopReason: ${response.stopReason})`);
+  }
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('Invalid response format from Bedrock');
+  }
+
+  return JSON.parse(jsonMatch[0]);
+}
+
 export async function callAIProvider(
   prompt: string,
   preferredProvider?: AIProvider
@@ -103,6 +143,8 @@ export async function callAIProvider(
         result = await callGemini(prompt);
       } else if (currentProvider === 'venice') {
         result = await callVenice(prompt);
+      } else if (currentProvider === 'bedrock') {
+        result = await callBedrock(prompt);
       } else {
         throw new Error(`Unknown provider: ${currentProvider}`);
       }
