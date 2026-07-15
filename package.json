@@ -22,6 +22,7 @@
     "test:pose:headed": "node scripts/test-pose-detection.cjs --headed",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
     "prepare": "husky install",
     "deploy:self": "hardhat run scripts/deploy-self-protocol.js --network celoMainnet",
     "self:switch-mainnet": "node scripts/switch-to-mainnet.js",

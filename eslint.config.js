@@ -46,7 +46,7 @@ export default [
     ],
   },
   {
-    files: ['next/src/**/*.{js,jsx,ts,tsx}'],
+    files: ['src/**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       parser: typescriptParser,
       ecmaVersion: 2022,
@@ -104,12 +104,6 @@ export default [
           message:
             'Use designTokens or Tailwind classes instead of hardcoded colors in style attributes',
         },
-      ],
-
-      // Warn on specific hardcoded hex colors
-      'no-warning-comments': [
-        'warn',
-        { terms: ['TODO:.*#fcb131', 'TODO:.*#[a-fA-F0-9]{6}'], location: 'any' },
       ],
     },
   },

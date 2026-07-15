@@ -338,8 +338,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     500
   );
 
-  if (!isVisible) return null;
-
   // Format exercise time to handle durations over 2 minutes correctly
   const formatExerciseTime = (seconds: number) => {
     if (seconds < 60) {
@@ -446,6 +444,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
     return `/api/screenshots?${params.toString()}`;
   }, [sessionSummary, repCount, isPB, progress.currentLevel, mode]);
+
+  if (!isVisible) return null;
 
   // Calculate scores for Celo submission choice
   const baseScore = repCount;

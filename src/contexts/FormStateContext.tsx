@@ -182,14 +182,13 @@ export function FormStateWrapper({
   validate?: () => FormValidationResult;
   className?: string;
 }) {
-  const { handleSubmit, isSubmitting, isLoading, status } = useFormState();
+  const { handleSubmit, validateForm } = useFormState();
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate if validation function provided
     if (validate) {
-      const { validateForm } = useFormState();
       const isValid = validateForm(validate);
       if (!isValid) return;
     }

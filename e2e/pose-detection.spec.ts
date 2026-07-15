@@ -197,7 +197,7 @@ test.describe('@pose-detection Pose Detection Cross-Platform', () => {
 
     // Wait for pose detection
     const poses = await page.evaluate(() => {
-      return new Promise((resolve) => {
+      return new Promise<Array<{ keypoints: Array<{ score: number }> }>>((resolve) => {
         window.addEventListener('posesDetected', (event: any) => {
           resolve(event.detail.poses);
         });
@@ -220,7 +220,7 @@ test.describe('@pose-detection Pose Detection Cross-Platform', () => {
 test.describe('@error Pose Detection Error Handling', () => {
   test('@error should categorize errors correctly', async ({ page }) => {
     const errorTypes = await page.evaluate(() => {
-      const errors = [];
+      const errors: string[] = [];
 
       // Simulate different error types
       const errorSources = [
@@ -247,7 +247,7 @@ test.describe('@error Pose Detection Error Handling', () => {
 
   test('@error should apply fallback strategies', async ({ page }) => {
     const fallbacksApplied = await page.evaluate(() => {
-      const fallbacks = [];
+      const fallbacks: string[] = [];
 
       window.addEventListener('poseDetectionFallback', (event: any) => {
         fallbacks.push(event.detail.action);

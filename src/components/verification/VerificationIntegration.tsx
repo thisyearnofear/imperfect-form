@@ -29,6 +29,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showNetworkSwitch, setShowNetworkSwitch] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const { wallet } = usePlatform();
   const { currentTheme } = useEnhancedChainTheme();
@@ -106,8 +107,6 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
       </div>
     );
   }
-
-  const [showDetails, setShowDetails] = useState(false);
 
   return (
     <>
