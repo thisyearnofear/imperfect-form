@@ -28,8 +28,6 @@ interface ExpandedLeaderboardModalProps {
   displayNames: Record<string, string>;
   isOpen: boolean;
   onClose: () => void;
-  // New prop for profile viewing
-  onViewProfile?: (userAddress: string) => void;
 }
 
 const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
@@ -38,7 +36,6 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
   displayNames,
   isOpen,
   onClose,
-  onViewProfile,
 }) => {
   const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
   const { wallet } = usePlatform();
@@ -122,14 +119,6 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
   const closeBreakdown = () => {
     setSelectedUser(null);
     setBreakdownType(null);
-  };
-
-  // Handle profile view with consistent behavior
-  const handleProfileView = (userAddress: string) => {
-    if (onViewProfile) {
-      onViewProfile(userAddress);
-    }
-    onClose(); // Close modal when switching to profile view
   };
 
   // Get dominant network for a user (network with highest score)
@@ -227,7 +216,6 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                           }
                           farcasterProfile={farcasterProfiles[entry.user]}
                           isVerified={verificationStatuses[entry.user] || false}
-                          onClick={() => handleProfileView(entry.user)}
                           size="sm"
                         />
                       </div>
@@ -305,7 +293,6 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                         }
                         farcasterProfile={farcasterProfiles[entry.user]}
                         isVerified={verificationStatuses[entry.user] || false}
-                        onClick={() => handleProfileView(entry.user)}
                         size="sm"
                       />
                     </div>
@@ -381,7 +368,6 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                           }
                           farcasterProfile={farcasterProfiles[entry.user]}
                           isVerified={verificationStatuses[entry.user] || false}
-                          onClick={() => handleProfileView(entry.user)}
                           size="sm"
                         />
                       </div>
@@ -465,7 +451,6 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                         }
                         farcasterProfile={farcasterProfiles[entry.user]}
                         isVerified={verificationStatuses[entry.user] || false}
-                        onClick={() => handleProfileView(entry.user)}
                         size="sm"
                       />
                     </div>

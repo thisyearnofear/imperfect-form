@@ -16,16 +16,8 @@ interface UnifiedConnectButtonProps {
   size?: 'sm' | 'md' | 'lg';
   showProfileWhenConnected?: boolean;
   // Enhanced props for clean 4-section layout
-  currentMode?:
-    | 'instructions'
-    | 'settings'
-    | 'profile'
-    | 'memory'
-    | 'memory-detail'
-    | 'profile-search';
-  onModeChange?: (
-    mode: 'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail' | 'profile-search'
-  ) => void;
+  currentMode?: 'instructions' | 'settings' | 'profile';
+  onModeChange?: (mode: 'instructions' | 'settings' | 'profile') => void;
   workoutStarted?: boolean;
 }
 
@@ -257,25 +249,6 @@ export default function UnifiedConnectButton({
                 </span>
               </button>
             )}
-
-            {/* Section 4: Memory Button */}
-            {onModeChange && (
-              <button
-                onClick={() =>
-                  !workoutStarted &&
-                  onModeChange(currentMode === 'memory' ? 'instructions' : 'memory')
-                }
-                disabled={workoutStarted}
-                className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation flex-1 ${
-                  currentMode === 'memory' ? 'bg-white/30' : ''
-                } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
-                aria-label={currentMode === 'memory' ? 'Back' : 'Open memory'}
-              >
-                <span className="text-white text-sm font-medium">
-                  {currentMode === 'memory' ? 'Back' : 'Memory'}
-                </span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -331,25 +304,6 @@ export default function UnifiedConnectButton({
             >
               <span className="text-white text-sm">
                 {currentMode === 'profile' ? 'Logout' : 'Profile'}
-              </span>
-            </button>
-          )}
-
-          {/* Section 4: Memory Button */}
-          {onModeChange && (
-            <button
-              onClick={() =>
-                !workoutStarted &&
-                onModeChange(currentMode === 'memory' ? 'instructions' : 'memory')
-              }
-              disabled={workoutStarted}
-              className={`bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 hover:bg-white/20 transition-colors touch-manipulation ${
-                currentMode === 'memory' ? 'bg-white/30' : ''
-              } ${workoutStarted ? 'opacity-50 cursor-not-allowed' : ''}`}
-              aria-label={currentMode === 'memory' ? 'Back' : 'Open memory'}
-            >
-              <span className="text-white text-sm">
-                {currentMode === 'memory' ? 'Back' : 'Memory'}
               </span>
             </button>
           )}

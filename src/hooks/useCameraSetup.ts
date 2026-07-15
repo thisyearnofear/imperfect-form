@@ -13,9 +13,7 @@ interface UseCameraSetupReturn {
   stopAllCameras: () => void;
 }
 
-export function useCameraSetup(
-  onProfileSearch?: (identifier: string) => void
-): UseCameraSetupReturn {
+export function useCameraSetup(): UseCameraSetupReturn {
   const [viewportDimensions, setViewportDimensions] = useState<ViewportDimensions>({
     height: 0,
     width: 0,
@@ -35,22 +33,11 @@ export function useCameraSetup(
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
 
-    const handleProfileSearchEvent = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.identifier && onProfileSearch) {
-        console.log('🔍 Profile search event received:', customEvent.detail.identifier);
-        onProfileSearch(customEvent.detail.identifier);
-      }
-    };
-
-    window.addEventListener('profileSearch', handleProfileSearchEvent);
-
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
-      window.removeEventListener('profileSearch', handleProfileSearchEvent);
     };
-  }, [onProfileSearch]);
+  }, []);
 
   const stopAllCameras = useCallback(() => {
     console.log('🛑 Stopping all cameras - using enhanced camera manager');

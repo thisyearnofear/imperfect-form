@@ -50,7 +50,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('workout');
   const [showDashboard, setShowDashboard] = useState(true);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
-  const [profileSearchTarget, setProfileSearchTarget] = useState<string | undefined>(undefined);
 
   const [leaderboardData, setLeaderboardData] = useState<{
     pushups: Score[];
@@ -69,12 +68,6 @@ export default function Home() {
   ) => {
     setLeaderboardData({ pushups, squats, displayNames });
     setShowExpandedLeaderboard(true);
-  };
-
-  const handleViewProfile = (userAddress: string) => {
-    console.log('🔍 Viewing profile for:', userAddress);
-    setProfileSearchTarget(userAddress);
-    setShowExpandedLeaderboard(false);
   };
 
   useEffect(() => {
@@ -179,7 +172,7 @@ export default function Home() {
             <div className="flex-1 flex flex-col">
               {/* Game Area */}
               <div className="relative z-10 flex-grow">
-                <GameWrapper profileSearchTarget={profileSearchTarget} />
+                <GameWrapper />
               </div>
 
               {/* Feature Showcase Cards - Below Game */}
@@ -315,7 +308,6 @@ export default function Home() {
         displayNames={leaderboardData.displayNames}
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
-        onViewProfile={handleViewProfile}
       />
 
       {/* First-time Mini App user prompt */}

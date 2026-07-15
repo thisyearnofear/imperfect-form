@@ -47,15 +47,6 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
     e.stopPropagation();
     if (onClick) {
       onClick();
-    } else {
-      // Default behavior: trigger profile search
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('profileSearch', {
-            detail: { identifier: userAddress },
-          })
-        );
-      }
     }
   };
 

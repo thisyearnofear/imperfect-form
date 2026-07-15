@@ -197,22 +197,7 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center space-x-2">
-                        <span
-                          className="font-bold cursor-pointer hover:underline transition-all duration-200 transform hover:scale-105 text-[#10b981] hover:text-green-300"
-                          style={{ color: '#10b981' }}
-                          onClick={() => {
-                            // Trigger profile search functionality
-                            // This would need to be passed as a prop or accessed via context
-                            // For now, we'll emit a custom event that the parent can listen to
-                            if (typeof window !== 'undefined') {
-                              window.dispatchEvent(
-                                new CustomEvent('profileSearch', {
-                                  detail: { identifier: score.user },
-                                })
-                              );
-                            }
-                          }}
-                        >
+                        <span className="font-bold text-[#10b981]" style={{ color: '#10b981' }}>
                           {displayName}
                         </span>
                         <VerificationBadge isVerified={true} size="sm" />
@@ -271,18 +256,8 @@ const VerifiedLeaderboard: React.FC<VerifiedLeaderboardProps> = ({ className }) 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-1">
                         <span
-                          className="font-bold text-xs truncate cursor-pointer hover:underline transition-all duration-200 transform hover:scale-105 text-[#10b981] hover:text-green-300"
+                          className="font-bold text-xs truncate text-[#10b981]"
                           style={{ color: '#10b981' }}
-                          onClick={() => {
-                            // Trigger profile search functionality
-                            if (typeof window !== 'undefined') {
-                              window.dispatchEvent(
-                                new CustomEvent('profileSearch', {
-                                  detail: { identifier: score.user },
-                                })
-                              );
-                            }
-                          }}
                         >
                           {displayName}
                         </span>

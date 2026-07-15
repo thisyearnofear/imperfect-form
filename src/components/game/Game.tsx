@@ -68,10 +68,9 @@ declare global {
 
 interface GameProps {
   thirdwebAddress?: string;
-  profileSearchTarget?: string;
 }
 
-const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => {
+const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Get universal wallet context first
   const { wallet, user } = usePlatform();
   const { address } = wallet;
@@ -85,12 +84,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
   const [voiceEnabled, setVoiceEnabled] = useState<boolean>(true);
 
-  const [currentMode, setCurrentMode] = useState<
-    'instructions' | 'settings' | 'profile' | 'memory' | 'memory-detail' | 'profile-search'
-  >('instructions');
-
-  // Profile search state
-  const [targetUser, setTargetUser] = useState<string | undefined>(undefined);
+  const [currentMode, setCurrentMode] = useState<'instructions' | 'settings' | 'profile'>(
+    'instructions'
+  );
 
   const [sessionSummary, setSessionSummary] = useState<
     import('@/services/sessionLogger').SessionSummary | null
@@ -151,7 +147,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
   // Swipe gesture handling for mobile using custom hook
   const { handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeGesture(
-    ['instructions', 'settings', 'profile', 'memory', 'memory-detail', 'profile-search'],
+    ['instructions', 'settings', 'profile'],
     currentMode,
     setCurrentMode
   );
@@ -172,26 +168,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   const { progress: xpProgress } = useXpProgress();
 
   // Handle profile search
-  const handleProfileSearch = useCallback((identifier: string) => {
-    console.log('🔍 Searching for profile:', identifier);
-    setTargetUser(identifier);
-    setCurrentMode('profile-search');
-  }, []);
 
   const handleWalletConnected = useCallback((address: string) => {
     if (process.env.NODE_ENV === 'development') {
       console.log('Game: Wallet connected with address:', address);
     }
   }, []);
-
-  // Handle external profile search target (from leaderboard clicks)
-  useEffect(() => {
-    if (profileSearchTarget) {
-      console.log('🔍 External profile search triggered:', profileSearchTarget);
-      setTargetUser(profileSearchTarget);
-      setCurrentMode('profile-search');
-    }
-  }, [profileSearchTarget]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -342,8 +324,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
     return hasFullscreenAPI;
   }, []);
 
-  // Camera setup, viewport tracking, and profile search events
-  const { stopAllCameras } = useCameraSetup(handleProfileSearch);
+  // Camera setup and viewport tracking
+  const { stopAllCameras } = useCameraSetup();
 
   // Log address changes for debugging
   useEffect(() => {
@@ -747,8 +729,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
                 isFullscreenAvailable={isFullscreenAvailable}
                 formattedStats={formattedStats}
                 isLoadingStats={statsLoading}
-                targetUser={targetUser}
-                onProfileSearch={handleProfileSearch}
               />
             </div>
           )}
