@@ -37,11 +37,22 @@ const nextConfig = {
   },
 
   // Turbopack configuration (Next.js 16 default)
-  // Disabled for production builds due to ESM compatibility issues with TensorFlow
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      // pose-detection statically imports the unused MediaPipe runtime; see stub
+      "@mediapipe/pose": "./src/stubs/mediapipe-pose.js",
+    },
+  },
 
   // Webpack configuration to fix runtime errors
   webpack: (config, { isServer }) => {
+    // Keep webpack builds consistent with the Turbopack alias above
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@mediapipe/pose": new URL("./src/stubs/mediapipe-pose.js", import.meta.url)
+        .pathname,
+    };
+
     // Fix for "Cannot read properties of undefined (reading 'call')" error
     // This ensures webpack runtime is properly handled
     if (!isServer) {

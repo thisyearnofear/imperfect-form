@@ -138,3 +138,8 @@ temp/
 # Mini app data persistence (runtime-generated)
 data/
 .blackboxcli/
+
+# Playwright/pose test artifacts
+test-results/
+test-report.json
+playwright-report/
