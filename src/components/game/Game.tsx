@@ -10,7 +10,6 @@ import { SummaryModal, ExpandedLeaderboardModal } from '@/components/modals';
 // Welcome component consolidated into InitializationScreen - import removed
 import { UniversalConnectButton } from '@/components/wallet';
 import { usePlatform } from '@/contexts/PlatformContext';
-import { useOnboarding } from '@/contexts/OnboardingContext';
 import ModeSwitch from './ModeSwitch';
 import { AgentInsightTray } from './AgentInsightTray';
 import useSwipeGesture from '@/hooks/useSwipeGesture';
@@ -159,9 +158,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
   const { lockLandscape, unlock } = useOrientationLock();
   const [isLandscapeLocked, setIsLandscapeLocked] = useState(false);
-
-  // Get onboarding context
-  const { setShouldShowTour } = useOnboarding();
 
   // Smart default mode based on user state
   const getDefaultMode = useCallback((): 'instructions' | 'settings' | 'profile' => {
@@ -814,22 +810,16 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           onOpenChange={(open) => {
             setShowIntroDialog(open);
             if (!open) {
-              // Trigger tour after intro dialog is closed
-              setTimeout(() => setShouldShowTour(true), 500);
             }
           }}
           onFarcaster={() => {
             // Placeholder: Open farcaster auth, then hide dialog
             window.open('/api/auth/farcaster', '_self');
             setShowIntroDialog(false);
-            // Trigger tour after auth flow
-            setTimeout(() => setShouldShowTour(true), 1000);
           }}
           onWallet={() => {
             // Placeholder: Simulate connect, then hide dialog
             setShowIntroDialog(false);
-            // Trigger tour after wallet connection
-            setTimeout(() => setShouldShowTour(true), 500);
           }}
           onSkip={() => {
             if (typeof window !== 'undefined') {
@@ -843,8 +833,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
               );
             }
             setShowIntroDialog(false);
-            // Trigger tour after skip
-            setTimeout(() => setShouldShowTour(true), 500);
           }}
         />
       )}

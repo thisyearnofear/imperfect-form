@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import InitializationScreen from '@/components/ui/InitializationScreen';
 import SimplifiedAppProviders from './SimplifiedAppProviders';
-import { OnboardingProvider, useOnboarding } from '@/contexts/OnboardingContext';
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 
 interface ClientOnlyProvidersProps {
   children: React.ReactNode;
@@ -44,18 +44,12 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
   }
 
   // Dynamically import components for client-only rendering
-  const Tour = dynamic(() => import('@/components/onboarding/Tour'), {
-    ssr: false,
-  });
   const ChainAmbient = dynamic(() => import('@/components/theme/ChainAmbient'), { ssr: false });
 
-  // Render with OnboardingProvider and conditionally show Tour
   function ProvidersWithOnboarding({ children }: { children: React.ReactNode }) {
-    const { shouldShowTour } = useOnboarding();
     return (
       <SimplifiedAppProviders>
         <ChainAmbient />
-        {shouldShowTour && <Tour />}
         {children}
       </SimplifiedAppProviders>
     );
