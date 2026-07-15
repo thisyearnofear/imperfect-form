@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@8.15.1",
+  "packageManager": "pnpm@10.33.2",
   "engines": {
     "node": ">=22.11.0"
   },
@@ -54,7 +54,7 @@
     "@stablelib/sha256": "^1.0.1",
     "@stablelib/x25519": "^1.0.3",
     "@supabase/supabase-js": "^2.45.4",
-    "@tanstack/react-query": "^5.85.5",
+    "@tanstack/react-query": "5.85.5",
     "@tensorflow-models/pose-detection": "^0.0.1",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-cpu": "^4.22.0",
@@ -64,7 +64,7 @@
     "dotenv": "^17.2.1",
     "ethers": "^6.15.0",
     "lucide-react": "1.14.0",
-    "next": "16.0.10",
+    "next": "16.2.6",
     "node-fetch": "^3.3.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -101,6 +101,7 @@
   },
   "pnpm": {
     "overrides": {
+      "@selfxyz/common>fs": "-",
       "@coinbase/wallet-sdk": "canary",
       "@farcaster/frame-sdk": "^0.0.60",
       "@farcaster/frame-wagmi-connector": "^0.0.40",
