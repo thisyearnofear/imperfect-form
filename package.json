@@ -35,8 +35,8 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1087.0",
     "@divvi/referral-sdk": "^2.3.0",
-    "@farcaster/frame-sdk": "^0.0.60",
-    "@farcaster/miniapp-wagmi-connector": "1.0.0",
+    "@farcaster/miniapp-sdk": "0.3.0",
+    "@farcaster/miniapp-wagmi-connector": "^2.0.0",
     "@google/genai": "2.11.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-tabs": "^1.1.13",
@@ -91,7 +91,6 @@
     "overrides": {
       "@selfxyz/common>fs": "-",
       "@coinbase/wallet-sdk": "canary",
-      "@farcaster/frame-sdk": "^0.0.60",
       "@walletconnect/ethereum-provider": "2.11.1",
       "@walletconnect/modal": "2.6.2",
       "@walletconnect/sign-client": "2.11.1",

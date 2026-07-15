@@ -307,7 +307,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     if (typeof window === 'undefined') return;
 
     try {
-      const { sdk } = await import('@farcaster/frame-sdk');
+      const { sdk } = await import('@farcaster/miniapp-sdk');
       setFarcasterSDK(sdk as unknown as FarcasterSDK);
 
       // Get user context first

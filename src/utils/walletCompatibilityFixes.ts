@@ -118,7 +118,7 @@ export async function checkWalletCompatibility(
     ) {
       // Check if Farcaster SDK is available
       try {
-        const { sdk } = await import('@farcaster/frame-sdk');
+        const { sdk } = await import('@farcaster/miniapp-sdk');
         if (!sdk.wallet) {
           issues.push('Farcaster wallet not available');
           solutions.push('Make sure you have a wallet connected in the Farcaster app');
@@ -291,7 +291,7 @@ export async function validateFarcasterWallet(): Promise<{ isValid: boolean; mes
     }
 
     // Try to get Farcaster SDK
-    const { sdk } = await import('@farcaster/frame-sdk');
+    const { sdk } = await import('@farcaster/miniapp-sdk');
 
     // Check if wallet is available
     if (!sdk.wallet) {

@@ -56,7 +56,7 @@ export default function FarcasterWalletDiagnostic({
     try {
       // Test 1: SDK Availability
       try {
-        const { sdk } = await import('@farcaster/frame-sdk');
+        const { sdk } = await import('@farcaster/miniapp-sdk');
         result.sdkAvailable = true;
 
         // Test 2: User Context

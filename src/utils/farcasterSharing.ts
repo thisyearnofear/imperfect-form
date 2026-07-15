@@ -33,7 +33,7 @@ export interface ShareResult {
  */
 export async function shareViaSdk(content: ShareContent): Promise<ShareResult> {
   try {
-    const { sdk } = await import('@farcaster/frame-sdk');
+    const { sdk } = await import('@farcaster/miniapp-sdk');
 
     if (!sdk.actions?.composeCast) {
       logger.warn('Farcaster SDK composeCast action not available');

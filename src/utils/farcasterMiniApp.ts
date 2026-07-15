@@ -30,7 +30,7 @@ export async function callFarcasterReady(): Promise<void> {
     logger.info('🎯 Attempting to call Farcaster ready()...');
 
     // Dynamically import the Farcaster SDK
-    const { sdk } = await import('@farcaster/frame-sdk');
+    const { sdk } = await import('@farcaster/miniapp-sdk');
     logger.info('🎯 Farcaster SDK imported successfully');
 
     if (sdk.actions?.ready) {
@@ -60,7 +60,7 @@ export async function callFarcasterReadyWithOptions(
   disableNativeGestures: boolean = false
 ): Promise<void> {
   try {
-    const { sdk } = await import('@farcaster/frame-sdk');
+    const { sdk } = await import('@farcaster/miniapp-sdk');
 
     if (sdk.actions?.ready) {
       // Add timeout to prevent hanging
@@ -196,7 +196,7 @@ export async function getEthereumProvider(): Promise<EthereumProvider | null> {
 
   try {
     // First, try to get Farcaster Mini App provider using the new API
-    const { sdk } = await import('@farcaster/frame-sdk');
+    const { sdk } = await import('@farcaster/miniapp-sdk');
 
     // Use the new getEthereumProvider() method instead of direct ethProvider access
     if (sdk.wallet?.getEthereumProvider) {
@@ -280,7 +280,7 @@ export async function getEthereumProvider(): Promise<EthereumProvider | null> {
  */
 export async function getFarcasterSupportedChains(): Promise<string[]> {
   try {
-    const { sdk } = await import('@farcaster/frame-sdk');
+    const { sdk } = await import('@farcaster/miniapp-sdk');
 
     if (sdk.getChains) {
       const chains = await sdk.getChains();
@@ -300,7 +300,7 @@ export async function getFarcasterSupportedChains(): Promise<string[]> {
  */
 export async function switchFarcasterChain(chainId: number): Promise<boolean> {
   try {
-    const { sdk } = await import('@farcaster/frame-sdk');
+    const { sdk } = await import('@farcaster/miniapp-sdk');
 
     if (!sdk.wallet?.ethProvider) {
       logger.warn('🎯 Farcaster wallet provider not available');
@@ -529,7 +529,7 @@ export async function applyBrowserSpecificFixes(): Promise<boolean> {
     if (isFarcasterMiniApp()) {
       try {
         // In some cases, Farcaster SDK needs to be initialized properly
-        const { sdk } = await import('@farcaster/frame-sdk');
+        const { sdk } = await import('@farcaster/miniapp-sdk');
         // The ready method exists as a function, so we check if it's callable
         if (typeof sdk.actions?.ready === 'function') {
           // Don't call ready() if it's already been called, as this can cause issues
@@ -627,7 +627,7 @@ export async function validateFarcasterWallet(): Promise<{ isValid: boolean; mes
     }
 
     // Try to get Farcaster SDK
-    const { sdk } = await import('@farcaster/frame-sdk');
+    const { sdk } = await import('@farcaster/miniapp-sdk');
 
     // Check if wallet is available
     if (!sdk.wallet) {

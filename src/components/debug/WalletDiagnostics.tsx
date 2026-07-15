@@ -154,7 +154,7 @@ export default function WalletDiagnostics() {
     // Test 7: Farcaster-specific checks
     if (platform === 'farcaster') {
       try {
-        const { sdk } = await import('@farcaster/frame-sdk');
+        const { sdk } = await import('@farcaster/miniapp-sdk');
 
         results.push({
           test: 'Farcaster SDK',
