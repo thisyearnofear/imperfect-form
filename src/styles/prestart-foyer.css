@@ -1,72 +1,298 @@
-/* Pre-start foyer — calm night-studio signal inside the arcade shell.
-   Sans for readability; brand keeps presence without Press-Start shouting. */
+/* Pre-start foyer — register via .prestart-foyer--{arcade|studio|calm}
+   and #screen[data-register]. Intent chooser commits chrome for the session. */
 
 .prestart-foyer {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding: 0.5rem 0.25rem 1rem;
-  max-width: 36rem;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 0.5rem 1rem;
+  max-width: 100%;
+  line-height: 1.7;
 }
 
-.prestart-foyer__brand {
+/* —— Arcade (Train) — Press Start + gold —— */
+.prestart-foyer--arcade {
+  font-family: 'Press Start 2P', cursive;
+  color: #fff;
+}
+
+.prestart-foyer--arcade .prestart-foyer__brand {
   margin: 0;
-  font-size: clamp(1.35rem, 4vw, 1.85rem);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: #f0fdfa;
-  line-height: 1.2;
+  font-size: clamp(0.7rem, 2.4vw, 0.95rem);
+  color: #fcb131;
+  text-shadow: 0 0 12px rgba(252, 177, 49, 0.45);
+  letter-spacing: 0.02em;
 }
 
-.prestart-foyer__vision {
+.prestart-foyer--arcade .prestart-foyer__rule {
+  width: 100%;
+  max-width: 14rem;
+  height: 2px;
+  background: linear-gradient(90deg, #fcb131 0%, rgba(252, 177, 49, 0.15) 100%);
+  box-shadow: 0 0 8px rgba(252, 177, 49, 0.35);
+}
+
+.prestart-foyer--arcade .prestart-foyer__line {
   margin: 0;
-  font-size: clamp(0.95rem, 2.6vw, 1.1rem);
-  font-weight: 300;
-  line-height: 1.45;
-  color: rgba(204, 251, 241, 0.92);
-  letter-spacing: 0.01em;
+  font-size: clamp(0.45rem, 1.6vw, 0.58rem);
+  color: #fff;
 }
 
-.prestart-foyer__trust {
-  margin: 0;
-  font-size: 0.8rem;
-  font-weight: 300;
-  line-height: 1.5;
-  color: rgba(153, 246, 228, 0.65);
+.prestart-foyer--arcade .prestart-foyer__line--accent {
+  color: #fcb131;
 }
 
-.prestart-foyer__hint {
-  margin: 0;
-  font-size: 0.75rem;
-  font-weight: 300;
-  line-height: 1.5;
-  color: rgba(253, 230, 138, 0.55);
-  border-left: 1px solid rgba(45, 212, 191, 0.25);
-  padding-left: 0.75rem;
+.prestart-foyer--arcade .prestart-foyer__meta {
+  margin: 0.15rem 0 0;
+  font-size: clamp(0.38rem, 1.3vw, 0.48rem);
+  color: rgba(255, 255, 255, 0.75);
 }
 
-.prestart-foyer__cta-hint {
-  margin: 0.35rem 0 0;
-  font-size: 0.7rem;
-  font-weight: 400;
-  letter-spacing: 0.06em;
+.prestart-foyer--arcade .prestart-foyer__meta--muted {
+  color: rgba(252, 177, 49, 0.55);
+}
+
+.prestart-foyer--arcade .prestart-foyer__cta {
+  margin: 0.5rem 0 0;
+  font-size: clamp(0.4rem, 1.4vw, 0.5rem);
+  color: #fcb131;
+  animation: prestartBlink 1.4s steps(2, end) infinite;
+}
+
+.prestart-foyer--arcade .prestart-foyer__intent {
+  font-family: 'Press Start 2P', cursive;
+  font-size: clamp(0.32rem, 1.1vw, 0.4rem);
+  padding: 0.45rem 0.55rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: 1px solid rgba(252, 177, 49, 0.35);
+  box-shadow: none;
   text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.7);
+  margin: 0;
+}
+
+.prestart-foyer--arcade .prestart-foyer__intent:hover {
+  color: #fff;
+  border-color: #fcb131;
+  transform: none;
+  box-shadow: none;
+}
+
+.prestart-foyer--arcade .prestart-foyer__intent.is-selected {
+  color: #000;
+  background: #fcb131;
+  border-color: #fcb131;
+}
+
+/* —— Studio (Coach) — readable sans, teal glass —— */
+.prestart-foyer--studio {
+  font-family: ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  color: rgba(240, 253, 250, 0.95);
+  gap: 0.55rem;
+}
+
+.prestart-foyer--studio .prestart-foyer__brand {
+  margin: 0;
+  font-size: clamp(1rem, 3vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #5eead4;
+}
+
+.prestart-foyer--studio .prestart-foyer__rule {
+  width: 100%;
+  max-width: 12rem;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(94, 234, 212, 0.7) 0%, transparent 100%);
+  box-shadow: none;
+}
+
+.prestart-foyer--studio .prestart-foyer__line {
+  margin: 0;
+  font-size: clamp(0.85rem, 2.2vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.92);
+  max-width: 22rem;
+}
+
+.prestart-foyer--studio .prestart-foyer__line--accent {
+  color: #99f6e4;
+  font-weight: 600;
+}
+
+.prestart-foyer--studio .prestart-foyer__meta {
+  margin: 0.1rem 0 0;
+  font-size: clamp(0.7rem, 1.6vw, 0.8rem);
+  color: rgba(153, 246, 228, 0.65);
+  max-width: 22rem;
+}
+
+.prestart-foyer--studio .prestart-foyer__meta--muted {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.prestart-foyer--studio .prestart-foyer__cta {
+  margin: 0.4rem 0 0;
+  font-size: clamp(0.75rem, 1.7vw, 0.85rem);
+  font-weight: 600;
+  color: #5eead4;
+  animation: prestartSoftPulse 2.2s ease-in-out infinite;
+}
+
+.prestart-foyer--studio .prestart-foyer__intent {
+  font-family: inherit;
+  font-size: clamp(0.7rem, 1.5vw, 0.8rem);
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  color: rgba(204, 251, 241, 0.75);
+  background: rgba(15, 118, 110, 0.2);
+  border: 1px solid rgba(94, 234, 212, 0.25);
+  border-radius: 0.35rem;
+  box-shadow: none;
+  text-transform: none;
+  margin: 0;
+  backdrop-filter: blur(8px);
+}
+
+.prestart-foyer--studio .prestart-foyer__intent:hover {
+  color: #fff;
+  border-color: rgba(94, 234, 212, 0.55);
+  transform: none;
+  box-shadow: none;
+}
+
+.prestart-foyer--studio .prestart-foyer__intent.is-selected {
+  color: #042f2e;
+  background: #5eead4;
+  border-color: #5eead4;
+}
+
+/* —— Calm (Breathe) — soft light, stillness —— */
+.prestart-foyer--calm {
+  font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  color: #1e293b;
+  gap: 0.5rem;
+  background: radial-gradient(
+    circle at top left,
+    rgba(240, 249, 255, 0.92) 0%,
+    rgba(204, 251, 241, 0.75) 45%,
+    rgba(241, 245, 249, 0.9) 100%
+  );
+}
+
+.prestart-foyer--calm .prestart-foyer__brand {
+  margin: 0;
+  font-size: clamp(1.05rem, 3vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #0f766e;
+}
+
+.prestart-foyer--calm .prestart-foyer__rule {
+  width: 100%;
+  max-width: 10rem;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(15, 118, 110, 0.45) 0%, transparent 100%);
+  box-shadow: none;
+}
+
+.prestart-foyer--calm .prestart-foyer__line {
+  margin: 0;
+  font-size: clamp(0.9rem, 2.3vw, 1.15rem);
+  font-weight: 500;
+  line-height: 1.3;
+  color: #334155;
+  max-width: 22rem;
+}
+
+.prestart-foyer--calm .prestart-foyer__line--accent {
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.prestart-foyer--calm .prestart-foyer__meta {
+  margin: 0.1rem 0 0;
+  font-size: clamp(0.72rem, 1.6vw, 0.82rem);
+  color: #64748b;
+  max-width: 22rem;
+}
+
+.prestart-foyer--calm .prestart-foyer__meta--muted {
+  color: #94a3b8;
+}
+
+.prestart-foyer--calm .prestart-foyer__cta {
+  margin: 0.4rem 0 0;
+  font-size: clamp(0.78rem, 1.7vw, 0.88rem);
+  font-weight: 600;
+  color: #0d9488;
+  animation: prestartSoftPulse 2.8s ease-in-out infinite;
+}
+
+.prestart-foyer--calm .prestart-foyer__intent {
+  font-family: inherit;
+  font-size: clamp(0.72rem, 1.5vw, 0.82rem);
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  color: #0f766e;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  border-radius: 999px;
+  box-shadow: none;
+  text-transform: none;
+  margin: 0;
+}
+
+.prestart-foyer--calm .prestart-foyer__intent:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: none;
+  box-shadow: none;
+}
+
+.prestart-foyer--calm .prestart-foyer__intent.is-selected {
+  color: #fff;
+  background: #0d9488;
+  border-color: #0d9488;
+}
+
+/* —— Shared chooser row —— */
+.prestart-foyer__intents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0.25rem;
+}
+
+.prestart-foyer__intent:active {
+  transform: none;
 }
 
 .prestart-foyer__reveal {
   opacity: 0;
-  transform: translateY(8px);
-  animation: prestartReveal 0.55s ease-out forwards;
+  transform: translateY(6px);
+  animation: prestartReveal 0.45s steps(3, end) forwards;
+}
+
+.prestart-foyer--studio .prestart-foyer__reveal,
+.prestart-foyer--calm .prestart-foyer__reveal {
+  animation: prestartRevealSmooth 0.5s ease-out forwards;
+}
+
+.prestart-foyer--arcade .prestart-foyer__cta.prestart-foyer__reveal {
+  animation:
+    prestartReveal 0.45s steps(3, end) forwards,
+    prestartBlink 1.4s steps(2, end) infinite;
+  animation-delay: 520ms, 1s;
+}
+
+.prestart-foyer--studio .prestart-foyer__cta.prestart-foyer__reveal,
+.prestart-foyer--calm .prestart-foyer__cta.prestart-foyer__reveal {
+  animation:
+    prestartRevealSmooth 0.5s ease-out forwards,
+    prestartSoftPulse 2.4s ease-in-out infinite;
+  animation-delay: 520ms, 1s;
 }
 
 @keyframes prestartReveal {
@@ -76,8 +302,55 @@
   }
 }
 
+@keyframes prestartRevealSmooth {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes prestartBlink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes prestartSoftPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Screen shell picks up session register (set on #screen in Game) */
+#screen[data-register='studio'] {
+  border-color: rgba(94, 234, 212, 0.45);
+  box-shadow: 0 0 14px rgba(45, 212, 191, 0.25);
+}
+
+#screen[data-register='studio'] #instructions {
+  background: rgba(2, 20, 18, 0.88);
+}
+
+#screen[data-register='calm'] {
+  border-color: rgba(13, 148, 136, 0.35);
+  box-shadow: 0 0 16px rgba(13, 148, 136, 0.18);
+  background-color: #f8fafc;
+}
+
+#screen[data-register='calm'] #instructions {
+  background: transparent;
+  color: #1e293b;
+  align-items: stretch;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .prestart-foyer__reveal {
+  .prestart-foyer__reveal,
+  .prestart-foyer__cta,
+  .prestart-foyer__cta.prestart-foyer__reveal {
     opacity: 1;
     transform: none;
     animation: none;

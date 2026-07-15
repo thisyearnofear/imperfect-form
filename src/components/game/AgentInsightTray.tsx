@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback, useTransition
 import { BiomechanicalState } from '@/types/mediapipe';
 import { analyzeForm, CoachingAnalysis } from '@/lib/coachingEngine';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { coachStation } from '@/services/coachStation';
 import '@/styles/agent-insights.css';
 
@@ -83,6 +84,7 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
   >('auto');
   const [, startTransition] = useTransition();
   const [personality] = useCoachPersonality();
+  const { register } = useSessionIntent();
   const aiMode = process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() || 'post';
   const aiLiveEnabled = aiMode === 'live';
   const aiIntervalMs = process.env.NODE_ENV === 'development' ? 15000 : 5000;
@@ -264,13 +266,14 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
   ]);
 
   const config = FEEDBACK_CONFIG[feedback.type];
+  const studio = register === 'studio';
 
   return (
-    <div className="coachy-tray">
+    <div className={`coachy-tray${studio ? ' coachy-tray--studio' : ''}`}>
       <div className="coachy-main">
         <div className="coachy-avatar">
-          <span className="coachy-icon">{config.icon}</span>
-          <span className="coachy-label">Coachy</span>
+          <span className="coachy-icon">{studio ? '◇' : config.icon}</span>
+          <span className="coachy-label">{studio ? 'Coach' : 'Coachy'}</span>
         </div>
 
         <div className="coachy-feedback">

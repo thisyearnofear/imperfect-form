@@ -20,8 +20,11 @@ import CameraPrimer, {
   shouldShowCameraPrimer,
   markCameraPrimerSeen,
 } from '@/components/recovery/CameraPrimer';
+import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { coachStation } from '@/services/coachStation';
+// session-register.css loaded from root layout
 
 import { useFullscreen } from '../../hooks/useFullscreen';
 import FullscreenExitButton from '../ui/FullscreenExitButton';
@@ -77,6 +80,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const { wallet, user } = usePlatform();
   const { address } = wallet;
   const finalAddress = address || thirdwebAddress;
+  const { intent: sessionIntent, register: sessionRegister } = useSessionIntent();
+  const [calmSessionActive, setCalmSessionActive] = useState(false);
 
   // --- Fullscreen integration ---
   const gameRef = useRef<HTMLDivElement>(null);
@@ -393,6 +398,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   const handleStart = useCallback(
     async (options?: { trace?: any; isRace?: boolean }) => {
+      // Breathe intent: calm recovery path — no camera, no workout boot
+      if (sessionIntent === 'recover') {
+        setCalmSessionActive(true);
+        return;
+      }
+
       // First use: show the calm camera primer before the browser's permission
       // prompt fires. Synchronous check - the fullscreen call below must stay
       // within this user gesture.
@@ -455,6 +466,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       setTimeLeft(120);
     },
     [
+      sessionIntent,
       isMobile,
       autoFs,
       isFullscreenAvailable,
@@ -584,6 +596,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     resetReps();
     setTimeLeft(120);
     setStarted(false);
+    setCalmSessionActive(false);
     setIsRace(false);
     setRaceTrace(null);
     // Welcome component consolidated into InitializationScreen - no need to reset welcome state
@@ -592,12 +605,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
     // Also stop the camera when resetting
     stopAllCameras();
-  }, [stopAllCameras, exitFullscreen, unlock]);
+  }, [stopAllCameras, exitFullscreen, unlock, resetReps]);
 
-  // handleModeChange function removed as it's no longer used
-  // Mode switching is now handled directly by ModeSwitch component
-
-  // Handle filter change removed (consolidated)
+  // Leaving Breathe intent closes the calm panel (register commit stays until they re-pick)
+  useEffect(() => {
+    if (sessionIntent !== 'recover') setCalmSessionActive(false);
+  }, [sessionIntent]);
 
   // Memoize the webcam component to prevent re-renders when timer updates
   // When racing against a ghost, prioritize raceTrace over pbTrace
@@ -638,6 +651,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       <div
         id="game-container"
         ref={gameRef}
+        data-register={sessionRegister}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -725,10 +739,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </div>
         </div>
 
-        <div id="screen">
+        <div id="screen" data-register={sessionRegister}>
           {/* Welcome component consolidated into InitializationScreen */}
 
-          {!started && (
+          {!started && !calmSessionActive && (
             <div className="">
               <SplitFlapInstructions
                 mode={currentMode}
@@ -740,6 +754,16 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                 isFullscreenAvailable={isFullscreenAvailable}
                 formattedStats={formattedStats}
                 isLoadingStats={statsLoading}
+              />
+            </div>
+          )}
+
+          {calmSessionActive && !started && (
+            <div id="instructions" className="!bg-transparent">
+              <RecoveryCard
+                mode={mode}
+                variant="panel"
+                onDismiss={() => setCalmSessionActive(false)}
               />
             </div>
           )}
@@ -770,6 +794,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           repCount={repCount}
           userId={wallet.address || undefined}
           finalAddress={finalAddress}
+          calmSessionActive={calmSessionActive}
           onStop={handleStop}
           onStart={handleStart}
           onReset={handleReset}

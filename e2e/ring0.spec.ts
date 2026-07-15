@@ -20,14 +20,65 @@ test.describe('Ring 0 - wallet-free core loop', () => {
 
   test('day-0 foyer sells form understanding, not XP chrome', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Imperfect Form').first()).toBeVisible({ timeout: 20000 });
-    await expect(page.getByText(/Your camera understands your form/i)).toBeVisible({
+    await expect(page.getByText('IMPERFECT FORM').first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByText(/CAMERA READS FORM/i)).toBeVisible({
       timeout: 10000,
     });
-    await expect(page.getByText(/Pose runs on your device/i)).toBeVisible();
+    await expect(page.getByText(/ON-DEVICE/i)).toBeVisible();
+    // Intent doorway present; default Train / Arcade keeps Ring 0 ungated
+    await expect(page.getByRole('radio', { name: /Train — arcade workout/i })).toBeVisible();
+    await expect(page.locator('#screen')).toHaveAttribute('data-register', 'arcade');
     // Game-loop tabs stay earned — not the foyer
     await expect(page.getByRole('button', { name: /Switch to Dashboard/i })).toHaveCount(0);
     const start = page.locator('#startButton');
+    await expect(start).toBeEnabled();
+  });
+
+  test('intent chooser commits register without gating START', async ({ page }) => {
+    await page.goto('/');
+    const start = page.locator('#startButton');
+    await expect(start).toBeEnabled({ timeout: 20000 });
+
+    await page.getByRole('radio', { name: /Coach — form understanding studio/i }).click();
+    await expect(page.locator('#screen')).toHaveAttribute('data-register', 'studio');
+    await expect(page.locator('#game-container')).toHaveAttribute('data-register', 'studio');
+    await expect(page.getByText(/Your camera understands your form/i)).toBeVisible();
+    await expect(start).toHaveText('Begin');
+    await expect(start).toBeEnabled();
+
+    await page.getByRole('radio', { name: /Breathe — calm recovery/i }).click();
+    await expect(page.locator('#screen')).toHaveAttribute('data-register', 'calm');
+    await expect(page.locator('#game-container')).toHaveAttribute('data-register', 'calm');
+    await expect(page.getByText(/Settle the system/i)).toBeVisible();
+    await expect(start).toHaveText('Breathe');
+    await expect(start).toBeEnabled();
+    await expect(page.getByTestId('mode-switch')).toHaveCount(0);
+
+    await page.getByRole('radio', { name: /Train — arcade workout/i }).click();
+    await expect(page.locator('#screen')).toHaveAttribute('data-register', 'arcade');
+    await expect(start).toHaveText('START');
+    await expect(start).toBeEnabled();
+  });
+
+  test('Breathe intent opens calm session without camera primer', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('radio', { name: /Breathe — calm recovery/i }).click();
+    const start = page.locator('#startButton');
+    await expect(start).toHaveText('Breathe');
+    await start.click();
+
+    await expect(page.getByTestId('calm-session-panel')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Your camera stays private')).toHaveCount(0);
+
+    // Chooser first — light register, both paths
+    const panel = page.getByTestId('calm-session-panel');
+    await expect(panel.getByText('Calm')).toBeVisible();
+    await panel.getByRole('button', { name: /Stretch/i }).click();
+    await expect(panel.getByText(/\d+ of \d+/i)).toBeVisible({ timeout: 5000 });
+
+    await panel.getByRole('button', { name: /skip/i }).click();
+    await page.locator('#resetButton').click();
+    await expect(page.getByTestId('calm-session-panel')).toHaveCount(0);
     await expect(start).toBeEnabled();
   });
 

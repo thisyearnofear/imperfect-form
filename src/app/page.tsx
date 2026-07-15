@@ -167,10 +167,13 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-teal-500/10">
+          <div className="sticky top-0 z-50 bg-black/95 border-b border-[#fcb131]/30">
             <div className="px-4 py-3">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-teal-300/50 font-medium font-sans">
-                Imperfect Form
+              <p
+                className="text-[#fcb131] text-[10px] tracking-wide"
+                style={{ fontFamily: "'Press Start 2P', cursive" }}
+              >
+                IMPERFECT FORM
               </p>
             </div>
           </div>

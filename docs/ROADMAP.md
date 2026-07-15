@@ -17,11 +17,14 @@
   sign-in; workouts merge into a wallet on connect
 - Recovery register (breath cooldown + per-exercise stretches)
 - Staged post-workout flow: celebrate → recover → analyze
-- Ring 0 e2e guard (`e2e/ring0.spec.ts`) — 4/4 passing ✅:
+- Ring 0 e2e guard (`e2e/ring0.spec.ts`) — 7/7 passing ✅:
   - START is enabled for a guest with no wallet
   - first START shows the camera primer before any permission prompt
   - primer "not now" backs out without starting
   - returning guest (primer seen) starts directly
+  - day-0 foyer sells form understanding (default Train / Arcade)
+  - intent chooser commits register (Train / Coach / Breathe) without gating START
+  - Breathe intent opens calm session without camera primer
 - Tailwind v4 (`@tailwindcss/postcss`) — migrated `globals.css` to
   `@import "tailwindcss"` + `@config` compat; fixed design-token spacing
   collision that was silently breaking `max-w-sm`, `max-w-md`, and other
@@ -29,11 +32,16 @@
 - Day-0 foyer / onboarding pass — brand-first pre-start (`PreStartFoyer`),
   positioning-aligned onboarding (`brandPositioning.ts`), game-loop chrome
   demoted until first XP; see company posture in NORTH_STAR
+- Session intent → register (Train / Coach / Breathe) — single source of truth
+  in `brandPositioning.ts`, persisted `imf_sessionIntent`, foyer chooser +
+  `#screen` / `#game-container[data-register]`; default Train/Arcade keeps Ring 0
+  ungated. Control chrome, mid-workout studio HUD / coach tray, and Calm entry
+  (camera-free breathe + stretch via `RecoveryCard` panel + light-tone sequences);
+  summary stages open on the intent’s home tab (Coach→Analyze, Breathe→Recover).
+  Marketing landing deferred until acquisition needs category copy outside the cabinet.
 
-**Next (product surface, after this lands):** evaluate whether a dedicated
-marketing/landing route is still needed, or whether the app foyer + refined
-onboarding is enough for web acquisition. Prefer deepening the in-app first
-10 seconds over spinning a separate site until data says otherwise.
+**Next (product surface):** Dedicated marketing/landing route only if foyer
+doorways fail web acquisition.
 
 **Shipped (Ring 1/2 — earned upgrades):**
 

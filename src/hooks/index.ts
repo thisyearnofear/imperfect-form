@@ -29,6 +29,9 @@ export { useHapticFeedback } from './useHapticFeedback';
 // Game state management
 export { useGameState, useWorkoutTimer } from './useGameState';
 
+// Session intent → aesthetic register (Train / Coach / Breathe)
+export { useSessionIntent } from './useSessionIntent';
+
 // Pose detection state
 export { usePoseDetection } from './usePoseDetection';
 export type { PoseState, DetectionProgress, DetectionPhase } from './usePoseDetection';

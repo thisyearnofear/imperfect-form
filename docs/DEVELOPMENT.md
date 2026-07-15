@@ -60,6 +60,25 @@ pnpm lint:fix
 
 ## Design System Integration
 
+### Session intent → aesthetic register
+
+**Source of truth:** `src/lib/brandPositioning.ts` (`SESSION_INTENTS`,
+`INTENT_TO_REGISTER`, control labels). Persist via `imf_sessionIntent`;
+read/write with `useSessionIntent`. Apply chrome with
+`#game-container[data-register]` / `#screen[data-register]`,
+`.prestart-foyer--{arcade|studio|calm}`, and `src/styles/session-register.css`
+(loaded from root layout).
+
+Do not add mid-session theme toggles. Do not invent a parallel landing page
+until acquisition needs it — enhance `PreStartFoyer` + register chrome first.
+See [NORTH_STAR.md](./NORTH_STAR.md) (UI optionality).
+
+| Intent  | Register | Primary entry                                      |
+| ------- | -------- | -------------------------------------------------- |
+| Train   | Arcade   | Workout START + ModeSwitch                         |
+| Coach   | Studio   | Form coaching Begin; summary opens on Analyze      |
+| Breathe | Calm     | Camera-free RecoveryCard panel (breathe + stretch) |
+
 ### Phase 4: Design Tokens System
 
 **Status**: ✅ Complete - Core tokens and utilities implemented

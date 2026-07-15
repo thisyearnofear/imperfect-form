@@ -2,6 +2,8 @@ import React from 'react';
 import ModeSwitch from './ModeSwitch';
 import { AgentInsightTray } from './AgentInsightTray';
 import { BiomechanicalState } from '@/types/mediapipe';
+import { getIntentDef } from '@/lib/brandPositioning';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 
 interface GameControlsProps {
   started: boolean;
@@ -12,6 +14,8 @@ interface GameControlsProps {
   repCount: number;
   userId?: string;
   finalAddress?: string;
+  /** Calm / Breathe session active inside #screen (not a camera workout) */
+  calmSessionActive?: boolean;
   onStop: () => void;
   onStart: () => void;
   onReset: () => void;
@@ -27,16 +31,22 @@ export const GameControls: React.FC<GameControlsProps> = ({
   repCount,
   userId,
   finalAddress,
+  calmSessionActive = false,
   onStop,
   onStart,
   onReset,
   onModeChange,
 }) => {
+  const { intent } = useSessionIntent();
+  const { controls, register } = getIntentDef(intent);
+  const busy = started || calmSessionActive;
+
   return (
     <div
       id="controls"
       className={`${isMobile ? 'mobile-controls' : 'mt-4'} controls-container`}
       style={{ marginBottom: isMobile ? '8px' : '0' }}
+      data-register={register}
     >
       {started ? (
         <div className="controls-enter w-full flex gap-3 items-center">
@@ -71,34 +81,41 @@ export const GameControls: React.FC<GameControlsProps> = ({
           </button>
         </div>
       ) : (
-        <div className="flex justify-between w-full h-full items-center controls-enter">
-          <ModeSwitch
-            value={mode}
-            disabled={started}
-            onChange={onModeChange}
-            className={isMobile ? 'mobile-mode-switch' : ''}
-          />
+        <div className="flex justify-between w-full h-full items-center controls-enter gap-2">
+          {controls.showExerciseModes ? (
+            <ModeSwitch
+              value={mode}
+              disabled={busy}
+              onChange={onModeChange}
+              className={isMobile ? 'mobile-mode-switch' : ''}
+              ariaLabel={controls.modeGroupLabel}
+            />
+          ) : (
+            <p className="calm-session-hint">
+              {calmSessionActive ? 'Session in progress' : 'No camera · just breath'}
+            </p>
+          )}
           <div className="flex gap-2">
             <button
               id="startButton"
               className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
               style={{ minHeight: isMobile ? '50px' : 'auto' }}
-              aria-label="Start game"
+              aria-label={controls.primaryAria}
               onClick={onStart}
-              disabled={started}
-              title={started ? 'Game already started' : 'Start game'}
+              disabled={busy}
+              title={busy ? 'Already in session' : controls.primaryAria}
             >
-              START
+              {controls.primary}
             </button>
             <button
               id="resetButton"
               className="py-3 px-4 text-sm sm:text-base touch-manipulation font-bold mobile-controls-button touch-target"
               style={{ minHeight: isMobile ? '50px' : 'auto' }}
-              aria-label="Reset game"
+              aria-label={controls.secondaryAria}
               onClick={onReset}
               disabled={started}
             >
-              RESET
+              {controls.secondary}
             </button>
           </div>
         </div>

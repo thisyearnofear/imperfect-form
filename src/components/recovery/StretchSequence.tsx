@@ -5,20 +5,22 @@ import { getStretches } from '@/lib/recovery/recoveryContent';
 
 /**
  * Guided stretch sequence (recovery register): timed stretches matched to
- * the exercise just performed, with a soft teal progress ring and calm cues.
+ * the exercise just performed. Dark = post-workout modal; light = Calm panel.
  */
 
 interface StretchSequenceProps {
   mode: string;
   onComplete: () => void;
+  tone?: 'dark' | 'light';
 }
 
-const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete }) => {
+const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete, tone = 'dark' }) => {
   const stretches = getStretches(mode);
   const [index, setIndex] = useState(0);
   const [remaining, setRemaining] = useState(stretches[0]?.seconds ?? 20);
   const done = index >= stretches.length;
   const current = stretches[index];
+  const light = tone === 'light';
 
   useEffect(() => {
     if (done) return;
@@ -34,13 +36,21 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete }) =
   if (done) {
     return (
       <div className="flex flex-col items-center gap-5 py-6 font-sans">
-        <div className="text-4xl">🌿</div>
-        <p className="text-sm font-light tracking-wide text-teal-100">
+        <div className="text-4xl" aria-hidden>
+          ✓
+        </div>
+        <p
+          className={`text-sm font-light tracking-wide ${light ? 'text-slate-600' : 'text-teal-100'}`}
+        >
           Recovery complete. Your muscles thank you.
         </p>
         <button
           onClick={onComplete}
-          className="px-6 py-2 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-100 text-xs font-medium hover:bg-teal-500/30 transition-colors"
+          className={
+            light
+              ? 'px-6 py-2 rounded-full bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 transition-colors'
+              : 'px-6 py-2 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-100 text-xs font-medium hover:bg-teal-500/30 transition-colors'
+          }
         >
           Done
         </button>
@@ -56,23 +66,34 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete }) =
         {current.emoji}
       </div>
       <div className="text-center space-y-1">
-        <p className="text-base font-light tracking-[0.2em] uppercase text-teal-100">
+        <p
+          className={`text-base font-light tracking-[0.2em] uppercase ${
+            light ? 'text-teal-800' : 'text-teal-100'
+          }`}
+        >
           {current.name}
         </p>
-        <p className="text-[10px] font-mono text-teal-300/60">
+        <p className={`text-[10px] font-mono ${light ? 'text-teal-600/70' : 'text-teal-300/60'}`}>
           {index + 1} of {stretches.length} · {remaining}s
         </p>
       </div>
 
-      {/* Progress bar */}
-      <div className="w-48 h-1.5 rounded-full bg-white/10 overflow-hidden">
+      <div
+        className={`w-48 h-1.5 rounded-full overflow-hidden ${light ? 'bg-teal-900/10' : 'bg-white/10'}`}
+      >
         <div
-          className="h-full rounded-full bg-teal-400/60 transition-all duration-1000 ease-linear motion-reduce:transition-none"
+          className={`h-full rounded-full transition-all duration-1000 ease-linear motion-reduce:transition-none ${
+            light ? 'bg-teal-600/70' : 'bg-teal-400/60'
+          }`}
           style={{ width: `${progress * 100}%` }}
         />
       </div>
 
-      <p className="text-xs font-light text-teal-100/70 text-center max-w-[240px] leading-relaxed">
+      <p
+        className={`text-xs font-light text-center max-w-[240px] leading-relaxed ${
+          light ? 'text-slate-600' : 'text-teal-100/70'
+        }`}
+      >
         {current.cue}
       </p>
 
@@ -81,7 +102,11 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete }) =
           setIndex((i) => i + 1);
           setRemaining(stretches[index + 1]?.seconds ?? 20);
         }}
-        className="text-[10px] text-teal-300/50 hover:text-teal-200 transition-colors"
+        className={
+          light
+            ? 'text-[10px] text-slate-400 hover:text-teal-700 transition-colors'
+            : 'text-[10px] text-teal-300/50 hover:text-teal-200 transition-colors'
+        }
       >
         skip →
       </button>

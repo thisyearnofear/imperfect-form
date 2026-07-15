@@ -20,6 +20,7 @@ import { verifiedFitnessContractABI } from '@/constants/contracts';
 import { markWorkoutSynced, getLocalWorkouts } from '@/services/integrations/WorkoutDataAdapter';
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 import LabAnalysisCard from '@/components/coach/LabAnalysisCard';
 import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useAchievements } from '@/hooks/useAchievements';
@@ -129,15 +130,21 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   } | null>(null);
   const [reportStatus, setReportStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [personality] = useCoachPersonality();
+  const { intent: sessionIntent, register: sessionRegister } = useSessionIntent();
 
   // Staged post-workout flow: celebrate -> recover -> analyze.
-  // Each stage gets its own emotional register instead of one long scroll.
+  // Entry stage follows session intent (Train→celebrate, Breathe→recover, Coach→analyze).
   const [stage, setStage] = useState<'celebrate' | 'recover' | 'analyze'>('celebrate');
   React.useEffect(() => {
-    if (isOpen) setStage('celebrate');
-  }, [isOpen]);
+    if (!isOpen) return;
+    if (sessionIntent === 'understand') setStage('analyze');
+    else if (sessionIntent === 'recover') setStage('recover');
+    else setStage('celebrate');
+  }, [isOpen, sessionIntent]);
   // A successful submission always shows the analyze stage (success lives there)
   const effectiveStage = submissionStatus === 'success' ? 'analyze' : stage;
+  const summaryRegister =
+    effectiveStage === 'analyze' ? 'lab' : effectiveStage === 'recover' ? 'calm' : sessionRegister;
 
   // Debug logging for submission status changes
   React.useEffect(() => {
@@ -526,10 +533,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         preventClose={false}
         maxWidth="520px"
       >
-        <div className={`space-y-5 ${transitionClass}`}>
+        <div
+          className={`space-y-5 ${transitionClass}`}
+          data-register={summaryRegister}
+          data-summary-intent={sessionIntent}
+        >
           {/* Stage stepper: celebrate -> recover -> analyze */}
           {submissionStatus !== 'success' && (
-            <div className="flex justify-center gap-1.5" role="tablist" aria-label="Summary stages">
+            <div
+              className="flex justify-center gap-1.5 summary-stage-tabs"
+              role="tablist"
+              aria-label="Summary stages"
+            >
               {(
                 [
                   { key: 'celebrate', label: 'Score', emoji: '🏆' },
@@ -542,10 +557,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   role="tab"
                   aria-selected={effectiveStage === s.key}
                   onClick={() => setStage(s.key)}
-                  className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                    effectiveStage === s.key
-                      ? 'bg-yellow-500 text-black shadow-[0_0_10px_rgba(252,177,49,0.4)]'
-                      : 'bg-white/5 text-gray-400 hover:text-gray-200'
+                  className={`summary-stage-tab px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
+                    effectiveStage === s.key ? 'is-active' : ''
                   }`}
                 >
                   {s.emoji} {s.label}

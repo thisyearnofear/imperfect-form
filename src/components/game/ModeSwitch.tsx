@@ -17,6 +17,7 @@ interface ModeSwitchProps {
   className?: string;
   availableModes?: Mode[]; // Allow filtering which modes to show
   layout?: 'horizontal' | 'grid'; // Support different layouts for many options
+  ariaLabel?: string;
 }
 
 interface ModeOption {
@@ -76,6 +77,7 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(
     className = '',
     availableModes = ['pushups', 'squats', 'curls', 'pullups', 'jumps'],
     layout = 'horizontal',
+    ariaLabel = 'Workout mode selection',
   }) => {
     const { currentTheme } = useEnhancedChainTheme();
     const { palette } = currentTheme;
@@ -107,7 +109,7 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(
         style={containerStyle}
         id={id}
         role="group"
-        aria-label="Workout mode selection"
+        aria-label={ariaLabel}
         data-testid="mode-switch"
       >
         {modeOptions.map((mode) => {

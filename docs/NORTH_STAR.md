@@ -39,13 +39,13 @@ you exercise ──► camera ──► pose estimation ──► joint-angle an
 
 ## How it maps onto what exists
 
-| Existing system                              | Role in the loop                                                                                                                 |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Exercise engine (`src/lib/exercise-engine/`) | Emits the trigger signal: form issues with current + target joint angles (pull-up extension 150°/155°, asymmetry >30°, ROM)      |
-| Coaching engine + AI providers (Nova 2 live) | The voice that narrates while the arm demonstrates, in persona tone                                                              |
-| Coach personas (SNEL / STEDDIE / RASTA)      | Arm motion profiles: slow-deliberate / smooth-centered / fast-energetic                                                          |
-| Design registers (arcade / lab / studio)     | The robot is the **lab register made physical** — the AI Clinical Review reaching out of the screen                              |
-| Pull-ups + push-ups                          | Flagship demos: elbow-joint corrections are what a desk arm can literally perform (lower-body demos are out of scope for SO-101) |
+| Existing system                                 | Role in the loop                                                                                                                 |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Exercise engine (`src/lib/exercise-engine/`)    | Emits the trigger signal: form issues with current + target joint angles (pull-up extension 150°/155°, asymmetry >30°, ROM)      |
+| Coaching engine + AI providers (Nova 2 live)    | The voice that narrates while the arm demonstrates, in persona tone                                                              |
+| Coach personas (SNEL / STEDDIE / RASTA)         | Arm motion profiles: slow-deliberate / smooth-centered / fast-energetic                                                          |
+| Design registers (arcade / studio / calm / lab) | Robot = **lab register made physical**; entry intents map arcade←Form, studio←Coach, calm←Breath                                 |
+| Pull-ups + push-ups                             | Flagship demos: elbow-joint corrections are what a desk arm can literally perform (lower-body demos are out of scope for SO-101) |
 
 ## Architecture
 
@@ -118,6 +118,45 @@ movement. Better form for millions through crafted game design and UI —
 not gym-bro slogans, not a sterile robotics brochure. Screens coach first;
 robots prove the category and become the gym-station wedge. Game-loop
 chrome (XP, ghosts, chain) is earned after the first coached feel.
+
+**Aesthetic registers** (one surface, one register — see
+`src/lib/brandPositioning.ts`):
+
+- **Arcade** — Train intent. Workout shell (`#screen`), START/controls, XP
+  play: Press Start 2P, black / white / gold (`#fcb131`). Inherited from
+  imperfect-form’s game cabinet.
+- **Night studio** — Coach / “understand” intent + trust surfaces (onboarding,
+  camera primer): readable sans, teal glass on black. Inherited from
+  imperfectcoach’s clinical lab tone.
+- **Calm** — Recover / breathe intent + post-workout recovery: soft light,
+  Manrope, teal fields — no dark mode for this register. Inherited from
+  imperfect-breath.
+- **Lab** — post-workout AI clinical review only (not an entry intent): purple
+  / mono metrics.
+
+**UI optionality (intent → register):** Arcade is a choice, not the universal
+UI. Optionality widens audience **when it maps to why someone showed up**, not
+when it is a mid-session theme toggle.
+
+| Intent (chooser) | Register | Sibling DNA | Job                        |
+| ---------------- | -------- | ----------- | -------------------------- |
+| Train            | Arcade   | Form        | Challenge + play           |
+| Coach            | Studio   | Coach       | Trust + form understanding |
+| Breathe          | Calm     | Breath      | Stillness + recover        |
+
+Rules:
+
+1. **One surface, one register** — never mix Press Start gold with calm glass
+   on the same viewport.
+2. **Chooser, then commit** — pre-start foyer picks intent; register stays for
+   the session (`imf_sessionIntent`). Default remains Train / Arcade so Ring 0
+   stays ungated.
+3. **Landing is deferred** — deepen the in-app doorway (chooser + register
+   chrome) before spinning a separate marketing route. A marketing landing is
+   for strangers who need category copy without locking Press Start as the
+   brand; ship it when acquisition data says the foyer is not enough.
+4. **Same engine under all three** — camera → understanding → guidance.
+   Different door and chrome; not three apps.
 
 **App one-liner:** Private camera coaching with game-quality feedback, and
 a path into physical AI that can show the correction. (See
