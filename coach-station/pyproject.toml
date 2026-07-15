@@ -12,6 +12,7 @@ dependencies = [
 # The Cyberwave SDK drives the SO-101 twin (simulation and live hardware).
 # Install with: uv sync --extra cyberwave
 cyberwave = ["cyberwave"]
+dev = ["pytest>=8.0"]
 
 [build-system]
 requires = ["hatchling"]

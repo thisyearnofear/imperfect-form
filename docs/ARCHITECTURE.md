@@ -395,6 +395,31 @@ service.dispose();
 3. **ONNX Runtime** - Faster initialization alternative
 4. **Lazy Warmup** - Defer model warmup until first detection needed
 
+## Coach Station (Physical AI bridge)
+
+**Status**: Milestone 1 sim path shipped (console + Cyberwave `affect("simulation")`)
+
+Browser FormEvents stream to a local Python service that resolves form issues
+into joint-space demonstrations on the SO-101 twin.
+
+```
+exercise engine formCheckSpeak / coaching analyzeForm
+        │
+        ▼
+coachStation.ts  ──ws://localhost:8765──►  coach_station/server.py
+                                                 │
+                                          resolve_demonstration
+                                                 │
+                                          trajectory (clamped)
+                                                 │
+                                    ConsoleArm | CyberwaveArm
+                                    (joints.set degrees=True)
+```
+
+Key files: `coach-station/coach_station/{schema,primitives,trajectory,arm,demo,server}.py`,
+`src/services/coachStation.ts`. See [NORTH_STAR.md](./NORTH_STAR.md) and
+[coach-station/README.md](../coach-station/README.md).
+
 ## Social Integration
 
 ### Farcaster Integration

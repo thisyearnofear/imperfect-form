@@ -30,6 +30,27 @@ pnpm test
 pnpm test:e2e
 ```
 
+### Coach station (Python)
+
+Zero-dep console sim + optional Cyberwave twin. From `coach-station/`:
+
+```sh
+uv sync --extra dev
+uv run pytest
+uv run python -m coach_station.demo --demo curl   # or: extension|tempo|asymmetry|all
+uv run python -m coach_station                    # WebSocket on ws://localhost:8765
+```
+
+Pair with the web app:
+
+```sh
+NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev
+```
+
+Cyberwave sim (optional): `uv sync --extra cyberwave`, then same demo/server
+commands (`COACH_AFFECT=simulation` is the default). See
+[`coach-station/README.md`](../coach-station/README.md).
+
 ## Linting
 
 ```sh

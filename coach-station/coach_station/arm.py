@@ -1,79 +1,86 @@
 """Arm backends: Cyberwave twin (simulation or live SO-101) or console sim.
 
-Sim-first development: the ConsoleArm needs no dependencies and prints the
-choreography; the CyberwaveArm drives the real twin once the SDK is installed
-and the station is paired (`cyberwave pair`).
+Sim-first: ConsoleArm needs no deps and prints the choreography; CyberwaveArm
+drives the twin once the SDK is installed (`uv sync --extra cyberwave`).
+Uses joints.set(..., degrees=True) per Cyberwave Python SDK docs.
 """
+
+from __future__ import annotations
 
 import asyncio
 import logging
 import os
 
 from .primitives import Demonstration
+from .trajectory import iter_trajectory
 
 logger = logging.getLogger("coach_station.arm")
 
-# Twin identifier for the SO-101 in Cyberwave's catalog. Verify against your
-# workspace after `cyberwave pair` - see docs.cyberwave.com.
-SO101_TWIN = os.environ.get("COACH_TWIN", "the-robot-studio/so-101")
+# Catalog slug from Cyberwave docs (SO-101). Override after `cyberwave pair`.
+SO101_TWIN = os.environ.get("COACH_TWIN", "the-robot-studio/so101")
 
 
 class ConsoleArm:
     """Zero-dependency backend: logs the motion the real arm would perform."""
 
     async def demonstrate(self, demo: Demonstration) -> None:
-        sweep = abs(demo.to_deg - demo.from_deg)
-        duration = sweep / demo.profile.speed_deg_s
-        for rep in range(demo.profile.repeats):
-            logger.info(
-                "[SIM] %s: %s %.0f° -> %.0f° over %.1fs (rep %d/%d) | %s",
-                demo.name,
-                demo.joint,
-                demo.from_deg,
-                demo.to_deg,
-                duration,
-                rep + 1,
-                demo.profile.repeats,
-                demo.narration,
-            )
-            await asyncio.sleep(duration + demo.profile.pause_s)
+        waypoints = list(iter_trajectory(demo))
+        total = sum(s for _, s in waypoints)
+        logger.info(
+            "[SIM] %s: %s %.0f° -> %.0f° | %d waypoints · %.1fs | %s",
+            demo.name,
+            demo.joint,
+            demo.from_deg,
+            demo.to_deg,
+            len(waypoints),
+            total,
+            demo.narration,
+        )
+        # Compress wall-clock in console mode: sleep proportional but capped
+        # so demos are watchable without waiting full physical duration.
+        scale = min(1.0, 3.0 / max(total, 0.01))
+        for deg, sleep_s in waypoints:
+            logger.debug("[SIM]   %s = %.1f°", demo.joint, deg)
+            await asyncio.sleep(sleep_s * scale)
 
 
 class CyberwaveArm:
     """Drives the SO-101 twin through the Cyberwave SDK.
 
-    Set COACH_AFFECT=live to move real hardware; default is simulation.
+    Default COACH_AFFECT=simulation (MuJoCo / Playground twin). Set
+    COACH_AFFECT=live only behind a physical dead-man (Milestone 2).
     """
 
     def __init__(self) -> None:
         from cyberwave import Cyberwave  # optional dependency
 
         self._cw = Cyberwave()
-        self._twin = self._cw.twins(SO101_TWIN)
         affect = os.environ.get("COACH_AFFECT", "simulation")
         self._cw.affect(affect)
+        self._twin = self._cw.twin(SO101_TWIN)
+        self._joint_api = self._twin.joints
         logger.info("Cyberwave twin %s ready (affect=%s)", SO101_TWIN, affect)
 
     async def demonstrate(self, demo: Demonstration) -> None:
-        # Phase 2: replace with proper joint-space trajectory once the twin's
-        # joint API is confirmed against the workspace. Keep motions slow and
-        # within workspace limits.
-        for _ in range(demo.profile.repeats):
-            self._twin.move_joint(  # type: ignore[attr-defined]
-                joint=demo.joint,
-                position_deg=demo.to_deg,
-                speed_deg_s=demo.profile.speed_deg_s,
-            )
-            await asyncio.sleep(demo.profile.pause_s)
-            self._twin.move_joint(  # type: ignore[attr-defined]
-                joint=demo.joint,
-                position_deg=demo.from_deg,
-                speed_deg_s=demo.profile.speed_deg_s,
+        try:
+            for deg, sleep_s in iter_trajectory(demo):
+                self._joint_api.set(demo.joint, deg, degrees=True)
+                await asyncio.sleep(sleep_s)
+        except Exception as exc:
+            # Fail soft: one bad demo must not take down the websocket server.
+            logger.error(
+                "Demonstration %s aborted (%s) — station stays up",
+                demo.name,
+                exc,
             )
 
 
 def create_arm():
     """CyberwaveArm when the SDK is available, ConsoleArm otherwise."""
+    force_console = os.environ.get("COACH_ARM", "").lower() in ("console", "sim", "log")
+    if force_console:
+        logger.info("COACH_ARM=%s — using console simulation", os.environ.get("COACH_ARM"))
+        return ConsoleArm()
     try:
         return CyberwaveArm()
     except Exception as exc:  # SDK missing or not paired - stay in console sim

@@ -8,7 +8,7 @@ the SO-101 arm ("Coach") to physically demonstrate corrections.
 
 ```sh
 cd coach-station
-uv sync
+uv sync --extra dev
 uv run python -m coach_station
 ```
 
@@ -21,18 +21,50 @@ NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev
 Do a workout with bad form and watch the station log the demonstrations the
 arm would perform.
 
-## Run against the Cyberwave twin
+## Demo CLI (no browser)
+
+Exercise the Milestone 1 primitives against the arm backend:
+
+```sh
+uv run python -m coach_station.demo --demo curl        # flagship strict curl
+uv run python -m coach_station.demo --demo extension   # pull-up ROM
+uv run python -m coach_station.demo --demo tempo
+uv run python -m coach_station.demo --demo asymmetry
+uv run python -m coach_station.demo --demo all
+```
+
+Force console logging even if Cyberwave is installed: `COACH_ARM=console`.
+
+## Run against the Cyberwave twin (MuJoCo / Playground sim)
 
 ```sh
 uv sync --extra cyberwave
 cyberwave pair                      # once, on the edge device
-uv run python -m coach_station     # simulation twin (default)
-COACH_AFFECT=live uv run python -m coach_station   # real SO-101
+uv run python -m coach_station     # COACH_AFFECT=simulation (default)
+COACH_AFFECT=live uv run python -m coach_station   # real SO-101 — Milestone 2
+```
+
+Twin slug default: `the-robot-studio/so101` (override with `COACH_TWIN`).
+Joint commands use `twin.joints.set(name, deg, degrees=True)` with an
+interpolated trajectory (see `coach_station/trajectory.py`).
+
+Elbow workspace clamps (env-overridable):
+
+- `COACH_ELBOW_MIN` (default `0`)
+- `COACH_ELBOW_MAX` (default `180`)
+
+## Tests
+
+```sh
+uv sync --extra dev
+uv run pytest
 ```
 
 ## Layout
 
 - `coach_station/schema.py` — FormEvent contract (mirrors `src/services/coachStation.ts`)
 - `coach_station/primitives.py` — form issue → demonstration, persona motion profiles
-- `coach_station/arm.py` — Cyberwave twin backend + zero-dependency console sim
+- `coach_station/trajectory.py` — interpolated joint waypoints + workspace clamps
+- `coach_station/arm.py` — Cyberwave twin backend (`joints.set`) + console sim
+- `coach_station/demo.py` — CLI to fire primitives without the web app
 - `coach_station/server.py` — WebSocket server, cooldowns, one-demo-at-a-time

@@ -43,18 +43,27 @@ onboarding is enough for web acquisition. Prefer deepening the in-app first
 - AI Highlight Card at the celebrate moment
 - Ghost challenges (URL-safe trace compression)
 
-**Scaffolded, not yet live:**
+**Scaffolded / in progress:**
 
-- `coach-station/` — Python websocket bridge from browser FormEvents to a
-  local station (see NORTH_STAR § Architecture)
+- Nova 2 voice track synced to the primitive being demonstrated (Milestone 1
+  leftover)
+
+**Shipped (Milestone 1 — sim choreography):**
+
+- `coach-station/` — WebSocket bridge + FormEvent → demonstration primitives
+  (`demonstrate_strict_curl`, `demonstrate_extension`, `demonstrate_tempo`,
+  `mirror_asymmetry`) with per-persona motion profiles; interpolated
+  trajectories + elbow workspace clamps; CyberwaveArm uses
+  `cw.affect("simulation")` + `joints.set`; ConsoleArm for zero-dep local runs
 - Browser bridge (`src/services/coachStation.ts`) — FormEvent + session
-  start/end, fail-silent when `NEXT_PUBLIC_COACH_STATION` is unset or the
-  socket is down; engine `formCheckSpeak` (e.g. `elbow_swing` on curls)
-  now streams through the pose loop
+  start/end, fail-silent; engine `formCheckSpeak` (e.g. `elbow_swing` on curls)
+  streams through the pose loop
+- Demo CLI: `cd coach-station && uv run python -m coach_station.demo --demo all`
+- Station tests: `uv sync --extra dev && uv run pytest` (10 passing)
 
 ## What's next
 
-### Milestone 1 — Sim choreography (this milestone is the demo)
+### Milestone 1 — Sim choreography (almost done — cohort demo)
 
 Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
 
@@ -62,22 +71,28 @@ Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
       (client tap live; station server receives + dispatches primitives)
 - [x] Fail-silent client behavior when no station is running
       (`coachStation.test.ts` + `e2e/coach-station.spec.ts`)
-- [ ] Three demonstration primitives against the MuJoCo twin
-      (`cw.affect("simulation")`):
-  - [ ] `demonstrate_extension(target_deg)` — pull-up extension 150° → 155°
-  - [ ] `demonstrate_tempo()` — pace correction
-  - [ ] `mirror_asymmetry()` — L/R asymmetry >30°
-- [ ] Per-persona motion profiles: SNEL slow-deliberate, STEDDIE
+- [x] Three demonstration primitives against the MuJoCo twin
+      (`cw.affect("simulation")` via CyberwaveArm + trajectory executor):
+  - [x] `demonstrate_extension(target_deg)` — pull-up extension 150° → 155°
+  - [x] `demonstrate_tempo()` — pace correction
+  - [x] `mirror_asymmetry()` — L/R asymmetry >30°
+  - plus cohort flagship `demonstrate_strict_curl` (curls + `elbow_swing`)
+- [x] Per-persona motion profiles: SNEL slow-deliberate, STEDDIE
       smooth-centered, RASTA fast-energetic
 - [ ] Nova 2 voice track synced to the primitive being demonstrated
+
+Demo without the browser: `cd coach-station && uv run python -m coach_station.demo --demo all`
 
 ### Milestone 2 — Hardware bring-up (SO-101 "Coach")
 
 - [ ] `cyberwave pair` on the edge machine
 - [ ] `affect("live")` behind a physical dead-man switch
-- [ ] Workspace limits (joint range, torque, reach clamps)
-- [ ] One-primitive-at-a-time policy (no compound motions until sim →
-      hardware transfer is validated)
+- [~] Workspace limits — elbow angle clamps shipped in
+  `coach_station/trajectory.py` (`COACH_ELBOW_MIN` / `COACH_ELBOW_MAX`);
+  torque / reach clamps still open for live
+- [x] One-primitive-at-a-time policy (server lock + demo cooldown already in
+      `coach_station/server.py`)
+- [ ] Validate sim → hardware transfer before compound motions
 
 ### Milestone 3 — Data flywheel (SmolVLA)
 
@@ -104,8 +119,8 @@ Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
 - **Gating training on-chain.** Ring 0 stays wallet-free. On-chain is an
   earned upgrade at value moments (PB, streak milestone, verified board).
 - **Lower-body demonstrations on SO-101.** A desk arm can't credibly show
-  squat depth or jump form. The flagship demos stay upper-body: push-ups and
-  pull-ups.
+  squat depth or jump form. The flagship demos stay upper-body: curls
+  (cohort), push-ups, and pull-ups.
 
 ## Success criteria
 
@@ -120,4 +135,5 @@ Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
 
 **Live app:** https://imperfectform.fun
 **North star:** [NORTH_STAR.md](./NORTH_STAR.md)
-**Station scaffold:** [`coach-station/`](../coach-station/)
+**Station:** [`coach-station/`](../coach-station/) — see README for sim CLI,
+Cyberwave twin, and pytest.

@@ -144,5 +144,14 @@ test-results/
 test-report.json
 playwright-report/
 
+# Python (coach-station)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+uv.lock
+
 # Qoder CLI local settings
 .qoder/settings.local.json

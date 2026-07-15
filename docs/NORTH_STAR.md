@@ -87,13 +87,18 @@ wallet popup on stage.
 
 ## Phases
 
-1. **Bridge (now):** `coach-station/` scaffold + FormEvent schema + web tap.
+1. **Bridge (shipped):** `coach-station/` WebSocket + FormEvent schema + web
+   tap (`coachStation.ts`). Fail-silent when the station is offline.
    Deliberately "dumb": form issue → scripted demonstration primitive.
-2. **Sim choreography:** demonstration primitives against the MuJoCo twin —
-   `demonstrate_extension(target_deg)`, `demonstrate_tempo()`,
-   `mirror_asymmetry()` — each with per-persona motion profiles.
+2. **Sim choreography (shipped, minus voice sync):** demonstration primitives
+   against the Cyberwave MuJoCo / Playground twin via
+   `cw.affect("simulation")` + interpolated `joints.set` trajectories —
+   `demonstrate_strict_curl` (cohort flagship), `demonstrate_extension`,
+   `demonstrate_tempo`, `mirror_asymmetry` — each with per-persona motion
+   profiles. Demo CLI: `python -m coach_station.demo`. Remaining: Nova 2
+   voice track synced to the primitive.
 3. **Hardware bring-up:** `cyberwave pair` on edge hardware, `affect("live")`,
-   workspace limits.
+   torque / reach clamps (elbow angle clamps already in trajectory layer).
 4. **Flywheel:** record every session via Cyberwave (built-in face
    anonymization keeps the privacy-first story intact); slice episodes; SmolVLA
    fine-tuning experiments.
