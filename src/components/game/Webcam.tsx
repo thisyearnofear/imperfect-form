@@ -3,6 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { usePoseDetection } from '@/modules/usePoseDetection';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { createRemoteLogger } from '@/utils/remoteLogger';
+import { normalizeExerciseMode } from '@/utils/biomechanics';
 
 // Add type declaration for window object
 declare global {
@@ -48,9 +49,8 @@ const Webcam: React.FC<WebcamProps> = ({
   onSessionEnd,
   pbTrace,
 }) => {
-  // Defensive: default to pushups if mode is null/undefined at runtime
-  const safeMode: import('@/utils/biomechanics').ExerciseMode =
-    mode === 'squats' ? 'squats' : 'pushups';
+  // Must pass curls/pullups/jumps through so the exercise engine runs.
+  const safeMode = normalizeExerciseMode(mode);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Pass isMobile flag to usePoseDetection for mobile-specific optimizations
   const { isMobile } = useDeviceDetect();

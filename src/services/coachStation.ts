@@ -8,8 +8,10 @@
  */
 
 import type { CoachPersonality } from '@/lib/coachPersonalities';
+import { getDefaultPersonality } from '@/lib/coachPersonalities';
 
 const STATION_URL = process.env.NEXT_PUBLIC_COACH_STATION;
+const PERSONALITY_STORAGE_KEY = 'coachPersonality';
 
 // Matches coach-station/coach_station/schema.py - keep in sync.
 export interface StationFormEvent {
@@ -24,6 +26,17 @@ export interface StationFormEvent {
 }
 
 const SAME_ISSUE_THROTTLE_MS = 2500;
+
+function isPersonality(value: string | null): value is CoachPersonality {
+  return value === 'SNEL' || value === 'STEDDIE' || value === 'RASTA';
+}
+
+/** Read the persisted persona without React (pose loop / worker bridge). */
+export function getStoredPersonality(): CoachPersonality {
+  if (typeof window === 'undefined') return getDefaultPersonality();
+  const stored = window.localStorage.getItem(PERSONALITY_STORAGE_KEY);
+  return isPersonality(stored) ? stored : getDefaultPersonality();
+}
 
 class CoachStationClient {
   private ws: WebSocket | null = null;
@@ -87,10 +100,30 @@ class CoachStationClient {
     });
   }
 
+  /**
+   * Bridge an exercise-engine formCheckSpeak (e.g. elbow_swing on curls)
+   * into a StationFormEvent. Used from the pose loop where React hooks
+   * aren't available.
+   */
+  sendEngineFormCheck(
+    mode: string,
+    speak: { issue: string; phrase: string },
+    repCount: number
+  ): void {
+    this.sendFormEvent({
+      mode,
+      issue: speak.issue,
+      severity: 'warning',
+      cue: speak.phrase,
+      personality: getStoredPersonality(),
+      repCount,
+    });
+  }
+
   sendSessionEvent(
     type: 'session_start' | 'session_end',
     mode: string,
-    personality: CoachPersonality
+    personality: CoachPersonality = getStoredPersonality()
   ): void {
     this.send({ type, mode, personality, timestamp_ms: Date.now() });
   }

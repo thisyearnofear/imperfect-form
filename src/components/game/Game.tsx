@@ -20,6 +20,8 @@ import CameraPrimer, {
   shouldShowCameraPrimer,
   markCameraPrimerSeen,
 } from '@/components/recovery/CameraPrimer';
+import { useCoachPersonality } from '@/hooks/useCoachPersonality';
+import { coachStation } from '@/services/coachStation';
 
 import { useFullscreen } from '../../hooks/useFullscreen';
 import FullscreenExitButton from '../ui/FullscreenExitButton';
@@ -211,6 +213,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [mode, setMode] = useState<import('@/utils/biomechanics').ExerciseMode>('pushups');
   const [showSummary, setShowSummary] = useState(false);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
+  const [personality] = useCoachPersonality();
 
   // Rep counting, haptic + visual feedback via hook
   const {
@@ -365,6 +368,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setStarted(false);
     setShowTutorial(false);
 
+    // Physical AI: end-of-session signal (no-op unless station URL configured)
+    coachStation.sendSessionEvent('session_end', mode, personality);
+
     // Always show summary; SummaryModal will prompt for wallet connection if needed
     console.log('Game: handleStop called with address:', finalAddress);
     console.log('Game: Opening SummaryModal with staggered transition');
@@ -378,7 +384,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     stopAllCameras();
 
     return () => clearTimeout(summaryTimer);
-  }, [stopAllCameras, finalAddress, exitFullscreen, unlock]);
+  }, [stopAllCameras, finalAddress, exitFullscreen, unlock, mode, personality]);
 
   // Update the ref whenever handleStop changes
   useEffect(() => {
@@ -441,6 +447,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       setShowTutorial(false); // Hide tutorial when starting
       setStarted(true);
 
+      // Physical AI: session start (no-op unless station URL configured)
+      coachStation.sendSessionEvent('session_start', mode, personality);
+
       // Reset counters
       resetReps();
       setTimeLeft(120);
@@ -456,6 +465,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       isRace,
       raceTrace,
       finalAddress,
+      personality,
+      resetReps,
     ]
   );
 

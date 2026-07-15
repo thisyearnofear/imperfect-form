@@ -67,7 +67,12 @@ export interface BiomechanicalState {
 
 // Worker response types
 export type WorkerResponse =
-  | { type: 'result'; state: BiomechanicalState | null; keypoints: Keypoint[] }
+  | {
+      type: 'result';
+      state: BiomechanicalState | null;
+      keypoints: Keypoint[];
+      formCheckSpeak?: { issue: string; phrase: string };
+    }
   | { type: 'rep'; count: number }
   | { type: 'ready' }
   | { type: 'backend'; backend: string }

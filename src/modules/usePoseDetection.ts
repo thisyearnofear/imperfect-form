@@ -10,12 +10,15 @@ import {
   detectPushup,
   detectSquat,
   detectEngineRep,
+  consumeFormCheckSpeak,
   engineDisplayRepState,
   isEngineMode,
+  normalizeExerciseMode,
   analyzeBiomechanics,
 } from '../utils/biomechanics';
 import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
 import { SessionLogger, SessionSummary } from '../services/sessionLogger';
+import { coachStation } from '../services/coachStation';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
@@ -67,9 +70,9 @@ export function usePoseDetection(
   const isSafari =
     /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
 
-  // Defensive: handle unexpected null/undefined at runtime
-  const safeMode: ExerciseMode =
-    mode === 'squats' || mode === 'pullups' || mode === 'jumps' ? mode : 'pushups';
+  // Must include curls — collapsing it to pushups silently breaks Ring 0 curls
+  // and the Milestone 1 coach-station demo (camera → curls → arm moves).
+  const safeMode: ExerciseMode = normalizeExerciseMode(mode);
   const videoRef = useRef<HTMLVideoElement>(null);
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -306,6 +309,7 @@ export function usePoseDetection(
                 count?: number;
                 state?: BiomechanicalState | null;
                 keypoints?: Keypoint[];
+                formCheckSpeak?: { issue: string; phrase: string };
               }
           >
         ) => {
@@ -327,6 +331,14 @@ export function usePoseDetection(
             if (data.state) {
               onMetricsRef.current?.(data.state);
               sessionLoggerRef.current?.logFrame(data.state, data.keypoints || []);
+            }
+            // Worker can't open WebSockets — forward engine form cues on main thread
+            if (data.formCheckSpeak) {
+              coachStation.sendEngineFormCheck(
+                safeMode,
+                data.formCheckSpeak,
+                lastRepCountRef.current
+              );
             }
           }
         };
@@ -603,6 +615,14 @@ export function usePoseDetection(
                 repCounter.repCount += 1;
                 lastRepCountRef.current = repCounter.repCount;
                 onRepCountRef.current(repCounter.repCount);
+              }
+
+              // Physical AI: stream engine form cues (e.g. elbow_swing on curls)
+              if (engineDetector) {
+                const speak = consumeFormCheckSpeak(engineDetector);
+                if (speak) {
+                  coachStation.sendEngineFormCheck(safeMode, speak, repCounter.repCount);
+                }
               }
 
               onMetricsRef.current?.(metrics);

@@ -13,6 +13,7 @@ import {
   detectPushup,
   detectSquat,
   detectEngineRep,
+  consumeFormCheckSpeak,
   engineDisplayRepState,
   isEngineMode,
   analyzeBiomechanics,
@@ -182,6 +183,8 @@ self.addEventListener('message', async (event) => {
             self.postMessage({ type: 'rep', count: repCounter.repCount });
           }
 
+          const formCheckSpeak = engineDetector ? consumeFormCheckSpeak(engineDetector) : undefined;
+
           // Render
           const displayRepState = engineDetector
             ? engineDisplayRepState(engineDetector)
@@ -189,7 +192,12 @@ self.addEventListener('message', async (event) => {
           drawSkeleton(ctx, keypoints, workerMode);
           drawFeedback(ctx, workerMode, displayRepState, lastProgress, metrics.warnings);
 
-          self.postMessage({ type: 'result', state: metrics, keypoints });
+          self.postMessage({
+            type: 'result',
+            state: metrics,
+            keypoints,
+            formCheckSpeak,
+          } satisfies import('../types/mediapipe').WorkerResponse);
         } else {
           // If no user pose, still draw the ghost if available (already handled above clearRect)
           drawFeedback(ctx, workerMode, 'middle', 0, []);

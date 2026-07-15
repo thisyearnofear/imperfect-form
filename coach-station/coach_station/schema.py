@@ -12,8 +12,8 @@ CoachPersonality = Literal["SNEL", "STEDDIE", "RASTA"]
 
 class FormEvent(BaseModel):
     type: Literal["form_event"] = "form_event"
-    mode: str  # pushups | squats | pullups | jumps
-    issue: str  # e.g. trunk_lean, depth, asymmetry, partial_bottom_rom
+    mode: str  # pushups | squats | pullups | jumps | curls
+    issue: str  # e.g. elbow_swing, trunk_lean, depth, asymmetry, partial_bottom_rom
     severity: Literal["info", "warning", "critical"]
     current: Optional[float] = None  # current joint angle / metric value
     target: Optional[float] = None  # target value the user should reach

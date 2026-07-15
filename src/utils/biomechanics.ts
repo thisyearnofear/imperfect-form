@@ -22,6 +22,19 @@ export interface Point {
 
 export type ExerciseMode = 'pushups' | 'squats' | 'pullups' | 'jumps' | 'curls';
 
+const ALL_EXERCISE_MODES: readonly ExerciseMode[] = [
+  'pushups',
+  'squats',
+  'pullups',
+  'jumps',
+  'curls',
+];
+
+/** Coerce null/unknown mode values to a valid ExerciseMode (defaults to pushups). */
+export function normalizeExerciseMode(mode: unknown): ExerciseMode {
+  return ALL_EXERCISE_MODES.includes(mode as ExerciseMode) ? (mode as ExerciseMode) : 'pushups';
+}
+
 /** Modes counted by the ported exercise engine rather than the local detectors. */
 export type EngineMode = 'pullups' | 'jumps' | 'curls';
 
@@ -146,6 +159,8 @@ export interface EngineRepDetectorState {
   curlState: CurlState;
   lastFeedback?: string;
   lastRepScore?: number;
+  /** Latest engine form-check cue; consumed by the coach-station bridge. */
+  lastFormCheckSpeak?: { issue: string; phrase: string };
 }
 
 export function createEngineRepDetectorState(mode: EngineMode): EngineRepDetectorState {
@@ -179,11 +194,24 @@ export function detectEngineRep(
   if (!result) return false;
   if (result.newRepState) state.engineRepState = result.newRepState;
   if (result.feedback) state.lastFeedback = result.feedback;
+  // Surface form cues every frame they fire; coachStation throttles duplicates.
+  if (result.formCheckSpeak) {
+    state.lastFormCheckSpeak = result.formCheckSpeak;
+  }
   if (result.isRepCompleted) {
     state.lastRepScore = result.repCompletionData?.score;
     return true;
   }
   return false;
+}
+
+/** Take and clear the pending form-check speak, if any. */
+export function consumeFormCheckSpeak(
+  state: EngineRepDetectorState
+): { issue: string; phrase: string } | undefined {
+  const speak = state.lastFormCheckSpeak;
+  state.lastFormCheckSpeak = undefined;
+  return speak;
 }
 
 /** Maps engine rep state onto the 'up'/'down' display states used by drawFeedback. */

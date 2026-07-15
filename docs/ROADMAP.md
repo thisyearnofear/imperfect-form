@@ -39,8 +39,10 @@
 
 - `coach-station/` — Python websocket bridge from browser FormEvents to a
   local station (see NORTH_STAR § Architecture)
-- Web tap into `WorkoutEventBridge` — the exercise engine already emits form
-  issues with current + target joint angles
+- Browser bridge (`src/services/coachStation.ts`) — FormEvent + session
+  start/end, fail-silent when `NEXT_PUBLIC_COACH_STATION` is unset or the
+  socket is down; engine `formCheckSpeak` (e.g. `elbow_swing` on curls)
+  now streams through the pose loop
 
 ## What's next
 
@@ -48,9 +50,10 @@
 
 Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
 
-- [ ] Wire `coach-station/` to FormEvent stream at `ws://localhost:8765`
-- [ ] Fail-silent client behavior when no station is running (already the
-      product-design intent — verify in-browser code)
+- [x] Wire `coach-station/` to FormEvent stream at `ws://localhost:8765`
+      (client tap live; station server receives + dispatches primitives)
+- [x] Fail-silent client behavior when no station is running
+      (`coachStation.test.ts` + `e2e/coach-station.spec.ts`)
 - [ ] Three demonstration primitives against the MuJoCo twin
       (`cw.affect("simulation")`):
   - [ ] `demonstrate_extension(target_deg)` — pull-up extension 150° → 155°
