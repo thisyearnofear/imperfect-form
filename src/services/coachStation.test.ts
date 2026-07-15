@@ -102,6 +102,7 @@ describe('coachStation fail-silent', () => {
       readyState = OpenWebSocket.OPEN;
       onclose: (() => void) | null = null;
       onerror: (() => void) | null = null;
+      onmessage: ((ev: { data: string }) => void) | null = null;
       send(data: string) {
         sent.push(data);
       }
@@ -123,5 +124,51 @@ describe('coachStation fail-silent', () => {
     expect(payload.cue).toBe('Pin your elbows');
     expect(payload.rep_count).toBe(3);
     expect(payload.personality).toBe('RASTA');
+  });
+
+  it('forwards demonstration events to subscribers (voice sync)', async () => {
+    process.env.NEXT_PUBLIC_COACH_STATION = 'ws://localhost:8765';
+    let wsInstance: { onmessage: ((ev: { data: string }) => void) | null } | null = null;
+
+    class CaptureWebSocket {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      readyState = CaptureWebSocket.OPEN;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      onmessage: ((ev: { data: string }) => void) | null = null;
+      constructor() {
+        wsInstance = this;
+      }
+      send() {}
+    }
+    (globalThis as { WebSocket: unknown }).WebSocket = CaptureWebSocket;
+
+    const { coachStation } = await import('@/services/coachStation');
+    const received: Array<{ name: string; narration: string }> = [];
+    const unsub = coachStation.onDemonstration((e) => {
+      received.push({ name: e.name, narration: e.narration });
+    });
+
+    // open socket via a send
+    coachStation.sendSessionEvent('session_start', 'curls');
+    expect(wsInstance).toBeTruthy();
+
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'demonstration',
+        name: 'demonstrate_strict_curl',
+        narration: 'Elbow pinned - only the forearm moves. Like this.',
+        personality: 'RASTA',
+        duration_s: 4.2,
+        issue: 'elbow_swing',
+        mode: 'curls',
+      }),
+    });
+
+    expect(received).toHaveLength(1);
+    expect(received[0].name).toBe('demonstrate_strict_curl');
+    expect(received[0].narration).toMatch(/Elbow pinned/);
+    unsub();
   });
 });

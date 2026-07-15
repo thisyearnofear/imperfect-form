@@ -5,6 +5,8 @@
  * Opt-in: does nothing unless NEXT_PUBLIC_COACH_STATION is set
  * (e.g. ws://localhost:8765). Fail-silent by design - the web app must never
  * degrade because the robot is off.
+ *
+ * Inbound: station may send `demonstration` events (narration synced to arm).
  */
 
 import type { CoachPersonality } from '@/lib/coachPersonalities';
@@ -25,6 +27,19 @@ export interface StationFormEvent {
   repCount: number;
 }
 
+/** Station → browser when a demo starts (voice sync cue). */
+export interface StationDemonstrationEvent {
+  type: 'demonstration';
+  name: string;
+  narration: string;
+  personality: CoachPersonality;
+  duration_s: number;
+  issue: string;
+  mode: string;
+}
+
+export type DemonstrationListener = (event: StationDemonstrationEvent) => void;
+
 const SAME_ISSUE_THROTTLE_MS = 2500;
 
 function isPersonality(value: string | null): value is CoachPersonality {
@@ -38,12 +53,48 @@ export function getStoredPersonality(): CoachPersonality {
   return isPersonality(stored) ? stored : getDefaultPersonality();
 }
 
+function parseDemonstration(raw: unknown): StationDemonstrationEvent | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  if (o.type !== 'demonstration') return null;
+  if (typeof o.name !== 'string' || typeof o.narration !== 'string') return null;
+  const personality = isPersonality(String(o.personality ?? ''))
+    ? (o.personality as CoachPersonality)
+    : getStoredPersonality();
+  return {
+    type: 'demonstration',
+    name: o.name,
+    narration: o.narration,
+    personality,
+    duration_s: typeof o.duration_s === 'number' ? o.duration_s : 0,
+    issue: typeof o.issue === 'string' ? o.issue : '',
+    mode: typeof o.mode === 'string' ? o.mode : '',
+  };
+}
+
 class CoachStationClient {
   private ws: WebSocket | null = null;
   private lastSent = new Map<string, number>();
+  private demoListeners = new Set<DemonstrationListener>();
 
   get enabled(): boolean {
     return typeof window !== 'undefined' && !!STATION_URL;
+  }
+
+  /** Subscribe to demonstration-start events from the station (voice sync). */
+  onDemonstration(listener: DemonstrationListener): () => void {
+    this.demoListeners.add(listener);
+    return () => this.demoListeners.delete(listener);
+  }
+
+  private emitDemonstration(event: StationDemonstrationEvent): void {
+    for (const listener of this.demoListeners) {
+      try {
+        listener(event);
+      } catch {
+        // fail-silent — UI listeners must not break the bridge
+      }
+    }
   }
 
   private ensureConnection(): void {
@@ -56,6 +107,15 @@ class CoachStationClient {
     }
     try {
       const ws = new WebSocket(STATION_URL as string);
+      ws.onmessage = (msg) => {
+        try {
+          const data = JSON.parse(String(msg.data));
+          const demo = parseDemonstration(data);
+          if (demo) this.emitDemonstration(demo);
+        } catch {
+          // ignore non-JSON
+        }
+      };
       ws.onclose = () => {
         this.ws = null;
       };

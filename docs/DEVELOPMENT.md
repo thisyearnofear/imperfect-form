@@ -79,6 +79,17 @@ See [NORTH_STAR.md](./NORTH_STAR.md) (UI optionality).
 | Coach   | Studio   | Form coaching Begin; summary opens on Analyze      |
 | Breathe | Calm     | Camera-free RecoveryCard panel (breathe + stretch) |
 
+### Coach TTS (demo voice sync)
+
+**Source of truth:** `src/config/ttsProviders.ts` + `src/lib/tts/speakCoachLine.ts`.
+API: `POST /api/tts`. Cascade **ElevenLabs → Amazon Polly → browser** (user may
+pin via settings **VOICE ENGINE** / `prefTtsProvider`). Station emits
+`demonstration` over the coach-station WebSocket when a primitive starts;
+`Game` subscribes and speaks narration fail-silently.
+
+Env: `ELEVENLABS_API_KEY` (optional), AWS creds for Polly (optional). Browser
+always works with zero keys.
+
 ### Phase 4: Design Tokens System
 
 **Status**: ✅ Complete - Core tokens and utilities implemented

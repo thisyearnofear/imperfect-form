@@ -138,3 +138,29 @@ class TestTrajectory:
         )
         assert curl and tempo
         assert tempo.profile.speed_deg_s < curl.profile.speed_deg_s
+
+
+class TestDemonstrationVoicePayload:
+    """Shape the browser expects for voice sync (coachStation.parseDemonstration)."""
+
+    def test_flagship_curl_has_narration_and_duration(self):
+        from coach_station.trajectory import trajectory_duration_s
+
+        demo = resolve_demonstration(
+            _event(mode="curls", issue="elbow_swing", personality="RASTA")
+        )
+        assert demo is not None
+        assert demo.narration
+        duration = trajectory_duration_s(demo)
+        assert duration > 0
+        payload = {
+            "type": "demonstration",
+            "name": demo.name,
+            "narration": demo.narration,
+            "personality": "RASTA",
+            "duration_s": round(duration, 2),
+            "issue": "elbow_swing",
+            "mode": "curls",
+        }
+        assert payload["type"] == "demonstration"
+        assert "Elbow" in payload["narration"] or "elbow" in payload["narration"].lower()

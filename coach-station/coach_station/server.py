@@ -3,6 +3,10 @@ and turns them into physical demonstrations on the SO-101 ("Coach").
 
 Run:  python -m coach_station          (console simulation)
       COACH_AFFECT=live python -m coach_station   (real arm via Cyberwave)
+
+When a demo starts, the station emits a `demonstration` JSON event back to the
+browser so voice narration can sync to the arm motion (provider-agnostic TTS
+lives on the web client).
 """
 
 import asyncio
@@ -16,6 +20,7 @@ from pydantic import ValidationError
 from .arm import create_arm
 from .primitives import resolve_demonstration
 from .schema import FormEvent, SessionEvent
+from .trajectory import trajectory_duration_s
 
 logger = logging.getLogger("coach_station")
 
@@ -32,7 +37,7 @@ class CoachStation:
         self._busy = asyncio.Lock()
         self._last_demo: dict[str, float] = {}
 
-    async def handle_event(self, raw: str) -> None:
+    async def handle_event(self, websocket, raw: str) -> None:
         try:
             payload = json.loads(raw)
         except json.JSONDecodeError:
@@ -69,13 +74,34 @@ class CoachStation:
 
         async with self._busy:
             self._last_demo[demo.name] = loop.time()
+            duration = trajectory_duration_s(demo)
             logger.info(
-                "Demonstrating %s for %s (%s, rep %d)",
+                "Demonstrating %s for %s (%s, rep %d) · %.1fs · %s",
                 demo.name,
                 event.issue,
                 event.personality,
                 event.rep_count,
+                duration,
+                demo.narration,
             )
+            # Voice sync cue — browser TTS speaks while the arm moves.
+            try:
+                await websocket.send(
+                    json.dumps(
+                        {
+                            "type": "demonstration",
+                            "name": demo.name,
+                            "narration": demo.narration,
+                            "personality": event.personality,
+                            "duration_s": round(duration, 2),
+                            "issue": event.issue,
+                            "mode": event.mode,
+                        }
+                    )
+                )
+            except Exception as exc:
+                logger.debug("Could not emit demonstration event: %s", exc)
+
             await self.arm.demonstrate(demo)
 
     async def handler(self, websocket) -> None:
@@ -83,7 +109,7 @@ class CoachStation:
         logger.info("Web app connected: %s", peer)
         try:
             async for message in websocket:
-                await self.handle_event(message)
+                await self.handle_event(websocket, message)
         except websockets.ConnectionClosed:
             pass
         finally:

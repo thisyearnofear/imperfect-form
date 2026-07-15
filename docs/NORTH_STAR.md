@@ -42,7 +42,8 @@ you exercise ──► camera ──► pose estimation ──► joint-angle an
 | Existing system                                 | Role in the loop                                                                                                                 |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | Exercise engine (`src/lib/exercise-engine/`)    | Emits the trigger signal: form issues with current + target joint angles (pull-up extension 150°/155°, asymmetry >30°, ROM)      |
-| Coaching engine + AI providers (Nova 2 live)    | The voice that narrates while the arm demonstrates, in persona tone                                                              |
+| Coaching engine + AI providers (text)           | Persona-toned cues; cloud LLM cascade (Gemini → Groq → …)                                                                        |
+| TTS providers (ElevenLabs / Polly / browser)    | Voice that narrates while the arm demonstrates — preference + fail-silent cascade; not vendor-locked                             |
 | Coach personas (SNEL / STEDDIE / RASTA)         | Arm motion profiles: slow-deliberate / smooth-centered / fast-energetic                                                          |
 | Design registers (arcade / studio / calm / lab) | Robot = **lab register made physical**; entry intents map arcade←Form, studio←Coach, calm←Breath                                 |
 | Pull-ups + push-ups                             | Flagship demos: elbow-joint corrections are what a desk arm can literally perform (lower-body demos are out of scope for SO-101) |
@@ -95,8 +96,9 @@ wallet popup on stage.
    `cw.affect("simulation")` + interpolated `joints.set` trajectories —
    `demonstrate_strict_curl` (cohort flagship), `demonstrate_extension`,
    `demonstrate_tempo`, `mirror_asymmetry` — each with per-persona motion
-   profiles. Demo CLI: `python -m coach_station.demo`. Remaining: Nova 2
-   voice track synced to the primitive.
+   profiles and narration. Station emits `demonstration` for voice sync;
+   web TTS is provider-agnostic (ElevenLabs → Polly → browser). Demo CLI:
+   `python -m coach_station.demo`.
 3. **Hardware bring-up:** `cyberwave pair` on edge hardware, `affect("live")`,
    torque / reach clamps (elbow angle clamps already in trajectory layer).
 4. **Flywheel:** record every session via Cyberwave (built-in face

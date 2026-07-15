@@ -4,6 +4,7 @@ import { BiomechanicalState } from '@/types/mediapipe';
 import { analyzeForm, CoachingAnalysis } from '@/lib/coachingEngine';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
+import { speakCoachLine } from '@/lib/tts';
 import { coachStation } from '@/services/coachStation';
 import '@/styles/agent-insights.css';
 
@@ -121,22 +122,17 @@ export const AgentInsightTray: React.FC<AgentInsightTrayProps> = ({
    */
   const metricsHash = useMemo(() => getMetricsHash(metrics), [metrics, getMetricsHash]);
 
-  // Voice feedback with throttling
+  // Voice feedback with throttling — provider cascade (ElevenLabs → Polly → browser)
   const speak = useMemo(
     () =>
       (text: string): void => {
-        if (typeof window === 'undefined' || !window.speechSynthesis || !voiceEnabled) return;
+        if (!voiceEnabled) return;
         const now = Date.now();
         if (now - lastVoiceRef.current < 3000) return;
-
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.1;
-        utterance.pitch = 1.0;
-        window.speechSynthesis.speak(utterance);
         lastVoiceRef.current = now;
+        void speakCoachLine(text, { voiceEnabled: true, personality });
       },
-    [voiceEnabled]
+    [voiceEnabled, personality]
   );
 
   // Local feedback: Debounced analysis (only when metrics meaningfully change)

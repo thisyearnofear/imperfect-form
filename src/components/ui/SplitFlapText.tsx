@@ -10,6 +10,12 @@ import { getNetworkByChainId } from '@/config/networks';
 import toast from 'react-hot-toast';
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { PreStartFoyer } from '@/components/home/PreStartFoyer';
+import {
+  nextTtsPreference,
+  ttsPreferenceLabel,
+  type TtsProviderPreference,
+} from '@/config/ttsProviders';
+import { getStoredTtsPreference, setStoredTtsPreference } from '@/lib/tts';
 
 interface SplitFlapTextProps {
   text: string;
@@ -96,6 +102,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 }) => {
   const [animationStep, setAnimationStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [ttsPref, setTtsPref] = useState<TtsProviderPreference>('auto');
   const { progress } = useXpProgress();
   const { wallet, platform, farcasterProvider } = usePlatform();
 
@@ -109,6 +116,10 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
       });
     }
   }, [mode]);
+
+  useEffect(() => {
+    setTtsPref(getStoredTtsPreference());
+  }, []);
 
   const handleSyncAll = async () => {
     if (unsyncedWorkouts.length === 0 || !wallet.isConnected || isSyncingAll) return;
@@ -185,7 +196,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           desc: !isFullscreenAvailable ? 'unavailable' : autoFs ? 'enabled' : 'disabled',
         },
         { key: 'b', text: 'VOICE COACH', desc: voiceEnabled ? 'enabled' : 'disabled' },
-        { key: 'c', text: 'THEME', desc: 'retro edition' },
+        { key: 'c', text: 'VOICE ENGINE', desc: ttsPreferenceLabel(ttsPref) },
         { key: 'd', text: 'Back to profile!', desc: '' },
       ],
       profile: [
@@ -236,6 +247,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
     unsyncedWorkouts.length,
     progress.currentLevel,
     voiceEnabled,
+    ttsPref,
   ]);
 
   useEffect(() => {
@@ -267,6 +279,10 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
           if (typeof window !== 'undefined') {
             window.localStorage.setItem('prefVoiceEnabled', (!voiceEnabled).toString());
           }
+        } else if (key === 'c') {
+          const next = nextTtsPreference(ttsPref);
+          setTtsPref(next);
+          setStoredTtsPreference(next);
         } else if (key === 'd') {
           onModeChange('profile');
         }

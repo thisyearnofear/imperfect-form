@@ -19,7 +19,10 @@ NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev
 ```
 
 Do a workout with bad form and watch the station log the demonstrations the
-arm would perform.
+arm would perform. When a demo starts, the station also emits a JSON
+`demonstration` event (narration + duration) back to the browser so voice can
+sync to the arm — TTS is provider-agnostic on the web client (ElevenLabs →
+Polly → browser).
 
 ## Demo CLI (no browser)
 

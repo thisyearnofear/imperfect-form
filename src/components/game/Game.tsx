@@ -23,6 +23,7 @@ import CameraPrimer, {
 import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
+import { speakCoachLine } from '@/lib/tts';
 import { coachStation } from '@/services/coachStation';
 // session-register.css loaded from root layout
 
@@ -191,6 +192,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       setVoiceEnabled(voicePref === null ? true : voicePref === 'true');
     }
   }, []);
+
+  // Voice sync: station `demonstration` events → TTS while the arm moves
+  useEffect(() => {
+    if (!coachStation.enabled) return;
+    return coachStation.onDemonstration((event) => {
+      if (!voiceEnabled) return;
+      void speakCoachLine(event.narration, {
+        voiceEnabled: true,
+        personality: event.personality,
+      });
+    });
+  }, [voiceEnabled]);
 
   // Initialize mode based on user state
   useEffect(() => {

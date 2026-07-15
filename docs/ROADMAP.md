@@ -53,8 +53,7 @@ doorways fail web acquisition.
 
 **Scaffolded / in progress:**
 
-- Nova 2 voice track synced to the primitive being demonstrated (Milestone 1
-  leftover)
+- _(none — Milestone 1 voice sync shipped)_
 
 **Shipped (Milestone 1 — sim choreography):**
 
@@ -66,8 +65,11 @@ doorways fail web acquisition.
 - Browser bridge (`src/services/coachStation.ts`) — FormEvent + session
   start/end, fail-silent; engine `formCheckSpeak` (e.g. `elbow_swing` on curls)
   streams through the pose loop
+- Demo voice sync — station emits `demonstration` (narration + duration); web
+  TTS cascade ElevenLabs → Amazon Polly → browser Web Speech; user preference
+  via settings VOICE ENGINE (`prefTtsProvider`); not Nova-locked
 - Demo CLI: `cd coach-station && uv run python -m coach_station.demo --demo all`
-- Station tests: `uv sync --extra dev && uv run pytest` (10 passing)
+- Station tests: `uv sync --extra dev && uv run pytest` (10+ passing)
 
 ## What's next
 
@@ -87,7 +89,8 @@ Goal: on the cohort day, camera on, curls, arm moves in MuJoCo.
   - plus cohort flagship `demonstrate_strict_curl` (curls + `elbow_swing`)
 - [x] Per-persona motion profiles: SNEL slow-deliberate, STEDDIE
       smooth-centered, RASTA fast-energetic
-- [ ] Nova 2 voice track synced to the primitive being demonstrated
+- [x] Demo voice sync (station `demonstration` event + provider-agnostic TTS:
+      ElevenLabs → Polly → browser; user preference in settings)
 
 Demo without the browser: `cd coach-station && uv run python -m coach_station.demo --demo all`
 
