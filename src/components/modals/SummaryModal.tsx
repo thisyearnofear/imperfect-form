@@ -7,6 +7,7 @@ import { usePlatform } from '@/contexts/PlatformContext';
 import { UniversalConnectButton } from '@/components/wallet';
 import FarcasterShare from '@/components/social/FarcasterShare';
 import { SubmitScore } from '@/components/game';
+import { ONCHAIN_MODES } from '@/components/game/ModeSwitch';
 import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
 import { VerificationIntegration } from '@/components/verification';
 import SelfVerificationModal from '@/components/verification/SelfVerificationModal';
@@ -81,7 +82,7 @@ export interface SummaryModalProps {
   onPlayAgain?: () => void;
   repCount: number;
   timeLeft: number;
-  mode?: 'pushups' | 'squats';
+  mode?: import('@/utils/biomechanics').ExerciseMode;
   address?: string; // Optional wallet address
   sessionSummary?: import('@/services/sessionLogger').SessionSummary | null;
   isRace?: boolean;
@@ -627,8 +628,17 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 userAddress={effectiveAddress || ''}
               />
 
+              {/* Local-only modes (no leaderboard contracts yet) skip submission */}
+              {!ONCHAIN_MODES.includes(mode) && submissionStatus !== 'success' && (
+                <div className="rounded-xl bg-black/20 p-3 text-center border border-white/5">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+                    💾 Saved locally — on-chain leaderboards coming for this exercise
+                  </span>
+                </div>
+              )}
+
               {/* Submit Score component - only show if not successfully submitted and level is 5+ */}
-              {submissionStatus !== 'success' && (
+              {ONCHAIN_MODES.includes(mode) && submissionStatus !== 'success' && (
                 <div className="rounded-xl bg-black/20 p-4 text-center border border-white/5">
                   {progress.currentLevel >= 5 ? (
                     <>

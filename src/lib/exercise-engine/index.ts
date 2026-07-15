@@ -22,6 +22,14 @@ export {
   type JumpProcessorResult,
 } from './jumpProcessor';
 export {
+  processCurls,
+  createCurlState,
+  resetCurlState,
+  type CurlState,
+  type CurlProcessorParams,
+  type CurlProcessorResult,
+} from './curlProcessor';
+export {
   PoseReadinessSystem,
   type ReadinessLevel,
   type ReadinessScore,

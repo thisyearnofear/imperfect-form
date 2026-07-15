@@ -89,6 +89,26 @@ export const STRETCHES: Record<string, Stretch[]> = {
       cue: 'Palm up, gently draw fingers down. Switch halfway.',
     },
   ],
+  curls: [
+    {
+      name: 'Biceps Stretch',
+      emoji: '💪',
+      seconds: 20,
+      cue: 'Arm straight behind you, palm down on a wall, turn away gently. Switch halfway.',
+    },
+    {
+      name: 'Wrist Release',
+      emoji: '🖐️',
+      seconds: 20,
+      cue: 'Palm up, gently draw fingers down. Switch halfway.',
+    },
+    {
+      name: 'Cross-Body Shoulder',
+      emoji: '🤝',
+      seconds: 20,
+      cue: 'Arm across the chest, gentle pull. Switch halfway.',
+    },
+  ],
   jumps: [
     {
       name: 'Calf Stretch',

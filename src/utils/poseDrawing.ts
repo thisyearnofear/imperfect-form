@@ -6,6 +6,7 @@ const MODE_ACCENT: Record<ExerciseMode, string> = {
   squats: '#00ffff',
   pullups: '#fcb131',
   jumps: '#ff69b4',
+  curls: '#a78bfa',
 };
 
 export function drawSkeleton(
@@ -34,7 +35,7 @@ export function drawSkeleton(
   const accentColor = isGhost ? '#c0c0c0' : MODE_ACCENT[mode];
   const jointColor = isGhost ? '#e0e0e0' : '#ffffff';
   // Arm-driven modes highlight the arms; leg-driven modes highlight the legs
-  const armsAccented = mode === 'pushups' || mode === 'pullups';
+  const armsAccented = mode === 'pushups' || mode === 'pullups' || mode === 'curls';
   const legsAccented = mode === 'squats' || mode === 'jumps';
 
   // Check if coordinates are normalized (0.0 to 1.0)

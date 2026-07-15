@@ -1,9 +1,13 @@
 import React, { memo } from 'react';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
+import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/mode-switch.css';
 
-// Types
-export type Mode = 'pushups' | 'squats';
+// Types - single source of truth is the biomechanics ExerciseMode union
+export type Mode = ExerciseMode;
+
+/** Modes with on-chain leaderboard contracts. Others save locally only. */
+export const ONCHAIN_MODES: readonly Mode[] = ['pushups', 'squats'] as const;
 
 interface ModeSwitchProps {
   value: Mode;
@@ -39,6 +43,27 @@ const ALL_MODE_OPTIONS: ModeOption[] = [
     ariaLabel: 'Switch to squats mode',
     category: 'lower-body',
   },
+  {
+    value: 'curls',
+    label: 'Curls',
+    icon: '🦾',
+    ariaLabel: 'Switch to bicep curls mode',
+    category: 'upper-body',
+  },
+  {
+    value: 'pullups',
+    label: 'Pull-ups',
+    icon: '🧗',
+    ariaLabel: 'Switch to pull-ups mode',
+    category: 'upper-body',
+  },
+  {
+    value: 'jumps',
+    label: 'Jumps',
+    icon: '🦘',
+    ariaLabel: 'Switch to jumps mode',
+    category: 'cardio',
+  },
 ];
 
 // Component
@@ -49,15 +74,14 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(
     onChange,
     id = 'modeSwitch',
     className = '',
-    availableModes = ['pushups', 'squats'], // Default to current supported modes
+    availableModes = ['pushups', 'squats', 'curls', 'pullups', 'jumps'],
     layout = 'horizontal',
   }) => {
     const { currentTheme } = useEnhancedChainTheme();
     const { palette } = currentTheme;
 
-    // Only show currently supported exercises
-    const supportedModes = ['pushups', 'squats'] as Mode[];
-    const modeOptions = ALL_MODE_OPTIONS; // Now ALL_MODE_OPTIONS only contains supported modes
+    const supportedModes = availableModes;
+    const modeOptions = ALL_MODE_OPTIONS.filter((m) => availableModes.includes(m.value));
 
     // Dynamic styles based on chain theme
     const containerStyle: React.CSSProperties = {

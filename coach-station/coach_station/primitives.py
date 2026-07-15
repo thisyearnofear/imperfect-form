@@ -52,6 +52,27 @@ def resolve_demonstration(event: FormEvent) -> Optional[Demonstration]:
     current = event.current if event.current is not None else 90.0
     target = event.target if event.target is not None else 155.0
 
+    if event.issue == "elbow_swing" and event.mode == "curls":
+        # The flagship demo: the SO-101 performs a strict pinned-elbow curl.
+        return Demonstration(
+            name="demonstrate_strict_curl",
+            joint="elbow_flex",
+            from_deg=160.0,
+            to_deg=50.0,
+            profile=profile,
+            narration="Elbow pinned - only the forearm moves. Like this.",
+        )
+
+    if event.issue == "depth" and event.mode == "curls":
+        return Demonstration(
+            name="demonstrate_full_curl",
+            joint="elbow_flex",
+            from_deg=current,
+            to_deg=50.0,
+            profile=profile,
+            narration=f"Curl all the way up - from {current:.0f}° to 50°.",
+        )
+
     if event.issue in ("partial_bottom_rom", "depth") and event.mode in ("pullups", "pushups"):
         return Demonstration(
             name="demonstrate_extension",

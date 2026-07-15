@@ -225,7 +225,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   const pendingStartRef = useRef<{ trace?: any; isRace?: boolean } | undefined>(undefined);
   const [timeLeft, setTimeLeft] = useState(120);
   // repCount managed by useRepCounter below
-  const [mode, setMode] = useState<'pushups' | 'squats'>('pushups');
+  const [mode, setMode] = useState<import('@/utils/biomechanics').ExerciseMode>('pushups');
   const [showSummary, setShowSummary] = useState(false);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
 
@@ -527,7 +527,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   const searchParams = useSearchParams();
   useEffect(() => {
     const raceParam = searchParams.get('race');
-    const modeParam = searchParams.get('mode') as 'pushups' | 'squats' | null;
+    const modeParam = searchParams.get('mode');
 
     if (raceParam) {
       try {
@@ -538,7 +538,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           setIsRace(true);
 
           // Override mode if specified in URL
-          if (modeParam && (modeParam === 'pushups' || modeParam === 'squats')) {
+          if (
+            modeParam === 'pushups' ||
+            modeParam === 'squats' ||
+            modeParam === 'pullups' ||
+            modeParam === 'jumps' ||
+            modeParam === 'curls'
+          ) {
             setMode(modeParam);
             console.log('🎮 Race mode set to:', modeParam);
           }

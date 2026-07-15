@@ -19,6 +19,9 @@ export interface XpProgress {
 export interface PersonalBests {
   pushups: number;
   squats: number;
+  pullups: number;
+  jumps: number;
+  curls: number;
 }
 
 export const XP_CONSTANTS = {
@@ -108,7 +111,7 @@ class XPServiceImpl {
     const targetDay = new Date(timestamp).toLocaleDateString();
 
     let currentStreak = 0;
-    let checkDate = new Date(targetDay);
+    const checkDate = new Date(targetDay);
 
     // Start checking from targetDay backwards
     for (let i = 0; i < days.length; i++) {
@@ -149,7 +152,7 @@ class XPServiceImpl {
 
     let currentStreak = 0;
     if (days[0] === today || days[0] === yesterday) {
-      let checkDate = new Date(days[0]);
+      const checkDate = new Date(days[0]);
       for (const day of days) {
         if (day === checkDate.toLocaleDateString()) {
           currentStreak++;
@@ -221,13 +224,12 @@ class XPServiceImpl {
    * Detect Personal Bests from workouts
    */
   getPersonalBests(workouts: LocalWorkout[]): PersonalBests {
-    const pbs = { pushups: 0, squats: 0 };
+    const pbs: PersonalBests = { pushups: 0, squats: 0, pullups: 0, jumps: 0, curls: 0 };
 
     for (const workout of workouts) {
-      if (workout.type === 'pushups') {
-        pbs.pushups = Math.max(pbs.pushups, workout.reps);
-      } else if (workout.type === 'squats') {
-        pbs.squats = Math.max(pbs.squats, workout.reps);
+      const type = workout.type as keyof PersonalBests;
+      if (type in pbs) {
+        pbs[type] = Math.max(pbs[type], workout.reps);
       }
     }
 

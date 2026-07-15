@@ -51,7 +51,7 @@ export interface CoachingAnalysis {
  */
 function analyzeStability(
   metrics: BiomechanicalState,
-  mode: 'pushups' | 'squats'
+  mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   if (!metrics.isStable) {
     return {
@@ -72,7 +72,7 @@ function analyzeStability(
  */
 function analyzeDepth(
   metrics: BiomechanicalState,
-  mode: 'pushups' | 'squats'
+  mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   const { depth } = metrics;
   const target = 0.85;
@@ -126,7 +126,7 @@ function analyzeDepth(
  */
 function analyzeTrunkLean(
   metrics: BiomechanicalState,
-  mode: 'pushups' | 'squats'
+  mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   const { trunkLean } = metrics;
   let target = 15; // Most exercise should be <15°
@@ -169,7 +169,7 @@ function analyzeTrunkLean(
  */
 function analyzeKneeValgus(
   metrics: BiomechanicalState,
-  mode: 'pushups' | 'squats'
+  mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   const { kneeValgus } = metrics;
   const target = 20;
@@ -208,7 +208,7 @@ function analyzeKneeValgus(
  */
 function analyzeAnkleFlexion(
   metrics: BiomechanicalState,
-  mode: 'pushups' | 'squats'
+  mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   if (mode !== 'squats') return null; // Only relevant for squats
 
@@ -235,7 +235,7 @@ function analyzeAnkleFlexion(
  */
 function analyzeSymmetry(
   metrics: BiomechanicalState,
-  mode: 'pushups' | 'squats'
+  mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   const { symmetry } = metrics;
   const target = 0.9; // >0.9 = balanced
@@ -291,7 +291,7 @@ function generateSummary(issues: CoachingIssue[]): string {
  */
 export function analyzeForm(
   metrics: BiomechanicalState,
-  mode: 'pushups' | 'squats',
+  mode: import('@/utils/biomechanics').ExerciseMode,
   sessionTrend?: 'improving' | 'degrading' | 'stable'
 ): CoachingAnalysis {
   const allIssues: CoachingIssue[] = [

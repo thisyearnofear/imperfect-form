@@ -48,7 +48,7 @@ class GhostServiceImpl {
   /**
    * Compress a workout trace into a URL-safe string
    */
-  compress(trace: SessionSnapshot[], mode: 'pushups' | 'squats' = 'pushups'): string {
+  compress(trace: SessionSnapshot[], mode: string = 'pushups'): string {
     if (!trace || trace.length === 0) {
       throw new Error('Cannot compress empty trace');
     }
@@ -236,7 +236,7 @@ class GhostServiceImpl {
   /**
    * Generate a shareable URL for a workout trace
    */
-  generateShareUrl(trace: SessionSnapshot[], mode: 'pushups' | 'squats', baseUrl?: string): string {
+  generateShareUrl(trace: SessionSnapshot[], mode: string, baseUrl?: string): string {
     const compressed = this.compress(trace, mode);
 
     const url = new URL(baseUrl || (typeof window !== 'undefined' ? window.location.origin : ''));
@@ -276,7 +276,7 @@ class GhostServiceImpl {
       binary += String.fromCharCode(uint8[i]);
     }
 
-    let base64 = btoa(binary);
+    const base64 = btoa(binary);
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 

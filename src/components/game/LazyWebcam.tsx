@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Spinner } from '@/components/ui';
 
 interface LazyWebcamProps {
-  mode?: 'pushups' | 'squats';
+  mode?: import('@/utils/biomechanics').ExerciseMode;
   onRepCount?: (count: number) => void;
   isActive?: boolean;
   onFilterChange?: (filterName: string) => void;

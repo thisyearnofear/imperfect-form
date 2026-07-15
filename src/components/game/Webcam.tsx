@@ -14,7 +14,7 @@ declare global {
 }
 
 interface WebcamProps {
-  mode?: 'pushups' | 'squats';
+  mode?: import('@/utils/biomechanics').ExerciseMode;
   onRepCount?: (count: number) => void;
   isActive?: boolean;
   onFilterChange?: (filterName: string) => void;
@@ -49,7 +49,8 @@ const Webcam: React.FC<WebcamProps> = ({
   pbTrace,
 }) => {
   // Defensive: default to pushups if mode is null/undefined at runtime
-  const safeMode: 'pushups' | 'squats' = mode === 'squats' ? 'squats' : 'pushups';
+  const safeMode: import('@/utils/biomechanics').ExerciseMode =
+    mode === 'squats' ? 'squats' : 'pushups';
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Pass isMobile flag to usePoseDetection for mobile-specific optimizations
   const { isMobile } = useDeviceDetect();

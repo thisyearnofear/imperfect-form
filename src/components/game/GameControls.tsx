@@ -7,7 +7,7 @@ interface GameControlsProps {
   started: boolean;
   isMobile: boolean;
   metrics: BiomechanicalState | null;
-  mode: 'pushups' | 'squats';
+  mode: import('@/utils/biomechanics').ExerciseMode;
   voiceEnabled: boolean;
   repCount: number;
   userId?: string;
@@ -15,7 +15,7 @@ interface GameControlsProps {
   onStop: () => void;
   onStart: () => void;
   onReset: () => void;
-  onModeChange: (mode: 'pushups' | 'squats') => void;
+  onModeChange: (mode: import('@/utils/biomechanics').ExerciseMode) => void;
 }
 
 export const GameControls: React.FC<GameControlsProps> = ({

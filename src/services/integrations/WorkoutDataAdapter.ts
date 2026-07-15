@@ -134,7 +134,7 @@ export async function getWorkoutTrace(workoutId: string): Promise<SessionSnapsho
  */
 export async function getPersonalBestWorkout(
   userAddress: string | undefined,
-  mode: 'pushups' | 'squats'
+  mode: import('@/utils/biomechanics').ExerciseMode
 ): Promise<LocalWorkout | null> {
   const workouts = await getLocalWorkouts();
 

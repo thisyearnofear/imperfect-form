@@ -137,7 +137,7 @@ function validateSubmissionRequirements(
 
 interface SubmitScoreProps {
   score?: number;
-  exerciseType?: 'pushups' | 'squats';
+  exerciseType?: import('@/utils/biomechanics').ExerciseMode;
   // Enhanced: Support for batch submissions
   pushupsScore?: number;
   squatsScore?: number;
@@ -277,7 +277,7 @@ export default function SubmitScore({
       }
 
       // Get fee amount for chains that require it
-      let feeAmount: string | null = null;
+      const feeAmount: string | null = null;
       // Monad Mainnet (chainId 143) does not require a submission fee, only gas
 
       // ENHANCEMENT: Unified provider selection with validation

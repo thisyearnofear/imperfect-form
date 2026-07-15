@@ -1,9 +1,12 @@
 import { Keypoint, BiomechanicalState } from '../types/mediapipe';
 import {
+  createCurlState,
   createJumpState,
   createPullupState,
+  processCurls,
   processJumps,
   processPullups,
+  type CurlState,
   type JumpState,
   type PullupState,
   type RepState as EngineRepState,
@@ -17,13 +20,13 @@ export interface Point {
   name?: string;
 }
 
-export type ExerciseMode = 'pushups' | 'squats' | 'pullups' | 'jumps';
+export type ExerciseMode = 'pushups' | 'squats' | 'pullups' | 'jumps' | 'curls';
 
 /** Modes counted by the ported exercise engine rather than the local detectors. */
-export type EngineMode = 'pullups' | 'jumps';
+export type EngineMode = 'pullups' | 'jumps' | 'curls';
 
 export function isEngineMode(mode: ExerciseMode): mode is EngineMode {
-  return mode === 'pullups' || mode === 'jumps';
+  return mode === 'pullups' || mode === 'jumps' || mode === 'curls';
 }
 
 export function getPoint(keypoints: Keypoint[], name: string): Point | null {
@@ -140,6 +143,7 @@ export interface EngineRepDetectorState {
   engineRepState: EngineRepState;
   pullupState: PullupState;
   jumpState: JumpState;
+  curlState: CurlState;
   lastFeedback?: string;
   lastRepScore?: number;
 }
@@ -149,6 +153,7 @@ export function createEngineRepDetectorState(mode: EngineMode): EngineRepDetecto
     engineRepState: mode === 'jumps' ? 'GROUNDED' : 'DOWN',
     pullupState: createPullupState(),
     jumpState: createJumpState(),
+    curlState: createCurlState(),
   };
 }
 
@@ -167,7 +172,9 @@ export function detectEngineRep(
   const result =
     mode === 'pullups'
       ? processPullups({ ...params, pullupState: state.pullupState })
-      : processJumps({ ...params, jumpState: state.jumpState });
+      : mode === 'jumps'
+        ? processJumps({ ...params, jumpState: state.jumpState })
+        : processCurls({ ...params, curlState: state.curlState });
 
   if (!result) return false;
   if (result.newRepState) state.engineRepState = result.newRepState;
@@ -233,6 +240,27 @@ export function analyzeBiomechanics(keypoints: Keypoint[], mode: ExerciseMode): 
         const rightAngle = calculateAngle(rs, re, rw);
         metrics.symmetry = Math.max(0, 1 - Math.abs(leftAngle - rightAngle) / 45);
         if (Math.abs(leftAngle - rightAngle) > 30) metrics.warnings.push('PULL EVENLY');
+      }
+    }
+  }
+
+  if (mode === 'curls' && ls && lw) {
+    const le = getPoint(keypoints, 'left_elbow');
+    const rs = getPoint(keypoints, 'right_shoulder');
+    const re = getPoint(keypoints, 'right_elbow');
+    const rw = getPoint(keypoints, 'right_wrist');
+    if (le) {
+      const leftAngle = calculateAngle(ls, le, lw);
+      // Curl progress: 170° extended -> 50° fully curled
+      metrics.depth = Math.max(0, Math.min(1, (170 - leftAngle) / (170 - 50)));
+      // Upper-arm drift = momentum cheat
+      if (lh) {
+        const shoulderDrift = calculateAngle(lh, ls, le);
+        if (shoulderDrift > 30) metrics.warnings.push('PIN ELBOWS');
+      }
+      if (rs && re && rw) {
+        const rightAngle = calculateAngle(rs, re, rw);
+        metrics.symmetry = Math.max(0, 1 - Math.abs(leftAngle - rightAngle) / 90);
       }
     }
   }

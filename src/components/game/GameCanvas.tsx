@@ -11,7 +11,7 @@ interface RepFeedback {
 }
 
 interface GameCanvasProps {
-  mode: 'pushups' | 'squats';
+  mode: import('@/utils/biomechanics').ExerciseMode;
   timeLeft: number;
   repCount: number;
   repFeedback: RepFeedback;

@@ -8,7 +8,7 @@ import '@/styles/agent-insights.css';
 
 interface AgentInsightTrayProps {
   metrics: BiomechanicalState | null;
-  mode: 'pushups' | 'squats';
+  mode: import('@/utils/biomechanics').ExerciseMode;
   voiceEnabled: boolean;
   repCount: number;
   userId?: string;
@@ -35,7 +35,7 @@ const FEEDBACK_CONFIG: Record<FeedbackType, { icon: string; className: string }>
  */
 const getFeedbackFromAnalysis = (
   analysis: CoachingAnalysis,
-  mode: 'pushups' | 'squats'
+  mode: import('@/utils/biomechanics').ExerciseMode
 ): FeedbackState => {
   // Determine UI type based on severity and issues
   let type: FeedbackType = 'neutral';
