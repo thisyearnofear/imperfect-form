@@ -56,7 +56,7 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode }) => {
                 {completed.has('breathe') ? '✓' : '🌬️'}
               </span>
               <span className="text-xs font-light text-teal-100">Breathe</span>
-              <span className="text-[9px] text-teal-300/50">4 breaths · 30s</span>
+              <span className="text-[10px] text-teal-300/50">4 breaths · 30s</span>
             </button>
             <button
               onClick={() => setActive('stretch')}
@@ -66,7 +66,7 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode }) => {
                 {completed.has('stretch') ? '✓' : '🧘'}
               </span>
               <span className="text-xs font-light text-teal-100">Stretch</span>
-              <span className="text-[9px] text-teal-300/50">3 moves · 1 min</span>
+              <span className="text-[10px] text-teal-300/50">3 moves · 1 min</span>
             </button>
           </div>
           <p className="text-[10px] font-light text-teal-100/40 text-center">

@@ -50,7 +50,7 @@ const LabAnalysisCard: React.FC<LabAnalysisCardProps> = ({
         <span className="text-[10px] font-black uppercase tracking-widest text-white">
           AI Clinical Review
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-wider text-purple-100 bg-white/20 rounded-full px-2 py-0.5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-100 bg-white/20 rounded-full px-2 py-0.5">
           {coach.emoji} {coach.name}
         </span>
       </div>

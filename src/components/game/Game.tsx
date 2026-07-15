@@ -17,6 +17,10 @@ import useSwipeGesture from '@/hooks/useSwipeGesture';
 import { GameControls } from './GameControls';
 
 import IntroDialog from '@/components/auth/IntroDialog';
+import CameraPrimer, {
+  shouldShowCameraPrimer,
+  markCameraPrimerSeen,
+} from '@/components/recovery/CameraPrimer';
 
 import { useFullscreen } from '../../hooks/useFullscreen';
 import FullscreenExitButton from '../ui/FullscreenExitButton';
@@ -217,6 +221,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
   // Tutorial state is managed but not displayed in current UI
   const [, setShowTutorial] = useState(true);
   const [started, setStarted] = useState(false);
+  const [showCameraPrimer, setShowCameraPrimer] = useState(false);
+  const pendingStartRef = useRef<{ trace?: any; isRace?: boolean } | undefined>(undefined);
   const [timeLeft, setTimeLeft] = useState(120);
   // repCount managed by useRepCounter below
   const [mode, setMode] = useState<'pushups' | 'squats'>('pushups');
@@ -394,6 +400,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
 
   const handleStart = useCallback(
     async (options?: { trace?: any; isRace?: boolean }) => {
+      // First use: show the calm camera primer before the browser's permission
+      // prompt fires. Synchronous check - the fullscreen call below must stay
+      // within this user gesture.
+      if (shouldShowCameraPrimer()) {
+        pendingStartRef.current = options;
+        setShowCameraPrimer(true);
+        return;
+      }
+
       // Use device detection hook's isMobile value
       // Only attempt fullscreen if it's available in the current context
       if (isMobile && autoFs && isFullscreenAvailable) {
@@ -759,6 +774,25 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress, profileSearchTarget }) => 
           onModeChange={setMode}
         />
       </div>
+      {showCameraPrimer && (
+        <div className="fixed inset-0 z-[90] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-teal-500/20 bg-teal-500/5 overflow-hidden">
+            <CameraPrimer
+              onEnable={() => {
+                markCameraPrimerSeen();
+                setShowCameraPrimer(false);
+                // Re-enter the start flow in this click's gesture context so
+                // fullscreen/orientation still work
+                handleStart(pendingStartRef.current);
+              }}
+              onCancel={() => {
+                setShowCameraPrimer(false);
+                pendingStartRef.current = undefined;
+              }}
+            />
+          </div>
+        </div>
+      )}
       {showIntroDialog && (
         <IntroDialog
           open={showIntroDialog}

@@ -6,35 +6,39 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ONBOARDING STEPS
+//
+// First-touch surface, calm register ("night studio"): readable, unhurried,
+// trust-first. Each step's accent previews one of the app's three registers -
+// teal (recovery/trust), gold (arcade), purple (lab).
 // ═══════════════════════════════════════════════════════════════════════════
 
 const STEPS = [
   {
     icon: Activity,
-    title: 'AI-Powered Fitness',
+    title: 'Your camera coaches you',
     description:
-      'Your camera detects push-ups and squats in real time using pose estimation. No wearables needed — just you and your device.',
+      'Push-ups and squats are counted in real time using pose detection that runs entirely on your device. No video is recorded or uploaded — no wearables, just you.',
+    accent: 'text-teal-300',
+    bg: 'bg-teal-400/10',
+    border: 'border-teal-400/20',
+  },
+  {
+    icon: Trophy,
+    title: 'Compete when you want to',
+    description:
+      'Save reps to on-chain leaderboards, race ghost replays of top performers, and climb the ranks — or just train for yourself.',
     accent: 'text-yellow-400',
     bg: 'bg-yellow-400/10',
     border: 'border-yellow-400/20',
   },
   {
-    icon: Trophy,
-    title: 'Compete On-Chain',
+    icon: Zap,
+    title: 'Grow a little every day',
     description:
-      'Every rep can be saved to a blockchain leaderboard. Race ghost replays of top performers and climb the ranks.',
+      'Earn XP, complete daily quests, unlock achievements, and get AI form analysis after each session. Your streak keeps you honest.',
     accent: 'text-purple-400',
     bg: 'bg-purple-400/10',
     border: 'border-purple-400/20',
-  },
-  {
-    icon: Zap,
-    title: 'Level Up Daily',
-    description:
-      'Earn XP, complete daily quests, unlock achievements, and track your progress on the roadmap. Your streak keeps you coming back.',
-    accent: 'text-green-400',
-    bg: 'bg-green-400/10',
-    border: 'border-green-400/20',
   },
 ];
 
@@ -75,16 +79,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 font-sans"
       role="dialog"
       aria-modal="true"
       aria-label="Welcome to Imperfect Form"
     >
-      <div className="relative w-full max-w-sm bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden shadow-2xl animate-slide-up">
+      <div className="relative w-full max-w-sm bg-teal-500/5 border border-teal-500/20 backdrop-blur-xl rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(45,212,191,0.1)] animate-slide-up">
         {/* Skip button */}
         <button
           onClick={handleSkip}
-          className="absolute top-3 right-3 p-1.5 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+          className="absolute top-3 right-3 p-1.5 rounded-full text-teal-300/40 hover:text-teal-200 hover:bg-white/5 transition-colors"
           aria-label="Skip onboarding"
         >
           <X size={16} />
@@ -96,7 +100,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
             <div
               key={i}
               className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                i <= step ? 'bg-yellow-400' : 'bg-zinc-700'
+                i <= step ? 'bg-teal-400/70' : 'bg-white/10'
               }`}
             />
           ))}
@@ -109,27 +113,29 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-white">{current.title}</h2>
-            <p className="text-sm text-zinc-400 leading-relaxed">{current.description}</p>
+            <h2 className="text-lg font-light tracking-wide text-teal-50">{current.title}</h2>
+            <p className="text-sm font-light text-teal-100/60 leading-relaxed">
+              {current.description}
+            </p>
           </div>
 
           <div className="flex flex-col gap-2 w-full pt-2">
             <button
               onClick={handleNext}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-yellow-400 hover:bg-yellow-300 text-black font-bold rounded-xl transition-colors text-sm"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-teal-500/20 border border-teal-400/30 text-teal-50 text-sm font-medium hover:bg-teal-500/30 transition-colors"
               aria-label={isLast ? 'Get started' : 'Next step'}
             >
-              {isLast ? 'Get Started' : 'Next'}
+              {isLast ? "Let's begin" : 'Next'}
               <ChevronRight size={16} aria-hidden="true" />
             </button>
 
             {!isLast && (
               <button
                 onClick={handleSkip}
-                className="w-full py-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="w-full py-2 text-xs font-light text-teal-300/40 hover:text-teal-200 transition-colors"
                 aria-label="Skip tutorial"
               >
-                Skip tutorial
+                skip
               </button>
             )}
           </div>
@@ -137,7 +143,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
 
         {/* Step counter */}
         <div className="pb-4 text-center">
-          <span className="text-xs text-zinc-600">
+          <span className="text-xs font-light text-teal-300/30">
             {step + 1} of {STEPS.length}
           </span>
         </div>

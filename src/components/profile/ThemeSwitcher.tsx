@@ -16,7 +16,7 @@ export const ThemeSwitcher: React.FC = () => {
         <div className="flex items-center justify-between mb-3">
           <div className="text-[10px] text-gray-500 uppercase font-mono tracking-widest flex items-center gap-2">
             <span>Elite Theme Switcher</span>
-            <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-[8px]">
+            <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-[10px]">
               LOCKED
             </span>
           </div>
@@ -64,7 +64,7 @@ export const ThemeSwitcher: React.FC = () => {
         <div className="text-[10px] text-[#FFD700] uppercase font-mono tracking-widest flex items-center gap-2">
           <span className="animate-pulse">★</span>
           <span>Elite Status Theme Switcher</span>
-          <span className="bg-[#FFD700]/20 text-[#FFD700] px-1.5 py-0.5 rounded text-[8px] border border-[#FFD700]/30 shadow-[0_0_5px_rgba(255,215,0,0.2)]">
+          <span className="bg-[#FFD700]/20 text-[#FFD700] px-1.5 py-0.5 rounded text-[10px] border border-[#FFD700]/30 shadow-[0_0_5px_rgba(255,215,0,0.2)]">
             VETERAN
           </span>
         </div>
@@ -73,7 +73,7 @@ export const ThemeSwitcher: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 relative z-10">
         <button
           onClick={() => handleThemeSelect(undefined)}
-          className={`px-2 py-2 text-[8px] font-mono uppercase transition-all duration-300 rounded-md border flex flex-col items-center justify-center gap-1 ${
+          className={`px-2 py-2 text-[10px] font-mono uppercase transition-all duration-300 rounded-md border flex flex-col items-center justify-center gap-1 ${
             themeOptions.forcedThemeId === undefined
               ? 'bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700] shadow-[0_0_10px_rgba(255,215,0,0.2)]'
               : 'bg-black/40 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200'
@@ -86,7 +86,7 @@ export const ThemeSwitcher: React.FC = () => {
           <button
             key={id}
             onClick={() => handleThemeSelect(id)}
-            className={`px-2 py-2 text-[8px] font-mono uppercase transition-all duration-300 rounded-md border flex flex-col items-center justify-center gap-1 ${
+            className={`px-2 py-2 text-[10px] font-mono uppercase transition-all duration-300 rounded-md border flex flex-col items-center justify-center gap-1 ${
               themeOptions.forcedThemeId === id
                 ? 'bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700] shadow-[0_0_10px_rgba(255,215,0,0.2)]'
                 : 'bg-black/40 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200'
@@ -107,7 +107,7 @@ export const ThemeSwitcher: React.FC = () => {
         ))}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-[#FFD700]/10 text-[9px] font-mono text-gray-500 uppercase flex items-center justify-between relative z-10">
+      <div className="mt-3 pt-3 border-t border-[#FFD700]/10 text-[10px] font-mono text-gray-500 uppercase flex items-center justify-between relative z-10">
         <div className="flex items-center gap-2">
           <span className="text-[#FFD700] animate-pulse">●</span>
           <span>
@@ -117,7 +117,7 @@ export const ThemeSwitcher: React.FC = () => {
               : 'DISABLED'}
           </span>
         </div>
-        <span className="text-[8px] text-[#FFD700]/40">LEVEL 10 EXCLUSIVE</span>
+        <span className="text-[10px] text-[#FFD700]/40">LEVEL 10 EXCLUSIVE</span>
       </div>
     </div>
   );

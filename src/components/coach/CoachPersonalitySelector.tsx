@@ -42,7 +42,7 @@ const CoachPersonalitySelector: React.FC = () => {
               >
                 {coach.name}
               </span>
-              <span className="text-[9px] text-gray-500 capitalize">{coach.theme}</span>
+              <span className="text-[10px] text-gray-500 capitalize">{coach.theme}</span>
             </button>
           );
         })}

@@ -798,7 +798,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           <span className="text-xl group-hover:scale-125 transition-transform inline-block">
                             👻
                           </span>
-                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             RACE
                           </span>
                         </button>
@@ -873,7 +873,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                           <span className="text-xl group-hover:scale-125 transition-transform inline-block">
                             👻
                           </span>
-                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-bold text-[#00a651] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold text-[#00a651] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             RACE
                           </span>
                         </button>

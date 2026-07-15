@@ -119,7 +119,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
               <div className="mt-6">
                 <div className="text-[10px] text-gray-500 uppercase font-mono tracking-widest mb-3 flex items-center gap-2">
                   <span>Achievements</span>
-                  <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-[8px]">
+                  <span className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-[10px]">
                     {unlockedAchievements.length} / {ACHIEVEMENTS.length}
                   </span>
                 </div>
