@@ -8,6 +8,8 @@ import { NotificationSignup } from '@/components/miniapp/NotificationSignup';
 import ChainAmbient from '@/components/theme/ChainAmbient';
 import ThemeSync from '@/components/theme/ThemeSync';
 import StudioAtmosphere from '@/components/theme/StudioAtmosphere';
+import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
+import { useCoachBayPulse } from '@/hooks/useCoachBayPulse';
 import { callFarcasterReady } from '@/utils/farcasterMiniApp';
 import {
   HeroSection,
@@ -54,6 +56,9 @@ export default function Home() {
 
   // Game-loop chrome is earned after the first coached feel — not the day-0 foyer.
   const hasTrained = progress.totalXp > 0;
+
+  // Form cue / demonstration → bay arc pulse (fail-silent when station unset)
+  useCoachBayPulse();
 
   const [leaderboardData, setLeaderboardData] = useState<{
     pushups: Score[];
@@ -157,6 +162,8 @@ export default function Home() {
         <>
           <ChainAmbient />
           <ThemeSync />
+          {/* Twin peek + demo pulse fallback when the day-0 bay is unmounted */}
+          <CoachTwinPeek showFallbackPulse />
         </>
       ) : (
         <StudioAtmosphere />

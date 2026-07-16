@@ -120,6 +120,8 @@ Landers see, in order:
    (`public/atmosphere/`, see NOTICE.md) on a CSS perspective 3D gaze stage
    (fine-pointer desktop gets stronger rotateY/X; no third-party Spline).
    Soft Celo/Base/Avalanche/Monad blooms only — not a ThemeSync takeover.
+   When `NEXT_PUBLIC_COACH_STATION` is set, `CoachTwinPeek` + bay pulse
+   (`body[data-coach-pulse]`) surface physical-AI demos fail-silently.
 3. **Home shell** — studio topbar (`IMPERFECT FORM`) even before `hasMounted`.
 4. **`CoachFoyer`** — glass panel over the bay; pick a move → start.
 

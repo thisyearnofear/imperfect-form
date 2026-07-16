@@ -83,6 +83,62 @@
   animation: studio-boot-pulse 1.6s ease-in-out infinite;
 }
 
+.studio-boot__enter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.35rem;
+  animation: studio-boot-enter-in 0.45s ease-out;
+}
+
+.studio-boot__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+}
+
+.studio-boot__btn {
+  appearance: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.65rem 1.15rem;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.studio-boot__btn:active {
+  transform: scale(0.97);
+}
+
+.studio-boot__btn--primary {
+  border: 1px solid rgba(122, 235, 216, 0.55);
+  background: linear-gradient(135deg, rgba(86, 217, 195, 0.95), rgba(0, 82, 255, 0.85));
+  color: #041014;
+}
+
+.studio-boot__btn--primary:hover {
+  border-color: rgba(247, 232, 106, 0.5);
+}
+
+.studio-boot__btn--quiet {
+  border: 1px solid rgba(141, 168, 165, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  color: #b7cdc9;
+}
+
+.studio-boot__btn--quiet:hover {
+  border-color: rgba(186, 220, 214, 0.55);
+  color: #effcf9;
+}
+
 @keyframes studio-boot-pulse {
   0%,
   100% {
@@ -93,8 +149,23 @@
   }
 }
 
+@keyframes studio-boot-enter-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .studio-boot__signal {
+    animation: none;
+  }
+
+  .studio-boot__enter {
     animation: none;
   }
 }

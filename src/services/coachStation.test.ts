@@ -126,6 +126,37 @@ describe('coachStation fail-silent', () => {
     expect(payload.personality).toBe('RASTA');
   });
 
+  it('notifies form-cue subscribers when a form event is sent', async () => {
+    process.env.NEXT_PUBLIC_COACH_STATION = 'ws://localhost:8765';
+
+    class OpenWebSocket {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      readyState = OpenWebSocket.OPEN;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      onmessage: ((ev: { data: string }) => void) | null = null;
+      send() {}
+    }
+    (globalThis as { WebSocket: unknown }).WebSocket = OpenWebSocket;
+
+    const { coachStation } = await import('@/services/coachStation');
+    const cues: string[] = [];
+    const unsub = coachStation.onFormCue((e) => cues.push(e.issue));
+
+    coachStation.sendFormEvent({
+      mode: 'curls',
+      issue: 'elbow_swing',
+      severity: 'warning',
+      cue: 'Pin your elbows',
+      personality: 'RASTA',
+      repCount: 1,
+    });
+
+    expect(cues).toEqual(['elbow_swing']);
+    unsub();
+  });
+
   it('forwards demonstration events to subscribers (voice sync)', async () => {
     process.env.NEXT_PUBLIC_COACH_STATION = 'ws://localhost:8765';
     let wsInstance: { onmessage: ((ev: { data: string }) => void) | null } | null = null;

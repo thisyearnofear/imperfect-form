@@ -39,6 +39,8 @@ export interface StationDemonstrationEvent {
 }
 
 export type DemonstrationListener = (event: StationDemonstrationEvent) => void;
+/** Fired when a form cue is bridged to the station (bay pulse / twin peek). */
+export type FormCueListener = (event: StationFormEvent) => void;
 export type StationStatus = 'offline' | 'connecting' | 'connected';
 export type StationStatusListener = (status: StationStatus) => void;
 
@@ -78,6 +80,7 @@ class CoachStationClient {
   private ws: WebSocket | null = null;
   private lastSent = new Map<string, number>();
   private demoListeners = new Set<DemonstrationListener>();
+  private formCueListeners = new Set<FormCueListener>();
   private statusListeners = new Set<StationStatusListener>();
   private connectionStatus: StationStatus = 'offline';
 
@@ -91,6 +94,12 @@ class CoachStationClient {
     return () => this.demoListeners.delete(listener);
   }
 
+  /** Subscribe to outbound form cues (for bay pulse even before a demo reply). */
+  onFormCue(listener: FormCueListener): () => void {
+    this.formCueListeners.add(listener);
+    return () => this.formCueListeners.delete(listener);
+  }
+
   get status(): StationStatus {
     return this.enabled ? this.connectionStatus : 'offline';
   }
@@ -99,6 +108,11 @@ class CoachStationClient {
     this.statusListeners.add(listener);
     listener(this.status);
     return () => this.statusListeners.delete(listener);
+  }
+
+  /** Eager connect for twin peek — fail-silent if station is off. */
+  connect(): void {
+    this.ensureConnection();
   }
 
   private setStatus(status: StationStatus): void {
@@ -113,6 +127,16 @@ class CoachStationClient {
         listener(event);
       } catch {
         // fail-silent — UI listeners must not break the bridge
+      }
+    }
+  }
+
+  private emitFormCue(event: StationFormEvent): void {
+    for (const listener of this.formCueListeners) {
+      try {
+        listener(event);
+      } catch {
+        // fail-silent
       }
     }
   }
@@ -171,6 +195,7 @@ class CoachStationClient {
     const now = Date.now();
     if (now - (this.lastSent.get(key) ?? 0) < SAME_ISSUE_THROTTLE_MS) return;
     this.lastSent.set(key, now);
+    this.emitFormCue(event);
     this.send({
       type: 'form_event',
       mode: event.mode,

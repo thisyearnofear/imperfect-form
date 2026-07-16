@@ -21,18 +21,22 @@ export function LiveCoachingStatus({ mode, tracking }: LiveCoachingStatusProps) 
   const guidance = guidanceFor(mode);
 
   useEffect(() => coachStation.onStatus(setStationStatus), []);
-  useEffect(
-    () =>
-      coachStation.onDemonstration((event) => {
-        setDemonstration(event);
-        const timeout = window.setTimeout(
-          () => setDemonstration(null),
-          Math.max(2500, event.duration_s * 1000)
-        );
-        return () => window.clearTimeout(timeout);
-      }),
-    []
-  );
+
+  useEffect(() => {
+    let timeout = 0;
+    const unsub = coachStation.onDemonstration((event) => {
+      setDemonstration(event);
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(
+        () => setDemonstration(null),
+        Math.max(2500, event.duration_s * 1000)
+      );
+    });
+    return () => {
+      unsub();
+      window.clearTimeout(timeout);
+    };
+  }, []);
 
   if (demonstration) {
     return (

@@ -60,14 +60,22 @@ full theme token once earned / wallet-switched.
 - **Lightweight 3D SO-101 gaze** — CSS perspective stage on Apache cut-outs
   (no third-party Spline); fine-pointer desktop gets stronger rotateY/X follow
 
+**Shipped (physical-AI presence):**
+
+- **Live twin peek** — `CoachTwinPeek` when `NEXT_PUBLIC_COACH_STATION` is set
+  (fail-silent status + silhouette curl on demos; Cyberwave/MuJoCo stay on the
+  station machine — no browser embed)
+- **Demo moment sync** — form cues / `demonstration` set `body[data-coach-pulse]`
+  so bay arc + glow pulse; earned shell gets a fallback bloom
+- **Weisdevice-lite entry** — studio boot “Enter the bay / Enter quietly” sound
+  consent (auto-skip for automation / reduced-motion / returning session)
+
 **Next beats:**
 
-1. **Live twin peek** — when `NEXT_PUBLIC_COACH_STATION` is set, optional
-   MuJoCo/Cyberwave preview strip in the bay (fail-silent).
-2. **Demo moment sync** — on first form cue / station `demonstration`, pulse
-   the bay arc + tip so physical AI is felt in-product.
-3. **Optional Spline upgrade** — only if we author/host our own scene with
+1. **Optional Spline upgrade** — only if we author/host our own scene with
    clear rights; keep cut-out CSS 3D as fallback.
+2. **Richer twin telemetry** — optional joint-angle stream from station → peek
+   (still fail-silent).
 
 **Shipped (Ring 1/2 — earned upgrades):**
 

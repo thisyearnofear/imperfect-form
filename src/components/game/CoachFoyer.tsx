@@ -3,6 +3,7 @@
 import React from 'react';
 import { ArrowRight, Camera, LockKeyhole } from 'lucide-react';
 import { BRAND, getIntentDef } from '@/lib/brandPositioning';
+import { playStudioCue } from '@/lib/uiSound';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/coach-foyer.css';
 
@@ -54,7 +55,10 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
                 className={`coach-foyer__exercise${selected ? ' is-selected' : ''}`}
                 style={{ animationDelay: `${180 + index * 40}ms` }}
                 aria-pressed={selected}
-                onClick={() => onModeChange(exercise.mode)}
+                onClick={() => {
+                  playStudioCue('soft');
+                  onModeChange(exercise.mode);
+                }}
               >
                 <span className="coach-foyer__exercise-copy">
                   <strong>{exercise.label}</strong>
@@ -72,7 +76,10 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           className="coach-foyer__start feel-press motion-enter"
           style={{ animationDelay: '320ms' }}
           aria-label={foyer.cta}
-          onClick={onStart}
+          onClick={() => {
+            playStudioCue('press');
+            onStart();
+          }}
         >
           <Camera size={18} strokeWidth={2} />
           {foyer.cta}
