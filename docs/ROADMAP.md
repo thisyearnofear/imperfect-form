@@ -2,7 +2,8 @@
 
 > The north star (see [NORTH_STAR.md](./NORTH_STAR.md)): AI watches you
 > exercise, understands your form, and a robot arm physically demonstrates the
-> correction. Everything on this roadmap serves that loop.
+> correction. Everything on this roadmap serves that **human-first** loop —
+> robot as teacher, not as the hero experience.
 
 ## Where we are
 
@@ -150,6 +151,9 @@ Runbook: [`coach-station/LIVE.md`](../coach-station/LIVE.md).
 
 ### Milestone 3 — Data flywheel (SmolVLA)
 
+Episodes come from **coached human sessions** (form cue → demonstration),
+not from teleop-only datasets as the product’s starting point.
+
 - [ ] Every coached session records to Cyberwave in LeRobot-format episodes
 - [ ] Built-in face anonymization on-device (privacy-first stays true)
 - [ ] Episode slicing per exercise / per persona / per form-issue class
@@ -164,17 +168,23 @@ Runbook: [`coach-station/LIVE.md`](../coach-station/LIVE.md).
 
 ## What we're deliberately not doing
 
+- **Robot-as-hero product.** The SO-101 teaches the human; it is not the
+  day-0 experience. Teleop / pick-and-place / household-task demos are out of
+  scope as the primary story — see NORTH_STAR “What we are (and are not).”
+- **VLA before proof.** Learned policies (SmolVLA) come after scripted
+  understand → show works on sim and hardware, and after coached sessions can
+  become episodes. We do not ship a thin web shell around a teleop dataset.
+- **Lower-body demonstrations on SO-101.** A desk arm can't credibly show
+  squat depth or jump form. Flagship demos stay upper-body: curls (cohort),
+  push-ups, and pull-ups. Engine still coaches those moves on-screen.
+- **Gating training on-chain.** Ring 0 stays wallet-free. On-chain is an
+  earned upgrade at value moments (PB, streak milestone, verified board).
 - **Cross-platform identity aggregation.** The Memory Protocol integration
   (Phase 6) is descoped: upstream `memoryproto.co` returns
   `DEPLOYMENT_DISABLED`, our API key 500s, and the graceful-degradation path
   already covers what users actually see. The Farcaster + Neynar path we
   already own delivers the identity slice we need. If a cross-platform graph
   becomes a real requirement, we'll pick a live provider then.
-- **Gating training on-chain.** Ring 0 stays wallet-free. On-chain is an
-  earned upgrade at value moments (PB, streak milestone, verified board).
-- **Lower-body demonstrations on SO-101.** A desk arm can't credibly show
-  squat depth or jump form. The flagship demos stay upper-body: curls
-  (cohort), push-ups, and pull-ups.
 
 ## Success criteria
 

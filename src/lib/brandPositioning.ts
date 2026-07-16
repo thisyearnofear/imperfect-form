@@ -5,6 +5,12 @@
  * Promise: watch → understand → show → progress.
  * Loop principle: Trust opens the door. Play keeps them. Physical AI makes them tell someone.
  *
+ * Differentiation (see docs/NORTH_STAR.md):
+ * - We are a privacy-first camera coaching PRODUCT. The robot teaches the human.
+ * - We are not a teleop / pick-and-place / VLA-arm demo with a thin web shell.
+ * - Scripted understand→show first; learned policies from real sessions later.
+ * - Honest SO-101 scope: upper-body demonstrations only.
+ *
  * Aesthetic registers (one surface, one register — do not mix):
  * - Night studio (DEFAULT doorway): Coach intent. Day-0 foyer, camera primer, live coaching.
  *   Type: readable sans (Manrope). Color: teal glass on black. (imperfectcoach DNA)
@@ -13,6 +19,7 @@
  * - Calm: Breathe / recover. Post-set recovery + optional calm entry — not the day-0 hero.
  *   Soft light, stillness. (imperfect-breath DNA)
  * - Lab: post-workout AI clinical review only — not an entry intent.
+ *   Physical AI bay presence is lab-adjacent (precise, alive) — not arcade-loud.
  *
  * Energy ladder (not a mid-rep theme toggle):
  * 1. Session 0 — Studio trust (CoachFoyer → primer → live cues)
@@ -183,6 +190,9 @@ export const BRAND = {
   trustLine: 'Pose runs on your device. Nothing leaves the browser until you choose.',
   roboticsHint:
     'Built toward physical AI that can demonstrate the correction — not just describe it.',
+  /** Positioning spine — keep copy aligned with docs/NORTH_STAR.md */
+  differentiation:
+    'The robot exists to teach the human: camera coaching first, physical demonstration second, learned policies from real sessions third.',
 } as const;
 
 export const ONBOARDING_STEPS = [

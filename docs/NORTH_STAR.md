@@ -4,9 +4,31 @@
 > demonstrates the correction. Imperfect Form closes the feedback loop that a
 > screen can't.**
 
-Many apps do pose detection. Almost none do physical AI. This is our
-differentiation in the market, backed by the **Cyberwave builders cohort** and
-an **SO-101 arm ("Coach")**.
+Many apps do pose detection. Almost none do physical AI. We are building toward
+that category with the **Cyberwave** platform and an **SO-101 arm ("Coach")** —
+always as the teacher in a human coaching product, never as a stand-alone
+manipulation demo.
+
+## What we are (and are not)
+
+**We are:** a mass-market, privacy-first **camera coaching product**. The robot
+exists to **teach a human** — demonstration as motor learning — then to compound
+into a gym-station wedge and a session → episode → policy flywheel.
+
+**We are not:**
+
+- A teleop / pick-and-place / household-task robot as the hero experience
+- A VLA demo that starts at the arm and treats the person as optional
+- A robotics brochure with a thin web shell bolted on
+- A desk arm pretending to coach lower-body mechanics it cannot show
+
+| Principle                         | Implication                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| **Human is the primary actor**    | Day-0 is camera trust (Ring 0). Robot demos are fail-silent subscribers.     |
+| **Understand before show**        | PoseRuntime + form events unlock demonstration; demos never gate coaching.   |
+| **Show beats describe**           | Scripted joint-space primitives first; learned policies after real sessions. |
+| **Honest robot scope**            | Upper-body corrections the SO-101 can literally sweep (curls, extension…).   |
+| **Product before platform flash** | Cyberwave twin / Edge power the loop; imperfectform.fun owns the story.      |
 
 ## The loop
 
@@ -16,7 +38,7 @@ you exercise ──► camera ──► pose estimation ──► joint-angle an
         ┌─────────────────────────────────────────────┤
         ▼                             ▼               ▼
   on-screen HUD              AI coach voice     SO-101 "Coach"
-  (arcade register)          (Nova 2, persona)  physically demonstrates
+  (studio → earned arcade)   (persona TTS)      physically demonstrates
                                                 the correct joint angle
         │                             │               │
         └─────────────┬───────────────┴───────────────┘
@@ -26,43 +48,55 @@ you exercise ──► camera ──► pose estimation ──► joint-angle an
         SmolVLA fine-tuning → end-to-end physical coaching
 ```
 
+**Story spine:** Trust opens the door → play keeps them → physical AI makes
+them tell someone. Screens coach first; robots prove the category.
+
 ## Why a robot changes the product
 
 - **Demonstration beats description.** "Extend your elbows more" is weak;
   watching an arm sweep from your 120° to the target 155° is motor learning.
-- **A data flywheel nobody else has.** Every coached session records to
+- **A data flywheel rooted in real coaching.** Every coached session can become
   LeRobot-format episodes through Cyberwave — training data for SmolVLA and
-  eventual end-to-end visuomotor coaching.
+  eventual end-to-end visuomotor coaching. The human session is the dataset,
+  not an afterthought to teleop.
 - **Three-tier positioning.** The app stays mass-market; the robot is
-  (1) the brand moat / the demo nobody else can give, (2) a premium "coach
+  (1) the brand moat / the demo a screen can't give, (2) a premium "coach
   station" wedge for gyms, (3) the data asset that compounds.
 
 ## How it maps onto what exists
 
-| Existing system                                 | Role in the loop                                                                                                                 |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Exercise engine (`src/lib/exercise-engine/`)    | Emits the trigger signal: form issues with current + target joint angles (pull-up extension 150°/155°, asymmetry >30°, ROM)      |
-| Coaching engine + AI providers (text)           | Persona-toned cues; cloud LLM cascade (Gemini → Groq → …)                                                                        |
-| TTS providers (ElevenLabs / Polly / browser)    | Voice that narrates while the arm demonstrates — preference + fail-silent cascade; not vendor-locked                             |
-| Coach personas (SNEL / STEDDIE / RASTA)         | Arm motion profiles: slow-deliberate / smooth-centered / fast-energetic                                                          |
-| Design registers (arcade / studio / calm / lab) | Robot = **lab register made physical**; entry intents map arcade←Form, studio←Coach, calm←Breath                                 |
-| Pull-ups + push-ups                             | Flagship demos: elbow-joint corrections are what a desk arm can literally perform (lower-body demos are out of scope for SO-101) |
+| Existing system                                 | Role in the loop                                                                                          |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Exercise engine (`src/lib/exercise-engine/`)    | Trigger signal: form issues with current + target joint angles                                            |
+| Coaching engine + AI providers (text)           | Persona-toned cues; cloud LLM cascade                                                                     |
+| TTS providers (ElevenLabs / Polly / browser)    | Voice that narrates while the arm demonstrates — preference + fail-silent cascade                         |
+| Coach personas (SNEL / STEDDIE / RASTA)         | Arm motion profiles: slow-deliberate / smooth-centered / fast-energetic                                   |
+| Design registers (arcade / studio / calm / lab) | Robot presence = **lab register made physical** in the bay                                                |
+| Studio bay + twin peek                          | Product surface for physical AI (gaze, pulse, station status) — felt in-app, not only on the edge machine |
+| Curls + pull-ups + push-ups                     | Flagship demos: elbow corrections a desk arm can perform (lower-body demos out of scope)                  |
 
 ## Architecture
 
 ```
 Browser (Next.js, MoveNet/TFJS)            coach-station/ (Python)
 ┌──────────────────────────────┐           ┌─────────────────────────────┐
-│ pose worker → exercise engine│           │ websockets server            │
-│ coaching engine → FormEvent  │──ws:8765─►│ FormEvent → primitive lookup │
-│ (fail-silent if no station)  │           │ persona motion profiles      │
-└──────────────────────────────┘           │ Cyberwave twin (SO-101)      │
-                                           │ cw.affect("simulation"|"live")│
-                                           └─────────────────────────────┘
+│ PoseRuntime (session owner)  │           │ websockets server            │
+│ pose → exercise engine       │           │ FormEvent → primitive lookup │
+│ coaching → FormEvent         │──ws:8765─►│ persona motion profiles      │
+│ twin peek / bay pulse (UI)   │◄─ demo ──│ Cyberwave twin (SO-101)      │
+│ (fail-silent if no station)  │           │ cw.affect("simulation"|"live")│
+└──────────────────────────────┘           └─────────────────────────────┘
 ```
 
-Sim-first: everything develops against the MuJoCo twin
-(`cw.affect("simulation")`) before touching hardware.
+**Design rules for this split:**
+
+1. **PoseRuntime owns the session** — camera/model until Stop; station never
+   remounts or blocks coaching.
+2. **Station is a subscriber** — unset `NEXT_PUBLIC_COACH_STATION` ⇒ no-op.
+3. **Scripted primitives before learned policies** — Milestone 1–2 prove
+   understand → show; Milestone 3 turns sessions into episodes / SmolVLA.
+4. **Sim-first** — develop against MuJoCo (`cw.affect("simulation")`) before
+   hardware (`LIVE.md`).
 
 ## Product shape: three rings
 
@@ -91,20 +125,20 @@ wallet popup on stage.
 1. **Bridge (shipped):** `coach-station/` WebSocket + FormEvent schema + web
    tap (`coachStation.ts`). Fail-silent when the station is offline.
    Deliberately "dumb": form issue → scripted demonstration primitive.
-2. **Sim choreography (shipped, minus voice sync):** demonstration primitives
-   against the Cyberwave MuJoCo / Playground twin via
-   `cw.affect("simulation")` + interpolated `joints.set` trajectories —
-   `demonstrate_strict_curl` (cohort flagship), `demonstrate_extension`,
-   `demonstrate_tempo`, `mirror_asymmetry` — each with per-persona motion
-   profiles and narration. Station emits `demonstration` for voice sync;
-   web TTS is provider-agnostic (ElevenLabs → Polly → browser). Safety layer
-   caps elbow workspace / speed / step (tighter live defaults). Demo CLI:
-   `python -m coach_station.demo`. Live bring-up: `coach-station/LIVE.md`.
+2. **Sim choreography (shipped):** demonstration primitives against the
+   Cyberwave MuJoCo / Playground twin via `cw.affect("simulation")` +
+   interpolated `joints.set` trajectories — `demonstrate_strict_curl`
+   (flagship), `demonstrate_extension`, `demonstrate_tempo`,
+   `mirror_asymmetry` — each with per-persona motion profiles and narration.
+   Station emits `demonstration` for voice sync + bay/twin UI; web TTS is
+   provider-agnostic (ElevenLabs → Polly → browser). Safety layer caps elbow
+   workspace / speed / step. Demo CLI: `python -m coach_station.demo`.
+   Live bring-up: `coach-station/LIVE.md`.
 3. **Hardware bring-up:** `cyberwave pair` on edge hardware, `affect("live")`,
    torque / reach clamps (elbow angle clamps already in trajectory layer).
-4. **Flywheel:** record every session via Cyberwave (built-in face
-   anonymization keeps the privacy-first story intact); slice episodes; SmolVLA
-   fine-tuning experiments.
+4. **Flywheel:** record every coached session via Cyberwave (face anonymization
+   keeps privacy-first intact); slice episodes; SmolVLA experiments that start
+   from _human form cues_, not from teleop-only datasets.
 
 ## Pitch (cohort)
 
@@ -125,6 +159,10 @@ chrome (XP, ghosts, chain) is earned after the first coached feel.
 **Loop principle:** Trust opens the door. Play keeps them. Physical AI makes
 them tell someone.
 
+**Differentiation in one line:** The robot exists to teach the human —
+private camera coaching first, physical demonstration second, learned policies
+from real sessions third.
+
 **Aesthetic registers** (one surface, one register — see
 `src/lib/brandPositioning.ts`):
 
@@ -138,7 +176,8 @@ them tell someone.
   Soft light, Manrope, teal fields — no dark mode. Not competing in the
   day-0 hero viewport. Inherited from imperfect-breath.
 - **Lab** — post-workout AI clinical review only (not an entry intent): purple
-  / mono metrics.
+  / mono metrics. Physical AI presence in the bay is lab-adjacent: precise,
+  alive, not arcade-loud.
 
 **Energy ladder** (not a mid-rep theme toggle):
 
@@ -168,7 +207,8 @@ Rules:
 4. **Same engine under all registers** — camera → understanding → guidance.
    Different door and chrome; not three apps.
 5. **Alive lives in the loop** — cue timing, persona voice, settle motion,
-   celebrate hits. Not puerile foyer slogans.
+   celebrate hits, twin peek / bay pulse when the station is linked. Not
+   puerile foyer slogans.
 
 **App one-liner:** Private camera coaching with game-quality feedback, and
 a path into physical AI that can show the correction. (See

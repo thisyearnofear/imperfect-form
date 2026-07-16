@@ -115,7 +115,8 @@ Play energy enters on the **first celebrate**, not before the first coached feel
 Landers see, in order:
 
 1. **`InitializationScreen`** (`studio-boot.css`) — night-studio wordmark + promise
-   while client providers hydrate (~280ms). Never Press Start / gold / emoji.
+   while client providers hydrate; soft “Enter the bay / Enter quietly” when ready
+   (automation / reduced-motion skip). Never Press Start / gold / emoji.
 2. **`StudioAtmosphere`** — coaching-bay depth + Apache SO-101 cut-outs
    (`public/atmosphere/`, see NOTICE.md) on a CSS perspective 3D gaze stage
    (fine-pointer desktop gets stronger rotateY/X; no third-party Spline).
@@ -124,6 +125,9 @@ Landers see, in order:
    (`body[data-coach-pulse]`) surface physical-AI demos fail-silently.
 3. **Home shell** — studio topbar (`IMPERFECT FORM`) even before `hasMounted`.
 4. **`CoachFoyer`** — glass panel over the bay; pick a move → start.
+
+Product differentiation (robot teaches the human; PoseRuntime is primary):
+see [NORTH_STAR.md](./NORTH_STAR.md) “What we are (and are not).”
 
 `body[data-shell="studio"]` until first XP — ChainAmbient / ThemeSync body paint
 are earned (`data-shell="earned"`). Root `<body>` uses Manrope (`next/font`).

@@ -279,10 +279,13 @@ import { useChainTheme } from '@/hooks/useChainTheme';
 
 **Status**: Session-scoped runtime — exercise is a strategy, not a remount.
 
-This is the mass-market coaching spine (Ring 0). Aesthetic registers and
-earned play chrome sit around it; they must not tear it down mid-session.
-Contract source: `src/lib/pose/poseRuntime.ts`. Rules: [DEVELOPMENT.md](./DEVELOPMENT.md)
-(Pose pipeline performance). Product posture: [NORTH_STAR.md](./NORTH_STAR.md).
+This is the mass-market coaching spine (Ring 0) and the **primary actor** in
+the Physical AI loop: the human trains here; the robot only _shows_ after form
+understanding. Aesthetic registers and earned play chrome sit around it; they
+must not tear it down mid-session. Product differentiation:
+[NORTH_STAR.md](./NORTH_STAR.md) (“What we are”). Contract source:
+`src/lib/pose/poseRuntime.ts`. Rules: [DEVELOPMENT.md](./DEVELOPMENT.md)
+(Pose pipeline performance).
 
 ### Loop
 
@@ -368,25 +371,36 @@ features to the service singleton without routing them through this contract.
 
 **Status**: Milestone 1 sim path shipped (console + Cyberwave `affect("simulation")`)
 
-Browser FormEvents stream to a local Python service that resolves form issues
-into joint-space demonstrations on the SO-101 twin.
+The station is a **subscriber**, not the product center. Browser FormEvents
+stream to a local Python service that resolves form issues into joint-space
+demonstrations on the SO-101 twin — so the arm can _teach_ after the camera
+has _understood_. Ring 0 coaching must work with the station offline.
 
 ```
 exercise engine formCheckSpeak / coaching analyzeForm
         │
         ▼
 coachStation.ts  ──ws://localhost:8765──►  coach_station/server.py
-                                                 │
-                                          resolve_demonstration
-                                                 │
-                                          trajectory (clamped)
-                                                 │
-                                    ConsoleArm | CyberwaveArm
-                                    (joints.set degrees=True)
+        │                                          │
+        │◄──── demonstration (narration) ──  resolve_demonstration
+        │                                          │
+ bay pulse / twin peek                      trajectory (clamped)
+                                                    │
+                                         ConsoleArm | CyberwaveArm
+                                         (joints.set degrees=True)
 ```
 
+**Architecture intent:**
+
+1. Scripted primitives prove understand → show before any learned policy.
+2. Persona motion profiles keep demonstration in character with on-screen coach.
+3. Safety clamps live on the station; the browser never drives joints directly.
+4. UI presence (twin peek, bay pulse) makes the twin felt in imperfectform.fun
+   without embedding MuJoCo in the browser.
+
 Key files: `coach-station/coach_station/{schema,primitives,trajectory,arm,demo,server}.py`,
-`src/services/coachStation.ts`. See [NORTH_STAR.md](./NORTH_STAR.md) and
+`src/services/coachStation.ts`, `src/components/theme/CoachTwinPeek.tsx`.
+See [NORTH_STAR.md](./NORTH_STAR.md) and
 [coach-station/README.md](../coach-station/README.md).
 
 ## Social Integration

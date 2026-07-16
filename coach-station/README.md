@@ -2,7 +2,12 @@
 
 The physical half of Imperfect Form's [north star](../docs/NORTH_STAR.md):
 a Python service that receives live form events from the web app and drives
-the SO-101 arm ("Coach") to physically demonstrate corrections.
+the SO-101 arm ("Coach") to **physically demonstrate corrections** — so the
+robot can teach the human after the camera has understood their form.
+
+This service is a **subscriber** to Ring 0 coaching. The web app must remain
+fully usable when the station is offline (fail-silent). Scripted joint-space
+primitives come before any learned policy; see NORTH_STAR “What we are.”
 
 ## Run (console simulation, no hardware or SDK needed)
 
