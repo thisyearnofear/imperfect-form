@@ -1,0 +1,100 @@
+/* First-paint boot — same night-studio language as CoachFoyer */
+
+.studio-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 50% 40% at 18% 20%, rgba(0, 82, 255, 0.16), transparent 55%),
+    radial-gradient(ellipse 45% 35% at 85% 25%, rgba(131, 110, 249, 0.14), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 70% 80%, rgba(240, 219, 24, 0.08), transparent 45%),
+    #061013;
+  color: #effcf9;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+.studio-boot__atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.studio-boot__glow {
+  position: absolute;
+  inset: -30% -10% auto;
+  height: 70%;
+  background: radial-gradient(
+    ellipse 55% 45% at 50% 0%,
+    rgba(86, 217, 195, 0.2),
+    transparent 70%
+  );
+}
+
+.studio-boot__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.studio-boot__brand {
+  margin: 0;
+  color: #7aebd8;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.studio-boot__line {
+  margin: 0;
+  max-width: 14ch;
+  color: #fff;
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.studio-boot__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.5rem 0 0;
+  color: #8da8a5;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.studio-boot__signal {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #67dbc7;
+  box-shadow: 0 0 0 4px rgba(103, 219, 199, 0.12);
+  animation: studio-boot-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes studio-boot-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-boot__signal {
+    animation: none;
+  }
+}

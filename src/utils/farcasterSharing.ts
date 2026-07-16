@@ -219,6 +219,8 @@ export function getNetworkDisplayName(network: string | undefined): string {
       return 'Celo';
     case 'monad':
       return 'Monad';
+    case 'avalanche':
+      return 'Avalanche';
     default:
       return 'Farcaster';
   }

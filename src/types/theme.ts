@@ -6,18 +6,11 @@
  */
 
 // Base chain identifiers
-export type ChainId = 'base' | 'polygon' | 'celo' | 'monad';
+export type ChainId = 'base' | 'polygon' | 'celo' | 'monad' | 'avalanche';
 
 // Animation timing functions and configurations
 export type AnimationTiming =
-  | 'linear'
-  | 'ease'
-  | 'ease-in'
-  | 'ease-out'
-  | 'ease-in-out'
-  | 'bounce'
-  | 'elastic'
-  | string;
+  'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'bounce' | 'elastic' | string;
 
 export interface AnimationConfig {
   duration: number;

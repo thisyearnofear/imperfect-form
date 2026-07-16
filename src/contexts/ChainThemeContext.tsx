@@ -191,16 +191,23 @@ const createDebouncedApplyTheme = () => {
       applyCSSCustomProperties(properties);
       applyThemeOptions(options);
 
-      // Also apply the background directly to body for immediate feedback
+      // Day-0 / studio shell owns the page chrome — do not paint chain colours over it.
       if (typeof document !== 'undefined') {
-        document.body.style.setProperty('background-color', enhancedTheme.palette.background);
-        document.body.style.setProperty('color', enhancedTheme.palette.text);
+        const studioShell = document.body.getAttribute('data-shell') === 'studio';
+        if (!studioShell) {
+          document.body.style.setProperty('background-color', enhancedTheme.palette.background);
+          document.body.style.setProperty('color', enhancedTheme.palette.text);
+        } else {
+          document.body.style.removeProperty('background-color');
+          document.body.style.removeProperty('color');
+        }
       }
 
       console.log(`Theme applied: ${theme.id}`, {
         background: theme.palette.background,
         text: theme.palette.text,
         primary: theme.palette.primary,
+        shell: typeof document !== 'undefined' ? document.body.getAttribute('data-shell') : null,
       });
     }, 100);
   };

@@ -15,7 +15,7 @@ html {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-manrope), Manrope, ui-sans-serif, system-ui, sans-serif;
   background-color: #061013;
   color: #effcf9;
   overflow-y: auto;
@@ -55,12 +55,20 @@ html {
   aspect-ratio: 4 / 3;
 }
 
-/* Day-0 foyer needs room for brand + exercise picker (not a 4:3 camera frame) */
+/* Day-0 foyer: sit in the coaching bay, not a black card floating in a void */
 #screen:has(.coach-foyer) {
   aspect-ratio: auto;
   height: auto;
   min-height: min(520px, 70vh);
   overflow-y: auto;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+#game-container:has(.coach-foyer) {
+  background: transparent;
+  min-height: calc(100vh - 72px);
 }
 
 #canvasContainer {
@@ -202,6 +210,13 @@ body[data-chain="celo"] .olympic-rings {
   min-height: min(520px, 70vh);
   aspect-ratio: auto;
   overflow-y: auto;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+#game-container:has(.coach-foyer) {
+  background: transparent;
 }
 
 /* Mobile override for screen */

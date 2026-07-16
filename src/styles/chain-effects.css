@@ -30,6 +30,14 @@ body[data-chain="monad"] {
   --ambient-tertiary: #6b7280;
 }
 
+body[data-chain="avalanche"] {
+  --accent: #e84142;
+  --accent-light: #f27178;
+  --ambient-shape: #e84142;
+  --ambient-secondary: #c73638;
+  --ambient-tertiary: #ff7a7c;
+}
+
 /* Enhanced Ambient Background Container */
 .chain-ambient {
   position: fixed;

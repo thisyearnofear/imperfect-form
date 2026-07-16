@@ -46,6 +46,29 @@ Train / Arcade cabinet mode is later depth, not a day-0 requirement.
 mode hot-swap, worker path policy in `src/lib/pose/poseRuntime.ts`, docs in
 ARCHITECTURE.md, smoke via `e2e/pose-runtime.spec.ts` (forced worker + curls).
 
+**Studio bay atmosphere (shipped → next):** day-0 `StudioAtmosphere` with
+Apache-2.0 SO-101 **alpha cut-outs** (`so101-*-cutout.webp`), gaze parallax,
+and soft Celo / Base / Avalanche / Monad colour blooms (not a day-0 ThemeSync
+takeover). ChainAmbient / ThemeSync still gated until first XP. Avalanche is a
+full theme token once earned / wallet-switched.
+
+**Shipped (atmosphere next beats):**
+
+- **Avalanche theme token** — `ChainId: 'avalanche'`, full `CHAIN_THEMES` entry,
+  wagmi/network switching (C-Chain `43114`), ambient CSS; leaderboard contract
+  optional via `NEXT_PUBLIC_AVALANCHE_CONTRACT_ADDRESS`
+- **Lightweight 3D SO-101 gaze** — CSS perspective stage on Apache cut-outs
+  (no third-party Spline); fine-pointer desktop gets stronger rotateY/X follow
+
+**Next beats:**
+
+1. **Live twin peek** — when `NEXT_PUBLIC_COACH_STATION` is set, optional
+   MuJoCo/Cyberwave preview strip in the bay (fail-silent).
+2. **Demo moment sync** — on first form cue / station `demonstration`, pulse
+   the bay arc + tip so physical AI is felt in-product.
+3. **Optional Spline upgrade** — only if we author/host our own scene with
+   clear rights; keep cut-out CSS 3D as fallback.
+
 **Shipped (Ring 1/2 — earned upgrades):**
 
 - Multi-chain leaderboards (Base, Celo, Polygon, Monad)

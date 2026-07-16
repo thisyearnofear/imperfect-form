@@ -109,6 +109,10 @@ body[data-chain="monad"] .imf-mode-switch {
   box-shadow: 0 0 20px rgba(85, 85, 85, 0.2);
 }
 
+body[data-chain="avalanche"] .imf-mode-switch {
+  box-shadow: 0 0 20px rgba(232, 65, 66, 0.25);
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .imf-mode-switch {

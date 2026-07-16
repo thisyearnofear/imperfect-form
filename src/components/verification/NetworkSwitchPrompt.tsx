@@ -61,6 +61,8 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
         return 'Base';
       case SupportedChain.MONAD:
         return 'Monad Testnet';
+      case SupportedChain.AVALANCHE:
+        return 'Avalanche';
       default:
         return chain;
     }

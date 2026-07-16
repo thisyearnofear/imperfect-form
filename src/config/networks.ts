@@ -69,6 +69,19 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     rpcUrls: ['https://rpc.monad.xyz', 'https://rpc1.monad.xyz', 'https://rpc3.monad.xyz'],
     blockExplorer: 'https://monadvision.com',
   },
+  // Theme + wallet switching ready; leaderboard contract lands with Avalanche deploy.
+  avalanche: {
+    chainId: 43114,
+    name: 'Avalanche',
+    contractAddress: process.env.NEXT_PUBLIC_AVALANCHE_CONTRACT_ADDRESS || '',
+    abi: baseLeaderboardABI,
+    rpcUrls: [
+      'https://api.avax.network/ext/bc/C/rpc',
+      'https://avalanche-c-chain-rpc.publicnode.com',
+      'https://avax.meowrpc.com',
+    ],
+    blockExplorer: 'https://snowtrace.io',
+  },
 };
 
 /**

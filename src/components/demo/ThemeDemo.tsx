@@ -30,7 +30,7 @@ export const ThemeDemo: React.FC = () => {
   const [progress, setProgress] = useState(65);
   const [isLoading, setIsLoading] = useState(false);
 
-  const chains: ChainId[] = ['base', 'celo', 'polygon', 'monad'];
+  const chains: ChainId[] = ['base', 'celo', 'polygon', 'monad', 'avalanche'];
 
   const handleThemeSwitch = (chainId: ChainId) => {
     setIsLoading(true);

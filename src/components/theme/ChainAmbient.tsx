@@ -19,6 +19,7 @@ const CHAIN_PATTERN_CONFIGS: Record<string, ChainShapeConfig> = {
   polygon: { count: 15, types: ['hexagon'] },
   celo: { count: 18, types: ['circle'] },
   monad: { count: 16, types: ['diamond'] },
+  avalanche: { count: 14, types: ['square', 'diamond'] },
 };
 
 const DEFAULT_SHAPE_CONFIG: ChainShapeConfig = { count: 12, types: ['circle'] };
@@ -86,6 +87,8 @@ const generatePatternPosition = (
       return generateWavePosition(index, total);
     case 'monad':
       return generateSpiralPosition(index, total);
+    case 'avalanche':
+      return generateGridPosition(index, total);
     default:
       return generateSpiralPosition(index, total);
   }

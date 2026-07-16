@@ -79,6 +79,8 @@ export function useRobustThemeSwitching(): UseRobustThemeSwitchingReturn {
         return 'celo';
       case chainConfigs[SupportedChain.MONAD].id:
         return 'monad';
+      case chainConfigs[SupportedChain.AVALANCHE].id:
+        return 'avalanche';
       default:
         console.warn(`Unsupported chain ID: ${chainId}, defaulting to base theme`);
         return 'base';
@@ -101,6 +103,11 @@ export function useRobustThemeSwitching(): UseRobustThemeSwitchingReturn {
       },
       { id: 'celo' as ChainId, name: 'Celo', chainId: chainConfigs[SupportedChain.CELO].id },
       { id: 'monad' as ChainId, name: 'Monad', chainId: chainConfigs[SupportedChain.MONAD].id },
+      {
+        id: 'avalanche' as ChainId,
+        name: 'Avalanche',
+        chainId: chainConfigs[SupportedChain.AVALANCHE].id,
+      },
     ];
   }, []);
 

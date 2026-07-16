@@ -216,7 +216,9 @@ export default function UnifiedConnectButton({
                           ? 'bg-blue-400'
                           : chainId === chainConfigs[SupportedChain.MONAD].id
                             ? 'bg-yellow-400'
-                            : 'bg-gray-400'
+                            : chainId === chainConfigs[SupportedChain.AVALANCHE].id
+                              ? 'bg-red-500'
+                              : 'bg-gray-400'
                   }`}
                 ></div>
                 {/* ENHANCEMENT: Always show full network name on mobile */}
@@ -278,7 +280,9 @@ export default function UnifiedConnectButton({
                         ? 'bg-blue-400'
                         : chainId === chainConfigs[SupportedChain.MONAD].id
                           ? 'bg-yellow-400'
-                          : 'bg-gray-400'
+                          : chainId === chainConfigs[SupportedChain.AVALANCHE].id
+                            ? 'bg-red-500'
+                            : 'bg-gray-400'
                 }`}
               ></div>
               <span className="text-white text-sm">{networkName}</span>

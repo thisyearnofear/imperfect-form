@@ -198,6 +198,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                 name: 'celo',
                 chainId: chainConfigs[SupportedChain.CELO].id,
               },
+              avalanche: {
+                name: 'avalanche',
+                chainId: chainConfigs[SupportedChain.AVALANCHE].id,
+              },
+              avax: {
+                name: 'avalanche',
+                chainId: chainConfigs[SupportedChain.AVALANCHE].id,
+              },
             };
 
             // Find the network info by looking for keywords in the URL

@@ -5,7 +5,7 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createConfig, http, cookieStorage, createStorage } from 'wagmi';
 import { coinbaseWallet, injected, walletConnect } from 'wagmi/connectors';
-import { base, polygon, celo, type Chain } from 'wagmi/chains';
+import { avalanche, base, polygon, celo, type Chain } from 'wagmi/chains';
 import { Toaster } from 'react-hot-toast';
 import { PlatformProvider } from '@/contexts/PlatformContext';
 import { NeynarAuthProvider } from '@/contexts/NeynarAuthContext';
@@ -188,7 +188,7 @@ const createConnectors = async () => {
 const createWagmiConfig = async () => {
   const connectors = await createConnectors();
   return createConfig({
-    chains: [celo, polygon, base, monadMainnet],
+    chains: [celo, polygon, base, monadMainnet, avalanche],
     connectors,
     storage: createStorage({
       storage: cookieStorage,
@@ -205,6 +205,8 @@ const createWagmiConfig = async () => {
       [celo.id]: http('https://forno.celo.org'),
       // Monad: Official mainnet
       [monadMainnet.id]: http('https://rpc.monad.xyz'),
+      // Avalanche C-Chain
+      [avalanche.id]: http('https://api.avax.network/ext/bc/C/rpc'),
     },
   });
 };

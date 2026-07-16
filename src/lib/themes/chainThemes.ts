@@ -1543,16 +1543,95 @@ const monadTheme: ChainTheme = {
   },
 };
 
+/**
+ * Derive a full ChainTheme from a sibling by remapping brand hex/rgba tokens.
+ * Keeps component/ambient structure without duplicating ~300 lines per chain.
+ */
+function rebrandTheme(
+  source: ChainTheme,
+  meta: {
+    id: ChainId;
+    name: string;
+    displayName: string;
+    description: string;
+    brandColor: string;
+    logoUrl: string;
+    chainId: number;
+    rpcUrl: string;
+    blockExplorer: string;
+  },
+  colorMap: Record<string, string>
+): ChainTheme {
+  let serialized = JSON.stringify(source);
+  const fromKeys = Object.keys(colorMap).sort((a, b) => b.length - a.length);
+  for (const from of fromKeys) {
+    serialized = serialized.split(from).join(colorMap[from]);
+  }
+  const theme = JSON.parse(serialized) as ChainTheme;
+  theme.id = meta.id;
+  theme.name = meta.name;
+  theme.displayName = meta.displayName;
+  theme.description = meta.description;
+  theme.metadata = {
+    ...theme.metadata,
+    brandColor: meta.brandColor,
+    logoUrl: meta.logoUrl,
+    networkType: 'mainnet',
+    chainId: meta.chainId,
+    rpcUrl: meta.rpcUrl,
+    blockExplorer: meta.blockExplorer,
+  };
+  return theme;
+}
+
+// Avalanche C-Chain — red brand on a dark bay (structure cloned from Base)
+const avalancheTheme: ChainTheme = rebrandTheme(
+  baseTheme,
+  {
+    id: 'avalanche',
+    name: 'Avalanche',
+    displayName: 'Avalanche C-Chain',
+    description:
+      'High-energy red accent theme for Avalanche — sharp, athletic, and ready for Physical AI demos',
+    brandColor: '#e84142',
+    logoUrl: '/avalanche-logo.svg',
+    chainId: 43114,
+    rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+    blockExplorer: 'https://snowtrace.io',
+  },
+  {
+    '#0052ff': '#e84142',
+    '#3b82f6': '#f27178',
+    '#1d4ed8': '#c73638',
+    '#1e3a8a': '#8f2224',
+    '#0ea5e9': '#ff7a7c',
+    '#38bdf8': '#ffa0a2',
+    '#0284c7': '#d64547',
+    '#00d4ff': '#ff5c5e',
+    '#7dd3fc': '#ffb3b4',
+    '#0891b2': '#b83234',
+    '#001a4d': '#1a0809',
+    '#002966': '#2b0e10',
+    '#000d26': '#0f0405',
+    '#003580': '#3d1215',
+    '#0047a3': '#5a1a1e',
+    '#00235c': '#280c0e',
+    'rgba(0, 82, 255,': 'rgba(232, 65, 66,',
+    'rgba(0,82,255,': 'rgba(232,65,66,',
+  }
+);
+
 // Export all themes
 export const CHAIN_THEMES: Record<ChainId, ChainTheme> = {
   base: baseTheme,
   celo: celoTheme,
   polygon: polygonTheme,
   monad: monadTheme,
+  avalanche: avalancheTheme,
 };
 
 // Export individual themes
-export { baseTheme, celoTheme, polygonTheme, monadTheme };
+export { baseTheme, celoTheme, polygonTheme, monadTheme, avalancheTheme };
 
 // Default theme
 export const DEFAULT_THEME = celoTheme;

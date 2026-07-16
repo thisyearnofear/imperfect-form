@@ -35,6 +35,7 @@ export enum SupportedChain {
   MONAD = 'monad',
   CELO = 'celo',
   CELO_ALFAJORES = 'celoAlfajores',
+  AVALANCHE = 'avalanche',
 }
 
 /**
@@ -205,6 +206,7 @@ export function getChainFromNetwork(network: string | null): SupportedChain | nu
   if (network === 'monad') return SupportedChain.MONAD;
   if (network === 'celo') return SupportedChain.CELO;
   if (network === 'celoAlfajores') return SupportedChain.CELO_ALFAJORES;
+  if (network === 'avalanche') return SupportedChain.AVALANCHE;
   return null;
 }
 
@@ -215,6 +217,7 @@ export function getNetworkFromChain(chain: SupportedChain | null): string | null
   if (chain === SupportedChain.MONAD) return 'monad';
   if (chain === SupportedChain.CELO) return 'celo';
   if (chain === SupportedChain.CELO_ALFAJORES) return 'celoAlfajores';
+  if (chain === SupportedChain.AVALANCHE) return 'avalanche';
   return null;
 }
 

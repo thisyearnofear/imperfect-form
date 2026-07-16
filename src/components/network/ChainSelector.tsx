@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { polygon, base, celo } from 'wagmi/chains';
+import { avalanche, polygon, base, celo } from 'wagmi/chains';
 import { AccessibleDialog } from '@/components/ui';
 import Image from 'next/image';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
+import type { ChainId } from '@/types/theme';
 
 // Custom Monad Mainnet chain object
 const monad = {
@@ -32,41 +33,30 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle chain selection
-  const handleChainSelected = async (selectedNetwork: 'polygon' | 'base' | 'monad' | 'celo') => {
+  const handleChainSelected = async (selectedNetwork: ChainId) => {
     setIsLoading(true);
 
     try {
       // Update local storage (client-side only)
       if (typeof window !== 'undefined') {
         localStorage.setItem('selectedNetwork', selectedNetwork);
-        localStorage.setItem(
-          'selectedChain',
-          selectedNetwork === 'polygon'
-            ? 'amoy'
-            : selectedNetwork === 'base'
-              ? 'base'
-              : selectedNetwork === 'monad'
-                ? 'monad'
-                : 'celo'
-        );
+        localStorage.setItem('selectedChain', selectedNetwork);
       }
 
       // Update theme context immediately
       setTheme(selectedNetwork);
 
       // Switch chain using platform context which handles Farcaster and other environments properly
-      let targetChainId: number;
+      const chainIdByNetwork: Record<ChainId, number> = {
+        polygon: polygon.id,
+        base: base.id,
+        celo: celo.id,
+        monad: monad.id,
+        avalanche: avalanche.id,
+      };
 
-      if (selectedNetwork === 'polygon') {
-        targetChainId = polygon.id;
-      } else if (selectedNetwork === 'base') {
-        targetChainId = base.id;
-      } else if (selectedNetwork === 'celo') {
-        targetChainId = celo.id;
-      } else if (selectedNetwork === 'monad') {
-        targetChainId = 143; // Monad Mainnet chain ID
-      } else {
-        // This should never happen due to the function parameter type, but satisfies TypeScript
+      const targetChainId = chainIdByNetwork[selectedNetwork];
+      if (!targetChainId) {
         console.error('Unknown network selected:', selectedNetwork);
         return;
       }
@@ -173,6 +163,24 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
                 unoptimized
               />
               <span className="text-sm">Monad</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleChainSelected('avalanche')}
+            className="network-option network-option-avalanche px-4 py-3 rounded-lg min-w-[100px] col-span-2"
+            disabled={isLoading}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <Image
+                src="/avalanche-logo.svg"
+                alt="Avalanche"
+                width={20}
+                height={20}
+                onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
+                unoptimized
+              />
+              <span className="text-sm">Avalanche</span>
             </div>
           </button>
         </div>

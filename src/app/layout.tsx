@@ -1,18 +1,20 @@
 import type { Metadata } from 'next';
-import { Press_Start_2P } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import './globals.css';
 import '@/styles/studio-shell.css';
 import '@/styles/session-recap.css';
 import '@/styles/studio-motion.css';
+import '@/styles/studio-boot.css';
 import '@/styles/animations.css';
 import '@/styles/session-register.css';
 import { BRAND } from '@/lib/brandPositioning';
-// Removed static import of network-elements.css in favor of dynamic loading
+import ClientOnlyProviders from '@/components/providers/ClientOnlyProviders';
 
-const pressStart2P = Press_Start_2P({
-  weight: '400',
+const manrope = Manrope({
+  weight: ['400', '500', '600', '700', '800'],
   subsets: ['latin'],
   display: 'swap',
+  variable: '--font-manrope',
 });
 
 export const metadata: Metadata = {
@@ -42,8 +44,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Using client-only providers to prevent SSR issues
-import ClientOnlyProviders from '@/components/providers/ClientOnlyProviders';
+const STUDIO_BG = '#061013';
 
 export default function RootLayout({
   children,
@@ -51,39 +52,33 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={manrope.variable}>
       <head>
-        {/* Google Fonts */}
+        {/* Press Start kept for earned Arcade register only — not the default shell */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Press+Start+2P&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
           rel="stylesheet"
         />
-        {/* Mobile-specific meta tags */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="theme-color" content="#061013" />
+        <meta name="theme-color" content={STUDIO_BG} />
 
-        {/* Farcaster Mini App Frame metadata - Latest v1 standard */}
         <meta
           name="fc:frame"
-          content='{"version":"next","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
+          content={`{"version":"next","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"Start coaching","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"${STUDIO_BG}"}}}`}
         />
-
-        {/* Mini App specific metadata - Current standard */}
         <meta
           name="fc:miniapp"
-          content='{"version":"1","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"Start Workout","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"#000000"}}}'
+          content={`{"version":"1","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"Start coaching","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"${STUDIO_BG}"}}}`}
         />
 
-        {/* Dynamic CSS loading script - client-side only */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Only load network styles when needed - client-side only
               if (typeof window !== 'undefined') {
                 function loadNetworkCSS() {
                   try {
@@ -97,11 +92,8 @@ export default function RootLayout({
                       link.href = '/network-elements.css';
                       document.head.appendChild(link);
                     }
-                  } catch (e) {
-                    // Silently fail if localStorage is not available
-                  }
+                  } catch (e) {}
                 }
-                // Load after DOM is ready
                 if (document.readyState === 'loading') {
                   document.addEventListener('DOMContentLoaded', loadNetworkCSS);
                 } else {
@@ -111,11 +103,13 @@ export default function RootLayout({
             `,
           }}
         />
-        {/* Modal styling - only target specific wallet modals when actually open */}
         <style
           dangerouslySetInnerHTML={{
             __html: `
-          /* Only apply backdrop styles when modals are explicitly open */
+          html, body {
+            background-color: ${STUDIO_BG};
+            color: #effcf9;
+          }
           .tw-connect-wallet-modal-overlay:not([style*="display: none"]),
           [data-dialog-backdrop]:not([style*="display: none"]),
           [data-modal-backdrop]:not([style*="display: none"]),
@@ -126,12 +120,9 @@ export default function RootLayout({
             background-color: rgb(0, 0, 0) !important;
             --tw-bg-opacity: 1 !important;
           }
-
-          /* Fix for Radix UI Dialog accessibility warning */
           [role="dialog"]:not([aria-labelledby]) {
             position: relative;
           }
-
           [role="dialog"]:not([aria-labelledby])::before {
             content: "Dialog Title";
             position: absolute;
@@ -148,7 +139,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${pressStart2P.className} antialiased`}>
+      <body className={`${manrope.className} antialiased`}>
         <ClientOnlyProviders>{children}</ClientOnlyProviders>
       </body>
     </html>

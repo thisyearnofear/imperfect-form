@@ -14,53 +14,45 @@
   position: relative;
   width: 100%;
   min-height: 100%;
-  overflow: hidden;
+  overflow: visible;
   color: var(--cf-ink);
-  background: #061013;
+  background: transparent;
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Local glass panel — keeps type readable over the bay without a black void */
 .coach-foyer__atmosphere {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(8, 28, 32, 0.72), rgba(6, 16, 19, 0.55) 55%, rgba(6, 16, 19, 0.4));
+  border: 1px solid rgba(139, 227, 212, 0.12);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
 }
 
 .coach-foyer__glow {
   position: absolute;
   inset: -20% -10% auto;
   height: 70%;
-  background:
-    radial-gradient(ellipse 55% 45% at 50% 0%, rgba(86, 217, 195, 0.22), transparent 70%),
-    radial-gradient(ellipse 40% 35% at 85% 30%, rgba(56, 160, 180, 0.12), transparent 65%),
-    radial-gradient(ellipse 35% 30% at 12% 40%, rgba(103, 219, 199, 0.1), transparent 60%);
+  background: radial-gradient(
+    ellipse 55% 45% at 40% 0%,
+    rgba(86, 217, 195, 0.16),
+    transparent 70%
+  );
 }
 
 .coach-foyer__grid {
-  position: absolute;
-  inset: 0;
-  opacity: 0.35;
-  background-image:
-    linear-gradient(rgba(139, 227, 212, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 227, 212, 0.04) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, black, transparent 75%);
+  display: none;
 }
 
 .coach-foyer__orbit {
-  position: absolute;
-  left: 50%;
-  top: 18%;
-  width: min(120%, 520px);
-  aspect-ratio: 1;
-  translate: -50% -40%;
-  border: 1px solid rgba(86, 217, 195, 0.08);
-  border-radius: 50%;
-  box-shadow:
-    inset 0 0 60px rgba(86, 217, 195, 0.04),
-    0 0 80px rgba(86, 217, 195, 0.05);
-  animation: coach-foyer-pulse 7s ease-in-out infinite;
+  display: none;
 }
 
 .coach-foyer__inner {
@@ -212,10 +204,16 @@
   justify-content: center;
   gap: 0.65rem;
   color: #04201d;
-  background: linear-gradient(180deg, var(--cf-teal-bright) 0%, var(--cf-teal) 100%);
+  background: linear-gradient(
+    115deg,
+    #7aebd8 0%,
+    #56d9c3 42%,
+    #6bb8ff 78%,
+    #c4b5fd 100%
+  );
   border: 1px solid #9af3e2;
   border-radius: var(--cf-radius);
-  box-shadow: 0 10px 28px rgba(86, 217, 195, 0.18);
+  box-shadow: 0 10px 28px rgba(86, 217, 195, 0.22);
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 800;
@@ -228,8 +226,8 @@
 
 .coach-foyer__start:hover {
   transform: translateY(-2px);
-  background: linear-gradient(180deg, #96f0df 0%, #6fe0cb 100%);
-  box-shadow: 0 14px 32px rgba(86, 217, 195, 0.26);
+  background: linear-gradient(115deg, #96f0df 0%, #6fe0cb 40%, #8ec5ff 78%, #d4c8ff 100%);
+  box-shadow: 0 14px 32px rgba(86, 217, 195, 0.28);
 }
 
 .coach-foyer__start:active {
@@ -255,18 +253,6 @@
   margin-top: 0.1rem;
   color: var(--cf-teal);
   opacity: 0.85;
-}
-
-@keyframes coach-foyer-pulse {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.03);
-  }
 }
 
 @media (max-width: 520px) {

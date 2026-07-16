@@ -37,6 +37,14 @@ export const NETWORK_COLORS = {
     borderLeft: 'border-l-3 border-green-500',
     name: 'Celo',
   },
+  avalanche: {
+    bg: 'bg-red-500',
+    text: 'text-red-500',
+    border: 'border-red-500',
+    bgOpacity: 'bg-red-500/20',
+    borderLeft: 'border-l-3 border-red-500',
+    name: 'Avalanche',
+  },
 } as const;
 
 export type NetworkType = keyof typeof NETWORK_COLORS;

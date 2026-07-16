@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import InitializationScreen from '@/components/ui/InitializationScreen';
 import SimplifiedAppProviders from './SimplifiedAppProviders';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
@@ -12,7 +11,9 @@ interface ClientOnlyProvidersProps {
 
 /**
  * Wrapper to ensure providers only render on client side
- * This prevents SSR issues with wallet connectors
+ * This prevents SSR issues with wallet connectors.
+ * Chain ambient is owned by the home page after first XP — not here —
+ * so day-0 studio atmosphere is never tinted by a wallet chain.
  */
 export default function ClientOnlyProviders({ children }: ClientOnlyProvidersProps) {
   const [isClient, setIsClient] = useState(false);
@@ -43,21 +44,9 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
     return <InitializationScreen onComplete={() => setInitializationComplete(true)} />;
   }
 
-  // Dynamically import components for client-only rendering
-  const ChainAmbient = dynamic(() => import('@/components/theme/ChainAmbient'), { ssr: false });
-
-  function ProvidersWithOnboarding({ children }: { children: React.ReactNode }) {
-    return (
-      <SimplifiedAppProviders>
-        <ChainAmbient />
-        {children}
-      </SimplifiedAppProviders>
-    );
-  }
-
   return (
     <OnboardingProvider>
-      <ProvidersWithOnboarding>{children}</ProvidersWithOnboarding>
+      <SimplifiedAppProviders>{children}</SimplifiedAppProviders>
     </OnboardingProvider>
   );
 }

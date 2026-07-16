@@ -69,6 +69,11 @@ const NETWORK_STYLES = {
     text: 'text-blue-300',
     badge: { backgroundColor: 'rgba(30, 58, 138, 0.5)', color: 'rgb(147, 197, 253)' },
   },
+  avalanche: {
+    bg: 'bg-red-900/50',
+    text: 'text-red-300',
+    badge: { backgroundColor: 'rgba(232, 65, 66, 0.45)', color: 'rgb(254, 202, 202)' },
+  },
 } as const;
 
 // Status color tokens
@@ -325,7 +330,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const isCelo = chainId === 42220;
 
   // Type assertion to help TypeScript understand the network type
-  const networkType = network as 'polygon' | 'base' | 'monad' | 'celo';
+  const networkType = network as 'polygon' | 'base' | 'monad' | 'celo' | 'avalanche';
 
   // Use the address from props if provided, otherwise fall back to wallet address from context
   const effectiveAddress = address || walletAddress;
@@ -965,7 +970,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 ✅ On {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
               </div>
               <a
-                href={`${chainConfigs[networkType as 'polygon' | 'base' | 'monad' | 'celo'].blockExplorerUrls?.[0]}/tx/${transactionHash}`}
+                href={`${chainConfigs[networkType as 'polygon' | 'base' | 'monad' | 'celo' | 'avalanche'].blockExplorerUrls?.[0]}/tx/${transactionHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-xs text-center text-blue-400 hover:text-blue-300 truncate"

@@ -110,6 +110,23 @@ Play energy enters on the **first celebrate**, not before the first coached feel
   radii on summary stage tabs / spark. Studio “alive” = cue timing, settle
   motion, persona voice — not loud foyer chrome.
 
+### First paint (day-0 must stay studio)
+
+Landers see, in order:
+
+1. **`InitializationScreen`** (`studio-boot.css`) — night-studio wordmark + promise
+   while client providers hydrate (~280ms). Never Press Start / gold / emoji.
+2. **`StudioAtmosphere`** — coaching-bay depth + Apache SO-101 cut-outs
+   (`public/atmosphere/`, see NOTICE.md) on a CSS perspective 3D gaze stage
+   (fine-pointer desktop gets stronger rotateY/X; no third-party Spline).
+   Soft Celo/Base/Avalanche/Monad blooms only — not a ThemeSync takeover.
+3. **Home shell** — studio topbar (`IMPERFECT FORM`) even before `hasMounted`.
+4. **`CoachFoyer`** — glass panel over the bay; pick a move → start.
+
+`body[data-shell="studio"]` until first XP — ChainAmbient / ThemeSync body paint
+are earned (`data-shell="earned"`). Root `<body>` uses Manrope (`next/font`).
+Press Start 2P is loaded only for Arcade register CSS — never on `<body>`.
+
 ### Pose pipeline performance (do not regress)
 
 Contract: [ARCHITECTURE.md](./ARCHITECTURE.md) → **PoseRuntime**. Path policy:

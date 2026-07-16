@@ -7,6 +7,7 @@ import { usePlatform } from '@/contexts/PlatformContext';
 import { NotificationSignup } from '@/components/miniapp/NotificationSignup';
 import ChainAmbient from '@/components/theme/ChainAmbient';
 import ThemeSync from '@/components/theme/ThemeSync';
+import StudioAtmosphere from '@/components/theme/StudioAtmosphere';
 import { callFarcasterReady } from '@/utils/farcasterMiniApp';
 import {
   HeroSection,
@@ -77,6 +78,19 @@ export default function Home() {
     setHasMounted(true);
   }, []);
 
+  // Studio shell owns day-0 chrome; chain themes only after first coached feel.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.setAttribute('data-shell', hasTrained ? 'earned' : 'studio');
+    if (!hasTrained) {
+      document.body.style.removeProperty('background-color');
+      document.body.style.removeProperty('color');
+    }
+    return () => {
+      document.body.removeAttribute('data-shell');
+    };
+  }, [hasTrained]);
+
   useEffect(() => {
     if (hasMounted && isInMiniApp) {
       console.log('🎯 Mini App initialization');
@@ -112,16 +126,45 @@ export default function Home() {
     }
   }, [isInMiniApp, hasMounted]);
 
+  const day0Topbar = (
+    <div className="studio-topbar sticky top-0 z-50">
+      <div className="studio-topbar__inner px-5 py-3.5 flex items-center justify-between gap-3">
+        <div>
+          <p className="studio-wordmark">IMPERFECT FORM</p>
+          <p className="studio-wordmark-sub">Private camera coaching</p>
+        </div>
+        <p className="studio-status">
+          <span /> Ready when you are
+        </p>
+      </div>
+    </div>
+  );
+
+  // Before mount: studio bay + topbar so we never flash a blank or arcade frame.
   if (!hasMounted) {
-    return null;
+    return (
+      <div className="relative flex flex-col min-h-screen">
+        <StudioAtmosphere />
+        <div className="relative z-10 flex flex-col min-h-screen">{day0Topbar}</div>
+      </div>
+    );
   }
 
   return (
     <>
-      <ChainAmbient />
-      <ThemeSync />
+      {/* Day-0: studio bay. After XP: chain ambient + theme sync are earned. */}
+      {hasTrained ? (
+        <>
+          <ChainAmbient />
+          <ThemeSync />
+        </>
+      ) : (
+        <StudioAtmosphere />
+      )}
 
-      <div className="flex flex-col min-h-screen bg-[#061013]">
+      <div
+        className={`relative z-10 flex flex-col min-h-screen ${hasTrained ? 'bg-[#061013]' : 'bg-transparent'}`}
+      >
         {/* Top Navigation — full chrome only after first trained session */}
         {hasTrained ? (
           <div className="studio-topbar sticky top-0 z-50">
@@ -163,17 +206,7 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="studio-topbar sticky top-0 z-50">
-            <div className="studio-topbar__inner px-5 py-3.5 flex items-center justify-between gap-3">
-              <div>
-                <p className="studio-wordmark">IMPERFECT FORM</p>
-                <p className="studio-wordmark-sub">Private camera coaching</p>
-              </div>
-              <p className="studio-status">
-                <span /> Ready when you are
-              </p>
-            </div>
-          </div>
+          day0Topbar
         )}
 
         {/* Main Content Area */}
