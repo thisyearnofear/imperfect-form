@@ -6,9 +6,9 @@ import { useSessionIntent } from '@/hooks/useSessionIntent';
 import '@/styles/prestart-foyer.css';
 
 /**
- * Day-0 pre-start composition inside #screen.
- * Intent chooser (Train / Coach / Breathe) picks the register for this session.
- * Default Train / Arcade — Ring 0 stays ungated. One surface, one register.
+ * Legacy intent-chooser foyer (Train / Coach / Breathe).
+ * Day-0 mass-market door is CoachFoyer (studio) — see docs/NORTH_STAR.md.
+ * Kept for SplitFlap fallback / reference; do not reintroduce as the front door.
  */
 export const PreStartFoyer: React.FC = () => {
   const { intent, setIntent, register } = useSessionIntent();

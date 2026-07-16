@@ -53,6 +53,7 @@ export type WorkerMessage =
       pbTrace?: SessionSnapshot[];
     }
   | { type: 'frame'; bitmap: ImageBitmap }
+  | { type: 'setMode'; mode: string }
   | { type: 'stop' };
 
 export interface BiomechanicalState {

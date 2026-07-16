@@ -55,6 +55,14 @@ html {
   aspect-ratio: 4 / 3;
 }
 
+/* Day-0 foyer needs room for brand + exercise picker (not a 4:3 camera frame) */
+#screen:has(.coach-foyer) {
+  aspect-ratio: auto;
+  height: auto;
+  min-height: min(520px, 70vh);
+  overflow-y: auto;
+}
+
 #canvasContainer {
   position: absolute;
   top: 0;
@@ -187,6 +195,13 @@ body[data-chain="celo"] .olympic-rings {
   /* Fixed height for desktop, flexible for mobile */
   height: 480px;
   transition: background-color 300ms ease-in-out, border-color 300ms ease-in-out, box-shadow 300ms ease-in-out;
+}
+
+#screen:has(.coach-foyer) {
+  height: auto;
+  min-height: min(520px, 70vh);
+  aspect-ratio: auto;
+  overflow-y: auto;
 }
 
 /* Mobile override for screen */

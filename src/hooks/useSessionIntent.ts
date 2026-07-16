@@ -11,7 +11,8 @@ import {
 } from '@/lib/brandPositioning';
 
 /**
- * Session intent (Train / Coach / Breathe) — persisted, default Train.
+ * Session intent (Coach / Train / Breathe) — persisted, default Coach (Studio).
+ * Day-0 doorway is CoachFoyer; Train/Breathe are earned or post-set paths.
  * Not a gate: START always works. Syncs across tabs via storage + same-tab custom event.
  */
 export function useSessionIntent() {
@@ -40,6 +41,11 @@ export function useSessionIntent() {
   }, []);
 
   const setIntent = useCallback((next: SessionIntent) => {
+    // No-op when unchanged — avoids localStorage + event thrash on foyer remounts.
+    if (typeof window !== 'undefined' && localStorage.getItem(SESSION_INTENT_KEY) === next) {
+      setIntentState((prev) => (prev === next ? prev : next));
+      return;
+    }
     localStorage.setItem(SESSION_INTENT_KEY, next);
     setIntentState(next);
     window.dispatchEvent(new Event('imf:session-intent'));

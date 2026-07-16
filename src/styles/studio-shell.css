@@ -1,8 +1,11 @@
 .studio-topbar { background: rgba(6, 16, 19, 0.93); border-bottom: 1px solid rgba(139, 227, 212, 0.12); backdrop-filter: blur(14px); }
 .studio-topbar__inner { max-width: 1120px; margin: 0 auto; }
-.studio-wordmark { margin: 0; color: #e9fffa; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.1em; }
-.studio-status { display: inline-flex; align-items: center; gap: 0.45rem; margin: 0; color: #91aca8; font-size: 0.73rem; }
-.studio-status span { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: #67dbc7; box-shadow: 0 0 0 4px rgba(103, 219, 199, 0.1); }
+.studio-wordmark { margin: 0; color: #e9fffa; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.82rem; font-weight: 800; letter-spacing: 0.12em; }
+.studio-wordmark-sub { margin: 0.2rem 0 0; color: #7f9a96; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em; }
+.studio-status { display: inline-flex; align-items: center; gap: 0.45rem; margin: 0; color: #91aca8; font-size: 0.73rem; font-weight: 600; }
+.studio-status span { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: #67dbc7; box-shadow: 0 0 0 4px rgba(103, 219, 199, 0.1); animation: studio-status-pulse 2.8s ease-in-out infinite; }
+@keyframes studio-status-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .studio-status span { animation: none; } }
 .studio-level-mark { width: 2.4rem; height: 2.4rem; display: grid; place-items: center; color: #bff8ed; background: rgba(103, 219, 199, 0.1); border: 1px solid rgba(103, 219, 199, 0.3); border-radius: 5px; font-size: 0.95rem; font-weight: 800; }
 .studio-meta { color: #8ca5a2; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .studio-xp { color: #f1fffc; font-size: 0.8rem; font-weight: 800; }

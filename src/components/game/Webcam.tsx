@@ -1,5 +1,5 @@
 'use client';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { usePoseDetection } from '@/modules/usePoseDetection';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { createRemoteLogger } from '@/utils/remoteLogger';
@@ -52,6 +52,11 @@ const Webcam: React.FC<WebcamProps> = ({
   // Must pass curls/pullups/jumps through so the exercise engine runs.
   const safeMode = normalizeExerciseMode(mode);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // OffscreenCanvas transfer is irreversible — remount a fresh host when poisoned.
+  const [canvasEpoch, setCanvasEpoch] = useState(0);
+  const onCanvasPoisoned = useCallback(() => {
+    setCanvasEpoch((epoch) => epoch + 1);
+  }, []);
   // Pass isMobile flag to usePoseDetection for mobile-specific optimizations
   const { isMobile } = useDeviceDetect();
   const videoRef = usePoseDetection(
@@ -64,7 +69,9 @@ const Webcam: React.FC<WebcamProps> = ({
     onDetectionProgress,
     onMetrics,
     onSessionEnd,
-    pbTrace
+    pbTrace,
+    canvasEpoch,
+    onCanvasPoisoned
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -330,6 +337,7 @@ const Webcam: React.FC<WebcamProps> = ({
         autoPlay
       />
       <canvas
+        key={canvasEpoch}
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full z-10"
         style={{

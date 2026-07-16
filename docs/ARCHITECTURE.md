@@ -275,125 +275,94 @@ import { useChainTheme } from '@/hooks/useChainTheme';
 - User-friendly network prompts
 - Consistent experience across chains
 
-## AI Pose Detection
+## PoseRuntime (camera coaching pipeline)
 
-### Technology Stack
+**Status**: Session-scoped runtime — exercise is a strategy, not a remount.
 
-- TensorFlow.js for browser-based ML
-- Camera utilities for video processing
-- Real-time pose inference with GPU acceleration
+This is the mass-market coaching spine (Ring 0). Aesthetic registers and
+earned play chrome sit around it; they must not tear it down mid-session.
+Contract source: `src/lib/pose/poseRuntime.ts`. Rules: [DEVELOPMENT.md](./DEVELOPMENT.md)
+(Pose pipeline performance). Product posture: [NORTH_STAR.md](./NORTH_STAR.md).
 
-### Architecture
-
-The pose detection system uses a centralized service layer (`PoseDetectionService`) that handles all initialization, progress tracking, and resource cleanup.
+### Loop
 
 ```
-┌─────────────────────────────────┐
-│      Game Component             │
-│  • Tracks detectionProgress     │
-│  • Renders PoseLoadingOverlay   │
-└─────────────┬───────────────────┘
-              │
-      ┌───────▼──────────┐
-      │   LazyWebcam     │
-      │ (dynamic import) │
-      └───────┬──────────┘
-              │
-      ┌───────▼──────────┐
-      │   Webcam         │
-      │ • Calls hook     │
-      │ • Forwards CB    │
-      └───────┬──────────┘
-              │
-      ┌───────▼────────────────────┐
-      │  usePoseDetection Hook     │
-      │ • Manages camera/canvas    │
-      │ • Delegates to service     │
-      └───────┬────────────────────┘
-              │
-      ┌───────▼──────────────────────────┐
-      │ PoseDetectionService (Singleton) │
-      │ • Initializes TensorFlow        │
-      │ • Loads & warms up model        │
-      │ • Emits progress events         │
-      │ • Manages resource cleanup      │
-      └────────────────────────────────┘
+CoachFoyer (studio) → Start → CameraPrimer (first time)
+        │
+        ▼
+┌───────────────────────────────────────────────────────────┐
+│ PoseRuntime (owned for the session)                       │
+│  LazyWebcam → Webcam → usePoseDetection                   │
+│  path: worker (prod desktop) | main (mobile / dev default)│
+│  mode hot-swap via modeRef + worker setMode               │
+└───────────────────────────┬───────────────────────────────┘
+                            │ keypoints / reps / metrics
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+ ExerciseEngine      Coach bus (fail-silent)   SessionLogger
+ (pushups|squats|    HUD · TTS · AgentTray     → Summary
+  curls|pullups|     coachStation FormEvents
+  jumps)
 ```
 
-### Key Features
+### Ownership rules (do not regress)
 
-- **Unified Service Layer** - Centralized pose detection logic in `src/services/PoseDetectionService.ts`
-- **Progress Tracking** - Real-time progress updates (10% → 30% → 70% → 100%) during initialization
-- **State Management** - Observable pattern for reactive state changes
-- **Model Warmup** - Automatic dummy inference after model load to eliminate first-detection latency
-- **Resource Cleanup** - Proper disposal of TensorFlow.js resources
+1. **Camera + model live for the session** — starting detection owns the
+   pipeline until Stop. Switching curls → push-ups must not remount the camera.
+2. **Mode is config** — `modeRef` + worker `setMode` / engine detector reset.
+   Mode is **not** a dependency that restarts OffscreenCanvas transfer.
+3. **Session end only on Stop** — `onSessionEnd` fires when `isActive`
+   goes true → false. Never from Strict Mode effect cleanup.
+4. **OffscreenCanvas transfer is irreversible** — poisoned hosts remount via
+   `canvasEpoch` on `Webcam`. Dev defaults to main-thread to avoid Strict Mode
+   races; production desktop uses the worker.
+5. **Coach-station is a subscriber** — fail-silent when
+   `NEXT_PUBLIC_COACH_STATION` is unset (`src/services/coachStation.ts`).
 
-### API Usage
+### Path selection
 
-```typescript
-import { getPoseDetectionService } from '@/services/PoseDetectionService';
+`shouldUsePoseWorker()` in `src/lib/pose/poseRuntime.ts`:
 
-const service = getPoseDetectionService();
+| Context                                   | Path                 |
+| ----------------------------------------- | -------------------- |
+| Mobile / no OffscreenCanvas               | main                 |
+| Production desktop                        | worker               |
+| Development (default)                     | main                 |
+| `window.__IMF_FORCE_POSE_WORKER__ = true` | worker (smoke tests) |
 
-// Subscribe to progress events
-const unsubscribe = service.onProgress((progress) => {
-  console.log(`${progress.percentage}% - ${progress.message}`);
-});
+Runtime status is published for debug/e2e as `window.__IMF_POSE_RUNTIME__`
+(`{ path, mode, startedAt }`).
 
-// Subscribe to state changes
-const unsubscribeState = service.onStateChange((state) => {
-  console.log('Pose detected:', state.poseDetected);
-});
+### Key files
 
-// Initialize
-await service.initializeTensorFlow(isMobile);
-await service.initializeDetector(isMobile);
+| Layer       | Path                                                    |
+| ----------- | ------------------------------------------------------- |
+| Path policy | `src/lib/pose/poseRuntime.ts`                           |
+| Pipeline    | `src/modules/usePoseDetection.ts`                       |
+| Worker      | `src/modules/poseWorker.ts`                             |
+| Canvas host | `src/components/game/Webcam.tsx`                        |
+| Cold load   | `src/components/game/LazyWebcam.tsx`                    |
+| Engine      | `src/lib/exercise-engine/`, `src/utils/biomechanics.ts` |
+| Day-0 door  | `src/components/game/CoachFoyer.tsx`                    |
+| Bridge      | `src/services/coachStation.ts`                          |
 
-// Get detector instance
-const detector = service.getDetector();
+### Smoke tests
 
-// Cleanup
-service.dispose();
-```
+- Unit: `src/lib/pose/poseRuntime.test.ts` — path policy
+- E2E: `e2e/pose-runtime.spec.ts` — curls + forced worker path, no canvas
+  poison, session stays alive
+- Ring 0: `e2e/ring0.spec.ts` — wallet-free foyer → primer → start
+- Coach station fail-silent: `e2e/coach-station.spec.ts`
 
-### Progress Phases
+### Progress phases (UX)
 
-1. **10%** - Initializing TensorFlow.js
-2. **30%** - Loading pose detection model
-3. **70%** - Warming up detector (first inference)
-4. **100%** - Ready for detection
+1. **~10%** — Starting / camera
+2. **~40–60%** — AI model init
+3. **100%** — Ready (pose tracking)
 
-### Performance Improvements
-
-| Metric                  | Before             | After                 |
-| ----------------------- | ------------------ | --------------------- |
-| Initialization feedback | None               | Real-time             |
-| First detection latency | 1-2s spike         | Eliminated via warmup |
-| Dead code               | ~250 lines         | 0 lines               |
-| Service implementations | 2 (MediaPipe + TF) | 1 unified (TF)        |
-
-### Features
-
-- Real-time fitness tracking
-- Exercise form analysis
-- Performance metrics collection
-
-### Recent Improvements (v1.0)
-
-- ✅ Removed unused MediaPipe hook (`useMediaPipePose.ts`)
-- ✅ Removed debug canvas borders from production code
-- ✅ Created unified service layer with observable pattern
-- ✅ Enhanced progress tracking with real percentages
-- ✅ Added model warmup optimization
-- ✅ Consolidated configuration in single location
-- ✅ DRY principle: single source of truth for initialization logic
-
-### Future Optimizations
-
-1. **Web Worker** - Move TensorFlow initialization off main thread
-2. **Model Caching** - Cache compiled models in IndexedDB
-3. **ONNX Runtime** - Faster initialization alternative
-4. **Lazy Warmup** - Defer model warmup until first detection needed
+Legacy note: `PoseDetectionService` still exists under `src/services/` for
+older call sites; the live Ring 0 path is PoseRuntime above — do not add new
+features to the service singleton without routing them through this contract.
 
 ## Coach Station (Physical AI bridge)
 

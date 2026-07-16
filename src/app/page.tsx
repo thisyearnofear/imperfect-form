@@ -164,10 +164,13 @@ export default function Home() {
           </div>
         ) : (
           <div className="studio-topbar sticky top-0 z-50">
-            <div className="studio-topbar__inner px-5 py-4 flex items-center justify-between">
-              <p className="studio-wordmark">IMPERFECT FORM</p>
+            <div className="studio-topbar__inner px-5 py-3.5 flex items-center justify-between gap-3">
+              <div>
+                <p className="studio-wordmark">IMPERFECT FORM</p>
+                <p className="studio-wordmark-sub">Private camera coaching</p>
+              </div>
               <p className="studio-status">
-                <span /> Camera coaching
+                <span /> Ready when you are
               </p>
             </div>
           </div>

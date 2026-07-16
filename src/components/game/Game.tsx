@@ -76,7 +76,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const { wallet, user } = usePlatform();
   const { address } = wallet;
   const finalAddress = address || thirdwebAddress;
-  const { intent: sessionIntent, register: sessionRegister } = useSessionIntent();
+  const { intent: sessionIntent, register: sessionRegister, setIntent } = useSessionIntent();
   const [calmSessionActive, setCalmSessionActive] = useState(false);
 
   // --- Fullscreen integration ---
@@ -113,7 +113,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             ? crypto.randomUUID()
             : `session-${Date.now()}`;
 
-        const exerciseMode = (summary.mode as 'pushups' | 'squats') || 'pushups';
+        const exerciseMode =
+          (summary.mode as import('@/utils/biomechanics').ExerciseMode) || 'pushups';
 
         // Guests get a stable local ID so PBs/XP/ghosts work without a wallet
         const effectiveUserId = getEffectiveUserId(finalAddress);
@@ -392,6 +393,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         return;
       }
 
+      // Day-0 coaching doorway commits Coach / Studio (noop if already set).
+      setIntent('understand');
+
       // First use: show the calm camera primer before the browser's permission
       // prompt fires. Synchronous check - the fullscreen call below must stay
       // within this user gesture.
@@ -455,6 +459,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     },
     [
       sessionIntent,
+      setIntent,
       isMobile,
       autoFs,
       isFullscreenAvailable,
@@ -636,7 +641,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       <div
         id="game-container"
         ref={gameRef}
-        data-register={sessionRegister}
+        data-register={
+          !started && !calmSessionActive && currentMode === 'instructions'
+            ? 'studio'
+            : sessionRegister
+        }
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -679,7 +688,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           )}
         </div>
 
-        <div id="screen" data-register={sessionRegister}>
+        <div
+          id="screen"
+          data-register={
+            !started && !calmSessionActive && currentMode === 'instructions'
+              ? 'studio'
+              : sessionRegister
+          }
+        >
           {!started &&
             !calmSessionActive &&
             (currentMode === 'instructions' ? (

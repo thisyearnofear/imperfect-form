@@ -193,7 +193,7 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
   const currentInstructions = useMemo(() => {
     const instructionConfigs: Record<InstructionMode, InstructionItem[]> = {
-      // Day-0 foyer is PreStartFoyer — no puerile feature list.
+      // Legacy path: PreStartFoyer. Day-0 mass-market door is CoachFoyer in Game.tsx.
       instructions: [],
       settings: [
         {

@@ -36,6 +36,13 @@ import {
 } from '../utils/tensorFlowInit';
 import { handleFarcasterError, ErrorCodes } from '../utils/farcasterErrors';
 import { isFarcasterMiniApp } from '../utils/farcasterMiniApp';
+import {
+  clearPoseRuntimeStatus,
+  publishPoseRuntimeStatus,
+  readForcePoseWorkerFlag,
+  shouldUsePoseWorker,
+  type PoseRuntimeWindow,
+} from '../lib/pose/poseRuntime';
 
 // Biomechanical types removed - consolidated into src/utils/biomechanics.ts
 
@@ -63,7 +70,10 @@ export function usePoseDetection(
   }) => void,
   onMetrics?: (state: BiomechanicalState) => void,
   onSessionEnd?: (summary: SessionSummary) => void,
-  pbTrace?: import('../types/workout').SessionSnapshot[]
+  pbTrace?: import('../types/workout').SessionSnapshot[],
+  /** Bumps when Webcam replaces a poisoned OffscreenCanvas host */
+  canvasEpoch: number = 0,
+  onCanvasPoisoned?: () => void
 ) {
   // Platform detection variables - defined once at function level
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -78,6 +88,10 @@ export function usePoseDetection(
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<PoseDetector | null>(null);
   const animationRef = useRef<number | null>(null);
+  const modeRef = useRef<ExerciseMode>(safeMode);
+  const isActiveRef = useRef(isActive);
+  const wasActiveRef = useRef(false);
+  const onCanvasPoisonedRef = useRef(onCanvasPoisoned);
   const [poseState, setPoseState] = useState<{
     hasCamera: boolean;
     hasPoseDetection: boolean;
@@ -101,6 +115,10 @@ export function usePoseDetection(
   const onDetectionProgressRef = useRef(onDetectionProgress);
   const onMetricsRef = useRef(onMetrics);
   const onSessionEndRef = useRef(onSessionEnd);
+
+  modeRef.current = safeMode;
+  isActiveRef.current = isActive;
+  onCanvasPoisonedRef.current = onCanvasPoisoned;
 
   const scheduleCallback = useCallback((fn: () => void) => {
     if (typeof queueMicrotask === 'function') {
@@ -146,9 +164,43 @@ export function usePoseDetection(
   // Check if OffscreenCanvas is supported
   const supportsOffscreenCanvas = typeof OffscreenCanvas !== 'undefined';
 
+  // Hot-swap exercise mode without tearing down camera / OffscreenCanvas.
+  useEffect(() => {
+    if (!isActive) return;
+    engineDetector = isEngineMode(safeMode) ? createEngineRepDetectorState(safeMode) : null;
+    workerRef.current?.postMessage({ type: 'setMode', mode: safeMode } satisfies WorkerMessage);
+    if (typeof window !== 'undefined') {
+      const prev = (window as PoseRuntimeWindow).__IMF_POSE_RUNTIME__;
+      if (prev) {
+        publishPoseRuntimeStatus({ ...prev, mode: safeMode });
+      }
+    }
+  }, [safeMode, isActive]);
+
+  // Emit session summary only when the parent deactivates us (Stop), not on
+  // React Strict Mode remounts or mode hot-swaps (those keep isActive true).
+  useEffect(() => {
+    if (isActive) {
+      wasActiveRef.current = true;
+      return;
+    }
+    if (!wasActiveRef.current) return;
+    wasActiveRef.current = false;
+    if (sessionLoggerRef.current) {
+      const summary = sessionLoggerRef.current.getSummary(lastRepCountRef.current);
+      // Ignore ghost sessions from aborted Strict Mode mounts (<500ms).
+      if (summary.duration >= 0.5) {
+        onSessionEndRef.current?.(summary);
+      }
+    }
+    sessionLoggerRef.current = null;
+  }, [isActive]);
+
   useEffect(() => {
     if (!isActive) return;
     if (!canvasRef.current || !videoRef.current) return;
+
+    let cancelled = false;
 
     notifyStateChange({ isLoading: true });
     emitProgress({
@@ -158,11 +210,12 @@ export function usePoseDetection(
     });
 
     // Initialize session logger
-    sessionLoggerRef.current = new SessionLogger(safeMode);
+    const startMode = modeRef.current;
+    sessionLoggerRef.current = new SessionLogger(startMode);
     sessionStartTimeRef.current = Date.now();
     lastRepCountRef.current = 0;
     repCounter = createInitialRepCounterState();
-    engineDetector = isEngineMode(safeMode) ? createEngineRepDetectorState(safeMode) : null;
+    engineDetector = isEngineMode(startMode) ? createEngineRepDetectorState(startMode) : null;
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
@@ -175,24 +228,34 @@ export function usePoseDetection(
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const isMobileDevice = isMobile || isMobileUA || (window.innerWidth < 768 && isTouchDevice);
 
-    // Use worker only on desktop — mobile devices (especially iOS Safari) struggle with
-    // OffscreenCanvas + worker (createImageBitmap failures, 0x0 textures, corrupted frames)
-    if (
-      supportsOffscreenCanvas &&
-      typeof canvas.transferControlToOffscreen === 'function' &&
-      !isMobileDevice
-    ) {
-      // Worker-based approach (desktop only)
+    // Path selection: see src/lib/pose/poseRuntime.ts + docs/ARCHITECTURE.md
+    const preferWorker = shouldUsePoseWorker({
+      isMobileDevice,
+      supportsOffscreenCanvas,
+      canTransferControl: typeof canvas.transferControlToOffscreen === 'function',
+      nodeEnv: process.env.NODE_ENV,
+      forceWorker: readForcePoseWorkerFlag(),
+    });
+
+    publishPoseRuntimeStatus({
+      path: preferWorker ? 'worker' : 'main',
+      mode: startMode,
+      startedAt: Date.now(),
+    });
+
+    if (preferWorker) {
       startWorkerBasedDetection();
     } else {
-      // Main-thread approach (mobile / iOS / touch devices)
       startMainThreadDetection();
     }
 
     async function startWorkerBasedDetection() {
       try {
+        if (cancelled) return;
+
         if ((canvas as any)._isTransferred) {
-          console.warn('Canvas already transferred');
+          console.warn('Canvas already transferred — requesting fresh canvas host');
+          onCanvasPoisonedRef.current?.();
           return;
         }
 
@@ -201,8 +264,20 @@ export function usePoseDetection(
           offscreen = canvas.transferControlToOffscreen();
           (canvas as any)._isTransferred = true;
         } catch (e) {
+          if (cancelled) return;
           console.warn('Canvas transfer failed, falling back to main thread', e);
+          publishPoseRuntimeStatus({
+            path: 'main',
+            mode: modeRef.current,
+            startedAt: sessionStartTimeRef.current || Date.now(),
+          });
           startMainThreadDetection();
+          return;
+        }
+
+        if (cancelled) {
+          // Transfer already happened; host canvas is dead — ask for a remount.
+          onCanvasPoisonedRef.current?.();
           return;
         }
 
@@ -219,6 +294,7 @@ export function usePoseDetection(
             };
 
         const cameraResult = await requestCameraPermission(constraints);
+        if (cancelled) return;
 
         if (!cameraResult.granted) {
           const farcasterError = handleFarcasterError(
@@ -251,6 +327,7 @@ export function usePoseDetection(
         }
 
         await video.play();
+        if (cancelled) return;
 
         notifyStateChange({ hasCamera: true });
         emitProgress({
@@ -265,7 +342,7 @@ export function usePoseDetection(
         const initMessage: WorkerMessage = {
           type: 'init',
           canvas: offscreen,
-          mode: safeMode,
+          mode: modeRef.current,
           width: video.videoWidth,
           height: video.videoHeight,
           isMobile,
@@ -275,7 +352,7 @@ export function usePoseDetection(
 
         let isProcessing = false;
         const frameCallback = async () => {
-          if (!videoRef.current || !workerRef.current || !isActive) return;
+          if (!videoRef.current || !workerRef.current || !isActiveRef.current || cancelled) return;
 
           if (!isProcessing) {
             isProcessing = true;
@@ -335,7 +412,7 @@ export function usePoseDetection(
             // Worker can't open WebSockets — forward engine form cues on main thread
             if (data.formCheckSpeak) {
               coachStation.sendEngineFormCheck(
-                safeMode,
+                modeRef.current,
                 data.formCheckSpeak,
                 lastRepCountRef.current
               );
@@ -350,7 +427,8 @@ export function usePoseDetection(
     }
 
     async function startMainThreadDetection() {
-      console.log('Using main-thread pose detection (mobile fallback)');
+      if (cancelled) return;
+      console.log('Using main-thread pose detection');
 
       try {
         // iOS Safari workaround: Try to ensure the video element is truly ready
@@ -372,6 +450,7 @@ export function usePoseDetection(
             };
 
         const cameraResult = await requestCameraPermission(constraints);
+        if (cancelled) return;
 
         if (!cameraResult.granted) {
           const farcasterError = handleFarcasterError(
@@ -404,6 +483,7 @@ export function usePoseDetection(
         }
 
         await video.play();
+        if (cancelled) return;
 
         // Monitor camera stream for disconnections (common in Farcaster)
         if (cameraResult.stream) {
@@ -575,11 +655,14 @@ export function usePoseDetection(
 
         // Start detection loop
         const detect = async () => {
-          if (!isActive || !videoRef.current || !detectorRef.current) return;
+          if (!isActiveRef.current || cancelled || !videoRef.current || !detectorRef.current)
+            return;
 
           try {
             const poses = await detectorRef.current!.estimatePoses(videoRef.current);
+            if (cancelled || !isActiveRef.current) return;
 
+            const activeMode = modeRef.current;
             const detected = poses.length > 0 && poses[0].keypoints.length > 0;
             notifyStateChange({ poseDetected: detected });
 
@@ -600,16 +683,16 @@ export function usePoseDetection(
               const keypoints = poses[0].keypoints as Keypoint[];
 
               // Biomechanical Analysis
-              const metrics = analyzeBiomechanics(keypoints, safeMode);
+              const metrics = analyzeBiomechanics(keypoints, activeMode);
 
               // Rep detection
               const repIncremented =
-                safeMode === 'pushups'
+                activeMode === 'pushups'
                   ? detectPushup(keypoints, repCounter)
-                  : safeMode === 'squats'
+                  : activeMode === 'squats'
                     ? detectSquat(keypoints, repCounter)
                     : engineDetector
-                      ? detectEngineRep(keypoints, safeMode, engineDetector)
+                      ? detectEngineRep(keypoints, activeMode, engineDetector)
                       : false;
               if (repIncremented) {
                 repCounter.repCount += 1;
@@ -621,7 +704,7 @@ export function usePoseDetection(
               if (engineDetector) {
                 const speak = consumeFormCheckSpeak(engineDetector);
                 if (speak) {
-                  coachStation.sendEngineFormCheck(safeMode, speak, repCounter.repCount);
+                  coachStation.sendEngineFormCheck(activeMode, speak, repCounter.repCount);
                 }
               }
 
@@ -641,14 +724,14 @@ export function usePoseDetection(
                     // We look for the first snapshot that is >= current elapsed time
                     const ghostSnapshot = pbTrace.find((s) => s.timestamp >= elapsed);
                     if (ghostSnapshot) {
-                      drawSkeleton(ctx as any, ghostSnapshot.keypoints, safeMode, true);
+                      drawSkeleton(ctx as any, ghostSnapshot.keypoints, activeMode, true);
                     }
                   }
 
-                  drawSkeleton(ctx as any, keypoints, safeMode);
+                  drawSkeleton(ctx as any, keypoints, activeMode);
                   drawFeedback(
                     ctx as any,
-                    safeMode,
+                    activeMode,
                     engineDetector ? engineDisplayRepState(engineDetector) : repCounter.repState,
                     metrics.depth,
                     metrics.warnings
@@ -667,7 +750,7 @@ export function usePoseDetection(
                     const elapsed = Date.now() - sessionStartTimeRef.current;
                     const ghostSnapshot = pbTrace.find((s) => s.timestamp >= elapsed);
                     if (ghostSnapshot) {
-                      drawSkeleton(ctx as any, ghostSnapshot.keypoints, safeMode, true);
+                      drawSkeleton(ctx as any, ghostSnapshot.keypoints, modeRef.current, true);
                     }
                   }
                 }
@@ -735,17 +818,16 @@ export function usePoseDetection(
     window.addEventListener('resize', handleResize);
 
     return () => {
+      cancelled = true;
       console.log('🧹 Cleaning up pose detection');
+      clearPoseRuntimeStatus();
 
       // Remove event listeners
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleResize);
 
-      // Calculate and trigger session end callback
-      if (sessionLoggerRef.current) {
-        const summary = sessionLoggerRef.current.getSummary(lastRepCountRef.current);
-        onSessionEndRef.current?.(summary);
-      }
+      // Session end is handled by the isActive→false effect — not here.
+      // Emitting on every cleanup races React Strict Mode and kills real sessions.
 
       // Clean up worker
       if (workerRef.current) {
@@ -780,7 +862,8 @@ export function usePoseDetection(
         streamRef.current = null;
       }
 
-      // Reset canvas transfer flag
+      // Reset transfer flag (does not undo a real OffscreenCanvas transfer —
+      // Webcam remounts a fresh <canvas> via canvasEpoch when poisoned).
       if (canvasRef.current) {
         (canvasRef.current as any)._isTransferred = false;
       }
@@ -800,7 +883,17 @@ export function usePoseDetection(
 
       notifyStateChange({ hasCamera: false, hasPoseDetection: false, poseDetected: false });
     };
-  }, [canvasRef, safeMode, isActive, isMobile, notifyStateChange, supportsOffscreenCanvas]);
+    // Mode is hot-swapped via modeRef — do not restart the pipeline on exercise change.
+  }, [
+    canvasRef,
+    canvasEpoch,
+    isActive,
+    isMobile,
+    notifyStateChange,
+    emitProgress,
+    supportsOffscreenCanvas,
+    pbTrace,
+  ]);
 
   return videoRef;
 }

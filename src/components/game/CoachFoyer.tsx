@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, Camera, LockKeyhole, MoveUpRight, PersonStanding, Trophy } from 'lucide-react';
+import { ArrowRight, Camera, LockKeyhole } from 'lucide-react';
+import { BRAND, getIntentDef } from '@/lib/brandPositioning';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/coach-foyer.css';
 
@@ -15,66 +16,73 @@ const exercises: Array<{
   mode: ExerciseMode;
   label: string;
   detail: string;
-  icon: typeof PersonStanding;
 }> = [
-  { mode: 'pushups', label: 'Push-ups', detail: 'Chest, shoulders, elbows', icon: MoveUpRight },
-  { mode: 'squats', label: 'Squats', detail: 'Depth, knees, tempo', icon: PersonStanding },
-  { mode: 'curls', label: 'Curls', detail: 'Elbow control, range', icon: MoveUpRight },
-  { mode: 'pullups', label: 'Pull-ups', detail: 'Extension, symmetry', icon: MoveUpRight },
-  { mode: 'jumps', label: 'Jumps', detail: 'Landing, knee tracking', icon: PersonStanding },
+  { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line' },
+  { mode: 'squats', label: 'Squats', detail: 'Depth · knees · tempo' },
+  { mode: 'curls', label: 'Curls', detail: 'Elbow control · range' },
+  { mode: 'pullups', label: 'Pull-ups', detail: 'Extension · symmetry' },
+  { mode: 'jumps', label: 'Jumps', detail: 'Landing · knee track' },
 ];
 
 export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
+  const foyer = getIntentDef('understand').foyer;
+
   return (
     <section className="coach-foyer" aria-labelledby="coach-foyer-title">
-      <div className="coach-foyer__eyebrow">
-        <span className="coach-foyer__signal" aria-hidden="true" />
-        Private camera coaching
+      <div className="coach-foyer__atmosphere" aria-hidden="true">
+        <div className="coach-foyer__glow" />
+        <div className="coach-foyer__grid" />
+        <div className="coach-foyer__orbit" />
       </div>
-      <h2 id="coach-foyer-title">Move with better form.</h2>
-      <p className="coach-foyer__lede">
-        Pick a movement. Your camera gives live, on-device feedback while you train.
-      </p>
 
-      <fieldset className="coach-foyer__exercise-list">
-        <legend>Choose a movement</legend>
-        {exercises.map((exercise) => {
-          const Icon = exercise.icon;
-          const selected = exercise.mode === mode;
-          return (
-            <button
-              key={exercise.mode}
-              type="button"
-              className={`coach-foyer__exercise${selected ? ' is-selected' : ''}`}
-              aria-pressed={selected}
-              onClick={() => onModeChange(exercise.mode)}
-            >
-              <span className="coach-foyer__exercise-icon">
-                <Icon size={18} strokeWidth={1.8} />
-              </span>
-              <span className="coach-foyer__exercise-copy">
-                <strong>{exercise.label}</strong>
-                <small>{exercise.detail}</small>
-              </span>
-              <span className="coach-foyer__radio" aria-hidden="true" />
-            </button>
-          );
-        })}
-      </fieldset>
+      <div className="coach-foyer__inner">
+        <p className="coach-foyer__brand motion-enter">{foyer.brand}</p>
 
-      <button type="button" className="coach-foyer__start" onClick={onStart}>
-        <Camera size={18} strokeWidth={2} />
-        Start camera coaching
-        <ArrowRight size={18} strokeWidth={2} />
-      </button>
+        <h2 id="coach-foyer-title" className="coach-foyer__title motion-enter motion-delay-1">
+          {foyer.line1}
+        </h2>
+        <p className="coach-foyer__lede motion-enter motion-delay-2">{BRAND.visionLine}</p>
 
-      <div className="coach-foyer__trust">
-        <span>
-          <LockKeyhole size={14} /> Video stays on this device
-        </span>
-        <span>
-          <Trophy size={14} /> Progress saves automatically
-        </span>
+        <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-2">
+          <legend>Choose a movement</legend>
+          {exercises.map((exercise, index) => {
+            const selected = exercise.mode === mode;
+            return (
+              <button
+                key={exercise.mode}
+                type="button"
+                className={`coach-foyer__exercise${selected ? ' is-selected' : ''}`}
+                style={{ animationDelay: `${180 + index * 40}ms` }}
+                aria-pressed={selected}
+                onClick={() => onModeChange(exercise.mode)}
+              >
+                <span className="coach-foyer__exercise-copy">
+                  <strong>{exercise.label}</strong>
+                  <small>{exercise.detail}</small>
+                </span>
+                <span className="coach-foyer__radio" aria-hidden="true" />
+              </button>
+            );
+          })}
+        </fieldset>
+
+        <button
+          type="button"
+          id="startButton"
+          className="coach-foyer__start feel-press motion-enter"
+          style={{ animationDelay: '320ms' }}
+          aria-label={foyer.cta}
+          onClick={onStart}
+        >
+          <Camera size={18} strokeWidth={2} />
+          {foyer.cta}
+          <ArrowRight size={18} strokeWidth={2} />
+        </button>
+
+        <p className="coach-foyer__trust motion-enter" style={{ animationDelay: '380ms' }}>
+          <LockKeyhole size={14} strokeWidth={2} aria-hidden="true" />
+          {BRAND.trustLine}
+        </p>
       </div>
     </section>
   );

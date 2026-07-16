@@ -39,9 +39,13 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-  },
+  // Set PW_NO_WEBSERVER=1 when a Next lock already owns the directory
+  // (reuseExistingServer alone is not enough — `next dev` exits 1 on lock).
+  webServer: process.env.PW_NO_WEBSERVER
+    ? undefined
+    : {
+        command: 'pnpm dev',
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+      },
 });

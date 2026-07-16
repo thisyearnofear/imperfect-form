@@ -133,6 +133,11 @@ self.addEventListener('message', async (event) => {
       lastProgress = 0;
 
       self.postMessage({ type: 'ready' });
+    } else if (data.type === 'setMode') {
+      workerMode = (data.mode ?? 'pushups') as ExerciseMode;
+      repCounter = createInitialRepCounterState();
+      engineDetector = isEngineMode(workerMode) ? createEngineRepDetectorState(workerMode) : null;
+      lastProgress = 0;
     } else if (data.type === 'frame') {
       if (!detector || !ctx) {
         if (data.bitmap) data.bitmap.close();

@@ -69,39 +69,70 @@ pnpm lint:fix
 ### Session intent → aesthetic register
 
 **Source of truth:** `src/lib/brandPositioning.ts` (`SESSION_INTENTS`,
-`INTENT_TO_REGISTER`, control labels). Persist via `imf_sessionIntent`;
-read/write with `useSessionIntent`. Apply chrome with
+`INTENT_TO_REGISTER`, control labels, energy ladder). Persist via
+`imf_sessionIntent`; read/write with `useSessionIntent`. Apply chrome with
 `#game-container[data-register]` / `#screen[data-register]`,
-`.prestart-foyer--{arcade|studio|calm}`, and `src/styles/session-register.css`
-(loaded from root layout).
+`src/styles/coach-foyer.css` / `studio-shell.css`, and
+`src/styles/session-register.css` (loaded from root layout).
 
-Do not add mid-session theme toggles. Do not invent a parallel landing page
-until acquisition needs it — enhance `PreStartFoyer` + register chrome first.
-See [NORTH_STAR.md](./NORTH_STAR.md) (UI optionality).
+**Day-0 doorway:** `CoachFoyer` (studio). Default intent is `understand`
+(Coach / Studio). Do not put a Train / Coach / Breathe chooser on the first
+viewport. Do not add mid-session theme toggles. Do not invent a parallel
+landing page until acquisition needs it — enhance `CoachFoyer` + studio
+chrome first. See [NORTH_STAR.md](./NORTH_STAR.md) (energy ladder).
 
-| Intent  | Register | Primary entry                                      |
-| ------- | -------- | -------------------------------------------------- |
-| Train   | Arcade   | Workout START + ModeSwitch                         |
-| Coach   | Studio   | Form coaching Begin; summary opens on Analyze      |
-| Breathe | Calm     | Camera-free RecoveryCard panel (breathe + stretch) |
+| Intent  | Register | Primary entry                                                  |
+| ------- | -------- | -------------------------------------------------------------- |
+| Coach   | Studio   | **Default** — `CoachFoyer` → primer → session; summary Analyze |
+| Train   | Arcade   | Earned play energy (Celebrate / UI sound); future Train mode   |
+| Breathe | Calm     | Post-set recover stage; camera-free `RecoveryCard` panel       |
+
+`PreStartFoyer` (intent chooser) is legacy — keep for reference / SplitFlap
+fallback only; do not reintroduce it as the mass-market front door.
 
 ### Delight / progress (register-aware)
 
 Progress is a **curve**, not the live HUD counter. Charts belong on Celebrate
 and the earned home dashboard (`totalXp > 0`) — never the day-0 foyer.
+Play energy enters on the **first celebrate**, not before the first coached feel.
 
 - **Data:** `getRecentProgressSeries()` in `src/lib/progress/recentProgress.ts`
   (last ~7 local sessions → XP estimate series).
 - **Viz:** lightweight `ProgressSpark` (`src/components/progress/`) — SVG/CSS,
   register language (arcade gold / studio teal / calm muted). No chart-kit
   vendor lock until it proves sticky.
-- **UI sound:** Cuelume via `src/lib/uiSound.ts` — Arcade Train only (`press` on
-  START, `success` on celebrate open / quest complete). Gated by `prefUiSound`
+- **UI sound:** Cuelume via `src/lib/uiSound.ts` — Arcade Train energy only
+  (`press` / `success` on celebrate / quest). Gated by `prefUiSound`
   (settings **UI SOUND**) and muted while coach TTS is speaking. Never during
-  Calm breathe phases.
+  Calm breathe phases; never on the day-0 studio foyer.
 - **Feel:** `tabular-nums` on HUD, `active:scale(0.96)` ≤300ms on primary
   controls, specific transition properties (not `transition: all`), concentric
-  radii on summary stage tabs / spark.
+  radii on summary stage tabs / spark. Studio “alive” = cue timing, settle
+  motion, persona voice — not loud foyer chrome.
+
+### Pose pipeline performance (do not regress)
+
+Contract: [ARCHITECTURE.md](./ARCHITECTURE.md) → **PoseRuntime**. Path policy:
+`src/lib/pose/poseRuntime.ts`.
+
+Desktop OffscreenCanvas `transferControlToOffscreen()` is **irreversible**. React
+Strict Mode (dev) remounts effects and races async camera init — that used to
+emit a ~0ms session end and then bail with “Canvas already transferred”, leaving
+curls/start feeling stuck.
+
+Rules in `src/modules/usePoseDetection.ts` + `Webcam.tsx`:
+
+1. **Abort async init** on effect cleanup (`cancelled` flag after every await).
+2. **Do not emit `onSessionEnd` from pipeline cleanup** — only when `isActive`
+   goes true → false (user Stop), and ignore ghost sessions &lt; 500ms.
+3. **Hot-swap exercise mode** via `modeRef` + worker `setMode` — mode must not
+   restart the camera pipeline.
+4. **Dev prefers main-thread detection** (no OffscreenCanvas) to avoid Strict
+   Mode transfer races; production desktop still uses the worker.
+5. If a canvas is poisoned, bump `canvasEpoch` so Webcam mounts a fresh `<canvas>`.
+6. **Smoke the worker path** with `e2e/pose-runtime.spec.ts` (sets
+   `window.__IMF_FORCE_POSE_WORKER__ = true` so `next dev` still hits the
+   production OffscreenCanvas pipeline).
 
 ### Coach TTS (demo voice sync)
 

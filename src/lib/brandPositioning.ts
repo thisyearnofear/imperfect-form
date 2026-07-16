@@ -3,18 +3,24 @@
  *
  * Category: approachable physical AI for movement.
  * Promise: watch → understand → show → progress.
+ * Loop principle: Trust opens the door. Play keeps them. Physical AI makes them tell someone.
  *
  * Aesthetic registers (one surface, one register — do not mix):
- * - Arcade: Train intent. Workout shell (#screen), START/controls, XP play.
+ * - Night studio (DEFAULT doorway): Coach intent. Day-0 foyer, camera primer, live coaching.
+ *   Type: readable sans (Manrope). Color: teal glass on black. (imperfectcoach DNA)
+ * - Arcade: Train / play energy. Earned after first coached feel (Celebrate, XP, UI sound).
  *   Type: Press Start 2P. Color: black / white / gold (#fcb131).
- * - Night studio: Coach intent + trust (onboarding, camera primer).
- *   Type: readable sans. Color: teal glass on black. (imperfectcoach DNA)
- * - Calm: Breathe / recover intent. Soft light, stillness. (imperfect-breath DNA)
+ * - Calm: Breathe / recover. Post-set recovery + optional calm entry — not the day-0 hero.
+ *   Soft light, stillness. (imperfect-breath DNA)
  * - Lab: post-workout AI clinical review only — not an entry intent.
  *
- * Intent → register is the optionality model: why you showed up picks the
- * chrome for the session. Not a mid-rep theme toggle. Landing marketing is
- * deferred; deepen the foyer doorway first (see docs/NORTH_STAR.md).
+ * Energy ladder (not a mid-rep theme toggle):
+ * 1. Session 0 — Studio trust (CoachFoyer → primer → live cues)
+ * 2. First celebrate — introduce play (ProgressSpark, Arcade UI sound, gold accents)
+ * 3. Explicit Train / Arcade cabinet — later / earned depth, not the mass-market front door
+ *
+ * Day-0 doorway is CoachFoyer (studio). Intent chooser is not on the first viewport.
+ * Landing marketing is deferred; deepen the foyer first (see docs/NORTH_STAR.md).
  *
  * Crafted play stays; puerile slogans do not. Game-loop chrome is earned
  * after the first coached feel — never the foyer.
@@ -26,7 +32,8 @@ export type AestheticRegister = 'arcade' | 'studio' | 'lab' | 'calm';
 /** Why the user opened the cabinet. Maps 1:1 to an entry register. */
 export type SessionIntent = 'train' | 'understand' | 'recover';
 
-export const DEFAULT_SESSION_INTENT: SessionIntent = 'train';
+/** Mass-market default: Coach / Studio — trust before arcade play. */
+export const DEFAULT_SESSION_INTENT: SessionIntent = 'understand';
 
 /** localStorage key — keep in sync with e2e / InitializationScreen clears */
 export const SESSION_INTENT_KEY = 'imf_sessionIntent';
@@ -58,11 +65,11 @@ const ARCADE_FOYER: FoyerCopy = {
 
 const STUDIO_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM',
-  line1: 'Your camera understands your form',
-  line2: 'A coach shows you how to fix it',
+  line1: 'Move with better form.',
+  line2: 'Your camera understands your form. A coach shows you how to fix it.',
   trust: 'On-device pose · nothing uploads until you choose',
-  hint: 'Clinical clarity — imperfectcoach DNA',
-  cta: 'Pick a move, then Start',
+  hint: 'Private camera coaching — path into physical AI',
+  cta: 'Start camera coaching',
 };
 
 const CALM_FOYER: FoyerCopy = {
@@ -77,7 +84,7 @@ const CALM_FOYER: FoyerCopy = {
 export type SessionIntentDef = {
   id: SessionIntent;
   register: Exclude<AestheticRegister, 'lab'>;
-  /** Chooser label (short) */
+  /** Chooser label (short) — used for earned / secondary mode entry, not day-0 hero */
   label: string;
   /** Accessible name for the chooser control */
   ariaLabel: string;
@@ -95,25 +102,11 @@ export type SessionIntentDef = {
 };
 
 /**
- * Entry doorways. Single source for foyer copy + register mapping.
- * Enhance this list rather than forking duplicate marketing surfaces.
+ * Intent definitions — register mapping + copy.
+ * Day-0 uses CoachFoyer (studio / understand). Other intents remain for
+ * summary staging, calm recovery, and future earned Train mode.
  */
 export const SESSION_INTENTS: readonly SessionIntentDef[] = [
-  {
-    id: 'train',
-    register: 'arcade',
-    label: 'Train',
-    ariaLabel: 'Train — arcade workout',
-    foyer: ARCADE_FOYER,
-    controls: {
-      primary: 'START',
-      primaryAria: 'Start game',
-      secondary: 'RESET',
-      secondaryAria: 'Reset game',
-      showExerciseModes: true,
-      modeGroupLabel: 'Workout mode selection',
-    },
-  },
   {
     id: 'understand',
     register: 'studio',
@@ -127,6 +120,21 @@ export const SESSION_INTENTS: readonly SessionIntentDef[] = [
       secondaryAria: 'Reset session',
       showExerciseModes: true,
       modeGroupLabel: 'Exercise selection',
+    },
+  },
+  {
+    id: 'train',
+    register: 'arcade',
+    label: 'Train',
+    ariaLabel: 'Train — arcade workout',
+    foyer: ARCADE_FOYER,
+    controls: {
+      primary: 'START',
+      primaryAria: 'Start game',
+      secondary: 'RESET',
+      secondaryAria: 'Reset game',
+      showExerciseModes: true,
+      modeGroupLabel: 'Workout mode selection',
     },
   },
   {
@@ -168,6 +176,8 @@ export const BRAND = {
    * Alias of Train intent; prefer getIntentDef('train').foyer in new code.
    */
   arcade: ARCADE_FOYER,
+  /** Day-0 / studio doorway — prefer getIntentDef('understand').foyer */
+  studio: STUDIO_FOYER,
   /** Prose equivalents for studio surfaces / SEO */
   visionLine: 'Your camera understands your form. A coach shows you how to fix it.',
   trustLine: 'Pose runs on your device. Nothing leaves the browser until you choose.',
