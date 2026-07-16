@@ -122,20 +122,25 @@ wallet popup on stage.
 
 ## Phases
 
+**Do this next:** Manual stage — browser + station, curls → arm moves + voice
+(see [ROADMAP.md](./ROADMAP.md) required order +
+[`coach-station/README.md`](../coach-station/README.md) checklist). Then richer
+twin telemetry, then hardware. Do not start SmolVLA before that proof.
+
 1. **Bridge (shipped):** `coach-station/` WebSocket + FormEvent schema + web
    tap (`coachStation.ts`). Fail-silent when the station is offline.
    Deliberately "dumb": form issue → scripted demonstration primitive.
-2. **Sim choreography (shipped):** demonstration primitives against the
-   Cyberwave MuJoCo / Playground twin via `cw.affect("simulation")` +
-   interpolated `joints.set` trajectories — `demonstrate_strict_curl`
-   (flagship), `demonstrate_extension`, `demonstrate_tempo`,
-   `mirror_asymmetry` — each with per-persona motion profiles and narration.
-   Station emits `demonstration` for voice sync + bay/twin UI; web TTS is
-   provider-agnostic (ElevenLabs → Polly → browser). Safety layer caps elbow
-   workspace / speed / step. Demo CLI: `python -m coach_station.demo`.
-   Live bring-up: `coach-station/LIVE.md`.
-3. **Hardware bring-up:** `cyberwave pair` on edge hardware, `affect("live")`,
-   torque / reach clamps (elbow angle clamps already in trajectory layer).
+2. **Sim choreography (software shipped · stage gate open):** demonstration
+   primitives against the Cyberwave MuJoCo / Playground twin via
+   `cw.affect("simulation")` + interpolated `joints.set` trajectories —
+   `demonstrate_strict_curl` (flagship), `demonstrate_extension`,
+   `demonstrate_tempo`, `mirror_asymmetry` — each with per-persona motion
+   profiles and narration. Station emits `demonstration` for voice sync +
+   bay/twin UI; web TTS is provider-agnostic. Demo CLI:
+   `python -m coach_station.demo`. **Manual stage still required** before
+   calling the cohort closed.
+3. **Hardware bring-up:** after manual stage —
+   `cyberwave pair`, `affect("live")`, clamps (`LIVE.md`). Curl-first.
 4. **Flywheel:** record every coached session via Cyberwave (face anonymization
    keeps privacy-first intact); slice episodes; SmolVLA experiments that start
    from _human form cues_, not from teleop-only datasets.

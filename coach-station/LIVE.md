@@ -1,12 +1,15 @@
 # Milestone 2 — Live SO-101 bring-up
 
 Software safety is in place. Hardware still needs a physical dead-man and
-validated sim → live transfer. Do not skip steps.
+validated sim → live transfer. **Do not start here until Milestone 1 manual
+stage passes** (browser + station; see [README.md](./README.md) checklist and
+[ROADMAP.md](../docs/ROADMAP.md) required order).
 
 ## Preconditions
 
 - [ ] Milestone 1 software dry-run green: `./scripts/cohort-dry-run.sh`
 - [ ] Manual cohort stage proven in **simulation** (console or Cyberwave twin)
+      — CoachFoyer → Curls → form cue → demo + TTS (+ twin peek / bay pulse)
 - [ ] Clear desk radius around the arm; no people in sweep plane
 - [ ] Physical dead-man / e-stop within reach of the operator
 - [ ] `cyberwave pair` completed on the edge machine

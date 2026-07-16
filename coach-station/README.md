@@ -79,16 +79,27 @@ From repo root, automated software dry-run (vitest + pytest + demo CLI):
 
 ## Cohort day checklist
 
+**Required next gate** (see [ROADMAP.md](../docs/ROADMAP.md) “What's next —
+required order”): pass this manual stage before twin telemetry polish or
+hardware bring-up.
+
 **Software (this script):** station bridge tests, TTS prefs, all primitives in console.
 
-**Stage (manual):**
+```sh
+./scripts/cohort-dry-run.sh   # from repo root
+```
+
+**Stage (manual) — pass criteria:**
 
 1. `cd coach-station && uv run python -m coach_station` (console or Cyberwave sim)
-2. `NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev`
-3. Browser: **Train** → curls → bad form → station logs demo + browser speaks narration
-4. Optional twin: `uv sync --extra cyberwave`, `COACH_AFFECT=simulation`
-5. **Live hardware never** without `COACH_AFFECT=live` **and** `COACH_LIVE_CONFIRM=1`
-   **and** a physical dead-man (Milestone 2)
+2. From repo root: `NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev`
+3. Browser (Ring 0, no wallet): **CoachFoyer** → pick **Curls** → Start camera
+   coaching → allow camera → produce bad elbow form (`elbow_swing`)
+4. Expect: station logs a demo · browser speaks narration · twin peek /
+   bay pulse react (when UI is on the day-0 shell)
+5. Optional Cyberwave twin: `uv sync --extra cyberwave`, `COACH_AFFECT=simulation`
+6. **Live hardware never** without `COACH_AFFECT=live` **and** `COACH_LIVE_CONFIRM=1`
+   **and** a physical dead-man (Milestone 2 — only after this stage passes)
 
 ## Live mode (Milestone 2)
 

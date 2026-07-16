@@ -23,6 +23,12 @@ Cohort / coach-station software gate (no camera required):
 ./scripts/cohort-dry-run.sh
 ```
 
+**Required next (product):** manual stage — station + browser, CoachFoyer →
+Curls → form cue → demo + TTS (+ twin peek / bay pulse). Checklist:
+[`coach-station/README.md`](../coach-station/README.md). Ordered gates:
+[ROADMAP.md](./ROADMAP.md) “What's next — required order”. Do not jump to
+hardware (`LIVE.md`) or SmolVLA before that stage passes.
+
 ## Build
 
 ```sh

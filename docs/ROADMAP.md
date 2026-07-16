@@ -71,13 +71,6 @@ full theme token once earned / wallet-switched.
 - **Weisdevice-lite entry** — studio boot “Enter the bay / Enter quietly” sound
   consent (auto-skip for automation / reduced-motion / returning session)
 
-**Next beats:**
-
-1. **Optional Spline upgrade** — only if we author/host our own scene with
-   clear rights; keep cut-out CSS 3D as fallback.
-2. **Richer twin telemetry** — optional joint-angle stream from station → peek
-   (still fail-silent).
-
 **Shipped (Ring 1/2 — earned upgrades):**
 
 - Multi-chain leaderboards (Base, Celo, Polygon, Monad)
@@ -86,11 +79,11 @@ full theme token once earned / wallet-switched.
 - AI Highlight Card at the celebrate moment
 - Ghost challenges (URL-safe trace compression)
 
-**Scaffolded / in progress:**
+**In progress (the gate):**
 
-- _(none — Milestone 1 voice sync shipped)_
+- Manual stage — browser + station end-to-end (see “What's next” below)
 
-**Shipped (Milestone 1 — sim choreography):**
+**Shipped (Milestone 1 — sim choreography software):**
 
 - `coach-station/` — WebSocket bridge + FormEvent → demonstration primitives
   (`demonstrate_strict_curl`, `demonstrate_extension`, `demonstrate_tempo`,
@@ -107,11 +100,22 @@ full theme token once earned / wallet-switched.
 - Station tests: `uv sync --extra dev && uv run pytest` (21 passing)
 - Soft dry-run: `./scripts/cohort-dry-run.sh`
 
-## What's next
+## What's next — required order
 
-### Milestone 1 — Sim choreography ✅ (cohort-ready)
+Do these in order. Polish items are **not** the gate.
+
+| #     | Gate                      | Done when                                                                                                            | Where                                                                    |
+| ----- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **1** | **Manual stage**          | Browser + station: curls → form cue → arm moves (console or Cyberwave sim) + TTS + twin peek / bay pulse. No wallet. | [`coach-station/README.md`](../coach-station/README.md) cohort checklist |
+| **2** | **Richer twin telemetry** | Peek silhouette tracks real demo progress (joint / waypoint stream), still fail-silent                               | After #1 feels solid                                                     |
+| **3** | **Hardware bring-up**     | One curl demo trustworthy on metal (`demonstrate_strict_curl` first)                                                 | [`coach-station/LIVE.md`](../coach-station/LIVE.md)                      |
+
+**Defer until #1–#3:** own Spline scene, Avalanche leaderboard contract, marketing landing, SmolVLA / episode flywheel (Milestone 3).
+
+### Milestone 1 — Sim choreography (software ✅ · stage gate open)
 
 Goal: camera on, curls, arm moves in MuJoCo (or console [SIM]), voice narrates.
+Software path is shipped; **cohort is not closed until manual stage passes.**
 
 - [x] Wire `coach-station/` to FormEvent stream at `ws://localhost:8765`
       (client tap live; station server receives + dispatches primitives)
@@ -128,14 +132,15 @@ Goal: camera on, curls, arm moves in MuJoCo (or console [SIM]), voice narrates.
 - [x] Demo voice sync (station `demonstration` event + provider-agnostic TTS:
       ElevenLabs → Polly → browser; user preference in settings)
 - [x] Software dry-run: `./scripts/cohort-dry-run.sh`
-- [ ] Manual stage: browser + optional Cyberwave twin (see
-      `coach-station/README.md` cohort checklist)
+- [ ] **Manual stage (required next):** browser + optional Cyberwave twin —
+      see `coach-station/README.md` cohort checklist
 
 Demo without the browser: `cd coach-station && uv run python -m coach_station.demo --demo all`
 
 ### Milestone 2 — Hardware bring-up (SO-101 "Coach")
 
-Runbook: [`coach-station/LIVE.md`](../coach-station/LIVE.md).
+**Start only after Milestone 1 manual stage.** Runbook:
+[`coach-station/LIVE.md`](../coach-station/LIVE.md).
 
 - [ ] `cyberwave pair` on the edge machine
 - [~] `affect("live")` behind dead-man — software gate shipped:
@@ -151,8 +156,9 @@ Runbook: [`coach-station/LIVE.md`](../coach-station/LIVE.md).
 
 ### Milestone 3 — Data flywheel (SmolVLA)
 
-Episodes come from **coached human sessions** (form cue → demonstration),
-not from teleop-only datasets as the product’s starting point.
+**Start only after hardware curl proof (Milestone 2).** Episodes come from
+**coached human sessions** (form cue → demonstration), not from teleop-only
+datasets as the product’s starting point.
 
 - [ ] Every coached session records to Cyberwave in LeRobot-format episodes
 - [ ] Built-in face anonymization on-device (privacy-first stays true)

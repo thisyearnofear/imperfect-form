@@ -43,7 +43,8 @@ Visit `http://localhost:3000` to see the app running.
 ## Documentation
 
 - [North Star](./docs/NORTH_STAR.md) - Differentiation, three rings, data flywheel
-- [Roadmap](./docs/ROADMAP.md) - Sim → hardware → SmolVLA (and what we won't do)
+- [Roadmap](./docs/ROADMAP.md) - **Required next order** (manual stage → telemetry → hardware)
+- [Coach station checklist](./coach-station/README.md) - Cohort day stage steps
 - [Architecture Overview](./docs/ARCHITECTURE.md) - PoseRuntime primary; station as subscriber
 - [Development Guide](./docs/DEVELOPMENT.md) - Setup, testing, and security
 - [Deployment Guide](./docs/DEPLOYMENT.md) - Smart contracts and network configuration
