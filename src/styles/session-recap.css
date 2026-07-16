@@ -1,0 +1,11 @@
+.session-recap { display: grid; gap: 0.7rem; padding: 1rem; color: #eafff9; background: #092022; border: 1px solid rgba(114, 222, 201, 0.22); border-radius: 6px; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; }
+.session-recap__headline { display: flex; align-items: start; justify-content: space-between; padding-bottom: 0.2rem; }
+.session-recap__headline p, .session-recap__item p { margin: 0; color: #8fb5ae; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.session-recap__headline h2 { margin: 0.2rem 0 0; color: #fff; font-size: 1.25rem; font-weight: 700; text-transform: capitalize; }
+.session-recap__headline > span { color: #a9c7c2; font-size: 0.75rem; font-weight: 700; }
+.session-recap__item { display: flex; gap: 0.65rem; padding-top: 0.7rem; border-top: 1px solid rgba(255,255,255,0.07); }
+.session-recap__item > svg { flex: 0 0 auto; margin-top: 0.1rem; color: #a6c8c1; }
+.session-recap__item--good > svg { color: #73dfad; }
+.session-recap__item strong { display: block; margin-top: 0.2rem; color: #dff4ef; font-size: 0.8rem; line-height: 1.4; }
+.session-recap > button { margin: 0.3rem 0 0; padding: 0.75rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; color: #06201d; background: #75dfcb; border: 0; border-radius: 5px; box-shadow: none; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.82rem; font-weight: 800; text-transform: none; }
+.session-recap > button:hover { transform: none; background: #98eddb; box-shadow: none; }

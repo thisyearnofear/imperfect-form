@@ -17,7 +17,7 @@ import {
 } from '@/components/home';
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { ChevronDown, ChevronUp, Activity } from 'lucide-react';
-import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
+import { UniversalConnectButton } from '@/components/wallet';
 
 const GameWrapper = dynamic(() => import('@/components/game/GameWrapper'), {
   ssr: false,
@@ -118,30 +118,25 @@ export default function Home() {
 
   return (
     <>
-      <OnboardingModal />
       <ChainAmbient />
       <ThemeSync />
 
-      <div className="flex flex-col min-h-screen bg-black">
+      <div className="flex flex-col min-h-screen bg-[#061013]">
         {/* Top Navigation — full chrome only after first trained session */}
         {hasTrained ? (
-          <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/5">
-            <div className="px-4 py-2 flex items-center justify-between">
+          <div className="studio-topbar sticky top-0 z-50">
+            <div className="studio-topbar__inner px-4 py-2 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
-                  <span className="text-lg font-black text-black">{progress.currentLevel}</span>
+                <div className="studio-level-mark">
+                  <span>{progress.currentLevel}</span>
                 </div>
                 <div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-                    Level {progress.currentLevel}
-                  </div>
-                  <div className="text-white font-bold text-sm">
-                    {progress.totalXp.toLocaleString()} XP
-                  </div>
+                  <div className="studio-meta">Level {progress.currentLevel}</div>
+                  <div className="studio-xp">{progress.totalXp.toLocaleString()} XP</div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+              <div className="studio-tabs flex items-center gap-1 p-1">
                 {[
                   { id: 'workout', label: 'Workout', icon: 'W' },
                   { id: 'dashboard', label: 'Dashboard', icon: 'S' },
@@ -152,9 +147,7 @@ export default function Home() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as ActiveTab)}
                     className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
-                      activeTab === tab.id
-                        ? 'bg-yellow-500 text-black'
-                        : 'text-gray-400 hover:text-white hover:bg-white/10'
+                      activeTab === tab.id ? 'is-active' : ''
                     }`}
                     aria-label={`Switch to ${tab.label} tab`}
                     aria-current={activeTab === tab.id ? 'page' : undefined}
@@ -164,16 +157,17 @@ export default function Home() {
                   </button>
                 ))}
               </div>
+              <div className="hidden sm:block">
+                <UniversalConnectButton size="sm" showProfileWhenConnected />
+              </div>
             </div>
           </div>
         ) : (
-          <div className="sticky top-0 z-50 bg-black/95 border-b border-[#fcb131]/30">
-            <div className="px-4 py-3">
-              <p
-                className="text-[#fcb131] text-[10px] tracking-wide"
-                style={{ fontFamily: "'Press Start 2P', cursive" }}
-              >
-                IMPERFECT FORM
+          <div className="studio-topbar sticky top-0 z-50">
+            <div className="studio-topbar__inner px-5 py-4 flex items-center justify-between">
+              <p className="studio-wordmark">IMPERFECT FORM</p>
+              <p className="studio-status">
+                <span /> Camera coaching
               </p>
             </div>
           </div>

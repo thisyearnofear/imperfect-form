@@ -14,7 +14,6 @@ interface GameControlsProps {
   voiceEnabled: boolean;
   repCount: number;
   userId?: string;
-  finalAddress?: string;
   /** Calm / Breathe session active inside #screen (not a camera workout) */
   calmSessionActive?: boolean;
   onStop: () => void;
@@ -31,7 +30,6 @@ export const GameControls: React.FC<GameControlsProps> = ({
   voiceEnabled,
   repCount,
   userId,
-  finalAddress,
   calmSessionActive = false,
   onStop,
   onStart,
@@ -72,18 +70,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
                 ? 'py-4 px-6 text-base min-h-[56px] min-w-[80px] rounded-xl shadow-lg'
                 : 'py-3 px-5 text-sm'
             }`}
-            style={
-              isMobile
-                ? {
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                    boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
-                  }
-                : {}
-            }
             aria-label="Stop game"
             onClick={onStop}
           >
-            {isMobile ? '■' : 'STOP'}
+            End session
           </button>
         </div>
       ) : (

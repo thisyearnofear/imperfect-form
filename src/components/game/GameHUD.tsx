@@ -1,5 +1,4 @@
 import React from 'react';
-import { useSessionIntent } from '@/hooks/useSessionIntent';
 
 interface GameHUDProps {
   mode: string;
@@ -18,8 +17,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   isOverlay = true,
   isRace = false,
 }) => {
-  const { register } = useSessionIntent();
-  const studio = register === 'studio';
+  const studio = true;
 
   // Logic for scaling based on rep count to create "delight"
   // Calculate a "beat" effect based on time to make the UI feel alive
@@ -39,7 +37,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   return (
     <div
       className={`game-hud-container ${isOverlay ? 'hud-overlay-fs' : ''}`}
-      data-register={register}
+      data-register="studio"
     >
       {isRace && (
         <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-30">
@@ -91,7 +89,10 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         }}
       >
         <span className="hud-label">Reps</span>
-        <span className={`hud-value ${studio ? 'text-teal-200' : 'text-blue-400'}`}>
+        <span
+          key={repCount}
+          className={`hud-value motion-rep ${studio ? 'text-teal-200' : 'text-blue-400'}`}
+        >
           {repCount}
         </span>
       </div>
@@ -105,10 +106,9 @@ interface RepFeedbackProps {
 }
 
 export const RepFeedbackOverlay: React.FC<RepFeedbackProps> = ({ show, count }) => {
-  const { register } = useSessionIntent();
   if (!show) return null;
 
-  const studio = register === 'studio';
+  const studio = true;
 
   const getFeedbackMessage = (c: number) => {
     if (studio) {
@@ -125,12 +125,12 @@ export const RepFeedbackOverlay: React.FC<RepFeedbackProps> = ({ show, count }) 
     <div
       className="absolute inset-0 flex items-center justify-center z-[85] pointer-events-none"
       style={{ transform: 'translate3d(0, 0, 10px)' }}
-      data-register={register}
+      data-register="studio"
     >
       <div
         className={
           studio
-            ? 'bg-teal-950/70 backdrop-blur-md rounded-2xl px-8 py-6 flex flex-col items-center gap-2 border border-teal-400/40 shadow-[0_0_24px_rgba(45,212,191,0.2)]'
+            ? 'motion-rep bg-teal-950/70 backdrop-blur-md rounded-2xl px-8 py-6 flex flex-col items-center gap-2 border border-teal-400/40 shadow-[0_0_24px_rgba(45,212,191,0.2)]'
             : 'bg-green-500/30 backdrop-blur-md rounded-3xl p-8 flex flex-col items-center gap-2 border-2 border-green-400/50 animate-bounce shadow-[0_0_30px_rgba(34,197,94,0.4)]'
         }
       >

@@ -1,0 +1,34 @@
+.studio-topbar { background: rgba(6, 16, 19, 0.93); border-bottom: 1px solid rgba(139, 227, 212, 0.12); backdrop-filter: blur(14px); }
+.studio-topbar__inner { max-width: 1120px; margin: 0 auto; }
+.studio-wordmark { margin: 0; color: #e9fffa; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.1em; }
+.studio-status { display: inline-flex; align-items: center; gap: 0.45rem; margin: 0; color: #91aca8; font-size: 0.73rem; }
+.studio-status span { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: #67dbc7; box-shadow: 0 0 0 4px rgba(103, 219, 199, 0.1); }
+.studio-level-mark { width: 2.4rem; height: 2.4rem; display: grid; place-items: center; color: #bff8ed; background: rgba(103, 219, 199, 0.1); border: 1px solid rgba(103, 219, 199, 0.3); border-radius: 5px; font-size: 0.95rem; font-weight: 800; }
+.studio-meta { color: #8ca5a2; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.studio-xp { color: #f1fffc; font-size: 0.8rem; font-weight: 800; }
+.studio-tabs { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 5px; }
+.studio-tabs button { margin: 0; border: 0; border-radius: 4px; background: transparent; box-shadow: none; color: #9bb2af; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.7rem; font-weight: 700; text-transform: none; }
+.studio-tabs button:hover { transform: none; color: #eafff9; background: rgba(255, 255, 255, 0.05); box-shadow: none; }
+.studio-tabs button.is-active { color: #08211f; background: #75dfcd; }
+#game-container[data-register] .game-hud-container { width: 100%; display: flex; justify-content: space-between; gap: 0.7rem; padding: 0.8rem; color: #d8eeea; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; }
+#game-container[data-register] .hud-block { flex: 1; min-height: auto; padding: 0.55rem 0.8rem; display: flex; flex-direction: column; background: rgba(5, 17, 20, 0.88); border: 1px solid rgba(139, 227, 212, 0.2); border-radius: 5px; box-shadow: none; }
+#game-container[data-register] .hud-label { color: #92aaa6; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.07em; }
+#game-container[data-register] .hud-value { color: #b9f8eb; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.2rem; font-weight: 700; }
+#game-container[data-register] #controls { max-width: 720px; margin-top: 0.75rem; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; }
+#game-container[data-register] #stopButton { margin: 0; padding: 0.75rem 1rem; color: #ffe5e5; background: #4e2025; border: 1px solid #9a4b51; border-radius: 5px; box-shadow: none; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.78rem; font-weight: 700; text-transform: none; }
+#game-container[data-register] #stopButton:hover { transform: none; background: #64272d; box-shadow: none; }
+.coach-cue { min-height: 3.5rem; padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: #dff7f1; background: rgba(9, 33, 34, 0.92); border: 1px solid rgba(117, 223, 205, 0.25); border-radius: 5px; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; }
+.coach-cue > svg { flex: 0 0 auto; color: #83e8d5; }
+.coach-cue p { margin: 0 0 0.1rem; color: #94b8b1; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.coach-cue strong { display: block; color: #f2fffc; font-size: 0.82rem; font-weight: 700; line-height: 1.3; }
+.coach-cue--adjust { border-color: rgba(238, 171, 104, 0.55); }
+.coach-cue--adjust > svg { color: #f5bd75; }
+.coach-cue--good > svg { color: #78e6b1; }
+.live-status { position: absolute; left: 50%; bottom: 0.85rem; z-index: 70; max-width: min(92%, 34rem); padding: 0.55rem 0.7rem; display: inline-flex; align-items: center; gap: 0.45rem; color: #dff4ef; background: rgba(5, 20, 22, 0.88); border: 1px solid rgba(157, 203, 195, 0.22); border-radius: 5px; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.72rem; font-weight: 650; line-height: 1.3; transform: translateX(-50%); text-align: center; }
+.live-status svg { flex: 0 0 auto; color: #a2c2bc; }
+.live-status--ready { border-color: rgba(114, 224, 169, 0.4); }
+.live-status--ready svg { color: #72e0a9; }
+.live-status--demo { border-color: rgba(124, 189, 239, 0.55); background: rgba(11, 33, 48, 0.94); }
+.live-status--demo svg { color: #9ed4ff; }
+#canvasContainerMobile.is-tracking, #canvasContainerDesktop.is-tracking { border-color: rgba(112, 224, 201, 0.52); animation: studio-settle 620ms ease-out; }
+@media (max-width: 640px) { #game-container { min-height: calc(100vh - 61px); padding: 0.75rem; } .studio-tabs button { padding: 0.5rem 0.6rem; } }

@@ -2,20 +2,14 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
-import { UnifiedLoader } from '@/components/ui';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
-import { useLoadingPhase } from '@/hooks/useLoadingPhase';
 import { SummaryModal, ExpandedLeaderboardModal } from '@/components/modals';
 // Welcome component consolidated into InitializationScreen - import removed
-import { UniversalConnectButton } from '@/components/wallet';
 import { usePlatform } from '@/contexts/PlatformContext';
-import ModeSwitch from './ModeSwitch';
-import { AgentInsightTray } from './AgentInsightTray';
 import useSwipeGesture from '@/hooks/useSwipeGesture';
 import { GameControls } from './GameControls';
 
-import IntroDialog from '@/components/auth/IntroDialog';
 import CameraPrimer, {
   shouldShowCameraPrimer,
   markCameraPrimerSeen,
@@ -37,6 +31,7 @@ import { isFarcasterMiniApp } from '../../utils/farcasterMiniApp';
 import { useRepCounter } from '../../hooks/useRepCounter';
 import { useCameraSetup } from '../../hooks/useCameraSetup';
 import { GameCanvas } from './GameCanvas';
+import CoachFoyer from './CoachFoyer';
 import {
   saveLocalWorkout,
   getPersonalBestWorkout,
@@ -151,7 +146,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   );
 
   // Swipe gesture handling for mobile
-  const { isMobile, isClient } = useDeviceDetect();
+  const { isMobile } = useDeviceDetect();
 
   // Swipe gesture handling for mobile using custom hook
   const { handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeGesture(
@@ -176,12 +171,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const { progress: xpProgress } = useXpProgress();
 
   // Handle profile search
-
-  const handleWalletConnected = useCallback((address: string) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Game: Wallet connected with address:', address);
-    }
-  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -259,22 +248,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     started,
     mode
   );
-  // Intro dialog state - now finalAddress is available
-  const [showIntroDialog, setShowIntroDialog] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const skip = localStorage.getItem('imf_skipWalletIntro');
-      // Don't show if user has wallet connected or has skipped
-      return !finalAddress && skip !== '1';
-    }
-    return false;
-  });
-
-  // Update intro dialog visibility when wallet connection changes,
-  // and merge any guest-era workouts into the connected address (Ring 0 -> 1)
+  // Merge guest-era workouts when a user connects after trying the core loop.
   useEffect(() => {
     if (finalAddress) {
-      // Hide intro dialog if user connects wallet
-      setShowIntroDialog(false);
       migrateGuestWorkouts(finalAddress).catch((err) =>
         console.warn('Guest workout migration failed:', err)
       );
@@ -286,7 +262,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     poseState,
     detectionProgress,
     metrics,
-    showLoadingOverlay,
     handlePoseStateChange,
     handleDetectionProgress,
     handleMetrics,
@@ -597,7 +572,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         return newTime;
       });
     }, 1000);
-  }, [handleStop]);
+  }, []);
 
   // handleRepCount is provided by useRepCounter as onRepDetected
 
@@ -654,9 +629,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     ]
   );
 
-  // DRY: Single source of truth for loading phase
-  const loadingPhase = useLoadingPhase(poseState);
-
   return (
     <>
       {/* Loading overlay for desktop pose detection */}
@@ -707,56 +679,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           )}
         </div>
 
-        <div id="banner" className="mobile-banner">
-          <div className="olympic-rings mobile-olympic-rings" aria-label="Olympic Rings">
-            <div className="ring blue" />
-            <div className="ring black" />
-            <div className="ring red" />
-            <div className="ring yellow" />
-            <div className="ring green" />
-          </div>
-
-          <h1 className="mobile-banner">Imperfect Form</h1>
-        </div>
-
-        {/* Wallet connection with fullscreen toggle */}
-        <div id="wallet-connection" className="wallet-connection mobile-wallet-connection">
-          <div
-            className={`flex items-center gap-2 ${finalAddress ? 'wallet-connected' : 'wallet-prompt'}`}
-          >
-            <UniversalConnectButton
-              size="md"
-              showProfileWhenConnected={true}
-              currentMode={currentMode}
-              onModeChange={setCurrentMode}
-              workoutStarted={started}
-              onConnected={handleWalletConnected}
-            />
-            {/* Fullscreen Toggle - alongside connect button */}
-            {isFullscreenAvailable && (
-              <button
-                onClick={() => {
-                  if (isFullscreen) {
-                    exitFullscreen();
-                  } else {
-                    enterFullscreen();
-                  }
-                }}
-                className="bg-white/10 backdrop-blur-sm rounded-lg p-2 hover:bg-white/20 transition-colors touch-manipulation"
-                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-              >
-                <span className="text-white text-lg">{isFullscreen ? '⛶' : '⛶'}</span>
-              </button>
-            )}
-          </div>
-        </div>
-
         <div id="screen" data-register={sessionRegister}>
-          {/* Welcome component consolidated into InitializationScreen */}
-
-          {!started && !calmSessionActive && (
-            <div className="">
+          {!started &&
+            !calmSessionActive &&
+            (currentMode === 'instructions' ? (
+              <CoachFoyer mode={mode} onModeChange={setMode} onStart={() => handleStart()} />
+            ) : (
               <SplitFlapInstructions
                 mode={currentMode}
                 onModeChange={setCurrentMode}
@@ -768,8 +696,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                 formattedStats={formattedStats}
                 isLoadingStats={statsLoading}
               />
-            </div>
-          )}
+            ))}
 
           {calmSessionActive && !started && (
             <div id="instructions" className="!bg-transparent">
@@ -798,26 +725,28 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           )}
         </div>
 
-        <GameControls
-          started={started}
-          isMobile={isMobile}
-          metrics={metrics}
-          mode={mode}
-          voiceEnabled={voiceEnabled}
-          repCount={repCount}
-          userId={wallet.address || undefined}
-          finalAddress={finalAddress}
-          calmSessionActive={calmSessionActive}
-          onStop={handleStop}
-          onStart={handleStart}
-          onReset={handleReset}
-          onModeChange={setMode}
-        />
+        {(started || currentMode !== 'instructions' || calmSessionActive) && (
+          <GameControls
+            started={started}
+            isMobile={isMobile}
+            metrics={metrics}
+            mode={mode}
+            voiceEnabled={voiceEnabled}
+            repCount={repCount}
+            userId={wallet.address || undefined}
+            calmSessionActive={calmSessionActive}
+            onStop={handleStop}
+            onStart={handleStart}
+            onReset={handleReset}
+            onModeChange={setMode}
+          />
+        )}
       </div>
       {showCameraPrimer && (
         <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-sm rounded-2xl border border-teal-500/20 bg-teal-500/5 overflow-y-auto max-h-[calc(100vh-2rem)]">
             <CameraPrimer
+              mode={mode}
               onEnable={() => {
                 markCameraPrimerSeen();
                 setShowCameraPrimer(false);
@@ -833,39 +762,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           </div>
         </div>
       )}
-      {showIntroDialog && (
-        <IntroDialog
-          open={showIntroDialog}
-          onOpenChange={(open) => {
-            setShowIntroDialog(open);
-            if (!open) {
-            }
-          }}
-          onFarcaster={() => {
-            // Placeholder: Open farcaster auth, then hide dialog
-            window.open('/api/auth/farcaster', '_self');
-            setShowIntroDialog(false);
-          }}
-          onWallet={() => {
-            // Placeholder: Simulate connect, then hide dialog
-            setShowIntroDialog(false);
-          }}
-          onSkip={() => {
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('imf_skipWalletIntro', '1');
-              // Dispatch storage event to update onboarding context
-              window.dispatchEvent(
-                new StorageEvent('storage', {
-                  key: 'imf_skipWalletIntro',
-                  newValue: '1',
-                })
-              );
-            }
-            setShowIntroDialog(false);
-          }}
-        />
-      )}
-
       <SummaryModal
         isOpen={showSummary}
         onClose={() => {

@@ -39,6 +39,8 @@ export interface StationDemonstrationEvent {
 }
 
 export type DemonstrationListener = (event: StationDemonstrationEvent) => void;
+export type StationStatus = 'offline' | 'connecting' | 'connected';
+export type StationStatusListener = (status: StationStatus) => void;
 
 const SAME_ISSUE_THROTTLE_MS = 2500;
 
@@ -76,6 +78,8 @@ class CoachStationClient {
   private ws: WebSocket | null = null;
   private lastSent = new Map<string, number>();
   private demoListeners = new Set<DemonstrationListener>();
+  private statusListeners = new Set<StationStatusListener>();
+  private connectionStatus: StationStatus = 'offline';
 
   get enabled(): boolean {
     return typeof window !== 'undefined' && !!STATION_URL;
@@ -85,6 +89,22 @@ class CoachStationClient {
   onDemonstration(listener: DemonstrationListener): () => void {
     this.demoListeners.add(listener);
     return () => this.demoListeners.delete(listener);
+  }
+
+  get status(): StationStatus {
+    return this.enabled ? this.connectionStatus : 'offline';
+  }
+
+  onStatus(listener: StationStatusListener): () => void {
+    this.statusListeners.add(listener);
+    listener(this.status);
+    return () => this.statusListeners.delete(listener);
+  }
+
+  private setStatus(status: StationStatus): void {
+    if (this.connectionStatus === status) return;
+    this.connectionStatus = status;
+    for (const listener of this.statusListeners) listener(this.status);
   }
 
   private emitDemonstration(event: StationDemonstrationEvent): void {
@@ -106,7 +126,9 @@ class CoachStationClient {
       return;
     }
     try {
+      this.setStatus('connecting');
       const ws = new WebSocket(STATION_URL as string);
+      ws.onopen = () => this.setStatus('connected');
       ws.onmessage = (msg) => {
         try {
           const data = JSON.parse(String(msg.data));
@@ -118,13 +140,16 @@ class CoachStationClient {
       };
       ws.onclose = () => {
         this.ws = null;
+        this.setStatus('offline');
       };
       ws.onerror = () => {
         // fail-silent: station offline is a normal state
+        this.setStatus('offline');
       };
       this.ws = ws;
     } catch {
       this.ws = null;
+      this.setStatus('offline');
     }
   }
 

@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { Press_Start_2P } from 'next/font/google';
 import './globals.css';
+import '@/styles/studio-shell.css';
+import '@/styles/session-recap.css';
+import '@/styles/studio-motion.css';
 import '@/styles/animations.css';
 import '@/styles/session-register.css';
 import { BRAND } from '@/lib/brandPositioning';

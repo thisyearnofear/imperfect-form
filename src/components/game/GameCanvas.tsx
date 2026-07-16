@@ -3,6 +3,7 @@
 import React from 'react';
 import { GameHUD, RepFeedbackOverlay } from './GameHUD';
 import { GameLoadingOverlay, DebugOverlay } from './GameOverlay';
+import { LiveCoachingStatus } from './LiveCoachingStatus';
 import { PoseState, DetectionProgress } from '@/hooks/usePoseDetection';
 
 interface RepFeedback {
@@ -61,7 +62,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <div
           id="canvasContainerMobile"
           aria-label="Game Canvas Mobile"
-          className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/50 ${isFullscreen ? 'video-container-fs' : ''}`}
+          className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/50 ${isFullscreen ? 'video-container-fs' : ''} ${poseState.poseDetected ? 'is-tracking' : ''}`}
           style={{ width: '100%', minHeight: '300px' }}
         >
           {webcam}
@@ -72,11 +73,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           />
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
-          <div
-            className={`pose-status-indicator ${poseState.poseDetected ? 'detected' : 'not-detected'}`}
-          >
-            {poseState.poseDetected ? '👤 POSE DETECTED' : '⚠️ NO POSE DETECTED'}
-          </div>
+          <LiveCoachingStatus mode={mode} tracking={poseState.poseDetected} />
         </div>
       </div>
     );
@@ -95,7 +92,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       <div
         id="canvasContainerDesktop"
         aria-label="Game Canvas Desktop"
-        className="w-full relative flex-grow rounded-lg overflow-hidden border border-white/10 bg-black/50"
+        className={`w-full relative flex-grow rounded-lg overflow-hidden border border-white/10 bg-black/50 ${poseState.poseDetected ? 'is-tracking' : ''}`}
       >
         {webcam}
         <GameLoadingOverlay
@@ -106,6 +103,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         />
         <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
         <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+        <LiveCoachingStatus mode={mode} tracking={poseState.poseDetected} />
       </div>
     </div>
   );

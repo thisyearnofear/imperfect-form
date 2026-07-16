@@ -1,0 +1,49 @@
+.coach-foyer {
+  width: min(100%, 600px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3.25rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #effcf9;
+  background:
+    linear-gradient(140deg, rgba(11, 38, 39, 0.94), rgba(5, 13, 17, 0.98) 58%),
+    #061013;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+.coach-foyer__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #8ae6d5;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.coach-foyer__signal { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #56d9c3; box-shadow: 0 0 0 4px rgba(86, 217, 195, 0.13); }
+.coach-foyer h2 { margin: 0; color: #fff; font-size: clamp(2rem, 7vw, 3.15rem); font-weight: 500; line-height: 1.05; letter-spacing: 0; }
+.coach-foyer__lede { max-width: 33rem; margin: 1rem 0 1.75rem; color: #b4c9c7; font-size: 0.98rem; line-height: 1.55; }
+
+.coach-foyer__exercise-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; margin: 0; padding: 0; border: 0; }
+.coach-foyer__exercise-list legend { width: 100%; margin-bottom: 0.65rem; color: #d6e8e5; font-size: 0.78rem; font-weight: 700; }
+.coach-foyer__exercise { min-width: 0; margin: 0; padding: 0.85rem; display: flex; align-items: center; gap: 0.7rem; color: #d8e8e6; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(181, 229, 221, 0.14); border-radius: 6px; box-shadow: none; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: inherit; text-align: left; text-transform: none; transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease; }
+.coach-foyer__exercise:hover { transform: none; color: #fff; background: rgba(86, 217, 195, 0.09); border-color: rgba(86, 217, 195, 0.4); box-shadow: none; }
+.coach-foyer__exercise.is-selected { color: #fff; background: rgba(86, 217, 195, 0.13); border-color: #56d9c3; transform: translateY(-1px); }
+.coach-foyer__exercise-icon { display: grid; flex: 0 0 auto; width: 2.2rem; height: 2.2rem; place-items: center; color: #84e8d7; background: rgba(86, 217, 195, 0.1); border-radius: 4px; }
+.coach-foyer__exercise-copy { min-width: 0; display: grid; gap: 0.12rem; }
+.coach-foyer__exercise-copy strong { font-size: 0.86rem; line-height: 1.2; }
+.coach-foyer__exercise-copy small { color: #8da8a5; font-size: 0.69rem; line-height: 1.25; }
+.coach-foyer__radio { width: 0.8rem; height: 0.8rem; margin-left: auto; flex: 0 0 auto; border: 1px solid #6d8582; border-radius: 50%; }
+.is-selected .coach-foyer__radio { border: 4px solid #56d9c3; animation: studio-settle 420ms ease-out; }
+
+.coach-foyer__start { width: 100%; min-height: 3.5rem; margin: 1.35rem 0 0; padding: 0.8rem 1rem; display: flex; align-items: center; justify-content: center; gap: 0.65rem; color: #04201d; background: #65dcc7; border: 1px solid #8af0dd; border-radius: 6px; box-shadow: none; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.95rem; font-weight: 800; text-transform: none; }
+.coach-foyer__start:hover { transform: translateY(-1px); background: #8aebd9; box-shadow: 0 8px 24px rgba(86, 217, 195, 0.18); }
+.coach-foyer__trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem 1.2rem; margin-top: 1rem; color: #8da8a5; font-size: 0.68rem; }
+.coach-foyer__trust span { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+@media (max-width: 520px) { .coach-foyer { padding: 1.5rem 1.2rem; } .coach-foyer__exercise-list { grid-template-columns: 1fr; } .coach-foyer__exercise { padding: 0.72rem; } }

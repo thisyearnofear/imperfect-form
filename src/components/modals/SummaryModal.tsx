@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
+import { chainConfigs } from '@/utils/chainSwitching';
 import { AccessibleDialog } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { UniversalConnectButton } from '@/components/wallet';
@@ -11,7 +11,6 @@ import { ONCHAIN_MODES } from '@/components/game/ModeSwitch';
 import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
 import { VerificationIntegration } from '@/components/verification';
 import SelfVerificationModal from '@/components/verification/SelfVerificationModal';
-import { createRemoteLogger } from '@/utils/remoteLogger';
 import { useFadeTransition } from '@/hooks';
 import { designTokens } from '@/lib/designTokens';
 import { ethers } from 'ethers';
@@ -31,6 +30,7 @@ import { ghostService } from '@/services/GhostService';
 import { ProgressSpark } from '@/components/progress';
 import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/recentProgress';
 import { playUiCue } from '@/lib/uiSound';
+import { SessionRecap } from '@/components/game/SessionRecap';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -103,7 +103,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   sessionSummary,
   isRace = false,
 }) => {
-  const logger = createRemoteLogger('SummaryModal');
   const { platform, wallet, user } = usePlatform();
   const { progress, pbs } = useXpProgress();
   const { checkNewAchievements } = useAchievements();
@@ -475,7 +474,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     });
 
     return `/api/screenshots?${params.toString()}`;
-  }, [sessionSummary, repCount, isPB, progress.currentLevel, mode]);
+  }, [sessionSummary, repCount, isPB, progress.currentLevel, mode, streakInfo?.multiplier]);
 
   if (!isVisible) return null;
 
@@ -489,9 +488,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       <AccessibleDialog
         isOpen={isOpen}
         onClose={onClose}
-        title={
-          submissionStatus === 'success' ? '✅ Synced to Leaderboard' : '💪 Session Saved Locally'
-        }
+        title={submissionStatus === 'success' ? 'Synced to leaderboard' : 'Your coaching recap'}
         description={
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2">
@@ -547,6 +544,21 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           data-register={summaryRegister}
           data-summary-intent={sessionIntent}
         >
+          {submissionStatus !== 'success' && (
+            <SessionRecap
+              mode={mode}
+              reps={repCount}
+              summary={sessionSummary ?? null}
+              onTryAgain={
+                onPlayAgain
+                  ? () => {
+                      onPlayAgain();
+                      onClose();
+                    }
+                  : undefined
+              }
+            />
+          )}
           {/* Stage stepper: celebrate -> recover -> analyze */}
           {submissionStatus !== 'success' && (
             <div
