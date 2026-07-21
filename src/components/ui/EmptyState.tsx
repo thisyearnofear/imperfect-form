@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { LucideIcon, Inbox, FileQuestion, AlertCircle, Search, Users, Trophy } from 'lucide-react';
+import { LucideIcon, Inbox, AlertCircle, Search, Users, Trophy } from 'lucide-react';
 import Button from './Button';
 
 // ═══════════════════════════════════════════════════════════════════════════

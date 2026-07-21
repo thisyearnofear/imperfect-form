@@ -81,7 +81,7 @@ class OfflineDataStoreImpl {
   }
 
   // Store data
-  async set<T>(key: string, data: T, ttl?: number): Promise<void> {
+  async set<T>(key: string, data: T, _ttl?: number): Promise<void> {
     if (typeof window === 'undefined') return;
 
     try {

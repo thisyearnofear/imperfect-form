@@ -37,9 +37,9 @@ const REQUIRED_KEYPOINTS = [
 
 // Compression constants
 const COMPRESSION_INTERVAL_MS = 500; // 2fps for compressed trace
-const MAX_URL_LENGTH = 2000; // Safety limit for URL sharing
+const _MAX_URL_LENGTH = 2000; // Safety limit for URL sharing
 const QUANTIZATION_BITS = 6; // 0-63 range (64 values)
-const QUANTIZATION_MAX = (1 << QUANTIZATION_BITS) - 1; // 63
+const _QUANTIZATION_MAX = (1 << QUANTIZATION_BITS) - 1; // 63
 
 // Version byte for future compatibility
 const FORMAT_VERSION = 1;
@@ -165,8 +165,8 @@ class GhostServiceImpl {
 
       // Step 2: Parse header
       const headerByte = bytes[0];
-      const version = (headerByte >> 4) & 0x0f;
-      const modeBit = (headerByte >> 3) & 0x01; // Wait, mode is bit 3 now
+      const _version = (headerByte >> 4) & 0x0f;
+      const _modeBit = (headerByte >> 3) & 0x01; // Wait, mode is bit 3 now
       // Actually let's use the same bit positions I just defined above
       // (FORMAT_VERSION << 4) | (mode === 'squats' ? 8 : 0) | intervalIdx
       // Wait, let's stick to what I wrote: (FORMAT_VERSION << 4) | (mode === 'squats' ? 1 : 0) | intervalIdx
@@ -178,7 +178,7 @@ class GhostServiceImpl {
       // bit 2: mode
       // bits 1-0: interval
 
-      const mode = headerByte & 0x04 ? 'squats' : 'pushups';
+      const _mode = headerByte & 0x04 ? 'squats' : 'pushups';
       const intervalIdx = headerByte & 0x03;
       const interval = intervalIdx === 0 ? 500 : intervalIdx === 1 ? 1000 : 2000;
 

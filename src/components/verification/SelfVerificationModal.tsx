@@ -7,7 +7,6 @@ import { AccessibleDialog } from '@/components/ui';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { SELF_PROTOCOL_CONFIG, getVerificationEndpoint } from '@/config/self-protocol';
-import { VERIFIED_FITNESS_CONTRACT_ADDRESS } from '@/constants/contracts';
 
 interface SelfVerificationModalProps {
   isOpen: boolean;
@@ -29,7 +28,7 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  const { currentTheme } = useEnhancedChainTheme();
+  const { currentTheme: _currentTheme } = useEnhancedChainTheme();
   const { platform } = usePlatform();
 
   // Detect mobile device

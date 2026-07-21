@@ -120,11 +120,8 @@ export function getUserModeSession(
  * End session and return summary
  */
 export function endSession(sessionId: string): SessionMetadata | null {
-  let targetKey: string | null = null;
-
   for (const [key, session] of activeUserSessions.entries()) {
     if (session.sessionId === sessionId) {
-      targetKey = key;
       const summary = { ...session };
       activeUserSessions.delete(key);
       return summary;

@@ -208,7 +208,7 @@ export async function callAIProvider(
       recordProviderSuccess(currentProvider);
 
       return { result, provider: currentProvider, latencyMs, estimatedCost };
-    } catch (error) {
+    } catch (_error) {
       failedProviders.add(currentProvider);
       recordProviderFailure(currentProvider);
 

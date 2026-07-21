@@ -252,7 +252,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ logs: data });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

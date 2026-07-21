@@ -33,7 +33,7 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
 
   const { wallet } = usePlatform();
   const { currentTheme } = useEnhancedChainTheme();
-  const { count: verifiedCount, isLoading: countLoading } = useVerifiedCount();
+  const { count: _verifiedCount, isLoading: _countLoading } = useVerifiedCount();
   const { address, chainId } = wallet;
 
   // CLEAN: Only render verification UI on Celo mainnet (chainId 42220)

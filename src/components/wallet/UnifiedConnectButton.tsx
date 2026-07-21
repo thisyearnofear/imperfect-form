@@ -7,7 +7,7 @@ import { Spinner } from '@/components/ui';
 import { getBestDisplayName } from '@/utils/web3bio';
 import { useClientOnly } from '@/hooks/useClientOnly';
 import ChainSelector from '@/components/network/ChainSelector';
-import { ensureWalletConnection, recoverWalletConnection } from '@/utils/walletConnectionRecovery';
+import { recoverWalletConnection } from '@/utils/walletConnectionRecovery';
 import toast from 'react-hot-toast';
 
 interface UnifiedConnectButtonProps {

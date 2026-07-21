@@ -185,7 +185,7 @@ function categorizeError(error: any): keyof typeof ERROR_CATEGORIES | 'UNKNOWN' 
 /**
  * Generate comprehensive diagnostics for an error
  */
-async function generateDiagnostics(error: any, context?: Partial<ErrorContext>): Promise<any> {
+async function generateDiagnostics(error: any, _context?: Partial<ErrorContext>): Promise<any> {
   const diagnostics: any = {
     timestamp: new Date().toISOString(),
     errorType: typeof error,
@@ -204,7 +204,7 @@ async function generateDiagnostics(error: any, context?: Partial<ErrorContext>):
       cookiesEnabled: typeof navigator !== 'undefined' ? navigator.cookieEnabled : false,
       onLine: typeof navigator !== 'undefined' ? navigator.onLine : true,
     };
-  } catch (err) {
+  } catch (_err) {
     diagnostics.browser = { error: 'Failed to get browser diagnostics' };
   }
 
@@ -268,10 +268,10 @@ export function showUserFeedback(report: ErrorReport, options: UserFeedbackOptio
   const {
     showToast = true,
     toastDuration = 6000,
-    includeRetryButton = report.isRetryable,
+    includeRetryButton: _includeRetryButton = report.isRetryable,
     includeDebugInfo = false,
-    onRetry,
-    onReportBug,
+    onRetry: _onRetry,
+    onReportBug: _onReportBug,
   } = options;
 
   if (!showToast) return;

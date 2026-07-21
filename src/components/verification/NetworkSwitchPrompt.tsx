@@ -23,7 +23,7 @@ const NetworkSwitchPrompt: React.FC<NetworkSwitchPromptProps> = ({
   reason,
 }) => {
   const [isSwitching, setIsSwitching] = useState(false);
-  const { actions, wallet } = usePlatform();
+  const { actions, wallet: _wallet } = usePlatform();
   const { currentTheme } = useEnhancedChainTheme();
 
   const handleSwitchNetwork = async () => {

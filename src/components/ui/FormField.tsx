@@ -6,7 +6,7 @@ import '@/styles/animations.css';
 type FieldSize = 'sm' | 'md' | 'lg';
 type FieldVariant = 'primary' | 'secondary' | 'error';
 
-interface BaseFieldProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
+interface _BaseFieldProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
   label?: string;
   error?: string;
   hint?: string;

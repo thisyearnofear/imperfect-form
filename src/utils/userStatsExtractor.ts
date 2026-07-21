@@ -406,24 +406,14 @@ export function formatUserStatsForProfile(stats: UserStats) {
     bestSquats,
     totalSessions,
     currentStreak,
-    pushupsRank,
-    squatsRank,
+    pushupsRank: _pushupsRank,
+    squatsRank: _squatsRank,
     daysSinceLastWorkout,
   } = stats;
 
   // Determine best exercise type and overall best rank
   const bestExercise = bestPushups >= bestSquats ? 'pushups' : 'squats';
   const bestScore = Math.max(bestPushups, bestSquats);
-
-  // Use the better ranking (lower number = better rank)
-  let bestRank = null;
-  if (pushupsRank && squatsRank) {
-    bestRank = Math.min(pushupsRank, squatsRank);
-  } else if (pushupsRank) {
-    bestRank = pushupsRank;
-  } else if (squatsRank) {
-    bestRank = squatsRank;
-  }
 
   // Generate motivational streak/activity text
   const { streakText, summaryText } = generateMotivationalText(

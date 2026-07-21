@@ -5,25 +5,20 @@
 
 import { ethers } from 'ethers';
 import { SUPPORTED_NETWORKS } from '@/config/networks';
-import { verifiedFitnessLeaderboardABI } from '@/constants/contracts';
 
 const { polygon, base, monad, celo } = SUPPORTED_NETWORKS;
 
-const POLYGON_CONTRACT_ADDRESS = polygon.contractAddress;
-const BASE_CONTRACT_ADDRESS = base.contractAddress;
-const MONAD_CONTRACT_ADDRESS = monad.contractAddress;
-const CELO_CONTRACT_ADDRESS = celo.contractAddress;
-const VERIFIED_FITNESS_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.celoVerified.contractAddress;
+const _POLYGON_CONTRACT_ADDRESS = polygon.contractAddress;
+const _BASE_CONTRACT_ADDRESS = base.contractAddress;
+const _MONAD_CONTRACT_ADDRESS = monad.contractAddress;
+const _CELO_CONTRACT_ADDRESS = celo.contractAddress;
+const _VERIFIED_FITNESS_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.celoVerified.contractAddress;
 
 import { Score, ContractScore, NetworkType } from '@/types';
 import { getDisplayName } from '@/utils/ensResolver';
 import { batchResolveFarcasterProfiles, FarcasterProfile } from '@/utils/neynarResolver';
 import { shortenAddress } from '@/utils/formatters';
-import {
-  getCachedLeaderboardData,
-  cacheLeaderboardData,
-  clearLeaderboardCache,
-} from './leaderboardCache';
+import { cacheLeaderboardData, clearLeaderboardCache } from './leaderboardCache';
 
 interface LeaderboardData {
   pushups: Score[];

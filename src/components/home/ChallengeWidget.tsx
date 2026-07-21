@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Ghost, Trophy, ChevronRight, Share2, Play, Crown } from 'lucide-react';
 import { useXpProgress } from '@/hooks/useXpProgress';
-import { getChampionTrace, isChampion } from '@/constants/championTraces';
 import { ghostService } from '@/services/GhostService';
 import { useSearchParams } from 'next/navigation';
 

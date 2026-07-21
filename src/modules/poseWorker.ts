@@ -2,9 +2,8 @@
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
-import { Keypoint, WorkerMessage, BiomechanicalState } from '../types/mediapipe';
+import { Keypoint, WorkerMessage } from '../types/mediapipe';
 import {
-  Point,
   ExerciseMode,
   RepCounterState,
   EngineRepDetectorState,
@@ -32,7 +31,7 @@ let workerIsMobile = false;
 let workerPbTrace: import('../types/workout').SessionSnapshot[] | undefined;
 let workerStartTime = 0;
 const DESKTOP_FRAME_INTERVAL_MS = 66; // ~15fps for stability
-const MIN_TIME_BETWEEN_REPS = 800; // ms
+const _MIN_TIME_BETWEEN_REPS = 800; // ms
 
 // Biomechanical Helpers removed - consolidated into src/utils/biomechanics.ts
 
@@ -77,7 +76,7 @@ async function disposeDetector() {
 }
 
 // Warm up the model with a dummy inference to avoid first-run latency
-async function warmupDetector(detector: PoseDetector, width: number, height: number) {
+async function warmupDetector(detector: PoseDetector, _width: number, _height: number) {
   try {
     // Create a small dummy buffer/canvas
     const offscreen = new OffscreenCanvas(256, 256);

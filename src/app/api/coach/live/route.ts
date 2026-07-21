@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  CoachRequest,
-  CoachResponse,
-  AIProvider,
-  getAvailableProviders,
-  isProviderConfigured,
-} from '@/config/aiProviders';
+import { CoachRequest, CoachResponse, AIProvider } from '@/config/aiProviders';
 import {
   getCachedFeedback,
   cacheFeedback,
@@ -14,7 +8,7 @@ import {
   recordCost,
   getSessionStats,
 } from '@/lib/cacheManager';
-import { analyzeForm, convertToLegacyFormat, CoachingAnalysis } from '@/lib/coachingEngine';
+import { analyzeForm, convertToLegacyFormat } from '@/lib/coachingEngine';
 import { getOrCreateSessionId, updateSessionMetrics } from '@/lib/sessionManager';
 import { callAIProvider } from '@/lib/aiCoachProviders';
 import {
@@ -47,7 +41,7 @@ import {
  * - Metrics haven't changed significantly
  * - Session budget exhausted
  */
-function generateCoachingFeedback(
+function _generateCoachingFeedback(
   metrics: any,
   mode: string
 ): { feedback: string; severity: string; shouldSpeak: boolean } {

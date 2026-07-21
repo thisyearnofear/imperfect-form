@@ -1,7 +1,6 @@
 'use client';
 
 import React, { Component, ReactNode } from 'react';
-import { Spinner } from '@/components/ui';
 
 interface Props {
   children: ReactNode;

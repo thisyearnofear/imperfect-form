@@ -54,7 +54,7 @@ export function isWalletAvailable(
       default:
         return false;
     }
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -63,7 +63,7 @@ export function isFarcasterMiniApp(): boolean {
   if (typeof window === 'undefined') return false;
   try {
     return Boolean((window as any).farcaster);
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }

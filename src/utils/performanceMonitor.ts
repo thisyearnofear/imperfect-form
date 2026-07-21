@@ -125,7 +125,7 @@ class PerformanceMonitoringSystem {
   /**
    * Record a detection frame
    */
-  recordDetection(detectionTime: number, processingTime: number, poseCount: number): void {
+  recordDetection(detectionTime: number, processingTime: number, _poseCount: number): void {
     this.monitor.recordFrame(detectionTime, processingTime);
 
     // Store metrics for aggregation

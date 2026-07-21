@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         provider,
         fallback: false,
       });
-    } catch (aiError) {
+    } catch (_aiError) {
       const report = generateLocalReport(sessionSummary, mode);
       return NextResponse.json({
         report,
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
         fallback: true,
       });
     }
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

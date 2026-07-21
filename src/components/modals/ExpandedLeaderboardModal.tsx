@@ -8,7 +8,6 @@ import { AccessibleDialog } from '@/components/ui';
 import { Score } from '@/types';
 import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
 import { useFadeTransition } from '@/hooks';
-import VerificationBadge from '@/components/verification/VerificationBadge';
 import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { isChampion } from '@/constants/championTraces';

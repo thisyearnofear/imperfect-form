@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useEffect, useRef, useCallback, useState, useReducer } from 'react';
+import { useEffect, useRef, useCallback, useReducer } from 'react';
 import {
   getDataSyncService,
   createDataKey,
@@ -124,6 +124,7 @@ export function useDataSync<T>(
       serviceRef.current.register(keyRef.current, keyOrSource as DataSource<T>);
       logger.debug('Data source registered', { key: keyRef.current });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch data
@@ -287,6 +288,7 @@ export function useMutation<T, R = any>(
         throw err;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [service, mutator, options]
   );
 

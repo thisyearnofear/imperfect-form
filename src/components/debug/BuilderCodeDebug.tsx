@@ -9,7 +9,7 @@ import {
 import { isBuilderCodeConfigured, getAttributionStats } from '@/utils/builderCodeValidator';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 
-const logger = createRemoteLogger('BuilderCodeDebug');
+const _logger = createRemoteLogger('BuilderCodeDebug');
 
 /**
  * Builder Code Debug Panel

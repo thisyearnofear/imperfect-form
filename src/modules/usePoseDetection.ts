@@ -1,7 +1,6 @@
 import { useEffect, useRef, RefObject, useState, useCallback } from 'react';
 import { WorkerMessage, WorkerResponse, BiomechanicalState, Keypoint } from '../types/mediapipe';
 import {
-  Point,
   ExerciseMode,
   RepCounterState,
   EngineRepDetectorState,
@@ -34,7 +33,7 @@ import {
   monitorTensorFlowMemory,
   disposeUnusedTensors,
 } from '../utils/tensorFlowInit';
-import { handleFarcasterError, ErrorCodes } from '../utils/farcasterErrors';
+import { handleFarcasterError } from '../utils/farcasterErrors';
 import { isFarcasterMiniApp } from '../utils/farcasterMiniApp';
 import {
   clearPoseRuntimeStatus,
@@ -92,7 +91,7 @@ export function usePoseDetection(
   const isActiveRef = useRef(isActive);
   const wasActiveRef = useRef(false);
   const onCanvasPoisonedRef = useRef(onCanvasPoisoned);
-  const [poseState, setPoseState] = useState<{
+  const [_poseState, setPoseState] = useState<{
     hasCamera: boolean;
     hasPoseDetection: boolean;
     poseDetected: boolean;
@@ -149,7 +148,7 @@ export function usePoseDetection(
   }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics, onSessionEnd]);
 
   const notifyStateChange = useCallback(
-    (newState: Partial<typeof poseState>) => {
+    (newState: Partial<typeof _poseState>) => {
       setPoseState((prev) => {
         const updated = { ...prev, ...newState };
         if (onPoseStateChangeRef.current) {
@@ -359,7 +358,7 @@ export function usePoseDetection(
             try {
               const bitmap = await createImageBitmap(video);
               worker.postMessage({ type: 'frame', bitmap }, [bitmap]);
-            } catch (e) {
+            } catch (_e) {
               // Silently handle frame capture errors
             }
             isProcessing = false;
@@ -865,6 +864,7 @@ export function usePoseDetection(
       // Reset transfer flag (does not undo a real OffscreenCanvas transfer —
       // Webcam remounts a fresh <canvas> via canvasEpoch when poisoned).
       if (canvasRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         (canvasRef.current as any)._isTransferred = false;
       }
 
@@ -884,6 +884,7 @@ export function usePoseDetection(
       notifyStateChange({ hasCamera: false, hasPoseDetection: false, poseDetected: false });
     };
     // Mode is hot-swapped via modeRef — do not restart the pipeline on exercise change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     canvasRef,
     canvasEpoch,

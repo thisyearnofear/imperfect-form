@@ -337,7 +337,7 @@ class DataSyncServiceImpl {
   getCacheMetadata(key: DataKey): Omit<CacheEntry<any>, 'data'> | null {
     const entry = this.cache.getEntry(key);
     if (!entry) return null;
-    const { data, ...metadata } = entry;
+    const { data: _data, ...metadata } = entry;
     return metadata;
   }
 }

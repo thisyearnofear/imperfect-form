@@ -5,7 +5,7 @@
  * No duplication - reuses existing fetching logic and offline fallbacks.
  */
 
-import { getDataSyncService, createDataKey, type DataSource } from '@/services/DataSyncService';
+import { getDataSyncService, createDataKey } from '@/services/DataSyncService';
 import { getOfflineDataStore } from '@/services/OfflineDataStore';
 import {
   getCachedLeaderboardData,
@@ -31,8 +31,8 @@ export const LEADERBOARD_KEYS = {
   LEGACY: createDataKey('leaderboard:legacy'),
 } as const;
 
-const LEADERBOARD_TTL = 5 * 60 * 1000; // 5 minutes (matches existing cache)
-const LEGACY_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const _LEADERBOARD_TTL = 5 * 60 * 1000; // 5 minutes (matches existing cache)
+const _LEGACY_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * Initialize and register all leaderboard data sources
@@ -44,7 +44,7 @@ export async function initializeLeaderboardSources(): Promise<void> {
 
   // Register pushups leaderboard
   service.register<Score[]>(LEADERBOARD_KEYS.PUSHUPS, {
-    fetch: async (signal) => {
+    fetch: async (_signal) => {
       try {
         // Try existing cache first (reuse current pattern)
         const cached = getCachedLeaderboardData();
@@ -76,7 +76,7 @@ export async function initializeLeaderboardSources(): Promise<void> {
 
   // Register squats leaderboard
   service.register<Score[]>(LEADERBOARD_KEYS.SQUATS, {
-    fetch: async (signal) => {
+    fetch: async (_signal) => {
       try {
         const cached = getCachedLeaderboardData();
         if (cached?.squats) return cached.squats;
@@ -101,7 +101,7 @@ export async function initializeLeaderboardSources(): Promise<void> {
 
   // Register full leaderboard (both types)
   service.register<EnhancedLeaderboardData>(LEADERBOARD_KEYS.FULL, {
-    fetch: async (signal) => {
+    fetch: async (_signal) => {
       try {
         const cached = getCachedLeaderboardData();
         if (cached) {
@@ -144,7 +144,7 @@ export async function initializeLeaderboardSources(): Promise<void> {
 
   // Register legacy leaderboard
   service.register<Score[]>(LEADERBOARD_KEYS.LEGACY, {
-    fetch: async (signal) => {
+    fetch: async (_signal) => {
       try {
         const legacy = await getLegacyScores();
         // Convert LegacyScore[] to Score[] by mapping to the expected format

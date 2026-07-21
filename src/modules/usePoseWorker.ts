@@ -27,7 +27,7 @@ export function usePoseWorker(
   const videoRef = useRef<HTMLVideoElement>(null);
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const [poseState, setPoseState] = useState({
+  const [_poseState, setPoseState] = useState({
     hasCamera: false,
     hasPoseDetection: false,
     poseDetected: false,
@@ -52,7 +52,7 @@ export function usePoseWorker(
     onSessionEndRef.current = onSessionEnd;
   }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics, onSessionEnd]);
 
-  const notifyStateChange = useCallback((newState: Partial<typeof poseState>) => {
+  const notifyStateChange = useCallback((newState: Partial<typeof _poseState>) => {
     setPoseState((prev) => {
       const updated = { ...prev, ...newState };
       onPoseStateChangeRef.current?.(updated);
@@ -158,7 +158,7 @@ export function usePoseWorker(
             try {
               const bitmap = await createImageBitmap(video);
               worker.postMessage({ type: 'frame', bitmap }, [bitmap]);
-            } catch (e) {
+            } catch (_e) {
               // Silently handle frame capture errors
             }
             isProcessing = false;

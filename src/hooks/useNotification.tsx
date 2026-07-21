@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import toast, { Toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useCallback } from 'react';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'loading';
@@ -10,12 +10,7 @@ interface NotificationOptions {
   duration?: number;
   id?: string;
   position?:
-    | 'top-left'
-    | 'top-center'
-    | 'top-right'
-    | 'bottom-left'
-    | 'bottom-center'
-    | 'bottom-right';
+    'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
   icon?: React.ReactNode;
   ariaLive?: 'polite' | 'assertive';
 }

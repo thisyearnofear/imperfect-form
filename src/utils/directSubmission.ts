@@ -200,7 +200,7 @@ async function validateProviderConnection(
                 params: [networkConfig],
               });
               logger.info(`✅ Network added and switched to ${targetChainId}`);
-            } catch (addError) {
+            } catch (_addError) {
               return {
                 isValid: false,
                 error: `Failed to add network ${targetChainId}. Please add it manually in your wallet.`,
@@ -229,7 +229,7 @@ async function validateProviderConnection(
     // Step 5: Final validation - ensure signer is ready
     try {
       await signer.getAddress(); // Validate signer is accessible
-    } catch (signerError) {
+    } catch (_signerError) {
       return {
         isValid: false,
         error: 'Wallet signer not available. Please reconnect your wallet.',

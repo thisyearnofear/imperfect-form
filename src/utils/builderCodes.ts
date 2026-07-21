@@ -186,7 +186,7 @@ export async function checkDataSuffixSupport(): Promise<boolean> {
 
         // If capabilities exist, dataSuffix is likely supported
         return !!capabilities;
-      } catch (error) {
+      } catch (_error) {
         // wallet_getCapabilities not supported, but dataSuffix might still work
         logger.info('wallet_getCapabilities not available, assuming basic dataSuffix support');
         return true;

@@ -14,7 +14,6 @@ export async function GET(_request: NextRequest) {
         'Cache-Control': 'public, max-age=31536000',
       },
     });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     // Fallback: Generate a simple SVG icon
     const svg = `

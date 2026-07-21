@@ -1,7 +1,7 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback } from 'react';
 import useDeviceDetect from './useDeviceDetect';
 
-interface SwipeCheckResult {
+interface _SwipeCheckResult {
   isLeftSwipe: boolean;
   isRightSwipe: boolean;
   isUpSwipe: boolean;

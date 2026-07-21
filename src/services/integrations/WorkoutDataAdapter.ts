@@ -82,7 +82,7 @@ export async function getLocalWorkouts(): Promise<LocalWorkout[]> {
   const service = getDataSyncService();
   try {
     return await service.fetch<LocalWorkout[]>(WORKOUT_KEYS.ALL);
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }

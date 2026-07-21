@@ -221,6 +221,7 @@ export default function WalletDiagnostics() {
 
   useEffect(() => {
     runDiagnostics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.isConnected, wallet.chainId]);
 
   const getStatusColor = (status: DiagnosticResult['status']) => {

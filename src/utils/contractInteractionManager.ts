@@ -7,7 +7,6 @@
 
 import { ethers } from 'ethers';
 import { createRemoteLogger } from './remoteLogger';
-import { createRobustProvider } from './robustNetworkManager';
 import toast from 'react-hot-toast';
 
 const logger = createRemoteLogger('ContractInteractionManager');
@@ -351,7 +350,7 @@ export async function executeContractRead<T>(
 
   // All retries failed
   const revertReason = decodeRevertReason(lastError);
-  const errorType = classifyError(lastError);
+  const _errorType = classifyError(lastError);
 
   return {
     success: false,
@@ -476,7 +475,7 @@ export async function executeContractWrite(
 
   // All retries failed
   const revertReason = decodeRevertReason(lastError);
-  const errorType = classifyError(lastError);
+  const _errorType = classifyError(lastError);
   const userMessage = getUserFriendlyErrorMessage(lastError, methodName);
 
   toast.error(userMessage, { id: 'final-error' });
@@ -491,7 +490,7 @@ export async function executeContractWrite(
 /**
  * Get user-friendly error message based on error type
  */
-function getUserFriendlyErrorMessage(error: any, methodName: string): string {
+function getUserFriendlyErrorMessage(error: any, _methodName: string): string {
   const errorType = classifyError(error);
   const revertReason = decodeRevertReason(error);
 
@@ -584,7 +583,7 @@ export async function createRobustContract(
   contractAddress: string,
   abi: any[],
   signerOrProvider: ethers.Signer | ethers.Provider,
-  chainId: number
+  _chainId: number
 ): Promise<ethers.Contract | null> {
   try {
     // Validate the contract address format

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { questService, Quest, DailyQuestState } from '@/services/QuestService';
+import { questService, DailyQuestState } from '@/services/QuestService';
 import { useXpProgress } from './useXpProgress';
 
 export const useQuests = () => {
@@ -22,6 +22,7 @@ export const useQuests = () => {
 
   useEffect(() => {
     fetchQuestStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workouts, workoutsLoading]);
 
   const quests = useMemo(() => {

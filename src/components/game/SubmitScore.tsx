@@ -154,7 +154,7 @@ export default function SubmitScore({
   exerciseType = 'pushups',
   pushupsScore,
   squatsScore,
-  forceDirectSubmission = false,
+  forceDirectSubmission: _forceDirectSubmission = false,
   walletAddress,
   submissionStatus,
   setSubmissionStatus,

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { chainConfigs, SupportedChain } from '@/utils/chainSwitching';
-import Image from 'next/image';
 import '@/styles/leaderboard.css';
 import { EmptyLeaderboard } from '@/components/ui/EmptyState';
 import '@/styles/mobile-optimizations.css';
@@ -14,12 +13,7 @@ import {
   baseLeaderboardABI,
 } from '@/constants/contracts';
 import { SUPPORTED_NETWORKS } from '@/config/networks';
-import {
-  getNetworkStyling,
-  getMedalStyle,
-  getGoldenGlow,
-  getHoverEffects,
-} from '@/utils/leaderboardUtils';
+import { getNetworkStyling, getMedalStyle, getHoverEffects } from '@/utils/leaderboardUtils';
 
 const POLYGON_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.polygon.contractAddress;
 const BASE_CONTRACT_ADDRESS = SUPPORTED_NETWORKS.base.contractAddress;
@@ -34,7 +28,7 @@ import {
   MONAD_FALLBACK_RPCS,
   CELO_FALLBACK_RPCS,
 } from '@/utils/rpcUtils';
-import { Spinner, DataLoader } from '@/components/ui';
+import { DataLoader } from '@/components/ui';
 import toast from 'react-hot-toast';
 import { Score, ContractScore } from '@/types';
 import {
@@ -43,7 +37,6 @@ import {
   clearLeaderboardCache,
 } from '@/utils/leaderboardCache';
 import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
-import VerificationBadge from '@/components/verification/VerificationBadge';
 import VerifiedLeaderboard from '@/components/leaderboard/VerifiedLeaderboard';
 import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
 import { usePlatform } from '@/contexts/PlatformContext';

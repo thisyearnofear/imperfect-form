@@ -51,7 +51,7 @@ export interface CoachingAnalysis {
  */
 function analyzeStability(
   metrics: BiomechanicalState,
-  mode: import('@/utils/biomechanics').ExerciseMode
+  _mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   if (!metrics.isStable) {
     return {
@@ -169,7 +169,7 @@ function analyzeTrunkLean(
  */
 function analyzeKneeValgus(
   metrics: BiomechanicalState,
-  mode: import('@/utils/biomechanics').ExerciseMode
+  _mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   const { kneeValgus } = metrics;
   const target = 20;
@@ -235,7 +235,7 @@ function analyzeAnkleFlexion(
  */
 function analyzeSymmetry(
   metrics: BiomechanicalState,
-  mode: import('@/utils/biomechanics').ExerciseMode
+  _mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
   const { symmetry } = metrics;
   const target = 0.9; // >0.9 = balanced

@@ -9,7 +9,7 @@ import { createRemoteLogger } from './remoteLogger';
 
 const logger = createRemoteLogger('WalletConnectManager');
 
-interface WalletConnectSession {
+interface _WalletConnectSession {
   topic: string;
   expiry: number;
   relay: any;

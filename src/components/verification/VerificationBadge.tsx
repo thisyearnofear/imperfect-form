@@ -17,7 +17,7 @@ const VerificationBadge: React.FC<VerificationBadgeProps> = ({
     lg: 'w-6 h-6',
   };
 
-  const textSizeClasses = {
+  const _textSizeClasses = {
     sm: 'text-xs',
     md: 'text-sm',
     lg: 'text-base',

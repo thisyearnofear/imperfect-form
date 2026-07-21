@@ -156,7 +156,7 @@ const Webcam: React.FC<WebcamProps> = ({
                 height: videoHeight,
               });
             }
-          } catch (e) {
+          } catch (_e) {
             // This happens if transferControlToOffscreen has already been called
             logger.debug('Canvas already transferred, skipping resize');
           }
@@ -170,7 +170,7 @@ const Webcam: React.FC<WebcamProps> = ({
               height: canvasRef.current.height,
               mobile: isMobile,
             });
-          } catch (e) {
+          } catch (_e) {
             logger.debug('Canvas already transferred, skipping resize');
           }
         }

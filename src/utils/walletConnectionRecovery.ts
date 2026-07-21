@@ -265,7 +265,7 @@ async function tryProviderCleanup(context: any): Promise<ConnectionRecoveryResul
         try {
           localStorage.removeItem(key);
           sessionStorage.removeItem(key);
-        } catch (e) {
+        } catch (_e) {
           // Ignore storage errors
         }
       });

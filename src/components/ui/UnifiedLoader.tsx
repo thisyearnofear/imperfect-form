@@ -255,7 +255,7 @@ export default function UnifiedLoader({
   subtitle,
 }: UnifiedLoaderProps) {
   const [shouldShow, setShouldShow] = useState(isVisible);
-  const [hasCompleted, setHasCompleted] = useState(false);
+  const [_hasCompleted, setHasCompleted] = useState(false);
   const config = PHASE_CONFIG[phase];
 
   const displayTitle = title || config.title;

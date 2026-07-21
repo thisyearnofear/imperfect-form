@@ -1,6 +1,6 @@
 import React from 'react';
 import { useXpProgress } from '@/hooks/useXpProgress';
-import { Lock, Unlock, Ghost, Share2, Award, Trophy } from 'lucide-react';
+import { Lock, Ghost, Share2, Award, Trophy } from 'lucide-react';
 
 interface Milestone {
   level: number;

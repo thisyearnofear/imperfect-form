@@ -6,7 +6,7 @@ import {
 } from '@/constants/contracts';
 import VerificationBadge from '@/components/verification/VerificationBadge';
 import { getBestDisplayName } from '@/utils/web3bio';
-import { Spinner, DataLoader } from '@/components/ui';
+import { DataLoader } from '@/components/ui';
 import { CELO_FALLBACK_RPCS } from '@/utils/rpcUtils';
 
 interface VerifiedScore {

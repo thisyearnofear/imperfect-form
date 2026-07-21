@@ -494,14 +494,14 @@ export async function getProviderForPrivacyBrowsers() {
           new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
         ]);
         return provider;
-      } catch (testError) {
+      } catch (_testError) {
         return null;
       }
     }
 
     // For non-Brave browsers, use normal provider access
     return await getEthereumProvider();
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -534,13 +534,13 @@ export async function applyBrowserSpecificFixes(): Promise<boolean> {
         if (typeof sdk.actions?.ready === 'function') {
           // Don't call ready() if it's already been called, as this can cause issues
         }
-      } catch (sdkError) {
+      } catch (_sdkError) {
         // SDK not available in this context, that's fine
       }
     }
 
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -597,7 +597,7 @@ export async function checkBrowserCompatibility(): Promise<{
         suggestions.push('Install a wallet extension like MetaMask or Coinbase Wallet');
       }
     }
-  } catch (error) {
+  } catch (_error) {
     issues.push('Provider access failed');
     suggestions.push('Try refreshing the page or disabling browser ad blockers');
   }

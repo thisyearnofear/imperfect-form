@@ -43,14 +43,12 @@ import {
   mergeThemes,
   themeUtils,
   enhanceDarkModeContrast,
-  getContrastRatio,
-  isAccessibleContrast,
 } from '@/lib/themes/themeUtils';
 
 // Constants
 const LOCAL_STORAGE_KEY = 'selectedNetwork';
 const THEME_OPTIONS_KEY = 'themeOptions';
-const CHAIN_EFFECTS_CSS_ID = 'chain-effects-css';
+const _CHAIN_EFFECTS_CSS_ID = 'chain-effects-css';
 const ENHANCED_THEME_CSS_ID = 'enhanced-theme-css';
 
 // Default theme options

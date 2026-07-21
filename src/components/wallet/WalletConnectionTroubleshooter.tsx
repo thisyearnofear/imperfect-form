@@ -38,7 +38,7 @@ export default function WalletConnectionTroubleshooter({
   const hasWalletConnect = !isFarcaster; // WalletConnect is available for non-Farcaster platforms
 
   // Handle connection attempt
-  const attemptConnection = async (method: string, forceWalletConnect = false) => {
+  const attemptConnection = async (method: string, _forceWalletConnect = false) => {
     setIsAttempting(method);
 
     try {

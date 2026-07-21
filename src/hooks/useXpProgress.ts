@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { xpService, XpProgress, PersonalBests } from '@/services/XPService';
+import { xpService } from '@/services/XPService';
 import { questService } from '@/services/QuestService';
 import { getLocalWorkouts, WORKOUT_KEYS } from '@/services/integrations/WorkoutDataAdapter';
 import { getDataSyncService, createDataKey } from '@/services/DataSyncService';

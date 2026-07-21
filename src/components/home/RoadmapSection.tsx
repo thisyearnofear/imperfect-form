@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useXpProgress } from '@/hooks/useXpProgress';
-import { Lock, Unlock, Ghost, Share2, Award, Trophy, ChevronRight } from 'lucide-react';
+import { Lock, Ghost, Share2, Award, Trophy, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 interface RoadmapSectionProps {
@@ -44,8 +44,8 @@ const MILESTONES = [
   },
 ];
 
-export const RoadmapSection: React.FC<RoadmapSectionProps> = ({ onViewAll }) => {
-  const { progress, loading } = useXpProgress();
+export const RoadmapSection: React.FC<RoadmapSectionProps> = ({ onViewAll: _onViewAll }) => {
+  const { progress, loading: _loading } = useXpProgress();
   const currentLevel = progress.currentLevel;
 
   return (

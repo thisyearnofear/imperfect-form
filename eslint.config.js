@@ -5,6 +5,7 @@ import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 // Known design token colors that are allowed
 const ALLOWED_COLORS = new Set([
@@ -69,8 +70,12 @@ export default [
       '@typescript-eslint': typescript,
       react: react,
       'react-hooks': reactHooks,
+      'unused-imports': unusedImports,
     },
     rules: {
+      // Auto-fix and remove unused imports
+      'unused-imports/no-unused-imports': 'error',
+
       // Allow any for pragmatic cases
       '@typescript-eslint/no-explicit-any': 'off',
 
@@ -80,6 +85,7 @@ export default [
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
         },
       ],
 

@@ -24,7 +24,7 @@ export interface WalletCompatibilityCheck {
  */
 export async function checkWalletCompatibility(
   requiredChainId: number,
-  contractAddress: string
+  _contractAddress: string
 ): Promise<WalletCompatibilityCheck> {
   const issues: string[] = [];
   const solutions: string[] = [];
@@ -50,7 +50,7 @@ export async function checkWalletCompatibility(
     try {
       const chainIdHex = await (provider as any).request({ method: 'eth_chainId' });
       currentChainId = parseInt(chainIdHex, 16);
-    } catch (error) {
+    } catch (_error) {
       issues.push('Unable to detect current network');
       solutions.push('Check your wallet connection and try again');
       return { isCompatible: false, issues, solutions };
@@ -105,7 +105,7 @@ export async function checkWalletCompatibility(
           solutions.push('Get MON from a supported exchange or bridge');
           return { isCompatible: false, issues, solutions };
         }
-      } catch (error) {
+      } catch (_error) {
         issues.push('Unable to check wallet balance');
         solutions.push('Ensure your wallet is properly connected to Monad');
       }
@@ -124,7 +124,7 @@ export async function checkWalletCompatibility(
           solutions.push('Make sure you have a wallet connected in the Farcaster app');
           return { isCompatible: false, issues, solutions };
         }
-      } catch (error) {
+      } catch (_error) {
         issues.push('Farcaster SDK not available');
         solutions.push('Try refreshing the mini app');
       }
@@ -224,7 +224,7 @@ export async function autoFixWalletIssues(requiredChainId: number): Promise<bool
 
             toast.success(`Added and switched to ${networkConfig.name}`);
             return true;
-          } catch (addError) {
+          } catch (_addError) {
             toast.error(`Failed to add ${networkConfig.name} network`);
             return false;
           }
@@ -306,7 +306,7 @@ export async function validateFarcasterWallet(): Promise<{ isValid: boolean; mes
     if (sdk.wallet.getEthereumProvider) {
       try {
         provider = await sdk.wallet.getEthereumProvider();
-      } catch (error) {
+      } catch (_error) {
         // Try legacy API
         provider = sdk.wallet.ethProvider;
       }
@@ -325,7 +325,7 @@ export async function validateFarcasterWallet(): Promise<{ isValid: boolean; mes
     try {
       await provider.request({ method: 'eth_chainId' });
       return { isValid: true, message: 'Farcaster wallet is ready' };
-    } catch (error) {
+    } catch (_error) {
       return {
         isValid: false,
         message: 'Farcaster wallet provider is not responding. Please try refreshing the app.',
