@@ -37,7 +37,10 @@ function coachingTakeaway(summary: SessionSummary | null, mode: ExerciseMode) {
 export function SessionRecap({ mode, reps, summary, onTryAgain }: SessionRecapProps) {
   const takeaway = coachingTakeaway(summary, mode);
   return (
-    <section className="session-recap motion-enter" aria-labelledby="session-recap-title">
+    <section
+      className="session-recap studio-card studio-card__body motion-enter"
+      aria-labelledby="session-recap-title"
+    >
       <div className="session-recap__headline">
         <div>
           <p>Coaching recap</p>
@@ -47,14 +50,14 @@ export function SessionRecap({ mode, reps, summary, onTryAgain }: SessionRecapPr
         </div>
         <span>{summary ? `${Math.round(summary.duration)}s` : 'Saved'}</span>
       </div>
-      <div className="session-recap__item session-recap__item--good motion-enter motion-delay-1">
+      <div className="session-recap__item studio-card__item session-recap__item--good motion-enter motion-delay-1">
         <CheckCircle2 size={17} />
         <div>
           <p>What went well</p>
           <strong>{takeaway.strength}</strong>
         </div>
       </div>
-      <div className="session-recap__item motion-enter motion-delay-2">
+      <div className="session-recap__item studio-card__item motion-enter motion-delay-2">
         <ArrowRight size={17} />
         <div>
           <p>Next set focus</p>
@@ -62,7 +65,7 @@ export function SessionRecap({ mode, reps, summary, onTryAgain }: SessionRecapPr
         </div>
       </div>
       {onTryAgain && (
-        <button type="button" onClick={onTryAgain}>
+        <button type="button" className="studio-card__button" onClick={onTryAgain}>
           <RotateCcw size={16} /> Try another set
         </button>
       )}

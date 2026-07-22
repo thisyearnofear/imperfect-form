@@ -1,0 +1,148 @@
+/**
+ * Studio card utility
+ * Shared glassy teal/studio register shell used by SessionRecap, LabAnalysisCard, etc.
+ */
+
+:root {
+  --studio-card-body-padding: 1rem;
+  --studio-card-body-gap: 0.75rem;
+  /* bare RGB triplet so it can be used inside rgba() with varying alpha */
+  --studio-card-success-rgb: 16, 185, 129;
+  /* bare RGB triplet for error states */
+  --studio-card-error-rgb: 239, 68, 68;
+  /* muted/lighter success green for secondary text */
+  --studio-card-success-muted-rgb: 52, 211, 153;
+  /* muted/lighter red for secondary error text */
+  --studio-card-error-muted-rgb: 248, 113, 113;
+  /* shared alpha values for accent item backgrounds, borders, and accent lines */
+  --studio-card-accent-bg-alpha: 0.12;
+  --studio-card-accent-border-alpha: 0.35;
+  --studio-card-accent-line-alpha: 0.85;
+}
+
+/* Base card shell */
+.studio-card {
+  color: #e9fffa;
+  background: rgba(5, 17, 20, 0.72);
+  border: 1px solid rgba(117, 223, 205, 0.18);
+  border-radius: 8px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.24);
+}
+
+/* Modifier for cards with a header strip (header spans full width, body is padded) */
+.studio-card--with-header {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Default padded body */
+.studio-card__body {
+  padding: var(--studio-card-body-padding, 1rem);
+  display: grid;
+  gap: var(--studio-card-body-gap, 0.75rem);
+}
+
+/* Horizontal / single-row body (replaces grid with flex) */
+.studio-card__body--row {
+  padding: var(--studio-card-body-padding, 1rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--studio-card-body-gap, 0.75rem);
+}
+
+/* Header strip for cards with a header */
+.studio-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(9, 52, 48, 0.7);
+  border-bottom: 1px solid rgba(117, 223, 205, 0.14);
+}
+
+/* Inner card item (takeaways, metrics, etc.) */
+.studio-card__item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(9, 33, 34, 0.5);
+  border: 1px solid rgba(117, 223, 205, 0.12);
+  border-radius: 6px;
+}
+
+/* Success / verified item accent */
+.studio-card__item--success {
+  color: rgb(var(--studio-card-success-rgb));
+  background: rgba(var(--studio-card-success-rgb), var(--studio-card-accent-bg-alpha, 0.12));
+  border-color: rgba(var(--studio-card-success-rgb), var(--studio-card-accent-border-alpha, 0.35));
+  border-left: 3px solid rgba(var(--studio-card-success-rgb), var(--studio-card-accent-line-alpha, 0.85));
+}
+
+/* Error / failed item accent */
+.studio-card__item--error {
+  color: rgb(var(--studio-card-error-rgb));
+  background: rgba(var(--studio-card-error-rgb), var(--studio-card-accent-bg-alpha, 0.12));
+  border-color: rgba(var(--studio-card-error-rgb), var(--studio-card-accent-border-alpha, 0.35));
+  border-left: 3px solid rgba(var(--studio-card-error-rgb), var(--studio-card-accent-line-alpha, 0.85));
+}
+
+/* Muted/secondary text inside a success item */
+.studio-card__item--success .studio-card__muted {
+  color: rgb(var(--studio-card-success-muted-rgb));
+}
+
+/* Muted/secondary text inside an error item */
+.studio-card__item--error .studio-card__muted {
+  color: rgb(var(--studio-card-error-muted-rgb));
+}
+
+/* Teal CTA button */
+.studio-card__button {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  color: #06201d;
+  background: #75dfcd;
+  border: 0;
+  border-radius: 6px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: none;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 150ms ease-out, transform 150ms ease-out;
+}
+
+.studio-card__button:hover {
+  background: #98eddb;
+}
+
+.studio-card__button:active {
+  transform: scale(0.98);
+}
+
+/* Small pill badge */
+.studio-card__badge {
+  padding: 0.15rem 0.6rem;
+  color: #e9fffa;
+  background: rgba(117, 223, 205, 0.14);
+  border: 1px solid rgba(117, 223, 205, 0.22);
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Section title / label */
+.studio-card__section-title {
+  margin: 0;
+  color: #a2c2bc;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}

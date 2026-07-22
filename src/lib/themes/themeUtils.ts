@@ -213,10 +213,10 @@ export const generateCSSCustomProperties = (theme: ChainTheme): CSSCustomPropert
 
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
-    console.log(
+    console.debug(
       `Generated ${Object.keys(properties).length} CSS custom properties for theme: ${theme.id}`
     );
-    console.log('Sample properties:', {
+    console.debug('Sample properties:', {
       primary: properties['--color-primary'],
       background: properties['--color-background'],
       surface: properties['--color-surface'],

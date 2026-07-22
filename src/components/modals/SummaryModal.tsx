@@ -140,26 +140,17 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [personality] = useCoachPersonality();
   const { intent: sessionIntent, register: sessionRegister } = useSessionIntent();
 
-  // Staged post-workout flow: celebrate -> recover -> analyze.
-  // Entry stage follows session intent (Train→celebrate, Breathe→recover, Coach→analyze).
-  const [stage, setStage] = useState<'celebrate' | 'recover' | 'analyze'>('celebrate');
+  // Staged post-workout flow: analyze -> recover -> celebrate.
+  // Entry stage is coaching-first (analyze). Earned celebration is the final stage.
+  const [stage, setStage] = useState<'celebrate' | 'recover' | 'analyze'>('analyze');
   React.useEffect(() => {
     if (!isOpen) return;
     if (sessionIntent === 'understand') setStage('analyze');
     else if (sessionIntent === 'recover') setStage('recover');
     else setStage('celebrate');
   }, [isOpen, sessionIntent]);
-  // A successful submission always shows the analyze stage (success lives there)
-  const effectiveStage = submissionStatus === 'success' ? 'analyze' : stage;
   const summaryRegister =
-    effectiveStage === 'analyze' ? 'lab' : effectiveStage === 'recover' ? 'calm' : sessionRegister;
-
-  // Debug logging for submission status changes
-  React.useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('SummaryModal: submissionStatus changed to', submissionStatus);
-    }
-  }, [submissionStatus]);
+    stage === 'analyze' ? 'lab' : stage === 'recover' ? 'calm' : sessionRegister;
 
   // Auto-close modal 2.5 seconds after successful submission
   React.useEffect(() => {
@@ -251,9 +242,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         const verified = await contract.isVerifiedHuman(walletAddress);
         if (isMounted) {
           setIsVerified(verified);
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('SummaryModal: User verification status on Celo:', verified);
-          }
         }
       } catch (err) {
         console.error('SummaryModal: Error checking verification status:', err);
@@ -337,8 +325,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   // Debug logging for mobile wallet issues
   React.useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('SummaryModal Debug Info:', {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('SummaryModal Debug Info:', {
         network: networkType,
         addressFromProps: address,
         walletAddress,
@@ -549,22 +537,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           data-register={summaryRegister}
           data-summary-intent={sessionIntent}
         >
-          {submissionStatus !== 'success' && (
-            <SessionRecap
-              mode={mode}
-              reps={repCount}
-              summary={sessionSummary ?? null}
-              onTryAgain={
-                onPlayAgain
-                  ? () => {
-                      onPlayAgain();
-                      onClose();
-                    }
-                  : undefined
-              }
-            />
-          )}
-          {/* Stage stepper: celebrate -> recover -> analyze */}
+          {/* Stage stepper: recap -> recover -> score */}
           {submissionStatus !== 'success' && (
             <div
               className="flex justify-center gap-1.5 summary-stage-tabs"
@@ -573,18 +546,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             >
               {(
                 [
-                  { key: 'celebrate', label: 'Score', emoji: '🏆' },
+                  { key: 'analyze', label: 'Recap', emoji: '📝' },
                   { key: 'recover', label: 'Recover', emoji: '🌬️' },
-                  { key: 'analyze', label: 'Analyze', emoji: '🧪' },
+                  { key: 'celebrate', label: 'Score', emoji: '🏆' },
                 ] as const
               ).map((s) => (
                 <button
                   key={s.key}
                   role="tab"
-                  aria-selected={effectiveStage === s.key}
+                  aria-selected={stage === s.key}
                   onClick={() => setStage(s.key)}
                   className={`summary-stage-tab px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    effectiveStage === s.key ? 'is-active' : ''
+                    stage === s.key ? 'is-active' : ''
                   }`}
                 >
                   {s.emoji} {s.label}
@@ -593,8 +566,20 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             </div>
           )}
 
-          {/* Network Info - Minimal badge (analyze: on-chain context) */}
-          {effectiveStage === 'analyze' && (
+          {/* Score tab header */}
+          {stage === 'celebrate' && submissionStatus !== 'success' && (
+            <div className="text-center space-y-1">
+              <p className="text-xs font-black uppercase tracking-widest text-teal-200/70">
+                Save to leaderboard
+              </p>
+              <p className="text-[10px] text-gray-500">
+                Optional — your workout is already saved locally
+              </p>
+            </div>
+          )}
+
+          {/* Network Info - Minimal badge (score tab: on-chain context) */}
+          {stage === 'celebrate' && (
             <div className="text-center">
               <span
                 className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${
@@ -606,11 +591,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             </div>
           )}
 
-          {/* Wallet connect lives ONLY in analyze - the rest of the modal is Ring 0 */}
-          {effectiveStage === 'analyze' && !effectiveAddress && ONCHAIN_MODES.includes(mode) && (
+          {/* Wallet connect lives ONLY in score tab - the rest of the modal is Ring 0 */}
+          {stage === 'celebrate' && !effectiveAddress && ONCHAIN_MODES.includes(mode) && (
             <UniversalConnectButton size="lg" />
           )}
-          {effectiveStage === 'analyze' && effectiveAddress && (
+          {stage === 'celebrate' && effectiveAddress && (
             <div className="space-y-4">
               {/* Celo-specific: Show submission choice directly in main dialog */}
               {chainId === 42220 && submissionStatus === 'idle' && submissionType === null && (
@@ -705,7 +690,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
               {/* Submit Score component - only show if not successfully submitted and level is 5+ */}
               {ONCHAIN_MODES.includes(mode) && submissionStatus !== 'success' && (
-                <div className="rounded-xl bg-black/20 p-4 text-center border border-white/5">
+                <div className="studio-card studio-card__body text-center">
                   {progress.currentLevel >= 5 ? (
                     <>
                       {/* Use unified Wagmi-based submission for all networks */}
@@ -745,14 +730,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                           Confirming Transaction...
                         </p>
                       )}
-                      {submissionStatus === 'error' && (
-                        <p className={`text-xs ${STATUS_STYLES.error.className} mt-3 font-bold`}>
-                          Connection Failed. Tap to Retry.
-                        </p>
-                      )}
                     </>
                   ) : (
-                    <div className="py-2 px-4">
+                    <div>
                       <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
                         <span className="text-lg">🔒</span>
                         <span className="text-sm font-bold uppercase tracking-widest">
@@ -776,12 +756,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
               {/* Success message - show when successfully submitted */}
               {submissionStatus === 'success' && (
-                <div className="rounded-xl bg-green-500/10 p-6 text-center space-y-4 border border-green-500/30 animate-in fade-in zoom-in duration-300">
-                  <div className="text-green-400 text-xl font-black tracking-tight">
-                    MISSION SUCCESSFUL
+                <div className="studio-card studio-card__body text-center animate-in fade-in zoom-in duration-300">
+                  <div className="text-teal-300 text-xl font-semibold tracking-tight">
+                    Synced to leaderboard
                   </div>
-                  <div className="text-[10px] text-green-400/60 uppercase font-black tracking-widest">
-                    Onchain data stored
+                  <div className="text-[10px] text-teal-300/60 uppercase font-semibold tracking-widest">
+                    On-chain record stored
                   </div>
                   {/* Play Again Button */}
                   {onPlayAgain && (
@@ -790,14 +770,10 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         onPlayAgain();
                         onClose();
                       }}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-blue-500 flex items-center justify-center gap-2"
-                      style={{
-                        fontFamily: "'Press Start 2P', monospace",
-                        fontSize: '11px',
-                      }}
+                      className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
                     >
-                      <span>🎮</span>
-                      <span>PLAY AGAIN</span>
+                      <span>↺</span>
+                      <span>Try another set</span>
                     </button>
                   )}
                 </div>
@@ -806,7 +782,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           )}
 
           {/* ===== CELEBRATE: the trophy moment ===== */}
-          {effectiveStage === 'celebrate' && (
+          {stage === 'celebrate' && (
             <>
               {repCount > 0 && progressSeries && (
                 <ProgressSpark
@@ -827,10 +803,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {/* Highlight Card */}
               {highlightCardUrl && (
                 <div className="space-y-3">
-                  <div className="text-xs uppercase tracking-widest text-gray-400 font-bold text-center">
-                    ✨ AI Highlight Card
-                  </div>
-                  <div className="relative group overflow-hidden rounded-xl border border-white/20 aspect-[9/16] max-h-[400px] mx-auto shadow-2xl">
+                  <p className="studio-card__section-title text-center">✨ AI Highlight Card</p>
+                  <div className="studio-card overflow-hidden aspect-[9/16] max-h-[400px] mx-auto relative group">
                     <img
                       src={highlightCardUrl}
                       alt="Workout Highlight"
@@ -872,20 +846,41 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           )}
 
           {/* ===== RECOVER: the night studio ===== */}
-          {effectiveStage === 'recover' && (
+          {stage === 'recover' && (
             <>
               {repCount > 0 && <RecoveryCard mode={mode} />}
               <button
-                onClick={() => setStage('analyze')}
-                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600/60 to-violet-700/60 hover:from-purple-500/60 hover:to-violet-600/60 text-purple-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-purple-400/20"
+                onClick={() => setStage('celebrate')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600/60 to-violet-700/60 hover:from-purple-500/60 hover:to-violet-600/60 text-purple-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-purple-400/20 active:scale-[0.96]"
               >
-                🧪 Analyze →
+                🏆 Save score →
+              </button>
+              <button
+                onClick={onClose}
+                className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-200 font-semibold rounded-xl text-xs uppercase tracking-widest transition-all border border-white/10 active:scale-[0.96]"
+              >
+                Done
               </button>
             </>
           )}
 
           {/* ===== ANALYZE: the lab (works for guests too) ===== */}
-          {effectiveStage === 'analyze' && (sessionSummary || reportStatus !== 'idle') && (
+          {stage === 'analyze' && (
+            <SessionRecap
+              mode={mode}
+              reps={repCount}
+              summary={sessionSummary ?? null}
+              onTryAgain={
+                onPlayAgain
+                  ? () => {
+                      onPlayAgain();
+                      onClose();
+                    }
+                  : undefined
+              }
+            />
+          )}
+          {stage === 'analyze' && (sessionSummary || reportStatus !== 'idle') && (
             <LabAnalysisCard
               report={report}
               status={reportStatus}
@@ -893,31 +888,47 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               onGenerate={handleGenerateReport}
             />
           )}
-          {effectiveStage === 'analyze' &&
+
+          {stage === 'analyze' && (
+            <button
+              onClick={() => setStage('celebrate')}
+              className="w-full px-4 py-3 bg-gradient-to-r from-teal-600/60 to-teal-700/60 hover:from-teal-500/60 hover:to-teal-600/60 text-teal-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-[transform,background-color,border-color] duration-200 border border-teal-400/20 active:scale-[0.96]"
+            >
+              🏆 Save score →
+            </button>
+          )}
+
+          {stage === 'celebrate' &&
             !ONCHAIN_MODES.includes(mode) &&
             submissionStatus !== 'success' && (
-              <div className="rounded-xl bg-black/20 p-3 text-center border border-white/5">
+              <div className="studio-card studio-card__body text-center">
                 <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
                   💾 Saved locally — on-chain leaderboards coming for this exercise
                 </span>
               </div>
             )}
-          {effectiveStage === 'analyze' && submissionStatus !== 'success' && onPlayAgain && (
+          {stage === 'celebrate' && submissionStatus !== 'success' && onPlayAgain && (
             <button
               onClick={() => {
                 onPlayAgain();
                 onClose();
               }}
-              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-200 shadow-lg border-2 border-blue-500 flex items-center justify-center gap-2"
-              style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '11px' }}
+              className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
             >
-              <span>🎮</span>
-              <span>PLAY AGAIN</span>
+              <span>↺</span>
+              <span>Try another set</span>
             </button>
           )}
 
           {/* Social sharing - available to Ring 0 guests too, not gated on tx */}
-          {effectiveStage === 'analyze' && repCount > 0 && (
+          {stage === 'celebrate' && repCount > 0 && (
+            <div className="text-center space-y-1 pb-2">
+              <p className="text-xs font-black uppercase tracking-widest text-teal-200/70">
+                Share & celebrate
+              </p>
+            </div>
+          )}
+          {stage === 'celebrate' && repCount > 0 && (
             <div className="border-t border-gray-700 pt-4">
               <div className="flex flex-col items-center space-y-4">
                 {/* Enhanced Farcaster integration */}
@@ -952,20 +963,17 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
           {/* Celo-specific verification prompt - show after successful submission on Celo only */}
           {submissionStatus === 'success' && submittedChainId === 42220 && (
-            <div className="border-t border-gray-700 pt-4">
-              <VerificationIntegration
-                onVerificationComplete={() => {
-                  console.log('User verified!');
-                  // Handle success - refresh leaderboard, show badge, etc.
-                }}
-                onClose={onClose}
-              />
-            </div>
+            <VerificationIntegration
+              onVerificationComplete={() => {
+                // Handle success - refresh leaderboard, show badge, etc.
+              }}
+              onClose={onClose}
+            />
           )}
 
           {/* Non-Celo success summary - show transaction and summary on other chains */}
           {submissionStatus === 'success' && submittedChainId !== 42220 && transactionHash && (
-            <div className="border-t border-gray-700 pt-4 space-y-3">
+            <div className="studio-card studio-card__body text-center">
               <div className="bg-green-900/20 border border-green-700/30 rounded p-2 text-center text-xs text-green-300">
                 ✅ On {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
               </div>
@@ -994,44 +1002,38 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           )}
 
           {/* Add Mini App prompt - show after successful workout in Farcaster only */}
-          {effectiveStage === 'celebrate' && isInMiniApp && repCount > 0 && (
-            <div className="border-t border-gray-700 pt-4">
-              <div className="text-center space-y-3">
-                <p className="text-xs text-purple-300 font-medium">📌 Pin app</p>
-                <AddMiniAppButton variant="secondary" showAfterWorkout={true} className="w-full" />
-              </div>
+          {stage === 'celebrate' && isInMiniApp && repCount > 0 && (
+            <div className="studio-card studio-card__body text-center">
+              <p className="text-xs text-purple-300 font-medium">📌 Pin app</p>
+              <AddMiniAppButton variant="secondary" showAfterWorkout={true} className="w-full" />
             </div>
           )}
 
           {/* Challenge Friends - Ghost Challenge Sharing */}
-          {effectiveStage === 'celebrate' &&
+          {stage === 'celebrate' &&
             repCount > 0 &&
             sessionSummary?.trace &&
             sessionSummary.trace.length > 0 && (
-              <div className="border-t border-gray-700 pt-4">
-                <div className="flex flex-col items-center space-y-3">
-                  <div className="text-xs uppercase tracking-widest text-gray-400 font-bold text-center">
-                    👻 Challenge Friends
-                  </div>
-                  <p className="text-[10px] text-gray-500 text-center px-2">
-                    Share your workout as a ghost trace for friends to race against
-                  </p>
-                  <div className="flex gap-2 w-full">
-                    <button
-                      onClick={() => handleChallengeShare('warpcast')}
-                      className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
-                    >
-                      <span>🟣</span>
-                      <span>Warpcast</span>
-                    </button>
-                    <button
-                      onClick={() => handleChallengeShare('twitter')}
-                      className="flex-1 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
-                    >
-                      <span>𝕏</span>
-                      <span>Twitter</span>
-                    </button>
-                  </div>
+              <div className="studio-card studio-card__body items-center text-center">
+                <p className="studio-card__section-title">👻 Challenge Friends</p>
+                <p className="text-[10px] text-gray-500 text-center px-2">
+                  Share your workout as a ghost trace for friends to race against
+                </p>
+                <div className="flex gap-2 w-full">
+                  <button
+                    onClick={() => handleChallengeShare('warpcast')}
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>🟣</span>
+                    <span>Warpcast</span>
+                  </button>
+                  <button
+                    onClick={() => handleChallengeShare('twitter')}
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>𝕏</span>
+                    <span>Twitter</span>
+                  </button>
                 </div>
               </div>
             )}

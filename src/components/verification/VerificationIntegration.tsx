@@ -92,16 +92,14 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
 
   if (isVerified) {
     return (
-      <div className={`verification-success ${className}`}>
-        <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-4 rounded-lg border border-green-500/30">
-          <div className="flex items-center space-x-3">
-            <div className="text-2xl">✅</div>
-            <div>
-              <h4 className="font-bold text-green-400">Verified Human</h4>
-              <p className="text-sm text-green-300">
-                You&apos;re verified! Your scores now show with a verified badge.
-              </p>
-            </div>
+      <div className={`studio-card studio-card__body ${className}`}>
+        <div className="studio-card__item studio-card__item--success">
+          <div className="text-2xl">✅</div>
+          <div>
+            <h4 className="font-bold">Verified Human</h4>
+            <p className="text-sm studio-card__muted">
+              You&apos;re verified! Your scores now show with a verified badge.
+            </p>
           </div>
         </div>
       </div>
@@ -111,68 +109,64 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
   return (
     <>
       {/* Ultra-compact verification prompt - default state */}
-      <div className={`verification-prompt ${className}`}>
-        {!showDetails ? (
-          // COMPACT VIEW - Single line, easy to dismiss
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm">🏆 +10% bonus for verification</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={() => setShowDetails(true)}
-                className="text-xs px-2 py-0.5 rounded text-yellow-300 hover:bg-yellow-500/20 transition-colors"
-              >
-                Learn more
-              </button>
-              <button
-                onClick={onClose}
-                className="text-2xl text-yellow-300 hover:text-white transition-colors p-1 hover:bg-yellow-500/20 rounded"
-                aria-label="Dismiss verification prompt"
-                title="Dismiss"
-              >
-                ×
-              </button>
-            </div>
+      {!showDetails ? (
+        // COMPACT VIEW - Single line, easy to dismiss
+        <div className={`studio-card studio-card__body--row ${className}`}>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm">🏆 +10% bonus for verification</span>
           </div>
-        ) : (
-          // EXPANDED VIEW - Details for curious users
-          <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-3 rounded-lg border border-yellow-500/30">
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="font-bold text-yellow-200">Get Verified Human Badge</h4>
-              <button
-                onClick={onClose}
-                className="text-2xl text-yellow-300 hover:text-white transition-colors p-1 hover:bg-yellow-500/20 rounded"
-                aria-label="Dismiss verification details"
-                title="Collapse"
-              >
-                ×
-              </button>
-            </div>
-
-            <p className="text-xs text-yellow-200/80 mb-3">
-              Verify your identity with Self Protocol on Celo blockchain. One-time setup, no
-              personal data stored.
-            </p>
-
+          <div className="flex items-center space-x-1">
             <button
-              onClick={promptForVerification}
-              className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm"
+              onClick={() => setShowDetails(true)}
+              className="text-xs px-2 py-0.5 rounded text-yellow-300 hover:bg-yellow-500/20 transition-colors"
             >
-              {chainId && chainSupportsSelfProtocol(chainId)
-                ? '🚀 Verify Now'
-                : '🔄 Switch to Celo'}
+              Learn more
             </button>
-
             <button
-              onClick={() => setShowDetails(false)}
-              className="w-full mt-2 text-xs px-2 py-1 rounded text-yellow-300 hover:bg-yellow-500/20 transition-colors"
+              onClick={onClose}
+              className="text-2xl text-yellow-300 hover:text-white transition-colors p-1 hover:bg-yellow-500/20 rounded"
+              aria-label="Dismiss verification prompt"
+              title="Dismiss"
             >
-              Collapse
+              ×
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        // EXPANDED VIEW - Details for curious users
+        <div className={`studio-card studio-card__body ${className}`}>
+          <div className="flex justify-between items-start mb-2">
+            <h4 className="font-bold text-yellow-200">Get Verified Human Badge</h4>
+            <button
+              onClick={onClose}
+              className="text-2xl text-yellow-300 hover:text-white transition-colors p-1 hover:bg-yellow-500/20 rounded"
+              aria-label="Dismiss verification details"
+              title="Collapse"
+            >
+              ×
+            </button>
+          </div>
+
+          <p className="text-xs text-yellow-200/80 mb-3">
+            Verify your identity with Self Protocol on Celo blockchain. One-time setup, no personal
+            data stored.
+          </p>
+
+          <button
+            onClick={promptForVerification}
+            className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm"
+          >
+            {chainId && chainSupportsSelfProtocol(chainId) ? '🚀 Verify Now' : '🔄 Switch to Celo'}
+          </button>
+
+          <button
+            onClick={() => setShowDetails(false)}
+            className="w-full mt-2 text-xs px-2 py-1 rounded text-yellow-300 hover:bg-yellow-500/20 transition-colors"
+          >
+            Collapse
+          </button>
+        </div>
+      )}
 
       {/* Network Switch Prompt */}
       <NetworkSwitchPrompt

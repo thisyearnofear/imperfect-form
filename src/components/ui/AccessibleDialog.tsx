@@ -244,8 +244,8 @@ const AccessibleDialog: React.FC<AccessibleDialogProps> = ({
           )}
 
           {description && (
-            <DialogPrimitive.Description style={styles.description}>
-              {description}
+            <DialogPrimitive.Description asChild>
+              <div style={styles.description}>{description}</div>
             </DialogPrimitive.Description>
           )}
 

@@ -25,7 +25,6 @@ export default function InitializationScreen({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    localStorage.setItem('imf_seenOnboarding_v1', '1');
     localStorage.setItem('imf_skipWalletIntro', '1');
 
     const skipCeremony =

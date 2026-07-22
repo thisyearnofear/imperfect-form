@@ -44,64 +44,63 @@ const LabAnalysisCard: React.FC<LabAnalysisCardProps> = ({
   const coach = getCoachInfo(personality);
 
   return (
-    <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 overflow-hidden text-left">
-      {/* Banner header - solid strip, clinical label, persona badge */}
-      <div className="bg-purple-600/80 px-4 py-2 flex items-center justify-between">
-        <span className="text-[10px] font-black uppercase tracking-widest text-white">
-          AI Clinical Review
-        </span>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-100 bg-white/20 rounded-full px-2 py-0.5">
+    <div className="lab-analysis-card studio-card studio-card--with-header">
+      {/* Banner header - studio teal strip, coaching label, persona badge */}
+      <div className="lab-analysis-card__header studio-card__header">
+        <span className="lab-analysis-card__header-title">Coaching analysis</span>
+        <span className="lab-analysis-card__badge studio-card__badge">
           {coach.emoji} {coach.name}
         </span>
       </div>
 
-      <div className="p-4 space-y-3 font-sans">
+      <div className="lab-analysis-card__body studio-card__body">
         {status === 'idle' && (
-          <button
-            onClick={onGenerate}
-            className="w-full px-3 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-xs font-bold tracking-wide transition-all"
-          >
-            ⚗️ Run Clinical Analysis
+          <button onClick={onGenerate} className="studio-card__button">
+            🧪 Run coaching analysis
           </button>
         )}
 
         {status === 'loading' && (
-          <div className="text-xs text-purple-200/80 animate-pulse font-mono">
-            Analyzing biomechanics…
-          </div>
+          <div className="lab-analysis-card__loading">Analyzing biomechanics…</div>
         )}
 
         {status === 'error' && (
-          <div className="text-xs text-red-300">
-            Analysis unavailable right now — your session stats are still saved.
+          <div className="studio-card__item studio-card__item--error">
+            <div className="text-2xl">❌</div>
+            <div>
+              <h4 className="font-bold text-xs m-0">Analysis unavailable right now</h4>
+              <p className="text-xs studio-card__muted">Your session stats are still saved.</p>
+            </div>
           </div>
         )}
 
         {status === 'ready' && report && (
           <>
-            <p className="text-sm text-purple-50/90 leading-relaxed">{report.summary}</p>
+            <p className="lab-analysis-card__summary">{report.summary}</p>
 
             {/* Metrics strip - mono register */}
             {Object.keys(report.metrics ?? {}).length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 rounded-lg bg-black/30 border border-white/5 px-3 py-2">
+              <div className="lab-analysis-card__metrics studio-card__item">
                 {Object.entries(report.metrics).map(([key, value]) => (
-                  <span key={key} className="font-mono text-[10px] text-purple-200/70">
+                  <span key={key} className="lab-analysis-card__metric">
                     {METRIC_LABELS[key] ?? key.toUpperCase()}{' '}
-                    <span className="text-purple-100">{Math.round(value)}</span>
+                    <span className="lab-analysis-card__metric-value">{Math.round(value)}</span>
                   </span>
                 ))}
               </div>
             )}
 
             {report.strengths.length > 0 && (
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-green-300 font-bold mb-1">
+              <div className="lab-analysis-card__section">
+                <div className="lab-analysis-card__section-title lab-analysis-card__section-title--strengths studio-card__section-title">
                   Strengths
                 </div>
-                <ul className="space-y-0.5">
+                <ul className="lab-analysis-card__list">
                   {report.strengths.map((s, i) => (
-                    <li key={`s-${i}`} className="text-xs text-gray-200 leading-relaxed">
-                      <span className="text-green-400 mr-1.5">+</span>
+                    <li key={`s-${i}`} className="lab-analysis-card__list-item">
+                      <span className="lab-analysis-card__list-item-icon lab-analysis-card__list-item-icon--strength">
+                        +
+                      </span>
                       {s}
                     </li>
                   ))}
@@ -110,14 +109,16 @@ const LabAnalysisCard: React.FC<LabAnalysisCardProps> = ({
             )}
 
             {report.issues.length > 0 && (
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-amber-300 font-bold mb-1">
+              <div className="lab-analysis-card__section">
+                <div className="lab-analysis-card__section-title lab-analysis-card__section-title--findings studio-card__section-title">
                   Findings
                 </div>
-                <ul className="space-y-0.5">
+                <ul className="lab-analysis-card__list">
                   {report.issues.map((s, i) => (
-                    <li key={`i-${i}`} className="text-xs text-gray-200 leading-relaxed">
-                      <span className="text-amber-400 mr-1.5">!</span>
+                    <li key={`i-${i}`} className="lab-analysis-card__list-item">
+                      <span className="lab-analysis-card__list-item-icon lab-analysis-card__list-item-icon--finding">
+                        !
+                      </span>
                       {s}
                     </li>
                   ))}
@@ -126,24 +127,22 @@ const LabAnalysisCard: React.FC<LabAnalysisCardProps> = ({
             )}
 
             {report.recommendations.length > 0 && (
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-purple-300 font-bold mb-1.5">
+              <div className="lab-analysis-card__section">
+                <div className="lab-analysis-card__section-title lab-analysis-card__section-title--protocol studio-card__section-title">
                   Protocol
                 </div>
-                <div className="space-y-1.5">
+                <div className="lab-analysis-card__recommendations">
                   {report.recommendations.map((r, i) => (
-                    <div key={`r-${i}`} className="flex items-start gap-2">
-                      <span className="w-5 h-5 shrink-0 rounded-full bg-purple-500/30 border border-purple-400/40 text-purple-100 text-[10px] font-mono flex items-center justify-center">
-                        {i + 1}
-                      </span>
-                      <span className="text-xs text-gray-200 leading-relaxed">{r}</span>
+                    <div key={`r-${i}`} className="lab-analysis-card__recommendation">
+                      <span className="lab-analysis-card__step">{i + 1}</span>
+                      <span className="lab-analysis-card__recommendation-text">{r}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <p className="text-[10px] italic text-purple-200/50 pt-1">
+            <p className="lab-analysis-card__byline">
               — {coach.emoji} {coach.name}, your {coach.theme} coach
             </p>
           </>

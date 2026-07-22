@@ -366,8 +366,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     coachStation.sendSessionEvent('session_end', mode, personality);
 
     // Always show summary; SummaryModal will prompt for wallet connection if needed
-    console.log('Game: handleStop called with address:', finalAddress);
-    console.log('Game: Opening SummaryModal with staggered transition');
 
     // Defer summary display by 100ms to allow game fade-out first
     const summaryTimer = setTimeout(() => {
@@ -378,7 +376,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     stopAllCameras();
 
     return () => clearTimeout(summaryTimer);
-  }, [stopAllCameras, finalAddress, exitFullscreen, unlock, mode, personality]);
+  }, [stopAllCameras, exitFullscreen, unlock, mode, personality]);
 
   // Update the ref whenever handleStop changes
   useEffect(() => {
@@ -781,16 +779,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       <SummaryModal
         isOpen={showSummary}
         onClose={() => {
-          console.log('Game: Closing SummaryModal');
           setShowSummary(false);
         }}
         onViewLeaderboard={() => {
-          console.log('Game: Closing SummaryModal and opening Leaderboard');
           setShowSummary(false);
           setShowExpandedLeaderboard(true);
         }}
         onPlayAgain={() => {
-          console.log('Game: Play Again clicked');
           handleReset();
         }}
         repCount={repCount}

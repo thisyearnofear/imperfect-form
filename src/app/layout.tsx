@@ -2,11 +2,14 @@ import type { Metadata } from 'next';
 import { Manrope } from 'next/font/google';
 import './globals.css';
 import '@/styles/studio-shell.css';
+import '@/styles/studio-card.css';
 import '@/styles/session-recap.css';
+import '@/styles/lab-analysis-card.css';
 import '@/styles/studio-motion.css';
 import '@/styles/studio-boot.css';
 import '@/styles/animations.css';
 import '@/styles/session-register.css';
+import '@/styles/buttons.css';
 import { BRAND } from '@/lib/brandPositioning';
 import ClientOnlyProviders from '@/components/providers/ClientOnlyProviders';
 

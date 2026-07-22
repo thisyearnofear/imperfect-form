@@ -98,7 +98,9 @@ const cleanupWalletConnectSessions = () => {
         dbNames.forEach((dbName) => {
           try {
             const deleteReq = indexedDB.deleteDatabase(dbName);
-            deleteReq.onsuccess = () => console.log(`${dbName} IndexedDB cleared`);
+            deleteReq.onsuccess = () => {
+              // IndexedDB cleared silently
+            };
             deleteReq.onerror = () => console.warn(`Failed to clear ${dbName} IndexedDB`);
           } catch (e) {
             console.warn(`Failed to delete ${dbName} database:`, e);
@@ -109,7 +111,7 @@ const cleanupWalletConnectSessions = () => {
       }
     }
 
-    console.log(`🧹 WalletConnect session cleanup completed (${wcKeys.length} keys removed)`);
+    // WalletConnect cleanup completed silently
   } catch (error) {
     console.warn('WalletConnect cleanup failed:', error);
   }

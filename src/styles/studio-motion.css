@@ -10,7 +10,25 @@
 .motion-demo { animation: studio-demo 1.4s ease-in-out infinite; }
 .motion-delay-1 { animation-delay: 70ms; }
 .motion-delay-2 { animation-delay: 140ms; }
+.motion-delay-3 { animation-delay: 210ms; }
+
+@keyframes coach-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.08); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
 }
+
+/* Screen transition primitives for progressive disclosure */
+@keyframes screen-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes screen-slide-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes screen-slide-left { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes screen-slide-right { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
+
+.screen-transition { animation-fill-mode: both; }
+.screen-transition--fade { animation: screen-fade-in 300ms ease both; }
+.screen-transition--slide-up { animation: screen-slide-up 300ms ease both; }
+.screen-transition--slide-left { animation: screen-slide-left 300ms ease both; }
+.screen-transition--slide-right { animation: screen-slide-right 300ms ease both; }

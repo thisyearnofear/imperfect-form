@@ -43,10 +43,7 @@ function DefaultFallback({ error, resetError }: { error?: Error; resetError: () 
     <div className="text-center p-4 text-red-400">
       <p>Something went wrong</p>
       {error && <p className="text-xs opacity-70">{error.message}</p>}
-      <button
-        onClick={resetError}
-        className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-      >
+      <button onClick={resetError} className="mt-2 btn-error-cta">
         Try again
       </button>
     </div>

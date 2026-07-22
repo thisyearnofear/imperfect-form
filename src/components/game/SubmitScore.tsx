@@ -196,7 +196,9 @@ export default function SubmitScore({
         const isVerified = await contract.isVerifiedHuman(address);
         if (isMounted) {
           setIsVerifiedUser(isVerified);
-          console.log('User verification status on Celo:', isVerified);
+          if (process.env.NODE_ENV === 'development') {
+            console.debug('User verification status on Celo:', isVerified);
+          }
         }
       } catch (err) {
         console.error('Error checking verification status:', err);
@@ -221,12 +223,14 @@ export default function SubmitScore({
 
   // ENHANCEMENT: Pre-submission validation
   const handleSubmit = async () => {
-    console.log(
-      'SubmitScoreWithWagmi: handleSubmit called with pushups:',
-      effectivePushupsScore,
-      'squats:',
-      effectiveSquatsScore
-    );
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(
+        'SubmitScoreWithWagmi: handleSubmit called with pushups:',
+        effectivePushupsScore,
+        'squats:',
+        effectiveSquatsScore
+      );
+    }
 
     // CONSOLIDATION: Unified pre-submission validation
     const validationError = validateSubmissionRequirements(
@@ -238,7 +242,9 @@ export default function SubmitScore({
     );
 
     if (validationError) {
-      console.log('SubmitScoreWithWagmi: Validation failed:', validationError);
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('SubmitScoreWithWagmi: Validation failed:', validationError);
+      }
       setSubmissionStatus('error');
       toast.error(validationError);
       return;
@@ -249,7 +255,6 @@ export default function SubmitScore({
 
     try {
       // Unified approach: Use Wagmi connection directly
-      console.log('Wallet connected via unified PlatformContext, proceeding with submission...');
       // Simple network configuration
       if (!chainId) {
         throw new Error('Network not detected. Please check your wallet connection.');
@@ -267,7 +272,9 @@ export default function SubmitScore({
 
       // If we are on Celo and the user is verified, force strict routing to the Verified Contract
       if (chainId === 42220 && isVerifiedUser) {
-        console.log('🌟 Verified User detected on Celo! Routing to Verified Contract.');
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('🌟 Verified User detected on Celo! Routing to Verified Contract.');
+        }
         targetContractAddress = CONTRACT_ADDRESSES.celo.verified;
         isVerifiedContract = true;
       } else if (chainId === 42220) {
@@ -288,15 +295,17 @@ export default function SubmitScore({
       }
 
       // Direct submission using simplified system
-      console.log('🚀 Submitting score with params:', {
-        pushups: effectivePushupsScore,
-        squats: effectiveSquatsScore,
-        contractAddress: targetContractAddress,
-        chainId,
-        isVerified: isVerifiedContract,
-        feeAmount,
-        provider: !!provider,
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('🚀 Submitting score with params:', {
+          pushups: effectivePushupsScore,
+          squats: effectiveSquatsScore,
+          contractAddress: targetContractAddress,
+          chainId,
+          isVerified: isVerifiedContract,
+          feeAmount,
+          provider: !!provider,
+        });
+      }
 
       const result = await submitScoreDirect(
         provider,
@@ -309,7 +318,9 @@ export default function SubmitScore({
       );
 
       if (result.success) {
-        console.log('SubmitScoreWithWagmi: Submission successful');
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('SubmitScoreWithWagmi: Submission successful');
+        }
         setSubmissionStatus('success');
         const sourceMessage = wallet.provider === 'wagmi' ? ' via Wagmi' : '';
         const leaderboardType = isVerifiedContract ? 'Verified' : networkConfig.name;
@@ -363,7 +374,9 @@ export default function SubmitScore({
             // Save back to cache - this triggers 'leaderboardCacheUpdated' event
             // which useUserStats listens to
             cacheLeaderboardData(updatedCache);
-            console.log('🚀 Optimistically updated leaderboard cache with new score');
+            if (process.env.NODE_ENV === 'development') {
+              console.debug('🚀 Optimistically updated leaderboard cache with new score');
+            }
           }
         } catch (err) {
           console.warn('Failed to optimistically update cache:', err);
@@ -374,7 +387,9 @@ export default function SubmitScore({
           onSubmissionSuccess(result.transactionHash, result.chainId);
         }
       } else {
-        console.log('SubmitScoreWithWagmi: Submission failed with error:', result.error);
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('SubmitScoreWithWagmi: Submission failed with error:', result.error);
+        }
         setSubmissionStatus('error');
 
         // Simplified error handling
@@ -401,15 +416,10 @@ export default function SubmitScore({
   // If no address, show connect button using unified PlatformContext
   if (!address) {
     return (
-      <div className="flex flex-col items-center space-y-4">
+      <div className="flex flex-col items-center space-y-3">
         <button
           onClick={() => actions.connect()}
-          className="px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-black font-bold rounded-lg hover:from-primary-dark hover:to-primary transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-primary"
-          style={{
-            fontFamily: "'Press Start 2P', monospace",
-            fontSize: '12px',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-          }}
+          className="px-5 py-2.5 bg-teal-500/20 border border-teal-400/40 text-teal-50 font-semibold rounded-lg hover:bg-teal-500/30 hover:border-teal-400/60 transition-all duration-200 active:scale-[0.98]"
         >
           {wallet.isConnecting ? (
             <div className="flex items-center space-x-2">
@@ -417,7 +427,7 @@ export default function SubmitScore({
               <span>Connecting...</span>
             </div>
           ) : (
-            'Connect Wallet'
+            'Connect wallet to sync'
           )}
         </button>
       </div>
@@ -431,79 +441,84 @@ export default function SubmitScore({
           <button
             onClick={() => setConfirmStep(true)}
             disabled={isLoading || submissionStatus === 'success'}
-            className="px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-black font-bold rounded-lg hover:from-primary-dark hover:to-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-primary"
-            style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '12px',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-            }}
+            className="px-5 py-2.5 bg-teal-500/20 border border-teal-400/40 text-teal-50 font-semibold rounded-lg hover:bg-teal-500/30 hover:border-teal-400/60 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
           >
             {submissionStatus === 'success'
-              ? 'Scores Synced! 🎉'
+              ? 'Scores synced'
               : hasMultipleScores
-                ? `Sync to Leaderboard${supportsBatch && isFarcasterMiniApp() ? ' (Batch)' : ''}`
-                : `Sync to Leaderboard`}
+                ? `Sync to leaderboard${supportsBatch && isFarcasterMiniApp() ? ' (batch)' : ''}`
+                : `Sync to leaderboard`}
           </button>
 
-          {/* Enhanced: Show batch transaction status for Farcaster */}
+          {/* Batch transaction status for Farcaster */}
           {isFarcasterMiniApp() && supportsBatch !== null && hasMultipleScores && (
-            <p className="text-xs text-primary opacity-70 text-center">
+            <p className="text-xs text-teal-300/70 text-center">
               {supportsBatch
-                ? '✨ Batch transactions supported - submit both scores in one action!'
-                : 'Will submit scores individually'}
+                ? 'Batch transactions supported — submit both scores in one action.'
+                : 'Scores will be submitted individually.'}
             </p>
           )}
 
-          {/* Enhanced: Show score breakdown and connection status */}
+          {/* Score breakdown */}
           {hasMultipleScores && (
-            <div className="text-xs text-primary opacity-60 text-center">
+            <div className="text-xs text-teal-300/60 text-center">
               {effectivePushupsScore > 0 && `${effectivePushupsScore} pushups`}
               {effectivePushupsScore > 0 && effectiveSquatsScore > 0 && ' + '}
               {effectiveSquatsScore > 0 && `${effectiveSquatsScore} squats`}
             </div>
           )}
 
-          {/* Show wallet connection info */}
+          {/* Wallet connection info */}
           {wallet.provider && (
-            <div className="text-xs text-primary opacity-50 text-center">
+            <div className="text-xs text-teal-300/50 text-center">
               Connected via {wallet.provider}
             </div>
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center space-y-4">
-          <div className="text-center">
-            <p
-              className="text-lg font-semibold text-primary mb-2"
-              style={{ fontFamily: "'Press Start 2P', monospace" }}
-            >
-              Confirm Sync
-            </p>
-            <div className="text-primary opacity-80 space-y-1">
-              {effectivePushupsScore > 0 && <p>Pushups: {effectivePushupsScore}</p>}
-              {effectiveSquatsScore > 0 && <p>Squats: {effectiveSquatsScore}</p>}
-              {isVerifiedUser && chainId === 42220 && (
-                <p className="text-[#10b981] text-xs mt-2 border border-[#10b981] rounded px-2 py-1 bg-[#10b981]/10">
-                  ✨ Submitting to Verified Leaderboard
-                </p>
-              )}
+        <div className="flex flex-col items-center space-y-4 w-full">
+          {submissionStatus === 'error' ? (
+            <div className="studio-card__item studio-card__item--error w-full">
+              <div className="text-2xl">❌</div>
+              <div className="flex-1">
+                <h4 className="font-bold text-xs m-0">Connection Failed</h4>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="mt-1 btn-error-cta"
+                >
+                  <span className="text-sm">↺</span>
+                  <span>Tap to Retry</span>
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-base font-semibold text-teal-100 mb-2">Confirm sync</p>
+              <div className="text-teal-200/80 space-y-1 text-sm">
+                {effectivePushupsScore > 0 && <p>Pushups: {effectivePushupsScore}</p>}
+                {effectiveSquatsScore > 0 && <p>Squats: {effectiveSquatsScore}</p>}
+                {isVerifiedUser && chainId === 42220 && (
+                  <p className="text-emerald-300 text-xs mt-2 border border-emerald-400/40 rounded px-2 py-1 bg-emerald-400/10">
+                    Submitting to verified leaderboard
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
-          <div className="flex space-x-4">
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg hover:from-green-700 hover:to-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-green-500 flex items-center space-x-2"
-              style={{
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: '10px',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-              }}
-            >
-              {isLoading && <Spinner />}
-              <span>{isLoading ? 'Submitting...' : 'Confirm'}</span>
-            </button>
+          <div className="flex space-x-3">
+            {submissionStatus !== 'error' && (
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="px-5 py-2.5 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98] flex items-center space-x-2 border border-teal-400/30"
+              >
+                {isLoading && <Spinner />}
+                <span>{isLoading ? 'Submitting...' : 'Confirm'}</span>
+              </button>
+            )}
 
             <button
               onClick={() => {
@@ -512,12 +527,7 @@ export default function SubmitScore({
                 setSubmissionStatus('idle');
               }}
               disabled={isLoading}
-              className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-lg hover:from-red-700 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg border-2 border-red-500"
-              style={{
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: '10px',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-              }}
+              className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-teal-100 font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98] border border-white/10"
             >
               Cancel
             </button>

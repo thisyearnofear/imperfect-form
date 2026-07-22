@@ -1,0 +1,141 @@
+.lab-analysis-card { text-align: left; }
+
+.lab-analysis-card__header-title {
+  margin: 0;
+  color: #f1fffc;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lab-analysis-card__loading {
+  color: #a2c2bc;
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  animation: lab-analysis-card-pulse 2s ease-in-out infinite;
+}
+
+@keyframes lab-analysis-card-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.lab-analysis-card__summary {
+  margin: 0;
+  color: #dff7f1;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.lab-analysis-card__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.lab-analysis-card__metric {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #8aa8a3;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lab-analysis-card__metric-value {
+  color: #f1fffc;
+  font-weight: 700;
+}
+
+.lab-analysis-card__section {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lab-analysis-card__section-title--strengths {
+  color: #83e8d5;
+}
+
+.lab-analysis-card__section-title--findings {
+  color: #f5bd75;
+}
+
+.lab-analysis-card__section-title--protocol {
+  color: #a2c2bc;
+}
+
+.lab-analysis-card__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lab-analysis-card__list-item {
+  display: flex;
+  gap: 0.5rem;
+  color: #dff7f1;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.lab-analysis-card__list-item-icon {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.lab-analysis-card__list-item-icon--strength {
+  color: #83e8d5;
+}
+
+.lab-analysis-card__list-item-icon--finding {
+  color: #f5bd75;
+}
+
+.lab-analysis-card__recommendations {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.lab-analysis-card__recommendation {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.lab-analysis-card__step {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  margin-top: 0.05rem;
+  color: #f1fffc;
+  background: rgba(117, 223, 205, 0.12);
+  border: 1px solid rgba(117, 223, 205, 0.25);
+  border-radius: 9999px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.lab-analysis-card__recommendation-text {
+  color: #dff7f1;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.lab-analysis-card__byline {
+  margin: 0.25rem 0 0;
+  color: #8aa8a3;
+  font-size: 0.7rem;
+  font-style: italic;
+}

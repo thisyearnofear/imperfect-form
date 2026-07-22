@@ -35,7 +35,7 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
       className={
         panel
           ? 'h-full w-full flex flex-col justify-center rounded-none border-0 bg-transparent p-4 text-left'
-          : 'rounded-2xl border border-teal-500/20 bg-teal-500/5 backdrop-blur-sm p-4 text-left shadow-[0_0_20px_rgba(45,212,191,0.08)]'
+          : 'studio-card studio-card__body text-left'
       }
       data-testid={panel ? 'calm-session-panel' : 'recovery-card'}
     >

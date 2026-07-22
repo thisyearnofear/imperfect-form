@@ -21,6 +21,9 @@ import {
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import { UniversalConnectButton } from '@/components/wallet';
+import { ScreenTransition } from '@/components/ui/ScreenTransition';
+import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 
 const GameWrapper = dynamic(() => import('@/components/game/GameWrapper'), {
   ssr: false,
@@ -53,9 +56,18 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('workout');
   const [showDashboard, setShowDashboard] = useState(true);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
+  const { hasSeen: hasSeenOnboarding, markSeen: markOnboardingSeen } = useOnboarding();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Game-loop chrome is earned after the first coached feel — not the day-0 foyer.
   const hasTrained = progress.totalXp > 0;
+
+  // Surface first-visit onboarding after the bay entry ceremony
+  useEffect(() => {
+    if (hasMounted && !hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [hasMounted, hasSeenOnboarding]);
 
   // Form cue / demonstration → bay arc pulse (fail-silent when station unset)
   useCoachBayPulse();
@@ -285,35 +297,41 @@ export default function Home() {
           )}
 
           {hasTrained && activeTab === 'dashboard' && (
-            <div className="flex-1 px-4 py-6 space-y-6 overflow-y-auto pb-24">
-              <div className="max-w-2xl mx-auto space-y-6">
-                <HeroSection />
-                <QuestDashboard />
-                <AchievementShowcase />
-                <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                    Top Performers
-                  </h3>
-                  <Leaderboard limit={5} onViewMore={handleViewMore} />
+            <ScreenTransition key="dashboard" mode="slide-up" className="flex-1 flex flex-col">
+              <div className="flex-1 px-4 py-6 space-y-6 overflow-y-auto pb-24">
+                <div className="max-w-2xl mx-auto space-y-6">
+                  <HeroSection />
+                  <QuestDashboard />
+                  <AchievementShowcase />
+                  <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                      Top Performers
+                    </h3>
+                    <Leaderboard limit={5} onViewMore={handleViewMore} />
+                  </div>
                 </div>
               </div>
-            </div>
+            </ScreenTransition>
           )}
 
           {hasTrained && activeTab === 'challenges' && (
-            <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
-              <div className="max-w-2xl mx-auto">
-                <ChallengeWidget />
+            <ScreenTransition key="challenges" mode="slide-up" className="flex-1 flex flex-col">
+              <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
+                <div className="max-w-2xl mx-auto">
+                  <ChallengeWidget />
+                </div>
               </div>
-            </div>
+            </ScreenTransition>
           )}
 
           {hasTrained && activeTab === 'roadmap' && (
-            <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
-              <div className="max-w-2xl mx-auto">
-                <RoadmapSection />
+            <ScreenTransition key="roadmap" mode="slide-up" className="flex-1 flex flex-col">
+              <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
+                <div className="max-w-2xl mx-auto">
+                  <RoadmapSection />
+                </div>
               </div>
-            </div>
+            </ScreenTransition>
           )}
         </div>
 
@@ -354,6 +372,16 @@ export default function Home() {
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
       />
+
+      {/* First-visit onboarding */}
+      {showOnboarding && (
+        <OnboardingModal
+          onComplete={() => {
+            markOnboardingSeen();
+            setShowOnboarding(false);
+          }}
+        />
+      )}
 
       {/* First-time Mini App user prompt */}
       {showFirstTimePrompt && (

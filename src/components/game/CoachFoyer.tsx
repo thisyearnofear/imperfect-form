@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { ArrowRight, Camera, LockKeyhole } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, Camera, LockKeyhole, ChevronDown, ChevronUp } from 'lucide-react';
 import { BRAND, getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
 import type { ExerciseMode } from '@/utils/biomechanics';
@@ -13,20 +13,63 @@ type CoachFoyerProps = {
   onStart: () => void;
 };
 
-const exercises: Array<{
+type ExerciseOption = {
   mode: ExerciseMode;
   label: string;
   detail: string;
-}> = [
-  { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line' },
-  { mode: 'squats', label: 'Squats', detail: 'Depth · knees · tempo' },
-  { mode: 'curls', label: 'Curls', detail: 'Elbow control · range' },
-  { mode: 'pullups', label: 'Pull-ups', detail: 'Extension · symmetry' },
-  { mode: 'jumps', label: 'Jumps', detail: 'Landing · knee track' },
+  category: 'primary' | 'extra';
+};
+
+const exercises: ExerciseOption[] = [
+  { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line', category: 'primary' },
+  { mode: 'squats', label: 'Squats', detail: 'Depth · knees · tempo', category: 'primary' },
+  { mode: 'curls', label: 'Curls', detail: 'Elbow control · range', category: 'extra' },
+  { mode: 'pullups', label: 'Pull-ups', detail: 'Extension · symmetry', category: 'extra' },
+  { mode: 'jumps', label: 'Jumps', detail: 'Landing · knee track', category: 'extra' },
 ];
+
+function CoachFocal({ className }: { className?: string }) {
+  return (
+    <div className={`coach-foyer__focal ${className || ''}`} aria-hidden="true">
+      <div className="coach-foyer__focal-ring" />
+      <svg viewBox="0 0 64 64" fill="none" className="coach-foyer__focal-arm">
+        <circle cx="22" cy="48" r="6" stroke="currentColor" strokeWidth="3" opacity="0.5" />
+        <path
+          d="M22 42 V24"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+          opacity="0.85"
+        />
+        <g className="coach-foyer__focal-forearm">
+          <path d="M22 32 H48" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+          <circle cx="48" cy="32" r="4" fill="currentColor" opacity="0.9" />
+        </g>
+        <circle cx="22" cy="32" r="5" fill="currentColor" />
+      </svg>
+      <span className="coach-foyer__focal-pulse" />
+    </div>
+  );
+}
 
 export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
+  const [showExtras, setShowExtras] = useState(false);
+  const firstExtraRef = React.useRef<HTMLButtonElement>(null);
+  const moreToggleRef = React.useRef<HTMLButtonElement>(null);
+
+  const primaryExercises = exercises.filter((e) => e.category === 'primary');
+  const extraExercises = exercises.filter((e) => e.category === 'extra');
+  const visibleExercises = [...primaryExercises, ...(showExtras ? extraExercises : [])];
+
+  // Move focus to the first newly revealed exercise or back to the toggle for keyboard users
+  React.useEffect(() => {
+    if (showExtras && firstExtraRef.current) {
+      firstExtraRef.current.focus();
+    } else if (!showExtras && moreToggleRef.current) {
+      moreToggleRef.current.focus();
+    }
+  }, [showExtras]);
 
   return (
     <section className="coach-foyer" aria-labelledby="coach-foyer-title">
@@ -37,21 +80,25 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
       </div>
 
       <div className="coach-foyer__inner">
-        <p className="coach-foyer__brand motion-enter">{foyer.brand}</p>
+        <CoachFocal className="motion-enter" />
 
-        <h2 id="coach-foyer-title" className="coach-foyer__title motion-enter motion-delay-1">
+        <p className="coach-foyer__brand motion-enter motion-delay-1">{foyer.brand}</p>
+
+        <h2 id="coach-foyer-title" className="coach-foyer__title motion-enter motion-delay-2">
           {foyer.line1}
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{BRAND.visionLine}</p>
 
-        <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-2">
+        <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">
           <legend>Choose a movement</legend>
-          {exercises.map((exercise, index) => {
+          {visibleExercises.map((exercise, index) => {
             const selected = exercise.mode === mode;
+            const isFirstExtra = showExtras && index === primaryExercises.length;
             return (
               <button
                 key={exercise.mode}
                 type="button"
+                ref={isFirstExtra ? firstExtraRef : undefined}
                 className={`coach-foyer__exercise${selected ? ' is-selected' : ''}`}
                 style={{ animationDelay: `${180 + index * 40}ms` }}
                 aria-pressed={selected}
@@ -69,6 +116,28 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
             );
           })}
         </fieldset>
+
+        <button
+          type="button"
+          ref={moreToggleRef}
+          className="coach-foyer__more motion-enter motion-delay-3"
+          aria-expanded={showExtras}
+          aria-controls="exercise-list"
+          onClick={() => {
+            playStudioCue('soft');
+            setShowExtras((prev) => !prev);
+          }}
+        >
+          {showExtras ? (
+            <>
+              <ChevronUp size={14} /> Fewer movements
+            </>
+          ) : (
+            <>
+              <ChevronDown size={14} /> More movements
+            </>
+          )}
+        </button>
 
         <button
           type="button"

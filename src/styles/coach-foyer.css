@@ -248,6 +248,91 @@
   text-align: center;
 }
 
+/* Centered focal point — coach arm presence */
+.coach-foyer__focal {
+  position: relative;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto 1.25rem;
+  display: grid;
+  place-items: center;
+  color: var(--cf-teal-bright);
+}
+
+.coach-foyer__focal-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(86, 217, 195, 0.25);
+  background: radial-gradient(circle at 30% 30%, rgba(86, 217, 195, 0.12), transparent 60%);
+}
+
+.coach-foyer__focal-pulse {
+  position: absolute;
+  inset: -0.5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(86, 217, 195, 0.15);
+  animation: coach-pulse 2.4s ease-in-out infinite;
+}
+
+.coach-foyer__focal-arm {
+  width: 2.25rem;
+  height: 2.25rem;
+  color: inherit;
+  transform: rotate(-12deg);
+}
+
+.coach-foyer__focal-forearm {
+  transform-origin: 22px 32px;
+  animation: coach-peek 3s ease-in-out infinite;
+}
+
+@keyframes coach-peek {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(8deg); }
+}
+
+/* Progressive disclosure toggle */
+.coach-foyer__more {
+  width: 100%;
+  margin: 0.55rem 0 0;
+  padding: 0.55rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  color: var(--cf-soft);
+  background: transparent;
+  border: 1px dashed var(--cf-border);
+  border-radius: var(--cf-radius);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: none;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.coach-foyer__more:hover {
+  color: var(--cf-teal-bright);
+  background: rgba(86, 217, 195, 0.06);
+  border-style: solid;
+  border-color: rgba(86, 217, 195, 0.35);
+}
+
+.coach-foyer__more:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-foyer__focal-pulse,
+  .coach-foyer__focal-forearm {
+    animation: none;
+  }
+}
+
 .coach-foyer__trust svg {
   flex: 0 0 auto;
   margin-top: 0.1rem;

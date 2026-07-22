@@ -253,15 +253,17 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     [platform, farcasterWallet, isWagmiConnected, wagmiAddress, wagmiChainId, isWagmiConnecting]
   );
 
-  // Debug wallet state changes
+  // Debug wallet state changes (only in development)
   useEffect(() => {
-    console.log('🔗 Wallet state updated:', {
-      platform,
-      isWagmiConnected,
-      wagmiAddress,
-      farcasterWallet,
-      finalWalletState: wallet,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔗 Wallet state updated:', {
+        platform,
+        isWagmiConnected,
+        wagmiAddress,
+        farcasterWallet,
+        finalWalletState: wallet,
+      });
+    }
   }, [platform, isWagmiConnected, wagmiAddress, farcasterWallet, wallet]);
 
   // Client-side initialization

@@ -181,8 +181,8 @@ export default function FarcasterShare({
               </div>
             </button>
           ) : (
-            <div className="flex flex-col items-center space-y-3 w-full bg-white/5 p-4 rounded-xl border border-white/10">
-              <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest text-center">
+            <div className="studio-card studio-card__body w-full items-center">
+              <p className="text-[10px] text-teal-200/70 uppercase font-black tracking-widest text-center">
                 Identity Required
               </p>
               <NeynarAuth

@@ -3,6 +3,7 @@ export { default as Button } from './Button';
 export { default as FullscreenExitButton } from './FullscreenExitButton';
 export { default as InitializationScreen } from './InitializationScreen';
 export { default as MemoryButton } from './MemoryButton';
+export { ScreenTransition } from './ScreenTransition';
 export { default as Navigation } from './Navigation';
 export { PioneerBadge } from './PioneerBadge';
 export { default as ProgressIndicator } from './ProgressIndicator';
