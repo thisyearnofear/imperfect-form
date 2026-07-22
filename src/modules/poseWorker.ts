@@ -2,7 +2,8 @@
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
-import { Keypoint, WorkerMessage } from '../types/mediapipe';
+import { Keypoint, WorkerMessage, PosePreprocessorSettings } from '../types/mediapipe';
+import { preprocessImageBitmap } from '../lib/pose/posePreprocessor';
 import {
   ExerciseMode,
   RepCounterState,
@@ -30,6 +31,13 @@ let lastProcessTime = 0;
 let workerIsMobile = false;
 let workerPbTrace: import('../types/workout').SessionSnapshot[] | undefined;
 let workerStartTime = 0;
+let preprocessorSettings: PosePreprocessorSettings = {
+  enabled: false,
+  mode: 'none',
+  targetMean: 0.5,
+  strength: 0.75,
+};
+let preprocessCanvas: OffscreenCanvas | null = null;
 const DESKTOP_FRAME_INTERVAL_MS = 66; // ~15fps for stability
 const _MIN_TIME_BETWEEN_REPS = 800; // ms
 
@@ -104,6 +112,7 @@ self.addEventListener('message', async (event) => {
       workerIsMobile = !!data.isMobile;
       workerPbTrace = data.pbTrace;
       workerStartTime = Date.now();
+      preprocessorSettings = data.preprocessor ?? preprocessorSettings;
 
       offscreen.width = data.width;
       offscreen.height = data.height;
@@ -151,9 +160,26 @@ self.addEventListener('message', async (event) => {
       }
       lastProcessTime = now;
 
+      let processedBitmap = bitmap;
+      if (preprocessorSettings.enabled && preprocessorSettings.mode !== 'none') {
+        try {
+          if (!preprocessCanvas) {
+            preprocessCanvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+          }
+          processedBitmap = await preprocessImageBitmap(
+            bitmap,
+            preprocessorSettings,
+            preprocessCanvas
+          );
+        } catch (_preErr) {
+          // Pre-processor failed; fall back to the raw frame and keep going.
+          processedBitmap = bitmap;
+        }
+      }
+
       const detectStart = performance.now();
       try {
-        const poses = await detector.estimatePoses(bitmap);
+        const poses = await detector.estimatePoses(processedBitmap);
         const detectionTimeMs = performance.now() - detectStart;
 
         // Emit baseline metrics regardless of whether a pose was detected
@@ -235,6 +261,10 @@ self.addEventListener('message', async (event) => {
       } catch (err) {
         console.error('In-worker processing error:', err);
       } finally {
+        // Close the processed bitmap if we created a new one
+        if (processedBitmap !== bitmap) {
+          processedBitmap.close();
+        }
         bitmap.close();
       }
     } else if (data.type === 'stop') {

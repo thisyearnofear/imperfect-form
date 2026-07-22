@@ -1,5 +1,12 @@
 import { SessionSnapshot } from './workout';
 
+export interface PosePreprocessorSettings {
+  enabled: boolean;
+  mode: 'auto' | 'none';
+  targetMean: number;
+  strength: number;
+}
+
 // Keypoint type for pose detection
 export interface Keypoint {
   name: string;
@@ -51,6 +58,7 @@ export type WorkerMessage =
       height: number;
       isMobile?: boolean;
       pbTrace?: SessionSnapshot[];
+      preprocessor?: PosePreprocessorSettings;
     }
   | { type: 'frame'; bitmap: ImageBitmap }
   | { type: 'setMode'; mode: string }

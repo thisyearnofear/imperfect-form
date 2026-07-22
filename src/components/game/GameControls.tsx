@@ -5,6 +5,12 @@ import { BiomechanicalState } from '@/types/mediapipe';
 import { getIntentDef } from '@/lib/brandPositioning';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { playUiCue } from '@/lib/uiSound';
+import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import {
+  loadPreprocessorSettings,
+  savePreprocessorSettings,
+  PosePreprocessorSettings,
+} from '@/lib/pose/posePreprocessor';
 
 interface GameControlsProps {
   started: boolean;
@@ -39,6 +45,20 @@ export const GameControls: React.FC<GameControlsProps> = ({
   const { intent } = useSessionIntent();
   const { controls, register } = getIntentDef(intent);
   const busy = started || calmSessionActive;
+
+  const [preprocessor, setPreprocessor] = React.useState<PosePreprocessorSettings>(() =>
+    loadPreprocessorSettings()
+  );
+
+  const handlePreprocessorChange = (enabled: boolean) => {
+    const next: PosePreprocessorSettings = {
+      ...preprocessor,
+      enabled,
+      mode: enabled ? 'auto' : 'none',
+    };
+    setPreprocessor(next);
+    savePreprocessorSettings(next);
+  };
 
   const handleStart = () => {
     playUiCue('press', { register });
@@ -114,6 +134,15 @@ export const GameControls: React.FC<GameControlsProps> = ({
               {controls.secondary}
             </button>
           </div>
+        </div>
+      )}
+      {!started && (
+        <div className="pt-3 border-t border-white/10 mt-3 w-full flex items-center justify-center">
+          <ToggleSwitch
+            checked={preprocessor.enabled}
+            onChange={handlePreprocessorChange}
+            label="Auto-correct exposure (beta)"
+          />
         </div>
       )}
     </div>

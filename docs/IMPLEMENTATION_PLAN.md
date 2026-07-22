@@ -44,26 +44,28 @@ window.__IMF_BASELINE__.copyMarkdown();
 
 ---
 
-## Phase 1: Pose-robustness pre-processing (1 week)
+## Phase 1: Pose-robustness pre-processing (1 week) — in progress
 
 **Goal:** Reduce lighting and angle failures before they reach MoveNet.
 
-### 1.1 Classical CV pipeline
+### 1.1 Classical CV pipeline ✅ shipped
 
-Add a pre-processing stage that runs on the canvas frame **before** it is sent to the detector. Keep it optional, benchmarked, and fail-silent.
+A lightweight pre-processing stage now runs on the canvas frame **before** it is sent to the detector. It is optional, benchmarked, and fail-silent.
 
-- **Exposure normalization:** histogram equalization or CLAHE-like lightness stretch.
-- **White balance:** simple gray-world or (later) learned white-balance.
-- **Lens undistortion:** optional, based on a conservative default FOV / device family.
-- **Configurable toggle:** `posePreprocessor: 'none' | 'classic' | 'auto'` stored in user prefs.
+- **Exposure normalization + white balance:** a sampled gray-world heuristic with a strength blend and mild contrast stretch.
+- **Configurable toggle:** stored in `localStorage` under `prefPosePreprocessor`; surfaced in `GameControls`.
+- **Scope:** Main-thread and Web Worker paths both support the pre-processor.
+- **Overhead:** a full-pixel JavaScript pass adds per-frame CPU cost; expect a small FPS dip on low-end devices. Use `window.__IMF_BASELINE__` to compare on/off runs.
+- **Out of scope for Phase 1.0:** lens undistortion; generative cleanup.
 
-**Files to touch:**
+**Files touched:**
 
-- New: `src/lib/pose/posePreprocessor.ts`
-- `src/modules/poseWorker.ts`
-- `src/modules/usePoseDetection.ts`
-- `src/services/PoseDetectionService.ts`
-- `src/components/game/Webcam.tsx` (where `ImageData` is captured)
+- `src/lib/pose/posePreprocessor.ts` ✅ new utility
+- `src/lib/pose/posePreprocessor.test.ts` ✅ unit tests
+- `src/modules/poseWorker.ts` ✅ applies preprocessor in worker path
+- `src/modules/usePoseDetection.ts` ✅ applies preprocessor in main-thread path
+- `src/types/mediapipe.ts` ✅ `PosePreprocessorSettings` + worker `init` message field
+- `src/components/game/GameControls.tsx` ✅ user-facing toggle
 
 ### 1.2 Generative cleanup (spike)
 
@@ -75,7 +77,7 @@ After 1.1 is measured, evaluate a lightweight generative enhancement pass (e.g.,
 
 ### 1.3 Success criteria
 
-- [ ] Classical pre-processing is a toggle in settings.
+- [x] Classical pre-processing is a toggle in settings.
 - [ ] Median keypoint confidence improves on the “bad lighting” test set by ≥10%.
 - [ ] Mobile FPS regression is <5% at worst.
 - [ ] Falls back to raw frames if the preprocessor errors.

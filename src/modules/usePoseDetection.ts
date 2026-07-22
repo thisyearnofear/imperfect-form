@@ -43,6 +43,11 @@ import {
   type PoseRuntimeWindow,
 } from '../lib/pose/poseRuntime';
 import { recordPoseBaselineFrame } from '../lib/pose/poseBaseline';
+import {
+  PosePreprocessorSettings,
+  loadPreprocessorSettings,
+  preprocessVideoFrame,
+} from '../lib/pose/posePreprocessor';
 
 // Biomechanical types removed - consolidated into src/utils/biomechanics.ts
 
@@ -87,6 +92,8 @@ export function usePoseDetection(
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<PoseDetector | null>(null);
+  const preprocessCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const preprocessorSettingsRef = useRef<PosePreprocessorSettings>(loadPreprocessorSettings());
   const animationRef = useRef<number | null>(null);
   const modeRef = useRef<ExerciseMode>(safeMode);
   const isActiveRef = useRef(isActive);
@@ -347,6 +354,7 @@ export function usePoseDetection(
           height: video.videoHeight,
           isMobile,
           pbTrace,
+          preprocessor: preprocessorSettingsRef.current,
         };
         worker.postMessage(initMessage, [offscreen]);
 
@@ -661,7 +669,26 @@ export function usePoseDetection(
 
           try {
             const detectStart = performance.now();
-            const poses = await detectorRef.current!.estimatePoses(videoRef.current);
+            const preprocessorEnabled =
+              preprocessorSettingsRef.current.enabled &&
+              preprocessorSettingsRef.current.mode !== 'none';
+            let detectInput: HTMLVideoElement | HTMLCanvasElement = videoRef.current;
+            if (preprocessorEnabled) {
+              try {
+                if (!preprocessCanvasRef.current) {
+                  preprocessCanvasRef.current = document.createElement('canvas');
+                }
+                detectInput = preprocessVideoFrame(
+                  videoRef.current,
+                  preprocessCanvasRef.current,
+                  preprocessorSettingsRef.current
+                );
+              } catch (_preErr) {
+                // Pre-processor failed; fall back to the raw video frame.
+                detectInput = videoRef.current;
+              }
+            }
+            const poses = await detectorRef.current!.estimatePoses(detectInput);
             const detectionTimeMs = performance.now() - detectStart;
             if (cancelled || !isActiveRef.current) return;
 
