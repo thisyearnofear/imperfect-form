@@ -5,6 +5,14 @@
 > correction. Everything on this roadmap serves that **human-first** loop —
 > robot as teacher, not as the hero experience.
 
+## Mentor feedback — Cyberwave / SO-101
+
+We reviewed the roadmap and technical questions with Francesco De Pascale at Cyberwave. His feedback is recorded in [`MENTOR_FEEDBACK.md`](./MENTOR_FEEDBACK.md) and the concrete plan lives in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). The headlines that change this roadmap:
+
+1. **Pose robustness first** — classical CV pre-processing (exposure, calibration) before retraining or generative cleanup.
+2. **Deterministic robot mapping before VLAs** — convert human poses → robot-achievable poses → safe trajectories, and record those as LeRobot episodes. SmolVLA only after that pipeline is trustworthy.
+3. **Edge performance is a three-knob problem** — input size, model architecture, and quantization. Measure before choosing.
+
 ## Where we are
 
 **Shipped (Ring 0 — wallet-free core loop):**
@@ -111,6 +119,18 @@ Do these in order. Polish items are **not** the gate.
 | **3** | **Hardware bring-up**     | One curl demo trustworthy on metal (`demonstrate_strict_curl` first)                                                 | [`coach-station/LIVE.md`](../coach-station/LIVE.md)                      |
 
 **Defer until #1–#3:** own Spline scene, Avalanche leaderboard contract, marketing landing, SmolVLA / episode flywheel (Milestone 3).
+
+### Mentor feedback derived gates
+
+These gates sit alongside the hardware gates above and are detailed in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). They can be worked in parallel with Milestone 1 and each other, but they should not delay the manual stage.
+
+| #     | Gate                        | Done when                                                                                                                                 | Where                                 |
+| ----- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **A** | **CV robustness**           | Pre-processing toggle (exposure / calibration) improves keypoint confidence on bad lighting by ≥10% with <5% mobile FPS regression        | `docs/IMPLEMENTATION_PLAN.md` Phase 1 |
+| **B** | **Human → robot mapping**   | `FormEvent` carries human joint angles; station maps them to SO-101 waypoints; first LeRobot episode recorded from a coached curl session | `docs/IMPLEMENTATION_PLAN.md` Phase 2 |
+| **C** | **Edge performance matrix** | MoveNet A/B matrix (input size / model variant / quantization) decides a new default mobile config with no Ring 0 e2e regression          | `docs/IMPLEMENTATION_PLAN.md` Phase 3 |
+
+**Rule of thumb:** `A` and `B` can start as soon as the manual stage is solid; `C` waits until `A` is done so pre-processing and model/quantization effects are not conflated. All three are inputs to the SmolVLA milestone, not blockers for it.
 
 ### Milestone 1 — Sim choreography (software ✅ · stage gate open)
 

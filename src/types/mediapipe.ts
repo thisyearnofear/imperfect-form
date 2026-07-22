@@ -77,4 +77,13 @@ export type WorkerResponse =
   | { type: 'rep'; count: number }
   | { type: 'ready' }
   | { type: 'backend'; backend: string }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | {
+      type: 'baseline';
+      detectionTimeMs: number;
+      keypointConfidence: number | null;
+      keypointCount: number;
+      memoryUsed?: number;
+      memoryTotal?: number;
+      mode: string;
+    };

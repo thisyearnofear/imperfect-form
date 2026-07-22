@@ -42,6 +42,7 @@ import {
   shouldUsePoseWorker,
   type PoseRuntimeWindow,
 } from '../lib/pose/poseRuntime';
+import { recordPoseBaselineFrame } from '../lib/pose/poseBaseline';
 
 // Biomechanical types removed - consolidated into src/utils/biomechanics.ts
 
@@ -377,19 +378,20 @@ export function usePoseDetection(
           animationRef.current = requestAnimationFrame(frameCallback);
         }
 
-        worker.onmessage = (
-          e: MessageEvent<
-            | WorkerResponse
-            | {
-                type: 'ready' | 'rep' | 'result';
-                count?: number;
-                state?: BiomechanicalState | null;
-                keypoints?: Keypoint[];
-                formCheckSpeak?: { issue: string; phrase: string };
-              }
-          >
-        ) => {
+        worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
           const data = e.data;
+          if (data.type === 'baseline') {
+            recordPoseBaselineFrame({
+              detectionTimeMs: data.detectionTimeMs ?? 0,
+              keypointConfidence: data.keypointConfidence ?? null,
+              keypointCount: data.keypointCount ?? 0,
+              memoryUsed: data.memoryUsed,
+              memoryTotal: data.memoryTotal,
+              mode: data.mode ?? modeRef.current,
+              path: 'worker',
+            });
+            return;
+          }
           if (data.type === 'ready') {
             notifyStateChange({ hasPoseDetection: true, isLoading: false });
             emitProgress({
@@ -658,7 +660,9 @@ export function usePoseDetection(
             return;
 
           try {
+            const detectStart = performance.now();
             const poses = await detectorRef.current!.estimatePoses(videoRef.current);
+            const detectionTimeMs = performance.now() - detectStart;
             if (cancelled || !isActiveRef.current) return;
 
             const activeMode = modeRef.current;
@@ -680,6 +684,24 @@ export function usePoseDetection(
 
             if (poses.length > 0) {
               const keypoints = poses[0].keypoints as Keypoint[];
+              const scored = keypoints.filter((kp) => typeof kp.score === 'number');
+              const avgScore =
+                scored.length > 0
+                  ? scored.reduce((sum, kp) => sum + (kp.score ?? 0), 0) / scored.length
+                  : null;
+
+              const memory = (performance as any).memory as
+                { usedJSHeapSize?: number; totalJSHeapSize?: number } | undefined;
+
+              recordPoseBaselineFrame({
+                detectionTimeMs: Math.round(detectionTimeMs * 100) / 100,
+                keypointConfidence: avgScore,
+                keypointCount: keypoints.length,
+                memoryUsed: memory?.usedJSHeapSize,
+                memoryTotal: memory?.totalJSHeapSize,
+                mode: activeMode,
+                path: 'main',
+              });
 
               // Biomechanical Analysis
               const metrics = analyzeBiomechanics(keypoints, activeMode);

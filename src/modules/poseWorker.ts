@@ -151,8 +151,33 @@ self.addEventListener('message', async (event) => {
       }
       lastProcessTime = now;
 
+      const detectStart = performance.now();
       try {
         const poses = await detector.estimatePoses(bitmap);
+        const detectionTimeMs = performance.now() - detectStart;
+
+        // Emit baseline metrics regardless of whether a pose was detected
+        const firstPose = poses[0];
+        const keypoints = firstPose?.keypoints as Keypoint[] | undefined;
+        const scored = keypoints?.filter((kp) => typeof kp.score === 'number') ?? [];
+        const avgScore =
+          scored.length > 0
+            ? Math.round(
+                (scored.reduce((sum, kp) => sum + (kp.score ?? 0), 0) / scored.length) * 1000
+              ) / 1000
+            : null;
+
+        const memory = (performance as any).memory as
+          { usedJSHeapSize?: number; totalJSHeapSize?: number } | undefined;
+        self.postMessage({
+          type: 'baseline',
+          detectionTimeMs: Math.round(detectionTimeMs * 100) / 100,
+          keypointConfidence: avgScore,
+          keypointCount: keypoints?.length ?? 0,
+          memoryUsed: memory?.usedJSHeapSize,
+          memoryTotal: memory?.totalJSHeapSize,
+          mode: workerMode,
+        });
 
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 

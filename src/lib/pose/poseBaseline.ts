@@ -1,0 +1,330 @@
+'use client';
+
+/**
+ * Pose baseline measurement utility
+ *
+ * Records per-frame performance and quality metrics from the pose detection
+ * pipeline. Designed to be started/stopped from the browser console or a
+ * debug page. Keeps a rolling buffer to avoid unbounded memory growth.
+ *
+ * Usage:
+ *   window.__IMF_BASELINE__.start();
+ *   // ... run a workout ...
+ *   window.__IMF_BASELINE__.stop();
+ *   window.__IMF_BASELINE__.exportMarkdown();
+ */
+
+import { getDeviceInfo } from '@/utils/deviceDetection';
+
+export interface PoseBaselineFrame {
+  /** Timestamp in ms */
+  t: number;
+  /** Time spent inside estimatePoses (ms) */
+  detectionTimeMs: number;
+  /** Total time between the start of this frame and the previous one (ms) */
+  frameDeltaMs: number;
+  /** Inferred FPS from the last rolling window */
+  fps: number;
+  /** Average keypoint score, 0–1, or null if no pose detected */
+  keypointConfidence: number | null;
+  /** Number of keypoints detected above the score threshold */
+  keypointCount: number;
+  /** JavaScript heap used (bytes) if available */
+  memoryUsed?: number;
+  /** JavaScript heap total (bytes) if available */
+  memoryTotal?: number;
+  /** Exercise mode at the time of the frame */
+  mode: string;
+  /** Whether the frame was processed on the worker or main thread */
+  path: 'worker' | 'main';
+}
+
+export interface PoseBaselineReport {
+  /** Unique run id */
+  runId: string;
+  /** When the baseline was started */
+  startedAt: number;
+  /** When the baseline was stopped */
+  endedAt: number;
+  /** Device / browser snapshot */
+  device: ReturnType<typeof getDeviceInfo>;
+  /** Aggregated statistics */
+  summary: {
+    durationMs: number;
+    frames: number;
+    avgFps: number;
+    medianFps: number;
+    p95DetectionTimeMs: number;
+    medianDetectionTimeMs: number;
+    avgKeypointConfidence: number | null;
+    poseDetectedFrames: number;
+    memoryGrowthBytes: number | null;
+  };
+  /** Per-frame samples (may be downsampled) */
+  frames: PoseBaselineFrame[];
+}
+
+interface PoseBaselineOptions {
+  /** Max number of frames to keep in memory. Older frames are dropped. */
+  maxFrames?: number;
+  /** Rolling window size for FPS calculation. */
+  fpsWindowSize?: number;
+}
+
+const DEFAULT_MAX_FRAMES = 4_000;
+const DEFAULT_FPS_WINDOW_SIZE = 30;
+const STORAGE_KEY = 'imf_poseBaseline_lastRun';
+
+function percentile(sorted: number[], p: number): number {
+  if (sorted.length === 0) return 0;
+  const idx = Math.max(0, Math.ceil((p / 100) * sorted.length) - 1);
+  return sorted[idx] ?? 0;
+}
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+class PoseBaselineRecorder {
+  private options: Required<PoseBaselineOptions>;
+  private frames: PoseBaselineFrame[] = [];
+  private lastFrameTime = 0;
+  private isRunning = false;
+  private runId = '';
+  private startedAt = 0;
+  private fpsWindow: number[] = [];
+
+  constructor(options: PoseBaselineOptions = {}) {
+    this.options = {
+      maxFrames: options.maxFrames ?? DEFAULT_MAX_FRAMES,
+      fpsWindowSize: options.fpsWindowSize ?? DEFAULT_FPS_WINDOW_SIZE,
+    };
+  }
+
+  /**
+   * Start a new baseline run.
+   */
+  start(): void {
+    this.frames = [];
+    this.fpsWindow = [];
+    this.lastFrameTime = 0;
+    this.isRunning = true;
+    this.runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    this.startedAt = performance.now();
+  }
+
+  /**
+   * Stop the current baseline run and return the report.
+   */
+  stop(): PoseBaselineReport | null {
+    if (!this.isRunning) return null;
+    this.isRunning = false;
+
+    const report = this.buildReport();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(report));
+    } catch {
+      // localStorage may be unavailable or full; ignore.
+    }
+    return report;
+  }
+
+  /**
+   * Record a single frame. Safe to call on every detection tick.
+   */
+  record(frame: Omit<PoseBaselineFrame, 't' | 'fps' | 'frameDeltaMs'>): void {
+    if (!this.isRunning) return;
+
+    const now = performance.now();
+    const delta = this.lastFrameTime ? now - this.lastFrameTime : 0;
+    this.lastFrameTime = now;
+
+    this.fpsWindow.unshift(delta);
+    if (this.fpsWindow.length > this.options.fpsWindowSize) {
+      this.fpsWindow.pop();
+    }
+
+    const avgDelta = this.fpsWindow.reduce((a, b) => a + b, 0) / Math.max(1, this.fpsWindow.length);
+    const fps = avgDelta > 0 ? Math.round(1000 / avgDelta) : 0;
+
+    this.frames.push({
+      ...frame,
+      t: now,
+      frameDeltaMs: delta,
+      fps,
+    });
+
+    if (this.frames.length > this.options.maxFrames) {
+      this.frames.shift();
+    }
+  }
+
+  /**
+   * Build a report from the current frames even while running.
+   */
+  buildReport(): PoseBaselineReport {
+    const endedAt = Date.now();
+    const durationMs = this.startedAt ? endedAt - this.startedAt : 0;
+    const samples = this.frames;
+
+    const detectionTimes = samples.map((f) => f.detectionTimeMs).sort((a, b) => a - b);
+    const fpsValues = samples.map((f) => f.fps);
+    const confidences = samples
+      .map((f) => f.keypointConfidence)
+      .filter((c): c is number => c !== null && c !== undefined);
+    const withPose = samples.filter((f) => f.keypointConfidence !== null).length;
+
+    const firstMemory = samples[0]?.memoryUsed ?? null;
+    const lastMemory = samples[samples.length - 1]?.memoryUsed ?? null;
+    const memoryGrowthBytes =
+      firstMemory !== null && lastMemory !== null ? lastMemory - firstMemory : null;
+
+    return {
+      runId: this.runId,
+      startedAt: this.startedAt,
+      endedAt,
+      device: getDeviceInfo(),
+      summary: {
+        durationMs,
+        frames: samples.length,
+        avgFps: samples.length
+          ? Math.round(fpsValues.reduce((a, b) => a + b, 0) / samples.length)
+          : 0,
+        medianFps: median(fpsValues),
+        p95DetectionTimeMs: percentile(detectionTimes, 95),
+        medianDetectionTimeMs: median(detectionTimes),
+        avgKeypointConfidence: confidences.length
+          ? Math.round((confidences.reduce((a, b) => a + b, 0) / confidences.length) * 1000) / 1000
+          : null,
+        poseDetectedFrames: withPose,
+        memoryGrowthBytes,
+      },
+      frames: samples,
+    };
+  }
+
+  /**
+   * Load the last stored report from localStorage.
+   */
+  loadLastReport(): PoseBaselineReport | null {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw) as PoseBaselineReport;
+    } catch {
+      return null;
+    }
+  }
+}
+
+let recorder: PoseBaselineRecorder | null = null;
+
+function getRecorder(): PoseBaselineRecorder {
+  if (!recorder) {
+    recorder = new PoseBaselineRecorder();
+  }
+  return recorder;
+}
+
+/** Start recording a baseline run. */
+export function startPoseBaseline(): void {
+  getRecorder().start();
+  console.log('[poseBaseline] started run:', getRecorder().buildReport().runId);
+}
+
+/** Stop recording and return the report. */
+export function stopPoseBaseline(): PoseBaselineReport | null {
+  const report = getRecorder().stop();
+  console.log('[poseBaseline] stopped. frames:', report?.summary.frames ?? 0);
+  return report;
+}
+
+/** Record a frame (used by the pose pipeline). */
+export function recordPoseBaselineFrame(
+  frame: Omit<PoseBaselineFrame, 't' | 'fps' | 'frameDeltaMs'>
+): void {
+  getRecorder().record(frame);
+}
+
+/** Export the last stored report as a markdown table. */
+export function exportPoseBaselineMarkdown(): string {
+  const report = getRecorder().loadLastReport();
+  if (!report) {
+    return '# Pose baseline\n\nNo baseline recorded yet. Run `window.__IMF_BASELINE__.start()` ... workout ... `window.__IMF_BASELINE__.stop()`.\n';
+  }
+
+  const { device, summary, startedAt, runId } = report;
+  const date = new Date(startedAt).toISOString();
+
+  return `# Pose Detection Baseline
+
+- **Run ID:** \`${runId}\`
+- **Date:** ${date}
+- **Duration:** ${(summary.durationMs / 1000).toFixed(1)}s
+- **Frames:** ${summary.frames}
+
+## Device
+
+| Property | Value |
+|----------|-------|
+| Platform | ${device.platform} |
+| Browser | ${device.browser} |
+| Performance level | ${device.performanceLevel} |
+| Memory (GB) | ${device.deviceMemory ?? 'unknown'} |
+| Cores | ${device.hardwareConcurrency} |
+| WebGL | ${device.webglSupport ? 'yes' : 'no'} |
+| WebGPU | ${device.webGPUSupport ? 'yes' : 'no'} |
+| OffscreenCanvas | ${device.offscreenCanvasSupport ? 'yes' : 'no'} |
+| Viewport | ${device.viewport.width}x${device.viewport.height} |
+
+## Summary
+
+| Metric | Value |
+|--------|-------|
+| Avg FPS | ${summary.avgFps} |
+| Median FPS | ${summary.medianFps} |
+| Median detection time (ms) | ${summary.medianDetectionTimeMs.toFixed(2)} |
+| p95 detection time (ms) | ${summary.p95DetectionTimeMs.toFixed(2)} |
+| Avg keypoint confidence | ${summary.avgKeypointConfidence ?? 'N/A'} |
+| Pose detected frames | ${summary.poseDetectedFrames} / ${summary.frames} |
+| Memory growth (bytes) | ${summary.memoryGrowthBytes ?? 'N/A'} |
+
+## Notes
+
+<!-- Add your own observations here: lighting, angle, occlusion, model config, etc. -->
+`;
+}
+
+/** Copy the markdown report to the clipboard. */
+export async function copyPoseBaselineMarkdown(): Promise<void> {
+  const markdown = exportPoseBaselineMarkdown();
+  try {
+    await navigator.clipboard.writeText(markdown);
+    console.log('[poseBaseline] markdown copied to clipboard');
+  } catch {
+    console.log(exportPoseBaselineMarkdown());
+  }
+}
+
+/** Global API exposed for console use. */
+export interface PoseBaselineWindowApi {
+  start: typeof startPoseBaseline;
+  stop: typeof stopPoseBaseline;
+  exportMarkdown: typeof exportPoseBaselineMarkdown;
+  copyMarkdown: typeof copyPoseBaselineMarkdown;
+  getReport: () => PoseBaselineReport | null;
+}
+
+/** Expose to window for manual console use (development only). */
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  (window as any).__IMF_BASELINE__ = {
+    start: startPoseBaseline,
+    stop: stopPoseBaseline,
+    exportMarkdown: exportPoseBaselineMarkdown,
+    copyMarkdown: copyPoseBaselineMarkdown,
+    getReport: () => getRecorder().loadLastReport(),
+  } as PoseBaselineWindowApi;
+}
