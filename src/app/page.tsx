@@ -128,9 +128,9 @@ export default function Home() {
         }).catch((err) => console.warn('Failed to track app launch:', err));
       }
 
-      callFarcasterReady()
-        .then(() => console.log('🎯 Ready() completed successfully'))
-        .catch(() => console.log('🎯 Ready() failed or not needed, continuing anyway'));
+      callFarcasterReady().catch(() => {
+        // Ready() failure is non-blocking; app continues without ceremony.
+      });
     }
   }, [hasMounted, isInMiniApp, user?.fid, platform]);
 
@@ -232,7 +232,11 @@ export default function Home() {
         <div className="flex-1 flex flex-col">
           {/* Workout Tab - Game Area */}
           {(activeTab === 'workout' || !hasTrained) && (
-            <div className="flex-1 flex flex-col">
+            <ScreenTransition
+              key={`workout-${hasTrained ? 'earned' : 'studio'}`}
+              mode="fade"
+              className="flex-1 flex flex-col"
+            >
               <div className="relative z-10 flex-grow">
                 <GameWrapper />
               </div>
@@ -293,7 +297,7 @@ export default function Home() {
                   </div>
                 </>
               )}
-            </div>
+            </ScreenTransition>
           )}
 
           {hasTrained && activeTab === 'dashboard' && (

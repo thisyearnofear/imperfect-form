@@ -26,10 +26,7 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       const register = async () => {
         try {
-          const reg = await navigator.serviceWorker.register('/sw.js');
-          if (process.env.NODE_ENV === 'development') {
-            console.log('SW registered:', reg.scope);
-          }
+          await navigator.serviceWorker.register('/sw.js');
         } catch (e) {
           console.warn('SW registration failed:', e);
         }

@@ -175,9 +175,6 @@ const createConnectors = async () => {
     if (farcasterMiniApp && typeof farcasterMiniApp === 'function') {
       const connector = farcasterMiniApp() as any; // Type assertion for compatibility
       connectors.unshift(connector);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✅ Farcaster mini app connector added to Wagmi config');
-      }
     }
   } catch (err) {
     console.warn('@farcaster/miniapp-wagmi-connector not available:', err);

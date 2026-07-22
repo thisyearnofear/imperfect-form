@@ -253,18 +253,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     [platform, farcasterWallet, isWagmiConnected, wagmiAddress, wagmiChainId, isWagmiConnecting]
   );
 
-  // Debug wallet state changes (only in development)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔗 Wallet state updated:', {
-        platform,
-        isWagmiConnected,
-        wagmiAddress,
-        farcasterWallet,
-        finalWalletState: wallet,
-      });
-    }
-  }, [platform, isWagmiConnected, wagmiAddress, farcasterWallet, wallet]);
+  // Wallet state is intentionally silent; use React DevTools or the remote logger for diagnostics.
 
   // Client-side initialization
   useEffect(() => {
@@ -367,21 +356,10 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
   // Actions implementation - simplified based on latest Farcaster docs
   const connect = useCallback(
     async (connectorId?: string): Promise<boolean> => {
-      console.log('🔗 PlatformContext: Connect called', {
-        platform,
-        connectorId,
-        isWagmiConnected,
-        wagmiAddress,
-        connectors: connectors.map((c) => ({
-          id: c.id,
-          name: c.name,
-          type: c.type,
-        })),
-      });
+      // Connection flow is intentionally silent in UI; errors surface via toast.
 
       // If already connected, return true
       if (isWagmiConnected && wagmiAddress) {
-        console.log('🔗 Already connected via Wagmi');
         return true;
       }
 
@@ -410,21 +388,13 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         // If no connectorId is provided for a non-farcaster platform,
         // open the wallet selector modal.
         else {
-          console.log('🔗 No connector ID, opening wallet selector modal');
           setWalletSelectorOpen(true);
           return false; // Indicate that connection is deferred to the modal
         }
 
-        console.log('🔗 Target connectors:', {
-          platform,
-          connectors: targetConnectors.map((c) => ({ id: c.id, name: c.name })),
-        });
-
         // Try each connector
         for (const connector of targetConnectors) {
           try {
-            console.log(`🔗 Attempting connection with ${connector.id}...`);
-
             // Special handling for WalletConnect to prevent session conflicts
             if (connector.id === 'walletConnect') {
               // Clear any existing WalletConnect sessions before connecting
@@ -468,18 +438,12 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
             // Wait for state to update
             await new Promise((resolve) => setTimeout(resolve, 500));
 
-            console.log('🔗 Connection attempt completed:', {
-              connectorId: connector.id,
-              isWagmiConnected,
-              wagmiAddress,
-            });
-
             // The Wagmi connector handles the actual connection state
             // Success will be reflected in the wallet state via useAccount hook
             toast.success('Wallet connected!');
             return true;
           } catch (error) {
-            console.warn(`🔗 Connection failed with ${connector.id}:`, error);
+            console.warn(`Connection failed with ${connector.id}:`, error);
 
             // Special handling for WalletConnect errors
             if (connector.id === 'walletConnect') {
@@ -490,7 +454,6 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
                 errorMessage.includes('proposal') ||
                 errorMessage.includes('topic')
               ) {
-                console.log('🔗 WalletConnect session error - performing comprehensive cleanup');
                 // Comprehensive cleanup and continue to next connector
                 try {
                   const allKeys = Object.keys(localStorage);
@@ -516,12 +479,6 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
                       key.includes('w3m')
                   );
                   sessionKeys.forEach((key) => sessionStorage.removeItem(key));
-
-                  console.log(
-                    `🧹 Cleaned up ${
-                      wcKeys.length + sessionKeys.length
-                    } WalletConnect entries after error`
-                  );
                 } catch (cleanupError) {
                   console.warn('WalletConnect error cleanup failed:', cleanupError);
                 }
@@ -529,9 +486,6 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
             }
 
             // For Farcaster connector, this might be expected if user doesn't have wallet
-            if (connector.id === 'farcasterFrame') {
-              console.log('🔗 Farcaster connector failed - user may not have wallet connected');
-            }
 
             // Continue to next connector
             continue;
@@ -547,7 +501,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         // It just means we are waiting for user interaction.
         return false;
       } catch (err) {
-        console.error('🔗 Connection failed:', err);
+        console.error('Connection failed:', err);
         toast.error('Connection failed. Please try again.');
         return false;
       }
@@ -597,12 +551,6 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
             console.warn(`Failed to remove WalletConnect sessionStorage key ${key}:`, e);
           }
         });
-
-        console.log(
-          `🧹 WalletConnect sessions cleaned up on disconnect (${
-            wcKeys.length + sessionKeys.length
-          } entries)`
-        );
       } catch (error) {
         console.warn('WalletConnect cleanup on disconnect failed:', error);
       }

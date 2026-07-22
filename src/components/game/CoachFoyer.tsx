@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowRight, Camera, LockKeyhole, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ArrowRight,
+  Camera,
+  LockKeyhole,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  Hand,
+  Sparkles,
+} from 'lucide-react';
 import { BRAND, getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
 import type { ExerciseMode } from '@/utils/biomechanics';
@@ -19,6 +28,24 @@ type ExerciseOption = {
   detail: string;
   category: 'primary' | 'extra';
 };
+
+const howItWorks = [
+  {
+    icon: Eye,
+    title: 'Camera reads form',
+    body: 'Pose detection runs on your device — no video upload.',
+  },
+  {
+    icon: Hand,
+    title: 'Coach shows the fix',
+    body: 'Real-time cues guide your movement as you train.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Progress unlocks',
+    body: 'XP, quests, and ghosts appear after your first session.',
+  },
+];
 
 const exercises: ExerciseOption[] = [
   { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line', category: 'primary' },
@@ -55,6 +82,7 @@ function CoachFocal({ className }: { className?: string }) {
 export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
   const [showExtras, setShowExtras] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const firstExtraRef = React.useRef<HTMLButtonElement>(null);
   const moreToggleRef = React.useRef<HTMLButtonElement>(null);
 
@@ -159,6 +187,37 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           <LockKeyhole size={14} strokeWidth={2} aria-hidden="true" />
           {BRAND.trustLine}
         </p>
+
+        <button
+          type="button"
+          className="coach-foyer__how-it-works-toggle motion-enter"
+          style={{ animationDelay: '440ms' }}
+          aria-expanded={showHowItWorks}
+          onClick={() => {
+            playStudioCue('soft');
+            setShowHowItWorks((prev) => !prev);
+          }}
+        >
+          {showHowItWorks ? 'Hide' : 'How it works'}
+          {showHowItWorks ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+
+        {showHowItWorks && (
+          <div className="coach-foyer__how-it-works motion-enter">
+            {howItWorks.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="coach-foyer__how-it-works-item">
+                  <Icon size={16} aria-hidden="true" />
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>{item.body}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
