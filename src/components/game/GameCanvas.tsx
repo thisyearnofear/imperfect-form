@@ -4,6 +4,7 @@ import React from 'react';
 import { GameHUD, RepFeedbackOverlay } from './GameHUD';
 import { GameLoadingOverlay, DebugOverlay } from './GameOverlay';
 import { LiveCoachingStatus } from './LiveCoachingStatus';
+import { FirstRepCelebration } from './FirstRepCelebration';
 import { PoseState, DetectionProgress } from '@/hooks/usePoseDetection';
 
 interface RepFeedback {
@@ -23,6 +24,7 @@ interface GameCanvasProps {
   poseState: PoseState;
   detectionProgress: DetectionProgress | null;
   webcam: React.ReactNode;
+  showFirstRepCelebration?: boolean;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -37,6 +39,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   poseState,
   detectionProgress,
   webcam,
+  showFirstRepCelebration = false,
 }) => {
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
@@ -72,6 +75,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             isVisible={isLoadingVisible}
           />
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+          <FirstRepCelebration show={showFirstRepCelebration} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <LiveCoachingStatus mode={mode} tracking={poseState.poseDetected} />
         </div>
@@ -103,6 +107,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         />
         <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
         <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+        <FirstRepCelebration show={showFirstRepCelebration} />
         <LiveCoachingStatus mode={mode} tracking={poseState.poseDetected} />
       </div>
     </div>

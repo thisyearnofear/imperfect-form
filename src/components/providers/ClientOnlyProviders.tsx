@@ -34,6 +34,60 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
       // Delay registration slightly to avoid competing with critical loads
       setTimeout(register, 1500);
     }
+
+    // Pre-warm TensorFlow.js backend and pre-download the MoveNet model so the
+    // first workout starts faster. Runs in a non-blocking idle window.
+    const warmup = async () => {
+      try {
+        const [{ initializeTensorFlow }, poseDetection] = await Promise.all([
+          import('@/utils/tensorFlowInit'),
+          import('@tensorflow-models/pose-detection'),
+        ]);
+
+        await initializeTensorFlow({ preferWebGL: true });
+
+        const isMobileUA =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(
+            navigator.userAgent
+          );
+        const modelType = isMobileUA ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
+
+        const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, {
+          modelType: modelType as any,
+          enableSmoothing: true,
+        });
+
+        // Warm up with a dummy inference so the first real frame is faster.
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = 'black';
+          ctx.fillRect(0, 0, 256, 256);
+          await detector.estimatePoses(canvas);
+        }
+
+        // Expose for the workout pipeline to reuse the pre-warmed detector.
+        window.__imfPreWarmedDetector = detector;
+      } catch (e) {
+        console.warn('TF.js pre-warm failed:', e);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      const delay = 'requestIdleCallback' in window ? 500 : 1500;
+      const run = () => {
+        // Use requestIdleCallback when available to avoid competing with render.
+        if ('requestIdleCallback' in window) {
+          window.requestIdleCallback(() => warmup());
+        } else {
+          setTimeout(warmup, 0);
+        }
+      };
+      const timer = setTimeout(run, delay);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   // Show welcome screen during initialization

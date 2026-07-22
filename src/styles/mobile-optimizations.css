@@ -478,6 +478,62 @@
   }
 }
 
+/* Landscape thumb-zone controls — keep primary actions near the thumbs */
+@media (orientation: landscape) and (max-height: 500px) {
+  .controls-container--landscape {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.6));
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .controls-container--landscape .controls-row--landscape {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  /* Primary action (Start/Stop) sits at the right thumb */
+  .controls-container--landscape #startButton,
+  .controls-container--landscape #stopButton {
+    min-height: 56px;
+    min-width: 110px;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    border-radius: 0.75rem;
+  }
+
+  /* Secondary action (Reset/ModeSwitch) sits at the left thumb */
+  .controls-container--landscape #resetButton,
+  .controls-container--landscape .mobile-mode-switch {
+    min-height: 56px;
+    font-size: 0.875rem;
+  }
+
+  /* Stop button in thumb zone during workout */
+  .controls-container--landscape .stop-button-discrete {
+    position: static;
+    min-width: 110px !important;
+    max-width: none;
+    min-height: 56px !important;
+    font-size: 0.95rem !important;
+    margin-left: auto;
+  }
+
+  /* Agent insight tray keeps to the left/center, out of the thumb zones */
+  .controls-container--landscape .coachy-wrap {
+    flex: 1;
+    max-width: 60%;
+  }
+}
+
 /* Touch feedback for interactive elements */
 @media (hover: none) and (pointer: coarse) {
   .touch-feedback:active {

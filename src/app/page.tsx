@@ -22,8 +22,6 @@ import { useXpProgress } from '@/hooks/useXpProgress';
 import { ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import { UniversalConnectButton } from '@/components/wallet';
 import { ScreenTransition } from '@/components/ui/ScreenTransition';
-import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
-import { useOnboarding } from '@/contexts/OnboardingContext';
 
 const GameWrapper = dynamic(() => import('@/components/game/GameWrapper'), {
   ssr: false,
@@ -51,23 +49,13 @@ export default function Home() {
   const { platform, user } = usePlatform();
   const { progress } = useXpProgress();
   const isInMiniApp = platform === 'farcaster';
-  const [hasMounted, setHasMounted] = useState(false);
   const [showFirstTimePrompt, setShowFirstTimePrompt] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('workout');
   const [showDashboard, setShowDashboard] = useState(true);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
-  const { hasSeen: hasSeenOnboarding, markSeen: markOnboardingSeen } = useOnboarding();
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Game-loop chrome is earned after the first coached feel — not the day-0 foyer.
   const hasTrained = progress.totalXp > 0;
-
-  // Surface first-visit onboarding after the bay entry ceremony
-  useEffect(() => {
-    if (hasMounted && !hasSeenOnboarding) {
-      setShowOnboarding(true);
-    }
-  }, [hasMounted, hasSeenOnboarding]);
 
   // Form cue / demonstration → bay arc pulse (fail-silent when station unset)
   useCoachBayPulse();
@@ -91,10 +79,6 @@ export default function Home() {
     setShowExpandedLeaderboard(true);
   };
 
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
   // Studio shell owns day-0 chrome; chain themes only after first coached feel.
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -109,7 +93,7 @@ export default function Home() {
   }, [hasTrained]);
 
   useEffect(() => {
-    if (hasMounted && isInMiniApp) {
+    if (isInMiniApp) {
       console.log('🎯 Mini App initialization');
 
       if (user?.fid) {
@@ -132,16 +116,16 @@ export default function Home() {
         // Ready() failure is non-blocking; app continues without ceremony.
       });
     }
-  }, [hasMounted, isInMiniApp, user?.fid, platform]);
+  }, [isInMiniApp, user?.fid, platform]);
 
   useEffect(() => {
-    if (isInMiniApp && hasMounted) {
+    if (isInMiniApp) {
       const hasSeenPrompt = localStorage.getItem('miniapp-first-visit-seen');
       if (!hasSeenPrompt) {
         setTimeout(() => setShowFirstTimePrompt(true), 3000);
       }
     }
-  }, [isInMiniApp, hasMounted]);
+  }, [isInMiniApp]);
 
   const day0Topbar = (
     <div className="studio-topbar sticky top-0 z-50">
@@ -156,16 +140,6 @@ export default function Home() {
       </div>
     </div>
   );
-
-  // Before mount: studio bay + topbar so we never flash a blank or arcade frame.
-  if (!hasMounted) {
-    return (
-      <div className="relative flex flex-col min-h-screen">
-        <StudioAtmosphere />
-        <div className="relative z-10 flex flex-col min-h-screen">{day0Topbar}</div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -376,16 +350,6 @@ export default function Home() {
         isOpen={showExpandedLeaderboard}
         onClose={() => setShowExpandedLeaderboard(false)}
       />
-
-      {/* First-visit onboarding */}
-      {showOnboarding && (
-        <OnboardingModal
-          onComplete={() => {
-            markOnboardingSeen();
-            setShowOnboarding(false);
-          }}
-        />
-      )}
 
       {/* First-time Mini App user prompt */}
       {showFirstTimePrompt && (

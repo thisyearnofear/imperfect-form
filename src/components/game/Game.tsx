@@ -22,6 +22,7 @@ import { coachStation } from '@/services/coachStation';
 // session-register.css loaded from root layout
 
 import { useFullscreen } from '../../hooks/useFullscreen';
+import { useOrientation } from '../../hooks/useOrientation';
 import FullscreenExitButton from '../ui/FullscreenExitButton';
 import { SplitFlapInstructions } from '../ui/SplitFlapText';
 import useOrientationLock from '../../hooks/useOrientationLock';
@@ -32,6 +33,7 @@ import { useRepCounter } from '../../hooks/useRepCounter';
 import { useCameraSetup } from '../../hooks/useCameraSetup';
 import { GameCanvas } from './GameCanvas';
 import CoachFoyer from './CoachFoyer';
+import LandscapePrompt from './LandscapePrompt';
 import {
   saveLocalWorkout,
   getPersonalBestWorkout,
@@ -148,6 +150,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Swipe gesture handling for mobile
   const { isMobile } = useDeviceDetect();
+  const { isPortrait } = useOrientation();
+  const [dismissLandscapePrompt, setDismissLandscapePrompt] = useState(false);
 
   // Swipe gesture handling for mobile using custom hook
   const { handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeGesture(
@@ -215,6 +219,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [, setShowTutorial] = useState(true);
   const [started, setStarted] = useState(false);
   const [showCameraPrimer, setShowCameraPrimer] = useState(false);
+  const [showFirstRepCelebration, setShowFirstRepCelebration] = useState(false);
   const pendingStartRef = useRef<{ trace?: any; isRace?: boolean } | undefined>(undefined);
   const [timeLeft, setTimeLeft] = useState(120);
   // repCount managed by useRepCounter below
@@ -232,6 +237,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   } = useRepCounter(
     () => {
       if (!timerRef.current) startTimer();
+      setShowFirstRepCelebration(true);
     },
     (count, exerciseMode) => {
       if (user?.fid) {
@@ -587,6 +593,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     resetReps();
     setTimeLeft(120);
     setStarted(false);
+    setShowFirstRepCelebration(false);
     setCalmSessionActive(false);
     setIsRace(false);
     setRaceTrace(null);
@@ -606,6 +613,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Memoize the webcam component to prevent re-renders when timer updates
   // When racing against a ghost, prioritize raceTrace over pbTrace
   const activeTrace = raceTrace || pbTrace;
+
+  const showLandscapePrompt = isMobile && isPortrait && !dismissLandscapePrompt;
 
   const memoizedWebcam = useMemo(
     () => (
@@ -735,6 +744,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               poseState={poseState}
               detectionProgress={detectionProgress}
               webcam={memoizedWebcam}
+              showFirstRepCelebration={showFirstRepCelebration}
             />
           )}
         </div>
@@ -743,6 +753,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           <GameControls
             started={started}
             isMobile={isMobile}
+            isLandscape={!isPortrait}
             metrics={metrics}
             mode={mode}
             voiceEnabled={voiceEnabled}
@@ -756,6 +767,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           />
         )}
       </div>
+      {showLandscapePrompt && <LandscapePrompt onDismiss={() => setDismissLandscapePrompt(true)} />}
+
       {showCameraPrimer && (
         <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-sm rounded-2xl border border-teal-500/20 bg-teal-500/5 overflow-y-auto max-h-[calc(100vh-2rem)]">

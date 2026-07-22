@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePlatform } from '@/contexts/PlatformContext';
+import { TOGGLE_AUTH_DEBUG_EVENT } from '@/lib/appEvents';
 
 interface AuthDebugPanelProps {
   show?: boolean;
@@ -12,13 +13,44 @@ interface AuthDebugPanelProps {
  * Debug panel to show authentication state
  * Only shows in development mode
  */
-export default function AuthDebugPanel({
-  show = process.env.NODE_ENV === 'development',
-  className = '',
-}: AuthDebugPanelProps) {
+export default function AuthDebugPanel({ show = false, className = '' }: AuthDebugPanelProps) {
+  const [isVisible, setIsVisible] = useState(false);
   const { platform, isReady, wallet, user, error } = usePlatform();
 
-  if (!show) return null;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsVisible(show || window.localStorage.getItem('DEBUG_AUTH') === 'true');
+  }, [show]);
+
+  // Toggle the panel with a keyboard shortcut (Ctrl+Shift+D) or a custom event.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const togglePanel = () => {
+      setIsVisible((prev) => {
+        const next = !prev;
+        window.localStorage.setItem('DEBUG_AUTH', String(next));
+        return next;
+      });
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === '\\') {
+        e.preventDefault();
+        togglePanel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener(TOGGLE_AUTH_DEBUG_EVENT, togglePanel);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener(TOGGLE_AUTH_DEBUG_EVENT, togglePanel);
+    };
+  }, []);
+
+  if (!isVisible) return null;
 
   const getStatusColor = () => {
     if (error) return 'bg-red-900/50 border-red-500';

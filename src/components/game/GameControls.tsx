@@ -15,6 +15,8 @@ import {
 interface GameControlsProps {
   started: boolean;
   isMobile: boolean;
+  /** Whether the device is in landscape orientation (mobile landscape UX) */
+  isLandscape?: boolean;
   metrics: BiomechanicalState | null;
   mode: import('@/utils/biomechanics').ExerciseMode;
   voiceEnabled: boolean;
@@ -31,6 +33,7 @@ interface GameControlsProps {
 export const GameControls: React.FC<GameControlsProps> = ({
   started,
   isMobile,
+  isLandscape = false,
   metrics,
   mode,
   voiceEnabled,
@@ -65,15 +68,21 @@ export const GameControls: React.FC<GameControlsProps> = ({
     onStart();
   };
 
+  const isMobileLandscape = isMobile && isLandscape;
+
   return (
     <div
       id="controls"
-      className={`${isMobile ? 'mobile-controls' : 'mt-4'} controls-container`}
+      className={`${isMobile ? 'mobile-controls' : 'mt-4'} controls-container${
+        isMobileLandscape ? ' controls-container--landscape' : ''
+      }`}
       style={{ marginBottom: isMobile ? '8px' : '0' }}
       data-register={register}
     >
       {started ? (
-        <div className="controls-enter w-full flex gap-3 items-center">
+        <div
+          className={`controls-enter w-full flex gap-3 items-center${isMobileLandscape ? ' controls-row--landscape' : ''}`}
+        >
           <div className={`min-w-0 ${isMobile ? 'coachy-wrap' : 'flex-1'}`}>
             <AgentInsightTray
               metrics={metrics}
@@ -97,7 +106,9 @@ export const GameControls: React.FC<GameControlsProps> = ({
           </button>
         </div>
       ) : (
-        <div className="flex justify-between w-full h-full items-center controls-enter gap-2">
+        <div
+          className={`flex justify-between w-full h-full items-center controls-enter gap-2${isMobileLandscape ? ' controls-row--landscape' : ''}`}
+        >
           {controls.showExerciseModes ? (
             <ModeSwitch
               value={mode}

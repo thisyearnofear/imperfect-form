@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { BRAND, getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/coach-foyer.css';
 
@@ -81,8 +83,11 @@ function CoachFocal({ className }: { className?: string }) {
 
 export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
+  const { hasSeen } = useOnboarding();
+  const { triggerHaptic } = useHapticFeedback();
   const [showExtras, setShowExtras] = useState(false);
-  const [showHowItWorks, setShowHowItWorks] = useState(false);
+  // Inline onboarding: show the value prop by default for first-time users.
+  const [showHowItWorks, setShowHowItWorks] = useState(!hasSeen);
   const firstExtraRef = React.useRef<HTMLButtonElement>(null);
   const moreToggleRef = React.useRef<HTMLButtonElement>(null);
 
@@ -132,6 +137,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
                 aria-pressed={selected}
                 onClick={() => {
                   playStudioCue('soft');
+                  triggerHaptic(40);
                   onModeChange(exercise.mode);
                 }}
               >
@@ -153,6 +159,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           aria-controls="exercise-list"
           onClick={() => {
             playStudioCue('soft');
+            triggerHaptic(40);
             setShowExtras((prev) => !prev);
           }}
         >
@@ -170,11 +177,12 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
         <button
           type="button"
           id="startButton"
-          className="coach-foyer__start feel-press motion-enter"
+          className="coach-foyer__start coach-foyer__start--hero feel-press motion-enter"
           style={{ animationDelay: '320ms' }}
           aria-label={foyer.cta}
           onClick={() => {
             playStudioCue('press');
+            triggerHaptic([50, 100]);
             onStart();
           }}
         >
@@ -183,9 +191,16 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           <ArrowRight size={18} strokeWidth={2} />
         </button>
 
-        <p className="coach-foyer__trust motion-enter" style={{ animationDelay: '380ms' }}>
+        <p
+          className="coach-foyer__trust coach-foyer__trust--under-start motion-enter"
+          style={{ animationDelay: '380ms' }}
+        >
           <LockKeyhole size={14} strokeWidth={2} aria-hidden="true" />
           {BRAND.trustLine}
+        </p>
+
+        <p className="coach-foyer__landscape-tip motion-enter" style={{ animationDelay: '420ms' }}>
+          Tip: rotate your phone to landscape for the full coaching view.
         </p>
 
         <button
@@ -195,6 +210,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           aria-expanded={showHowItWorks}
           onClick={() => {
             playStudioCue('soft');
+            triggerHaptic(40);
             setShowHowItWorks((prev) => !prev);
           }}
         >
