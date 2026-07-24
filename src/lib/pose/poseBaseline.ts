@@ -21,6 +21,8 @@ export interface PoseBaselineFrame {
   t: number;
   /** Time spent inside estimatePoses (ms) */
   detectionTimeMs: number;
+  /** Time spent in image preprocessing before detection (ms) */
+  preprocessTimeMs?: number;
   /** Total time between the start of this frame and the previous one (ms) */
   frameDeltaMs: number;
   /** Inferred FPS from the last rolling window */
@@ -56,6 +58,8 @@ export interface PoseBaselineReport {
     medianFps: number;
     p95DetectionTimeMs: number;
     medianDetectionTimeMs: number;
+    p95PreprocessTimeMs: number;
+    medianPreprocessTimeMs: number;
     avgKeypointConfidence: number | null;
     poseDetectedFrames: number;
     memoryGrowthBytes: number | null;
@@ -113,7 +117,8 @@ class PoseBaselineRecorder {
     this.lastFrameTime = 0;
     this.isRunning = true;
     this.runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    this.startedAt = performance.now();
+    // Use wall-clock time so the markdown report dates and durations are correct.
+    this.startedAt = Date.now();
   }
 
   /**
@@ -171,6 +176,10 @@ class PoseBaselineRecorder {
     const samples = this.frames;
 
     const detectionTimes = samples.map((f) => f.detectionTimeMs).sort((a, b) => a - b);
+    const preprocessTimes = samples
+      .map((f) => f.preprocessTimeMs ?? 0)
+      .filter((t) => t > 0)
+      .sort((a, b) => a - b);
     const fpsValues = samples.map((f) => f.fps);
     const confidences = samples
       .map((f) => f.keypointConfidence)
@@ -196,6 +205,8 @@ class PoseBaselineRecorder {
         medianFps: median(fpsValues),
         p95DetectionTimeMs: percentile(detectionTimes, 95),
         medianDetectionTimeMs: median(detectionTimes),
+        p95PreprocessTimeMs: preprocessTimes.length > 0 ? percentile(preprocessTimes, 95) : 0,
+        medianPreprocessTimeMs: preprocessTimes.length > 0 ? median(preprocessTimes) : 0,
         avgKeypointConfidence: confidences.length
           ? Math.round((confidences.reduce((a, b) => a + b, 0) / confidences.length) * 1000) / 1000
           : null,
@@ -288,6 +299,8 @@ export function exportPoseBaselineMarkdown(): string {
 | Median FPS | ${summary.medianFps} |
 | Median detection time (ms) | ${summary.medianDetectionTimeMs.toFixed(2)} |
 | p95 detection time (ms) | ${summary.p95DetectionTimeMs.toFixed(2)} |
+| Median preprocess time (ms) | ${summary.medianPreprocessTimeMs.toFixed(2)} |
+| p95 preprocess time (ms) | ${summary.p95PreprocessTimeMs.toFixed(2)} |
 | Avg keypoint confidence | ${summary.avgKeypointConfidence ?? 'N/A'} |
 | Pose detected frames | ${summary.poseDetectedFrames} / ${summary.frames} |
 | Memory growth (bytes) | ${summary.memoryGrowthBytes ?? 'N/A'} |

@@ -10,7 +10,10 @@ import {
   loadPreprocessorSettings,
   savePreprocessorSettings,
   PosePreprocessorSettings,
+  getCpuFilterMaxPixels,
+  PHASE2_CV_FILTERS_ENABLED,
 } from '@/lib/pose/posePreprocessor';
+import { getDeviceInfo } from '@/utils/deviceDetection';
 
 interface GameControlsProps {
   started: boolean;
@@ -49,19 +52,30 @@ export const GameControls: React.FC<GameControlsProps> = ({
   const { controls, register } = getIntentDef(intent);
   const busy = started || calmSessionActive;
 
-  const [preprocessor, setPreprocessor] = React.useState<PosePreprocessorSettings>(() =>
-    loadPreprocessorSettings()
-  );
+  const [preprocessor, setPreprocessor] = React.useState<PosePreprocessorSettings>(() => {
+    const settings = loadPreprocessorSettings();
+    if (typeof window !== 'undefined') {
+      settings.cpuFilterMaxPixels = getCpuFilterMaxPixels(getDeviceInfo().performanceLevel);
+    }
+    return settings;
+  });
 
-  const handlePreprocessorChange = (enabled: boolean) => {
-    const next: PosePreprocessorSettings = {
-      ...preprocessor,
-      enabled,
-      mode: enabled ? 'auto' : 'none',
-    };
+  const updatePreprocessor = (updates: Partial<PosePreprocessorSettings>) => {
+    const next: PosePreprocessorSettings = { ...preprocessor, ...updates };
+    // Keep the legacy 'mode' field in sync for backward compatibility.
+    if ('enabled' in updates || 'autoExposure' in updates) {
+      next.mode = next.enabled && next.autoExposure ? 'auto' : 'none';
+    }
     setPreprocessor(next);
     savePreprocessorSettings(next);
   };
+
+  const activeFeatureCount = [
+    preprocessor.autoExposure,
+    ...(PHASE2_CV_FILTERS_ENABLED
+      ? [preprocessor.cameraCalibration, preprocessor.generativeCleanup]
+      : []),
+  ].filter(Boolean).length;
 
   const handleStart = () => {
     playUiCue('press', { register });
@@ -148,12 +162,40 @@ export const GameControls: React.FC<GameControlsProps> = ({
         </div>
       )}
       {!started && (
-        <div className="pt-3 border-t border-white/10 mt-3 w-full flex items-center justify-center">
-          <ToggleSwitch
-            checked={preprocessor.enabled}
-            onChange={handlePreprocessorChange}
-            label="Auto-correct exposure (beta)"
-          />
+        <div className="pt-3 border-t border-white/10 mt-3 w-full flex flex-col gap-2">
+          <div className="flex items-center justify-center gap-2">
+            <ToggleSwitch
+              checked={preprocessor.enabled}
+              onChange={(enabled) => updatePreprocessor({ enabled })}
+              label="Enable CV preprocessing"
+            />
+            {preprocessor.enabled && (
+              <span className="text-xs text-teal-200/80">({activeFeatureCount} active)</span>
+            )}
+          </div>
+          {preprocessor.enabled && (
+            <div className="pl-4 border-l border-white/10 ml-2 flex flex-col gap-2">
+              <ToggleSwitch
+                checked={preprocessor.autoExposure}
+                onChange={(autoExposure) => updatePreprocessor({ autoExposure })}
+                label="Auto-exposure / white balance (classical)"
+              />
+              {PHASE2_CV_FILTERS_ENABLED && (
+                <>
+                  <ToggleSwitch
+                    checked={preprocessor.cameraCalibration}
+                    onChange={(cameraCalibration) => updatePreprocessor({ cameraCalibration })}
+                    label="Lens distortion fix (classical)"
+                  />
+                  <ToggleSwitch
+                    checked={preprocessor.generativeCleanup}
+                    onChange={(generativeCleanup) => updatePreprocessor({ generativeCleanup })}
+                    label="Generative low-light cleanup (spike)"
+                  />
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

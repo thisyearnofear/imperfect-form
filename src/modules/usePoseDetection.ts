@@ -47,7 +47,9 @@ import {
   PosePreprocessorSettings,
   loadPreprocessorSettings,
   preprocessVideoFrame,
+  getCpuFilterMaxPixels,
 } from '../lib/pose/posePreprocessor';
+import { getDeviceInfo } from '../utils/deviceDetection';
 
 // Biomechanical types removed - consolidated into src/utils/biomechanics.ts
 
@@ -55,6 +57,19 @@ import {
 
 let repCounter: RepCounterState = createInitialRepCounterState();
 let engineDetector: EngineRepDetectorState | null = null;
+
+let cachedInitialPreprocessorSettings: PosePreprocessorSettings | null = null;
+function getInitialPreprocessorSettings(): PosePreprocessorSettings {
+  if (cachedInitialPreprocessorSettings) {
+    return { ...cachedInitialPreprocessorSettings };
+  }
+  const settings = loadPreprocessorSettings();
+  if (typeof window !== 'undefined') {
+    settings.cpuFilterMaxPixels = getCpuFilterMaxPixels(getDeviceInfo().performanceLevel);
+  }
+  cachedInitialPreprocessorSettings = settings;
+  return { ...settings };
+}
 
 export function usePoseDetection(
   canvasRef: RefObject<HTMLCanvasElement | null>,
@@ -93,7 +108,9 @@ export function usePoseDetection(
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<PoseDetector | null>(null);
   const preprocessCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const preprocessorSettingsRef = useRef<PosePreprocessorSettings>(loadPreprocessorSettings());
+  const preprocessorSettingsRef = useRef<PosePreprocessorSettings>(
+    getInitialPreprocessorSettings()
+  );
   const animationRef = useRef<number | null>(null);
   const modeRef = useRef<ExerciseMode>(safeMode);
   const isActiveRef = useRef(isActive);
@@ -675,10 +692,11 @@ export function usePoseDetection(
             return;
 
           try {
-            const detectStart = performance.now();
+            const preprocessStart = performance.now();
+            const settings = preprocessorSettingsRef.current;
             const preprocessorEnabled =
-              preprocessorSettingsRef.current.enabled &&
-              preprocessorSettingsRef.current.mode !== 'none';
+              settings.enabled &&
+              (settings.autoExposure || settings.cameraCalibration || settings.generativeCleanup);
             let detectInput: HTMLVideoElement | HTMLCanvasElement = videoRef.current;
             if (preprocessorEnabled) {
               try {
@@ -688,13 +706,15 @@ export function usePoseDetection(
                 detectInput = preprocessVideoFrame(
                   videoRef.current,
                   preprocessCanvasRef.current,
-                  preprocessorSettingsRef.current
+                  settings
                 );
               } catch (_preErr) {
                 // Pre-processor failed; fall back to the raw video frame.
                 detectInput = videoRef.current;
               }
             }
+            const preprocessTimeMs = performance.now() - preprocessStart;
+            const detectStart = performance.now();
             const poses = await detectorRef.current!.estimatePoses(detectInput);
             const detectionTimeMs = performance.now() - detectStart;
             if (cancelled || !isActiveRef.current) return;
@@ -729,6 +749,7 @@ export function usePoseDetection(
 
               recordPoseBaselineFrame({
                 detectionTimeMs: Math.round(detectionTimeMs * 100) / 100,
+                preprocessTimeMs: Math.round(preprocessTimeMs * 100) / 100,
                 keypointConfidence: avgScore,
                 keypointCount: keypoints.length,
                 memoryUsed: memory?.usedJSHeapSize,

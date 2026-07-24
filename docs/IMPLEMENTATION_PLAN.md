@@ -56,7 +56,8 @@ A lightweight pre-processing stage now runs on the canvas frame **before** it is
 - **Configurable toggle:** stored in `localStorage` under `prefPosePreprocessor`; surfaced in `GameControls`.
 - **Scope:** Main-thread and Web Worker paths both support the pre-processor.
 - **Overhead:** a full-pixel JavaScript pass adds per-frame CPU cost; expect a small FPS dip on low-end devices. Use `window.__IMF_BASELINE__` to compare on/off runs.
-- **Out of scope for Phase 1.0:** lens undistortion; generative cleanup.
+- **Out of scope for Phase 1.0:** lens undistortion; generative cleanup.  
+  The code for these Phase 2 filters exists in `src/lib/pose/posePreprocessor.ts` but is gated by `PHASE2_CV_FILTERS_ENABLED` (default `false`). They do not run in main builds until the flag is flipped after passing real-world baselines.
 
 **Files touched:**
 
@@ -67,13 +68,14 @@ A lightweight pre-processing stage now runs on the canvas frame **before** it is
 - `src/types/mediapipe.ts` ✅ `PosePreprocessorSettings` + worker `init` message field
 - `src/components/game/GameControls.tsx` ✅ user-facing toggle
 
-### 1.2 Generative cleanup (spike)
+### 1.2 Generative cleanup / Phase 2 CV filters (spike)
 
-After 1.1 is measured, evaluate a lightweight generative enhancement pass (e.g., tiny ONNX or TensorFlow.js enhancement model). This is explicitly a **spike**, not the default path.
+The Phase 2 filter code (lens-distortion fix and generative low-light cleanup) lives in `src/lib/pose/posePreprocessor.ts` but is gated by `PHASE2_CV_FILTERS_ENABLED` (default `false`). This keeps the experimental code close to the production pipeline while ensuring only the validated Phase 1 classical filter (auto-exposure / white balance) runs in main.
 
 **Files to touch:**
 
-- Spike branch only; do not ship to `main` until it beats the classical baseline.
+- Spike branch only; do not flip `PHASE2_CV_FILTERS_ENABLED` to `true` in `main` until the filters beat the classical baseline on real-world measurements.
+- When ready to ship, update `docs/PERFORMANCE_BASELINE.md` with the three-configuration baseline and un-gate the toggles.
 
 ### 1.3 Success criteria
 

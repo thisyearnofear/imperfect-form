@@ -1,11 +1,6 @@
 import { SessionSnapshot } from './workout';
-
-export interface PosePreprocessorSettings {
-  enabled: boolean;
-  mode: 'auto' | 'none';
-  targetMean: number;
-  strength: number;
-}
+import type { PosePreprocessorSettings } from '../lib/pose/posePreprocessor';
+export type { PosePreprocessorSettings };
 
 // Keypoint type for pose detection
 export interface Keypoint {
@@ -89,6 +84,7 @@ export type WorkerResponse =
   | {
       type: 'baseline';
       detectionTimeMs: number;
+      preprocessTimeMs?: number;
       keypointConfidence: number | null;
       keypointCount: number;
       memoryUsed?: number;

@@ -3,7 +3,10 @@ import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
 import { Keypoint, WorkerMessage, PosePreprocessorSettings } from '../types/mediapipe';
-import { preprocessImageBitmap } from '../lib/pose/posePreprocessor';
+import {
+  getDefaultPreprocessorSettings,
+  preprocessImageBitmap,
+} from '../lib/pose/posePreprocessor';
 import {
   ExerciseMode,
   RepCounterState,
@@ -31,12 +34,7 @@ let lastProcessTime = 0;
 let workerIsMobile = false;
 let workerPbTrace: import('../types/workout').SessionSnapshot[] | undefined;
 let workerStartTime = 0;
-let preprocessorSettings: PosePreprocessorSettings = {
-  enabled: false,
-  mode: 'none',
-  targetMean: 0.5,
-  strength: 0.75,
-};
+let preprocessorSettings: PosePreprocessorSettings = getDefaultPreprocessorSettings();
 let preprocessCanvas: OffscreenCanvas | null = null;
 const DESKTOP_FRAME_INTERVAL_MS = 66; // ~15fps for stability
 const _MIN_TIME_BETWEEN_REPS = 800; // ms
@@ -161,16 +159,25 @@ self.addEventListener('message', async (event) => {
       lastProcessTime = now;
 
       let processedBitmap = bitmap;
-      if (preprocessorSettings.enabled && preprocessorSettings.mode !== 'none') {
+      let preprocessTimeMs = 0;
+      const preprocessingActive =
+        preprocessorSettings.enabled &&
+        (preprocessorSettings.mode !== 'none' ||
+          preprocessorSettings.cameraCalibration ||
+          preprocessorSettings.generativeCleanup);
+
+      if (preprocessingActive) {
         try {
           if (!preprocessCanvas) {
             preprocessCanvas = new OffscreenCanvas(bitmap.width, bitmap.height);
           }
+          const preprocessStart = performance.now();
           processedBitmap = await preprocessImageBitmap(
             bitmap,
             preprocessorSettings,
             preprocessCanvas
           );
+          preprocessTimeMs = performance.now() - preprocessStart;
         } catch (_preErr) {
           // Pre-processor failed; fall back to the raw frame and keep going.
           processedBitmap = bitmap;
@@ -198,6 +205,7 @@ self.addEventListener('message', async (event) => {
         self.postMessage({
           type: 'baseline',
           detectionTimeMs: Math.round(detectionTimeMs * 100) / 100,
+          preprocessTimeMs: Math.round(preprocessTimeMs * 100) / 100,
           keypointConfidence: avgScore,
           keypointCount: keypoints?.length ?? 0,
           memoryUsed: memory?.usedJSHeapSize,

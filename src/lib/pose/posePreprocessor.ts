@@ -13,41 +13,129 @@
  * histogram so we keep the per-frame pixel loop small and branch-free.
  */
 
+/** Maximum number of pixels we will run expensive CPU filters on in real time.
+ *  Frames above this limit skip the filter to protect frame rate. */
+export const CPU_FILTER_MAX_PIXELS = 640 * 480;
+
+/**
+ * Phase 2 CV filters (lens-distortion fix and generative low-light cleanup)
+ * are experimental and gated. They are not enabled by default in main; keep
+ * this flag false until real-world baselines prove they meet the latency and
+ * confidence targets in docs/PERFORMANCE_BASELINE.md. Auto-exposure/white
+ * balance remains the only shipped Phase 1 filter.
+ */
+export const PHASE2_CV_FILTERS_ENABLED = false;
+
+/** Map a device performance level to the maximum pixel count we will subject
+ *  to expensive CPU filters. Lower thresholds on low-end devices keep the
+ *  frame rate healthy. */
+export function getCpuFilterMaxPixels(performanceLevel: 'low' | 'medium' | 'high'): number {
+  switch (performanceLevel) {
+    case 'low':
+      return 320 * 240;
+    case 'medium':
+      return 640 * 480;
+    case 'high':
+      return 1280 * 720;
+    default:
+      return CPU_FILTER_MAX_PIXELS;
+  }
+}
+
 export interface PosePreprocessorSettings {
   enabled: boolean;
   /** 'auto' is the only shipped Phase 1 mode. 'none' is the same as enabled:false. */
   mode: 'auto' | 'none';
-  /** Target mean luminance in [0,1]. Default 0.5. */
+  /** Phase 1: target mean luminance in [0,1]. Default 0.5. */
   targetMean: number;
-  /** Blend strength in [0,1]. 0 = no effect, 1 = full correction. Default 0.75. */
+  /** Phase 1: blend strength in [0,1]. 0 = no effect, 1 = full correction. Default 0.75. */
   strength: number;
+  /** Phase 1/2: alias for auto-exposure mode. */
+  autoExposure: boolean;
+  /** Phase 2: correct radial lens distortion (barrel/pincushion). */
+  cameraCalibration: boolean;
+  /** Phase 2: radial distortion coefficient. Negative corrects barrel distortion. */
+  distortionFactor: number;
+  /** Phase 2: enable lightweight generative low-light cleanup. */
+  generativeCleanup: boolean;
+  /** Phase 2: optional URL/path to a TensorFlow.js GraphModel for generative cleanup.
+   *  TODO: currently a placeholder; the tone-curve fallback above runs while we
+   *  evaluate whether a real tiny generative model is worth the battery/latency cost. */
+  generativeModelUrl: string | null;
+  /** Runtime guard: maximum number of pixels allowed for expensive CPU filters.
+   *  Set based on device performance level; falls back to CPU_FILTER_MAX_PIXELS. */
+  cpuFilterMaxPixels: number;
 }
 
 const DEFAULT_SETTINGS: PosePreprocessorSettings = {
   enabled: false,
-  mode: 'auto',
+  mode: 'none',
   targetMean: 0.5,
   strength: 0.75,
+  autoExposure: false,
+  cameraCalibration: false,
+  distortionFactor: -0.1,
+  generativeCleanup: false,
+  generativeModelUrl: null,
+  cpuFilterMaxPixels: CPU_FILTER_MAX_PIXELS,
 };
 
 export function getDefaultPreprocessorSettings(): PosePreprocessorSettings {
-  return { ...DEFAULT_SETTINGS };
+  const settings = { ...DEFAULT_SETTINGS };
+  if (!PHASE2_CV_FILTERS_ENABLED) {
+    settings.cameraCalibration = false;
+    settings.generativeCleanup = false;
+  }
+  return settings;
 }
 
 export function normalizePreprocessorSettings(
   partial: Partial<PosePreprocessorSettings>
 ): PosePreprocessorSettings {
+  const autoExposure = partial.autoExposure ?? partial.mode === 'auto';
   return {
     enabled: partial.enabled ?? DEFAULT_SETTINGS.enabled,
-    mode: partial.mode ?? DEFAULT_SETTINGS.mode,
+    mode: partial.mode ?? (autoExposure ? 'auto' : 'none'),
     targetMean: clamp(partial.targetMean ?? DEFAULT_SETTINGS.targetMean, 0.1, 0.9),
     strength: clamp(partial.strength ?? DEFAULT_SETTINGS.strength, 0, 1),
+    autoExposure,
+    cameraCalibration: PHASE2_CV_FILTERS_ENABLED
+      ? (partial.cameraCalibration ?? DEFAULT_SETTINGS.cameraCalibration)
+      : false,
+    distortionFactor: clamp(
+      partial.distortionFactor ?? DEFAULT_SETTINGS.distortionFactor,
+      -0.5,
+      0.5
+    ),
+    generativeCleanup: PHASE2_CV_FILTERS_ENABLED
+      ? (partial.generativeCleanup ?? DEFAULT_SETTINGS.generativeCleanup)
+      : false,
+    generativeModelUrl: partial.generativeModelUrl ?? DEFAULT_SETTINGS.generativeModelUrl,
+    cpuFilterMaxPixels: partial.cpuFilterMaxPixels ?? DEFAULT_SETTINGS.cpuFilterMaxPixels,
   };
 }
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
+
+/** Compute an integer stride for virtual frame downsampling.
+ *
+ * When a frame exceeds the CPU pixel budget, we process it in
+ * `stride x stride` blocks (nearest-neighbor fill) so the work scales with
+ * the budget, not the raw resolution. A stride of 1 means "process at full
+ * resolution".
+ */
+function getDownsampleStride(width: number, height: number, maxPixels: number): number {
+  const pixelCount = width * height;
+  if (pixelCount <= maxPixels) return 1;
+  // Cap at 8 so quality doesn't completely fall off a cliff on very large frames.
+  return Math.min(8, Math.max(2, Math.ceil(Math.sqrt(pixelCount / maxPixels))));
+}
+
+/** Track one-time console warnings so we don't spam on every frame. */
+let cameraCalibrationDownsampleWarned = false;
+let toneCurveDownsampleWarned = false;
 
 /** Storage key for the user's pre-processor preference. */
 export const PREPROCESSOR_STORAGE_KEY = 'prefPosePreprocessor';
@@ -65,7 +153,9 @@ export function loadPreprocessorSettings(): PosePreprocessorSettings {
 
 export function savePreprocessorSettings(settings: PosePreprocessorSettings): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(PREPROCESSOR_STORAGE_KEY, JSON.stringify(settings));
+  // Don't persist the runtime/device-specific threshold; it is recomputed on load.
+  const { cpuFilterMaxPixels: _, ...persistable } = settings;
+  window.localStorage.setItem(PREPROCESSOR_STORAGE_KEY, JSON.stringify(persistable));
 }
 
 interface HistogramResult {
@@ -122,7 +212,7 @@ export function preprocessImageData(
   imageData: ImageData,
   settings: PosePreprocessorSettings
 ): void {
-  if (!settings.enabled || settings.mode === 'none') return;
+  if (!settings.enabled || !settings.autoExposure) return;
 
   const { targetMean, strength } = settings;
   const data = imageData.data;
@@ -182,7 +272,11 @@ export async function preprocessImageBitmap(
   settings: PosePreprocessorSettings,
   canvas?: OffscreenCanvas | HTMLCanvasElement
 ): Promise<ImageBitmap> {
-  if (!settings.enabled || settings.mode === 'none') {
+  const shouldApplyAnything =
+    settings.enabled &&
+    (settings.autoExposure || settings.cameraCalibration || settings.generativeCleanup);
+
+  if (!shouldApplyAnything) {
     return bitmap;
   }
 
@@ -201,10 +295,188 @@ export async function preprocessImageBitmap(
   ctx.drawImage(bitmap, 0, 0);
 
   const imageData = ctx.getImageData(0, 0, width, height);
-  preprocessImageData(imageData, settings);
+  if (settings.autoExposure) {
+    preprocessImageData(imageData, settings);
+  }
+  applyCameraCalibration(imageData, settings);
+  if (settings.generativeCleanup) {
+    applyToneCurveEnhancement(imageData, settings);
+  }
   ctx.putImageData(imageData, 0, 0);
 
   return createImageBitmap(canvas as any);
+}
+
+/**
+ * Apply radial lens distortion correction to ImageData in-place.
+ * Negative factor corrects barrel distortion; positive corrects pincushion.
+ *
+ * WARNING: This performs a full-image bilinear resample on the CPU and is
+ * expensive at real-time frame rates. Treat as an experimental/offline tool
+ * unless the frame size is small or the device is very fast. Automatically
+ * skipped when the frame exceeds CPU_FILTER_MAX_PIXELS.
+ */
+export function applyCameraCalibration(
+  imageData: ImageData,
+  settings: PosePreprocessorSettings
+): void {
+  if (!settings.enabled || !settings.cameraCalibration) return;
+
+  const { distortionFactor } = settings;
+  if (distortionFactor === 0) return;
+
+  const { width, height, data } = imageData;
+
+  const cpuFilterMaxPixels = settings.cpuFilterMaxPixels ?? CPU_FILTER_MAX_PIXELS;
+  const stride = getDownsampleStride(width, height, cpuFilterMaxPixels);
+  const isDownsampled = stride > 1;
+
+  if (isDownsampled && !cameraCalibrationDownsampleWarned) {
+    console.warn(
+      `[posePreprocessor] Camera calibration downsampled: frame ${width}x${height} exceeds cpuFilterMaxPixels=${cpuFilterMaxPixels}; using stride=${stride}.`
+    );
+    cameraCalibrationDownsampleWarned = true;
+  }
+
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
+  const output = new Uint8ClampedArray(data);
+
+  for (let y = 0; y < height; y += stride) {
+    for (let x = 0; x < width; x += stride) {
+      // Use the center of the block for the source coordinate so the
+      // downsampled result better represents the block.
+      const sampleX = Math.min(width - 1, x + Math.floor(stride / 2));
+      const sampleY = Math.min(height - 1, y + Math.floor(stride / 2));
+
+      const dx = sampleX - centerX;
+      const dy = sampleY - centerY;
+      const r = Math.sqrt(dx * dx + dy * dy) / maxRadius;
+      // r_corrected = r * (1 + k * r^2)
+      const scale = 1 + distortionFactor * r * r;
+      const srcX = centerX + dx * scale;
+      const srcY = centerY + dy * scale;
+
+      let rValue = 0;
+      let gValue = 0;
+      let bValue = 0;
+      let aValue = 255;
+
+      if (srcX < 0 || srcX >= width - 1 || srcY < 0 || srcY >= height - 1) {
+        rValue = 0;
+        gValue = 0;
+        bValue = 0;
+        aValue = 255;
+      } else {
+        // Bilinear sample
+        const x0 = Math.floor(srcX);
+        const y0 = Math.floor(srcY);
+        const xf = srcX - x0;
+        const yf = srcY - y0;
+        const x1 = Math.min(x0 + 1, width - 1);
+        const y1 = Math.min(y0 + 1, height - 1);
+
+        const i00 = (y0 * width + x0) * 4;
+        const i10 = (y0 * width + x1) * 4;
+        const i01 = (y1 * width + x0) * 4;
+        const i11 = (y1 * width + x1) * 4;
+
+        for (let c = 0; c < 3; c++) {
+          const v00 = data[i00 + c];
+          const v10 = data[i10 + c];
+          const v01 = data[i01 + c];
+          const v11 = data[i11 + c];
+          const v0 = v00 + (v10 - v00) * xf;
+          const v1 = v01 + (v11 - v01) * xf;
+          const v = v0 + (v1 - v0) * yf;
+          const value = Math.min(255, Math.max(0, Math.round(v)));
+          if (c === 0) rValue = value;
+          if (c === 1) gValue = value;
+          if (c === 2) bValue = value;
+        }
+      }
+
+      // Fill the stride x stride output block, clamped to image bounds.
+      const blockEndY = Math.min(height, y + stride);
+      const blockEndX = Math.min(width, x + stride);
+      for (let by = y; by < blockEndY; by++) {
+        for (let bx = x; bx < blockEndX; bx++) {
+          const outIdx = (by * width + bx) * 4;
+          output[outIdx] = rValue;
+          output[outIdx + 1] = gValue;
+          output[outIdx + 2] = bValue;
+          output[outIdx + 3] = aValue;
+        }
+      }
+    }
+  }
+
+  data.set(output);
+}
+
+/**
+ * Apply a local histogram equalization / tone curve that brightens shadows and
+ * compresses highlights. This is the Phase 2 "generative cleanup" spike: a fast
+ * canvas-based fallback that runs in both main thread and Web Workers while we
+ * evaluate whether a real tiny generative model is justified for battery/latency.
+ *
+ * NOTE: This is intentionally not a neural model. It is a lightweight classical
+ * enhancement so the feature can ship and be measured before committing to a
+ * heavier generative approach (e.g. Zero-DCE Lite via TensorFlow.js).
+ */
+export function applyToneCurveEnhancement(
+  imageData: ImageData,
+  settings: PosePreprocessorSettings
+): void {
+  const data = imageData.data;
+
+  const cpuFilterMaxPixels = settings.cpuFilterMaxPixels ?? CPU_FILTER_MAX_PIXELS;
+  const stride = getDownsampleStride(imageData.width, imageData.height, cpuFilterMaxPixels);
+  const isDownsampled = stride > 1;
+
+  if (isDownsampled && !toneCurveDownsampleWarned) {
+    console.warn(
+      `[posePreprocessor] Tone curve enhancement downsampled: frame ${imageData.width}x${imageData.height} exceeds cpuFilterMaxPixels=${cpuFilterMaxPixels}; using stride=${stride}.`
+    );
+    toneCurveDownsampleWarned = true;
+  }
+
+  // Build a simple luminance histogram. For large frames we subsample more
+  // aggressively so histogram cost stays proportional to the pixel budget,
+  // but we still apply the resulting LUT to every pixel (a cheap point op).
+  // step = bytes between samples; 16 = every 4th pixel at full resolution,
+  // scaled up by the downsample stride on large frames.
+  const step = (isDownsampled ? stride : 1) * 16;
+  const hist = new Uint32Array(256);
+  for (let i = 0; i < data.length; i += step) {
+    const l = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    hist[Math.min(255, Math.floor(l))]++;
+  }
+
+  // Build CDF (cumulative distribution function) for equalization.
+  const cdf = new Uint32Array(256);
+  cdf[0] = hist[0];
+  for (let i = 1; i < 256; i++) {
+    cdf[i] = cdf[i - 1] + hist[i];
+  }
+  const total = cdf[255];
+  const lut = new Uint8Array(256);
+  if (total > 0) {
+    for (let i = 0; i < 256; i++) {
+      lut[i] = Math.min(255, Math.round((cdf[i] / total) * 255));
+    }
+  }
+
+  // Apply tone curve and a mild gamma lift to shadows.
+  for (let i = 0; i < data.length; i += 4) {
+    const l = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    const mapped = lut[Math.min(255, Math.floor(l))];
+    const factor = Math.min(1.2, 0.8 + (mapped / 255) * 0.4);
+    data[i] = Math.min(255, data[i] * factor);
+    data[i + 1] = Math.min(255, data[i + 1] * factor);
+    data[i + 2] = Math.min(255, data[i + 2] * factor);
+  }
 }
 
 /**
@@ -216,7 +488,11 @@ export function preprocessVideoFrame(
   canvas: HTMLCanvasElement,
   settings: PosePreprocessorSettings
 ): HTMLCanvasElement {
-  if (!settings.enabled || settings.mode === 'none') {
+  const shouldApplyAnything =
+    settings.enabled &&
+    (settings.autoExposure || settings.cameraCalibration || settings.generativeCleanup);
+
+  if (!shouldApplyAnything) {
     return canvas;
   }
 
@@ -229,7 +505,13 @@ export function preprocessVideoFrame(
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  preprocessImageData(imageData, settings);
+  if (settings.autoExposure) {
+    preprocessImageData(imageData, settings);
+  }
+  applyCameraCalibration(imageData, settings);
+  if (settings.generativeCleanup) {
+    applyToneCurveEnhancement(imageData, settings);
+  }
   ctx.putImageData(imageData, 0, 0);
 
   return canvas;

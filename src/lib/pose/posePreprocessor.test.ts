@@ -6,6 +6,9 @@ import {
   loadPreprocessorSettings,
   savePreprocessorSettings,
   PREPROCESSOR_STORAGE_KEY,
+  applyCameraCalibration,
+  applyToneCurveEnhancement,
+  type PosePreprocessorSettings,
 } from './posePreprocessor';
 
 class MockImageData {
@@ -81,6 +84,12 @@ describe('posePreprocessor', () => {
         mode: 'none',
         targetMean: 0.5,
         strength: 0.75,
+        autoExposure: false,
+        cameraCalibration: false,
+        distortionFactor: -0.1,
+        generativeCleanup: false,
+        generativeModelUrl: null,
+        cpuFilterMaxPixels: 640 * 480,
       });
       expect(imageData.data[0]).toBe(100);
       expect(imageData.data[1]).toBe(120);
@@ -89,7 +98,18 @@ describe('posePreprocessor', () => {
 
     it('brightens dark pixels when enabled', () => {
       const imageData = makeImageData(10, 10, 10);
-      preprocessImageData(imageData, { enabled: true, mode: 'auto', targetMean: 0.5, strength: 1 });
+      preprocessImageData(imageData, {
+        enabled: true,
+        mode: 'auto',
+        targetMean: 0.5,
+        strength: 1,
+        autoExposure: true,
+        cameraCalibration: false,
+        distortionFactor: -0.1,
+        generativeCleanup: false,
+        generativeModelUrl: null,
+        cpuFilterMaxPixels: 640 * 480,
+      });
       // A dark gray pixel should be lifted toward the target mean.
       expect(imageData.data[0]).toBeGreaterThan(10);
       expect(imageData.data[1]).toBeGreaterThan(10);
@@ -98,7 +118,18 @@ describe('posePreprocessor', () => {
 
     it('preserves alpha channel', () => {
       const imageData = makeImageData(10, 10, 10);
-      preprocessImageData(imageData, { enabled: true, mode: 'auto', targetMean: 0.5, strength: 1 });
+      preprocessImageData(imageData, {
+        enabled: true,
+        mode: 'auto',
+        targetMean: 0.5,
+        strength: 1,
+        autoExposure: true,
+        cameraCalibration: false,
+        distortionFactor: -0.1,
+        generativeCleanup: false,
+        generativeModelUrl: null,
+        cpuFilterMaxPixels: 640 * 480,
+      });
       expect(imageData.data[3]).toBe(255);
     });
   });
@@ -115,7 +146,18 @@ describe('posePreprocessor', () => {
     });
 
     it('saves and loads settings', () => {
-      const settings = { enabled: true, mode: 'auto' as const, targetMean: 0.6, strength: 0.5 };
+      const settings = {
+        enabled: true,
+        mode: 'auto' as const,
+        targetMean: 0.6,
+        strength: 0.5,
+        autoExposure: true,
+        cameraCalibration: false,
+        distortionFactor: -0.1,
+        generativeCleanup: false,
+        generativeModelUrl: null,
+        cpuFilterMaxPixels: 640 * 480,
+      };
       savePreprocessorSettings(settings);
       const loaded = loadPreprocessorSettings();
       expect(loaded.enabled).toBe(true);
@@ -129,6 +171,169 @@ describe('posePreprocessor', () => {
       window.localStorage.setItem(PREPROCESSOR_STORAGE_KEY, 'not-json');
       const loaded = loadPreprocessorSettings();
       expect(loaded).toEqual(getDefaultPreprocessorSettings());
+    });
+  });
+
+  describe('applyCameraCalibration', () => {
+    function makeCalibrationSettings(
+      partial: Partial<PosePreprocessorSettings> = {}
+    ): PosePreprocessorSettings {
+      return {
+        enabled: true,
+        mode: 'none',
+        targetMean: 0.5,
+        strength: 0.75,
+        autoExposure: false,
+        cameraCalibration: true,
+        distortionFactor: -0.2,
+        generativeCleanup: false,
+        generativeModelUrl: null,
+        cpuFilterMaxPixels: 640 * 480,
+        ...partial,
+      };
+    }
+
+    it('processes small frames at full resolution', () => {
+      const width = 80;
+      const height = 60;
+      const data = new Uint8ClampedArray(width * height * 4);
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = 100;
+        data[i + 1] = 120;
+        data[i + 2] = 90;
+        data[i + 3] = 255;
+      }
+      const imageData = new ImageData(data, width, height);
+
+      applyCameraCalibration(imageData, makeCalibrationSettings());
+
+      expect(imageData.width).toBe(width);
+      expect(imageData.height).toBe(height);
+      // Alpha should remain 255 for all pixels.
+      for (let i = 3; i < data.length; i += 4) {
+        expect(data[i]).toBe(255);
+      }
+    });
+
+    it('processes large frames with virtual downsampling instead of skipping', () => {
+      // 600x600 exceeds the default 640x480 budget and triggers stride > 1,
+      // while keeping the test fast enough to finish in under 5s.
+      const width = 600;
+      const height = 600;
+      const data = new Uint8ClampedArray(width * height * 4);
+      // Fill a diagonal-ish pattern so distortion has a visible effect.
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const idx = (y * width + x) * 4;
+          data[idx] = x % 256;
+          data[idx + 1] = y % 256;
+          data[idx + 2] = (x + y) % 256;
+          data[idx + 3] = 255;
+        }
+      }
+      const imageData = new ImageData(data, width, height);
+      const before = new Uint8ClampedArray(data);
+
+      applyCameraCalibration(imageData, makeCalibrationSettings());
+
+      // Distortion should have mutated at least some pixels.
+      let changed = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (
+          data[i] !== before[i] ||
+          data[i + 1] !== before[i + 1] ||
+          data[i + 2] !== before[i + 2]
+        ) {
+          changed++;
+        }
+      }
+      expect(changed).toBeGreaterThan(0);
+
+      // Output dimensions and alpha should be unchanged.
+      expect(imageData.width).toBe(width);
+      expect(imageData.height).toBe(height);
+      for (let i = 3; i < data.length; i += 4) {
+        expect(data[i]).toBe(255);
+      }
+    });
+  });
+
+  describe('applyToneCurveEnhancement', () => {
+    function makeToneCurveSettings(
+      partial: Partial<PosePreprocessorSettings> = {}
+    ): PosePreprocessorSettings {
+      return {
+        enabled: true,
+        mode: 'none',
+        targetMean: 0.5,
+        strength: 0.75,
+        autoExposure: false,
+        cameraCalibration: false,
+        distortionFactor: -0.1,
+        generativeCleanup: true,
+        generativeModelUrl: null,
+        cpuFilterMaxPixels: 640 * 480,
+        ...partial,
+      };
+    }
+
+    it('processes small frames at full resolution', () => {
+      const width = 80;
+      const height = 60;
+      const data = new Uint8ClampedArray(width * height * 4);
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = 20;
+        data[i + 1] = 20;
+        data[i + 2] = 20;
+        data[i + 3] = 255;
+      }
+      const imageData = new ImageData(data, width, height);
+
+      applyToneCurveEnhancement(imageData, makeToneCurveSettings());
+
+      expect(imageData.width).toBe(width);
+      expect(imageData.height).toBe(height);
+      for (let i = 3; i < data.length; i += 4) {
+        expect(data[i]).toBe(255);
+      }
+    });
+
+    it('processes large frames with strided histogram instead of skipping', () => {
+      // 600x600 exceeds the default 640x480 budget and triggers stride > 1,
+      // while keeping the test fast enough to finish in under 5s.
+      const width = 600;
+      const height = 600;
+      const data = new Uint8ClampedArray(width * height * 4);
+      // Mix of dark and bright pixels so histogram equalization does work.
+      for (let i = 0; i < data.length; i += 4) {
+        const isDark = (i / 4) % 2 === 0;
+        data[i] = isDark ? 20 : 220;
+        data[i + 1] = isDark ? 20 : 220;
+        data[i + 2] = isDark ? 20 : 220;
+        data[i + 3] = 255;
+      }
+      const imageData = new ImageData(data, width, height);
+      const before = new Uint8ClampedArray(data);
+
+      applyToneCurveEnhancement(imageData, makeToneCurveSettings());
+
+      let changed = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (
+          data[i] !== before[i] ||
+          data[i + 1] !== before[i + 1] ||
+          data[i + 2] !== before[i + 2]
+        ) {
+          changed++;
+        }
+      }
+      expect(changed).toBeGreaterThan(0);
+
+      expect(imageData.width).toBe(width);
+      expect(imageData.height).toBe(height);
+      for (let i = 3; i < data.length; i += 4) {
+        expect(data[i]).toBe(255);
+      }
     });
   });
 });
