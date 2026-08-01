@@ -72,8 +72,8 @@ full theme token once earned / wallet-switched.
 **Shipped (physical-AI presence):**
 
 - **Live twin peek** — `CoachTwinPeek` when `NEXT_PUBLIC_COACH_STATION` is set
-  (fail-silent status + silhouette curl on demos; Cyberwave/MuJoCo stay on the
-  station machine — no browser embed)
+  (fail-silent status + data-driven silhouette/progress during demos;
+  Cyberwave/MuJoCo stay on the station machine — no browser embed)
 - **Demo moment sync** — form cues / `demonstration` set `body[data-coach-pulse]`
   so bay arc + glow pulse; earned shell gets a fallback bloom
 - **Weisdevice-lite entry** — studio boot “Enter the bay / Enter quietly” sound
@@ -105,7 +105,10 @@ full theme token once earned / wallet-switched.
   TTS cascade ElevenLabs → Amazon Polly → browser Web Speech; user preference
   via settings VOICE ENGINE (`prefTtsProvider`); not Nova-locked
 - Demo CLI: `cd coach-station && uv run python -m coach_station.demo --demo all`
-- Station tests: `uv sync --extra dev && uv run pytest` (21 passing)
+- Versioned station feedback: `robot_state`, `trajectory_progress`, and
+  `command_result` events correlate through `command_id`; trajectory progress
+  is throttled to at most 10Hz and rendered accessibly in the twin peek
+- Station tests: `uv sync --extra dev && uv run pytest` (29 passing)
 - Soft dry-run: `./scripts/cohort-dry-run.sh`
 
 ## What's next — required order
@@ -115,7 +118,7 @@ Do these in order. Polish items are **not** the gate.
 | #     | Gate                      | Done when                                                                                                            | Where                                                                    |
 | ----- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | **1** | **Manual stage**          | Browser + station: curls → form cue → arm moves (console or Cyberwave sim) + TTS + twin peek / bay pulse. No wallet. | [`coach-station/README.md`](../coach-station/README.md) cohort checklist |
-| **2** | **Richer twin telemetry** | Peek silhouette tracks real demo progress (joint / waypoint stream), still fail-silent                               | After #1 feels solid                                                     |
+| **2** | **Richer twin telemetry** | ✅ Shipped: peek silhouette tracks versioned joint/progress events, still fail-silent                               | Manual validation remains                                                     |
 | **3** | **Hardware bring-up**     | One curl demo trustworthy on metal (`demonstrate_strict_curl` first)                                                 | [`coach-station/LIVE.md`](../coach-station/LIVE.md)                      |
 
 **Defer until #1–#3:** own Spline scene, Avalanche leaderboard contract, marketing landing, SmolVLA / episode flywheel (Milestone 3).
@@ -153,7 +156,8 @@ Software path is shipped; **cohort is not closed until manual stage passes.**
       ElevenLabs → Polly → browser; user preference in settings)
 - [x] Software dry-run: `./scripts/cohort-dry-run.sh`
 - [ ] **Manual stage (required next):** browser + optional Cyberwave twin —
-      see `coach-station/README.md` cohort checklist
+      see `coach-station/README.md` cohort checklist. Telemetry is implemented;
+      this gate still requires a real browser/session validation.
 
 Demo without the browser: `cd coach-station && uv run python -m coach_station.demo --demo all`
 

@@ -157,6 +157,106 @@ describe('coachStation fail-silent', () => {
     unsub();
   });
 
+  it('forwards versioned command results and robot states to subscribers', async () => {
+    process.env.NEXT_PUBLIC_COACH_STATION = 'ws://localhost:8765';
+    let wsInstance: { onmessage: ((ev: { data: string }) => void) | null } | null = null;
+
+    class FeedbackWebSocket {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      readyState = FeedbackWebSocket.OPEN;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      onmessage: ((ev: { data: string }) => void) | null = null;
+      constructor() {
+        wsInstance = this;
+      }
+      send() {}
+    }
+    (globalThis as { WebSocket: unknown }).WebSocket = FeedbackWebSocket;
+
+    const { coachStation } = await import('@/services/coachStation');
+    const results: string[] = [];
+    const states: string[] = [];
+    const progress: number[] = [];
+    const unsubResult = coachStation.onCommandResult((event) => results.push(event.status));
+    const unsubState = coachStation.onRobotState((event) => states.push(event.status));
+    const unsubProgress = coachStation.onTrajectoryProgress((event) =>
+      progress.push(event.progress_pct)
+    );
+
+    coachStation.sendSessionEvent('session_start', 'curls');
+    expect(wsInstance).toBeTruthy();
+
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'command_result',
+        version: '1.0',
+        command_id: 'cmd-1',
+        status: 'succeeded',
+        adapter: 'console',
+        affect: 'simulation',
+        duration_s: 0.4,
+        completed_at_ms: 123,
+      }),
+    });
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'robot_state',
+        version: '1.0',
+        status: 'executing',
+        adapter: 'console',
+        affect: 'simulation',
+        command_id: 'cmd-1',
+        updated_at_ms: 122,
+      }),
+    });
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'trajectory_progress',
+        version: '1.0',
+        command_id: 'cmd-1',
+        joint: 'elbow_flex',
+        current_deg: 90,
+        progress_pct: 0.5,
+        timestamp_ms: 122,
+      }),
+    });
+    // Unknown protocol versions are ignored rather than reaching UI listeners.
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'command_result',
+        version: '2.0',
+        command_id: 'cmd-2',
+        status: 'succeeded',
+        adapter: 'console',
+        affect: 'simulation',
+        completed_at_ms: 124,
+      }),
+    });
+
+    expect(results).toEqual(['succeeded']);
+    expect(states).toEqual(['executing']);
+    expect(progress).toEqual([0.5]);
+    unsubResult();
+    unsubState();
+    unsubProgress();
+
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'command_result',
+        version: '1.0',
+        command_id: 'cmd-3',
+        status: 'aborted',
+        adapter: 'console',
+        affect: 'simulation',
+        completed_at_ms: 125,
+      }),
+    });
+    expect(results).toEqual(['succeeded']);
+    expect(states).toEqual(['executing']);
+  });
+
   it('forwards demonstration events to subscribers (voice sync)', async () => {
     process.env.NEXT_PUBLIC_COACH_STATION = 'ws://localhost:8765';
     let wsInstance: { onmessage: ((ev: { data: string }) => void) | null } | null = null;

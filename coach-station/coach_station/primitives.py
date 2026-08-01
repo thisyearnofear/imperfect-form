@@ -6,9 +6,12 @@ The recordings these produce (via Cyberwave) become SmolVLA training data.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
-from .schema import CoachPersonality, FormEvent
+from .schema import (
+    CoachPersonality,
+    DemonstrationIntentV1,
+    FormEvent,
+)
 
 
 @dataclass(frozen=True)
@@ -41,7 +44,7 @@ class Demonstration:
     narration: str
 
 
-def resolve_demonstration(event: FormEvent) -> Optional[Demonstration]:
+def resolve_demonstration(event: FormEvent) -> Demonstration | None:
     """Map a form event to a demonstration, or None if the arm can't help.
 
     Elbow-joint corrections are the flagship (pull-ups, push-ups): a desk arm
@@ -119,3 +122,44 @@ def resolve_demonstration(event: FormEvent) -> Optional[Demonstration]:
 
     # trunk_lean, knee_valgus, ankle_flexion etc.: out of a desk arm's reach
     return None
+
+
+def to_demonstration_intent(
+    event: FormEvent,
+    demo: Demonstration,
+    *,
+    command_id: str,
+    duration_s: float,
+) -> DemonstrationIntentV1:
+    """Normalize a resolved primitive into the adapter-facing v1 contract."""
+    return DemonstrationIntentV1(
+        command_id=command_id,
+        name=demo.name,
+        mode=event.mode,
+        issue=event.issue,
+        personality=event.personality,
+        joint=demo.joint,
+        from_deg=demo.from_deg,
+        to_deg=demo.to_deg,
+        speed_deg_s=demo.profile.speed_deg_s,
+        pause_s=demo.profile.pause_s,
+        repeats=demo.profile.repeats,
+        narration=demo.narration,
+        duration_s=round(duration_s, 2),
+    )
+
+
+def from_demonstration_intent(intent: DemonstrationIntentV1) -> Demonstration:
+    """Rehydrate the adapter contract for the existing trajectory machinery."""
+    return Demonstration(
+        name=intent.name,
+        joint=intent.joint,
+        from_deg=intent.from_deg,
+        to_deg=intent.to_deg,
+        profile=MotionProfile(
+            speed_deg_s=intent.speed_deg_s,
+            pause_s=intent.pause_s,
+            repeats=intent.repeats,
+        ),
+        narration=intent.narration,
+    )

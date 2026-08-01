@@ -42,6 +42,9 @@ uv run python -m coach_station.demo --demo all
 ```
 
 Force console logging even if Cyberwave is installed: `COACH_ARM=console`.
+For quick local iteration only, `COACH_SIM_SPEED_SCALE=0.25` accelerates
+console playback; leave it unset (the default `1`) when validating narration,
+trajectory progress, and twin timing against the reported `duration_s`.
 
 ## Run against the Cyberwave twin (MuJoCo / Playground sim)
 
@@ -80,8 +83,9 @@ From repo root, automated software dry-run (vitest + pytest + demo CLI):
 ## Cohort day checklist
 
 **Required next gate** (see [ROADMAP.md](../docs/ROADMAP.md) “What's next —
-required order”): pass this manual stage before twin telemetry polish or
-hardware bring-up.
+required order”): pass this manual browser/session stage before hardware
+bring-up. Versioned twin telemetry is shipped in the software path, but the
+cohort gate still requires observing it in a real browser session.
 
 **Software (this script):** station bridge tests, TTS prefs, all primitives in console.
 
@@ -91,7 +95,8 @@ hardware bring-up.
 
 **Stage (manual) — pass criteria:**
 
-1. `cd coach-station && uv run python -m coach_station` (console or Cyberwave sim)
+1. `cd coach-station && COACH_SIM_SPEED_SCALE=1 uv run python -m coach_station`
+   (console or Cyberwave sim; use the default scale for timing validation)
 2. From repo root: `NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev`
 3. Browser (Ring 0, no wallet): **CoachFoyer** → pick **Curls** → Start camera
    coaching → allow camera → produce bad elbow form (`elbow_swing`)

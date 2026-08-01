@@ -369,7 +369,8 @@ features to the service singleton without routing them through this contract.
 
 ## Coach Station (Physical AI bridge)
 
-**Status**: Milestone 1 sim path shipped (console + Cyberwave `affect("simulation")`)
+**Status**: Milestone 1 sim path shipped (console + Cyberwave `affect("simulation")`);
+versioned lifecycle/progress feedback shipped, manual stage still required
 
 The station is a **subscriber**, not the product center. Browser FormEvents
 stream to a local Python service that resolves form issues into joint-space
@@ -395,11 +396,26 @@ coachStation.ts  ──ws://localhost:8765──►  coach_station/server.py
 1. Scripted primitives prove understand → show before any learned policy.
 2. Persona motion profiles keep demonstration in character with on-screen coach.
 3. Safety clamps live on the station; the browser never drives joints directly.
-4. UI presence (twin peek, bay pulse) makes the twin felt in imperfectform.fun
-   without embedding MuJoCo in the browser.
+4. UI presence (twin peek, bay pulse, and accessible progress) makes the twin
+   felt in imperfectform.fun without embedding MuJoCo in the browser.
+5. `command_id` correlates lifecycle and progress feedback; the browser ignores
+   stale or invalid versions and remains fail-silent.
 
 Key files: `coach-station/coach_station/{schema,primitives,trajectory,arm,demo,server}.py`,
 `src/services/coachStation.ts`, `src/components/theme/CoachTwinPeek.tsx`.
+
+Wire events:
+
+- `demonstration` — narration and command start cue
+- `robot_state` — executing / idle / error lifecycle
+- `trajectory_progress` — `elbow_flex`, current degrees, normalized progress;
+  emitted at most 10Hz
+- `command_result` — succeeded / aborted / rejected result
+
+The browser only visualizes station feedback; safety limits and joint commands
+remain station-side. `COACH_SIM_SPEED_SCALE` may accelerate local console
+playback for development, but the reported trajectory duration remains the
+physical/simulation timing contract used for synchronization.
 See [NORTH_STAR.md](./NORTH_STAR.md) and
 [coach-station/README.md](../coach-station/README.md).
 

@@ -14,13 +14,16 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
+from typing import Awaitable, Callable, Protocol
 
-from .primitives import Demonstration
+from .primitives import Demonstration, from_demonstration_intent
+from .schema import CommandResultV1, DemonstrationIntentV1
 from .safety import clamp_elbow_deg, load_safety_limits, resolve_affect
 from .trajectory import iter_trajectory
 
 # Re-export for callers/tests that imported resolve_affect from arm
-__all__ = ["ConsoleArm", "CyberwaveArm", "create_arm", "resolve_affect"]
+__all__ = ["ArmAdapter", "ConsoleArm", "CyberwaveArm", "create_arm", "resolve_affect"]
 
 logger = logging.getLogger("coach_station.arm")
 
@@ -28,10 +31,63 @@ logger = logging.getLogger("coach_station.arm")
 SO101_TWIN = os.environ.get("COACH_TWIN", "the-robot-studio/so101")
 
 
+ProgressListener = Callable[[float, float], Awaitable[None]]
+
+
+class ArmAdapter(Protocol):
+    """Adapter boundary between normalized intent and robot execution."""
+
+    name: str
+    affect: str
+
+    async def execute(
+        self,
+        intent: DemonstrationIntentV1,
+        on_progress: ProgressListener | None = None,
+    ) -> CommandResultV1:
+        ...
+
+
 class ConsoleArm:
     """Zero-dependency backend: logs the motion the real arm would perform."""
 
-    async def demonstrate(self, demo: Demonstration) -> None:
+    name = "console"
+    affect = "simulation"
+
+    async def execute(
+        self,
+        intent: DemonstrationIntentV1,
+        on_progress: ProgressListener | None = None,
+    ) -> CommandResultV1:
+        started = time.monotonic()
+        try:
+            await self.demonstrate(from_demonstration_intent(intent), on_progress=on_progress)
+            return CommandResultV1(
+                command_id=intent.command_id,
+                status="succeeded",
+                adapter=self.name,
+                affect=self.affect,
+                duration_s=round(time.monotonic() - started, 2),
+                completed_at_ms=int(time.time() * 1000),
+            )
+        except Exception as exc:
+            logger.error("Console demonstration %s aborted: %s", intent.name, exc)
+            return CommandResultV1(
+                command_id=intent.command_id,
+                status="aborted",
+                adapter=self.name,
+                affect=self.affect,
+                duration_s=round(time.monotonic() - started, 2),
+                error=str(exc),
+                completed_at_ms=int(time.time() * 1000),
+            )
+
+    async def demonstrate(
+        self,
+        demo: Demonstration,
+        *,
+        on_progress: ProgressListener | None = None,
+    ) -> None:
         limits = load_safety_limits()
         waypoints = list(iter_trajectory(demo, limits))
         total = sum(s for _, s in waypoints)
@@ -47,12 +103,19 @@ class ConsoleArm:
             limits.max_step_deg,
             demo.narration,
         )
-        # Compress wall-clock in console mode: sleep proportional but capped
-        # so demos are watchable without waiting full physical duration.
-        scale = min(1.0, 3.0 / max(total, 0.01))
-        for deg, sleep_s in waypoints:
-            logger.debug("[SIM]   %s = %.1f°", demo.joint, deg)
-            await asyncio.sleep(sleep_s * scale)
+        # Keep browser narration/progress aligned with the physical trajectory
+        # by default. Developers can opt into accelerated local playback with
+        # COACH_SIM_SPEED_SCALE=0.25 (or similar) when manually iterating.
+        try:
+            scale = max(float(os.environ.get("COACH_SIM_SPEED_SCALE", "1")), 0.01)
+        except ValueError:
+            scale = 1.0
+        await _run_waypoints(
+            waypoints,
+            on_progress=on_progress,
+            sleep_scale=scale,
+            log_waypoint=lambda deg: logger.debug("[SIM]   %s = %.1f°", demo.joint, deg),
+        )
 
 
 class CyberwaveArm:
@@ -62,12 +125,15 @@ class CyberwaveArm:
     COACH_AFFECT=live + COACH_LIVE_CONFIRM=1 only behind a physical dead-man.
     """
 
+    name = "cyberwave"
+
     def __init__(self) -> None:
         from cyberwave import Cyberwave  # optional dependency
 
         self._cw = Cyberwave()
         affect = resolve_affect()
         self._affect = affect
+        self.affect = affect
         self._limits = load_safety_limits(live=(affect == "live"))
         self._cw.affect(affect)
         self._twin = self._cw.twin(SO101_TWIN)
@@ -82,20 +148,73 @@ class CyberwaveArm:
             self._limits.max_step_deg,
         )
 
-    async def demonstrate(self, demo: Demonstration) -> None:
+    async def execute(
+        self,
+        intent: DemonstrationIntentV1,
+        on_progress: ProgressListener | None = None,
+    ) -> CommandResultV1:
+        started = time.monotonic()
         try:
-            for deg, sleep_s in iter_trajectory(demo, self._limits):
-                # Defense in depth: re-clamp at the wire even if trajectory drifts
-                cmd = clamp_elbow_deg(deg, self._limits) if demo.joint == "elbow_flex" else deg
-                self._joint_api.set(demo.joint, cmd, degrees=True)
-                await asyncio.sleep(sleep_s)
-        except Exception as exc:
-            # Fail soft: one bad demo must not take down the websocket server.
-            logger.error(
-                "Demonstration %s aborted (%s) — station stays up",
-                demo.name,
-                exc,
+            await self.demonstrate(from_demonstration_intent(intent), on_progress=on_progress)
+            return CommandResultV1(
+                command_id=intent.command_id,
+                status="succeeded",
+                adapter=self.name,
+                affect=self.affect,
+                duration_s=round(time.monotonic() - started, 2),
+                completed_at_ms=int(time.time() * 1000),
             )
+        except Exception as exc:
+            logger.error("Cyberwave demonstration %s aborted: %s", intent.name, exc)
+            return CommandResultV1(
+                command_id=intent.command_id,
+                status="aborted",
+                adapter=self.name,
+                affect=self.affect,
+                duration_s=round(time.monotonic() - started, 2),
+                error=str(exc),
+                completed_at_ms=int(time.time() * 1000),
+            )
+
+    async def demonstrate(
+        self,
+        demo: Demonstration,
+        *,
+        on_progress: ProgressListener | None = None,
+    ) -> None:
+        waypoints = list(iter_trajectory(demo, self._limits))
+
+        async def send_waypoint(deg: float) -> None:
+            # Defense in depth: re-clamp at the wire even if trajectory drifts.
+            cmd = clamp_elbow_deg(deg, self._limits) if demo.joint == "elbow_flex" else deg
+            self._joint_api.set(demo.joint, cmd, degrees=True)
+
+        await _run_waypoints(waypoints, on_progress=on_progress, send=send_waypoint)
+
+
+async def _run_waypoints(
+    waypoints: list[tuple[float, float]],
+    *,
+    on_progress: ProgressListener | None = None,
+    sleep_scale: float = 1.0,
+    send: Callable[[float], Awaitable[None]] | None = None,
+    log_waypoint: Callable[[float], None] | None = None,
+) -> None:
+    """Execute waypoints and emit progress at no more than 10Hz."""
+    total = max(len(waypoints), 1)
+    last_emit = 0.0
+    for index, (deg, sleep_s) in enumerate(waypoints, start=1):
+        if log_waypoint:
+            log_waypoint(deg)
+        if send:
+            await send(deg)
+        now = time.monotonic()
+        progress = index / total
+        if on_progress and (now - last_emit >= 0.1 or index == total):
+            await on_progress(deg, progress)
+            last_emit = now
+        await asyncio.sleep(sleep_s * sleep_scale)
+
 
 
 def create_arm():
