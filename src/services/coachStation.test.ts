@@ -302,4 +302,77 @@ describe('coachStation fail-silent', () => {
     expect(received[0].narration).toMatch(/Elbow pinned/);
     unsub();
   });
+
+  it('accepts trajectories with and without observed (measured) angle', async () => {
+    process.env.NEXT_PUBLIC_COACH_STATION = 'ws://localhost:8765';
+    let wsInstance: { onmessage: ((ev: { data: string }) => void) | null } | null = null;
+
+    class CaptureWebSocket {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      readyState = CaptureWebSocket.OPEN;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      onmessage: ((ev: { data: string }) => void) | null = null;
+      constructor() {
+        wsInstance = this;
+      }
+      send() {}
+    }
+    (globalThis as { WebSocket: unknown }).WebSocket = CaptureWebSocket;
+
+    const { coachStation } = await import('@/services/coachStation');
+    const events: Array<{ current: number; measured: number | undefined }> = [];
+    const unsub = coachStation.onTrajectoryProgress((e) =>
+      events.push({ current: e.current_deg, measured: e.measured_deg })
+    );
+
+    coachStation.sendSessionEvent('session_start', 'curls');
+    expect(wsInstance).toBeTruthy();
+
+    // Echo-only: no measured_deg → undefined (UI renders commanded, no badge)
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'trajectory_progress',
+        version: '1.0',
+        command_id: 'cmd-echo',
+        joint: 'elbow_flex',
+        current_deg: 90,
+        progress_pct: 0.5,
+        timestamp_ms: 1,
+      }),
+    });
+    // Observed: measured_deg present → surfaced for the dial
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'trajectory_progress',
+        version: '1.0',
+        command_id: 'cmd-obs',
+        joint: 'elbow_flex',
+        current_deg: 90,
+        progress_pct: 0.55,
+        timestamp_ms: 2,
+        measured_deg: 88.7,
+      }),
+    });
+    // Out-of-range measured values get dropped (UI falls back to commanded)
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'trajectory_progress',
+        version: '1.0',
+        command_id: 'cmd-bad',
+        joint: 'elbow_flex',
+        current_deg: 90,
+        progress_pct: 0.6,
+        timestamp_ms: 3,
+        measured_deg: 999,
+      }),
+    });
+
+    expect(events).toHaveLength(3);
+    expect(events[0]).toEqual({ current: 90, measured: undefined });
+    expect(events[1]).toEqual({ current: 90, measured: 88.7 });
+    expect(events[2]).toEqual({ current: 90, measured: undefined });
+    unsub();
+  });
 });

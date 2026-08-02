@@ -90,9 +90,12 @@ export interface StationTrajectoryProgressEvent {
   version: '1.0';
   command_id: string;
   joint: 'elbow_flex';
+  /** Commanded waypoint. */
   current_deg: number;
   progress_pct: number;
   timestamp_ms: number;
+  /** Encoder/sim-observed angle when the adapter can read it; absent = echo. */
+  measured_deg?: number;
 }
 
 export type DemonstrationListener = (event: StationDemonstrationEvent) => void;
@@ -187,6 +190,10 @@ function parseTrajectoryProgress(raw: unknown): StationTrajectoryProgressEvent |
   ) {
     return null;
   }
+  const measured =
+    isFiniteNumber(o.measured_deg) && o.measured_deg >= 0 && o.measured_deg <= 180
+      ? o.measured_deg
+      : undefined;
   return {
     type: 'trajectory_progress',
     version: '1.0',
@@ -195,6 +202,7 @@ function parseTrajectoryProgress(raw: unknown): StationTrajectoryProgressEvent |
     current_deg: o.current_deg,
     progress_pct: o.progress_pct,
     timestamp_ms: o.timestamp_ms,
+    measured_deg: measured,
   };
 }
 

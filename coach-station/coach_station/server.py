@@ -128,7 +128,11 @@ class CoachStation:
             except Exception as exc:
                 logger.debug("Could not emit demonstration event: %s", exc)
 
-            async def on_progress(current_deg: float, progress_pct: float) -> None:
+            async def on_progress(
+                current_deg: float,
+                progress_pct: float,
+                measured_deg: float | None = None,
+            ) -> None:
                 await self._send_json(
                     websocket,
                     TrajectoryProgressV1(
@@ -137,6 +141,7 @@ class CoachStation:
                         current_deg=current_deg,
                         progress_pct=progress_pct,
                         timestamp_ms=int(time.time() * 1000),
+                        measured_deg=measured_deg,
                     ).model_dump(),
                 )
 
@@ -165,6 +170,20 @@ class CoachStation:
                     completed_at_ms=int(time.time() * 1000),
                 )
             await self._send_json(websocket, result.model_dump())
+            if result.status != "succeeded":
+                publish = getattr(self.arm, "publish_fault", None)
+                if callable(publish):
+                    try:
+                        publish(
+                            name=f"Demo failed: {intent.name}",
+                            description=(
+                                f"{result.status}: {result.error or 'unknown'} "
+                                f"(adapter={result.adapter}, affect={result.affect}, "
+                                f"command_id={result.command_id})"
+                            ),
+                        )
+                    except Exception as exc:
+                        logger.debug("publish_fault skipped: %s", exc)
             await self._send_state(websocket, RobotStateV1(
                 status="idle" if result.status == "succeeded" else "error",
                 adapter=result.adapter,

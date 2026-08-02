@@ -77,8 +77,14 @@ class ProgressArm:
 
     async def execute(self, intent, on_progress=None):
         if on_progress:
-            await on_progress(160.0, 0.25)
-            await on_progress(50.0, 1.0)
+            await on_progress(160.0, 0.25, None)
+            await on_progress(50.0, 1.0, None)
+
+    def read_joint_deg(self, _joint: str) -> None:
+        return None
+
+    def publish_fault(self, _name: str, _description: str) -> None:
+        return
         return CommandResultV1(
             command_id=intent.command_id,
             status="succeeded",

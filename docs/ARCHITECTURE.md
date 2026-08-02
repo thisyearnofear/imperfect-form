@@ -401,15 +401,24 @@ coachStation.ts  ──ws://localhost:8765──►  coach_station/server.py
 5. `command_id` correlates lifecycle and progress feedback; the browser ignores
    stale or invalid versions and remains fail-silent.
 
-Key files: `coach-station/coach_station/{schema,primitives,trajectory,arm,demo,server}.py`,
-`src/services/coachStation.ts`, `src/components/theme/CoachTwinPeek.tsx`.
+Key files: `coach-station/coach_station/{schema,primitives,trajectory,arm,demo,server,recordings}.py`,
+`src/services/coachStation.ts`, `src/components/theme/CoachTwinPeek.tsx` — the
+twin peek renders as an elbow instrument (dial, ghost target, motion trail,
+SIM/LIVE badge, persona tint) sourced from the events above.
 
 Wire events:
 
 - `demonstration` — narration and command start cue
 - `robot_state` — executing / idle / error lifecycle
 - `trajectory_progress` — `elbow_flex`, current degrees, normalized progress;
-  emitted at most 10Hz
+  emitted at most 10Hz. `measured_deg` (additive, v1) carries the _observed_
+  joint angle from `twin.joints.get_all()` when the backend can read it
+  (sim telemetry cache or live encoders). `current_deg` remains the commanded
+  waypoint; the UI dial prefers observed when present (`·obs` marker on the
+  readout) and falls back to commanded otherwise.
+- Twin alert publishing (`publish_fault`) posts aborted/rejected outcomes to
+  `twin.alerts` when `COACH_TWIN_ALERTS=1`; kept off by default so sim
+  iteration doesn't spam the Cyberwave dashboard alert feed.
 - `command_result` — succeeded / aborted / rejected result
 
 The browser only visualizes station feedback; safety limits and joint commands

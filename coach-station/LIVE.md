@@ -52,6 +52,13 @@ Do not run `--demo all` on hardware until curl is stable.
 - [ ] Browser narration still fires (`demonstration` WS event)
 - [ ] Killing the dead-man / process leaves the arm idle/safe
 - [ ] Re-check elbow clamps against measured hard stops; set env permanently
+- [ ] **Twin instrument shows `·obs`** on the degree readout (live) — meaning
+      `twin.joints.get_all()` telemetry is flowing and the UI dial tracks the
+      encoder, not just the commanded waypoint. If it never appears, encoder
+      telemetry isn't reaching the SDK cache and the dial is rendering only
+      commanded angles — investigate before compound motions.
+- Optional: `COACH_TWIN_ALERTS=1` so aborted/rejected demos surface in the
+  Cyberwave dashboard alert feed during first live runs
 
 ## Still open
 

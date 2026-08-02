@@ -73,7 +73,12 @@ class CommandResultV1(BaseModel):
 
 
 class TrajectoryProgressV1(BaseModel):
-    """Throttled progress snapshot for the twin UI and future telemetry."""
+    """Throttled progress snapshot for the twin UI and future telemetry.
+
+    `current_deg` is the *commanded* waypoint. `measured_deg` is the latest
+    observed encoder/sim joint angle when the backend can read one — when
+    absent the client should treat current_deg as the best-known truth.
+    """
 
     type: Literal["trajectory_progress"] = "trajectory_progress"
     version: ProtocolVersion = "1.0"
@@ -82,6 +87,7 @@ class TrajectoryProgressV1(BaseModel):
     current_deg: float = Field(ge=0.0, le=180.0)
     progress_pct: float = Field(ge=0.0, le=1.0)
     timestamp_ms: int
+    measured_deg: Optional[float] = Field(default=None, ge=0.0, le=180.0)
 
 
 class RobotStateV1(BaseModel):

@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import os
 import time
-from typing import Awaitable, Callable, Protocol
+from typing import Awaitable, Callable, Optional, Protocol
 
 from .primitives import Demonstration, from_demonstration_intent
 from .schema import CommandResultV1, DemonstrationIntentV1
@@ -31,7 +32,8 @@ logger = logging.getLogger("coach_station.arm")
 SO101_TWIN = os.environ.get("COACH_TWIN", "the-robot-studio/so101")
 
 
-ProgressListener = Callable[[float, float], Awaitable[None]]
+ProgressListener = Callable[[float, float, "Optional[float]"], Awaitable[None]]
+Observer = Callable[[], "Optional[float]"]
 
 
 class ArmAdapter(Protocol):
@@ -46,6 +48,22 @@ class ArmAdapter(Protocol):
         on_progress: ProgressListener | None = None,
     ) -> CommandResultV1:
         ...
+
+    def read_joint_deg(self, joint: str) -> float | None:
+        """Return the *measured* joint angle in degrees if the backend can
+        observe one (encoders on live hardware, telemetry cache in sim).
+
+        Returns None when measurement isn't possible; callers fall back to
+        echoing the commanded waypoint instead. Should never raise — telemetry
+        read failure shouldn't break coaching.
+        """
+
+    def publish_fault(self, name: str, description: str) -> None:
+        """Surface an adapter-visible fault outside the WebSocket loop.
+
+        No-op for ConsoleArm; CyberwaveArm posts a twin alert so the failure
+        shows up in the Cyberwave dashboard, not just in our own logs.
+        """
 
 
 class ConsoleArm:
@@ -82,6 +100,10 @@ class ConsoleArm:
                 completed_at_ms=int(time.time() * 1000),
             )
 
+    def read_joint_deg(self, joint: str) -> float | None:
+        """Console backend cannot observe; callers fall back to echo."""
+        return None
+
     async def demonstrate(
         self,
         demo: Demonstration,
@@ -117,6 +139,10 @@ class ConsoleArm:
             log_waypoint=lambda deg: logger.debug("[SIM]   %s = %.1f°", demo.joint, deg),
         )
 
+    def publish_fault(self, name: str, description: str) -> None:
+        """Console backend has nothing external to notify."""
+        return
+
 
 class CyberwaveArm:
     """Drives the SO-101 twin through the Cyberwave SDK.
@@ -138,6 +164,11 @@ class CyberwaveArm:
         self._cw.affect(affect)
         self._twin = self._cw.twin(SO101_TWIN)
         self._joint_api = self._twin.joints
+        # Post-demo error surface in the Cyberwave dashboard — only fired for
+        # aborted/error transitions, and only when explicitly enabled. Keeps
+        # demo chatter out of the twin's alert feed while still lighting up
+        # their console when coaching actually goes wrong.
+        self._alerts_enabled = os.environ.get("COACH_TWIN_ALERTS", "").strip() in ("1", "true")
         logger.info(
             "Cyberwave twin %s ready (affect=%s elbow=[%.0f,%.0f] max_speed=%.0f max_step=%.1f)",
             SO101_TWIN,
@@ -176,6 +207,25 @@ class CyberwaveArm:
                 completed_at_ms=int(time.time() * 1000),
             )
 
+    def read_joint_deg(self, joint: str) -> float | None:
+        """Best-effort read of the *measured* elbow from the twin cache.
+
+        Returns None if the twin hasn't reported yet or the read fails —
+        the trajectory runner then falls back to echoing commanded waypoints,
+        which is still correct (sim vs live drift stays honest via logging).
+        """
+        try:
+            states = self._joint_api.get_all()
+        except Exception as exc:
+            logger.debug("read_joint_deg: get_all failed (%s)", exc)
+            return None
+        value = states.get(joint)
+        if not isinstance(value, (int, float)):
+            return None
+        # joints.get_all() returns radians per SDK docs
+        deg = math.degrees(float(value))
+        return deg if math.isfinite(deg) else None
+
     async def demonstrate(
         self,
         demo: Demonstration,
@@ -189,7 +239,30 @@ class CyberwaveArm:
             cmd = clamp_elbow_deg(deg, self._limits) if demo.joint == "elbow_flex" else deg
             self._joint_api.set(demo.joint, cmd, degrees=True)
 
-        await _run_waypoints(waypoints, on_progress=on_progress, send=send_waypoint)
+        await _run_waypoints(
+            waypoints,
+            on_progress=on_progress,
+            send=send_waypoint,
+            observe=lambda: self.read_joint_deg(demo.joint),
+        )
+
+    def publish_fault(self, name: str, description: str) -> None:
+        """Post a twin alert so errors show up in the Cyberwave dashboard.
+
+        Enabled via COACH_TWIN_ALERTS=1 (default off). Fail-silent: alerting
+        must never take down the coaching loop.
+        """
+        if not self._alerts_enabled:
+            return
+        try:
+            self._twin.alerts.create(
+                name=name,
+                description=description,
+                severity="error",
+                alert_type="coach_demo_fault",
+            )
+        except Exception as exc:
+            logger.warning("Twin alert publish failed (%s: %s) — continuing", name, exc)
 
 
 async def _run_waypoints(
@@ -198,9 +271,16 @@ async def _run_waypoints(
     on_progress: ProgressListener | None = None,
     sleep_scale: float = 1.0,
     send: Callable[[float], Awaitable[None]] | None = None,
+    observe: Observer | None = None,
     log_waypoint: Callable[[float], None] | None = None,
 ) -> None:
-    """Execute waypoints and emit progress at no more than 10Hz."""
+    """Execute waypoints and emit progress at no more than 10Hz.
+
+    `observe` reads the *measured* joint angle (degrees) when the backend can
+    see it; the emitted payload carries both commanded and measured so the UI
+    can distinguish "sent" from "actually moved" — the difference matters in
+    live mode, and is what makes the twin instrument honest about reality.
+    """
     total = max(len(waypoints), 1)
     last_emit = 0.0
     for index, (deg, sleep_s) in enumerate(waypoints, start=1):
@@ -211,7 +291,13 @@ async def _run_waypoints(
         now = time.monotonic()
         progress = index / total
         if on_progress and (now - last_emit >= 0.1 or index == total):
-            await on_progress(deg, progress)
+            measured = None
+            if observe is not None:
+                try:
+                    measured = observe()
+                except Exception as exc:
+                    logger.debug("observe() failed at waypoint %d: %s", index, exc)
+            await on_progress(deg, progress, measured)
             last_emit = now
         await asyncio.sleep(sleep_s * sleep_scale)
 

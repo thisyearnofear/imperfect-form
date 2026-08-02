@@ -67,6 +67,33 @@ Elbow workspace + motion clamps (env-overridable; live defaults tighter):
 
 See [`LIVE.md`](./LIVE.md) for Milestone 2 hardware bring-up.
 
+## Twin integration surface (Cyberwave)
+
+Three opt-in seams keep the station honest about what's really happening:
+
+- **Measured telemetry** (`TrajectoryProgressV1.measured_deg`): the adapter
+  reads `twin.joints.get_all()` per progress tick and threads the _observed_
+  elbow angle alongside the commanded one. The UI dial renders observed when
+  available (`·obs` suffix on the readout), falls back to commanded otherwise
+  (e.g. `ConsoleArm`, or when the SDK hasn't received a state update yet).
+  Read failures never interrupt coaching — `observe()` errors are logged at
+  DEBUG and the emitter continues.
+- **Twin alerts** (`COACH_TWIN_ALERTS=1`): when a demo fails (`aborted`,
+  `rejected`), the station posts a `coach_demo_fault` alert to the Cyberwave
+  twin so the failure shows up in the dashboard alert feed, not just our
+  logs. Off by default so simulation doesn't spam the alert feed.
+- **Programmatic recordings fetch** — the Cyberwave SDK has no
+  start/stop recording API (capture is driven from Live Mode in the
+  dashboard). The companion CLI fetches robot-actuation recordings for a
+  session window so you can trim them into training episodes for the
+  SmolVLA flywheel:
+
+  ```sh
+  CYBERWAVE_API_KEY=... uv run python -m coach_station.recordings \
+    --since 2026-08-03 --until 2026-08-04
+  CYBERWAVE_API_KEY=... uv run python -m coach_station.recordings --inspect
+  ```
+
 ## Tests
 
 ```sh
@@ -124,7 +151,8 @@ COACH_AFFECT=live COACH_LIVE_CONFIRM=1 uv run python -m coach_station
 - `coach_station/schema.py` — FormEvent contract (mirrors `src/services/coachStation.ts`)
 - `coach_station/primitives.py` — form issue → demonstration, persona motion profiles
 - `coach_station/trajectory.py` — interpolated joint waypoints + safety clamps
-- `coach_station/arm.py` — Cyberwave twin backend (`joints.set`) + console sim
+- `coach_station/arm.py` — Cyberwave twin backend (`joints.set`, `joints.get_all()`, alerts) + console sim
+- `coach_station/recordings.py` — fetch twin recordings for a session window (episode pipeline, SmolVLA flywheel)
 - `coach_station/demo.py` — CLI to fire primitives without the web app
 - `coach_station/server.py` — WebSocket server, cooldowns, one-demo-at-a-time
 - `LIVE.md` — Milestone 2 hardware bring-up runbook

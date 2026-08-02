@@ -105,21 +105,30 @@ full theme token once earned / wallet-switched.
   TTS cascade ElevenLabs → Amazon Polly → browser Web Speech; user preference
   via settings VOICE ENGINE (`prefTtsProvider`); not Nova-locked
 - Demo CLI: `cd coach-station && uv run python -m coach_station.demo --demo all`
+- Recordings CLI: `uv run python -m coach_station.recordings --since ...`
+  fetches twin actuation recordings (per-joint telemetry) for the SmolVLA
+  episode pipeline
 - Versioned station feedback: `robot_state`, `trajectory_progress`, and
   `command_result` events correlate through `command_id`; trajectory progress
-  is throttled to at most 10Hz and rendered accessibly in the twin peek
-- Station tests: `uv sync --extra dev && uv run pytest` (29 passing)
+  is throttled to at most 10Hz and rendered accessibly in the twin peek;
+  `trajectory_progress.measured_deg` (additive in v1) surfaces the observed
+  elbow from `twin.joints.get_all()` when the adapter can read it, versus
+  echoing only commanded waypoints (UI `·obs` suffix)
+- Twin-visibility alerts (`COACH_TWIN_ALERTS=1`): aborted/rejected demos post
+  to the Cyberwave dashboard alert feed via `twin.alerts.create`, not just
+  station logs
+- Station tests: `uv sync --extra dev && uv run pytest` (41 passing)
 - Soft dry-run: `./scripts/cohort-dry-run.sh`
 
 ## What's next — required order
 
 Do these in order. Polish items are **not** the gate.
 
-| #     | Gate                      | Done when                                                                                                            | Where                                                                    |
-| ----- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **1** | **Manual stage**          | Browser + station: curls → form cue → arm moves (console or Cyberwave sim) + TTS + twin peek / bay pulse. No wallet. | [`coach-station/README.md`](../coach-station/README.md) cohort checklist |
-| **2** | **Richer twin telemetry** | ✅ Shipped: peek silhouette tracks versioned joint/progress events, still fail-silent                               | Manual validation remains                                                     |
-| **3** | **Hardware bring-up**     | One curl demo trustworthy on metal (`demonstrate_strict_curl` first)                                                 | [`coach-station/LIVE.md`](../coach-station/LIVE.md)                      |
+| #     | Gate                      | Done when                                                                                                                                                     | Where                                                                    |
+| ----- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **1** | **Manual stage**          | Browser + station: curls → form cue → arm moves (console or Cyberwave sim) + TTS + twin instrument / bay pulse. No wallet.                                    | [`coach-station/README.md`](../coach-station/README.md) cohort checklist |
+| **2** | **Richer twin telemetry** | ✅ Shipped: peek silhouette is now a dial-driven instrument tracking commanded _and_ observed joint angles + persona-tinted SIM/LIVE badge, still fail-silent | Manual validation remains                                                |
+| **3** | **Hardware bring-up**     | One curl demo trustworthy on metal (`demonstrate_strict_curl` first)                                                                                          | [`coach-station/LIVE.md`](../coach-station/LIVE.md)                      |
 
 **Defer until #1–#3:** own Spline scene, Avalanche leaderboard contract, marketing landing, SmolVLA / episode flywheel (Milestone 3).
 
@@ -185,6 +194,9 @@ Demo without the browser: `cd coach-station && uv run python -m coach_station.de
 datasets as the product’s starting point.
 
 - [ ] Every coached session records to Cyberwave in LeRobot-format episodes
+      — fetch/inspect plumbing shipped via `coach_station/recordings.py`;
+      capture still dashboard-driven per Cyberwave SDK (no programmatic
+      start/stop API, verified against current docs)
 - [ ] Built-in face anonymization on-device (privacy-first stays true)
 - [ ] Episode slicing per exercise / per persona / per form-issue class
 - [ ] SmolVLA fine-tuning experiment #1: extension-cue → arm motion
@@ -193,7 +205,10 @@ datasets as the product’s starting point.
 ### Milestone 4 — Coach station wedge
 
 - [ ] Kiosk mode for a paired camera + arm at a gym
-- [ ] Per-station telemetry back to Cyberwave
+- [~] Per-station telemetry back to Cyberwave — fault alerts shipped behind
+  `COACH_TWIN_ALERTS=1` (`coach_station/arm.py::publish_fault`,
+  surfaced as twin alerts in the Cyberwave dashboard); broader twin-state
+  mirroring deferred
 - [ ] Persona selection for the station (matches app)
 
 ## What we're deliberately not doing
