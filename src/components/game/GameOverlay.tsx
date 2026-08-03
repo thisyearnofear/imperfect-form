@@ -12,10 +12,19 @@ interface GameOverlayProps {
 const PHASE_ORDER: LoadingPhase[] = ['initial', 'camera', 'ai', 'positioning', 'ready'];
 /** No phase renders for less than this — sub-second states read as flicker bugs. */
 const PHASE_MIN_MS = 700;
+/** When the pose model was pre-warmed on idle (window.__imfPreWarmedDetector),
+ *  the 'ai' phase is not a real wait — collapse it to a brief beat so returning
+ *  users don't sit on a fake 700ms loader. */
+const AI_PHASE_WARM_MS = 220;
 /** 'Ready' is a deliberate beat, not a frame-flash while the overlay hides. */
 const READY_BEAT_MS = 900;
 
 const phaseRank = (p: LoadingPhase) => PHASE_ORDER.indexOf(p);
+
+/** True when ClientOnlyProviders pre-warmed MoveNet on idle. */
+function isModelPreWarmed(): boolean {
+  return typeof window !== 'undefined' && !!window.__imfPreWarmedDetector;
+}
 
 export const GameLoadingOverlay: React.FC<GameOverlayProps> = ({
   phase,
@@ -47,7 +56,10 @@ export const GameLoadingOverlay: React.FC<GameOverlayProps> = ({
     if (phaseRank(phase) < phaseRank(heldPhase)) return; // never regress
 
     const elapsed = Date.now() - lastAdvanceRef.current;
-    const wait = Math.max(0, PHASE_MIN_MS - elapsed);
+    // Pre-warmed model: the 'ai' phase is not a real load — shorten its hold
+    // so returning users skip the fake 700ms wait. Other phases keep PHASE_MIN_MS.
+    const minMs = phase === 'ai' && isModelPreWarmed() ? AI_PHASE_WARM_MS : PHASE_MIN_MS;
+    const wait = Math.max(0, minMs - elapsed);
     const timer = setTimeout(() => {
       const newest = latestPhaseRef.current;
       if (phaseRank(newest) < phaseRank(heldPhase)) return;

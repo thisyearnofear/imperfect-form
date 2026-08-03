@@ -47,35 +47,6 @@ const initializeWindowProperties = () => {
 // Call initialization
 initializeWindowProperties();
 
-// Network color tokens - mapped from design system
-const NETWORK_STYLES = {
-  polygon: {
-    bg: 'bg-purple-900/50',
-    text: 'text-purple-300',
-    badge: { backgroundColor: 'rgba(147, 51, 234, 0.5)', color: 'rgb(216, 180, 254)' },
-  },
-  monad: {
-    bg: 'bg-yellow-900/50',
-    text: 'text-yellow-300',
-    badge: { backgroundColor: 'rgba(180, 83, 9, 0.5)', color: 'rgb(253, 224, 71)' },
-  },
-  celo: {
-    bg: 'bg-green-900/50',
-    text: 'text-green-300',
-    badge: { backgroundColor: 'rgba(20, 83, 45, 0.5)', color: 'rgb(134, 239, 172)' },
-  },
-  base: {
-    bg: 'bg-blue-900/50',
-    text: 'text-blue-300',
-    badge: { backgroundColor: 'rgba(30, 58, 138, 0.5)', color: 'rgb(147, 197, 253)' },
-  },
-  avalanche: {
-    bg: 'bg-red-900/50',
-    text: 'text-red-300',
-    badge: { backgroundColor: 'rgba(232, 65, 66, 0.45)', color: 'rgb(254, 202, 202)' },
-  },
-} as const;
-
 // Status color tokens
 const STATUS_STYLES = {
   submitting: { color: designTokens.colors.warning, className: 'text-yellow-400' },
@@ -566,224 +537,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             </div>
           )}
 
-          {/* Score tab header */}
+          {/* ===== CELEBRATE: the trophy moment =====
+             Relevance-gated so a guest never sees a wall of wallet/verify/share
+             CTAs. Hero = the result; one primary CTA; earned depth below. */}
           {stage === 'celebrate' && submissionStatus !== 'success' && (
-            <div className="text-center space-y-1">
-              <p className="text-xs font-black uppercase tracking-widest text-teal-200/70">
-                Save to leaderboard
-              </p>
-              <p className="text-[10px] text-gray-500">
-                Optional — your workout is already saved locally
-              </p>
-            </div>
-          )}
-
-          {/* Network Info - Minimal badge (score tab: on-chain context) */}
-          {stage === 'celebrate' && (
-            <div className="text-center">
-              <span
-                className={`inline-block font-semibold px-2.5 py-1 rounded-full text-xs ${
-                  NETWORK_STYLES[networkType].bg
-                } ${NETWORK_STYLES[networkType].text} ${isCelo ? 'text-green-100' : ''}`}
-              >
-                {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
-              </span>
-            </div>
-          )}
-
-          {/* Wallet connect lives ONLY in score tab - the rest of the modal is Ring 0 */}
-          {stage === 'celebrate' && !effectiveAddress && ONCHAIN_MODES.includes(mode) && (
-            <UniversalConnectButton size="lg" />
-          )}
-          {stage === 'celebrate' && effectiveAddress && (
-            <div className="space-y-4">
-              {/* Celo-specific: Show submission choice directly in main dialog */}
-              {chainId === 42220 && submissionStatus === 'idle' && submissionType === null && (
-                <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
-                  <div className="flex items-center justify-between px-1 mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      Select Submission Type
-                    </span>
-                    {isCelo && (
-                      <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full font-bold border border-green-500/20">
-                        Celo Bonus Active
-                      </span>
-                    )}
-                  </div>
-
-                  {isVerified ? (
-                    // VERIFIED USER: Primary Verified Button + Subtle Basic Link
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={handleSubmitVerified}
-                        className="relative w-full p-4 rounded-xl bg-gradient-to-br from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white shadow-lg shadow-green-900/30 border border-green-500/30 transition-all active:scale-[0.98] group"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="text-left">
-                            <div className="font-black text-lg sm:text-xl flex items-center gap-2">
-                              <span>Verified Score</span>
-                              <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                                +10%
-                              </span>
-                            </div>
-                            <div className="text-xs sm:text-sm text-green-100 font-medium opacity-90 mt-0.5">
-                              Submit with verified human badge
-                            </div>
-                          </div>
-                          <div className="text-3xl sm:text-4xl font-black tracking-tighter drop-shadow-md">
-                            {verifiedScore}
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={handleSubmitBasic}
-                        className="w-full py-2 text-xs sm:text-sm text-gray-500 hover:text-gray-300 font-medium transition-colors"
-                      >
-                        or submit as{' '}
-                        <span className="underline decoration-gray-700 underline-offset-2">
-                          Standard Score ({baseScore})
-                        </span>
-                      </button>
-                    </div>
-                  ) : (
-                    // UNVERIFIED USER: Prominent Verify CTA + Secondary Basic Button
-                    <div className="flex flex-col gap-2.5">
-                      <button
-                        onClick={handleStartVerification}
-                        className="relative w-full p-4 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white shadow-lg shadow-orange-900/30 border border-yellow-500/30 transition-all active:scale-[0.98] group overflow-hidden"
-                      >
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="flex items-center justify-between relative z-10">
-                          <div className="text-left">
-                            <div className="font-black text-lg sm:text-xl text-white flex items-center gap-2">
-                              <span>Verify & Submit</span>
-                              <span className="bg-black/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                                BONUS
-                              </span>
-                            </div>
-                            <div className="text-xs sm:text-sm text-yellow-50 font-medium opacity-90 mt-0.5">
-                              Get +{bonusPoints} points boost
-                            </div>
-                          </div>
-                          <div className="text-3xl sm:text-4xl font-black tracking-tighter drop-shadow-md">
-                            {verifiedScore}
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={handleSubmitBasic}
-                        className="w-full p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 active:bg-white/5 transition-all flex items-center justify-between group"
-                      >
-                        <span className="text-sm font-semibold text-gray-400 group-hover:text-gray-300 transition-colors">
-                          Submit Standard Score
-                        </span>
-                        <span className="text-base font-bold text-gray-500 group-hover:text-gray-400 transition-colors">
-                          {baseScore}
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Submit Score component - only show if not successfully submitted and level is 5+ */}
-              {ONCHAIN_MODES.includes(mode) && submissionStatus !== 'success' && (
-                <div className="studio-card studio-card__body text-center">
-                  {progress.currentLevel >= 5 ? (
-                    <>
-                      {/* Use unified Wagmi-based submission for all networks */}
-                      <SubmitScore
-                        score={repCount}
-                        exerciseType={mode}
-                        forceDirectSubmission={true}
-                        walletAddress={effectiveAddress}
-                        submissionStatus={submissionStatus}
-                        setSubmissionStatus={setSubmissionStatus}
-                        onSubmissionSuccess={(txHash, chainId) => {
-                          setTransactionHash(txHash);
-                          setSubmittedChainId(chainId);
-                          // Update local workout as synced for freemium model
-                          if (sessionSummary) {
-                            const networkName = getNetworkFromChainId(chainId);
-                            getLocalWorkouts().then((workouts) => {
-                              // Match by timestamp (startTime)
-                              const workout = workouts.find(
-                                (w) => w.timestamp === sessionSummary.startTime
-                              );
-                              if (workout) {
-                                markWorkoutSynced(workout.id, txHash, networkName as any);
-                                if (process.env.NODE_ENV !== 'production') {
-                                  console.log('✅ Local workout marked as synced:', workout.id);
-                                }
-                              }
-                            });
-                          }
-                        }}
-                      />
-                      {/* Dynamic feedback message */}
-                      {submissionStatus === 'submitting' && (
-                        <p
-                          className={`text-xs ${STATUS_STYLES.submitting.className} mt-3 animate-pulse font-bold tracking-widest uppercase`}
-                        >
-                          Confirming Transaction...
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <div>
-                      <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
-                        <span className="text-lg">🔒</span>
-                        <span className="text-sm font-bold uppercase tracking-widest">
-                          On-chain Sync Locked
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-gray-400">
-                        Reach <span className="text-primary font-bold">Level 5</span> to sync your
-                        workouts to the blockchain.
-                      </p>
-                      <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gray-600"
-                          style={{ width: `${(progress.currentLevel / 5) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Success message - show when successfully submitted */}
-              {submissionStatus === 'success' && (
-                <div className="studio-card studio-card__body text-center animate-in fade-in zoom-in duration-300">
-                  <div className="text-teal-300 text-xl font-semibold tracking-tight">
-                    Synced to leaderboard
-                  </div>
-                  <div className="text-[10px] text-teal-300/60 uppercase font-semibold tracking-widest">
-                    On-chain record stored
-                  </div>
-                  {/* Play Again Button */}
-                  {onPlayAgain && (
-                    <button
-                      onClick={() => {
-                        onPlayAgain();
-                        onClose();
-                      }}
-                      className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
-                    >
-                      <span>↺</span>
-                      <span>Try another set</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ===== CELEBRATE: the trophy moment ===== */}
-          {stage === 'celebrate' && (
             <>
+              {/* Progress spark — earned depth, not a gate */}
               {repCount > 0 && progressSeries && (
                 <ProgressSpark
                   points={progressSeries.points}
@@ -800,7 +559,192 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 />
               )}
 
-              {/* Highlight Card */}
+              {/* Single primary CTA — no duplicates */}
+              {onPlayAgain && (
+                <button
+                  onClick={() => {
+                    onPlayAgain();
+                    onClose();
+                  }}
+                  className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
+                >
+                  <span>↺</span>
+                  <span>Try another set</span>
+                </button>
+              )}
+
+              {/* On-chain: only when relevant (has wallet + on-chain mode + not yet submitted) */}
+              {effectiveAddress && ONCHAIN_MODES.includes(mode) && (
+                <div className="space-y-4">
+                  {/* Celo-specific: Show submission choice directly in main dialog */}
+                  {chainId === 42220 && submissionStatus === 'idle' && submissionType === null && (
+                    <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
+                      <div className="flex items-center justify-between px-1 mb-2">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          Select Submission Type
+                        </span>
+                        {isCelo && (
+                          <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full font-bold border border-green-500/20">
+                            Celo Bonus Active
+                          </span>
+                        )}
+                      </div>
+
+                      {isVerified ? (
+                        // VERIFIED USER: Primary Verified Button + Subtle Basic Link
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={handleSubmitVerified}
+                            className="relative w-full p-4 rounded-xl bg-gradient-to-br from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white shadow-lg shadow-green-900/30 border border-green-500/30 transition-all active:scale-[0.98] group"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="text-left">
+                                <div className="font-black text-lg sm:text-xl flex items-center gap-2">
+                                  <span>Verified Score</span>
+                                  <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                    +10%
+                                  </span>
+                                </div>
+                                <div className="text-xs sm:text-sm text-green-100 font-medium opacity-90 mt-0.5">
+                                  Submit with verified human badge
+                                </div>
+                              </div>
+                              <div className="text-3xl sm:text-4xl font-black tracking-tighter drop-shadow-md">
+                                {verifiedScore}
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={handleSubmitBasic}
+                            className="w-full py-2 text-xs sm:text-sm text-gray-500 hover:text-gray-300 font-medium transition-colors"
+                          >
+                            or submit as{' '}
+                            <span className="underline decoration-gray-700 underline-offset-2">
+                              Standard Score ({baseScore})
+                            </span>
+                          </button>
+                        </div>
+                      ) : (
+                        // UNVERIFIED USER: Prominent Verify CTA + Secondary Basic Button
+                        <div className="flex flex-col gap-2.5">
+                          <button
+                            onClick={handleStartVerification}
+                            className="relative w-full p-4 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white shadow-lg shadow-orange-900/30 border border-yellow-500/30 transition-all active:scale-[0.98] group overflow-hidden"
+                          >
+                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="flex items-center justify-between relative z-10">
+                              <div className="text-left">
+                                <div className="font-black text-lg sm:text-xl text-white flex items-center gap-2">
+                                  <span>Verify & Submit</span>
+                                  <span className="bg-black/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                    BONUS
+                                  </span>
+                                </div>
+                                <div className="text-xs sm:text-sm text-yellow-50 font-medium opacity-90 mt-0.5">
+                                  Get +{bonusPoints} points boost
+                                </div>
+                              </div>
+                              <div className="text-3xl sm:text-4xl font-black tracking-tighter drop-shadow-md">
+                                {verifiedScore}
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={handleSubmitBasic}
+                            className="w-full p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 active:bg-white/5 transition-all flex items-center justify-between group"
+                          >
+                            <span className="text-sm font-semibold text-gray-400 group-hover:text-gray-300 transition-colors">
+                              Submit Standard Score
+                            </span>
+                            <span className="text-base font-bold text-gray-500 group-hover:text-gray-400 transition-colors">
+                              {baseScore}
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Submit Score component - only show if level is 5+ (outer block already gates on not-success) */}
+                  {ONCHAIN_MODES.includes(mode) && (
+                    <div className="studio-card studio-card__body text-center">
+                      {progress.currentLevel >= 5 ? (
+                        <>
+                          {/* Use unified Wagmi-based submission for all networks */}
+                          <SubmitScore
+                            score={repCount}
+                            exerciseType={mode}
+                            forceDirectSubmission={true}
+                            walletAddress={effectiveAddress}
+                            submissionStatus={submissionStatus}
+                            setSubmissionStatus={setSubmissionStatus}
+                            onSubmissionSuccess={(txHash, chainId) => {
+                              setTransactionHash(txHash);
+                              setSubmittedChainId(chainId);
+                              // Update local workout as synced for freemium model
+                              if (sessionSummary) {
+                                const networkName = getNetworkFromChainId(chainId);
+                                getLocalWorkouts().then((workouts) => {
+                                  // Match by timestamp (startTime)
+                                  const workout = workouts.find(
+                                    (w) => w.timestamp === sessionSummary.startTime
+                                  );
+                                  if (workout) {
+                                    markWorkoutSynced(workout.id, txHash, networkName as any);
+                                    if (process.env.NODE_ENV !== 'production') {
+                                      console.log('✅ Local workout marked as synced:', workout.id);
+                                    }
+                                  }
+                                });
+                              }
+                            }}
+                          />
+                          {/* Dynamic feedback message */}
+                          {submissionStatus === 'submitting' && (
+                            <p
+                              className={`text-xs ${STATUS_STYLES.submitting.className} mt-3 animate-pulse font-bold tracking-widest uppercase`}
+                            >
+                              Confirming Transaction...
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <div>
+                          <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
+                            <span className="text-lg">🔒</span>
+                            <span className="text-sm font-bold uppercase tracking-widest">
+                              On-chain Sync Locked
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-gray-400">
+                            Reach <span className="text-primary font-bold">Level 5</span> to sync
+                            your workouts to the blockchain.
+                          </p>
+                          <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gray-600"
+                              style={{ width: `${(progress.currentLevel / 5) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Non-on-chain mode: quiet local-saved note (no wallet wall) */}
+              {stage === 'celebrate' && !ONCHAIN_MODES.includes(mode) && (
+                <div className="studio-card studio-card__body text-center">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+                    💾 Saved locally — on-chain leaderboards coming for this exercise
+                  </span>
+                </div>
+              )}
+
+              {/* Highlight Card — only when a best pose exists */}
               {highlightCardUrl && (
                 <div className="space-y-3">
                   <p className="studio-card__section-title text-center">✨ AI Highlight Card</p>
@@ -815,7 +759,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         onClick={() => {
                           const text = `Check out my ${repCount} ${mode} on Imperfect Form! 💪 #OnchainOlympics`;
                           if (isInMiniApp) {
-                            // Farcaster mini-app share would go here if supported
                             window.open(
                               `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(window.location.origin + highlightCardUrl)}`,
                               '_blank'
@@ -836,6 +779,76 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
+              {/* Share row — Farcaster + Twitter, guests too */}
+              {repCount > 0 && (
+                <div className="border-t border-gray-700 pt-4">
+                  <div className="flex flex-col items-center space-y-4">
+                    <FarcasterShare
+                      reps={repCount}
+                      exerciseMode={mode}
+                      timeSpent={formatExerciseTime(120 - timeLeft)}
+                      network={networkType}
+                      isInMiniApp={isInMiniApp}
+                      user={user}
+                    />
+                    {!isInMiniApp && (
+                      <button
+                        className="twitter-button transition-all transform hover:scale-105"
+                        onClick={() => {
+                          const text = `${repCount} ${mode} • Onchain Olympics 💪`;
+                          const url = `https://imperfect-form.vercel.app`;
+                          window.open(
+                            `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                            '_blank'
+                          );
+                        }}
+                      >
+                        𝕏
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Ghost challenge — only when a trace exists */}
+              {repCount > 0 && sessionSummary?.trace && sessionSummary.trace.length > 0 && (
+                <div className="studio-card studio-card__body items-center text-center">
+                  <p className="studio-card__section-title">👻 Challenge Friends</p>
+                  <p className="text-[10px] text-gray-500 text-center px-2">
+                    Share your workout as a ghost trace for friends to race against
+                  </p>
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={() => handleChallengeShare('warpcast')}
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>🟣</span>
+                      <span>Warpcast</span>
+                    </button>
+                    <button
+                      onClick={() => handleChallengeShare('twitter')}
+                      className="flex-1 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>𝕏</span>
+                      <span>Twitter</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Pin app — Farcaster only */}
+              {isInMiniApp && repCount > 0 && (
+                <div className="studio-card studio-card__body text-center">
+                  <p className="text-xs text-purple-300 font-medium">📌 Pin app</p>
+                  <AddMiniAppButton
+                    variant="secondary"
+                    showAfterWorkout={true}
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              {/* Forward nav to recover */}
               <button
                 onClick={() => setStage('recover')}
                 className="w-full px-4 py-3 bg-gradient-to-r from-teal-600/60 to-teal-700/60 hover:from-teal-500/60 hover:to-teal-600/60 text-teal-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-[transform,background-color,border-color] duration-200 border border-teal-400/20 active:scale-[0.96]"
@@ -843,6 +856,30 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 🌬️ Cool Down →
               </button>
             </>
+          )}
+
+          {/* Success state — replaces the celebrate flow after on-chain submit */}
+          {stage === 'celebrate' && submissionStatus === 'success' && (
+            <div className="studio-card studio-card__body text-center animate-in fade-in zoom-in duration-300">
+              <div className="text-teal-300 text-xl font-semibold tracking-tight">
+                Synced to leaderboard
+              </div>
+              <div className="text-[10px] text-teal-300/60 uppercase font-semibold tracking-widest">
+                On-chain record stored
+              </div>
+              {onPlayAgain && (
+                <button
+                  onClick={() => {
+                    onPlayAgain();
+                    onClose();
+                  }}
+                  className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
+                >
+                  <span>↺</span>
+                  <span>Try another set</span>
+                </button>
+              )}
+            </div>
           )}
 
           {/* ===== RECOVER: the night studio ===== */}
@@ -898,69 +935,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             </button>
           )}
 
-          {stage === 'celebrate' &&
-            !ONCHAIN_MODES.includes(mode) &&
-            submissionStatus !== 'success' && (
-              <div className="studio-card studio-card__body text-center">
-                <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-                  💾 Saved locally — on-chain leaderboards coming for this exercise
-                </span>
-              </div>
-            )}
-          {stage === 'celebrate' && submissionStatus !== 'success' && onPlayAgain && (
-            <button
-              onClick={() => {
-                onPlayAgain();
-                onClose();
-              }}
-              className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
-            >
-              <span>↺</span>
-              <span>Try another set</span>
-            </button>
-          )}
-
-          {/* Social sharing - available to Ring 0 guests too, not gated on tx */}
-          {stage === 'celebrate' && repCount > 0 && (
-            <div className="text-center space-y-1 pb-2">
-              <p className="text-xs font-black uppercase tracking-widest text-teal-200/70">
-                Share & celebrate
-              </p>
-            </div>
-          )}
-          {stage === 'celebrate' && repCount > 0 && (
-            <div className="border-t border-gray-700 pt-4">
-              <div className="flex flex-col items-center space-y-4">
-                {/* Enhanced Farcaster integration */}
-                <FarcasterShare
-                  reps={repCount}
-                  exerciseMode={mode}
-                  timeSpent={formatExerciseTime(120 - timeLeft)} // Calculate elapsed time: 120 seconds (2 min) - timeLeft
-                  network={networkType} // Pass the direct network type (polygon, base, celo, monad)
-                  isInMiniApp={isInMiniApp}
-                  user={user}
-                />
-
-                {/* Twitter sharing - only show outside mini app context */}
-                {!isInMiniApp && (
-                  <button
-                    className="twitter-button transition-all transform hover:scale-105"
-                    onClick={() => {
-                      const text = `${repCount} ${mode} • Onchain Olympics 💪`;
-                      const url = `https://imperfect-form.vercel.app`;
-                      window.open(
-                        `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-                        '_blank'
-                      );
-                    }}
-                  >
-                    𝕏
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Celo-specific verification prompt - show after successful submission on Celo only */}
           {submissionStatus === 'success' && submittedChainId === 42220 && (
             <VerificationIntegration
@@ -1000,43 +974,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               </button>
             </div>
           )}
-
-          {/* Add Mini App prompt - show after successful workout in Farcaster only */}
-          {stage === 'celebrate' && isInMiniApp && repCount > 0 && (
-            <div className="studio-card studio-card__body text-center">
-              <p className="text-xs text-purple-300 font-medium">📌 Pin app</p>
-              <AddMiniAppButton variant="secondary" showAfterWorkout={true} className="w-full" />
-            </div>
-          )}
-
-          {/* Challenge Friends - Ghost Challenge Sharing */}
-          {stage === 'celebrate' &&
-            repCount > 0 &&
-            sessionSummary?.trace &&
-            sessionSummary.trace.length > 0 && (
-              <div className="studio-card studio-card__body items-center text-center">
-                <p className="studio-card__section-title">👻 Challenge Friends</p>
-                <p className="text-[10px] text-gray-500 text-center px-2">
-                  Share your workout as a ghost trace for friends to race against
-                </p>
-                <div className="flex gap-2 w-full">
-                  <button
-                    onClick={() => handleChallengeShare('warpcast')}
-                    className="flex-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>🟣</span>
-                    <span>Warpcast</span>
-                  </button>
-                  <button
-                    onClick={() => handleChallengeShare('twitter')}
-                    className="flex-1 px-3 py-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>𝕏</span>
-                    <span>Twitter</span>
-                  </button>
-                </div>
-              </div>
-            )}
 
           {/* Self Verification Modal - mounted regardless of stage/wallet branch */}
           <SelfVerificationModal

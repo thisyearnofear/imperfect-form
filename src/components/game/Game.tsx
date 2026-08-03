@@ -543,11 +543,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     return () => window.removeEventListener('raceGhost', handleRaceGhost);
   }, [finalAddress, handleStart]);
 
-  // Extract race trace from URL on mount
+  // Extract race trace + intent from URL on mount
   const searchParams = useSearchParams();
   useEffect(() => {
     const raceParam = searchParams.get('race');
     const modeParam = searchParams.get('mode');
+    const intentParam = searchParams.get('intent');
+
+    // Deep-link the session intent (?intent=train|recover|understand) so the
+    // PWA manifest shortcuts and shared links land on the right entrance.
+    if (intentParam === 'train' || intentParam === 'recover' || intentParam === 'understand') {
+      setIntent(intentParam);
+    }
 
     if (raceParam) {
       try {
@@ -573,7 +580,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         console.error('Failed to decode race trace from URL:', error);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, setIntent]);
 
   // Moved memoized webcam after handler functions are defined
 
