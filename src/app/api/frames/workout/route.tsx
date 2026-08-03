@@ -14,8 +14,8 @@ export async function GET(req: NextRequest) {
   // Base URL for the app
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://imperfectform.fun';
 
-  // Image URL for the frame - use static embed image
-  const imageUrl = `${baseUrl}/embed.png`;
+  // Image URL for the frame - use static OG image
+  const imageUrl = `${baseUrl}/og-image.png`;
 
   // HTML response with frame metadata
   return new NextResponse(

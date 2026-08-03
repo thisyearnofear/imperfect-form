@@ -1,0 +1,63 @@
+{
+  "name": "Imperfect Form — Private camera coaching",
+  "short_name": "Imperfect Form",
+  "description": "Private camera coaching. Game-quality feedback. A path into physical AI that can show the correction.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#061013",
+  "theme_color": "#061013",
+  "categories": ["health", "fitness", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Imperfect Form — move with better form"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start camera coaching",
+      "short_name": "Coach",
+      "description": "Begin a private camera coaching session",
+      "url": "/?intent=understand"
+    },
+    {
+      "name": "Train",
+      "short_name": "Train",
+      "description": "Arcade workout mode",
+      "url": "/?intent=train"
+    },
+    {
+      "name": "Breathe",
+      "short_name": "Breathe",
+      "description": "Calm recovery session",
+      "url": "/?intent=recover"
+    }
+  ]
+}

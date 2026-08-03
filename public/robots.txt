@@ -1,0 +1,12 @@
+# https://imperfectform.fun
+User-agent: *
+Allow: /
+
+# Block debug / internal routes from indexing
+Disallow: /debug-mobile
+Disallow: /debug-wallet
+Disallow: /verification-test
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://imperfectform.fun/sitemap.xml

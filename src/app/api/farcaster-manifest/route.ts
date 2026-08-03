@@ -22,11 +22,11 @@ const manifest = {
       'Private camera coaching with game-quality feedback, and a path into physical AI that can show the correction.',
     primaryCategory: 'health-fitness',
     tags: ['fitness', 'workout', 'coaching', 'pose-detection', 'form'],
-    heroImageUrl: 'https://imperfectform.fun/embed.png',
+    heroImageUrl: 'https://imperfectform.fun/og-image.png',
     tagline: 'Move with better form',
     ogTitle: 'Imperfect Form',
     ogDescription: 'Private camera coaching. Game-quality feedback. A path into physical AI.',
-    ogImageUrl: 'https://imperfectform.fun/embed.png',
+    ogImageUrl: 'https://imperfectform.fun/og-image.png',
     requiredChains: ['eip155:42220', 'eip155:137', 'eip155:8453'],
     requiredCapabilities: [
       'wallet.getEthereumProvider',

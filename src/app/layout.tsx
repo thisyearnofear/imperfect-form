@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
 import './globals.css';
 import '@/styles/studio-shell.css';
@@ -20,34 +20,153 @@ const manrope = Manrope({
   variable: '--font-manrope',
 });
 
+const STUDIO_BG = '#061013';
+
+/** Canonical production origin. Override per-deploy via NEXT_PUBLIC_SITE_URL. */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://imperfectform.fun';
+
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
+const OG_IMAGE_ALT = `${BRAND.name} — private camera coaching with a path into physical AI`;
+
+const SITE_DESCRIPTION =
+  'Private camera coaching. Game-quality feedback. A path into physical AI that can show the correction.';
+
 export const metadata: Metadata = {
-  title: `${BRAND.name} | Move better`,
-  description: BRAND.tagline,
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${BRAND.name} | Move better`,
+    template: `%s · ${BRAND.name}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: BRAND.name,
+  authors: [{ name: BRAND.name, url: SITE_URL }],
+  creator: BRAND.name,
+  publisher: BRAND.name,
+  keywords: [
+    'form coaching',
+    'pose detection',
+    'AI fitness coach',
+    'camera coaching',
+    'exercise form',
+    'workout feedback',
+    'physical AI',
+    'MoveNet',
+    'on-device pose',
+    'private fitness',
+    'Farcaster mini app',
+    'onchain fitness',
+  ],
+  category: 'health-fitness',
+  alternates: {
+    canonical: '/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
+  manifest: '/site.webmanifest',
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '1024x1024', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: ['/favicon.ico'],
+  },
   openGraph: {
     title: `${BRAND.name} | Move better`,
-    description: BRAND.tagline,
-    url: 'https://imperfectform.fun',
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
     siteName: BRAND.name,
     images: [
       {
-        url: 'https://imperfectform.fun/embed.png',
+        url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: `${BRAND.name} — private camera coaching with a path into physical AI`,
+        alt: OG_IMAGE_ALT,
+        type: 'image/png',
       },
     ],
     locale: 'en_US',
+    alternateLocale: ['en_GB'],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
+    site: '@ifdotfun',
+    creator: '@ifdotfun',
     title: `${BRAND.name} | Move better`,
-    description: BRAND.tagline,
-    images: ['https://imperfectform.fun/embed.png'],
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: OG_IMAGE_ALT,
+      },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    title: BRAND.name,
+    statusBarStyle: 'black-translucent',
+  },
+  formatDetection: {
+    telephone: false,
+    address: false,
+    email: false,
   },
 };
 
-const STUDIO_BG = '#061013';
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: STUDIO_BG },
+    { media: '(prefers-color-scheme: light)', color: STUDIO_BG },
+  ],
+};
+
+/** JSON-LD structured data for rich social + search results. */
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: BRAND.name,
+  url: SITE_URL,
+  description: SITE_DESCRIPTION,
+  applicationCategory: 'HealthApplication',
+  operatingSystem: 'Web',
+  browserRequirements: 'Requires a camera and WebGL-capable browser.',
+  image: OG_IMAGE,
+  icon: `${SITE_URL}/icon.png`,
+  screenshot: OG_IMAGE,
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  featureList: [
+    'On-device pose detection (no video upload)',
+    'Real-time rep counting and form scoring',
+    'AI coaching personas',
+    'Path into physical AI demonstration',
+    'Farcaster mini app',
+  ],
+  publisher: {
+    '@type': 'Organization',
+    name: BRAND.name,
+    url: SITE_URL,
+    sameAs: ['https://x.com/ifdotfun', 'https://twitter.com/ifdotfun'],
+  },
+};
 
 export default function RootLayout({
   children,
@@ -64,19 +183,23 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
           rel="stylesheet"
         />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="theme-color" content={STUDIO_BG} />
+        {/* viewport, theme-color, apple-web-app, format-detection, icons, manifest
+            and canonical are emitted by the `metadata` + `viewport` exports above. */}
 
+        {/* Farcaster Frame + Mini App launch metadata */}
         <meta
           name="fc:frame"
-          content={`{"version":"next","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"Start coaching","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"${STUDIO_BG}"}}}`}
+          content={`{"version":"next","imageUrl":"${SITE_URL}/og-image.png","button":{"title":"Start coaching","action":{"type":"launch_frame","name":"Imperfect Form","url":"${SITE_URL}","splashImageUrl":"${SITE_URL}/splash.png","splashBackgroundColor":"${STUDIO_BG}"}}}`}
         />
         <meta
           name="fc:miniapp"
-          content={`{"version":"1","imageUrl":"https://imperfectform.fun/embed.png","button":{"title":"Start coaching","action":{"type":"launch_frame","name":"Imperfect Form","url":"https://imperfectform.fun","splashImageUrl":"https://imperfectform.fun/splash.png","splashBackgroundColor":"${STUDIO_BG}"}}}`}
+          content={`{"version":"1","imageUrl":"${SITE_URL}/og-image.png","button":{"title":"Start coaching","action":{"type":"launch_frame","name":"Imperfect Form","url":"${SITE_URL}","splashImageUrl":"${SITE_URL}/splash.png","splashBackgroundColor":"${STUDIO_BG}"}}}`}
+        />
+
+        {/* Structured data for rich social + search results */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
 
         <script
