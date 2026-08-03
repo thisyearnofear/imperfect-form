@@ -78,6 +78,8 @@ type Execution =
 
 type DemoBus = {
   connect: () => void;
+  /** Tear down pending + looping timers. Optional — real station owns its socket. */
+  disconnect?: () => void;
   onStatus: (fn: (s: StationStatus) => void) => () => void;
   onDemonstration: (fn: (e: StationDemonstrationEvent) => void) => () => void;
   onDemonstrationIntent: (fn: (e: StationDemonstrationIntentV1) => void) => () => void;
@@ -110,9 +112,20 @@ function makeDemoBus(): DemoBus {
   };
 
   const timers: number[] = [];
+  let loopTimer: number | null = null;
+  let stopped = false;
   const commandId = 'demo-cmd';
 
+  const arm = (fn: () => void, ms: number) => {
+    if (stopped) return;
+    const id = window.setTimeout(() => {
+      if (!stopped) fn();
+    }, ms);
+    timers.push(id);
+  };
+
   const playSweep = () => {
+    if (stopped) return;
     const personality: CoachPersonality = 'RASTA';
     const intent: StationDemonstrationIntentV1 = {
       type: 'demonstration_intent',
@@ -146,21 +159,19 @@ function makeDemoBus(): DemoBus {
     emit('status', 'connected');
     emit('intent', intent);
 
-    timers.push(
-      window.setTimeout(() => {
-        emit('robot_state', {
-          type: 'robot_state',
-          version: '1.0',
-          status: 'executing',
-          adapter: 'demo',
-          affect: 'demo',
-          command_id: commandId,
-          detail: intent.name,
-          updated_at_ms: Date.now(),
-        } satisfies StationRobotStateEvent);
-        emit('demonstration', demo);
-      }, 900)
-    );
+    arm(() => {
+      emit('robot_state', {
+        type: 'robot_state',
+        version: '1.0',
+        status: 'executing',
+        adapter: 'demo',
+        affect: 'demo',
+        command_id: commandId,
+        detail: intent.name,
+        updated_at_ms: Date.now(),
+      } satisfies StationRobotStateEvent);
+      emit('demonstration', demo);
+    }, 900);
 
     const steps = 24;
     const durationMs = 4200;
@@ -168,55 +179,63 @@ function makeDemoBus(): DemoBus {
       const t = i / steps;
       const deg = 160 + (50 - 160) * t;
       const ms = 900 + (i / steps) * durationMs;
-      timers.push(
-        window.setTimeout(() => {
-          emit('progress', {
-            type: 'trajectory_progress',
-            version: '1.0',
-            command_id: commandId,
-            joint: 'elbow_flex',
-            current_deg: deg,
-            progress_pct: t,
-            timestamp_ms: Date.now(),
-            measured_deg: deg,
-          } satisfies StationTrajectoryProgressEvent);
-        }, ms)
-      );
+      arm(() => {
+        emit('progress', {
+          type: 'trajectory_progress',
+          version: '1.0',
+          command_id: commandId,
+          joint: 'elbow_flex',
+          current_deg: deg,
+          progress_pct: t,
+          timestamp_ms: Date.now(),
+          measured_deg: deg,
+        } satisfies StationTrajectoryProgressEvent);
+      }, ms);
     }
 
-    timers.push(
-      window.setTimeout(
-        () => {
-          emit('command_result', {
-            type: 'command_result',
-            version: '1.0',
-            command_id: commandId,
-            status: 'succeeded',
-            adapter: 'demo',
-            affect: 'demo',
-            duration_s: 4.2,
-            completed_at_ms: Date.now(),
-          } satisfies StationCommandResultEvent);
-          emit('robot_state', {
-            type: 'robot_state',
-            version: '1.0',
-            status: 'idle',
-            adapter: 'demo',
-            affect: 'demo',
-            command_id: null,
-            detail: null,
-            updated_at_ms: Date.now(),
-          } satisfies StationRobotStateEvent);
-        },
-        900 + durationMs + 400
-      )
+    arm(
+      () => {
+        emit('command_result', {
+          type: 'command_result',
+          version: '1.0',
+          command_id: commandId,
+          status: 'succeeded',
+          adapter: 'demo',
+          affect: 'demo',
+          duration_s: 4.2,
+          completed_at_ms: Date.now(),
+        } satisfies StationCommandResultEvent);
+        emit('robot_state', {
+          type: 'robot_state',
+          version: '1.0',
+          status: 'idle',
+          adapter: 'demo',
+          affect: 'demo',
+          command_id: null,
+          detail: null,
+          updated_at_ms: Date.now(),
+        } satisfies StationRobotStateEvent);
+      },
+      900 + durationMs + 400
     );
   };
 
   return {
     connect: () => {
-      timers.push(window.setTimeout(playSweep, 600));
-      timers.push(window.setInterval(playSweep, 14000) as unknown as number);
+      if (loopTimer !== null) return; // already running
+      arm(playSweep, 600);
+      loopTimer = window.setInterval(() => {
+        if (!stopped) playSweep();
+      }, 14000);
+    },
+    disconnect: () => {
+      stopped = true;
+      for (const id of timers) window.clearTimeout(id);
+      timers.length = 0;
+      if (loopTimer !== null) {
+        window.clearInterval(loopTimer);
+        loopTimer = null;
+      }
     },
     onStatus: add('status'),
     onDemonstration: add('demonstration'),
@@ -364,6 +383,10 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
       window.clearTimeout(progressTimeout);
       window.clearTimeout(bootTimeout);
       activeCommandIdRef.current = null;
+      // Scripted demo owns its timers; clear them on unmount so the loop
+      // doesn't leak into the earned shell (or worse, into an outing's
+      // React tree).
+      demoBusRef.current?.disconnect?.(); // scripted demo owns its timer queue
     };
   }, [enabled]);
 
