@@ -375,4 +375,84 @@ describe('coachStation fail-silent', () => {
     expect(events[2]).toEqual({ current: 90, measured: undefined });
     unsub();
   });
+
+  it('forwards executable demonstration intents to subscribers', async () => {
+    process.env.NEXT_PUBLIC_COACH_STATION = 'ws://localhost:8765';
+    let wsInstance: { onmessage: ((ev: { data: string }) => void) | null } | null = null;
+
+    class CaptureWebSocket {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      readyState = CaptureWebSocket.OPEN;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      onmessage: ((ev: { data: string }) => void) | null = null;
+      constructor() {
+        wsInstance = this;
+      }
+      send() {}
+    }
+    (globalThis as { WebSocket: unknown }).WebSocket = CaptureWebSocket;
+
+    const { coachStation } = await import('@/services/coachStation');
+    const received: Array<{ name: string; from: number; to: number; commandId: string }> = [];
+    const unsub = coachStation.onDemonstrationIntent((e) =>
+      received.push({ name: e.name, from: e.from_deg, to: e.to_deg, commandId: e.command_id })
+    );
+
+    coachStation.sendSessionEvent('session_start', 'curls');
+    expect(wsInstance).toBeTruthy();
+
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'demonstration_intent',
+        version: '1.0',
+        command_id: 'cmd-42',
+        name: 'demonstrate_strict_curl',
+        mode: 'curls',
+        issue: 'elbow_swing',
+        personality: 'RASTA',
+        joint: 'elbow_flex',
+        from_deg: 160,
+        to_deg: 50,
+        speed_deg_s: 80,
+        pause_s: 0.5,
+        repeats: 2,
+        narration: 'Elbow pinned',
+        duration_s: 4.2,
+      }),
+    });
+    // Out-of-band: no joint field / wrong version → dropped silently
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({
+        type: 'demonstration_intent',
+        version: '2.0',
+        command_id: 'cmd-99',
+        name: 'nope',
+        mode: 'curls',
+        issue: 'x',
+        personality: 'RASTA',
+        joint: 'elbow_flex',
+        from_deg: 0,
+        to_deg: 0,
+        speed_deg_s: 10,
+        pause_s: 0,
+        repeats: 1,
+        narration: 'x',
+        duration_s: 1,
+      }),
+    });
+    wsInstance!.onmessage?.({
+      data: JSON.stringify({ type: 'demonstration_intent', command_id: 'cmd-empty' }),
+    });
+
+    expect(received).toHaveLength(1);
+    expect(received[0]).toEqual({
+      name: 'demonstrate_strict_curl',
+      from: 160,
+      to: 50,
+      commandId: 'cmd-42',
+    });
+    unsub();
+  });
 });

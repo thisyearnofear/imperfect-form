@@ -108,6 +108,14 @@ class CoachStation:
                 updated_at_ms=int(time.time() * 1000),
             ))
 
+            # Mirror the executable intent so consumers can render the sweep
+            # target truthfully (ended arm pose, target ticks) instead of
+            # decoding it from a name heuristic.
+            try:
+                await websocket.send(intent.model_dump_json())
+            except Exception as exc:
+                logger.debug("Could not emit demonstration intent: %s", exc)
+
             # Voice sync cue — browser TTS speaks while the arm moves.
             try:
                 await websocket.send(

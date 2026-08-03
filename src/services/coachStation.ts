@@ -52,7 +52,8 @@ export interface StationDemonstrationIntentV1 {
   mode: string;
   issue: string;
   personality: CoachPersonality;
-  joint: string;
+  /** Executable joint — currently elbow_flex only per schema. */
+  joint: 'elbow_flex';
   from_deg: number;
   to_deg: number;
   speed_deg_s: number;
@@ -99,6 +100,7 @@ export interface StationTrajectoryProgressEvent {
 }
 
 export type DemonstrationListener = (event: StationDemonstrationEvent) => void;
+export type DemonstrationIntentListener = (event: StationDemonstrationIntentV1) => void;
 export type CommandResultListener = (event: StationCommandResultEvent) => void;
 export type RobotStateListener = (event: StationRobotStateEvent) => void;
 export type TrajectoryProgressListener = (event: StationTrajectoryProgressEvent) => void;
@@ -172,6 +174,61 @@ function parseCommandResult(raw: unknown): StationCommandResultEvent | null {
   };
 }
 
+function parseDemonstrationIntent(raw: unknown): StationDemonstrationIntentV1 | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  if (
+    o.type !== 'demonstration_intent' ||
+    o.version !== '1.0' ||
+    typeof o.command_id !== 'string' ||
+    typeof o.name !== 'string' ||
+    typeof o.mode !== 'string' ||
+    typeof o.issue !== 'string' ||
+    o.joint !== 'elbow_flex' ||
+    !isFiniteNumber(o.from_deg) ||
+    !isFiniteNumber(o.to_deg) ||
+    o.from_deg < 0 ||
+    o.from_deg > 180 ||
+    o.to_deg < 0 ||
+    o.to_deg > 180 ||
+    !isFiniteNumber(o.speed_deg_s) ||
+    o.speed_deg_s <= 0 ||
+    o.speed_deg_s > 120 ||
+    !isFiniteNumber(o.pause_s) ||
+    o.pause_s < 0 ||
+    o.pause_s > 10 ||
+    typeof o.repeats !== 'number' ||
+    !Number.isInteger(o.repeats) ||
+    o.repeats < 1 ||
+    o.repeats > 8 ||
+    typeof o.narration !== 'string' ||
+    !isFiniteNumber(o.duration_s) ||
+    o.duration_s < 0 ||
+    o.duration_s > 120
+  ) {
+    return null;
+  }
+  return {
+    type: 'demonstration_intent',
+    version: '1.0',
+    command_id: o.command_id,
+    name: o.name,
+    mode: o.mode,
+    issue: o.issue,
+    personality: isPersonality(String(o.personality ?? ''))
+      ? (o.personality as CoachPersonality)
+      : getStoredPersonality(),
+    joint: 'elbow_flex',
+    from_deg: o.from_deg,
+    to_deg: o.to_deg,
+    speed_deg_s: o.speed_deg_s,
+    pause_s: o.pause_s,
+    repeats: o.repeats,
+    narration: o.narration,
+    duration_s: o.duration_s,
+  };
+}
+
 function parseTrajectoryProgress(raw: unknown): StationTrajectoryProgressEvent | null {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
@@ -235,6 +292,7 @@ class CoachStationClient {
   private ws: WebSocket | null = null;
   private lastSent = new Map<string, number>();
   private demoListeners = new Set<DemonstrationListener>();
+  private intentListeners = new Set<DemonstrationIntentListener>();
   private commandResultListeners = new Set<CommandResultListener>();
   private robotStateListeners = new Set<RobotStateListener>();
   private trajectoryProgressListeners = new Set<TrajectoryProgressListener>();
@@ -250,6 +308,12 @@ class CoachStationClient {
   onDemonstration(listener: DemonstrationListener): () => void {
     this.demoListeners.add(listener);
     return () => this.demoListeners.delete(listener);
+  }
+
+  /** Subscribe to the executable intent mirror (truth source for from/to). */
+  onDemonstrationIntent(listener: DemonstrationIntentListener): () => void {
+    this.intentListeners.add(listener);
+    return () => this.intentListeners.delete(listener);
   }
 
   /** Subscribe to versioned adapter execution results. */
@@ -317,6 +381,16 @@ class CoachStationClient {
     }
   }
 
+  private emitDemonstrationIntent(event: StationDemonstrationIntentV1): void {
+    for (const listener of this.intentListeners) {
+      try {
+        listener(event);
+      } catch {
+        // fail-silent — UI listeners must not break the bridge
+      }
+    }
+  }
+
   private emitCommandResult(event: StationCommandResultEvent): void {
     for (const listener of this.commandResultListeners) {
       try {
@@ -372,6 +446,11 @@ class CoachStationClient {
       ws.onmessage = (msg) => {
         try {
           const data = JSON.parse(String(msg.data));
+          const intent = parseDemonstrationIntent(data);
+          if (intent) {
+            this.emitDemonstrationIntent(intent);
+            return;
+          }
           const demo = parseDemonstration(data);
           if (demo) {
             this.emitDemonstration(demo);

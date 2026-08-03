@@ -149,6 +149,7 @@ def test_station_emits_demo_state_result_and_idle_feedback():
     assert len(arm.intents) == 1
     assert [message["type"] for message in websocket.messages] == [
         "robot_state",
+        "demonstration_intent",
         "demonstration",
         "command_result",
         "robot_state",
@@ -157,9 +158,13 @@ def test_station_emits_demo_state_result_and_idle_feedback():
     command_id = websocket.messages[0]["command_id"]
     assert websocket.messages[0]["status"] == "executing"
     assert websocket.messages[0]["command_id"] == command_id
-    assert websocket.messages[2]["status"] == "succeeded"
-    assert websocket.messages[2]["command_id"] == command_id
-    assert websocket.messages[3]["status"] == "idle"
+    assert websocket.messages[1]["type"] == "demonstration_intent"
+    assert websocket.messages[1]["from_deg"] == 160.0
+    assert websocket.messages[1]["to_deg"] == 50.0
+    assert websocket.messages[1]["command_id"] == command_id
+    assert websocket.messages[3]["status"] == "succeeded"
+    assert websocket.messages[3]["command_id"] == command_id
+    assert websocket.messages[4]["status"] == "idle"
 
 
 def test_aborted_adapter_result_reports_error_state_without_crashing():
@@ -168,9 +173,9 @@ def test_aborted_adapter_result_reports_error_state_without_crashing():
 
     asyncio.run(station.handle_event(websocket, _form_event().model_dump_json()))
 
-    assert websocket.messages[2]["status"] == "aborted"
-    assert websocket.messages[2]["error"] == "test failure"
-    assert websocket.messages[3]["status"] == "error"
+    assert websocket.messages[3]["status"] == "aborted"
+    assert websocket.messages[3]["error"] == "test failure"
+    assert websocket.messages[4]["status"] == "error"
 
 
 def test_raised_adapter_exception_becomes_aborted_feedback():
@@ -179,9 +184,9 @@ def test_raised_adapter_exception_becomes_aborted_feedback():
 
     asyncio.run(station.handle_event(websocket, _form_event().model_dump_json()))
 
-    assert websocket.messages[2]["status"] == "aborted"
-    assert websocket.messages[2]["error"] == "adapter exploded"
-    assert websocket.messages[3]["status"] == "error"
+    assert websocket.messages[3]["status"] == "aborted"
+    assert websocket.messages[3]["error"] == "adapter exploded"
+    assert websocket.messages[4]["status"] == "error"
 
 
 def test_malformed_adapter_result_becomes_aborted_feedback():
@@ -190,9 +195,9 @@ def test_malformed_adapter_result_becomes_aborted_feedback():
 
     asyncio.run(station.handle_event(websocket, _form_event().model_dump_json()))
 
-    assert websocket.messages[2]["status"] == "aborted"
-    assert "validation error" in websocket.messages[2]["error"]
-    assert websocket.messages[3]["status"] == "error"
+    assert websocket.messages[3]["status"] == "aborted"
+    assert "validation error" in websocket.messages[3]["error"]
+    assert websocket.messages[4]["status"] == "error"
 
 
 def test_mismatched_command_id_becomes_aborted_feedback():
@@ -201,9 +206,9 @@ def test_mismatched_command_id_becomes_aborted_feedback():
 
     asyncio.run(station.handle_event(websocket, _form_event().model_dump_json()))
 
-    assert websocket.messages[2]["status"] == "aborted"
-    assert "expected" in websocket.messages[2]["error"]
-    assert websocket.messages[3]["status"] == "error"
+    assert websocket.messages[3]["status"] == "aborted"
+    assert "expected" in websocket.messages[3]["error"]
+    assert websocket.messages[4]["status"] == "error"
 
 
 def test_progress_capable_adapter_emits_versioned_trajectory_progress():

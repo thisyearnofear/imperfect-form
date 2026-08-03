@@ -5,63 +5,13 @@ import {
   coachStation,
   type StationCommandResultEvent,
   type StationDemonstrationEvent,
+  type StationDemonstrationIntentV1,
   type StationRobotStateEvent,
   type StationTrajectoryProgressEvent,
   type StationStatus,
 } from '@/services/coachStation';
 import type { CoachPersonality } from '@/lib/coachPersonalities';
 import '@/styles/coach-twin-peek.css';
-
-/**
- * Elbow-space intent mirroring for the twin instrument.
- *
- * The station mirrors the physical intent as `DemonstrationIntentV1` events;
- * when a demo arrives the browser reconstructs the elbow sweep target so the
- * instrument shows where Coach is going, not just where it currently is.
- * Values map to the human-anatomy elbow angle: 0° is fully extended (arm
- * straight), 180° is fully flexed (curled) — Coach demos highlight the strict
- * curl, so the instrument mirrors that convention.
- */
-export interface StationDemonstrationIntentV1 {
-  type: 'demonstration_intent';
-  version?: '1.0';
-  command_id?: string;
-  name: string;
-  mode: string;
-  issue: string;
-  joint: 'elbow_flex';
-  from_deg: number;
-  to_deg: number;
-  speed_deg_s: number;
-  pause_s: number;
-  repeats: number;
-  narration: string;
-  duration_s: number;
-}
-
-/**
- * Mirror the intent implied by a demo event. `to_deg=50` matches the
- * strict-curl primitive in coach-station/coach_station/primitives.py; once
- * the station broadcasts explicit `demonstration_intent` payloads this shim
- * can be replaced by a direct subscription.
- */
-function deriveIntent(demo: StationDemonstrationEvent): StationDemonstrationIntentV1 {
-  return {
-    type: 'demonstration_intent',
-    command_id: demo.command_id,
-    name: demo.name,
-    mode: demo.mode,
-    issue: demo.issue,
-    joint: 'elbow_flex',
-    from_deg: clampElbowDeg(160),
-    to_deg: clampElbowDeg(50),
-    speed_deg_s: 45,
-    pause_s: 1,
-    repeats: 1,
-    narration: demo.narration,
-    duration_s: demo.duration_s,
-  };
-}
 
 function clampElbowDeg(deg: number): number {
   return Math.max(0, Math.min(180, deg));
@@ -130,12 +80,12 @@ type Execution =
  * Live twin instrument — visible only when NEXT_PUBLIC_COACH_STATION is set.
  * Fail-silent: offline is a quiet status, never an error.
  *
- * When idle it's a discreet status strip. When a demonstration runs it
- * expands into a small piece of Cyberwave-flavored mission control: a SIM /
- * LIVE badge straight from the station's `affect` field, an elbow dial with
- * real degree readout, ghost limb for the target pose, motion trail, and
- * persona-tinted energy — all rendered from real `trajectory_progress`
- * events. No MuJoCo embed; Cyberwave/console stay on the station machine.
+ * When idle it's a discreet status strip. The ghost target and range arc come
+ * from the executable `demonstration_intent` broadcast (station truth), not
+ * the demo banner; the readout prefers observed angle from
+ * `trajectory_progress.measured_deg` and falls back to commanded otherwise.
+ * SIM / LIVE badge reflects the station's `affect` field. All rendering
+ * is fail-silent: MuJoCo/console stay on the station machine.
  */
 export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse?: boolean }) {
   const enabled = coachStation.enabled;
@@ -180,6 +130,10 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
         setAffect(null);
       }
     });
+    const unsubIntent = coachStation.onDemonstrationIntent((event) => {
+      activeCommandIdRef.current = event.command_id;
+      setIntent(event);
+    });
     const unsubDemo = coachStation.onDemonstration((event) => {
       if (event.command_id) activeCommandIdRef.current = event.command_id;
       window.clearTimeout(progressTimeout);
@@ -187,12 +141,10 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
       setTrail([]);
       setDemo(event);
       setPersonality(event.personality);
-      setIntent(deriveIntent(event));
       window.clearTimeout(demoTimeout);
       demoTimeout = window.setTimeout(
         () => {
           setDemo(null);
-          setIntent(null);
           setTrail([]);
         },
         Math.max(2500, event.duration_s * 1000 || 3200)
@@ -233,6 +185,7 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
 
     return () => {
       unsubStatus();
+      unsubIntent();
       unsubDemo();
       unsubProgress();
       unsubState();
@@ -281,7 +234,9 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
       : progress
         ? progress.current_deg
         : intent?.from_deg;
-  const targetElbowDeg = demo && intent ? intent.to_deg : undefined;
+  // Ghost target comes from the executable intent (station truth) so it
+  // persists while the arm is moving, not just while the demo banner is up.
+  const targetElbowDeg = intent ? intent.to_deg : undefined;
   const currentForearmRotation =
     currentElbowDeg !== undefined ? elbowDegToForearmRotation(currentElbowDeg) : undefined;
   const targetForearmRotation =
@@ -291,13 +246,9 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
     showGhostTarget && intent && currentElbowDeg !== undefined
       ? buildRangeArc(intent.from_deg, clampElbowDeg(currentElbowDeg))
       : null;
-  // The readout should make observed-vs-commanded legible, not hidden.
+  // The readout makes observed-vs-commanded legible, not hidden.
   const readoutLabel =
-    observedElbowDeg !== undefined
-      ? `${Math.round(clampElbowDeg(observedElbowDeg))}°`
-      : currentElbowDeg !== undefined
-        ? `${Math.round(clampElbowDeg(currentElbowDeg))}°`
-        : null;
+    currentElbowDeg !== undefined ? `${Math.round(clampElbowDeg(currentElbowDeg))}°` : null;
   const affectLabel = affect === 'live' ? 'LIVE' : affect ? 'SIM' : null;
   const personaClass = personality ? ` persona-${personality.toLowerCase()}` : '';
 
