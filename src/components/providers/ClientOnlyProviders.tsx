@@ -17,10 +17,17 @@ interface ClientOnlyProvidersProps {
  */
 export default function ClientOnlyProviders({ children }: ClientOnlyProvidersProps) {
   const [isClient, setIsClient] = useState(false);
-  const [initializationComplete, setInitializationComplete] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+
+    // Legacy key: keeps the (currently unmounted) wallet IntroDialog suppressed
+    // for anyone who already passed the old boot ceremony.
+    try {
+      localStorage.setItem('imf_skipWalletIntro', '1');
+    } catch {
+      // storage blocked — non-fatal
+    }
 
     // Register service worker for caching TF model assets
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -90,9 +97,9 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
     }
   }, []);
 
-  // Show welcome screen during initialization
-  if (!isClient || !initializationComplete) {
-    return <InitializationScreen onComplete={() => setInitializationComplete(true)} />;
+  // Passive splash only while providers hydrate — never an interactive gate.
+  if (!isClient) {
+    return <InitializationScreen />;
   }
 
   return (

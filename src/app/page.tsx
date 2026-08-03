@@ -19,13 +19,23 @@ import {
   AchievementShowcase,
 } from '@/components/home';
 import { useXpProgress } from '@/hooks/useXpProgress';
+import { getHasTrained } from '@/lib/hasTrained';
 import { ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import { UniversalConnectButton } from '@/components/wallet';
 import { ScreenTransition } from '@/components/ui/ScreenTransition';
 
+// Branded shell (not a bare spinner) while the game chunk loads — the swap
+// into the foyer should feel like a fade within one surface, not a glitch.
+const GameLoadingShell = () => (
+  <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
+    <p className="studio-wordmark">IMPERFECT FORM</p>
+    <p className="studio-wordmark-sub">Preparing the bay…</p>
+  </div>
+);
+
 const GameWrapper = dynamic(() => import('@/components/game/GameWrapper'), {
   ssr: false,
-  loading: () => <Spinner />,
+  loading: () => <GameLoadingShell />,
 });
 
 const Leaderboard = dynamic(() => import('@/components/game/Leaderboard'), {
@@ -55,7 +65,13 @@ export default function Home() {
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
 
   // Game-loop chrome is earned after the first coached feel — not the day-0 foyer.
-  const hasTrained = progress.totalXp > 0;
+  // The initial decision must be synchronous: the instant localStorage flag
+  // avoids flashing the day-0 foyer to returning users while XP loads from
+  // IndexedDB. Async XP stays the source of truth (XP never decreases).
+  const [hasTrained, setHasTrained] = useState(getHasTrained);
+  useEffect(() => {
+    if (progress.totalXp > 0) setHasTrained(true);
+  }, [progress.totalXp]);
 
   // Form cue / demonstration → bay arc pulse (fail-silent when station unset)
   useCoachBayPulse();
@@ -118,14 +134,14 @@ export default function Home() {
     }
   }, [isInMiniApp, user?.fid, platform]);
 
+  // Notification ask is earned: only after the first coached session, never
+  // 3 seconds after arrival before any value has been delivered.
   useEffect(() => {
-    if (isInMiniApp) {
-      const hasSeenPrompt = localStorage.getItem('miniapp-first-visit-seen');
-      if (!hasSeenPrompt) {
-        setTimeout(() => setShowFirstTimePrompt(true), 3000);
-      }
-    }
-  }, [isInMiniApp]);
+    if (!isInMiniApp || !hasTrained) return;
+    if (localStorage.getItem('miniapp-first-visit-seen')) return;
+    const timer = setTimeout(() => setShowFirstTimePrompt(true), 1500);
+    return () => clearTimeout(timer);
+  }, [isInMiniApp, hasTrained]);
 
   const day0Topbar = (
     <div className="studio-topbar sticky top-0 z-50">

@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+// NOTE: the OnboardingModal component is currently not mounted anywhere in
+// the app — onboarding lives inline (foyer explainer, session-boot overlay
+// tips). These specs encode the retired modal flow and stay skipped until the
+// component is either revived or deleted.
 test.describe('Onboarding Modal', () => {
+  test.skip(true, 'OnboardingModal is not mounted; onboarding is inline');
+
   test.beforeEach(async ({ page }) => {
     // Clear onboarding state so modal shows
     await page.addInitScript(() => {
@@ -75,6 +81,8 @@ test.describe('Tab Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem('imf_seenOnboarding_v1', '1');
+      // Tab chrome is earned after the first coached session — not day-0.
+      localStorage.setItem('imf_hasTrained', '1');
     });
   });
 

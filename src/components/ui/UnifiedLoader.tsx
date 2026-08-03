@@ -191,7 +191,7 @@ const PHASE_CONFIG: Record<
   }
 > = {
   initial: {
-    title: 'Loading...',
+    title: 'Starting up…',
     subtitle: 'Requesting camera access',
     guidance: 'Please allow camera access when prompted',
     color: 'text-blue-300',
@@ -201,8 +201,8 @@ const PHASE_CONFIG: Record<
     estimatedTime: '< 5 seconds',
   },
   camera: {
-    title: 'Camera Ready',
-    subtitle: 'Initializing video stream',
+    title: 'Starting camera…',
+    subtitle: 'Waking up the video stream',
     guidance: 'Step back - full body in frame',
     color: 'text-purple-300',
     bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
@@ -244,6 +244,27 @@ const PHASE_CONFIG: Record<
   },
 };
 
+// Session-boot step rail: one continuous sequence with three honest
+// milestones, so the post-START wait reads as progress — not N random dialogs.
+const BOOT_STEPS = ['Camera', 'Coach AI', 'Finding you'] as const;
+const ACTIVE_STEP: Record<LoadingPhase, number> = {
+  initial: 0,
+  camera: 0,
+  ai: 1,
+  positioning: 2,
+  ready: 3,
+};
+
+// Placement education lives where the user can actually act on it: while the
+// model warms up, not on a pre-screen they dismiss unread.
+const BOOT_TIPS = [
+  'Your video never leaves this device.',
+  'Prop your phone / laptop so your whole body fits the frame.',
+  'Good lighting helps the coach read your form.',
+  'Stand back — head to toes visible — until the coach finds you.',
+];
+const TIP_ROTATE_MS = 4200;
+
 export default function UnifiedLoader({
   phase,
   progress = 0,
@@ -256,7 +277,17 @@ export default function UnifiedLoader({
 }: UnifiedLoaderProps) {
   const [shouldShow, setShouldShow] = useState(isVisible);
   const [_hasCompleted, setHasCompleted] = useState(false);
+  const [tipIndex, setTipIndex] = useState(0);
   const config = PHASE_CONFIG[phase];
+
+  // Rotate placement tips while the AI model warms (the one real wait).
+  useEffect(() => {
+    if (!isOverlay || !isVisible || phase !== 'ai') return;
+    const timer = setInterval(() => {
+      setTipIndex((i) => (i + 1) % BOOT_TIPS.length);
+    }, TIP_ROTATE_MS);
+    return () => clearInterval(timer);
+  }, [isOverlay, isVisible, phase]);
 
   const displayTitle = title || config.title;
   const displaySubtitle = subtitle || config.subtitle;
@@ -359,6 +390,38 @@ export default function UnifiedLoader({
           </p>
         </div>
 
+        {/* Step rail — one boot sequence, three milestones */}
+        <div className="mt-6 flex items-center gap-3" aria-hidden="true">
+          {BOOT_STEPS.map((step, i) => {
+            const activeStep = ACTIVE_STEP[phase];
+            const done = phase === 'ready' || i < activeStep;
+            const active = !done && i === activeStep;
+            return (
+              <div key={step} className="flex items-center gap-1.5">
+                <span
+                  className={`flex h-4 w-4 items-center justify-center rounded-full border text-[8px] font-black transition-colors duration-300 ${
+                    done
+                      ? 'border-green-400/60 bg-green-400/20 text-green-300'
+                      : active
+                        ? 'border-yellow-400/60 bg-yellow-400/15 text-yellow-300 animate-pulse'
+                        : 'border-white/15 bg-white/5 text-white/30'
+                  }`}
+                >
+                  {done ? '✓' : i + 1}
+                </span>
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${
+                    done ? 'text-green-300/80' : active ? 'text-yellow-200/90' : 'text-white/30'
+                  }`}
+                >
+                  {step}
+                </span>
+                {i < BOOT_STEPS.length - 1 && <span className="h-px w-4 bg-white/15" />}
+              </div>
+            );
+          })}
+        </div>
+
         {/* Progress indicators */}
         {phase === 'ai' && progress > 0 && (
           <div className="mt-8 flex flex-col items-center gap-3">
@@ -370,6 +433,12 @@ export default function UnifiedLoader({
                 Initializing
               </p>
               <p className="text-sm font-black text-purple-300 mt-1">{progress}%</p>
+              <p
+                key={tipIndex}
+                className="mt-2 max-w-[260px] text-[11px] leading-snug text-white/60"
+              >
+                {BOOT_TIPS[tipIndex]}
+              </p>
             </div>
           </div>
         )}

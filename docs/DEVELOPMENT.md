@@ -120,9 +120,10 @@ Play energy enters on the **first celebrate**, not before the first coached feel
 
 Landers see, in order:
 
-1. **`InitializationScreen`** (`studio-boot.css`) — night-studio wordmark + promise
-   while client providers hydrate; soft “Enter the bay / Enter quietly” when ready
-   (automation / reduced-motion skip). Never Press Start / gold / emoji.
+1. **`InitializationScreen`** (`studio-boot.css`) — night-studio wordmark + promise,
+   passively shown only while client providers hydrate. It is never an
+   interactive gate (no sound-consent ceremony; sound folds into the first CTA
+   press). Never Press Start / gold / emoji.
 2. **`StudioAtmosphere`** — coaching-bay depth + Apache SO-101 cut-outs
    (`public/atmosphere/`, see NOTICE.md) on a CSS perspective 3D gaze stage
    (fine-pointer desktop gets stronger rotateY/X; no third-party Spline).
@@ -130,7 +131,12 @@ Landers see, in order:
    When `NEXT_PUBLIC_COACH_STATION` is set, `CoachTwinPeek` + bay pulse
    (`body[data-coach-pulse]`) surface physical-AI demos fail-silently.
 3. **Home shell** — studio topbar (`IMPERFECT FORM`) even before `hasMounted`.
-4. **`CoachFoyer`** — glass panel over the bay; pick a move → start.
+4. **`CoachFoyer`** — glass panel over the bay; two pre-answered moves, CTA-first
+   (extras + explainer demoted below START). START fires the browser camera ask
+   directly; `CameraPrimer` is denial-recovery only, and a single step-railed
+   boot overlay (Camera → Coach AI → Finding you, ≥700ms/phase, rotating
+   placement tips during model warmup) replaces micro-flashing loaders.
+   Returning users land on earned chrome synchronously via `imf_hasTrained`.
 
 Product differentiation (robot teaches the human; PoseRuntime is primary):
 see [NORTH_STAR.md](./NORTH_STAR.md) “What we are (and are not).”

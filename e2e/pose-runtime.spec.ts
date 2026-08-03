@@ -8,6 +8,10 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('PoseRuntime - worker path + curls', () => {
+  // shouldUsePoseWorker: mobile and dev always run the main thread by design;
+  // the forced-worker smoke only exists for the desktop pipeline.
+  test.skip(({ isMobile }) => !!isMobile, 'worker path is desktop-only by design');
+
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.clear();
@@ -31,8 +35,10 @@ test.describe('PoseRuntime - worker path + curls', () => {
       timeout: 20000,
     });
 
+    // Curls live behind the demoted "More movements" section in the foyer.
+    await page.getByRole('button', { name: /More movements/i }).click();
     await page.getByRole('button', { name: /Curls/i }).click();
-    await expect(page.getByRole('button', { name: /Curls/i })).toHaveAttribute(
+    await expect(page.getByRole('button', { name: /Curls/i }).first()).toHaveAttribute(
       'aria-pressed',
       'true'
     );
@@ -41,7 +47,9 @@ test.describe('PoseRuntime - worker path + curls', () => {
     await expect(start).toBeEnabled();
     await start.click();
 
-    await expect(page.getByText(/Initializing Engine|Loading camera|Starting/i)).toBeVisible({
+    await expect(
+      page.getByText(/Initializing Engine|Loading camera|Starting/i).first()
+    ).toBeVisible({
       timeout: 15000,
     });
 

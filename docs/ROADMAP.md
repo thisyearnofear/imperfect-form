@@ -27,8 +27,11 @@ We reviewed the roadmap and technical questions with Francesco De Pascale at Cyb
 - Recovery register (breath cooldown + per-exercise stretches)
 - Staged post-workout flow: celebrate → recover → analyze
 - Ring 0 e2e guards — wallet-free core loop + PoseRuntime:
-  - `e2e/ring0.spec.ts` — ungated START, camera primer, studio `CoachFoyer`,
-    earned tabs only after XP
+  - `e2e/ring0.spec.ts` — no boot gate, ungated START, browser-direct camera
+    ask (primer = denial recovery), studio `CoachFoyer`, earned tabs only
+    after XP, earned chrome paints synchronously (`imf_hasTrained`)
+  - `e2e/ring0-camera.spec.ts` — granted-permission path on desktop Chromium
+    (fake media device): no pre-screen, straight into the boot overlay
   - `e2e/pose-runtime.spec.ts` — curls + forced worker path stays alive
     (session-scoped camera/model; mode is not a remount)
 - Tailwind v4 (`@tailwindcss/postcss`) — migrated `globals.css` to
@@ -76,8 +79,12 @@ full theme token once earned / wallet-switched.
   Cyberwave/MuJoCo stay on the station machine — no browser embed)
 - **Demo moment sync** — form cues / `demonstration` set `body[data-coach-pulse]`
   so bay arc + glow pulse; earned shell gets a fallback bloom
-- **Weisdevice-lite entry** — studio boot “Enter the bay / Enter quietly” sound
-  consent (auto-skip for automation / reduced-motion / returning session)
+- **One-screen doorway** — no interactive boot gate: passive studio splash
+  while providers hydrate, then `CoachFoyer` (2 pre-answered moves, CTA-first).
+  Sound consent folded into the first CTA press (real gesture); the camera ask
+  fires straight from START — primer survives only as denial-recovery; a single
+  step-railed boot overlay replaces the old loader cascade; rotate-hint /
+  notification asks deferred until a session exists
 
 **Shipped (Ring 1/2 — earned upgrades):**
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowRight,
   Camera,
@@ -14,7 +14,6 @@ import {
 import { BRAND, getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useOnboarding } from '@/contexts/OnboardingContext';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/coach-foyer.css';
 
@@ -57,6 +56,13 @@ const exercises: ExerciseOption[] = [
   { mode: 'jumps', label: 'Jumps', detail: 'Landing · knee track', category: 'extra' },
 ];
 
+/** Warm the camera + pose chunk while the user reads the foyer so START is instant. */
+function prefetchWebcamChunk() {
+  void import('./Webcam').catch(() => {
+    /* prefetch is best-effort; LazyWebcam loads on demand otherwise */
+  });
+}
+
 function CoachFocal({ className }: { className?: string }) {
   return (
     <div className={`coach-foyer__focal ${className || ''}`} aria-hidden="true">
@@ -83,19 +89,29 @@ function CoachFocal({ className }: { className?: string }) {
 
 export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
-  const { hasSeen } = useOnboarding();
   const { triggerHaptic } = useHapticFeedback();
   const [showExtras, setShowExtras] = useState(false);
-  // Inline onboarding: show the value prop by default for first-time users.
-  const [showHowItWorks, setShowHowItWorks] = useState(!hasSeen);
+  // Explainer is collapsed by default — its content also rotates inside the
+  // session-boot overlay, where the user is a captive audience.
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const firstExtraRef = React.useRef<HTMLButtonElement>(null);
   const moreToggleRef = React.useRef<HTMLButtonElement>(null);
 
   const primaryExercises = exercises.filter((e) => e.category === 'primary');
   const extraExercises = exercises.filter((e) => e.category === 'extra');
-  const visibleExercises = [...primaryExercises, ...(showExtras ? extraExercises : [])];
 
-  // Move focus to the first newly revealed exercise or back to the toggle for keyboard users
+  // Prefetch the heavy camera chunk on idle + on CTA hover/press intent.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(prefetchWebcamChunk, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = setTimeout(prefetchWebcamChunk, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Move focus to the first revealed exercise, or back to the toggle (a11y).
   React.useEffect(() => {
     if (showExtras && firstExtraRef.current) {
       firstExtraRef.current.focus();
@@ -103,6 +119,31 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
       moreToggleRef.current.focus();
     }
   }, [showExtras]);
+
+  const renderExerciseButton = (exercise: ExerciseOption, index: number) => {
+    const selected = exercise.mode === mode;
+    return (
+      <button
+        key={exercise.mode}
+        type="button"
+        ref={exercise.category === 'extra' && index === 0 ? firstExtraRef : undefined}
+        className={`coach-foyer__exercise${selected ? ' is-selected' : ''}`}
+        style={{ animationDelay: `${180 + index * 40}ms` }}
+        aria-pressed={selected}
+        onClick={() => {
+          playStudioCue('soft');
+          triggerHaptic(40);
+          onModeChange(exercise.mode);
+        }}
+      >
+        <span className="coach-foyer__exercise-copy">
+          <strong>{exercise.label}</strong>
+          <small>{exercise.detail}</small>
+        </span>
+        <span className="coach-foyer__radio" aria-hidden="true" />
+      </button>
+    );
+  };
 
   return (
     <section className="coach-foyer" aria-labelledby="coach-foyer-title">
@@ -122,57 +163,11 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{BRAND.visionLine}</p>
 
+        {/* Two defaults, pre-answered — the only decision offered before START */}
         <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">
           <legend>Choose a movement</legend>
-          {visibleExercises.map((exercise, index) => {
-            const selected = exercise.mode === mode;
-            const isFirstExtra = showExtras && index === primaryExercises.length;
-            return (
-              <button
-                key={exercise.mode}
-                type="button"
-                ref={isFirstExtra ? firstExtraRef : undefined}
-                className={`coach-foyer__exercise${selected ? ' is-selected' : ''}`}
-                style={{ animationDelay: `${180 + index * 40}ms` }}
-                aria-pressed={selected}
-                onClick={() => {
-                  playStudioCue('soft');
-                  triggerHaptic(40);
-                  onModeChange(exercise.mode);
-                }}
-              >
-                <span className="coach-foyer__exercise-copy">
-                  <strong>{exercise.label}</strong>
-                  <small>{exercise.detail}</small>
-                </span>
-                <span className="coach-foyer__radio" aria-hidden="true" />
-              </button>
-            );
-          })}
+          {primaryExercises.map(renderExerciseButton)}
         </fieldset>
-
-        <button
-          type="button"
-          ref={moreToggleRef}
-          className="coach-foyer__more motion-enter motion-delay-3"
-          aria-expanded={showExtras}
-          aria-controls="exercise-list"
-          onClick={() => {
-            playStudioCue('soft');
-            triggerHaptic(40);
-            setShowExtras((prev) => !prev);
-          }}
-        >
-          {showExtras ? (
-            <>
-              <ChevronUp size={14} /> Fewer movements
-            </>
-          ) : (
-            <>
-              <ChevronDown size={14} /> More movements
-            </>
-          )}
-        </button>
 
         <button
           type="button"
@@ -180,6 +175,8 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           className="coach-foyer__start coach-foyer__start--hero feel-press motion-enter"
           style={{ animationDelay: '320ms' }}
           aria-label={foyer.cta}
+          onPointerEnter={prefetchWebcamChunk}
+          onTouchStart={prefetchWebcamChunk}
           onClick={() => {
             playStudioCue('press');
             triggerHaptic([50, 100]);
@@ -199,9 +196,40 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           {BRAND.trustLine}
         </p>
 
-        <p className="coach-foyer__landscape-tip motion-enter" style={{ animationDelay: '420ms' }}>
-          Tip: rotate your phone to landscape for the full coaching view.
-        </p>
+        {/* Earned depth, demoted below the CTA */}
+        <button
+          type="button"
+          ref={moreToggleRef}
+          className="coach-foyer__more motion-enter"
+          style={{ animationDelay: '420ms' }}
+          aria-expanded={showExtras}
+          aria-controls="coach-foyer-more-movements"
+          onClick={() => {
+            playStudioCue('soft');
+            triggerHaptic(40);
+            setShowExtras((prev) => !prev);
+          }}
+        >
+          {showExtras ? (
+            <>
+              <ChevronUp size={14} /> Fewer movements
+            </>
+          ) : (
+            <>
+              <ChevronDown size={14} /> More movements
+            </>
+          )}
+        </button>
+
+        {showExtras && (
+          <fieldset
+            id="coach-foyer-more-movements"
+            className="coach-foyer__exercise-list motion-enter"
+          >
+            <legend>More movements</legend>
+            {extraExercises.map(renderExerciseButton)}
+          </fieldset>
+        )}
 
         <button
           type="button"

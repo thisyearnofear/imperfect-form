@@ -11,8 +11,9 @@ import useSwipeGesture from '@/hooks/useSwipeGesture';
 import { GameControls } from './GameControls';
 
 import CameraPrimer, {
-  shouldShowCameraPrimer,
-  markCameraPrimerSeen,
+  isFirstCameraUse,
+  markCameraIntroHandled,
+  requestCameraAccess,
 } from '@/components/recovery/CameraPrimer';
 import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
@@ -400,17 +401,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       // Day-0 coaching doorway commits Coach / Studio (noop if already set).
       setIntent('understand');
 
-      // First use: show the calm camera primer before the browser's permission
-      // prompt fires. Synchronous check - the fullscreen call below must stay
-      // within this user gesture.
-      if (shouldShowCameraPrimer()) {
-        pendingStartRef.current = options;
-        setShowCameraPrimer(true);
-        return;
-      }
-
-      // Use device detection hook's isMobile value
-      // Only attempt fullscreen if it's available in the current context
+      // Gesture-sensitive work stays synchronous with the press: fullscreen
+      // and orientation lock must run BEFORE any await, or browsers reject them.
       if (isMobile && autoFs && isFullscreenAvailable) {
         enterFullscreen(); // Must be synchronous with user gesture
       } else if (isMobile && autoFs && !isFullscreenAvailable) {
@@ -422,6 +414,25 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       if (isMobile && (mode === 'pushups' || mode === 'squats')) {
         lockLandscape();
         setIsLandscapeLocked(true);
+      }
+
+      // First camera use: ask the BROWSER directly from this press — the OS
+      // prompt is the consent UX, so there is no separate pre-screen. The
+      // primer survives only as denial-recovery (setup help + retry).
+      if (isFirstCameraUse()) {
+        const granted = await requestCameraAccess();
+        if (!granted) {
+          // Fullscreen/orientation were entered optimistically above (sync
+          // gesture rules). Unwind them now: a fullscreened game container
+          // would paint OVER the recovery card on mobile, hiding the fix.
+          exitFullscreen();
+          unlock();
+          setIsLandscapeLocked(false);
+          pendingStartRef.current = options;
+          setShowCameraPrimer(true);
+          return;
+        }
+        markCameraIntroHandled();
       }
 
       // Fetch PB trace for ghost mode if user level is 3+ AND we're not already in a race
@@ -468,8 +479,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       autoFs,
       isFullscreenAvailable,
       enterFullscreen,
+      exitFullscreen,
       mode,
       lockLandscape,
+      unlock,
       xpProgress.currentLevel,
       isRace,
       raceTrace,
@@ -614,7 +627,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // When racing against a ghost, prioritize raceTrace over pbTrace
   const activeTrace = raceTrace || pbTrace;
 
-  const showLandscapePrompt = isMobile && isPortrait && !dismissLandscapePrompt;
+  // Rotate hint only matters once a session is running — it must never
+  // gate the day-0 foyer (that made it decision #1 on portrait phones).
+  const showLandscapePrompt = started && isMobile && isPortrait && !dismissLandscapePrompt;
 
   const memoizedWebcam = useMemo(
     () => (
@@ -775,11 +790,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             <CameraPrimer
               mode={mode}
               onEnable={() => {
-                markCameraPrimerSeen();
-                setShowCameraPrimer(false);
-                // Re-enter the start flow in this click's gesture context so
-                // fullscreen/orientation still work
-                handleStart(pendingStartRef.current);
+                // Denial-recovery retry: re-ask the browser first; only boot
+                // the session once permission is actually granted.
+                void (async () => {
+                  const granted = await requestCameraAccess();
+                  if (!granted) return; // still blocked — the card explains the fix
+                  markCameraIntroHandled();
+                  setShowCameraPrimer(false);
+                  const pending = pendingStartRef.current;
+                  pendingStartRef.current = undefined;
+                  handleStart(pending);
+                })();
               }}
               onCancel={() => {
                 setShowCameraPrimer(false);

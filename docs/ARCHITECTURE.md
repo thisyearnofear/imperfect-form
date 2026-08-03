@@ -290,7 +290,9 @@ must not tear it down mid-session. Product differentiation:
 ### Loop
 
 ```
-CoachFoyer (studio) → Start → CameraPrimer (first time)
+CoachFoyer (studio) → Start → browser camera prompt (direct from the press)
+        │     CameraPrimer only as denial-recovery; one boot overlay
+        │     (Camera → Coach AI → Finding you, min-display, no micro-flashes)
         │
         ▼
 ┌───────────────────────────────────────────────────────────┐

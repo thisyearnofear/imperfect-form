@@ -8,6 +8,7 @@
 import { getDataSyncService, createDataKey } from '@/services/DataSyncService';
 import { getOfflineDataStore } from '@/services/OfflineDataStore';
 import { LocalWorkout, SessionSnapshot } from '@/types/workout';
+import { markHasTrained } from '@/lib/hasTrained';
 
 // Data keys for workout-related data
 export const WORKOUT_KEYS = {
@@ -61,6 +62,9 @@ export async function initializeWorkoutSources(): Promise<void> {
  * Save a workout session locally
  */
 export async function saveLocalWorkout(workout: LocalWorkout): Promise<void> {
+  // A saved workout means the user has trained — flip the sync chrome flag
+  // so the next visit paints the earned shell immediately (no foyer flash).
+  markHasTrained();
   const service = getDataSyncService();
   await service.mutate(WORKOUT_KEYS.ALL, workout, {
     optimistic: await getLocalWorkouts().then((current) => {
