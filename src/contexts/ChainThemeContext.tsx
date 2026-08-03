@@ -190,8 +190,13 @@ const createDebouncedApplyTheme = () => {
       applyThemeOptions(options);
 
       // Day-0 / studio shell owns the page chrome — do not paint chain colours over it.
+      // Check documentElement first (set synchronously in <head> before this runs)
+      // then body (set by page.tsx's effect) so the gate is reliable on first paint.
       if (typeof document !== 'undefined') {
-        const studioShell = document.body.getAttribute('data-shell') === 'studio';
+        const shell =
+          document.documentElement.getAttribute('data-shell') ||
+          document.body?.getAttribute('data-shell');
+        const studioShell = shell === 'studio';
         if (!studioShell) {
           document.body.style.setProperty('background-color', enhancedTheme.palette.background);
           document.body.style.setProperty('color', enhancedTheme.palette.text);
@@ -205,7 +210,11 @@ const createDebouncedApplyTheme = () => {
         background: theme.palette.background,
         text: theme.palette.text,
         primary: theme.palette.primary,
-        shell: typeof document !== 'undefined' ? document.body.getAttribute('data-shell') : null,
+        shell:
+          typeof document !== 'undefined'
+            ? document.documentElement.getAttribute('data-shell') ||
+              document.body?.getAttribute('data-shell')
+            : null,
       });
     }, 100);
   };

@@ -118,14 +118,19 @@ export default function Home() {
   };
 
   // Studio shell owns day-0 chrome; chain themes only after first coached feel.
+  // Set on documentElement (matches the synchronous <head> script) AND body so
+  // ChainThemeContext's debounced apply reliably sees 'studio' on first paint.
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    document.body.setAttribute('data-shell', hasTrained ? 'earned' : 'studio');
+    const shell = hasTrained ? 'earned' : 'studio';
+    document.documentElement.setAttribute('data-shell', shell);
+    document.body.setAttribute('data-shell', shell);
     if (!hasTrained) {
       document.body.style.removeProperty('background-color');
       document.body.style.removeProperty('color');
     }
     return () => {
+      document.documentElement.removeAttribute('data-shell');
       document.body.removeAttribute('data-shell');
     };
   }, [hasTrained]);

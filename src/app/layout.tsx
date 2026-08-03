@@ -206,6 +206,15 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if (typeof window !== 'undefined') {
+                // Set data-shell synchronously before any theme context mounts:
+                // day-0 (studio) must own the page chrome so ChainThemeContext's
+                // debounced apply (100ms) skips painting chain colours over it.
+                // Mirrors the synchronous getHasTrained() read in page.tsx.
+                try {
+                  var hasTrained = window.localStorage.getItem('imf_hasTrained') === '1';
+                  document.documentElement.setAttribute('data-shell', hasTrained ? 'earned' : 'studio');
+                } catch (e) {}
+
                 function loadNetworkCSS() {
                   try {
                     if (
@@ -213,7 +222,7 @@ export default function RootLayout({
                       localStorage.getItem('selectedNetwork') === 'celo' ||
                       localStorage.getItem('selectedWalletProvider') === 'signature'
                     ) {
-                      const link = document.createElement('link');
+                      var link = document.createElement('link');
                       link.rel = 'stylesheet';
                       link.href = '/network-elements.css';
                       document.head.appendChild(link);
