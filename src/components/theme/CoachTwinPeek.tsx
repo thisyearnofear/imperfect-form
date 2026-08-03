@@ -76,19 +76,187 @@ type Execution =
   | { kind: 'succeeded'; detail: string }
   | { kind: 'aborted' | 'rejected' | 'error'; detail: string };
 
+type DemoBus = {
+  connect: () => void;
+  onStatus: (fn: (s: StationStatus) => void) => () => void;
+  onDemonstration: (fn: (e: StationDemonstrationEvent) => void) => () => void;
+  onDemonstrationIntent: (fn: (e: StationDemonstrationIntentV1) => void) => () => void;
+  onTrajectoryProgress: (fn: (e: StationTrajectoryProgressEvent) => void) => () => void;
+  onRobotState: (fn: (e: StationRobotStateEvent) => void) => () => void;
+  onCommandResult: (fn: (e: StationCommandResultEvent) => void) => () => void;
+};
+
 /**
- * Live twin instrument — visible only when NEXT_PUBLIC_COACH_STATION is set.
+ * Scripted demo bus for ?twin=1 — the instrument renders the full protocol
+ * surface off synthetic events. Real station takes precedence when both are
+ * configured; the demo never drives a real arm.
+ */
+function makeDemoBus(): DemoBus {
+  type AnyListener = (e: never) => void;
+  const listeners = new Map<string, Set<AnyListener>>();
+  const add = (kind: string) => (fn: AnyListener) => {
+    if (!listeners.has(kind)) listeners.set(kind, new Set());
+    listeners.get(kind)!.add(fn);
+    return () => listeners.get(kind)!.delete(fn);
+  };
+  const emit = (kind: string, payload: unknown) => {
+    for (const fn of listeners.get(kind) ?? []) {
+      try {
+        fn(payload as never);
+      } catch {
+        // scripted demo must never break the app shell
+      }
+    }
+  };
+
+  const timers: number[] = [];
+  const commandId = 'demo-cmd';
+
+  const playSweep = () => {
+    const personality: CoachPersonality = 'RASTA';
+    const intent: StationDemonstrationIntentV1 = {
+      type: 'demonstration_intent',
+      version: '1.0',
+      command_id: commandId,
+      name: 'demonstrate_strict_curl',
+      mode: 'curls',
+      issue: 'elbow_swing',
+      personality,
+      joint: 'elbow_flex',
+      from_deg: 160,
+      to_deg: 50,
+      speed_deg_s: 80,
+      pause_s: 0.5,
+      repeats: 2,
+      narration: 'Elbow pinned — watch the dial.',
+      duration_s: 4.2,
+    };
+    const demo: StationDemonstrationEvent = {
+      type: 'demonstration',
+      name: 'demonstrate_strict_curl',
+      narration: 'Elbow pinned — watch the dial.',
+      personality,
+      duration_s: 4.2,
+      issue: 'elbow_swing',
+      mode: 'curls',
+      command_id: commandId,
+      version: '1.0',
+    };
+
+    emit('status', 'connected');
+    emit('intent', intent);
+
+    timers.push(
+      window.setTimeout(() => {
+        emit('robot_state', {
+          type: 'robot_state',
+          version: '1.0',
+          status: 'executing',
+          adapter: 'demo',
+          affect: 'demo',
+          command_id: commandId,
+          detail: intent.name,
+          updated_at_ms: Date.now(),
+        } satisfies StationRobotStateEvent);
+        emit('demonstration', demo);
+      }, 900)
+    );
+
+    const steps = 24;
+    const durationMs = 4200;
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      const deg = 160 + (50 - 160) * t;
+      const ms = 900 + (i / steps) * durationMs;
+      timers.push(
+        window.setTimeout(() => {
+          emit('progress', {
+            type: 'trajectory_progress',
+            version: '1.0',
+            command_id: commandId,
+            joint: 'elbow_flex',
+            current_deg: deg,
+            progress_pct: t,
+            timestamp_ms: Date.now(),
+            measured_deg: deg,
+          } satisfies StationTrajectoryProgressEvent);
+        }, ms)
+      );
+    }
+
+    timers.push(
+      window.setTimeout(
+        () => {
+          emit('command_result', {
+            type: 'command_result',
+            version: '1.0',
+            command_id: commandId,
+            status: 'succeeded',
+            adapter: 'demo',
+            affect: 'demo',
+            duration_s: 4.2,
+            completed_at_ms: Date.now(),
+          } satisfies StationCommandResultEvent);
+          emit('robot_state', {
+            type: 'robot_state',
+            version: '1.0',
+            status: 'idle',
+            adapter: 'demo',
+            affect: 'demo',
+            command_id: null,
+            detail: null,
+            updated_at_ms: Date.now(),
+          } satisfies StationRobotStateEvent);
+        },
+        900 + durationMs + 400
+      )
+    );
+  };
+
+  return {
+    connect: () => {
+      timers.push(window.setTimeout(playSweep, 600));
+      timers.push(window.setInterval(playSweep, 14000) as unknown as number);
+    },
+    onStatus: add('status'),
+    onDemonstration: add('demonstration'),
+    onDemonstrationIntent: add('intent'),
+    onTrajectoryProgress: add('progress'),
+    onRobotState: add('robot_state'),
+    onCommandResult: add('command_result'),
+  };
+}
+
+/**
+ * Read ?twin=1 from the URL. Kept query-side so a judge can drop `?twin=1`
+ * onto any URL — no router integration, works in e2e and deep links alike.
+ */
+function isTwinDemoRequested(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('twin') === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Live twin instrument — visible when NEXT_PUBLIC_COACH_STATION is set or
+ * when the URL carries `?twin=1` (scripted demo, `DEMO` badge).
  * Fail-silent: offline is a quiet status, never an error.
  *
  * When idle it's a discreet status strip. The ghost target and range arc come
  * from the executable `demonstration_intent` broadcast (station truth), not
  * the demo banner; the readout prefers observed angle from
  * `trajectory_progress.measured_deg` and falls back to commanded otherwise.
- * SIM / LIVE badge reflects the station's `affect` field. All rendering
+ * SIM / LIVE / DEMO badge reflects the station's `affect` field. All rendering
  * is fail-silent: MuJoCo/console stay on the station machine.
  */
 export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse?: boolean }) {
-  const enabled = coachStation.enabled;
+  const demoBusRef = useRef<DemoBus | null>(null);
+  const isDemo = !coachStation.enabled && isTwinDemoRequested();
+  if (isDemo && !demoBusRef.current) demoBusRef.current = makeDemoBus();
+  const enabled = coachStation.enabled || isDemo;
   const [status, setStatus] = useState<StationStatus>(coachStation.status);
   const [demo, setDemo] = useState<StationDemonstrationEvent | null>(null);
   const [progress, setProgress] = useState<StationTrajectoryProgressEvent | null>(null);
@@ -103,7 +271,8 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
   useEffect(() => {
     if (!enabled) return;
 
-    coachStation.connect();
+    const source: DemoBus = demoBusRef.current ?? coachStation;
+    source.connect();
     let demoTimeout = 0;
     let executionTimeout = 0;
     let progressTimeout = 0;
@@ -123,18 +292,18 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
       executionTimeout = window.setTimeout(() => setExecution(null), 2800);
     };
 
-    const unsubStatus = coachStation.onStatus((nextStatus) => {
+    const unsubStatus = source.onStatus((nextStatus) => {
       setStatus(nextStatus);
       if (nextStatus === 'offline') {
         resetInstrument();
         setAffect(null);
       }
     });
-    const unsubIntent = coachStation.onDemonstrationIntent((event) => {
+    const unsubIntent = source.onDemonstrationIntent((event) => {
       activeCommandIdRef.current = event.command_id;
       setIntent(event);
     });
-    const unsubDemo = coachStation.onDemonstration((event) => {
+    const unsubDemo = source.onDemonstration((event) => {
       if (event.command_id) activeCommandIdRef.current = event.command_id;
       window.clearTimeout(progressTimeout);
       setProgress(null);
@@ -150,14 +319,14 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
         Math.max(2500, event.duration_s * 1000 || 3200)
       );
     });
-    const unsubProgress = coachStation.onTrajectoryProgress((event) => {
+    const unsubProgress = source.onTrajectoryProgress((event) => {
       if (!activeCommandIdRef.current || event.command_id !== activeCommandIdRef.current) return;
       window.clearTimeout(executionTimeout);
       window.clearTimeout(progressTimeout);
       setProgress(event);
       setTrail((current) => [...current.slice(-(TRAIL_LENGTH - 1)), event.current_deg]);
     });
-    const unsubState = coachStation.onRobotState((event: StationRobotStateEvent) => {
+    const unsubState = source.onRobotState((event: StationRobotStateEvent) => {
       setAffect(event.affect);
       if (event.status === 'executing') {
         if (event.command_id) activeCommandIdRef.current = event.command_id;
@@ -171,7 +340,7 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
         clearExecutionLater();
       }
     });
-    const unsubResult = coachStation.onCommandResult((event: StationCommandResultEvent) => {
+    const unsubResult = source.onCommandResult((event: StationCommandResultEvent) => {
       setAffect(event.affect);
       if (!activeCommandIdRef.current || event.command_id !== activeCommandIdRef.current) return;
       resetInstrument();
@@ -249,7 +418,8 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
   // The readout makes observed-vs-commanded legible, not hidden.
   const readoutLabel =
     currentElbowDeg !== undefined ? `${Math.round(clampElbowDeg(currentElbowDeg))}°` : null;
-  const affectLabel = affect === 'live' ? 'LIVE' : affect ? 'SIM' : null;
+  const affectLabel =
+    affect === 'live' ? 'LIVE' : affect === 'simulation' ? 'SIM' : isDemo ? 'DEMO' : null;
   const personaClass = personality ? ` persona-${personality.toLowerCase()}` : '';
 
   return (
