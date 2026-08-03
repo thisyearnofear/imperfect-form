@@ -204,13 +204,7 @@
   justify-content: center;
   gap: 0.65rem;
   color: #04201d;
-  background: linear-gradient(
-    115deg,
-    #7aebd8 0%,
-    #56d9c3 42%,
-    #6bb8ff 78%,
-    #c4b5fd 100%
-  );
+  background: linear-gradient(115deg, #7aebd8 0%, #56d9c3 55%, #4cc9b0 100%);
   border: 1px solid #9af3e2;
   border-radius: var(--cf-radius);
   box-shadow: 0 10px 28px rgba(86, 217, 195, 0.22);
@@ -226,7 +220,7 @@
 
 .coach-foyer__start:hover {
   transform: translateY(-2px);
-  background: linear-gradient(115deg, #96f0df 0%, #6fe0cb 40%, #8ec5ff 78%, #d4c8ff 100%);
+  background: linear-gradient(115deg, #96f0df 0%, #6fe0cb 55%, #58d9c3 100%);
   box-shadow: 0 14px 32px rgba(86, 217, 195, 0.28);
 }
 

@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { CoachTwinPeek } from '@/components/theme/CoachTwinPeek';
 import '@/styles/studio-atmosphere.css';
 
 /**
  * Day-0 / studio shell backdrop — coaching bay with real SO-101 presence.
  * Photos: TheRobotStudio/SO-ARM100 (Apache-2.0), alpha cut-outs in public/atmosphere/.
  * CSS 3D cursor-gaze + multi-chain blooms. Demo pulses via body[data-coach-pulse].
+ *
+ * The live twin instrument (CoachTwinPeek) is an earned-shell element and is
+ * NOT rendered here on day-0 — it would float over the CoachFoyer headline.
+ * The earned shell renders CoachTwinPeek directly in page.tsx.
  */
-export function StudioAtmosphere() {
+export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -114,19 +117,21 @@ export function StudioAtmosphere() {
           </div>
         </div>
 
-        <div className="studio-atmosphere__network-row">
-          <span className="is-celo">Celo</span>
-          <span className="is-base">Base</span>
-          <span className="is-avalanche">Avalanche</span>
-          <span className="is-monad">Monad</span>
-        </div>
+        {quiet ? null : (
+          <>
+            <div className="studio-atmosphere__network-row">
+              <span className="is-celo">Celo</span>
+              <span className="is-base">Base</span>
+              <span className="is-avalanche">Avalanche</span>
+              <span className="is-monad">Monad</span>
+            </div>
 
-        <p className="studio-atmosphere__caption">
-          SO-101 Coach · path → physical AI that can show the fix
-        </p>
+            <p className="studio-atmosphere__caption">
+              SO-101 Coach · path → physical AI that can show the fix
+            </p>
+          </>
+        )}
       </div>
-
-      <CoachTwinPeek />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import ChainAmbient from '@/components/theme/ChainAmbient';
 import ThemeSync from '@/components/theme/ThemeSync';
 import StudioAtmosphere from '@/components/theme/StudioAtmosphere';
 import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
+import { BRAND } from '@/lib/brandPositioning';
 import { useCoachBayPulse } from '@/hooks/useCoachBayPulse';
 import { callFarcasterReady } from '@/utils/farcasterMiniApp';
 import {
@@ -24,12 +25,22 @@ import { ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import { UniversalConnectButton } from '@/components/wallet';
 import { ScreenTransition } from '@/components/ui/ScreenTransition';
 
-// Branded shell (not a bare spinner) while the game chunk loads — the swap
-// into the foyer should feel like a fade within one surface, not a glitch.
+// Branded shell while the game chunk loads — visually identical to the
+// InitializationScreen first frame so the boot splash → foyer swap is a
+// fade within one surface, not a flash to a different layout.
 const GameLoadingShell = () => (
-  <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-    <p className="studio-wordmark">IMPERFECT FORM</p>
-    <p className="studio-wordmark-sub">Preparing the bay…</p>
+  <div className="studio-boot" role="status" aria-live="polite" aria-label="Loading Imperfect Form">
+    <div className="studio-boot__atmosphere" aria-hidden="true">
+      <div className="studio-boot__glow" />
+    </div>
+    <div className="studio-boot__content">
+      <p className="studio-boot__brand">{BRAND.studio.brand}</p>
+      <p className="studio-boot__line">{BRAND.studio.line1}</p>
+      <p className="studio-boot__status">
+        <span className="studio-boot__signal" aria-hidden="true" />
+        Preparing the bay
+      </p>
+    </div>
   </div>
 );
 
@@ -146,13 +157,12 @@ export default function Home() {
   const day0Topbar = (
     <div className="studio-topbar sticky top-0 z-50">
       <div className="studio-topbar__inner px-5 py-3.5 flex items-center justify-between gap-3">
-        <div>
-          <p className="studio-wordmark">IMPERFECT FORM</p>
-          <p className="studio-wordmark-sub">Private camera coaching</p>
-        </div>
+        {/* Day-0: foyer carries the brand; topbar is status-only to avoid a
+            duplicate wordmark in the first viewport. */}
         <p className="studio-status">
           <span /> Ready when you are
         </p>
+        <p className="studio-wordmark-sub">Private camera coaching</p>
       </div>
     </div>
   );
@@ -168,7 +178,7 @@ export default function Home() {
           <CoachTwinPeek showFallbackPulse />
         </>
       ) : (
-        <StudioAtmosphere />
+        <StudioAtmosphere quiet />
       )}
 
       <div
