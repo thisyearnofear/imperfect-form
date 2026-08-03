@@ -219,6 +219,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Tutorial state is managed but not displayed in current UI
   const [, setShowTutorial] = useState(true);
   const [started, setStarted] = useState(false);
+  // Synchronous "starting" flag: set the instant START is pressed so the
+  // foyer fades out immediately, before the camera permission await resolves.
+  // Cleared when `started` flips (session live) or the camera primer shows.
+  const [isStarting, setIsStarting] = useState(false);
   const [showCameraPrimer, setShowCameraPrimer] = useState(false);
   const [showFirstRepCelebration, setShowFirstRepCelebration] = useState(false);
   const pendingStartRef = useRef<{ trace?: any; isRace?: boolean } | undefined>(undefined);
@@ -398,6 +402,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         return;
       }
 
+      // Signal the foyer to fade out immediately — before any await — so
+      // there is no dead frame between START and the camera permission prompt.
+      setIsStarting(true);
+
       // Day-0 coaching doorway commits Coach / Studio (noop if already set).
       setIntent('understand');
 
@@ -428,6 +436,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           exitFullscreen();
           unlock();
           setIsLandscapeLocked(false);
+          setIsStarting(false);
           pendingStartRef.current = options;
           setShowCameraPrimer(true);
           return;
@@ -464,6 +473,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       // Welcome component consolidated into InitializationScreen - setShowWelcome removed
       setShowTutorial(false); // Hide tutorial when starting
       setStarted(true);
+      setIsStarting(false); // session live — foyer handoff complete
 
       // Physical AI: session start (no-op unless station URL configured)
       coachStation.sendSessionEvent('session_start', mode, personality);
@@ -491,6 +501,37 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       resetReps,
     ]
   );
+
+  // Desktop keyboard shortcuts: Space = start/stop, 1/2 = push-ups/squats,
+  // Esc = stop. Skipped on mobile (physical keyboards rare; avoids hijacking
+  // assistive tech on touch). Ignored while typing in an input/textarea.
+  useEffect(() => {
+    if (isMobile) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (started) handleStopRef.current?.();
+        else handleStart();
+      } else if (e.key === 'Escape' && started) {
+        e.preventDefault();
+        handleStopRef.current?.();
+      } else if (!started && !calmSessionActive) {
+        // Exercise selection only before a session starts.
+        if (e.key === '1') setMode('pushups');
+        else if (e.key === '2') setMode('squats');
+        else if (e.key === '3') setMode('curls');
+        else if (e.key === '4') setMode('pullups');
+        else if (e.key === '5') setMode('jumps');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isMobile, started, calmSessionActive, handleStart]);
 
   // --- Ghost Mode & Race Integration ---
 
@@ -728,7 +769,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           {!started &&
             !calmSessionActive &&
             (currentMode === 'instructions' ? (
-              <CoachFoyer mode={mode} onModeChange={setMode} onStart={() => handleStart()} />
+              <div className={isStarting ? 'coach-foyer--starting' : ''}>
+                <CoachFoyer mode={mode} onModeChange={setMode} onStart={() => handleStart()} />
+              </div>
             ) : (
               <SplitFlapInstructions
                 mode={currentMode}

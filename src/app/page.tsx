@@ -75,6 +75,17 @@ export default function Home() {
   const [showDashboard, setShowDashboard] = useState(true);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
 
+  // Gradual tab reveal: Workout + Stats always; Ghost at L3; Roadmap at L5.
+  // Avoids the 0->100 chrome flip on the first earned session.
+  const visibleTabs: { id: ActiveTab; label: string; minLevel: number }[] = (
+    [
+      { id: 'workout', label: 'Workout', minLevel: 0 },
+      { id: 'dashboard', label: 'Stats', minLevel: 0 },
+      { id: 'challenges', label: 'Ghost', minLevel: 3 },
+      { id: 'roadmap', label: 'Roadmap', minLevel: 5 },
+    ] as const
+  ).filter((t) => progress.currentLevel >= t.minLevel);
+
   // Game-loop chrome is earned after the first coached feel — not the day-0 foyer.
   // The initial decision must be synchronous: the instant localStorage flag
   // avoids flashing the day-0 foyer to returning users while XP loads from
@@ -118,6 +129,14 @@ export default function Home() {
       document.body.removeAttribute('data-shell');
     };
   }, [hasTrained]);
+
+  // Gradual reveal guard: if the active tab is gated out by level (e.g. the
+  // user was on Ghost but dropped below Level 3), fall back to Workout so the
+  // content area is never empty.
+  useEffect(() => {
+    if (activeTab === 'challenges' && progress.currentLevel < 3) setActiveTab('workout');
+    else if (activeTab === 'roadmap' && progress.currentLevel < 5) setActiveTab('workout');
+  }, [activeTab, progress.currentLevel]);
 
   useEffect(() => {
     if (isInMiniApp) {
@@ -199,22 +218,22 @@ export default function Home() {
               </div>
 
               <div className="studio-tabs flex items-center gap-1 p-1">
-                {[
-                  { id: 'workout', label: 'Workout', icon: 'W' },
-                  { id: 'dashboard', label: 'Dashboard', icon: 'S' },
-                  { id: 'challenges', label: 'Challenges', icon: 'G' },
-                  { id: 'roadmap', label: 'Roadmap', icon: 'R' },
-                ].map((tab) => (
+                {/* Gradual reveal: Workout always; Stats after first session;
+                    Ghost (Challenges) at Level 3+; Roadmap at Level 5+. Avoids the
+                    0->100 chrome flip on the first earned session. */}
+                {visibleTabs.map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as ActiveTab)}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${
                       activeTab === tab.id ? 'is-active' : ''
                     }`}
                     aria-label={`Switch to ${tab.label} tab`}
                     aria-current={activeTab === tab.id ? 'page' : undefined}
                   >
-                    <span className="font-mono text-[10px] opacity-70">{tab.icon}</span>
+                    <span className="font-mono text-[10px] opacity-70">
+                      {tab.id.charAt(0).toUpperCase()}
+                    </span>
                     <span className="hidden sm:inline">{tab.label}</span>
                   </button>
                 ))}
@@ -342,16 +361,14 @@ export default function Home() {
         {/* Mobile bottom tabs — only after first session */}
         {hasTrained && (
           <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10">
-            <div className="grid grid-cols-4 gap-1 p-2">
-              {[
-                { id: 'workout', label: 'Workout' },
-                { id: 'dashboard', label: 'Stats' },
-                { id: 'challenges', label: 'Ghost' },
-                { id: 'roadmap', label: 'Progress' },
-              ].map((tab) => (
+            <div
+              className="grid gap-1 p-2"
+              style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
+            >
+              {visibleTabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as ActiveTab)}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`flex flex-col items-center py-2 rounded-lg transition-all ${
                     activeTab === tab.id
                       ? 'text-yellow-400 bg-yellow-500/10'

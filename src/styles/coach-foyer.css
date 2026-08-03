@@ -20,6 +20,17 @@
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Foyer fade-out the instant START is pressed — eliminates the dead frame
+   between the press and the camera permission prompt / loading overlay. */
+.coach-foyer--starting .coach-foyer {
+  opacity: 0;
+  transform: scale(0.985);
+  pointer-events: none;
+  transition:
+    opacity 220ms ease-out,
+    transform 220ms ease-out;
+}
+
 /* Local glass panel — keeps type readable over the bay without a black void */
 .coach-foyer__atmosphere {
   position: absolute;
