@@ -62,6 +62,9 @@ describe('detectEngineRep formCheckSpeak', () => {
     detectEngineRep(armsPose(), 'curls', state);
     detectEngineRep(armsPose({ leftElbowAngle: 90, leftSwing: true }), 'curls', state);
 
+    expect(state.lastElbowAngle).toBeCloseTo(90, 0);
+    expect(state.lastPoseData?.leftElbowAngle).toBeCloseTo(90, 0);
+    expect(state.lastPoseData?.observedElbowAngle).toBeCloseTo(90, 0);
     const speak = consumeFormCheckSpeak(state);
     expect(speak?.issue).toBe('elbow_swing');
     expect(speak?.phrase).toMatch(/elbow/i);

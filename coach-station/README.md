@@ -24,7 +24,11 @@ NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev
 ```
 
 Do a workout with bad form and watch the station log the demonstrations the
-arm would perform. When a demo starts, the station also emits a JSON
+arm would perform. For curls, an `elbow_swing` cue carries the observed elbow
+angle as `current` and a deterministic 50° correction as `target`; the station
+clamps both to the active workspace before generating the `elbow_flex`
+trajectory. Clients that omit those optional fields retain the scripted 160°
+→ 50° fallback. When a demo starts, the station also emits a JSON
 `demonstration` event (narration + duration) back to the browser so voice can
 sync to the arm — TTS is provider-agnostic on the web client (ElevenLabs →
 Polly → browser).
@@ -148,8 +152,8 @@ COACH_AFFECT=live COACH_LIVE_CONFIRM=1 uv run python -m coach_station
 ## Layout
 
 - `coach_station/safety.py` — affect resolve + workspace/speed/step limits
-- `coach_station/schema.py` — FormEvent contract (mirrors `src/services/coachStation.ts`)
-- `coach_station/primitives.py` — form issue → demonstration, persona motion profiles
+- `coach_station/schema.py` — FormEvent contract (mirrors `src/services/coachStation.ts`); optional `current`/`target` angle fields
+- `coach_station/primitives.py` — form issue → demonstration, dynamic curl angle normalization, persona motion profiles
 - `coach_station/trajectory.py` — interpolated joint waypoints + safety clamps
 - `coach_station/arm.py` — Cyberwave twin backend (`joints.set`, `joints.get_all()`, alerts) + console sim
 - `coach_station/recordings.py` — fetch twin recordings for a session window (episode pipeline, SmolVLA flywheel)

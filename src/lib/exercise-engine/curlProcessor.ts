@@ -101,14 +101,17 @@ export const processCurls = ({
   let formCheckSpeak: { issue: string; phrase: string } | undefined;
 
   // Cheat detection: upper arm should stay pinned while curling
-  const swinging =
-    (leftVisible && left.shoulderAngle > SWING_SHOULDER_DEG && left.elbowAngle < EXTENDED_DEG) ||
-    (rightVisible && right.shoulderAngle > SWING_SHOULDER_DEG && right.elbowAngle < EXTENDED_DEG);
+  const leftSwing =
+    leftVisible && left.shoulderAngle > SWING_SHOULDER_DEG && left.elbowAngle < EXTENDED_DEG;
+  const rightSwing =
+    rightVisible && right.shoulderAngle > SWING_SHOULDER_DEG && right.elbowAngle < EXTENDED_DEG;
+  const swinging = leftSwing || rightSwing;
 
   if (swinging) {
     curlState.swingSinceLastRep = true;
     feedback = 'Keep your elbows pinned to your sides!';
     formCheckSpeak = { issue: 'elbow_swing', phrase: 'Pin your elbows' };
+    poseData.observedElbowAngle = leftSwing ? left?.elbowAngle : right?.elbowAngle;
   }
 
   // Per-arm hysteresis (each arm counts independently - alternating curls work)

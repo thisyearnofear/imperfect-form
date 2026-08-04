@@ -40,6 +40,8 @@ export interface PoseAngles {
   rightHipAngle?: number;
   leftShoulderAngle?: number;
   rightShoulderAngle?: number;
+  /** Elbow angle from the visible arm that triggered a form cue. */
+  observedElbowAngle?: number;
 }
 
 export interface PoseData extends PoseAngles {

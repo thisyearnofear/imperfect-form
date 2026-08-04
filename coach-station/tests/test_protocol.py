@@ -109,6 +109,8 @@ def _form_event() -> FormEvent:
 
 def test_intent_is_versioned_and_contains_adapter_parameters():
     event = _form_event()
+    event.current = 132.0
+    event.target = 55.0
     demo = resolve_demonstration(event)
     assert demo is not None
 
@@ -125,6 +127,20 @@ def test_intent_is_versioned_and_contains_adapter_parameters():
     assert intent.name == "demonstrate_strict_curl"
     assert intent.joint == "elbow_flex"
     assert intent.repeats == 2
+
+
+def test_station_intent_uses_observed_curl_angles():
+    station = CoachStation(arm=FakeArm())
+    websocket = FakeWebSocket()
+    event = _form_event()
+    event.current = 132.0
+    event.target = 55.0
+
+    asyncio.run(station.handle_event(websocket, event.model_dump_json()))
+
+    intent = next(message for message in websocket.messages if message["type"] == "demonstration_intent")
+    assert intent["from_deg"] == 132.0
+    assert intent["to_deg"] == 55.0
 
 
 def test_command_result_rejects_unknown_protocol_version():

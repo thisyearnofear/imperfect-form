@@ -439,7 +439,9 @@ export function usePoseDetection(
               coachStation.sendEngineFormCheck(
                 modeRef.current,
                 data.formCheckSpeak,
-                lastRepCountRef.current
+                lastRepCountRef.current,
+                data.poseData?.leftElbowAngle ?? data.poseData?.rightElbowAngle,
+                modeRef.current === 'curls' ? 50 : undefined
               );
             }
           }
@@ -779,7 +781,13 @@ export function usePoseDetection(
               if (engineDetector) {
                 const speak = consumeFormCheckSpeak(engineDetector);
                 if (speak) {
-                  coachStation.sendEngineFormCheck(activeMode, speak, repCounter.repCount);
+                  coachStation.sendEngineFormCheck(
+                    activeMode,
+                    speak,
+                    repCounter.repCount,
+                    engineDetector?.lastElbowAngle,
+                    activeMode === 'curls' ? 50 : undefined
+                  );
                 }
               }
 

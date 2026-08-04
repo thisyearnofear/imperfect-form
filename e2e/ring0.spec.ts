@@ -44,7 +44,7 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.locator('#screen')).toHaveAttribute('data-register', 'studio');
     await expect(page.locator('#game-container')).toHaveAttribute('data-register', 'studio');
     // Game-loop tabs stay earned — not the foyer
-    await expect(page.getByRole('button', { name: /Switch to Dashboard/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Switch to Stats/i })).toHaveCount(0);
     const start = page.locator('#startButton');
     await expect(start).toBeEnabled();
     await expect(start).toHaveText(/Start camera coaching/i);
@@ -106,7 +106,7 @@ test.describe('Ring 0 - wallet-free core loop', () => {
 
     // The earned shell paint decision is synchronous: tab chrome and the
     // earned body register are the FIRST thing rendered — no day-0 foyer flash.
-    await expect(page.getByRole('button', { name: /Switch to Dashboard/i })).toBeVisible({
+    await expect(page.getByRole('button', { name: /Switch to Stats/i })).toBeVisible({
       timeout: 20000,
     });
     await expect(page.locator('body')).toHaveAttribute('data-shell', 'earned');

@@ -5,8 +5,10 @@ demonstration, parameterized by target angle and persona motion profile.
 The recordings these produce (via Cyberwave) become SmolVLA training data.
 """
 
+import math
 from dataclasses import dataclass
 
+from .safety import clamp_elbow_deg
 from .schema import (
     CoachPersonality,
     DemonstrationIntentV1,
@@ -44,6 +46,12 @@ class Demonstration:
     narration: str
 
 
+def _safe_elbow_deg(value: float | None, default: float) -> float:
+    """Normalize optional angle inputs to the active safety workspace."""
+    raw = value if value is not None and math.isfinite(value) else default
+    return clamp_elbow_deg(raw)
+
+
 def resolve_demonstration(event: FormEvent) -> Demonstration | None:
     """Map a form event to a demonstration, or None if the arm can't help.
 
@@ -52,18 +60,22 @@ def resolve_demonstration(event: FormEvent) -> Demonstration | None:
     coach handles those.
     """
     profile = PERSONA_PROFILES[event.personality]
-    current = event.current if event.current is not None else 90.0
-    target = event.target if event.target is not None else 155.0
+    current = _safe_elbow_deg(event.current, 90.0)
+    target = _safe_elbow_deg(event.target, 155.0)
 
     if event.issue == "elbow_swing" and event.mode == "curls":
-        # The flagship demo: the SO-101 performs a strict pinned-elbow curl.
+        # The flagship demo maps the user's observed elbow angle to a safe,
+        # deterministic pinned-elbow target. Defaults preserve the original
+        # scripted curl when older clients omit current/target.
+        from_deg = _safe_elbow_deg(event.current, 160.0)
+        to_deg = _safe_elbow_deg(event.target, 50.0)
         return Demonstration(
             name="demonstrate_strict_curl",
             joint="elbow_flex",
-            from_deg=160.0,
-            to_deg=50.0,
+            from_deg=from_deg,
+            to_deg=to_deg,
             profile=profile,
-            narration="Elbow pinned - only the forearm moves. Like this.",
+            narration=f"Elbow pinned - from {from_deg:.0f}° to {to_deg:.0f}°. Like this.",
         )
 
     if event.issue == "depth" and event.mode == "curls":

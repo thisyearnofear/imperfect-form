@@ -113,7 +113,9 @@ describe('coachStation fail-silent', () => {
     coachStation.sendEngineFormCheck(
       'curls',
       { issue: 'elbow_swing', phrase: 'Pin your elbows' },
-      3
+      3,
+      132,
+      50
     );
 
     expect(sent).toHaveLength(1);
@@ -123,6 +125,8 @@ describe('coachStation fail-silent', () => {
     expect(payload.issue).toBe('elbow_swing');
     expect(payload.cue).toBe('Pin your elbows');
     expect(payload.rep_count).toBe(3);
+    expect(payload.current).toBe(132);
+    expect(payload.target).toBe(50);
     expect(payload.personality).toBe('RASTA');
   });
 

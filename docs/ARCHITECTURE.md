@@ -375,6 +375,9 @@ features to the service singleton without routing them through this contract.
 versioned lifecycle/progress feedback shipped, manual stage still required
 
 The station is a **subscriber**, not the product center. Browser FormEvents
+for curl `elbow_swing` may include the observed elbow angle (`current`) and the50° correction target (`target`); the station normalizes those optional values
+to its active safety workspace before emitting the executable intent. The
+browser and station remain fail-silent when the station is offline. FormEvents
 stream to a local Python service that resolves form issues into joint-space
 demonstrations on the SO-101 twin — so the arm can _teach_ after the camera
 has _understood_. Ring 0 coaching must work with the station offline.

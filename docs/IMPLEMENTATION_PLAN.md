@@ -86,11 +86,19 @@ The Phase 2 filter code (lens-distortion fix and generative low-light cleanup) l
 
 ---
 
-## Phase 2: Human-pose → robot-pose mapping (1.5 weeks)
+## Phase 2: Human-pose → robot-pose mapping (1.5 weeks) — in progress
 
 **Goal:** Build the deterministic bridge that turns a form correction into a safe robot demonstration and records the resulting episode.
 
-### 2.1 Define the mapping contract
+**Current state:** The first elbow-first slice is shipped for curls. The browser
+captures the elbow angle associated with an `elbow_swing` cue, sends it as
+`FormEvent.current`, and sends a deterministic 50° correction as
+`FormEvent.target`. The station clamps both values to the active simulation or
+live workspace before producing the `elbow_flex` intent and interpolated
+trajectory. The remaining gate is recording and validating a coached episode
+in LeRobot format.
+
+### 2.1 Define the mapping contract ✅ shipped for curl elbow flexion
 
 Create a small, typed pipeline:
 
@@ -111,15 +119,23 @@ CyberwaveArm / ConsoleArm
 - **Mirroring vs. third-person:** Start with **third-person demonstration** (robot shows the correction from a canonical viewpoint) because it avoids left/right ambiguity. Mirror mode is a later toggle.
 - **Elbow-first primitives:** Continue the existing `demonstrate_strict_curl`, `demonstrate_extension`, `mirror_asymmetry` primitives. Add `demonstrate_shoulder_protraction`, `demonstrate_wrist_neutral`.
 
-### 2.2 Implement the mapper
+### 2.2 Implement the mapper ✅ first curl slice shipped
 
-**Files to touch:**
+The first slice intentionally stays inside the existing primitive and safety
+layers rather than introducing a new mapper package:
 
-- New: `coach-station/coach_station/mapper/human_to_robot.py`
-- New: `coach-station/coach_station/mapper/__init__.py`
-- Update: `coach-station/coach_station/primitives.py` to use the mapper
-- Update: `coach-station/coach_station/schema.py` to accept human joint angles in `FormEvent`
-- Update: `src/services/coachStation.ts` to send richer `FormEvent` payloads
+- `src/lib/exercise-engine/curlProcessor.ts` identifies the visible arm that
+  triggered `elbow_swing` and exposes its observed elbow angle.
+- `src/modules/usePoseDetection.ts` and `src/modules/poseWorker.ts` forward
+  that angle through the browser bridge.
+- `src/services/coachStation.ts` sends `current` plus the 50° curl target.
+- `coach-station/coach_station/primitives.py` normalizes dynamic endpoints to
+  the active workspace and resolves `demonstrate_strict_curl`.
+- `coach-station/coach_station/trajectory.py` interpolates the safe
+  `elbow_flex` waypoints with speed and per-step clamps.
+
+Future joints and corrections can move into a dedicated mapper package once
+this curl path is validated on the station.
 
 ### 2.3 Record episodes
 
@@ -133,8 +149,13 @@ Every time a demo fires, append a LeRobot-format episode slice to disk (not yet 
 
 ### 2.4 Success criteria
 
-- [ ] Curls → bad elbow form → `elbow_swing` → robot maps to a corrected elbow angle and plays a trajectory.
-- [ ] Each recorded episode includes: timestamp, user/session id, exercise mode, detected issue, detected human angle, target human angle, robot waypoints, persona.
+- [x] Curls → bad elbow form → `elbow_swing` → station maps to a corrected,
+      safety-clamped elbow angle and plays a trajectory.
+- [ ] Browser + station manual stage validates the mapping in simulation with
+      narration and twin telemetry.
+- [ ] Each recorded episode includes: timestamp, user/session id, exercise mode,
+      detected issue, detected human angle, target human angle, robot waypoints,
+      persona.
 - [ ] Episode format is documented and importable by `lerobot`.
 
 ---

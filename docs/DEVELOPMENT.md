@@ -35,6 +35,10 @@ hardware (`LIVE.md`) or SmolVLA before that stage passes.
 pnpm build
 ```
 
+`pnpm build` also runs `scripts/check-firstload.js`, which scans the `/` route's
+first-load chunks and fails if bundled ethers, Self.xyz, or Supabase runtime
+markers appear. Keep those dependencies behind lazy imports.
+
 ## Testing
 
 ```sh
@@ -58,6 +62,12 @@ Pair with the web app:
 ```sh
 NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev
 ```
+
+For the deterministic curl mapping slice, the browser sends the observed
+elbow angle associated with `elbow_swing` as `FormEvent.current` and a 50°
+correction as `FormEvent.target`. The station clamps both to the active
+simulation/live workspace before generating the `elbow_flex` trajectory;
+omitting either field uses the legacy 160° → 50° fallback.
 
 Cyberwave sim (optional): `uv sync --extra cyberwave`, then same demo/server
 commands (`COACH_AFFECT=simulation` is the default). See

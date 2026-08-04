@@ -17,10 +17,12 @@ function armsPose({
   leftElbowAngle = 180,
   rightElbowAngle = 180,
   leftSwing = false,
+  rightSwing = false,
 }: {
   leftElbowAngle?: number;
   rightElbowAngle?: number;
   leftSwing?: boolean;
+  rightSwing?: boolean;
 } = {}) {
   const makeArm = (sideX: number, elbowAngle: number, swing: boolean, side: string) => {
     const shoulder = kp(`${side}_shoulder`, sideX, 100);
@@ -44,7 +46,7 @@ function armsPose({
 
   return [
     ...makeArm(100, leftElbowAngle, leftSwing, 'left'),
-    ...makeArm(300, rightElbowAngle, false, 'right'),
+    ...makeArm(300, rightElbowAngle, rightSwing, 'right'),
   ];
 }
 
@@ -85,6 +87,20 @@ describe('processCurls', () => {
     expect(curlState.repsCompleted).toBe(1);
     expect(result?.repCompletionData?.score).toBe(100);
     expect(result?.feedback).toContain('first curl');
+  });
+
+  it('uses the right elbow angle when only the right arm triggers the swing cue', () => {
+    const curlState = createCurlState();
+    processCurls({ ...baseParams, keypoints: armsPose(), curlState });
+
+    const result = processCurls({
+      ...baseParams,
+      keypoints: armsPose({ rightElbowAngle: 75, rightSwing: true }),
+      curlState,
+    });
+
+    expect(result?.formCheckSpeak?.issue).toBe('elbow_swing');
+    expect(result?.poseData.observedElbowAngle).toBeCloseTo(75, 0);
   });
 
   it('does not count without full extension first (hysteresis)', () => {

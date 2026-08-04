@@ -161,6 +161,13 @@ export interface EngineRepDetectorState {
   lastRepScore?: number;
   /** Latest engine form-check cue; consumed by the coach-station bridge. */
   lastFormCheckSpeak?: { issue: string; phrase: string };
+  /** Latest observed elbow angles for deterministic coach-station mapping. */
+  lastPoseData?: {
+    leftElbowAngle?: number;
+    rightElbowAngle?: number;
+    observedElbowAngle?: number;
+  };
+  lastElbowAngle?: number;
 }
 
 export function createEngineRepDetectorState(mode: EngineMode): EngineRepDetectorState {
@@ -194,6 +201,15 @@ export function detectEngineRep(
   if (!result) return false;
   if (result.newRepState) state.engineRepState = result.newRepState;
   if (result.feedback) state.lastFeedback = result.feedback;
+  state.lastPoseData = {
+    leftElbowAngle: result.poseData.leftElbowAngle,
+    rightElbowAngle: result.poseData.rightElbowAngle,
+    observedElbowAngle: result.poseData.observedElbowAngle,
+  };
+  state.lastElbowAngle =
+    result.poseData.observedElbowAngle ??
+    result.poseData.leftElbowAngle ??
+    result.poseData.rightElbowAngle;
   // Surface form cues every frame they fire; coachStation throttles duplicates.
   if (result.formCheckSpeak) {
     state.lastFormCheckSpeak = result.formCheckSpeak;

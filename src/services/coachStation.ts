@@ -528,12 +528,16 @@ class CoachStationClient {
   sendEngineFormCheck(
     mode: string,
     speak: { issue: string; phrase: string },
-    repCount: number
+    repCount: number,
+    current?: number,
+    target?: number
   ): void {
     this.sendFormEvent({
       mode,
       issue: speak.issue,
       severity: 'warning',
+      current,
+      target,
       cue: speak.phrase,
       personality: getStoredPersonality(),
       repCount,

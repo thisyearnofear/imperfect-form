@@ -40,6 +40,52 @@ class TestResolveDemonstration:
         assert demo.from_deg == 160.0
         assert demo.to_deg == 50.0
 
+    def test_flagship_curl_maps_observed_and_target_angles(self):
+        demo = resolve_demonstration(
+            _event(
+                mode="curls",
+                issue="elbow_swing",
+                current=132.0,
+                target=55.0,
+                cue="Pin your elbows",
+            )
+        )
+        assert demo is not None
+        assert demo.name == "demonstrate_strict_curl"
+        assert demo.from_deg == 132.0
+        assert demo.to_deg == 55.0
+        assert "132°" in demo.narration
+        assert "55°" in demo.narration
+
+    def test_flagship_curl_clamps_dynamic_angles_to_active_workspace(self, monkeypatch):
+        monkeypatch.setenv("COACH_AFFECT", "live")
+        monkeypatch.setenv("COACH_LIVE_CONFIRM", "1")
+        monkeypatch.setenv("COACH_ELBOW_MIN", "20")
+        monkeypatch.setenv("COACH_ELBOW_MAX", "160")
+        demo = resolve_demonstration(
+            _event(mode="curls", issue="elbow_swing", current=5.0, target=175.0)
+        )
+        assert demo is not None
+        assert demo.from_deg == 20.0
+        assert demo.to_deg == 160.0
+
+    def test_extension_and_asymmetry_also_use_safe_dynamic_angles(self, monkeypatch):
+        monkeypatch.setenv("COACH_AFFECT", "live")
+        monkeypatch.setenv("COACH_LIVE_CONFIRM", "1")
+        monkeypatch.setenv("COACH_ELBOW_MIN", "20")
+        monkeypatch.setenv("COACH_ELBOW_MAX", "160")
+
+        extension = resolve_demonstration(
+            _event(mode="pullups", issue="partial_bottom_rom", current=-10.0, target=190.0)
+        )
+        asymmetry = resolve_demonstration(
+            _event(mode="pullups", issue="asymmetry", current=-10.0, target=190.0)
+        )
+
+        assert extension is not None and asymmetry is not None
+        assert (extension.from_deg, extension.to_deg) == (20.0, 160.0)
+        assert (asymmetry.from_deg, asymmetry.to_deg) == (20.0, 160.0)
+
     def test_demonstrate_extension_pullup_rom(self):
         demo = resolve_demonstration(
             _event(

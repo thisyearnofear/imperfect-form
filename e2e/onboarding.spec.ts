@@ -97,10 +97,10 @@ test.describe('Tab Navigation', () => {
     await page.goto('/');
     await page.waitForTimeout(500);
 
-    // Click Dashboard tab
-    const dashboardTab = page.getByRole('button', { name: /dashboard/i });
-    if (await dashboardTab.isVisible()) {
-      await dashboardTab.click();
+    // Click Stats tab
+    const statsTab = page.getByRole('button', { name: /stats/i });
+    if (await statsTab.isVisible()) {
+      await statsTab.click();
       // Dashboard content should appear
       await expect(page.getByText(/quest|xp|level/i).first()).toBeVisible({ timeout: 3000 });
     }

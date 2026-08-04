@@ -124,7 +124,11 @@ full theme token once earned / wallet-switched.
 - Twin-visibility alerts (`COACH_TWIN_ALERTS=1`): aborted/rejected demos post
   to the Cyberwave dashboard alert feed via `twin.alerts.create`, not just
   station logs
-- Station tests: `uv sync --extra dev && uv run pytest` (41 passing)
+- Deterministic curl mapping: `elbow_swing` FormEvents carry the observed
+  elbow angle plus a 50° correction target; the station normalizes both to
+  the active safety workspace before generating the `elbow_flex` trajectory.
+  Older clients that omit angles retain the 160° → 50° scripted fallback.
+- Station tests: `uv sync --extra dev && uv run pytest` (45 passing)
 - Soft dry-run: `./scripts/cohort-dry-run.sh`
 
 ## What's next — required order
@@ -143,11 +147,11 @@ Do these in order. Polish items are **not** the gate.
 
 These gates sit alongside the hardware gates above and are detailed in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). They can be worked in parallel with Milestone 1 and each other, but they should not delay the manual stage.
 
-| #     | Gate                        | Done when                                                                                                                                 | Where                                 |
-| ----- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| **A** | **CV robustness**           | Pre-processing toggle (exposure / calibration) improves keypoint confidence on bad lighting by ≥10% with <5% mobile FPS regression        | `docs/IMPLEMENTATION_PLAN.md` Phase 1 |
-| **B** | **Human → robot mapping**   | `FormEvent` carries human joint angles; station maps them to SO-101 waypoints; first LeRobot episode recorded from a coached curl session | `docs/IMPLEMENTATION_PLAN.md` Phase 2 |
-| **C** | **Edge performance matrix** | MoveNet A/B matrix (input size / model variant / quantization) decides a new default mobile config with no Ring 0 e2e regression          | `docs/IMPLEMENTATION_PLAN.md` Phase 3 |
+| #     | Gate                        | Done when                                                                                                                                              | Where                                 |
+| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| **A** | **CV robustness**           | Pre-processing toggle (exposure / calibration) improves keypoint confidence on bad lighting by ≥10% with <5% mobile FPS regression                     | `docs/IMPLEMENTATION_PLAN.md` Phase 1 |
+| **B** | **Human → robot mapping**   | ✅ Deterministic curl angle mapping + safety-clamped SO-101 waypoints shipped; first LeRobot episode still needs recording from a coached curl session | `docs/IMPLEMENTATION_PLAN.md` Phase 2 |
+| **C** | **Edge performance matrix** | MoveNet A/B matrix (input size / model variant / quantization) decides a new default mobile config with no Ring 0 e2e regression                       | `docs/IMPLEMENTATION_PLAN.md` Phase 3 |
 
 **Rule of thumb:** `A` and `B` can start as soon as the manual stage is solid; `C` waits until `A` is done so pre-processing and model/quantization effects are not conflated. All three are inputs to the SmolVLA milestone, not blockers for it.
 

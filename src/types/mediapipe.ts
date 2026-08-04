@@ -75,6 +75,11 @@ export type WorkerResponse =
       type: 'result';
       state: BiomechanicalState | null;
       keypoints: Keypoint[];
+      poseData?: {
+        leftElbowAngle?: number;
+        rightElbowAngle?: number;
+        observedElbowAngle?: number;
+      };
       formCheckSpeak?: { issue: string; phrase: string };
     }
   | { type: 'rep'; count: number }

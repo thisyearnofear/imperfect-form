@@ -244,11 +244,11 @@ self.addEventListener('message', async (event) => {
 
           // Render
           drawSkeleton(ctx, keypoints, workerMode);
-
           self.postMessage({
             type: 'result',
             state: metrics,
             keypoints,
+            poseData: engineDetector?.lastPoseData,
             formCheckSpeak,
           } satisfies import('../types/mediapipe').WorkerResponse);
         } else {
