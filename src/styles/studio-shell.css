@@ -18,6 +18,13 @@ body[data-shell='studio'] .studio-topbar { background: rgba(6, 16, 19, 0.45); }
 #game-container[data-register] .hud-block { flex: 1; min-height: auto; padding: 0.55rem 0.8rem; display: flex; flex-direction: column; background: rgba(5, 17, 20, 0.88); border: 1px solid rgba(139, 227, 212, 0.2); border-radius: 5px; box-shadow: none; }
 #game-container[data-register] .hud-label { color: #92aaa6; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.07em; }
 #game-container[data-register] .hud-value { color: #b9f8eb; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.2rem; font-weight: 700; }
+
+/* Quiet depth indicator — replaces the loud on-canvas depth gauge bar.
+   Studio aesthetic: thin teal fill, not a red gradient. */
+#game-container[data-register] .hud-depth { gap: 0.35rem; justify-content: center; }
+#game-container[data-register] .hud-depth__bar { display: block; width: 100%; height: 4px; border-radius: 2px; background: rgba(139, 227, 212, 0.15); overflow: hidden; }
+#game-container[data-register] .hud-depth__fill { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #56d9c3, #7aebd8); transition: width 120ms ease-out; }
+#game-container[data-register] .hud-depth__warn { color: #e6a72c; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.58rem; font-weight: 600; line-height: 1.3; opacity: 0.85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #game-container[data-register] #controls { max-width: 720px; margin-top: 0.75rem; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; }
 #game-container[data-register] #stopButton { margin: 0; padding: 0.75rem 1rem; color: #ffe5e5; background: #4e2025; border: 1px solid #9a4b51; border-radius: 5px; box-shadow: none; font-family: Manrope, ui-sans-serif, system-ui, sans-serif; font-size: 0.78rem; font-weight: 700; text-transform: none; }
 #game-container[data-register] #stopButton:hover { transform: none; background: #64272d; box-shadow: none; }

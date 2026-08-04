@@ -10,12 +10,11 @@ import {
   detectSquat,
   detectEngineRep,
   consumeFormCheckSpeak,
-  engineDisplayRepState,
   isEngineMode,
   normalizeExerciseMode,
   analyzeBiomechanics,
 } from '../utils/biomechanics';
-import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
+import { drawSkeleton } from '../utils/poseDrawing';
 import { SessionLogger, SessionSummary } from '../services/sessionLogger';
 import { coachStation } from '../services/coachStation';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
@@ -805,13 +804,9 @@ export function usePoseDetection(
                   }
 
                   drawSkeleton(ctx as any, keypoints, activeMode);
-                  drawFeedback(
-                    ctx as any,
-                    activeMode,
-                    engineDetector ? engineDisplayRepState(engineDetector) : repCounter.repState,
-                    metrics.depth,
-                    metrics.warnings
-                  );
+                  // Canvas feedback (GO UP! / depth bar / warnings) moved to the DOM HUD —
+                  // see GameHUD depth indicator + LiveCoachingStatus. Canvas renders only
+                  // the skeleton + ghost now, keeping the studio aesthetic clean.
                 }
               }
             } else {

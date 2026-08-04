@@ -810,6 +810,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               detectionProgress={detectionProgress}
               webcam={memoizedWebcam}
               showFirstRepCelebration={showFirstRepCelebration}
+              metrics={metrics}
             />
           )}
         </div>

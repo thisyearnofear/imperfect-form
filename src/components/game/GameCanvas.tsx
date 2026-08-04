@@ -25,6 +25,7 @@ interface GameCanvasProps {
   detectionProgress: DetectionProgress | null;
   webcam: React.ReactNode;
   showFirstRepCelebration?: boolean;
+  metrics?: import('@/types/mediapipe').BiomechanicalState | null;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -40,6 +41,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   detectionProgress,
   webcam,
   showFirstRepCelebration = false,
+  metrics = null,
 }) => {
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
@@ -61,6 +63,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           formatTime={formatTime}
           isOverlay={isFullscreen}
           isRace={isRace}
+          depth={metrics?.depth}
+          warnings={metrics?.warnings}
         />
         <div
           id="canvasContainerMobile"
@@ -92,6 +96,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         formatTime={formatTime}
         isOverlay={false}
         isRace={isRace}
+        depth={metrics?.depth}
+        warnings={metrics?.warnings}
       />
       <div
         id="canvasContainerDesktop"

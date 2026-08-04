@@ -17,11 +17,10 @@ import {
   detectSquat,
   detectEngineRep,
   consumeFormCheckSpeak,
-  engineDisplayRepState,
   isEngineMode,
   analyzeBiomechanics,
 } from '../utils/biomechanics';
-import { drawSkeleton, drawFeedback } from '../utils/poseDrawing';
+import { drawSkeleton } from '../utils/poseDrawing';
 
 let detector: PoseDetector;
 let ctx: OffscreenCanvasRenderingContext2D;
@@ -67,8 +66,6 @@ async function initTfBackend(): Promise<'webgpu' | 'webgl'> {
 // calculateAngle removed - consolidated into src/utils/biomechanics.ts
 
 // detectPushup and detectSquat removed - consolidated into src/utils/biomechanics.ts
-
-let lastProgress = 0;
 
 // Helper to dispose the current detector
 async function disposeDetector() {
@@ -136,14 +133,12 @@ self.addEventListener('message', async (event) => {
 
       repCounter = createInitialRepCounterState();
       engineDetector = isEngineMode(workerMode) ? createEngineRepDetectorState(workerMode) : null;
-      lastProgress = 0;
 
       self.postMessage({ type: 'ready' });
     } else if (data.type === 'setMode') {
       workerMode = (data.mode ?? 'pushups') as ExerciseMode;
       repCounter = createInitialRepCounterState();
       engineDetector = isEngineMode(workerMode) ? createEngineRepDetectorState(workerMode) : null;
-      lastProgress = 0;
     } else if (data.type === 'frame') {
       if (!detector || !ctx) {
         if (data.bitmap) data.bitmap.close();
@@ -229,7 +224,6 @@ self.addEventListener('message', async (event) => {
 
           // Biomechanical Analysis
           const metrics = analyzeBiomechanics(keypoints, workerMode);
-          lastProgress = metrics.depth;
 
           // Update Detection
           const repIncremented =
@@ -249,11 +243,7 @@ self.addEventListener('message', async (event) => {
           const formCheckSpeak = engineDetector ? consumeFormCheckSpeak(engineDetector) : undefined;
 
           // Render
-          const displayRepState = engineDetector
-            ? engineDisplayRepState(engineDetector)
-            : repCounter.repState;
           drawSkeleton(ctx, keypoints, workerMode);
-          drawFeedback(ctx, workerMode, displayRepState, lastProgress, metrics.warnings);
 
           self.postMessage({
             type: 'result',
@@ -263,7 +253,6 @@ self.addEventListener('message', async (event) => {
           } satisfies import('../types/mediapipe').WorkerResponse);
         } else {
           // If no user pose, still draw the ghost if available (already handled above clearRect)
-          drawFeedback(ctx, workerMode, 'middle', 0, []);
           self.postMessage({ type: 'result', state: null, keypoints: [] });
         }
       } catch (err) {

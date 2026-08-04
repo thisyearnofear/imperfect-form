@@ -8,6 +8,10 @@ interface GameHUDProps {
   formatTime: (sec: number) => string;
   isOverlay?: boolean;
   isRace?: boolean;
+  /** Biomechanical depth (0–1) for the quiet depth indicator. */
+  depth?: number;
+  /** Form warnings — surfaced as a subtle cue, not a red box. */
+  warnings?: string[];
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -17,6 +21,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   formatTime,
   isOverlay = true,
   isRace = false,
+  depth,
+  warnings,
 }) => {
   const studio = true;
   const { immersive } = useImmersive();
@@ -98,6 +104,25 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           {repCount}
         </span>
       </div>
+
+      {/* Quiet depth indicator — replaces the loud on-canvas depth gauge bar.
+          Studio aesthetic: a thin teal fill, not a red gradient. */}
+      {typeof depth === 'number' && depth > 0 && (
+        <div className="hud-block hud-depth" aria-label="Rep depth">
+          <span className="hud-label">Depth</span>
+          <span className="hud-depth__bar" aria-hidden="true">
+            <span
+              className="hud-depth__fill"
+              style={{ width: `${Math.min(100, Math.round(depth * 100))}%` }}
+            />
+          </span>
+          {warnings && warnings.length > 0 && (
+            <span className="hud-depth__warn" title={warnings[0]}>
+              {warnings[0]}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 };
