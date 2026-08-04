@@ -14,6 +14,7 @@ import {
 import { BRAND, getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useImmersive } from '@/hooks/useImmersive';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/coach-foyer.css';
 
@@ -90,6 +91,7 @@ function CoachFocal({ className }: { className?: string }) {
 export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
   const { triggerHaptic } = useHapticFeedback();
+  const { immersive, setImmersive } = useImmersive();
   const [showExtras, setShowExtras] = useState(false);
   // Explainer is collapsed by default — its content also rotates inside the
   // session-boot overlay, where the user is a captive audience.
@@ -196,11 +198,13 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           {BRAND.trustLine}
         </p>
 
-        {/* Sandow lineage stamp — the quiet heritage thread. Brass accent on the
-            teal trust surface: "this is graded" alongside "this is private". */}
-        <p className="sandow-lineage motion-enter" style={{ animationDelay: '420ms' }}>
-          Graded vs. Sandow · 1897
-        </p>
+        {/* Sandow lineage stamp — opt-in (immersive mode). Default experience
+            is quiet; the heritage is discoverable via /lore, not relentless. */}
+        {immersive && (
+          <p className="sandow-lineage motion-enter" style={{ animationDelay: '420ms' }}>
+            Graded vs. Sandow · 1897
+          </p>
+        )}
 
         {/* Earned depth, demoted below the CTA */}
         <button
@@ -274,6 +278,36 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
             >
               The 1897 lineage →
             </a>
+
+            {/* Immersive mode toggle — opt-in full Sandow storytelling.
+                Default off; the verbose heritage is discoverable, not relentless. */}
+            <label
+              className="coach-foyer__immersive-toggle"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                margin: '0.75rem 0 0',
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                color: 'var(--cf-soft, #7a9692)',
+                userSelect: 'none',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={immersive}
+                onChange={(e) => {
+                  playStudioCue('soft');
+                  triggerHaptic(40);
+                  setImmersive(e.target.checked);
+                }}
+                style={{ accentColor: 'var(--cf-teal, #56d9c3)' }}
+                aria-label="Immersive heritage mode"
+              />
+              Immersive heritage
+            </label>
           </div>
         )}
       </div>

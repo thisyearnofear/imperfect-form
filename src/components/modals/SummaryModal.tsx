@@ -20,6 +20,7 @@ import { markWorkoutSynced, getLocalWorkouts } from '@/services/integrations/Wor
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
+import { useImmersive } from '@/hooks/useImmersive';
 import LabAnalysisCard from '@/components/coach/LabAnalysisCard';
 import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useAchievements } from '@/hooks/useAchievements';
@@ -81,6 +82,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 }) => {
   const { platform, wallet, user } = usePlatform();
   const { progress, pbs } = useXpProgress();
+  const { immersive } = useImmersive();
   const { checkNewAchievements } = useAchievements();
   const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
   const [progressSeries, setProgressSeries] = useState<ProgressSeries | null>(null);
@@ -452,11 +454,21 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       <AccessibleDialog
         isOpen={isOpen}
         onClose={onClose}
-        title={submissionStatus === 'success' ? 'Synced to leaderboard' : 'Graded'}
+        title={
+          submissionStatus === 'success'
+            ? 'Synced to leaderboard'
+            : immersive
+              ? 'Graded'
+              : 'Your coaching recap'
+        }
         description={
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2">
-              <span className="sandow-grade">{getMedalEmoji()}</span>
+              {immersive ? (
+                <span className="sandow-grade">{getMedalEmoji()}</span>
+              ) : (
+                <span>{getMedalEmoji()}</span>
+              )}
               <span>
                 {submissionStatus === 'success'
                   ? 'Rank updated on-chain'
@@ -472,7 +484,13 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             )}
             {isPB && submissionStatus !== 'success' && (
               <div className="mt-2 summary-pb-badge">
-                <span className="sandow-warrant">Royal Warrant · New Personal Best</span>
+                {immersive ? (
+                  <span className="sandow-warrant">Royal Warrant · New Personal Best</span>
+                ) : (
+                  <span className="bg-primary text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
+                    🔥 NEW PERSONAL BEST!
+                  </span>
+                )}
               </div>
             )}
             {/* Value-moment wallet ask: only at a PB, only when no wallet -

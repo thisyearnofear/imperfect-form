@@ -11,6 +11,7 @@ import StudioAtmosphere from '@/components/theme/StudioAtmosphere';
 import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
 import { BRAND } from '@/lib/brandPositioning';
 import { useCoachBayPulse } from '@/hooks/useCoachBayPulse';
+import { useImmersive } from '@/hooks/useImmersive';
 import { callFarcasterReady } from '@/utils/farcasterMiniApp';
 import {
   HeroSection,
@@ -28,21 +29,29 @@ import { ScreenTransition } from '@/components/ui/ScreenTransition';
 // Branded shell while the game chunk loads — visually identical to the
 // InitializationScreen first frame so the boot splash → foyer swap is a
 // fade within one surface, not a flash to a different layout.
-const GameLoadingShell = () => (
-  <div className="studio-boot" role="status" aria-live="polite" aria-label="Loading Imperfect Form">
-    <div className="studio-boot__atmosphere" aria-hidden="true">
-      <div className="studio-boot__glow" />
+function GameLoadingShell() {
+  const { immersive } = useImmersive();
+  return (
+    <div
+      className="studio-boot"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading Imperfect Form"
+    >
+      <div className="studio-boot__atmosphere" aria-hidden="true">
+        <div className="studio-boot__glow" />
+      </div>
+      <div className="studio-boot__content">
+        <p className="studio-boot__brand">{BRAND.studio.brand}</p>
+        <p className="studio-boot__line">{BRAND.studio.line1}</p>
+        <p className="studio-boot__status">
+          <span className="studio-boot__signal" aria-hidden="true" />
+          {immersive ? 'Calibrating the gauge' : 'Preparing the bay'}
+        </p>
+      </div>
     </div>
-    <div className="studio-boot__content">
-      <p className="studio-boot__brand">{BRAND.studio.brand}</p>
-      <p className="studio-boot__line">{BRAND.studio.line1}</p>
-      <p className="studio-boot__status">
-        <span className="studio-boot__signal" aria-hidden="true" />
-        Calibrating the gauge
-      </p>
-    </div>
-  </div>
-);
+  );
+}
 
 const GameWrapper = dynamic(() => import('@/components/game/GameWrapper'), {
   ssr: false,
@@ -100,6 +109,9 @@ export default function Home() {
   // avoids flashing the day-0 foyer to returning users while XP loads from
   // IndexedDB. Async XP stays the source of truth (XP never decreases).
   const [hasTrained, setHasTrained] = useState(getHasTrained);
+  // Immersive mode (opt-in Sandow storytelling, default off). Gates the loud
+  // heritage copy; default experience is quiet/implicit/motif-led.
+  const { immersive } = useImmersive();
   // Day-0 only: cover StudioAtmosphere (robot photo) with the studio-boot
   // splash until GameWrapper mounts, so the arm photo never flashes through
   // during the dynamic-import gap. Lifted above the loading slot so it's
@@ -239,7 +251,7 @@ export default function Home() {
             <p className="studio-boot__line">{BRAND.studio.line1}</p>
             <p className="studio-boot__status">
               <span className="studio-boot__signal" aria-hidden="true" />
-              Calibrating the gauge
+              {immersive ? 'Calibrating the gauge' : 'Preparing the bay'}
             </p>
           </div>
         </div>
@@ -253,12 +265,17 @@ export default function Home() {
           <div className="studio-topbar sticky top-0 z-50">
             <div className="studio-topbar__inner px-4 py-2 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="studio-level-mark sandow-stamp" aria-label="Graded level">
-                  <span>L{progress.currentLevel}</span>
+                <div
+                  className={`studio-level-mark${immersive ? ' sandow-stamp' : ''}`}
+                  aria-label="Level"
+                >
+                  <span>{progress.currentLevel}</span>
                 </div>
                 <div>
                   <div className="studio-meta">Level {progress.currentLevel}</div>
-                  <div className="studio-xp">{progress.totalXp.toLocaleString()} graded reps</div>
+                  <div className="studio-xp">
+                    {progress.totalXp.toLocaleString()} {immersive ? 'graded reps' : 'XP'}
+                  </div>
                 </div>
               </div>
 

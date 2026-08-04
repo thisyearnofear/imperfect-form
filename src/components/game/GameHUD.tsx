@@ -1,4 +1,5 @@
 import React from 'react';
+import { useImmersive } from '@/hooks/useImmersive';
 
 interface GameHUDProps {
   mode: string;
@@ -18,6 +19,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   isRace = false,
 }) => {
   const studio = true;
+  const { immersive } = useImmersive();
 
   // Logic for scaling based on rep count to create "delight"
   // Calculate a "beat" effect based on time to make the UI feel alive
@@ -88,7 +90,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           transition: 'transform 0.1s ease-out',
         }}
       >
-        <span className="hud-label sandow-gauge__label">Graded</span>
+        <span className="hud-label sandow-gauge__label">{immersive ? 'Graded' : 'Reps'}</span>
         <span
           key={repCount}
           className={`hud-value motion-rep sandow-gauge__value ${studio ? 'text-teal-200' : 'text-blue-400'}`}

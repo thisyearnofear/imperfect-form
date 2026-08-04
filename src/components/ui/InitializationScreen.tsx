@@ -2,20 +2,18 @@
 
 import React from 'react';
 import { BRAND } from '@/lib/brandPositioning';
+import { useImmersive } from '@/hooks/useImmersive';
 import '@/styles/studio-boot.css';
 
 /**
  * Passive boot splash, shown only while client providers hydrate.
  *
- * Previously this was an interactive gate: a fake "Preparing" timer followed
- * by a sound-consent choice ("Enter quietly" / "Enter the bay"). That cost
- * every visitor a full extra screen before the foyer, and the choice was
- * meaningless before any sound existed. Hydration is now the only wait.
- *
- * Sound stays on by default (first CTA press is a real user gesture, which
- * unlocks the AudioContext anyway) and remains toggleable in Settings.
+ * Default: neutral ("Preparing the bay"). Immersive mode: "Calibrating the
+ * gauge" — the Sandow lineage thread. The toggle is opt-in (default off) so
+ * the verbose heritage stays discoverable, not relentless.
  */
 export default function InitializationScreen() {
+  const { immersive } = useImmersive();
   return (
     <div
       className="studio-boot"
@@ -31,7 +29,7 @@ export default function InitializationScreen() {
         <p className="studio-boot__line">{BRAND.studio.line1}</p>
         <p className="studio-boot__status">
           <span className="studio-boot__signal" aria-hidden="true" />
-          Calibrating the gauge
+          {immersive ? 'Calibrating the gauge' : 'Preparing the bay'}
         </p>
       </div>
     </div>
