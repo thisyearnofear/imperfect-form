@@ -147,8 +147,15 @@ cabinet aesthetic becomes the **exhibit identity** — not the day-0 web door
 (which stays studio/trust-first), but the physical cabinet's UI and the
 submission's visual language.
 
-See `docs/NORTH_STAR.md` → "Cræft / Sandow register" for the theme spec,
-and `src/lib/brandPositioning.ts` → `CRAFFT_FOYER` for the copy.
+The public provenance page is **`/lore`** (not `/crafft` — the route is named
+for the user's need: provenance, trust, domain authority; the prize is
+internal strategy, not a user-facing route name). The Sandow spine threads
+through every app surface (boot splash, foyer lineage stamp, HUD brass gauge,
+recap "Graded" + Royal Warrant stamp, earned-shell level nameplate) so the
+lineage is cohesive, not siloed. See `src/styles/sandow-spine.css`.
+
+See `docs/NORTH_STAR.md` → "Heritage: the Sandow lineage" for the theme spec,
+and `src/lib/brandPositioning.ts` → `CRAFFT_FOYER` for the cabinet copy.
 
 ## Timeline
 

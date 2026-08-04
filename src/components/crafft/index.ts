@@ -1,2 +1,2 @@
-export { CrafftCabinet } from './CrafftCabinet';
-export type { CrafftCabinetProps } from './CrafftCabinet';
+export { SandowCabinet } from './SandowCabinet';
+export type { SandowCabinetProps } from './SandowCabinet';

@@ -266,6 +266,14 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
                 </div>
               );
             })}
+            {/* Provenance link — quiet discovery, not a prize reference. */}
+            <a
+              href="/lore"
+              className="coach-foyer__lore-link sandow-lineage"
+              style={{ margin: '0.5rem 0 0', textDecoration: 'none' }}
+            >
+              The 1897 lineage →
+            </a>
           </div>
         )}
       </div>

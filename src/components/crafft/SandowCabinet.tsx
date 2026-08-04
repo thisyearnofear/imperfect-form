@@ -6,17 +6,17 @@ import { BRAND } from '@/lib/brandPositioning';
 import '@/styles/crafft-cabinet.css';
 
 /**
- * The Sandow Machine — Cræft / Sandow cabinet exhibit surface.
+ * The Sandow Machine — the cabinet surface for /lore and the physical exhibit.
  *
  * A Victorian seaside strength-tester cabinet housing the form-coaching loop:
  * photo in → graded against Sandow 1897 → arm shows the fix. This is the
- * exhibit identity for the Cræft Prize submission (see docs/CRAFFT_PRIZE.md),
+ * provenance identity (see docs/CRAFFT_PRIZE.md for the prize strategy),
  * not the day-0 web door (which stays studio/trust-first).
  *
  * Satire with a steel core: playful brass-plate cabinet aesthetic over the
  * real working instrument (on-device pose + SO-101 arm).
  */
-export interface CrafftCabinetProps {
+export interface SandowCabinetProps {
   /** Reps graded (post-session). Omit for the idle cabinet state. */
   reps?: number;
   /** Mode being graded. */
@@ -27,12 +27,12 @@ export interface CrafftCabinetProps {
   onBegin?: () => void;
 }
 
-export function CrafftCabinet({
+export function SandowCabinet({
   reps,
   mode = 'curls',
   armLinked = false,
   onBegin,
-}: CrafftCabinetProps) {
+}: SandowCabinetProps) {
   const foyer = BRAND.crafft;
   const graded = typeof reps === 'number' && reps >= 0;
 
@@ -102,4 +102,4 @@ export function CrafftCabinet({
   );
 }
 
-export default CrafftCabinet;
+export default SandowCabinet;

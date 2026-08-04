@@ -12,7 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${SITE}/crafft`,
+      url: `${SITE}/lore`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.8,
