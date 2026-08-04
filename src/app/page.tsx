@@ -49,6 +49,15 @@ const GameWrapper = dynamic(() => import('@/components/game/GameWrapper'), {
   loading: () => <GameLoadingShell />,
 });
 
+/** Wraps GameWrapper so page.tsx knows when the game chunk has mounted
+ *  and can stop covering StudioAtmosphere with the boot splash. */
+function GameReadyGate({ onReady }: { onReady: () => void }) {
+  useEffect(() => {
+    onReady();
+  }, [onReady]);
+  return <GameWrapper />;
+}
+
 const Leaderboard = dynamic(() => import('@/components/game/Leaderboard'), {
   ssr: false,
   loading: () => <Spinner />,
@@ -91,6 +100,11 @@ export default function Home() {
   // avoids flashing the day-0 foyer to returning users while XP loads from
   // IndexedDB. Async XP stays the source of truth (XP never decreases).
   const [hasTrained, setHasTrained] = useState(getHasTrained);
+  // Day-0 only: cover StudioAtmosphere (robot photo) with the studio-boot
+  // splash until GameWrapper mounts, so the arm photo never flashes through
+  // during the dynamic-import gap. Lifted above the loading slot so it's
+  // always present, not dependent on the chunk's loading fallback timing.
+  const [gameReady, setGameReady] = useState(false);
   useEffect(() => {
     if (progress.totalXp > 0) setHasTrained(true);
   }, [progress.totalXp]);
@@ -205,6 +219,32 @@ export default function Home() {
         <StudioAtmosphere quiet />
       )}
 
+      {/* Day-0 boot splash overlay: covers StudioAtmosphere (robot photo) until
+          the GameWrapper chunk mounts, so the arm never flashes through during
+          the dynamic-import gap. Lifted above the loading slot so it's always
+          present, not dependent on chunk timing. */}
+      {!hasTrained && !gameReady && (
+        <div
+          className="studio-boot"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading Imperfect Form"
+          style={{ zIndex: 10000 }}
+        >
+          <div className="studio-boot__atmosphere" aria-hidden="true">
+            <div className="studio-boot__glow" />
+          </div>
+          <div className="studio-boot__content">
+            <p className="studio-boot__brand">{BRAND.studio.brand}</p>
+            <p className="studio-boot__line">{BRAND.studio.line1}</p>
+            <p className="studio-boot__status">
+              <span className="studio-boot__signal" aria-hidden="true" />
+              Preparing the bay
+            </p>
+          </div>
+        </div>
+      )}
+
       <div
         className={`relative z-10 flex flex-col min-h-screen ${hasTrained ? 'bg-[#061013]' : 'bg-transparent'}`}
       >
@@ -262,7 +302,7 @@ export default function Home() {
               className="flex-1 flex flex-col"
             >
               <div className="relative z-10 flex-grow">
-                <GameWrapper />
+                <GameReadyGate onReady={() => setGameReady(true)} />
               </div>
 
               {hasTrained && (
