@@ -196,6 +196,12 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           {BRAND.trustLine}
         </p>
 
+        {/* Sandow lineage stamp — the quiet heritage thread. Brass accent on the
+            teal trust surface: "this is graded" alongside "this is private". */}
+        <p className="sandow-lineage motion-enter" style={{ animationDelay: '420ms' }}>
+          Graded vs. Sandow · 1897
+        </p>
+
         {/* Earned depth, demoted below the CTA */}
         <button
           type="button"

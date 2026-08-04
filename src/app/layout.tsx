@@ -10,6 +10,7 @@ import '@/styles/studio-boot.css';
 import '@/styles/animations.css';
 import '@/styles/session-register.css';
 import '@/styles/buttons.css';
+import '@/styles/sandow-spine.css';
 import { BRAND } from '@/lib/brandPositioning';
 import ClientOnlyProviders from '@/components/providers/ClientOnlyProviders';
 

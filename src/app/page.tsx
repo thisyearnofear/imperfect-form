@@ -38,7 +38,7 @@ const GameLoadingShell = () => (
       <p className="studio-boot__line">{BRAND.studio.line1}</p>
       <p className="studio-boot__status">
         <span className="studio-boot__signal" aria-hidden="true" />
-        Preparing the bay
+        Calibrating the gauge
       </p>
     </div>
   </div>
@@ -239,7 +239,7 @@ export default function Home() {
             <p className="studio-boot__line">{BRAND.studio.line1}</p>
             <p className="studio-boot__status">
               <span className="studio-boot__signal" aria-hidden="true" />
-              Preparing the bay
+              Calibrating the gauge
             </p>
           </div>
         </div>
@@ -253,12 +253,12 @@ export default function Home() {
           <div className="studio-topbar sticky top-0 z-50">
             <div className="studio-topbar__inner px-4 py-2 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="studio-level-mark">
-                  <span>{progress.currentLevel}</span>
+                <div className="studio-level-mark sandow-stamp" aria-label="Graded level">
+                  <span>L{progress.currentLevel}</span>
                 </div>
                 <div>
                   <div className="studio-meta">Level {progress.currentLevel}</div>
-                  <div className="studio-xp">{progress.totalXp.toLocaleString()} XP</div>
+                  <div className="studio-xp">{progress.totalXp.toLocaleString()} graded reps</div>
                 </div>
               </div>
 

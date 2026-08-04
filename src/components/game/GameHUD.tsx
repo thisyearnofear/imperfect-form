@@ -82,16 +82,16 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </span>
       </div>
       <div
-        className="hud-block reps"
+        className="hud-block reps sandow-gauge"
         style={{
           transform: `scale(${repScale})`,
           transition: 'transform 0.1s ease-out',
         }}
       >
-        <span className="hud-label">Reps</span>
+        <span className="hud-label sandow-gauge__label">Graded</span>
         <span
           key={repCount}
-          className={`hud-value motion-rep ${studio ? 'text-teal-200' : 'text-blue-400'}`}
+          className={`hud-value motion-rep sandow-gauge__value ${studio ? 'text-teal-200' : 'text-blue-400'}`}
         >
           {repCount}
         </span>

@@ -31,7 +31,7 @@ export default function InitializationScreen() {
         <p className="studio-boot__line">{BRAND.studio.line1}</p>
         <p className="studio-boot__status">
           <span className="studio-boot__signal" aria-hidden="true" />
-          Preparing the bay
+          Calibrating the gauge
         </p>
       </div>
     </div>

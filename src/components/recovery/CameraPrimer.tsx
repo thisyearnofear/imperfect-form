@@ -28,7 +28,7 @@ const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, onEnable, onCancel })
       </div>
       <div className="camera-primer__heading">
         <p>Camera is off</p>
-        <h3>Enable it to coach your {guidance.label.toLowerCase()}</h3>
+        <h3>Present your form — the camera grades your {guidance.label.toLowerCase()}</h3>
       </div>
       <ul className="camera-primer__steps">
         <li>

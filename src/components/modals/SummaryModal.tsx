@@ -452,14 +452,15 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       <AccessibleDialog
         isOpen={isOpen}
         onClose={onClose}
-        title={submissionStatus === 'success' ? 'Synced to leaderboard' : 'Your coaching recap'}
+        title={submissionStatus === 'success' ? 'Synced to leaderboard' : 'Graded'}
         description={
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2">
+              <span className="sandow-grade">{getMedalEmoji()}</span>
               <span>
                 {submissionStatus === 'success'
-                  ? `${getMedalEmoji()} Rank updated on-chain`
-                  : `${getMedalEmoji()} ${repCount} ${mode} • ${120 - timeLeft}s`}
+                  ? 'Rank updated on-chain'
+                  : `${repCount} ${mode} • ${120 - timeLeft}s`}
               </span>
             </div>
             {isRace && (
@@ -471,9 +472,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             )}
             {isPB && submissionStatus !== 'success' && (
               <div className="mt-2 summary-pb-badge">
-                <span className="bg-primary text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
-                  🔥 NEW PERSONAL BEST!
-                </span>
+                <span className="sandow-warrant">Royal Warrant · New Personal Best</span>
               </div>
             )}
             {/* Value-moment wallet ask: only at a PB, only when no wallet -

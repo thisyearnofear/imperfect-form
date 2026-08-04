@@ -1,0 +1,154 @@
+/*
+ * Sandow spine — shared brass tokens for the grading-loop lineage.
+ *
+ * One material vocabulary across every surface:
+ *  - Brass (#fcb131 / #e6a72c): the grade + the correction. Quiet accent in
+ *    studio surfaces (a hairline, a stamp); loud in the cabinet (/crafft).
+ *  - Ink (#061013 / #0a0a0a): the surface. Already the app background.
+ *  - Paper (#f4ecd8 / #effcf9): the readout. Already the app text.
+ *
+ * The teal glass (#56d9c3) stays as the trust/privacy material (on-device,
+ * nothing leaves). Brass is the heritage thread. They coexist: teal says
+ * "this is private," brass says "this is graded."
+ *
+ * Usage: these tokens are inherited by any element with [data-register] or
+ * .sandow-spine. Surfaces opt in; nothing is forced.
+ */
+
+:root {
+  --sandow-brass: #fcb131;
+  --sandow-brass-dim: #c98c1a;
+  --sandow-brass-soft: #e6a72c;
+  --sandow-ink: #061013;
+  --sandow-paper: #f4ecd8;
+  --sandow-rule: rgba(252, 177, 49, 0.4);
+  --sandow-rule-quiet: rgba(252, 177, 49, 0.18);
+}
+
+/* —— Brass nameplate — the cabinet's identity stamp. ——
+   Quiet version for studio surfaces (foyer lineage stamp, recap grade stamp,
+   earned-shell level mark). Loud version lives in crafft-cabinet.css. */
+.sandow-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--sandow-rule-quiet);
+  border-radius: 2px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sandow-brass-soft);
+  background: rgba(252, 177, 49, 0.03);
+  white-space: nowrap;
+}
+
+.sandow-stamp::before {
+  content: '✠';
+  font-size: 0.7rem;
+  opacity: 0.7;
+  line-height: 1;
+}
+
+/* —— Brass gauge — the "graded against the ideal" readout. ——
+   Used in the HUD (rep count) and the recap. A brass hairline instrument,
+   not a full cabinet reskin. */
+.sandow-gauge {
+  border: 1px solid var(--sandow-rule-quiet);
+  border-radius: 4px;
+  background: rgba(252, 177, 49, 0.03);
+}
+
+.sandow-gauge__label {
+  color: var(--sandow-brass-soft);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.sandow-gauge__value {
+  color: var(--sandow-paper);
+  font-variant-numeric: tabular-nums;
+}
+
+/* —— Brass grade stamp — the recap medal, reframed as a Sandow grade. —— */
+.sandow-grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--sandow-rule);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(252, 177, 49, 0.12), rgba(252, 177, 49, 0.04));
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sandow-brass);
+  box-shadow: inset 0 1px 0 rgba(252, 177, 49, 0.25);
+}
+
+/* —— Royal-warrant stamp — the PB / "graded" achievement. —— */
+.sandow-warrant {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--sandow-rule);
+  border-radius: 2px;
+  background: rgba(252, 177, 49, 0.06);
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sandow-brass);
+}
+
+.sandow-warrant::before {
+  content: '✠';
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+/* —— Lineage line — the quiet heritage thread under trust copy. —— */
+.sandow-lineage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--sandow-brass-soft);
+  opacity: 0.7;
+}
+
+.sandow-lineage::before {
+  content: '';
+  width: 1rem;
+  height: 1px;
+  background: var(--sandow-rule-quiet);
+}
+
+.sandow-lineage::after {
+  content: '';
+  width: 1rem;
+  height: 1px;
+  background: var(--sandow-rule-quiet);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sandow-stamp,
+  .sandow-grade,
+  .sandow-warrant {
+    transition: none;
+  }
+}
