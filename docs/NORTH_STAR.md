@@ -9,6 +9,29 @@ that category with the **Cyberwave** platform and an **SO-101 arm ("Coach")** �
 always as the teacher in a human coaching product, never as a stand-alone
 manipulation demo.
 
+## Heritage: the Sandow lineage
+
+This is not a stretch metaphor — it is documented history. **Eugen Sandow**
+ran his "Institute of Physical Culture" in London in the 1890s and built the
+first global fitness brand. His actual mechanic: men across Britain photographed
+themselves shirtless, mailed the photos to Sandow's London office, and got their
+proportions graded against his "ideal" measurement tables — a Victorian, postal
+version of pose-estimation feedback. He also sold a **spring-grip dumbbell**,
+stamped _"Supplied to King Edward VII by Royal Letters Patent,"_ as a mechanical
+device to correct grip and form.
+
+That is the imperfect-form loop, 130 years early: photo in → graded against an
+ideal → correction out. The Royal Mail was the transport layer; the camera is
+now the transport layer. The spring-grip dumbbell was the "physical AI" of its
+day — a mechanical form-corrector with a Royal Warrant. The SO-101 arm is the
+same loop, closed with a robot.
+
+This matters for positioning and for the [Cræft Prize](./CRAFFT_PRIZE.md):
+Britain invented the AI form-check in 1897. We finished the job — with a robot.
+The aesthetic lineage is the British seaside arcade ("Test Your Strength"
+high-strikers, penny arcades) — playful, viral, but a real working instrument
+under the cabinet. Satire with a steel core.
+
 ## What we are (and are not)
 
 **We are:** a mass-market, privacy-first **camera coaching product**. The robot
@@ -177,6 +200,11 @@ from real sessions third.
 - **Arcade** — Train / play energy. Earned after the first coached feel
   (Celebrate, XP, UI sound) and a future explicit Train mode — not the
   mass-market front door. Press Start 2P, black / white / gold (`#fcb131`).
+  **Cræft / Sandow cabinet** is a variant of this register for the physical
+  exhibit and the [Cræft Prize](./CRAFFT_PRIZE.md) submission: Victorian
+  seaside strength-tester aesthetic, Sandow 1897 lineage, the arm as a
+  mechanical form-corrector. Satire with a steel core — playful cabinet,
+  real instrument. See `CRAFFT_FOYER` in `src/lib/brandPositioning.ts`.
 - **Calm** — Recover / breathe: post-workout recovery + optional calm entry.
   Soft light, Manrope, teal fields — no dark mode. Not competing in the
   day-0 hero viewport. Inherited from imperfect-breath.

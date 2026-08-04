@@ -33,8 +33,9 @@
  * after the first coached feel — never the foyer.
  */
 
-/** Entry + surface registers. Lab is post-workout only. */
-export type AestheticRegister = 'arcade' | 'studio' | 'lab' | 'calm';
+/** Entry + surface registers. Lab is post-workout only. Cræft is the
+ *  Sandow-cabinet exhibit variant of Arcade (see docs/CRAFFT_PRIZE.md). */
+export type AestheticRegister = 'arcade' | 'studio' | 'lab' | 'calm' | 'crafft';
 
 /** Why the user opened the cabinet. Maps 1:1 to an entry register. */
 export type SessionIntent = 'train' | 'understand' | 'recover';
@@ -86,6 +87,22 @@ const CALM_FOYER: FoyerCopy = {
   trust: 'Private · gentle · no scoreboard energy',
   hint: 'Stillness — imperfect-breath DNA',
   cta: 'Start when you are ready',
+};
+
+/**
+ * Cræft / Sandow cabinet register — a variant of Arcade for the physical
+ * exhibit and the Cræft Prize submission. Victorian seaside strength-tester
+ * aesthetic: Britain invented the AI form-check in 1897 (Sandow's mail-order
+ * physical culture); we finished it with a robot. Satire with a steel core —
+ * playful cabinet, real working instrument underneath. See docs/CRAFFT_PRIZE.md.
+ */
+const CRAFFT_FOYER: FoyerCopy = {
+  brand: 'THE SANDOW MACHINE',
+  line1: 'STEP UP · BE GRADED',
+  line2: 'Britain invented the form-check in 1897. We finished it with a robot.',
+  trust: 'ON-DEVICE · GRADED vs. SANDOW 1897',
+  hint: 'PHOTO IN → GRADED → ARM SHOWS THE FIX',
+  cta: 'INSERT COIN · BEGIN',
 };
 
 export type SessionIntentDef = {
@@ -185,6 +202,8 @@ export const BRAND = {
   arcade: ARCADE_FOYER,
   /** Day-0 / studio doorway — prefer getIntentDef('understand').foyer */
   studio: STUDIO_FOYER,
+  /** Cræft / Sandow cabinet exhibit register — see docs/CRAFFT_PRIZE.md */
+  crafft: CRAFFT_FOYER,
   /** Prose equivalents for studio surfaces / SEO */
   visionLine: 'Your camera understands your form. A coach shows you how to fix it.',
   trustLine: 'Pose runs on your device. Nothing leaves the browser until you choose.',

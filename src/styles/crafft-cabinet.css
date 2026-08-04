@@ -1,0 +1,261 @@
+/*
+ * Cræft / Sandow cabinet register — Victorian seaside strength-tester aesthetic.
+ * A variant of Arcade for the physical exhibit and the Cræft Prize submission.
+ * See docs/CRAFFT_PRIZE.md and CRAFFT_FOYER in src/lib/brandPositioning.ts.
+ *
+ * Design rules:
+ *  - Gold (#fcb131) on near-black, like a brass nameplate on a dark cabinet.
+ *  - Press Start 2P for the wordmark + CTA only (pixel-legible, arcade lineage).
+ *  - Manrope for body — never mix pixel type with long-form reading.
+ *  - Brass-plate borders (double rule, gold) — the "Royal Letters Patent" feel.
+ *  - Satire with a steel core: playful cabinet, real instrument underneath.
+ *  - Never the day-0 web door (studio stays default). Exhibit / earned surface.
+ */
+
+/* The cabinet surface — applied via [data-register='crafft'] on #screen or a
+   .crafft-cabinet wrapper. */
+[data-register='crafft'],
+.crafft-cabinet {
+  --crafft-gold: #fcb131;
+  --crafft-gold-dim: #c98c1a;
+  --crafft-brass: #e6a72c;
+  --crafft-ink: #0a0a0a;
+  --crafft-paper: #f4ecd8;
+  --crafft-rule: rgba(252, 177, 49, 0.55);
+  background-color: var(--crafft-ink);
+  color: var(--crafft-paper);
+}
+
+.crafft-cabinet__inner {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1.25rem, 3vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.crafft-cabinet__lede {
+  margin: 0;
+  max-width: 32ch;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.95rem, 2.4vw, 1.1rem);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--crafft-paper);
+  opacity: 0.92;
+}
+
+.crafft-cabinet__trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--crafft-brass);
+  opacity: 0.8;
+}
+
+.crafft-cabinet__trust svg {
+  flex: 0 0 auto;
+  color: var(--crafft-gold);
+  opacity: 0.85;
+}
+
+.crafft-cabinet__arm-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  color: var(--crafft-gold);
+  opacity: 0.85;
+}
+
+.crafft-cabinet__arm-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--crafft-gold);
+  box-shadow: 0 0 8px rgba(252, 177, 49, 0.6);
+  animation: crafft-arm-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes crafft-arm-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Brass nameplate — the cabinet's identity plate. */
+.crafft-nameplate {
+  border: 2px solid var(--crafft-gold);
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(180deg, rgba(252, 177, 49, 0.12), rgba(252, 177, 49, 0.04));
+  box-shadow:
+    inset 0 1px 0 rgba(252, 177, 49, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+.crafft-nameplate__brand {
+  margin: 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--crafft-gold);
+  text-shadow: 0 0 8px rgba(252, 177, 49, 0.4);
+}
+
+.crafft-nameplate__sub {
+  margin: 0.4rem 0 0;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--crafft-brass);
+  opacity: 0.85;
+}
+
+/* The "INSERT COIN" CTA — a brass button, not a gradient. */
+.crafft-cta {
+  width: 100%;
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--crafft-ink);
+  background: linear-gradient(180deg, var(--crafft-gold), var(--crafft-gold-dim));
+  border: 2px solid var(--crafft-gold);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 6px 0 var(--crafft-gold-dim),
+    0 8px 20px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 120ms ease;
+  cursor: pointer;
+}
+
+.crafft-cta:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 7px 0 var(--crafft-gold-dim),
+    0 10px 24px rgba(252, 177, 49, 0.3);
+}
+
+.crafft-cta:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 3px 0 var(--crafft-gold-dim),
+    0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* The grading readout — a brass gauge plate. */
+.crafft-gauge {
+  border: 1px solid var(--crafft-rule);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  background: rgba(252, 177, 49, 0.04);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  color: var(--crafft-gold);
+  text-align: center;
+}
+
+.crafft-gauge__label {
+  display: block;
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+  margin-bottom: 0.3rem;
+}
+
+.crafft-gauge__value {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--crafft-paper);
+  text-shadow: 0 0 6px rgba(252, 177, 49, 0.3);
+}
+
+/* Royal-warrant stamp — the "Supplied to King Edward VII" lineage. */
+.crafft-warrant {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--crafft-rule);
+  border-radius: 2px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--crafft-brass);
+  background: rgba(252, 177, 49, 0.03);
+}
+
+.crafft-warrant::before {
+  content: '✠';
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+/* Sandow lineage footer — the historical anchor. */
+.crafft-lineage {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--crafft-rule);
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.62rem;
+  line-height: 1.5;
+  color: var(--crafft-brass);
+  opacity: 0.75;
+  text-align: center;
+}
+
+.crafft-lineage strong {
+  color: var(--crafft-gold);
+  font-weight: 700;
+}
+
+/* Reduced motion — no glow pulses. */
+@media (prefers-reduced-motion: reduce) {
+  .crafft-nameplate__brand {
+    text-shadow: none;
+  }
+  .crafft-cta:hover {
+    transform: none;
+  }
+  .crafft-cabinet__arm-dot {
+    animation: none;
+  }
+}

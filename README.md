@@ -4,6 +4,11 @@ AI watches you exercise, understands your form, and a robot arm physically
 demonstrates the correction. Many apps do pose detection — almost none close
 the feedback loop with physical AI.
 
+**Heritage:** Britain invented the AI form-check in 1897 — Eugen Sandow graded
+photographs by post and sold a spring-grip dumbbell (Royal Warrant, King Edward
+VII) as a mechanical form-corrector. We finished the loop with a robot. See
+[The Cræft Prize](./docs/CRAFFT_PRIZE.md) and [North Star → Heritage](./docs/NORTH_STAR.md).
+
 **Product posture:** Studio-first day-0 doorway (private camera coaching);
 game-loop play is earned after the first coached feel; the robot exists to
 **teach the human** — not as a stand-alone manipulation demo. See
@@ -42,7 +47,8 @@ Visit `http://localhost:3000` to see the app running.
 
 ## Documentation
 
-- [North Star](./docs/NORTH_STAR.md) - Differentiation, three rings, data flywheel
+- [North Star](./docs/NORTH_STAR.md) - Differentiation, three rings, data flywheel, Sandow heritage
+- [The Cræft Prize](./docs/CRAFFT_PRIZE.md) - Submission strategy: Sandow lineage + arcade cabinet exhibit
 - [Roadmap](./docs/ROADMAP.md) - **Required next order** (manual stage → telemetry → hardware)
 - [Coach station checklist](./coach-station/README.md) - Cohort day stage steps
 - [Architecture Overview](./docs/ARCHITECTURE.md) - PoseRuntime primary; station as subscriber
