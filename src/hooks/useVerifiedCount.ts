@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+// ethers is imported on demand inside fetchVerifiedCount — this hook lives in a
+// shared chunk pulled into the / first load via the providers' eager graph
+// (useTransition → WalletSelectorModal), so a module-scope ethers import would
+// drag the whole library in on day-0 (PERFORMANT).
 import { verifiedFitnessLeaderboardABI } from '@/constants/contracts';
 import { SELF_PROTOCOL_CONFIG } from '@/config/self-protocol';
 
@@ -33,6 +36,9 @@ export function useVerifiedCount(): UseVerifiedCountReturn {
     try {
       setIsLoading(true);
       setError(null);
+
+      // Load ethers on demand so the ~370KB lib stays out of the first load
+      const { ethers } = await import('ethers');
 
       // Create provider for Celo Mainnet
       const provider = new ethers.JsonRpcProvider(SELF_PROTOCOL_CONFIG.network.rpcUrl);

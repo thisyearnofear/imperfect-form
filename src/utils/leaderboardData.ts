@@ -5,6 +5,28 @@
 
 import { ethers } from 'ethers';
 import { SUPPORTED_NETWORKS } from '@/config/networks';
+import {
+  fitnessLeaderboardABI,
+  monadLeaderboardABI,
+  polygonLeaderboardABI,
+  baseLeaderboardABI,
+} from '@/constants/contracts';
+
+// ABI per network — ABIs are pure data in constants/abis (re-exported via
+// constants/contracts). This module is lazy-loaded, so importing them here
+// alongside ethers keeps ethers out of the / first load (PERFORMANT).
+const NETWORK_ABIS: Record<string, any[]> = {
+  polygon: polygonLeaderboardABI,
+  base: baseLeaderboardABI,
+  celo: fitnessLeaderboardABI,
+  monad: monadLeaderboardABI,
+  avalanche: baseLeaderboardABI,
+};
+
+// Fallback so a future network added to SUPPORTED_NETWORKS still decodes its
+// scores instead of silently failing (standardized Score shape covers them).
+const getNetworkAbi = (networkName: string): any[] =>
+  NETWORK_ABIS[networkName] ?? fitnessLeaderboardABI;
 
 const { polygon, base, monad, celo } = SUPPORTED_NETWORKS;
 
@@ -45,7 +67,11 @@ async function fetchWithFallbackRpcs(
     try {
       console.log(`Trying ${networkName} RPC: ${rpc}`);
       const provider = new ethers.JsonRpcProvider(rpc);
-      const contractInstance = new ethers.Contract(contractAddress, network.abi, provider);
+      const contractInstance = new ethers.Contract(
+        contractAddress,
+        getNetworkAbi(networkName),
+        provider
+      );
 
       // Check if the contract exists at the address
       const code = await provider.getCode(contractAddress);

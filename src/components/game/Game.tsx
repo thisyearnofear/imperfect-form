@@ -4,7 +4,16 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
-import { SummaryModal, ExpandedLeaderboardModal } from '@/components/modals';
+// Code-split the recap modals — they drag ethers, supabase, the verification
+// SDK, and the Farcaster Neynar SDK into the bundle. None are needed until a
+// workout finishes, so load them on demand (PERFORMANT / PREVENT BLOAT).
+const SummaryModal = dynamic(() => import('@/components/modals/SummaryModal'), {
+  ssr: false,
+});
+const ExpandedLeaderboardModal = dynamic(
+  () => import('@/components/modals/ExpandedLeaderboardModal'),
+  { ssr: false }
+);
 // Welcome component consolidated into InitializationScreen - import removed
 import { usePlatform } from '@/contexts/PlatformContext';
 import useSwipeGesture from '@/hooks/useSwipeGesture';

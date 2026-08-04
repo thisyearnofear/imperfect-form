@@ -6,7 +6,6 @@ export interface NetworkConfig {
   chainId: number;
   name: string;
   contractAddress: string;
-  abi: any[];
   rpcUrls: string[];
   blockExplorer?: string;
 }

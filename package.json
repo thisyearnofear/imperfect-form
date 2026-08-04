@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/check-firstload.js",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",

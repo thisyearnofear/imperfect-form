@@ -12,6 +12,10 @@ export type CoachBayPulseKind = 'cue' | 'demo' | null;
 export function useCoachBayPulse(): void {
   useEffect(() => {
     if (typeof document === 'undefined') return;
+    // No station connected — skip subscribing to the coachStation event bus
+    // and setting up pulse timers on day-0 when the arm is never linked
+    // (PERFORMANT).
+    if (!coachStation.enabled) return;
 
     let clearTimer = 0;
 

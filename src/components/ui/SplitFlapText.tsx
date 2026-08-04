@@ -5,7 +5,9 @@ import '@/styles/split-flap.css';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { getLocalWorkouts, markWorkoutSynced } from '@/services/integrations/WorkoutDataAdapter';
 import { LocalWorkout } from '@/types/workout';
-import { submitScoreDirect } from '@/utils/directSubmission';
+// directSubmission pulls in ethers — imported on demand in handleSyncAll so the
+// recap/leaderboard stack stays out of the first load (this file is re-exported
+// by the @/components/ui barrel that page.tsx imports eagerly; PERFORMANT).
 import { getNetworkByChainId } from '@/config/networks';
 import toast from 'react-hot-toast';
 import { useXpProgress } from '@/hooks/useXpProgress';
@@ -155,6 +157,12 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
     }
 
     const loadingToast = toast.loading(`Syncing ${unsyncedWorkouts.length} sessions...`);
+
+    // directSubmission pulls in ethers — imported on demand so the
+    // recap/leaderboard stack stays out of the first load (this file is
+    // re-exported by the @/components/ui barrel that page.tsx imports eagerly;
+    // PERFORMANT).
+    const { submitScoreDirect } = await import('@/utils/directSubmission');
 
     for (const workout of unsyncedWorkouts) {
       try {

@@ -1,10 +1,3 @@
-import {
-  fitnessLeaderboardABI,
-  monadLeaderboardABI,
-  polygonLeaderboardABI,
-  baseLeaderboardABI,
-  verifiedFitnessLeaderboardABI,
-} from '@/constants/contracts';
 import { NetworkConfig } from '@/types/contracts';
 
 /**
@@ -15,7 +8,6 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainId: 137,
     name: 'Polygon',
     contractAddress: '0x28FE19798fe0A0276CF474f2DCC3749313f1aC0A',
-    abi: polygonLeaderboardABI,
     rpcUrls: [
       'https://polygon-rpc.com/',
       'https://polygon-mainnet.g.alchemy.com/public',
@@ -27,7 +19,6 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainId: 8453,
     name: 'Base',
     contractAddress: '0x58DC4867f87473BF9874892dE8e62C48958c8d96',
-    abi: baseLeaderboardABI,
     rpcUrls: [
       'https://mainnet.base.org',
       'https://base-rpc.publicnode.com',
@@ -39,7 +30,6 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainId: 42220,
     name: 'Celo',
     contractAddress: '0xB0cbC7325EbC744CcB14211CA74C5a764928F273',
-    abi: fitnessLeaderboardABI,
     rpcUrls: [
       'https://forno.celo.org',
       'https://rpc.celo-community.org',
@@ -53,7 +43,6 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     contractAddress:
       process.env.NEXT_PUBLIC_VERIFIED_FITNESS_CONTRACT ||
       '0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03',
-    abi: verifiedFitnessLeaderboardABI,
     rpcUrls: [
       'https://forno.celo.org',
       'https://rpc.celo-community.org',
@@ -65,7 +54,6 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainId: 143,
     name: 'Monad',
     contractAddress: process.env.NEXT_PUBLIC_MONAD_CONTRACT_ADDRESS || '',
-    abi: monadLeaderboardABI,
     rpcUrls: ['https://rpc.monad.xyz', 'https://rpc1.monad.xyz', 'https://rpc3.monad.xyz'],
     blockExplorer: 'https://monadvision.com',
   },
@@ -74,7 +62,6 @@ export const SUPPORTED_NETWORKS: Record<string, NetworkConfig> = {
     chainId: 43114,
     name: 'Avalanche',
     contractAddress: process.env.NEXT_PUBLIC_AVALANCHE_CONTRACT_ADDRESS || '',
-    abi: baseLeaderboardABI,
     rpcUrls: [
       'https://api.avax.network/ext/bc/C/rpc',
       'https://avalanche-c-chain-rpc.publicnode.com',

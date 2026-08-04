@@ -17,7 +17,6 @@ export const chainConfigs = Object.fromEntries(
       rpcUrls: network.rpcUrls,
       blockExplorerUrls: [network.blockExplorer],
       contractAddress: network.contractAddress,
-      abi: network.abi,
     },
   ])
 );
