@@ -27,6 +27,72 @@ stage passes** (browser + station; see [README.md](./README.md) checklist and
 Torque/current limits are **not** yet commanded via the SDK — step/speed
 caps are the software stand-in until Cyberwave exposes them.
 
+## Hardware feasibility sprint — pre-bring-up gate
+
+The Devpost Arm Create: AI Optimization Challenge assessment
+([`docs/ARM_AI_CHALLENGE.md`](../docs/ARM_AI_CHALLENGE.md)) defines a five-step
+feasibility sprint that gates live hardware work. **Steps 1–3 are hard
+preconditions before any live motion.** Step 4 is the first live curl (the
+bring-up sequence below). Step 5 is the challenge-evidence follow-on once the
+curl is stable. If any gate fails, stay in simulation and keep the product
+path focused — the challenge is an evidence sprint, not a pivot.
+
+### Step 1 — Connect and identify the arm
+
+With the SO-101 powered and its controller plugged in:
+
+```sh
+ls /dev/cu.*
+system_profiler SPUSBDataType
+```
+
+Expect a new USB serial device (Feetech / motor-bus). **Do not move the arm
+yet.**
+
+- [ ] New serial device visible after power + connect
+
+### Step 2 — Validate controller + calibration
+
+Official SO-101/LeRobot setup flow **before** our application process
+connects: identify the serial port, confirm servo IDs, verify the power
+supply, calibrate, and perform only the prescribed safe first-motion check.
+
+- [ ] Serial port identified
+- [ ] Servo IDs confirmed
+- [ ] Power supply verified
+- [ ] Calibration complete (safe first-motion check passed)
+
+### Step 3 — Pair Cyberwave
+
+`cyberwave pair` on the machine connected to the arm (see preconditions
+above). Confirm the SO-101 twin is visible and `twin.joints.get_all()` returns
+joint telemetry **before** any live motion.
+
+- [ ] `cyberwave pair` succeeds; twin visible
+- [ ] Joint telemetry readable (`get_all` non-empty)
+
+### Step 4 — Live curl demo (slow, dead-man armed)
+
+Run the bring-up sequence below: `demonstrate_strict_curl` only, slow env
+caps, operator on dead-man. Confirm the `·obs` encoder readout appears.
+
+- [ ] One live curl completes with `·obs` encoder telemetry
+
+### Step 5 — Arm-target benchmark
+
+The challenge needs Arm-targeted optimization evidence on the compute host
+(not the servo electronics). Baseline vs. reduced input resolution / alternate
+backend / smaller model on the Arm64 target.
+
+- [ ] Benchmark plan defined (latency / FPS / startup / memory / quality kept)
+- [ ] Before/after result recorded for the submission
+
+**GO** to the bring-up sequence only when Steps 1–3 pass. **STOP** (stay on
+the existing product/evidence path) if the arm cannot connect / power /
+calibrate, Cyberwave live pairing is unavailable, live telemetry is
+unobtainable, the arm is sim-only, or a credible Arm benchmark can't be
+produced in time.
+
 ## Bring-up sequence
 
 ```sh
