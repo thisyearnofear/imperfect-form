@@ -1,16 +1,31 @@
 'use client';
 
-import React from 'react';
-import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowRight, CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import type { SessionSummary } from '@/services/sessionLogger';
+import FormLine from './FormLine';
+import FormSignatureHistory from './FormSignatureHistory';
 
 type SessionRecapProps = {
   mode: ExerciseMode;
   reps: number;
   summary: SessionSummary | null;
+  userAddress?: string;
   onTryAgain?: () => void;
+  onStartSelfGhost?: (workoutId: string) => void;
 };
+
+type ReceiptAction = 'idle' | 'copied' | 'shared' | 'cancelled' | 'error';
+
+const DEFAULT_RECEIPT_ORIGIN = 'https://imperfectform.fun';
+
+function receiptOrigin() {
+  if (typeof window !== 'undefined') return window.location.origin;
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || DEFAULT_RECEIPT_ORIGIN
+  );
+}
 
 const NEXT_FOCUS: Record<ExerciseMode, string> = {
   pushups: 'Keep one long line from shoulders through hips as you lower.',
@@ -34,7 +49,119 @@ function coachingTakeaway(summary: SessionSummary | null, mode: ExerciseMode) {
   };
 }
 
-export function SessionRecap({ mode, reps, summary, onTryAgain }: SessionRecapProps) {
+function FormReceipt({
+  mode,
+  reps,
+  summary,
+}: Omit<SessionRecapProps, 'onTryAgain' | 'userAddress'>) {
+  const [action, setAction] = useState<ReceiptAction>('idle');
+  const depth = summary ? Math.round(summary.avgDepth * 100) : null;
+  const observationCount = summary?.warningCount ?? 0;
+  const receiptText = useMemo(
+    () =>
+      [
+        'FORM RECEIPT',
+        `${reps} ${mode} · ${depth === null ? 'local session' : `${depth}% average depth`}`,
+        observationCount === 0
+          ? 'No major form observations detected.'
+          : `${observationCount} form observation${observationCount === 1 ? '' : 's'} logged for the next set.`,
+        'Imperfect Form · private camera coaching',
+      ].join('\n'),
+    [depth, mode, observationCount, reps]
+  );
+
+  const handleShare = async () => {
+    try {
+      const url = receiptOrigin();
+      if (navigator.share) {
+        await navigator.share({ title: 'Form Receipt', text: receiptText, url });
+        setAction('shared');
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${receiptText}\n${url}`);
+        setAction('copied');
+        return;
+      }
+      setAction('error');
+    } catch (error) {
+      setAction(error instanceof Error && error.name === 'AbortError' ? 'cancelled' : 'error');
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        setAction('error');
+        return;
+      }
+      await navigator.clipboard.writeText(`${receiptText}\n${receiptOrigin()}`);
+      setAction('copied');
+    } catch {
+      setAction('error');
+    }
+  };
+
+  return (
+    <section className="form-receipt" aria-labelledby="form-receipt-title">
+      <div className="form-receipt__stamp">FORM RECEIPT</div>
+      <div className="form-receipt__body">
+        <div>
+          <p className="form-receipt__eyebrow">A record worth keeping</p>
+          <h3 id="form-receipt-title">Your correction starts here.</h3>
+        </div>
+        <p className="form-receipt__copy">
+          {observationCount === 0
+            ? 'A clean baseline. Keep this line for the next set.'
+            : `${observationCount} form observation${observationCount === 1 ? '' : 's'} to work on next.`}
+        </p>
+        <div className="form-receipt__facts">
+          <span>
+            <strong>{reps}</strong> reps
+          </span>
+          {depth !== null && (
+            <span>
+              <strong>{depth}%</strong> depth
+            </span>
+          )}
+          <span>
+            <strong>{observationCount}</strong> observations
+          </span>
+        </div>
+        <div className="form-receipt__actions">
+          <button
+            type="button"
+            className="form-receipt__button form-receipt__button--primary"
+            onClick={handleShare}
+          >
+            <Share2 size={15} aria-hidden="true" /> Share receipt
+          </button>
+          <button type="button" className="form-receipt__button" onClick={handleCopy}>
+            <Copy size={15} aria-hidden="true" /> Copy
+          </button>
+        </div>
+        <p className="form-receipt__status" aria-live="polite">
+          {action === 'copied' && 'Copied — no camera image included.'}
+          {action === 'shared' && 'Ready to show someone your form line.'}
+          {action === 'cancelled' && 'Share cancelled. Your receipt is still here.'}
+          {action === 'error' && 'Sharing is unavailable. Select the receipt text below.'}
+        </p>
+        <pre className="form-receipt__text" aria-label="Copyable form receipt text">
+          {receiptText}
+        </pre>
+      </div>
+    </section>
+  );
+}
+
+export function SessionRecap({
+  mode,
+  reps,
+  summary,
+  userAddress,
+  onTryAgain,
+  onStartSelfGhost,
+}: SessionRecapProps) {
   const takeaway = coachingTakeaway(summary, mode);
   return (
     <section
@@ -64,6 +191,17 @@ export function SessionRecap({ mode, reps, summary, onTryAgain }: SessionRecapPr
           <strong>{takeaway.next}</strong>
         </div>
       </div>
+      {summary?.trace && summary.trace.length > 0 && (
+        <FormLine trace={summary.trace} avgDepth={summary.avgDepth} />
+      )}
+      <FormSignatureHistory
+        mode={mode}
+        reps={reps}
+        summary={summary}
+        userAddress={userAddress}
+        onStartSelfGhost={onStartSelfGhost}
+      />
+      <FormReceipt mode={mode} reps={reps} summary={summary} />
       {onTryAgain && (
         <button type="button" className="studio-card__button" onClick={onTryAgain}>
           <RotateCcw size={16} /> Try another set

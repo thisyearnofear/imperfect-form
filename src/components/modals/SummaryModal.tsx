@@ -65,6 +65,7 @@ export interface SummaryModalProps {
   mode?: import('@/utils/biomechanics').ExerciseMode;
   address?: string; // Optional wallet address
   sessionSummary?: import('@/services/sessionLogger').SessionSummary | null;
+  onStartSelfGhost?: (workoutId: string) => void;
   isRace?: boolean;
 }
 
@@ -78,6 +79,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   mode = 'pushups',
   address,
   sessionSummary,
+  onStartSelfGhost,
   isRace = false,
 }) => {
   const { platform, wallet, user } = usePlatform();
@@ -924,6 +926,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               mode={mode}
               reps={repCount}
               summary={sessionSummary ?? null}
+              userAddress={effectiveAddress ?? undefined}
+              onStartSelfGhost={onStartSelfGhost}
               onTryAgain={
                 onPlayAgain
                   ? () => {

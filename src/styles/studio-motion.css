@@ -1,42 +1,180 @@
-@keyframes studio-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes studio-settle { 0% { box-shadow: 0 0 0 0 rgba(112, 224, 201, 0.5); } 100% { box-shadow: 0 0 0 14px rgba(112, 224, 201, 0); } }
-@keyframes studio-rep { 0% { opacity: 0; transform: translateY(6px) scale(0.96); } 55% { opacity: 1; transform: translateY(0) scale(1.03); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes studio-cue { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes studio-demo { 0% { border-color: rgba(158, 212, 255, 0.25); } 50% { border-color: rgba(158, 212, 255, 0.9); } 100% { border-color: rgba(158, 212, 255, 0.25); } }
+/* Motion grammar: instrument (enter), coaching (cue), ceremony (settle). */
+:root {
+  --motion-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-ease-in-out: cubic-bezier(0.2, 0, 0, 1);
+  --motion-duration-micro: 160ms;
+  --motion-duration-cue: 260ms;
+  --motion-duration-ceremony: 900ms;
+}
 
-.motion-enter { animation: studio-enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.motion-cue { animation: studio-cue 180ms ease-out both; }
-.motion-rep { animation: studio-rep 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.motion-demo { animation: studio-demo 1.4s ease-in-out infinite; }
-.motion-delay-1 { animation-delay: 70ms; }
-.motion-delay-2 { animation-delay: 140ms; }
-.motion-delay-3 { animation-delay: 210ms; }
+@keyframes studio-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes studio-settle {
+  0% {
+    box-shadow: 0 0 0 0 rgba(112, 224, 201, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(112, 224, 201, 0);
+  }
+}
+@keyframes studio-rep {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(0) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes studio-cue {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes studio-demo {
+  0% {
+    border-color: rgba(158, 212, 255, 0.25);
+  }
+  50% {
+    border-color: rgba(158, 212, 255, 0.9);
+  }
+  100% {
+    border-color: rgba(158, 212, 255, 0.25);
+  }
+}
+
+.motion-enter {
+  animation: studio-enter var(--motion-duration-cue) var(--motion-ease-out) both;
+}
+.motion-cue {
+  animation: studio-cue var(--motion-duration-micro) var(--motion-ease-out) both;
+}
+.motion-rep {
+  animation: studio-rep 300ms var(--motion-ease-out) both;
+}
+.motion-demo {
+  animation: studio-demo 1.4s var(--motion-ease-in-out) infinite;
+}
+.motion-settle {
+  animation: studio-settle var(--motion-duration-ceremony) var(--motion-ease-out) both;
+}
+.motion-delay-1 {
+  animation-delay: 70ms;
+}
+.motion-delay-2 {
+  animation-delay: 140ms;
+}
+.motion-delay-3 {
+  animation-delay: 210ms;
+}
 
 @keyframes coach-pulse {
-  0%, 100% { opacity: 0.35; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.08); }
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }
 
 /* Screen transition primitives for progressive disclosure */
-@keyframes screen-fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes screen-slide-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes screen-slide-left { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes screen-slide-right { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes screen-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes screen-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes screen-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes screen-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-.screen-transition { animation-fill-mode: both; }
-.screen-transition--fade { animation: screen-fade-in 300ms ease both; }
-.screen-transition--slide-up { animation: screen-slide-up 300ms ease both; }
-.screen-transition--slide-left { animation: screen-slide-left 300ms ease both; }
-.screen-transition--slide-right { animation: screen-slide-right 300ms ease both; }
+.screen-transition {
+  animation-fill-mode: both;
+}
+.screen-transition--fade {
+  animation: screen-fade-in 300ms var(--motion-ease-out) both;
+}
+.screen-transition--slide-up {
+  animation: screen-slide-up 300ms var(--motion-ease-out) both;
+}
+.screen-transition--slide-left {
+  animation: screen-slide-left 300ms var(--motion-ease-out) both;
+}
+.screen-transition--slide-right {
+  animation: screen-slide-right 300ms var(--motion-ease-out) both;
+}
 
 /* Modal / card slide-up utility used by onboarding and dialogs */
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .animate-slide-up {

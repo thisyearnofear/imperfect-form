@@ -7,6 +7,13 @@ export interface SessionSnapshot {
   keypoints: Keypoint[];
 }
 
+/** Compact, local-only description of a session's movement pattern. */
+export interface FormSignature {
+  averageDepth: number;
+  depthConsistency: number;
+  observationRate: number;
+}
+
 /**
  * LocalWorkout - Standardized structure for locally stored workout sessions
  * This enables freemium usage where workouts are saved immediately for free,
@@ -23,4 +30,5 @@ export interface LocalWorkout {
   userAddress?: string; // Optional: associate with a specific wallet if connected
   trace?: SessionSnapshot[];
   hasTrace?: boolean;
+  formSignature?: FormSignature;
 }

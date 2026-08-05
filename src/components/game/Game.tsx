@@ -52,6 +52,7 @@ import {
   migrateGuestWorkouts,
 } from '@/services/integrations/WorkoutDataAdapter';
 import { getEffectiveUserId } from '@/services/guestIdentity';
+import { buildFormSignature } from '@/lib/progress/formSignature';
 import { ghostService } from '@/services/GhostService';
 import { getChampionTrace, isChampion } from '@/constants/championTraces';
 
@@ -142,6 +143,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             synced: false,
             type: exerciseMode,
             userAddress: effectiveUserId,
+            formSignature: buildFormSignature(summary),
           })
             .then(async () => {
               console.log('✅ Workout auto-saved locally:', workoutId);
@@ -542,6 +544,23 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     return () => window.removeEventListener('keydown', onKey);
   }, [isMobile, started, calmSessionActive, handleStart]);
 
+  const handleSelfGhostRace = useCallback(
+    async (workoutId: string) => {
+      try {
+        const trace = await getWorkoutTrace(workoutId);
+        if (!trace || trace.length === 0) return;
+        setShowSummary(false);
+        setRaceTrace(trace);
+        setIsRace(true);
+        setMode(mode);
+        await handleStart({ trace, isRace: true });
+      } catch (error) {
+        console.error('Failed to start self-ghost race:', error);
+      }
+    },
+    [handleStart, mode]
+  );
+
   // --- Ghost Mode & Race Integration ---
 
   // Handle raceGhost custom event from Leaderboard
@@ -887,6 +906,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         mode={mode}
         address={finalAddress}
         sessionSummary={sessionSummary}
+        onStartSelfGhost={handleSelfGhostRace}
         isRace={isRace}
       />
 
