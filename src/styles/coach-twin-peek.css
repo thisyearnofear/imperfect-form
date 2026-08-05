@@ -404,6 +404,219 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
 
 }
 
+/* Coach Bay instrument — active sessions get an observability-first panel,
+   while the earned-shell peek remains compact. */
+.coach-twin-peek.is-session {
+  width: min(27rem, 38vw);
+  max-width: min(27rem, 38vw);
+  padding: 0.85rem 0.95rem;
+  gap: 0.8rem;
+  border-radius: 0.7rem;
+  background:
+    linear-gradient(145deg, rgba(9, 31, 36, 0.94), rgba(5, 15, 18, 0.92)),
+    repeating-linear-gradient(0deg, transparent 0 19px, rgba(122, 235, 216, 0.025) 20px);
+  border-color: rgba(var(--twin-accent), 0.32);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.coach-twin-peek.is-session .coach-twin-peek__stage {
+  width: 106px;
+  height: 106px;
+  margin: -0.2rem 0 0 -0.15rem;
+}
+
+.coach-twin-peek.is-session .coach-twin-peek__stage:not(.is-schematic) {
+  width: 64px;
+  height: 64px;
+  margin: 0;
+}
+
+.coach-twin-peek__eyebrow {
+  margin: 0 0 0.15rem;
+  color: rgba(219, 247, 241, 0.62);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.coach-twin-peek.is-session .coach-twin-peek__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+}
+
+.coach-twin-peek.is-session .coach-twin-peek__header {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.coach-twin-peek__phases {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.55rem 0 0.35rem;
+  padding: 0;
+  list-style: none;
+  color: rgba(172, 205, 198, 0.46);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.coach-twin-peek__phases li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.24rem;
+}
+
+.coach-twin-peek__phases li:not(:last-child)::after {
+  content: '›';
+  margin-left: 0.18rem;
+  color: rgba(172, 205, 198, 0.3);
+}
+
+.coach-twin-peek__phases li > span {
+  width: 0.32rem;
+  height: 0.32rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.coach-twin-peek__phases li.is-complete,
+.coach-twin-peek__phases li.is-active {
+  color: rgba(var(--twin-accent), 0.95);
+}
+
+.coach-twin-peek__phases li.is-complete > span {
+  background: rgba(var(--twin-accent), 0.7);
+}
+
+.coach-twin-peek__phases li.is-active > span {
+  background: rgba(var(--twin-accent), 1);
+  box-shadow: 0 0 8px rgba(var(--twin-accent), 0.65);
+}
+
+.coach-twin-peek.is-session .coach-twin-peek__status {
+  color: rgba(239, 253, 249, 0.94);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.coach-twin-peek__issue {
+  display: grid;
+  gap: 0.12rem;
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 2px solid rgba(247, 232, 106, 0.78);
+  background: rgba(247, 232, 106, 0.06);
+}
+
+.coach-twin-peek__issue-label {
+  color: rgba(247, 232, 106, 0.78);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.coach-twin-peek__issue strong {
+  color: rgba(255, 252, 220, 0.96);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.coach-twin-peek__issue span:last-child {
+  color: rgba(225, 224, 190, 0.76);
+  font-size: 0.62rem;
+  line-height: 1.3;
+}
+
+.coach-twin-peek__telemetry {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(181, 229, 221, 0.12);
+}
+
+.coach-twin-peek__telemetry > div {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.coach-twin-peek__telemetry span {
+  color: rgba(172, 205, 198, 0.62);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.49rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.coach-twin-peek__telemetry strong {
+  color: rgba(231, 251, 246, 0.94);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.coach-twin-peek__telemetry > div.is-observed strong {
+  color: rgba(var(--twin-accent), 1);
+}
+
+.coach-twin-peek__telemetry small {
+  grid-column: 1 / -1;
+  color: rgba(172, 205, 198, 0.46);
+  font-size: 0.52rem;
+}
+
+.coach-twin-peek.is-session .coach-twin-peek__progress {
+  margin-top: 0.65rem;
+}
+
+.coach-twin-peek.is-session .coach-twin-peek__progress-track {
+  width: 100%;
+  height: 0.28rem;
+}
+
+@media (max-width: 900px) and (min-width: 721px) {
+  .coach-twin-peek.is-session {
+    width: min(24rem, 42vw);
+    max-width: min(24rem, 42vw);
+  }
+}
+
+@media (max-width: 720px) {
+  .coach-twin-peek.is-session {
+    width: auto;
+    max-width: min(19rem, calc(100vw - 1.3rem));
+    padding: 0.72rem 0.78rem;
+    gap: 0.58rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__stage.is-schematic {
+    width: 82px;
+    height: 82px;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__phases {
+    gap: 0.32rem;
+    font-size: 0.46rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__issue {
+    margin-top: 0.45rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .coach-twin-peek.is-demo:not(.is-progress) .coach-twin-peek__forearm {
     animation: none;

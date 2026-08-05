@@ -17,6 +17,24 @@ function clampElbowDeg(deg: number): number {
   return Math.max(0, Math.min(180, deg));
 }
 
+function issueLabel(issue?: string | null): string | null {
+  if (!issue) return null;
+  if (issue === 'elbow_swing') return 'Elbow drifting';
+  return issue.replace(/[_-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function phaseRankFor(phase: 'see' | 'coach' | 'show', active: 'see' | 'coach' | 'show'): number {
+  return ['see', 'coach', 'show'].indexOf(phase) - ['see', 'coach', 'show'].indexOf(active);
+}
+
+function formatTelemetryAge(timestampMs: number | null): string | null {
+  if (timestampMs === null) return null;
+  const ageSeconds = Math.max(0, Math.round((Date.now() - timestampMs) / 1000));
+  if (ageSeconds < 5) return 'Updated just now';
+  if (ageSeconds < 60) return `Updated ${ageSeconds}s ago`;
+  return `Updated ${Math.floor(ageSeconds / 60)}m ago`;
+}
+
 /**
  * Convert an elbow angle to the instrument's forearm SVG rotation.
  *
@@ -458,6 +476,15 @@ export function CoachTwinPeek({
   const affectLabel =
     affect === 'live' ? 'LIVE' : affect === 'simulation' ? 'SIM' : isDemo ? 'DEMO' : null;
   const personaClass = personality ? ` persona-${personality.toLowerCase()}` : '';
+  const activePhase =
+    demo != null || progress != null || isExecutionActive || execution?.kind === 'succeeded'
+      ? 'show'
+      : intent != null
+        ? 'coach'
+        : 'see';
+  const activeIssue = issueLabel(intent?.issue ?? demo?.issue);
+  const telemetrySource = observedElbowDeg !== undefined ? 'Observed' : 'Commanded';
+  const telemetryAgeLabel = formatTelemetryAge(progress?.timestamp_ms ?? null);
 
   return (
     <>
@@ -642,47 +669,147 @@ export function CoachTwinPeek({
           ) : null}
         </div>
         <div className="coach-twin-peek__copy">
-          <div className="coach-twin-peek__header">
-            <p className="coach-twin-peek__label">SO-101 twin</p>
-            {affectLabel ? (
-              <span
-                className={`coach-twin-peek__affect${affect === 'live' ? ' is-live' : ''}`}
-                title={`Cyberwave affect: ${affect}`}
-              >
-                {affectLabel}
-              </span>
-            ) : null}
-          </div>
-          <p className="coach-twin-peek__status" aria-live="polite">
-            {statusLabel}
-          </p>
-          {progressPct !== null ? (
-            <div
-              className="coach-twin-peek__progress"
-              role="progressbar"
-              aria-label="Coach correction progress"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={progressPct}
-            >
-              <span className="coach-twin-peek__progress-track">
-                <span
-                  className="coach-twin-peek__progress-fill"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </span>
-              <span className="coach-twin-peek__progress-value">{progressPct}%</span>
-            </div>
-          ) : null}
-          {demo ? (
-            <p className="coach-twin-peek__tip" aria-live="polite">
-              {demo.narration}
-            </p>
-          ) : execution ? (
-            <p className="coach-twin-peek__tip coach-twin-peek__tip--execution" aria-live="polite">
-              {execution.detail}
-            </p>
-          ) : null}
+          {session ? (
+            <>
+              <div className="coach-twin-peek__header">
+                <div>
+                  <p className="coach-twin-peek__eyebrow">Coach Bay</p>
+                  <p className="coach-twin-peek__label">SO-101 · form instrument</p>
+                </div>
+                {affectLabel ? (
+                  <span
+                    className={`coach-twin-peek__affect${affect === 'live' ? ' is-live' : ''}`}
+                    title={`Cyberwave affect: ${affect}`}
+                  >
+                    {affectLabel}
+                  </span>
+                ) : null}
+              </div>
+
+              <ol className="coach-twin-peek__phases" aria-label="Coaching sequence">
+                {(['see', 'coach', 'show'] as const).map((phase) => (
+                  <li
+                    key={phase}
+                    className={
+                      phase === activePhase
+                        ? 'is-active'
+                        : phaseRankFor(phase, activePhase) < 0
+                          ? 'is-complete'
+                          : ''
+                    }
+                  >
+                    <span aria-hidden="true" />
+                    {phase}
+                  </li>
+                ))}
+              </ol>
+
+              <p className="coach-twin-peek__status" aria-live="polite">
+                {statusLabel}
+              </p>
+
+              {activeIssue ? (
+                <div className="coach-twin-peek__issue">
+                  <span className="coach-twin-peek__issue-label">Form issue</span>
+                  <strong>{activeIssue}</strong>
+                  {demo?.narration || intent?.narration ? (
+                    <span>{demo?.narration ?? intent?.narration}</span>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {isShowingInstrument && targetElbowDeg !== undefined ? (
+                <div className="coach-twin-peek__telemetry" aria-label="Correction telemetry">
+                  <div>
+                    <span>Target</span>
+                    <strong>{Math.round(targetElbowDeg)}°</strong>
+                  </div>
+                  <div className={observedElbowDeg !== undefined ? 'is-observed' : ''}>
+                    <span>{telemetrySource}</span>
+                    <strong>
+                      {currentElbowDeg !== undefined ? `${Math.round(currentElbowDeg)}°` : '—'}
+                    </strong>
+                  </div>
+                  {telemetryAgeLabel ? <small>{telemetryAgeLabel}</small> : null}
+                </div>
+              ) : null}
+
+              {progressPct !== null ? (
+                <div
+                  className="coach-twin-peek__progress"
+                  role="progressbar"
+                  aria-label="Coach correction progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progressPct}
+                >
+                  <span className="coach-twin-peek__progress-track">
+                    <span
+                      className="coach-twin-peek__progress-fill"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </span>
+                  <span className="coach-twin-peek__progress-value">{progressPct}%</span>
+                </div>
+              ) : null}
+
+              {execution && !activeIssue ? (
+                <p
+                  className="coach-twin-peek__tip coach-twin-peek__tip--execution"
+                  aria-live="polite"
+                >
+                  {execution.detail}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <div className="coach-twin-peek__header">
+                <p className="coach-twin-peek__label">SO-101 twin</p>
+                {affectLabel ? (
+                  <span
+                    className={`coach-twin-peek__affect${affect === 'live' ? ' is-live' : ''}`}
+                    title={`Cyberwave affect: ${affect}`}
+                  >
+                    {affectLabel}
+                  </span>
+                ) : null}
+              </div>
+              <p className="coach-twin-peek__status" aria-live="polite">
+                {statusLabel}
+              </p>
+              {progressPct !== null ? (
+                <div
+                  className="coach-twin-peek__progress"
+                  role="progressbar"
+                  aria-label="Coach correction progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progressPct}
+                >
+                  <span className="coach-twin-peek__progress-track">
+                    <span
+                      className="coach-twin-peek__progress-fill"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </span>
+                  <span className="coach-twin-peek__progress-value">{progressPct}%</span>
+                </div>
+              ) : null}
+              {demo ? (
+                <p className="coach-twin-peek__tip" aria-live="polite">
+                  {demo.narration}
+                </p>
+              ) : execution ? (
+                <p
+                  className="coach-twin-peek__tip coach-twin-peek__tip--execution"
+                  aria-live="polite"
+                >
+                  {execution.detail}
+                </p>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
       {showFallbackPulse ? <div className="coach-bay-pulse-fallback" aria-hidden="true" /> : null}
