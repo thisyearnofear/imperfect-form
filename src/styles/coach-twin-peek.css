@@ -439,13 +439,20 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
     bottom: auto;
     left: auto;
     right: 0.65rem;
+    /* Reset the -50% shift: the session panel is right-anchored and must
+       stay flush to the corner, not float center-screen over the face. */
+    transform: translateY(6px);
     max-width: min(16.5rem, calc(100vw - 1.3rem));
   }
 
-  .coach-twin-peek.is-visible {
-    transform: translate(-50%, 0);
+  .coach-twin-peek.is-session.is-visible {
+    transform: translateY(0);
   }
 
+  /* Only the bottom-centered earned-shell strip needs the -50% centering. */
+  .coach-twin-peek.is-visible:not(.is-session) {
+    transform: translate(-50%, 0);
+  }
 }
 
 /* Coach Bay instrument — active sessions get an observability-first panel,
@@ -684,6 +691,108 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
   }
 
   .coach-twin-peek.is-session .coach-twin-peek__issue {
+    margin-top: 0.45rem;
+  }
+}
+
+/* Narrow phones — the instrument hugs the corner instead of covering the
+   upper-body framing. Progressive tiers mirror the app's small-phone scale. */
+@media (max-width: 420px) {
+  .coach-twin-peek.is-session {
+    right: 0.5rem;
+    max-width: min(15rem, calc(100vw - 1rem));
+    padding: 0.62rem 0.68rem;
+    gap: 0.5rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__stage.is-schematic {
+    width: 74px;
+    height: 74px;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__phases {
+    gap: 0.28rem;
+    font-size: 0.43rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__telemetry strong {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .coach-twin-peek.is-session {
+    max-width: min(13.25rem, calc(100vw - 0.9rem));
+    padding: 0.56rem 0.6rem;
+    gap: 0.45rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__stage.is-schematic {
+    width: 66px;
+    height: 66px;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__label {
+    font-size: 0.62rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Mobile landscape (phone-width) — the fixed HUD timer/stop sit top-right
+   and the thumb-zone controls sit at the bottom; the session instrument
+   compacts into the gap between them instead of spanning the viewport
+   height. Width-gated so short desktop windows keep the desktop layout. */
+@media (orientation: landscape) and (max-height: 560px) and (max-width: 960px) {
+  .coach-twin-peek.is-session {
+    top: 3.75rem;
+    bottom: auto;
+    left: auto;
+    right: 0.65rem;
+    transform: translateY(0);
+    max-width: min(17rem, 34vw);
+    padding: 0.55rem 0.65rem;
+    gap: 0.4rem;
+    border-radius: 0.6rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__stage {
+    width: 56px;
+    height: 56px;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__stage.is-schematic {
+    width: 68px;
+    height: 68px;
+    margin: -0.15rem 0 0 -0.1rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__phases {
+    margin: 0.4rem 0 0.25rem;
+    gap: 0.28rem;
+    font-size: 0.42rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__status {
+    font-size: 0.72rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__issue {
+    margin-top: 0.4rem;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__telemetry {
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__telemetry strong {
+    font-size: 0.78rem;
+  }
+
+  .coach-twin-peek.is-session .coach-twin-peek__progress {
     margin-top: 0.45rem;
   }
 }
