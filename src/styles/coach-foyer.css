@@ -38,8 +38,12 @@
   pointer-events: none;
   overflow: hidden;
   border-radius: 12px;
-  background:
-    linear-gradient(145deg, rgba(8, 28, 32, 0.72), rgba(6, 16, 19, 0.55) 55%, rgba(6, 16, 19, 0.4));
+  background: linear-gradient(
+    145deg,
+    rgba(8, 28, 32, 0.72),
+    rgba(6, 16, 19, 0.55) 55%,
+    rgba(6, 16, 19, 0.4)
+  );
   border: 1px solid rgba(139, 227, 212, 0.12);
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.28),
@@ -51,11 +55,7 @@
   position: absolute;
   inset: -20% -10% auto;
   height: 70%;
-  background: radial-gradient(
-    ellipse 55% 45% at 40% 0%,
-    rgba(86, 217, 195, 0.16),
-    transparent 70%
-  );
+  background: radial-gradient(ellipse 55% 45% at 40% 0%, rgba(86, 217, 195, 0.16), transparent 70%);
 }
 
 .coach-foyer__grid {
@@ -141,7 +141,9 @@
 
 .coach-foyer__coach-status.is-connected .coach-foyer__coach-status-dot {
   background: var(--cf-teal-bright);
-  box-shadow: 0 0 0 3px rgba(86, 217, 195, 0.12), 0 0 12px rgba(86, 217, 195, 0.45);
+  box-shadow:
+    0 0 0 3px rgba(86, 217, 195, 0.12),
+    0 0 12px rgba(86, 217, 195, 0.45);
 }
 
 .coach-foyer__coach-status.is-connecting {
@@ -160,7 +162,9 @@
 }
 
 @keyframes coach-status-blink {
-  50% { opacity: 0.35; }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .coach-foyer__exercise-list {
@@ -310,13 +314,73 @@
   text-align: center;
 }
 
-.coach-foyer__scope-note {
-  margin: 0.7rem 0 0;
+/* Robot-native proof case — signposted on the Curls card, not a footnote. */
+.coach-foyer__exercise-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.coach-foyer__exercise-title strong {
+  min-width: 0;
+}
+
+.coach-foyer__robot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.06rem 0.34rem;
+  border-radius: 999px;
+  background: rgba(86, 217, 195, 0.12);
+  border: 1px solid rgba(86, 217, 195, 0.42);
   color: var(--cf-teal-bright);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   line-height: 1.35;
-  text-align: center;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.coach-foyer__robot-chip.is-live {
+  box-shadow: 0 0 10px rgba(86, 217, 195, 0.18);
+}
+
+.coach-foyer__robot-chip.is-connecting {
+  color: #d8c98c;
+  border-color: rgba(216, 201, 140, 0.42);
+  background: rgba(216, 201, 140, 0.1);
+}
+
+.coach-foyer__robot-chip.is-dormant {
+  color: var(--cf-soft);
+  border-color: rgba(181, 229, 221, 0.24);
+  background: transparent;
+}
+
+.is-selected .coach-foyer__robot-chip {
+  border-color: rgba(86, 217, 195, 0.6);
+}
+
+/* Keyboard focus — teal rings on the dark glass instead of the UA outline. */
+.coach-foyer__exercise:focus-visible,
+.coach-foyer__more:focus-visible,
+.coach-foyer__how-it-works-toggle:focus-visible,
+.coach-foyer__immersive-toggle input:focus-visible {
+  outline: 2px solid var(--cf-teal);
+  outline-offset: 2px;
+}
+
+.coach-foyer__start:focus-visible {
+  outline: 2px solid #9af3e2;
+  outline-offset: 3px;
 }
 
 /* System map — the product relationship is the hero, not an abstract robot icon. */
@@ -554,6 +618,11 @@
 
   .coach-foyer__exercise {
     padding: 0.78rem 0.85rem;
+  }
+
+  .coach-foyer__robot-chip {
+    font-size: 0.46rem;
+    letter-spacing: 0.08em;
   }
 }
 

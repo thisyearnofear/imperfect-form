@@ -71,7 +71,11 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(pushups).toBeVisible();
     await expect(curls).toHaveAttribute('aria-pressed', 'true');
     await expect(pushups).toHaveAttribute('aria-pressed', 'false');
-    await expect(page.getByText(/clearest path to the robot demo/i)).toBeVisible();
+    // The robot-native proof case is signposted at the point of choice:
+    // exactly one chip, on the Curls card, never on the camera-only card.
+    await expect(page.locator('.coach-foyer__robot-chip')).toHaveCount(1);
+    await expect(curls.locator('.coach-foyer__robot-chip')).toBeVisible();
+    await expect(pushups.locator('.coach-foyer__robot-chip')).toHaveCount(0);
 
     // Lower-body and additional movements stay behind explicit, demoted toggles.
     await expect(page.getByRole('button', { name: /Squats/i })).toHaveCount(0);

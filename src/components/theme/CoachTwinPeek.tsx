@@ -27,9 +27,9 @@ function phaseRankFor(phase: 'see' | 'coach' | 'show', active: 'see' | 'coach' |
   return ['see', 'coach', 'show'].indexOf(phase) - ['see', 'coach', 'show'].indexOf(active);
 }
 
-function formatTelemetryAge(timestampMs: number | null): string | null {
+function formatTelemetryAge(timestampMs: number | null, nowMs: number): string | null {
   if (timestampMs === null) return null;
-  const ageSeconds = Math.max(0, Math.round((Date.now() - timestampMs) / 1000));
+  const ageSeconds = Math.max(0, Math.round((nowMs - timestampMs) / 1000));
   if (ageSeconds < 5) return 'Updated just now';
   if (ageSeconds < 60) return `Updated ${ageSeconds}s ago`;
   return `Updated ${Math.floor(ageSeconds / 60)}m ago`;
@@ -310,6 +310,7 @@ export function CoachTwinPeek({
   const [personality, setPersonality] = useState<CoachPersonality | null>(null);
   const [trail, setTrail] = useState<number[]>([]);
   const [booted, setBooted] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const activeCommandIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -321,6 +322,10 @@ export function CoachTwinPeek({
     let executionTimeout = 0;
     let progressTimeout = 0;
     const bootTimeout = window.setTimeout(() => setBooted(true), 900);
+    // Keep the telemetry-age label honest while the session panel is open:
+    // without this tick it would freeze on "just now" the moment progress
+    // stops. Session-only — the compact earned-shell twin has no age label.
+    const ageTicker = session ? window.setInterval(() => setNow(Date.now()), 5000) : 0;
 
     const resetInstrument = () => {
       activeCommandIdRef.current = null;
@@ -407,13 +412,16 @@ export function CoachTwinPeek({
       window.clearTimeout(executionTimeout);
       window.clearTimeout(progressTimeout);
       window.clearTimeout(bootTimeout);
+      if (ageTicker) window.clearInterval(ageTicker);
       activeCommandIdRef.current = null;
       // Scripted demo owns its timers; clear them on unmount so the loop
       // doesn't leak into the earned shell (or worse, into an outing's
       // React tree).
       demoBusRef.current?.disconnect?.(); // scripted demo owns its timer queue
     };
-  }, [enabled]);
+    // `session` only gates the age ticker and never flips within a mount;
+    // it's included so the effect's deps stay honest.
+  }, [enabled, session]);
 
   if (!enabled) {
     return showFallbackPulse ? (
@@ -449,6 +457,8 @@ export function CoachTwinPeek({
   const progressPct = progress ? Math.round(progress.progress_pct * 100) : null;
   const isShowingInstrument =
     demo != null || progress != null || execution?.kind === 'executing' || intent != null;
+  // Idle-but-connected in a session: the coach is quietly watching the set.
+  const isWatching = session && status === 'connected' && !isShowingInstrument;
   // Prefer encoder/sim-observed angle when the station can see it; fall back
   // to the commanded waypoint otherwise (console/silent backends).
   const observedElbowDeg = progress?.measured_deg;
@@ -484,12 +494,12 @@ export function CoachTwinPeek({
         : 'see';
   const activeIssue = issueLabel(intent?.issue ?? demo?.issue);
   const telemetrySource = observedElbowDeg !== undefined ? 'Observed' : 'Commanded';
-  const telemetryAgeLabel = formatTelemetryAge(progress?.timestamp_ms ?? null);
+  const telemetryAgeLabel = formatTelemetryAge(progress?.timestamp_ms ?? null, now);
 
   return (
     <>
       <div
-        className={`coach-twin-peek${session ? ' is-session' : ''} is-visible${booted ? ' is-booted' : ''}${demo ? ' is-demo' : ''}${progress ? ' is-progress' : ''}${isExecutionActive ? ' is-executing' : ''}${hasExecutionError ? ' is-error' : ''}${isShowingInstrument ? ' is-instrument' : ''}${personaClass}`}
+        className={`coach-twin-peek${session ? ' is-session' : ''} is-visible${booted ? ' is-booted' : ''}${demo ? ' is-demo' : ''}${progress ? ' is-progress' : ''}${isExecutionActive ? ' is-executing' : ''}${hasExecutionError ? ' is-error' : ''}${isShowingInstrument ? ' is-instrument' : ''}${isWatching ? ' is-watching' : ''}${personaClass}`}
         role="group"
         aria-label={demo ? `Coach demonstrating: ${demo.narration}` : statusLabel}
       >

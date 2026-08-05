@@ -134,6 +134,16 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
   const primaryExercises = exercises.filter((e) => e.category === 'primary');
   const extraExercises = exercises.filter((e) => e.category === 'extra');
 
+  // Station-aware robot-demo chip on the flagship Curls card: live when the
+  // Coach link is up, dormant when it isn't — the robot demo is signposted at
+  // the point of choice, not in a footnote below the CTA.
+  const robotChipState =
+    !coachStation.enabled || coachStatus === 'offline'
+      ? 'dormant'
+      : coachStatus === 'connected'
+        ? 'live'
+        : 'connecting';
+
   useEffect(() => {
     if (!coachStation.enabled) return;
     const unsubscribe = coachStation.onStatus(setCoachStatus);
@@ -178,7 +188,15 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
         }}
       >
         <span className="coach-foyer__exercise-copy">
-          <strong>{exercise.label}</strong>
+          <span className="coach-foyer__exercise-title">
+            <strong>{exercise.label}</strong>
+            {exercise.mode === 'curls' ? (
+              <span className={`coach-foyer__robot-chip is-${robotChipState}`}>
+                <Sparkles size={10} strokeWidth={2} aria-hidden="true" />
+                Robot demo
+              </span>
+            ) : null}
+          </span>
           <small>{exercise.detail}</small>
         </span>
         <span className="coach-foyer__radio" aria-hidden="true" />
@@ -267,11 +285,8 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           </p>
         )}
 
-        <p className="coach-foyer__scope-note motion-enter" style={{ animationDelay: '400ms' }}>
-          Curls are the clearest path to the robot demo when Coach is connected.
-        </p>
-
-        {/* Earned depth, demoted below the CTA */}
+        {/* The robot-native proof case is signposted on the Curls card itself;
+            no footnote needed below the CTA. Earned depth is demoted below it. */}
         <button
           type="button"
           ref={moreToggleRef}

@@ -133,7 +133,9 @@
 }
 
 .coach-twin-peek__trail {
-  transition: transform 0.18s linear, opacity 0.3s ease;
+  transition:
+    transform 0.18s linear,
+    opacity 0.3s ease;
 }
 
 /* Compact silhouette keeps its own elbow hub */
@@ -148,7 +150,9 @@
 .coach-twin-peek__range-arc {
   transform-box: view-box;
   transform-origin: 18px 44px;
-  transition: d 0.18s ease-out, opacity 0.2s ease;
+  transition:
+    d 0.18s ease-out,
+    opacity 0.2s ease;
 }
 
 .coach-twin-peek.is-demo .coach-twin-peek__range-arc {
@@ -174,6 +178,22 @@
 
 .coach-twin-peek__readout.is-observed {
   border-bottom: 1px dotted rgba(var(--twin-accent), 0.5);
+}
+
+/* Encoder truth — while a trajectory is running, the observed readout
+   breathes so the dial says "this is live, not replayed." */
+.coach-twin-peek.is-progress .coach-twin-peek__readout.is-observed {
+  animation: coach-twin-obs-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes coach-twin-obs-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 8px rgba(var(--twin-accent), 0.35);
+  }
+  50% {
+    text-shadow: 0 0 14px rgba(var(--twin-accent), 0.75);
+  }
 }
 
 .coach-twin-peek__target-chip {
@@ -241,7 +261,9 @@
   }
 }
 
-.coach-twin-peek.is-demo:not(.is-progress) .coach-twin-peek__stage:not(.is-schematic) .coach-twin-peek__forearm {
+.coach-twin-peek.is-demo:not(.is-progress)
+  .coach-twin-peek__stage:not(.is-schematic)
+  .coach-twin-peek__forearm {
   animation: coach-twin-curl 1.1s ease-in-out infinite;
 }
 
@@ -341,6 +363,23 @@
   }
 }
 
+/* Idle-but-connected in a session: the coach is quietly watching the set.
+   A slow hub breath, not an alarm — the instrument stays a calm presence
+   until a correction actually fires. */
+.coach-twin-peek.is-session.is-watching .coach-twin-peek__arm circle:last-child {
+  animation: coach-twin-watching 3s ease-in-out infinite;
+}
+
+@keyframes coach-twin-watching {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Fallback pulse when StudioAtmosphere is unmounted (earned shell) */
 .coach-bay-pulse-fallback {
   position: fixed;
@@ -362,7 +401,12 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
 }
 
 body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
-  background: radial-gradient(circle, rgba(240, 219, 24, 0.28), rgba(122, 235, 216, 0.12), transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(240, 219, 24, 0.28),
+    rgba(122, 235, 216, 0.12),
+    transparent 70%
+  );
 }
 
 @keyframes coach-bay-fallback-pulse {
@@ -416,7 +460,9 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
     linear-gradient(145deg, rgba(9, 31, 36, 0.94), rgba(5, 15, 18, 0.92)),
     repeating-linear-gradient(0deg, transparent 0 19px, rgba(122, 235, 216, 0.025) 20px);
   border-color: rgba(var(--twin-accent), 0.32);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .coach-twin-peek.is-session .coach-twin-peek__stage {
@@ -471,6 +517,7 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
   display: inline-flex;
   align-items: center;
   gap: 0.24rem;
+  transition: color 0.35s ease;
 }
 
 .coach-twin-peek__phases li:not(:last-child)::after {
@@ -484,6 +531,9 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
   height: 0.32rem;
   border: 1px solid currentColor;
   border-radius: 50%;
+  transition:
+    background-color 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
 .coach-twin-peek__phases li.is-complete,
@@ -498,6 +548,27 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
 .coach-twin-peek__phases li.is-active > span {
   background: rgba(var(--twin-accent), 1);
   box-shadow: 0 0 8px rgba(var(--twin-accent), 0.65);
+}
+
+/* Phase advance — the active step settles in with a small lift so the
+   SEE → COACH → SHOW progression reads as movement, not a state swap. */
+.coach-twin-peek__phases li.is-active {
+  animation: coach-twin-phase 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes coach-twin-phase {
+  0% {
+    transform: translateY(2px);
+    opacity: 0.35;
+  }
+  60% {
+    transform: translateY(-1px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .coach-twin-peek.is-session .coach-twin-peek__status {
@@ -636,6 +707,18 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
 
   .coach-twin-peek__stage {
     transition: none;
+  }
+
+  .coach-twin-peek__phases li.is-active {
+    animation: none;
+  }
+
+  .coach-twin-peek.is-progress .coach-twin-peek__readout.is-observed {
+    animation: none;
+  }
+
+  .coach-twin-peek.is-session.is-watching .coach-twin-peek__arm circle:last-child {
+    animation: none;
   }
 
   .coach-bay-pulse-fallback {
