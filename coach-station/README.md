@@ -113,6 +113,12 @@ From repo root, automated software dry-run (vitest + pytest + demo CLI):
 
 ## Cohort day checklist
 
+For the complete first-visit clarity test, camera-only/station-connected variants,
+and evidence requirements, see [`docs/FIRST_VISIT_AND_MANUAL_STAGE.md`](../docs/FIRST_VISIT_AND_MANUAL_STAGE.md).
+The browser foyer reports `Camera coaching ready` in every state and distinguishes
+Coach link connected / connecting / offline; a link connection is not claimed to
+be mechanical arm readiness.
+
 **Required next gate** (see [ROADMAP.md](../docs/ROADMAP.md) “What's next —
 required order”): pass this manual browser/session stage before hardware
 bring-up. Versioned twin telemetry is shipped in the software path, but the
@@ -131,10 +137,13 @@ cohort gate still requires observing it in a real browser session.
 2. From repo root: `NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev`
 3. Browser (Ring 0, no wallet): **CoachFoyer** → pick **Curls** → Start camera
    coaching → allow camera → produce bad elbow form (`elbow_swing`)
-4. Expect: station logs a demo · browser speaks narration · twin peek /
-   bay pulse react (when UI is on the day-0 shell)
-5. Optional Cyberwave twin: `uv sync --extra cyberwave`, `COACH_AFFECT=simulation`
-6. **Live hardware never** without `COACH_AFFECT=live` **and** `COACH_LIVE_CONFIRM=1`
+4. Expect: foyer status remains camera-ready · station logs a demo · browser
+   speaks narration · twin peek / bay pulse react (when UI is on the day-0 shell)
+5. Deterministic UI-only rehearsal: open the app with `?twin=1`, start a session,
+   and then see the DEMO twin instrument and progress loop; this never drives a
+   real arm and does not close the manual-stage gate
+6. Optional Cyberwave twin: `uv sync --extra cyberwave`, `COACH_AFFECT=simulation`
+7. **Live hardware never** without `COACH_AFFECT=live` **and** `COACH_LIVE_CONFIRM=1`
    **and** a physical dead-man (Milestone 2 — only after this stage passes)
 
 ## Live mode (Milestone 2)

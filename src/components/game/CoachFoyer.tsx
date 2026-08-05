@@ -15,6 +15,7 @@ import { BRAND, getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useImmersive } from '@/hooks/useImmersive';
+import { coachStation, type StationStatus } from '@/services/coachStation';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/coach-foyer.css';
 
@@ -97,6 +98,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
   const { triggerHaptic } = useHapticFeedback();
   const { immersive, setImmersive } = useImmersive();
+  const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [showExtras, setShowExtras] = useState(false);
   // Explainer is collapsed by default — its content also rotates inside the
   // session-boot overlay, where the user is a captive audience.
@@ -106,6 +108,13 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
 
   const primaryExercises = exercises.filter((e) => e.category === 'primary');
   const extraExercises = exercises.filter((e) => e.category === 'extra');
+
+  useEffect(() => {
+    if (!coachStation.enabled) return;
+    const unsubscribe = coachStation.onStatus(setCoachStatus);
+    coachStation.connect();
+    return unsubscribe;
+  }, []);
 
   // Prefetch the heavy camera chunk on idle + on CTA hover/press intent.
   useEffect(() => {
@@ -169,6 +178,24 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           {foyer.line1}
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{BRAND.visionLine}</p>
+
+        <div
+          className={`coach-foyer__coach-status is-${coachStation.enabled ? coachStatus : 'camera-only'} motion-enter`}
+          style={{ animationDelay: '150ms' }}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="coach-foyer__coach-status-dot" aria-hidden="true" />
+          <span>
+            {coachStation.enabled && coachStatus === 'connected'
+              ? 'Camera coaching ready · Coach link connected'
+              : coachStation.enabled && coachStatus === 'connecting'
+                ? 'Camera coaching ready · Coach link connecting'
+                : coachStation.enabled
+                  ? 'Camera coaching ready · Coach link offline'
+                  : 'Camera coaching ready · robot demo when Coach is connected'}
+          </span>
+        </div>
 
         {/* Two defaults, pre-answered — the only decision offered before START */}
         <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">

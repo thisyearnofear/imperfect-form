@@ -24,8 +24,11 @@ Cohort / coach-station software gate (no camera required):
 ```
 
 **Required next (product):** manual stage — station + browser, CoachFoyer →
-Curls → form cue → demo + TTS (+ twin peek / bay pulse). Checklist:
-[`coach-station/README.md`](../coach-station/README.md). Ordered gates:
+Curls → form cue → demo + TTS (+ twin peek / bay pulse). The foyer now reports
+camera readiness separately from the Coach link (`connected`, `connecting`, or
+`offline`) and never gates camera coaching on the station. Use the repeatable
+[first-visit + manual-stage protocol](./FIRST_VISIT_AND_MANUAL_STAGE.md) alongside
+the [coach-station checklist](../coach-station/README.md). Ordered gates:
 [ROADMAP.md](./ROADMAP.md) “What's next — required order”. Do not jump to
 hardware (`LIVE.md`) or SmolVLA before that stage passes.
 
@@ -138,8 +141,11 @@ Landers see, in order:
    (`public/atmosphere/`, see NOTICE.md) on a CSS perspective 3D gaze stage
    (fine-pointer desktop gets stronger rotateY/X; no third-party Spline).
    Soft Celo/Base/Avalanche/Monad blooms only — not a ThemeSync takeover.
-   When `NEXT_PUBLIC_COACH_STATION` is set, `CoachTwinPeek` + bay pulse
-   (`body[data-coach-pulse]`) surface physical-AI demos fail-silently.
+   When `NEXT_PUBLIC_COACH_STATION` is set, `CoachFoyer` reports the Coach link
+   state and `CoachTwinPeek` + bay pulse (`body[data-coach-pulse]`) surface
+   physical-AI demos fail-silently. `?twin=1` provides a deterministic DEMO
+   rehearsal for UI composition only; it never drives hardware or closes the
+   manual-stage gate.
 3. **Home shell** — studio topbar (`IMPERFECT FORM`) even before `hasMounted`.
 4. **`CoachFoyer`** — glass panel over the bay; two pre-answered moves, CTA-first
    (extras + explainer demoted below START). START fires the browser camera ask

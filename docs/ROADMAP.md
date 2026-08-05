@@ -77,6 +77,13 @@ full theme token once earned / wallet-switched.
 - **Live twin peek** — `CoachTwinPeek` when `NEXT_PUBLIC_COACH_STATION` is set
   (fail-silent status + data-driven silhouette/progress during demos;
   Cyberwave/MuJoCo stay on the station machine — no browser embed)
+- **Coach-link clarity** — `CoachFoyer` reports camera coaching readiness and
+  distinguishes Coach link connected / connecting / offline without gating the
+  camera path; Curls is the default robot-native movement and Push-ups remains
+  the broad camera-coaching alternative
+- **First-visit protocol** — [`FIRST_VISIT_AND_MANUAL_STAGE.md`](./FIRST_VISIT_AND_MANUAL_STAGE.md)
+  defines the stranger test, camera-only vs station-connected variants, and
+  evidence required for the manual simulation gate
 - **Demo moment sync** — form cues / `demonstration` set `body[data-coach-pulse]`
   so bay arc + glow pulse; earned shell gets a fallback bloom
 - **One-screen doorway** — no interactive boot gate: passive studio splash
@@ -176,8 +183,10 @@ Software path is shipped; **cohort is not closed until manual stage passes.**
       ElevenLabs → Polly → browser; user preference in settings)
 - [x] Software dry-run: `./scripts/cohort-dry-run.sh`
 - [ ] **Manual stage (required next):** browser + optional Cyberwave twin —
-      see `coach-station/README.md` cohort checklist. Telemetry is implemented;
-      this gate still requires a real browser/session validation.
+      see [`FIRST_VISIT_AND_MANUAL_STAGE.md`](./FIRST_VISIT_AND_MANUAL_STAGE.md)
+      and the `coach-station/README.md` cohort checklist. Telemetry and the
+      Coach-link status UI are implemented; this gate still requires a real
+      browser/session validation.
 
 Demo without the browser: `cd coach-station && uv run python -m coach_station.demo --demo all`
 
@@ -255,5 +264,6 @@ datasets as the product’s starting point.
 
 **Live app:** https://imperfectform.fun
 **North star:** [NORTH_STAR.md](./NORTH_STAR.md)
+**First-visit + manual-stage protocol:** [`FIRST_VISIT_AND_MANUAL_STAGE.md`](./FIRST_VISIT_AND_MANUAL_STAGE.md)
 **Station:** [`coach-station/`](../coach-station/) — see README for sim CLI,
 Cyberwave twin, and pytest.

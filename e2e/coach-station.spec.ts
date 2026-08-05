@@ -22,6 +22,7 @@ test.describe('Coach station - fail-silent when offline', () => {
     await page.goto('/');
     const start = page.locator('#startButton');
     await expect(start).toBeEnabled({ timeout: 20000 });
+    await expect(page.getByText(/Camera coaching ready/i).first()).toBeVisible();
     await start.click();
 
     await expect(
@@ -42,6 +43,7 @@ test.describe('Coach station - fail-silent when offline', () => {
 
     const start = page.locator('#startButton');
     await expect(start).toBeEnabled({ timeout: 20000 });
+    await expect(page.getByText(/Camera coaching ready/i).first()).toBeVisible();
     await start.click();
 
     await expect(

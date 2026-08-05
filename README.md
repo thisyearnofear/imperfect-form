@@ -23,7 +23,7 @@ from real sessions.
 ## Features
 
 - **AI Pose Detection**: Real-time rep counting and form analysis (MoveNet/TensorFlow.js, in-browser — no video leaves your device)
-- **Physical AI Coach** _(in development)_: SO-101 demonstrates correct joint angles via the [coach station](./coach-station/) when linked — fail-silent when offline
+- **Physical AI Coach** _(simulation stage)_: the SO-101 can demonstrate upper-body corrections via the [coach station](./coach-station/) when the Coach link is connected; camera coaching remains usable when offline
 - **AI Coaching**: Multi-provider (Gemini / Venice / AWS Bedrock Nova 2) with coach personas 🐌 SNEL · 🐢 STEDDIE · 🐙 RASTA
 - **Exercises**: Push-ups, squats, curls, pull-ups, and jumps (engine-verified rep counting with per-rep form scoring)
 - **Recovery**: Optional guided breathing cooldown and per-exercise stretches
@@ -50,6 +50,7 @@ Visit `http://localhost:3000` to see the app running.
 - [North Star](./docs/NORTH_STAR.md) - Differentiation, three rings, data flywheel, Sandow heritage
 - [The Cræft Prize](./docs/CRAFFT_PRIZE.md) - Submission strategy: Sandow lineage + arcade cabinet exhibit
 - [Roadmap](./docs/ROADMAP.md) - **Required next order** (manual stage → telemetry → hardware)
+- [First-visit + manual-stage protocol](./docs/FIRST_VISIT_AND_MANUAL_STAGE.md) - User clarity test, Coach-link states, and repeatable simulation evidence
 - [Coach station checklist](./coach-station/README.md) - Cohort day stage steps
 - [Architecture Overview](./docs/ARCHITECTURE.md) - PoseRuntime primary; station as subscriber
 - [Development Guide](./docs/DEVELOPMENT.md) - Setup, testing, and security
