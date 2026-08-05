@@ -150,6 +150,21 @@ Do these in order. Polish items are **not** the gate.
 
 **Defer until #1–#3:** own Spline scene, Avalanche leaderboard contract, marketing landing, SmolVLA / episode flywheel (Milestone 3).
 
+### Arm Create: AI Optimization Challenge — conditional GO (assessment only)
+
+We assessed the Devpost **Arm Create: AI Optimization Challenge** against this
+project and the SO-101 path (full write-up:
+[`ARM_AI_CHALLENGE.md`](./ARM_AI_CHALLENGE.md)). Verdict: a credible
+**Track 1 — Physical AI** candidate, **not submission-ready yet** — the missing
+layer is Arm-targeted optimization evidence (benchmarked Arm64 compute host +
+before/after result). The Arm requirement applies to the AI/control compute
+workload, not necessarily the servo electronics; an Arm64 host (this Apple
+Silicon Mac included) can carry it. **No challenge-specific feature work is
+started** until the hardware feasibility gates pass (arm visible → calibrated
+→ `cyberwave pair` → one live curl with `·obs` encoder telemetry → Arm64
+benchmark). If any gate fails, we stay focused on the existing product and
+evidence opportunities.
+
 ### Mentor feedback derived gates
 
 These gates sit alongside the hardware gates above and are detailed in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). They can be worked in parallel with Milestone 1 and each other, but they should not delay the manual stage.
