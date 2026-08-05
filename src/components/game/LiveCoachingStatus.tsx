@@ -1,12 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Bot, CheckCircle2, ScanLine } from 'lucide-react';
-import {
-  coachStation,
-  type StationDemonstrationEvent,
-  type StationStatus,
-} from '@/services/coachStation';
+import React from 'react';
+import { CheckCircle2, ScanLine } from 'lucide-react';
 import { guidanceFor } from '@/lib/exerciseGuidance';
 import type { ExerciseMode } from '@/utils/biomechanics';
 
@@ -16,48 +11,7 @@ interface LiveCoachingStatusProps {
 }
 
 export function LiveCoachingStatus({ mode, tracking }: LiveCoachingStatusProps) {
-  const [stationStatus, setStationStatus] = useState<StationStatus>(coachStation.status);
-  const [demonstration, setDemonstration] = useState<StationDemonstrationEvent | null>(null);
   const guidance = guidanceFor(mode);
-
-  useEffect(() => coachStation.onStatus(setStationStatus), []);
-
-  useEffect(() => {
-    let timeout = 0;
-    const unsub = coachStation.onDemonstration((event) => {
-      setDemonstration(event);
-      window.clearTimeout(timeout);
-      timeout = window.setTimeout(
-        () => setDemonstration(null),
-        Math.max(2500, event.duration_s * 1000)
-      );
-    });
-    return () => {
-      unsub();
-      window.clearTimeout(timeout);
-    };
-  }, []);
-
-  if (demonstration) {
-    return (
-      <div
-        key={`demo-${demonstration.name}`}
-        className="live-status live-status--demo motion-cue motion-demo"
-      >
-        <Bot size={16} />
-        <span>Coach demonstrating: {demonstration.narration}</span>
-      </div>
-    );
-  }
-
-  if (coachStation.enabled && stationStatus === 'connected') {
-    return (
-      <div key="coach-ready" className="live-status motion-cue">
-        <Bot size={16} />
-        <span>Physical coach ready to demonstrate corrections</span>
-      </div>
-    );
-  }
 
   if (tracking) {
     return (

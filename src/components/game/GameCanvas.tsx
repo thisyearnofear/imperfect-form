@@ -5,6 +5,7 @@ import { GameHUD, RepFeedbackOverlay } from './GameHUD';
 import { GameLoadingOverlay, DebugOverlay } from './GameOverlay';
 import { LiveCoachingStatus } from './LiveCoachingStatus';
 import { FirstRepCelebration } from './FirstRepCelebration';
+import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
 import { PoseState, DetectionProgress } from '@/hooks/usePoseDetection';
 
 interface RepFeedback {
@@ -83,6 +84,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <LiveCoachingStatus mode={mode} tracking={poseState.poseDetected} />
         </div>
+        <CoachTwinPeek session />
       </div>
     );
   }
@@ -116,6 +118,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <FirstRepCelebration show={showFirstRepCelebration} />
         <LiveCoachingStatus mode={mode} tracking={poseState.poseDetected} />
       </div>
+      <CoachTwinPeek session />
     </div>
   );
 };

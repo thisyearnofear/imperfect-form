@@ -271,7 +271,14 @@ function isTwinDemoRequested(): boolean {
  * SIM / LIVE / DEMO badge reflects the station's `affect` field. All rendering
  * is fail-silent: MuJoCo/console stay on the station machine.
  */
-export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse?: boolean }) {
+export function CoachTwinPeek({
+  showFallbackPulse = false,
+  session = false,
+}: {
+  showFallbackPulse?: boolean;
+  /** Rendered inside the active workout rather than the earned shell. */
+  session?: boolean;
+}) {
   const demoBusRef = useRef<DemoBus | null>(null);
   const isDemo = !coachStation.enabled && isTwinDemoRequested();
   if (isDemo && !demoBusRef.current) demoBusRef.current = makeDemoBus();
@@ -396,27 +403,34 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
     ) : null;
   }
 
+  // A configured but unreachable station should not turn into a persistent
+  // error card. Return to the camera coaching surface quietly.
+  if (status === 'offline') return null;
+
   const statusLabel =
     execution?.kind === 'succeeded'
       ? 'Correction complete'
       : execution?.kind === 'aborted' || execution?.kind === 'rejected'
         ? 'Correction stopped'
         : execution?.kind === 'error'
-          ? 'Station error'
+          ? 'Station error · coaching continues'
           : demo != null
             ? 'Demonstrating'
             : execution?.kind === 'executing'
               ? 'Executing correction'
-              : status === 'connected'
-                ? 'Twin linked'
-                : status === 'connecting'
-                  ? 'Linking twin…'
-                  : 'Station offline';
+              : intent != null
+                ? 'Correction queued'
+                : status === 'connected'
+                  ? 'Coach standing by'
+                  : status === 'connecting'
+                    ? 'Connecting Coach…'
+                    : 'Coach station offline · coaching continues';
 
   const isExecutionActive = execution?.kind === 'executing';
   const hasExecutionError = execution?.kind === 'error' || execution?.kind === 'aborted';
   const progressPct = progress ? Math.round(progress.progress_pct * 100) : null;
-  const isShowingInstrument = demo != null || progress != null || execution?.kind === 'executing';
+  const isShowingInstrument =
+    demo != null || progress != null || execution?.kind === 'executing' || intent != null;
   // Prefer encoder/sim-observed angle when the station can see it; fall back
   // to the commanded waypoint otherwise (console/silent backends).
   const observedElbowDeg = progress?.measured_deg;
@@ -448,7 +462,7 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
   return (
     <>
       <div
-        className={`coach-twin-peek is-visible${booted ? ' is-booted' : ''}${demo ? ' is-demo' : ''}${progress ? ' is-progress' : ''}${isExecutionActive ? ' is-executing' : ''}${hasExecutionError ? ' is-error' : ''}${isShowingInstrument ? ' is-instrument' : ''}${personaClass}`}
+        className={`coach-twin-peek${session ? ' is-session' : ''} is-visible${booted ? ' is-booted' : ''}${demo ? ' is-demo' : ''}${progress ? ' is-progress' : ''}${isExecutionActive ? ' is-executing' : ''}${hasExecutionError ? ' is-error' : ''}${isShowingInstrument ? ' is-instrument' : ''}${personaClass}`}
         role="group"
         aria-label={demo ? `Coach demonstrating: ${demo.narration}` : statusLabel}
       >
@@ -639,10 +653,7 @@ export function CoachTwinPeek({ showFallbackPulse = false }: { showFallbackPulse
               </span>
             ) : null}
           </div>
-          <p
-            className={`coach-twin-peek__status${status === 'offline' && !demo && !execution ? ' is-offline' : ''}`}
-            aria-live="polite"
-          >
+          <p className="coach-twin-peek__status" aria-live="polite">
             {statusLabel}
           </p>
           {progressPct !== null ? (

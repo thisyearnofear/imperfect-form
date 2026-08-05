@@ -225,7 +225,7 @@ export default function Home() {
           <ChainAmbient />
           <ThemeSync />
           {/* Twin peek + demo pulse fallback when the day-0 bay is unmounted */}
-          <CoachTwinPeek showFallbackPulse />
+          {activeTab !== 'workout' && <CoachTwinPeek showFallbackPulse />}
         </>
       ) : (
         <StudioAtmosphere quiet />

@@ -27,7 +27,20 @@
   transition:
     opacity 0.35s ease,
     transform 0.35s ease,
-    border-color 0.3s ease;
+    border-color 0.3s ease,
+    max-width 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* During a workout the station instrument belongs to the camera viewport,
+   not the app shell. It sits in the upper-right so the face/body framing and
+   bottom coaching cue remain readable. */
+.coach-twin-peek.is-session {
+  top: clamp(5rem, 12vh, 7.5rem);
+  left: auto;
+  right: clamp(0.75rem, 2.5vw, 1.5rem);
+  z-index: 95;
+  max-width: min(19rem, 36vw);
 }
 
 /* Persona tints — the instrument borrows the active coach's energy. */
@@ -377,9 +390,18 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
     max-width: min(20rem, 92vw);
   }
 
+  .coach-twin-peek.is-session {
+    top: clamp(7rem, 16vh, 9rem);
+    bottom: auto;
+    left: auto;
+    right: 0.65rem;
+    max-width: min(16.5rem, calc(100vw - 1.3rem));
+  }
+
   .coach-twin-peek.is-visible {
     transform: translate(-50%, 0);
   }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
