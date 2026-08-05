@@ -319,48 +319,81 @@
   text-align: center;
 }
 
-/* Centered focal point — coach arm presence */
-.coach-foyer__focal {
-  position: relative;
-  width: 4.5rem;
-  height: 4.5rem;
+/* System map — the product relationship is the hero, not an abstract robot icon. */
+.coach-foyer__system-map {
+  width: min(100%, 31rem);
   margin: 0 auto 1.25rem;
+  padding: 0.7rem 0.55rem;
   display: grid;
-  place-items: center;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.35rem;
   color: var(--cf-teal-bright);
+  background: rgba(6, 22, 25, 0.55);
+  border: 1px solid rgba(139, 227, 212, 0.16);
+  border-radius: var(--cf-radius);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
-.coach-foyer__focal-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1px solid rgba(86, 217, 195, 0.25);
-  background: radial-gradient(circle at 30% 30%, rgba(86, 217, 195, 0.12), transparent 60%);
+.coach-foyer__system-node {
+  min-width: 0;
+  padding: 0.55rem 0.35rem 0.45rem;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.22rem;
+  color: var(--cf-muted);
+  border: 1px solid rgba(181, 229, 221, 0.11);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.025);
+  text-align: center;
 }
 
-.coach-foyer__focal-pulse {
-  position: absolute;
-  inset: -0.5rem;
-  border-radius: 50%;
-  border: 1px solid rgba(86, 217, 195, 0.15);
-  animation: coach-pulse 2.4s ease-in-out infinite;
+.coach-foyer__system-node svg {
+  color: var(--cf-teal);
 }
 
-.coach-foyer__focal-arm {
-  width: 2.25rem;
-  height: 2.25rem;
-  color: inherit;
-  transform: rotate(-12deg);
+.coach-foyer__system-node-name {
+  color: #e8f8f4;
+  font-size: 0.65rem;
+  font-weight: 750;
+  line-height: 1.15;
 }
 
-.coach-foyer__focal-forearm {
-  transform-origin: 22px 32px;
-  animation: coach-peek 3s ease-in-out infinite;
+.coach-foyer__system-node small {
+  color: var(--cf-soft);
+  font-size: 0.54rem;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
-@keyframes coach-peek {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(8deg); }
+.coach-foyer__system-node.is-camera,
+.coach-foyer__system-node.is-coach {
+  border-color: rgba(86, 217, 195, 0.23);
+}
+
+.coach-foyer__system-node.is-robot.is-connected {
+  color: var(--cf-teal-bright);
+  border-color: rgba(86, 217, 195, 0.46);
+  background: rgba(86, 217, 195, 0.08);
+}
+
+.coach-foyer__system-node.is-robot.is-connecting {
+  border-color: rgba(216, 201, 140, 0.35);
+}
+
+.coach-foyer__system-node.is-robot.is-offline,
+.coach-foyer__system-node.is-robot.is-camera-only {
+  opacity: 0.72;
+}
+
+.coach-foyer__system-link {
+  align-self: center;
+  color: rgba(122, 235, 216, 0.62);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 /* Progressive disclosure toggle */
@@ -398,8 +431,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .coach-foyer__focal-pulse,
-  .coach-foyer__focal-forearm,
   .coach-foyer__coach-status-dot {
     animation: none;
   }
@@ -502,6 +533,23 @@
 
   .coach-foyer__title {
     max-width: none;
+  }
+
+  .coach-foyer__system-map {
+    gap: 0.2rem;
+    padding-inline: 0.25rem;
+  }
+
+  .coach-foyer__system-node {
+    padding-inline: 0.2rem;
+  }
+
+  .coach-foyer__system-node-name {
+    font-size: 0.6rem;
+  }
+
+  .coach-foyer__system-node small {
+    font-size: 0.49rem;
   }
 
   .coach-foyer__exercise {

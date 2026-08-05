@@ -45,6 +45,11 @@ test.describe('Ring 0 - wallet-free core loop', () => {
       }
     );
     await expect(page.getByText(/Your camera understands your form/i)).toBeVisible();
+    await expect(
+      page.getByRole('img', {
+        name: /Camera ready, form coach ready, robot arm when connected/i,
+      })
+    ).toBeVisible();
     await expect(page.locator('#screen')).toHaveAttribute('data-register', 'studio');
     await expect(page.locator('#game-container')).toHaveAttribute('data-register', 'studio');
     // Game-loop tabs stay earned — not the foyer

@@ -54,7 +54,7 @@ const exercises: ExerciseOption[] = [
   {
     mode: 'curls',
     label: 'Curls',
-    detail: 'Best for seeing the robot fix when connected',
+    detail: 'Camera catches elbow swing · Coach shows the correction',
     category: 'primary',
   },
   { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line', category: 'primary' },
@@ -70,26 +70,51 @@ function prefetchWebcamChunk() {
   });
 }
 
-function CoachFocal({ className }: { className?: string }) {
+function CoachSystemMap({
+  status,
+  enabled,
+  className,
+}: {
+  status: StationStatus;
+  enabled: boolean;
+  className?: string;
+}) {
+  const coachLabel = 'Ready';
+  const stationLabel = !enabled
+    ? 'When connected'
+    : status === 'connected'
+      ? 'Connected'
+      : status === 'connecting'
+        ? 'Connecting'
+        : 'Offline';
+
   return (
-    <div className={`coach-foyer__focal ${className || ''}`} aria-hidden="true">
-      <div className="coach-foyer__focal-ring" />
-      <svg viewBox="0 0 64 64" fill="none" className="coach-foyer__focal-arm">
-        <circle cx="22" cy="48" r="6" stroke="currentColor" strokeWidth="3" opacity="0.5" />
-        <path
-          d="M22 42 V24"
-          stroke="currentColor"
-          strokeWidth="4"
-          strokeLinecap="round"
-          opacity="0.85"
-        />
-        <g className="coach-foyer__focal-forearm">
-          <path d="M22 32 H48" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-          <circle cx="48" cy="32" r="4" fill="currentColor" opacity="0.9" />
-        </g>
-        <circle cx="22" cy="32" r="5" fill="currentColor" />
-      </svg>
-      <span className="coach-foyer__focal-pulse" />
+    <div
+      className={`coach-foyer__system-map ${className || ''}`}
+      role="img"
+      aria-label={`Camera ready, form coach ready, robot arm ${stationLabel.toLowerCase()}`}
+    >
+      <div className="coach-foyer__system-node is-camera">
+        <Camera size={16} strokeWidth={2} aria-hidden="true" />
+        <span className="coach-foyer__system-node-name">Camera</span>
+        <small>Ready</small>
+      </div>
+      <span className="coach-foyer__system-link" aria-hidden="true">
+        →
+      </span>
+      <div className="coach-foyer__system-node is-coach">
+        <Eye size={16} strokeWidth={2} aria-hidden="true" />
+        <span className="coach-foyer__system-node-name">Form coach</span>
+        <small>{coachLabel}</small>
+      </div>
+      <span className="coach-foyer__system-link" aria-hidden="true">
+        →
+      </span>
+      <div className={`coach-foyer__system-node is-robot is-${status}`}>
+        <Sparkles size={16} strokeWidth={2} aria-hidden="true" />
+        <span className="coach-foyer__system-node-name">SO-101</span>
+        <small>{stationLabel}</small>
+      </div>
     </div>
   );
 }
@@ -170,7 +195,11 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
       </div>
 
       <div className="coach-foyer__inner">
-        <CoachFocal className="motion-enter" />
+        <CoachSystemMap
+          status={coachStatus}
+          enabled={coachStation.enabled}
+          className="motion-enter"
+        />
 
         <p className="coach-foyer__brand motion-enter motion-delay-1">{foyer.brand}</p>
 
