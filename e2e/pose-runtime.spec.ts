@@ -31,12 +31,13 @@ test.describe('PoseRuntime - worker path + curls', () => {
 
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: /Move with better form/i })).toBeVisible({
-      timeout: 20000,
-    });
+    await expect(page.getByRole('heading', { name: /AI watches your exercise form/i })).toBeVisible(
+      {
+        timeout: 20000,
+      }
+    );
 
-    // Curls live behind the demoted "More movements" section in the foyer.
-    await page.getByRole('button', { name: /More movements/i }).click();
+    // Curls lead the foyer because they are the clearest robot-demo path.
     await page.getByRole('button', { name: /Curls/i }).click();
     await expect(page.getByRole('button', { name: /Curls/i }).first()).toHaveAttribute(
       'aria-pressed',

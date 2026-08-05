@@ -239,7 +239,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const pendingStartRef = useRef<{ trace?: any; isRace?: boolean } | undefined>(undefined);
   const [timeLeft, setTimeLeft] = useState(120);
   // repCount managed by useRepCounter below
-  const [mode, setMode] = useState<import('@/utils/biomechanics').ExerciseMode>('pushups');
+  // Lead with the flagship physical-AI path: curls are the clearest way to
+  // feel the camera → form issue → robot demonstration loop.
+  const [mode, setMode] = useState<import('@/utils/biomechanics').ExerciseMode>('curls');
   const [showSummary, setShowSummary] = useState(false);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [personality] = useCoachPersonality();

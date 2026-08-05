@@ -73,10 +73,11 @@ const ARCADE_FOYER: FoyerCopy = {
 
 const STUDIO_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM',
-  line1: 'Move with better form.',
-  line2: 'Your camera understands your form. A coach shows you how to fix it.',
+  line1: 'AI watches your exercise form.',
+  line2:
+    'Get live camera coaching now. When Coach is connected, the robot arm can show the correction — not just describe it.',
   trust: 'On-device pose · nothing uploads until you choose',
-  hint: 'Private camera coaching — path into physical AI',
+  hint: 'Camera → understand → show',
   cta: 'Start camera coaching',
 };
 
@@ -194,7 +195,7 @@ export function parseSessionIntent(raw: string | null | undefined): SessionInten
 export const BRAND = {
   name: 'Imperfect Form',
   /** Short category line for metadata / shares */
-  tagline: 'Private camera coaching. Game-quality feedback. A path into physical AI.',
+  tagline: 'AI watches your exercise form. Private camera coaching with a path into physical AI.',
   /**
    * Arcade foyer lines — short so Press Start 2P stays legible inside #screen.
    * Alias of Train intent; prefer getIntentDef('train').foyer in new code.
@@ -205,7 +206,8 @@ export const BRAND = {
   /** Cræft / Sandow cabinet exhibit register — see docs/CRAFFT_PRIZE.md */
   crafft: CRAFFT_FOYER,
   /** Prose equivalents for studio surfaces / SEO */
-  visionLine: 'Your camera understands your form. A coach shows you how to fix it.',
+  visionLine:
+    'Private camera coaching that understands your form — with a robot coach built to show the fix when connected.',
   trustLine: 'Pose runs on your device. Nothing leaves the browser until you choose.',
   roboticsHint:
     'Built toward physical AI that can demonstrate the correction — not just describe it.',

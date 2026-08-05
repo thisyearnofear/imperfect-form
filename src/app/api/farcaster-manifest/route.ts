@@ -19,13 +19,14 @@ const manifest = {
     webhookUrl: 'https://imperfectform.fun/api/miniapp/webhook',
     subtitle: 'Private camera coaching',
     description:
-      'Private camera coaching with game-quality feedback, and a path into physical AI that can show the correction.',
+      'AI watches your exercise form with private camera coaching. When Coach is connected, a robot arm can show the correction.',
     primaryCategory: 'health-fitness',
     tags: ['fitness', 'workout', 'coaching', 'pose-detection', 'form'],
     heroImageUrl: 'https://imperfectform.fun/og-image.png',
-    tagline: 'Move with better form',
+    tagline: 'AI watches your exercise form',
     ogTitle: 'Imperfect Form',
-    ogDescription: 'Private camera coaching. Game-quality feedback. A path into physical AI.',
+    ogDescription:
+      'AI watches your exercise form with private camera coaching and a robot arm that can show the correction.',
     ogImageUrl: 'https://imperfectform.fun/og-image.png',
     requiredChains: ['eip155:42220', 'eip155:137', 'eip155:8453'],
     requiredCapabilities: [

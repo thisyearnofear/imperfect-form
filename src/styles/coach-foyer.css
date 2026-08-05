@@ -253,6 +253,15 @@
   text-align: center;
 }
 
+.coach-foyer__scope-note {
+  margin: 0.7rem 0 0;
+  color: var(--cf-teal-bright);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
 /* Centered focal point — coach arm presence */
 .coach-foyer__focal {
   position: relative;

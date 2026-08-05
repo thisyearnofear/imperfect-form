@@ -26,9 +26,11 @@ test.describe('Ring 0 - wallet-free core loop', () => {
 
   test('no interactive boot gate stands in front of the foyer', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /Move with better form/i })).toBeVisible({
-      timeout: 20000,
-    });
+    await expect(page.getByRole('heading', { name: /AI watches your exercise form/i })).toBeVisible(
+      {
+        timeout: 20000,
+      }
+    );
     // The old ceremony ("Enter the bay" / "Enter quietly") must never come back.
     await expect(page.getByRole('button', { name: /Enter the bay/i })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /Enter quietly/i })).toHaveCount(0);
@@ -37,9 +39,11 @@ test.describe('Ring 0 - wallet-free core loop', () => {
   test('day-0 foyer is studio coaching doorway, not XP chrome', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByText('IMPERFECT FORM').first()).toBeVisible({ timeout: 20000 });
-    await expect(page.getByRole('heading', { name: /Move with better form/i })).toBeVisible({
-      timeout: 20000,
-    });
+    await expect(page.getByRole('heading', { name: /AI watches your exercise form/i })).toBeVisible(
+      {
+        timeout: 20000,
+      }
+    );
     await expect(page.getByText(/Your camera understands your form/i)).toBeVisible();
     await expect(page.locator('#screen')).toHaveAttribute('data-register', 'studio');
     await expect(page.locator('#game-container')).toHaveAttribute('data-register', 'studio');
@@ -50,20 +54,26 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(start).toHaveText(/Start camera coaching/i);
   });
 
-  test('foyer offers two pre-answered moves; depth is earned/demoted', async ({ page }) => {
+  test('foyer leads with robot-native coaching; depth is earned/demoted', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#startButton')).toBeEnabled({ timeout: 20000 });
 
-    // Primary movements are the only choice visible before START.
-    await expect(page.getByRole('button', { name: /Push-ups/i }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Squats/i }).first()).toBeVisible();
+    // Primary movements lead with the flagship robot-native path, plus a
+    // familiar camera-coaching exercise.
+    const curls = page.getByRole('button', { name: /Curls/i }).first();
+    const pushups = page.getByRole('button', { name: /Push-ups/i }).first();
+    await expect(curls).toBeVisible();
+    await expect(pushups).toBeVisible();
+    await expect(curls).toHaveAttribute('aria-pressed', 'true');
+    await expect(pushups).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByText(/clearest path to the robot demo/i)).toBeVisible();
 
-    // Extras and the explainer stay behind explicit, demoted toggles.
-    await expect(page.getByRole('button', { name: /Curls/i })).toHaveCount(0);
+    // Lower-body and additional movements stay behind explicit, demoted toggles.
+    await expect(page.getByRole('button', { name: /Squats/i })).toHaveCount(0);
     await expect(page.getByText(/Pose detection runs on your device/i)).toHaveCount(0);
 
     await page.getByRole('button', { name: /More movements/i }).click();
-    await expect(page.getByRole('button', { name: /Curls/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Squats/i }).first()).toBeVisible();
 
     await page.getByRole('button', { name: /How it works/i }).click();
     await expect(page.getByText(/Pose detection runs on your device/i)).toBeVisible();

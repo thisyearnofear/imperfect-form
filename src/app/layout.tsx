@@ -27,15 +27,15 @@ const STUDIO_BG = '#061013';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://imperfectform.fun';
 
 const OG_IMAGE = `${SITE_URL}/og-image.png`;
-const OG_IMAGE_ALT = `${BRAND.name} — private camera coaching with a path into physical AI`;
+const OG_IMAGE_ALT = `${BRAND.name} — AI watches your exercise form, with a path into physical AI`;
 
 const SITE_DESCRIPTION =
-  'Private camera coaching. Game-quality feedback. A path into physical AI that can show the correction.';
+  'AI watches your exercise form with private camera coaching and a robot arm that can show the correction.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${BRAND.name} | Move better`,
+    default: `${BRAND.name} | AI watches your exercise form`,
     template: `%s · ${BRAND.name}`,
   },
   description: SITE_DESCRIPTION,
@@ -47,6 +47,7 @@ export const metadata: Metadata = {
     'form coaching',
     'pose detection',
     'AI fitness coach',
+    'AI exercise form coach',
     'camera coaching',
     'exercise form',
     'workout feedback',
@@ -82,7 +83,7 @@ export const metadata: Metadata = {
     shortcut: ['/favicon.ico'],
   },
   openGraph: {
-    title: `${BRAND.name} | Move better`,
+    title: `${BRAND.name} | AI watches your exercise form`,
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     siteName: BRAND.name,
@@ -103,7 +104,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@ifdotfun',
     creator: '@ifdotfun',
-    title: `${BRAND.name} | Move better`,
+    title: `${BRAND.name} | AI watches your exercise form`,
     description: SITE_DESCRIPTION,
     images: [
       {

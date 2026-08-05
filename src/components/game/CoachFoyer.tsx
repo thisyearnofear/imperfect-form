@@ -39,20 +39,25 @@ const howItWorks = [
   },
   {
     icon: Hand,
-    title: 'Coach shows the fix',
-    body: 'Real-time cues guide your movement as you train.',
+    title: 'Coach catches the issue',
+    body: 'Live cues explain what to change while you move.',
   },
   {
     icon: Sparkles,
-    title: 'Progress unlocks',
-    body: 'XP, quests, and ghosts appear after your first session.',
+    title: 'Robot shows the fix',
+    body: 'For upper-body corrections, the robot arm can demonstrate the movement in the bay when Coach is connected.',
   },
 ];
 
 const exercises: ExerciseOption[] = [
+  {
+    mode: 'curls',
+    label: 'Curls',
+    detail: 'Best for seeing the robot fix when connected',
+    category: 'primary',
+  },
   { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line', category: 'primary' },
-  { mode: 'squats', label: 'Squats', detail: 'Depth · knees · tempo', category: 'primary' },
-  { mode: 'curls', label: 'Curls', detail: 'Elbow control · range', category: 'extra' },
+  { mode: 'squats', label: 'Squats', detail: 'Depth · knees · tempo', category: 'extra' },
   { mode: 'pullups', label: 'Pull-ups', detail: 'Extension · symmetry', category: 'extra' },
   { mode: 'jumps', label: 'Jumps', detail: 'Landing · knee track', category: 'extra' },
 ];
@@ -167,7 +172,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
 
         {/* Two defaults, pre-answered — the only decision offered before START */}
         <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">
-          <legend>Choose a movement</legend>
+          <legend>Choose a movement to coach</legend>
           {primaryExercises.map(renderExerciseButton)}
         </fieldset>
 
@@ -205,6 +210,10 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
             Graded vs. Sandow · 1897
           </p>
         )}
+
+        <p className="coach-foyer__scope-note motion-enter" style={{ animationDelay: '400ms' }}>
+          Curls are the clearest path to the robot demo when Coach is connected.
+        </p>
 
         {/* Earned depth, demoted below the CTA */}
         <button
