@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { useHapticFeedback } from './useHapticFeedback';
+import { shouldCelebrateFirstSignal } from '@/lib/firstSignal';
 
 export interface RepFeedback {
   show: boolean;
@@ -42,7 +43,7 @@ export function useRepCounter(
         setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 1000);
       }
 
-      if (count === 1 && started && onFirstRep) {
+      if (shouldCelebrateFirstSignal(count, prevCount, Boolean(started)) && onFirstRep) {
         onFirstRep();
       }
 

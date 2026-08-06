@@ -45,3 +45,6 @@ body[data-shell='studio'] .studio-topbar { background: rgba(6, 16, 19, 0.45); }
 .live-status--demo svg { color: #9ed4ff; }
 #canvasContainerMobile.is-tracking, #canvasContainerDesktop.is-tracking { border-color: rgba(112, 224, 201, 0.52); animation: studio-settle 620ms ease-out; }
 @media (max-width: 640px) { #game-container { min-height: calc(100vh - 61px); padding: 0.75rem; } .studio-tabs button { padding: 0.5rem 0.6rem; } }
+
+.live-status--signal { border-color: rgba(238, 186, 105, 0.55); background: rgba(39, 29, 15, 0.92); }
+.live-status--signal svg { color: #f5c77d; }

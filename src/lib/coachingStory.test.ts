@@ -43,7 +43,12 @@ describe('coaching story', () => {
     const story = sessionStory(summary(), 'curls', 3);
     expect(story.title).toContain('one useful thing');
     expect(story.body).toContain('Keep your elbows quiet');
-    expect(story.focus).toContain('Pin your elbows');
+    expect(story.focus).toBe('Keep your elbows quiet');
+  });
+
+  it('carries the observed correction into the retry focus', () => {
+    const story = sessionStory(summary(), 'curls', 3);
+    expect(story.focus).toBe('Keep your elbows quiet');
   });
 
   it('keeps a clean baseline honest without inventing improvement', () => {
@@ -54,5 +59,6 @@ describe('coaching story', () => {
     );
     expect(story.title).toContain('clean baseline');
     expect(story.body).toContain('without a major form observation');
+    expect(story.focus).toBe('Keep your knees tracking over your toes on the way down.');
   });
 });

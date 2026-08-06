@@ -13,7 +13,7 @@ type SessionRecapProps = {
   reps: number;
   summary: SessionSummary | null;
   userAddress?: string;
-  onTryAgain?: () => void;
+  onTryAgain?: (focus: string) => void;
   onStartSelfGhost?: (workoutId: string) => void;
 };
 
@@ -210,8 +210,14 @@ export function SessionRecap({
       />
       <FormReceipt mode={mode} reps={reps} summary={summary} />
       {onTryAgain && (
-        <button type="button" className="studio-card__button" onClick={onTryAgain}>
-          <RotateCcw size={16} /> Try another set
+        <button
+          type="button"
+          className="studio-card__button min-h-11"
+          onClick={() => onTryAgain(story.focus)}
+          aria-label={`Try another ${mode} set focusing on ${story.focus}`}
+        >
+          <RotateCcw size={16} aria-hidden="true" />
+          <span>Try this correction now</span>
         </button>
       )}
     </section>

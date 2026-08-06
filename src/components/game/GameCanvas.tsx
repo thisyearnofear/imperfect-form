@@ -27,6 +27,8 @@ interface GameCanvasProps {
   detectionProgress: DetectionProgress | null;
   webcam: React.ReactNode;
   showFirstRepCelebration?: boolean;
+  /** A user-facing focus carried from the recap retry CTA; never drives robot commands. */
+  retryFocus?: string | null;
   metrics?: import('@/types/mediapipe').BiomechanicalState | null;
 }
 
@@ -43,6 +45,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   detectionProgress,
   webcam,
   showFirstRepCelebration = false,
+  retryFocus = null,
   metrics = null,
 }) => {
   const loadingPhase = !poseState.hasCamera
@@ -68,6 +71,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     phase: coachingMoment.phase,
     warning: coachingMoment.warning,
     focusWarning: coachingMoment.focusWarning,
+    retryFocus,
+    firstSignal: showFirstRepCelebration,
   };
 
   if (isMobile) {
@@ -96,7 +101,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             isVisible={isLoadingVisible}
           />
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
-          <FirstRepCelebration show={showFirstRepCelebration} />
+          <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <LiveCoachingStatus {...coachingStatusProps} />
         </div>
@@ -131,7 +136,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         />
         <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
         <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
-        <FirstRepCelebration show={showFirstRepCelebration} />
+        <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
         <LiveCoachingStatus {...coachingStatusProps} />
       </div>
       <CoachTwinPeek session />

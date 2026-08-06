@@ -32,6 +32,7 @@ import { ProgressSpark } from '@/components/progress';
 import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/recentProgress';
 import { playUiCue } from '@/lib/uiSound';
 import { SessionRecap } from '@/components/game/SessionRecap';
+import { sessionStory } from '@/lib/coachingStory';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -59,7 +60,7 @@ export interface SummaryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onViewLeaderboard?: () => void;
-  onPlayAgain?: () => void;
+  onPlayAgain?: (focus: string) => void;
   repCount: number;
   timeLeft: number;
   mode?: import('@/utils/biomechanics').ExerciseMode;
@@ -126,6 +127,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   }, [isOpen, sessionIntent]);
   const summaryRegister =
     stage === 'analyze' ? 'lab' : stage === 'recover' ? 'calm' : sessionRegister;
+  const retryFocus = sessionStory(sessionSummary ?? null, mode, repCount).focus;
 
   // Auto-close modal 2.5 seconds after successful submission
   React.useEffect(() => {
@@ -582,7 +584,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {onPlayAgain && (
                 <button
                   onClick={() => {
-                    onPlayAgain();
+                    onPlayAgain(retryFocus);
                     onClose();
                   }}
                   className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
@@ -889,7 +891,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {onPlayAgain && (
                 <button
                   onClick={() => {
-                    onPlayAgain();
+                    onPlayAgain(retryFocus);
                     onClose();
                   }}
                   className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
@@ -930,8 +932,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               onStartSelfGhost={onStartSelfGhost}
               onTryAgain={
                 onPlayAgain
-                  ? () => {
-                      onPlayAgain();
+                  ? (focus) => {
+                      onPlayAgain(focus);
                       onClose();
                     }
                   : undefined

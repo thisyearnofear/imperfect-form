@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { guidanceFor } from '@/lib/exerciseGuidance';
+import type { ExerciseMode } from '@/utils/biomechanics';
 import './first-rep-celebration.css';
 
 interface FirstRepCelebrationProps {
   show: boolean;
+  mode: ExerciseMode;
 }
 
-export function FirstRepCelebration({ show }: FirstRepCelebrationProps) {
+export function FirstRepCelebration({ show, mode }: FirstRepCelebrationProps) {
   const [visible, setVisible] = useState(show);
 
   const particles = useMemo(
@@ -32,11 +35,11 @@ export function FirstRepCelebration({ show }: FirstRepCelebrationProps) {
   if (!visible) return null;
 
   return (
-    <div className="first-rep-celebration" aria-hidden="true">
+    <div className="first-rep-celebration" aria-hidden="true" data-exercise={mode}>
       <div className="first-rep-celebration__burst" />
       <div className="first-rep-celebration__text">
-        <span>First rep!</span>
-        <small>Coach is watching</small>
+        <span>First signal captured</span>
+        <small>{guidanceFor(mode).label} · Coach is watching your form</small>
       </div>
       {particles.map((particle, i) => (
         <span

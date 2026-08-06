@@ -55,6 +55,7 @@ import { getEffectiveUserId } from '@/services/guestIdentity';
 import { buildFormSignature } from '@/lib/progress/formSignature';
 import { ghostService } from '@/services/GhostService';
 import { getChampionTrace, isChampion } from '@/constants/championTraces';
+import { playStudioCue } from '@/lib/uiSound';
 
 import { Score } from '@/types';
 
@@ -236,13 +237,23 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [isStarting, setIsStarting] = useState(false);
   const [showCameraPrimer, setShowCameraPrimer] = useState(false);
   const [showFirstRepCelebration, setShowFirstRepCelebration] = useState(false);
-  const pendingStartRef = useRef<{ trace?: any; isRace?: boolean } | undefined>(undefined);
+  const firstSignalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingStartRef = useRef<
+    { trace?: any; isRace?: boolean; retryFocus?: string } | undefined
+  >(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (firstSignalTimerRef.current) clearTimeout(firstSignalTimerRef.current);
+    };
+  }, []);
   const [timeLeft, setTimeLeft] = useState(120);
   // repCount managed by useRepCounter below
   // Lead with the flagship physical-AI path: curls are the clearest way to
   // feel the camera → form issue → robot demonstration loop.
   const [mode, setMode] = useState<import('@/utils/biomechanics').ExerciseMode>('curls');
   const [showSummary, setShowSummary] = useState(false);
+  const [retryFocus, setRetryFocus] = useState<string | null>(null);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [personality] = useCoachPersonality();
 
@@ -256,6 +267,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     () => {
       if (!timerRef.current) startTimer();
       setShowFirstRepCelebration(true);
+      if (firstSignalTimerRef.current) clearTimeout(firstSignalTimerRef.current);
+      firstSignalTimerRef.current = setTimeout(() => {
+        setShowFirstRepCelebration(false);
+        firstSignalTimerRef.current = null;
+      }, 2200);
+      playStudioCue('chime');
     },
     (count, exerciseMode) => {
       if (user?.fid) {
@@ -408,15 +425,24 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, [handleStop]);
 
   const handleStart = useCallback(
-    async (options?: { trace?: any; isRace?: boolean }) => {
-      // Breathe intent: calm recovery path — no camera, no workout boot
-      if (sessionIntent === 'recover') {
+    async (options?: { trace?: any; isRace?: boolean; retryFocus?: string }) => {
+      const isFocusedRetry = Boolean(options?.retryFocus);
+
+      // A recap retry is an explicit coaching action, even if the user was
+      // previously in Breathe/Recover. Ordinary starts preserve that intent.
+      if (isFocusedRetry) setIntent('understand');
+      else if (sessionIntent === 'recover') {
         setCalmSessionActive(true);
         return;
       }
 
       // Signal the foyer to fade out immediately — before any await — so
       // there is no dead frame between START and the camera permission prompt.
+      // Keep the retry focus in the pending start object if permission recovery
+      // is needed; ordinary starts clear any previous session's cue.
+      if (isFocusedRetry) setRetryFocus(options?.retryFocus ?? null);
+      else setRetryFocus(null);
+      setShowFirstRepCelebration(false);
       setIsStarting(true);
 
       // Day-0 coaching doorway commits Coach / Studio (noop if already set).
@@ -685,12 +711,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setTimeLeft(120);
     setStarted(false);
     setShowFirstRepCelebration(false);
+    if (firstSignalTimerRef.current) {
+      clearTimeout(firstSignalTimerRef.current);
+      firstSignalTimerRef.current = null;
+    }
     setCalmSessionActive(false);
     setIsRace(false);
     setRaceTrace(null);
     // Welcome component consolidated into InitializationScreen - no need to reset welcome state
     setShowTutorial(true);
     setShowSummary(false);
+    setRetryFocus(null);
 
     // Also stop the camera when resetting
     stopAllCameras();
@@ -840,6 +871,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               detectionProgress={detectionProgress}
               webcam={memoizedWebcam}
               showFirstRepCelebration={showFirstRepCelebration}
+              retryFocus={retryFocus}
               metrics={metrics}
             />
           )}
@@ -900,8 +932,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           setShowSummary(false);
           setShowExpandedLeaderboard(true);
         }}
-        onPlayAgain={() => {
+        onPlayAgain={(focus) => {
+          // This callback is invoked by the recap button's user gesture, so
+          // the next camera session can begin immediately without returning
+          // the user to a second foyer decision.
           handleReset();
+          void handleStart({ retryFocus: focus });
         }}
         repCount={repCount}
         timeLeft={timeLeft}

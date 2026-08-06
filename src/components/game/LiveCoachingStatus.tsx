@@ -15,6 +15,8 @@ interface LiveCoachingStatusProps {
   phase?: CoachingMomentPhase;
   warning?: string | null;
   focusWarning?: string | null;
+  firstSignal?: boolean;
+  retryFocus?: string | null;
 }
 
 export function LiveCoachingStatus({
@@ -25,11 +27,27 @@ export function LiveCoachingStatus({
   phase: suppliedPhase,
   warning: suppliedWarning,
   focusWarning: suppliedFocusWarning,
+  firstSignal = false,
+  retryFocus = null,
 }: LiveCoachingStatusProps) {
   const guidance = guidanceFor(mode);
   const phase = suppliedPhase ?? (tracking ? (repCount > 0 ? 'your_turn' : 'observed') : 'framing');
   const warning = suppliedWarning ?? warnings[0] ?? null;
   const focusWarning = suppliedFocusWarning ?? null;
+
+  if (firstSignal && repCount === 1) {
+    return (
+      <div
+        key="first-signal"
+        className="live-status live-status--signal motion-cue"
+        role="status"
+        aria-live="polite"
+      >
+        <CheckCircle2 size={16} />
+        <span>First signal captured. Coach is watching your form.</span>
+      </div>
+    );
+  }
 
   if (phase === 'correction' && warning) {
     return (
@@ -58,7 +76,9 @@ export function LiveCoachingStatus({
           Your turn.{' '}
           {focusWarning
             ? `Keep this in mind: ${readableFormWarning(focusWarning).toLowerCase()}.`
-            : 'Match the line and keep going.'}
+            : retryFocus
+              ? `Retry focus: ${retryFocus.toLowerCase()}`
+              : 'Match the line and keep going.'}
         </span>
       </div>
     );
@@ -73,7 +93,10 @@ export function LiveCoachingStatus({
         aria-live="polite"
       >
         <CheckCircle2 size={16} />
-        <span>I see your movement. Show me one rep.</span>
+        <span>
+          I see your movement.{' '}
+          {retryFocus ? `Next set focus: ${retryFocus.toLowerCase()}.` : 'Show me one rep.'}
+        </span>
       </div>
     );
   }

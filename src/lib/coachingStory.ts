@@ -37,7 +37,11 @@ export function sessionStory(
   mode: ExerciseMode,
   reps: number
 ): SessionStory {
-  const focus = nextFocusFor(mode);
+  const firstWarning = summary?.anomalies[0]?.metrics.warnings[0];
+  // Carry the observed correction into the retry CTA when one exists. A
+  // clean baseline still gets the exercise-specific next focus, but we never
+  // invent a correction that the coach did not observe.
+  const focus = firstWarning ? readableFormWarning(firstWarning) : nextFocusFor(mode);
 
   if (!summary) {
     return {
@@ -47,7 +51,6 @@ export function sessionStory(
     };
   }
 
-  const firstWarning = summary.anomalies[0]?.metrics.warnings[0];
   if (firstWarning) {
     return {
       title: 'The coach found one useful thing to work on.',
