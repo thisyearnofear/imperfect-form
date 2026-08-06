@@ -13,8 +13,8 @@ import { EnhancedChainThemeProvider } from '@/contexts/ChainThemeContext';
 import WalletSelectorModal from '@/components/modals/WalletSelectorModal';
 import { Spinner } from '@/components/ui';
 import WalletErrorBoundary from './WalletErrorBoundary';
-import WalletDebugInfo from '@/components/debug/WalletDebugInfo';
-// Removed: WalletConnectionDiagnostic - no longer needed after consolidation
+// Removed: WalletDebugInfo and WalletConnectionDiagnostic from the production tree;
+// wallet diagnostics remain available to developers without a user-facing trigger.
 
 // Define Monad Mainnet
 const monadMainnet: Chain = {
@@ -345,8 +345,7 @@ export default function SimplifiedAppProviders({ children }: AppProvidersProps) 
                 <Toaster {...toastConfig} />
                 {children}
                 <WalletSelectorModal />
-                <WalletDebugInfo />
-                {/* Removed: WalletConnectionDiagnostic - consolidated into unified system */}
+                {/* Wallet diagnostics are intentionally not mounted in the user surface. */}
               </NeynarAuthProvider>
             </PlatformProvider>
           </EnhancedChainThemeProvider>

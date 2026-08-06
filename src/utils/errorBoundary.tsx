@@ -38,12 +38,17 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-function DefaultFallback({ error, resetError }: { error?: Error; resetError: () => void }) {
+function DefaultFallback({ resetError }: { error?: Error; resetError: () => void }) {
   return (
-    <div className="text-center p-4 text-red-400">
-      <p>Something went wrong</p>
-      {error && <p className="text-xs opacity-70">{error.message}</p>}
-      <button onClick={resetError} className="mt-2 btn-error-cta">
+    <div className="studio-error-boundary" role="alert">
+      <div className="studio-error-boundary__mark" aria-hidden="true">
+        !
+      </div>
+      <p className="studio-error-boundary__eyebrow">The bay paused</p>
+      <p className="studio-error-boundary__message">
+        Something interrupted this moment. Your session has not been lost.
+      </p>
+      <button onClick={resetError} className="studio-error-boundary__action">
         Try again
       </button>
     </div>

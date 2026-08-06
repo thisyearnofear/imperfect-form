@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Check, Wind, X, PersonStanding } from 'lucide-react';
 import BreathingCooldown from './BreathingCooldown';
 import StretchSequence from './StretchSequence';
 
@@ -39,28 +40,32 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
       }
       data-testid={panel ? 'calm-session-panel' : 'recovery-card'}
     >
-      <div className="flex items-center justify-between">
-        <span
-          className={`text-[10px] font-medium uppercase tracking-[0.25em] font-sans ${
-            panel ? 'text-teal-700/80' : 'text-teal-300/80'
-          }`}
-        >
-          {panel ? 'Calm' : 'Cool Down'}
-        </span>
+      <div className="recovery-card__header flex items-center justify-between">
+        <div>
+          <span
+            className={`recovery-card__eyebrow text-[10px] font-medium uppercase tracking-[0.25em] font-sans ${
+              panel ? 'text-teal-700/80' : 'text-teal-300/80'
+            }`}
+          >
+            {panel ? 'Calm' : 'Cool Down'}
+          </span>
+          <p className={`recovery-card__title ${panel ? 'text-slate-800' : 'text-teal-50'}`}>
+            Leave the session better than you found it.
+          </p>
+        </div>
         {(active !== null || panel) && (
           <button
+            type="button"
             onClick={() => {
               if (panel && onDismiss) onDismiss();
               else setActive(null);
             }}
-            className={
-              panel
-                ? 'text-slate-400 hover:text-slate-600 text-xs transition-colors'
-                : 'text-teal-300/50 hover:text-teal-200 text-xs transition-colors'
-            }
+            className={`recovery-card__close ${
+              panel ? 'text-slate-400 hover:text-slate-600' : 'text-teal-300/50 hover:text-teal-200'
+            }`}
             aria-label="Close session"
           >
-            ✕
+            <X size={15} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -74,17 +79,16 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
 
       {active === null && (
         <div className="mt-3 space-y-2 font-sans">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="recovery-card__options grid grid-cols-2 gap-2">
             <button
+              type="button"
               onClick={() => setActive('breathe')}
-              className={
-                panel
-                  ? 'flex flex-col items-center gap-1 rounded-xl border border-teal-600/20 bg-white/70 hover:bg-white p-3 transition-colors'
-                  : 'flex flex-col items-center gap-1 rounded-xl border border-teal-400/20 bg-white/5 hover:bg-teal-500/10 p-3 transition-colors'
-              }
+              className={`recovery-card__option ${
+                panel ? 'recovery-card__option--light' : 'recovery-card__option--dark'
+              }`}
             >
-              <span className="text-xl" aria-hidden>
-                {completed.has('breathe') ? '✓' : '🌬️'}
+              <span className="recovery-card__option-icon" aria-hidden="true">
+                {completed.has('breathe') ? <Check size={18} /> : <Wind size={20} />}
               </span>
               <span className={`text-xs font-light ${panel ? 'text-teal-900' : 'text-teal-100'}`}>
                 Breathe
@@ -94,15 +98,14 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
               </span>
             </button>
             <button
+              type="button"
               onClick={() => setActive('stretch')}
-              className={
-                panel
-                  ? 'flex flex-col items-center gap-1 rounded-xl border border-teal-600/20 bg-white/70 hover:bg-white p-3 transition-colors'
-                  : 'flex flex-col items-center gap-1 rounded-xl border border-teal-400/20 bg-white/5 hover:bg-teal-500/10 p-3 transition-colors'
-              }
+              className={`recovery-card__option ${
+                panel ? 'recovery-card__option--light' : 'recovery-card__option--dark'
+              }`}
             >
-              <span className="text-xl" aria-hidden>
-                {completed.has('stretch') ? '✓' : '🧘'}
+              <span className="recovery-card__option-icon" aria-hidden="true">
+                {completed.has('stretch') ? <Check size={18} /> : <PersonStanding size={20} />}
               </span>
               <span className={`text-xs font-light ${panel ? 'text-teal-900' : 'text-teal-100'}`}>
                 Stretch
@@ -113,11 +116,11 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
             </button>
           </div>
           <p
-            className={`text-[10px] font-light text-center ${
+            className={`recovery-card__note text-[10px] font-light text-center ${
               panel ? 'text-slate-500' : 'text-teal-100/40'
             }`}
           >
-            optional — take a minute to recover
+            optional · take a minute to recover
           </p>
         </div>
       )}

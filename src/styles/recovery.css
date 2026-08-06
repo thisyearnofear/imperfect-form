@@ -1,0 +1,148 @@
+/* Recovery register — quiet, tactile, and continuous with the coaching bay. */
+
+.recovery-card__header {
+  gap: 0.75rem;
+}
+
+.recovery-card__title {
+  margin: 0.28rem 0 0;
+  max-width: 28ch;
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.recovery-card__close {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  opacity: 0.7;
+  transition:
+    opacity 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.recovery-card__close:hover {
+  opacity: 1;
+  background: rgba(117, 223, 205, 0.1);
+}
+
+.recovery-card__close:active {
+  transform: scale(0.94);
+}
+
+.recovery-card__option {
+  min-height: 7.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  padding: 0.8rem 0.65rem;
+  border-radius: 0.7rem;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.recovery-card__option:hover {
+  transform: translateY(-1px);
+}
+
+.recovery-card__option:active {
+  transform: scale(0.97);
+}
+
+.recovery-card__option:focus-visible,
+.recovery-card__close:focus-visible {
+  outline: 2px solid #75dfcd;
+  outline-offset: 2px;
+}
+
+.recovery-card__option--dark {
+  color: #dff7f1;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(117, 223, 205, 0.2);
+}
+
+.recovery-card__option--dark:hover {
+  background: rgba(86, 217, 195, 0.1);
+  border-color: rgba(117, 223, 205, 0.42);
+}
+
+.recovery-card__option--light {
+  color: #115e59;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(13, 148, 136, 0.2);
+}
+
+.recovery-card__option--light:hover {
+  background: #fff;
+  border-color: rgba(13, 148, 136, 0.42);
+}
+
+.recovery-card__option-icon {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  color: #75dfcd;
+  background: rgba(117, 223, 205, 0.12);
+  border: 1px solid rgba(117, 223, 205, 0.2);
+  border-radius: 50%;
+}
+
+.recovery-card__option--light .recovery-card__option-icon {
+  color: #0d9488;
+  background: rgba(13, 148, 136, 0.08);
+  border-color: rgba(13, 148, 136, 0.18);
+}
+
+.recovery-card__note {
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.recovery-card__completion,
+.recovery-card__movement-mark {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: #75dfcd;
+  background: rgba(117, 223, 205, 0.12);
+  border: 1px solid rgba(117, 223, 205, 0.25);
+  border-radius: 50%;
+}
+
+.recovery-card__movement-mark {
+  color: #ffd97a;
+  background: rgba(252, 177, 49, 0.1);
+  border-color: rgba(252, 177, 49, 0.25);
+}
+
+@media (max-width: 420px) {
+  .recovery-card__option {
+    min-height: 6.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recovery-card__option,
+  .recovery-card__close {
+    transition: none;
+  }
+
+  .recovery-card__option:hover,
+  .recovery-card__option:active,
+  .recovery-card__close:active {
+    transform: none;
+  }
+}

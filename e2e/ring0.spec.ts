@@ -59,12 +59,21 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.locator('.studio-atmosphere__calibration')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__floor')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__plinth')).toHaveCount(1);
+    // Human input is represented as a restrained motion study, not a literal
+    // stick figure, while the loop remains present in the first-visit collage.
+    await expect(page.locator('.studio-atmosphere__motion-study')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__skeleton')).toHaveCount(0);
     await expect(page.locator('.game-wrapper')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     // Game-loop tabs stay earned — not the foyer
     await expect(page.getByRole('button', { name: /Switch to Stats/i })).toHaveCount(0);
+    // Developer diagnostics must never become part of the doorway, even in a
+    // dev server where the test suite runs.
+    await expect(page.getByRole('button', { name: /Toggle Auth Debug/i })).toHaveCount(0);
+    await expect(page.getByText(/^🔧 Debug$/)).toHaveCount(0);
     const start = page.locator('#startButton');
     await expect(start).toBeEnabled();
-    await expect(start).toHaveText(/Try one rep/i);
+    await expect(start).toHaveText(/Try one rep.*Curls/i);
+    await expect(start).toHaveAccessibleName(/Try one rep of Curls with camera coaching/i);
   });
 
   test('foyer leads with robot-native coaching; depth is earned/demoted', async ({ page }) => {
@@ -83,6 +92,10 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'pushups');
     await expect(curls).toHaveAttribute('aria-pressed', 'false');
     await expect(pushups).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#startButton')).toHaveText(/Try one rep.*Push-ups/i);
+    await expect(page.locator('#startButton')).toHaveAccessibleName(
+      /Try one rep of Push-ups with camera coaching/i
+    );
     // The robot-native proof case is signposted at the point of choice:
     // exactly one chip, on the Curls card, never on the camera-only card.
     await expect(page.locator('.coach-foyer__robot-chip')).toHaveCount(1);
@@ -114,6 +127,7 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.getByText('Camera is off')).toBeVisible({ timeout: 8000 });
     await expect(page.getByText(/Video stays on your device/i)).toBeVisible();
     await expect(page.getByText('Before we start')).toHaveCount(0);
+    await expect(page.locator('[data-testid="recovery-card"]')).toBeVisible();
   });
 
   test('recovery card "not now" backs out without starting', async ({ page }) => {

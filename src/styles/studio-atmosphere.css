@@ -335,47 +335,80 @@ body[data-coach-station='connected'] .studio-atmosphere__state-readout {
     filter 0.25s ease;
 }
 
-/* The loop motif — the pose skeleton is the 'camera sees you' half of the
-   story; the dashed link and the arc carry the eye to the arm. Same teal as
-   the in-app trust proof, kept faint so it never fights the foyer. */
+/* The loop motif — a restrained motion study is the 'camera sees you' half
+   of the story. It is intentionally more like a movement-analysis plate than
+   a person icon; the dashed link carries the eye to the physical coach. */
 .studio-atmosphere__figure {
   position: absolute;
-  left: 6%;
-  top: 20%;
-  width: min(24vw, 260px);
+  left: 5%;
+  top: 22%;
+  width: min(28vw, 300px);
   z-index: 1;
+  opacity: 0.76;
 }
 
-.studio-atmosphere__skeleton {
+.studio-atmosphere__motion-study {
+  display: block;
   width: 100%;
+  overflow: visible;
   color: rgba(122, 235, 216, 0.9);
+  filter: drop-shadow(0 0 14px rgba(86, 217, 195, 0.24));
+  animation: studio-atmosphere-study-breathe 5.5s ease-in-out infinite;
+}
+
+.studio-atmosphere__motion-trace,
+.studio-atmosphere__motion-axis,
+.studio-atmosphere__motion-segment,
+.studio-atmosphere__motion-reticle {
   stroke: currentColor;
-  stroke-width: 2;
   stroke-linecap: round;
-  opacity: 0.16;
-  filter: drop-shadow(0 0 14px rgba(86, 217, 195, 0.35));
-  animation: studio-atmosphere-skeleton-breathe 5.5s ease-in-out infinite;
+  stroke-linejoin: round;
+  fill: none;
 }
 
-.studio-atmosphere__skeleton circle {
-  fill: currentColor;
-  stroke: none;
+.studio-atmosphere__motion-trace {
+  stroke-width: 1.7;
+  opacity: 0.56;
 }
 
-.studio-atmosphere__skeleton-head {
-  opacity: 0.85;
+.studio-atmosphere__motion-trace--ghost {
+  stroke: rgba(122, 235, 216, 0.42);
+  stroke-dasharray: 2 8;
+  opacity: 0.5;
 }
 
-.studio-atmosphere__figure-label {
-  position: absolute;
-  left: 0;
-  bottom: -1.15rem;
-  color: rgba(186, 220, 214, 0.55);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.5rem;
-  font-weight: 800;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
+.studio-atmosphere__motion-axis {
+  stroke-width: 1;
+  stroke-dasharray: 1 7;
+  opacity: 0.34;
+}
+
+.studio-atmosphere__motion-segment {
+  stroke-width: 1.15;
+  stroke-dasharray: 4 5;
+  opacity: 0.42;
+}
+
+.studio-atmosphere__motion-joint {
+  fill: rgba(122, 235, 216, 0.78);
+  stroke: rgba(214, 240, 234, 0.38);
+  stroke-width: 1;
+}
+
+.studio-atmosphere__motion-joint--focus {
+  fill: rgba(255, 217, 122, 0.88);
+  stroke: rgba(255, 217, 122, 0.4);
+  transform-box: fill-box;
+  transform-origin: center;
+  filter: drop-shadow(0 0 5px rgba(255, 217, 122, 0.45));
+}
+
+.studio-atmosphere__motion-reticle {
+  stroke: rgba(255, 217, 122, 0.58);
+  stroke-width: 0.8;
+  stroke-dasharray: 2 4;
+  opacity: 0.52;
+  animation: studio-atmosphere-reticle-drift 6s ease-in-out infinite;
 }
 
 .studio-atmosphere__link {
@@ -404,13 +437,27 @@ body[data-coach-station='connected'] .studio-atmosphere__state-readout {
   stroke-dasharray: none;
 }
 
-@keyframes studio-atmosphere-skeleton-breathe {
+@keyframes studio-atmosphere-study-breathe {
   0%,
   100% {
-    opacity: 0.12;
+    opacity: 0.68;
+    transform: translate3d(0, 0, 0);
   }
   50% {
-    opacity: 0.2;
+    opacity: 0.88;
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@keyframes studio-atmosphere-reticle-drift {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.38;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.7;
   }
 }
 
@@ -431,7 +478,7 @@ body[data-coach-mode='curls'] .studio-atmosphere__plinth {
 
 body[data-coach-mode='pushups'] .studio-atmosphere__figure,
 body[data-coach-mode='squats'] .studio-atmosphere__figure {
-  opacity: 0.24;
+  opacity: 0.58;
 }
 
 body[data-coach-mode='pushups'] .studio-atmosphere__link,
@@ -457,8 +504,12 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-glow {
   animation: studio-atmosphere-demo-glow 1.2s ease-out;
 }
 
-body[data-coach-pulse='cue'] .studio-atmosphere__skeleton {
-  animation: studio-atmosphere-cue-skeleton 1.2s ease-out;
+body[data-coach-pulse='cue'] .studio-atmosphere__motion-study {
+  animation: studio-atmosphere-cue-study 1.2s ease-out;
+}
+
+body[data-coach-pulse='cue'] .studio-atmosphere__motion-joint--focus {
+  animation: studio-atmosphere-focus-joint 1.2s ease-out;
 }
 
 body[data-coach-pulse='cue'] .studio-atmosphere__state-readout {
@@ -514,15 +565,27 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   }
 }
 
-@keyframes studio-atmosphere-cue-skeleton {
+@keyframes studio-atmosphere-cue-study {
   0%,
   100% {
-    opacity: 0.16;
-    transform: scale(1);
+    opacity: 0.7;
+    transform: translate3d(0, 0, 0) scale(1);
   }
   42% {
-    opacity: 0.42;
-    transform: scale(1.025);
+    opacity: 1;
+    transform: translate3d(0, -2px, 0) scale(1.025);
+  }
+}
+
+@keyframes studio-atmosphere-focus-joint {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.78;
+  }
+  42% {
+    transform: scale(1.55);
+    opacity: 1;
   }
 }
 
@@ -662,13 +725,14 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
   }
 
   .studio-atmosphere__figure {
-    left: -8%;
-    top: 8%;
-    width: 40vw;
+    left: -10%;
+    top: 10%;
+    width: 48vw;
+    opacity: 0.58;
   }
 
-  .studio-atmosphere__figure .studio-atmosphere__skeleton {
-    opacity: 0.1;
+  .studio-atmosphere__motion-study {
+    opacity: 0.82;
   }
 
   .studio-atmosphere__link {
@@ -749,7 +813,10 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
 @media (prefers-reduced-motion: reduce) {
   .studio-atmosphere__arm-glow,
   .studio-atmosphere__bloom,
-  .studio-atmosphere__skeleton {
+  .studio-atmosphere__motion-study,
+  .studio-atmosphere__motion-reticle,
+  body[data-coach-pulse='cue'] .studio-atmosphere__motion-study,
+  body[data-coach-pulse='cue'] .studio-atmosphere__motion-joint--focus {
     animation: none;
   }
 

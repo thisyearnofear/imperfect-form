@@ -14,13 +14,18 @@ interface DebugInfo {
 }
 
 /**
- * Debug component to help identify wallet provider issues
+ * Development-only diagnostic component for wallet provider issues.
+ * It is intentionally not mounted in the production application tree.
  */
 export default function WalletDebugInfo() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
+  const shouldShow = process.env.NODE_ENV === 'development';
+
   useEffect(() => {
+    if (!shouldShow) return;
+
     const collectDebugInfo = async () => {
       const errors: string[] = [];
 
@@ -85,12 +90,10 @@ export default function WalletDebugInfo() {
     };
 
     collectDebugInfo();
-  }, []);
+  }, [shouldShow]);
 
-  // Only show in development or when explicitly enabled
-  const shouldShow =
-    process.env.NODE_ENV === 'development' ||
-    (typeof window !== 'undefined' && window.location.search.includes('debug=wallet'));
+  // Diagnostics are opt-in and development-only. Never expose a debug trigger
+  // or wallet/provider inventory on a production URL, even with a query string.
 
   if (!shouldShow) return null;
 

@@ -37,7 +37,8 @@ const REQUIRED_KEYPOINTS = [
 
 // Compression constants
 const COMPRESSION_INTERVAL_MS = 500; // 2fps for compressed trace
-const _MAX_URL_LENGTH = 2000; // Safety limit for URL sharing
+const MAX_URL_LENGTH = 2000; // Safety limit for URL sharing
+const MAX_GHOST_FRAMES = 55; // Keeps the full link below common social URL limits
 const QUANTIZATION_BITS = 6; // 0-63 range (64 values)
 const _QUANTIZATION_MAX = (1 << QUANTIZATION_BITS) - 1; // 63
 
@@ -79,6 +80,19 @@ class GhostServiceImpl {
       downsampled.push(trace[0]);
     }
 
+    // Keep the complete URL usable in social share sheets. Preserve the
+    // beginning and end of a long trace rather than silently dropping its
+    // final movement segment.
+    const boundedTrace =
+      downsampled.length <= MAX_GHOST_FRAMES
+        ? downsampled
+        : Array.from({ length: MAX_GHOST_FRAMES }, (_, index) => {
+            const sourceIndex = Math.round(
+              (index * (downsampled.length - 1)) / (MAX_GHOST_FRAMES - 1)
+            );
+            return downsampled[sourceIndex];
+          });
+
     // Step 2: Find bounding box for normalization of the WHOLE trace
     // This makes the ghost auto-centered and auto-scaled
     let minX = Infinity,
@@ -86,7 +100,7 @@ class GhostServiceImpl {
     let minY = Infinity,
       maxY = -Infinity;
 
-    downsampled.forEach((s) => {
+    boundedTrace.forEach((s) => {
       s.keypoints.forEach((kp) => {
         if (REQUIRED_KEYPOINTS.includes(kp.name) && kp.score > 0.3) {
           minX = Math.min(minX, kp.x);
@@ -116,14 +130,14 @@ class GhostServiceImpl {
     bytes.push((FORMAT_VERSION << 4) | (mode === 'squats' ? 4 : 0) | intervalIdx);
 
     // Frame count (8 bits)
-    const frameCount = Math.min(downsampled.length, 255);
+    const frameCount = Math.min(boundedTrace.length, 255);
     bytes.push(frameCount);
 
     // Step 4: Encode each frame
     // We use 2 bytes per keypoint (8 bits X, 8 bits Y) for better precision
     // Total 24 bytes per frame for 12 keypoints
     for (let i = 0; i < frameCount; i++) {
-      const snapshot = downsampled[i];
+      const snapshot = boundedTrace[i];
       const snapshotKpMap = new Map<string, Keypoint>();
       for (const kp of snapshot.keypoints) {
         snapshotKpMap.set(kp.name, kp);
@@ -244,7 +258,11 @@ class GhostServiceImpl {
     url.searchParams.set('race', compressed);
     url.searchParams.set('mode', mode);
 
-    return url.toString();
+    const shareUrl = url.toString();
+    if (shareUrl.length > MAX_URL_LENGTH) {
+      throw new Error('Ghost challenge link exceeds the sharing limit');
+    }
+    return shareUrl;
   }
 
   /**

@@ -56,6 +56,7 @@ import { buildFormSignature } from '@/lib/progress/formSignature';
 import { ghostService } from '@/services/GhostService';
 import { getChampionTrace, isChampion } from '@/constants/championTraces';
 import { playStudioCue } from '@/lib/uiSound';
+import { trackChallengeEvent } from '@/lib/challengeAnalytics';
 
 import { Score } from '@/types';
 
@@ -114,11 +115,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     null
   );
   const [isRace, setIsRace] = useState(false);
+  const [hasIncomingChallenge, setHasIncomingChallenge] = useState(false);
+  const challengeUrlParsedRef = useRef(false);
 
   const handleSessionEnd = useCallback(
     (summary: import('@/services/sessionLogger').SessionSummary) => {
       console.log('📊 Session ended with summary:', summary);
       setSessionSummary(summary);
+      if (isRace) {
+        trackChallengeEvent('challenge_completed', user?.fid, {
+          mode: summary.mode,
+          reps: summary.repCount,
+        });
+      }
 
       // Auto-save workout locally for freemium model
       if (summary.repCount > 0) {
@@ -158,7 +167,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         });
       }
     },
-    [finalAddress]
+    [finalAddress, isRace, user?.fid]
   );
 
   // Swipe gesture handling for mobile
@@ -239,7 +248,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [showFirstRepCelebration, setShowFirstRepCelebration] = useState(false);
   const firstSignalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingStartRef = useRef<
-    { trace?: any; isRace?: boolean; retryFocus?: string } | undefined
+    | {
+        trace?: import('@/types/workout').SessionSnapshot[] | null;
+        isRace?: boolean;
+        retryFocus?: string;
+        challengeSource?: 'incoming' | 'self' | 'external';
+      }
+    | undefined
   >(undefined);
 
   useEffect(() => {
@@ -470,7 +485,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, [handleStop]);
 
   const handleStart = useCallback(
-    async (options?: { trace?: any; isRace?: boolean; retryFocus?: string }) => {
+    async (options?: {
+      trace?: import('@/types/workout').SessionSnapshot[] | null;
+      isRace?: boolean;
+      retryFocus?: string;
+      challengeSource?: 'incoming' | 'self' | 'external';
+    }) => {
       const isFocusedRetry = Boolean(options?.retryFocus);
 
       // A recap retry is an explicit coaching action, even if the user was
@@ -528,9 +548,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         markCameraIntroHandled();
       }
 
-      // Fetch PB trace for ghost mode if user level is 3+ AND we're not already in a race
+      // Incoming peer challenges are available on day one. Only personal-best
+      // racing remains progression-aware; a shared correction is the acquisition doorway.
       const effectiveIsRace = options?.isRace ?? isRace;
-      const effectiveRaceTrace = options?.trace ?? raceTrace;
+      const effectiveRaceTrace = options?.trace !== undefined ? options.trace : raceTrace;
 
       try {
         if (xpProgress.currentLevel >= 3 && !effectiveIsRace && !effectiveRaceTrace) {
@@ -545,8 +566,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         } else if (effectiveIsRace || effectiveRaceTrace) {
           console.log('🏁 Racing against a ghost trace, skipping standard PB load');
           setPbTrace(null);
+          trackChallengeEvent('challenge_started', user?.fid, {
+            mode,
+            source: options?.challengeSource ?? 'self',
+          });
         } else {
-          console.log('🔒 Ghost Mode locked (Level 3 required)');
           setPbTrace(null);
         }
       } catch (err) {
@@ -557,6 +581,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       // Welcome component consolidated into InitializationScreen - setShowWelcome removed
       setShowTutorial(false); // Hide tutorial when starting
       setStarted(true);
+      setHasIncomingChallenge(false);
       setIsStarting(false); // session live — foyer handoff complete
 
       // Physical AI: session start (no-op unless station URL configured)
@@ -583,6 +608,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       finalAddress,
       personality,
       resetReps,
+      user?.fid,
     ]
   );
 
@@ -626,7 +652,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         setRaceTrace(trace);
         setIsRace(true);
         setMode(mode);
-        await handleStart({ trace, isRace: true });
+        await handleStart({ trace, isRace: true, challengeSource: 'self' });
       } catch (error) {
         console.error('Failed to start self-ghost race:', error);
       }
@@ -675,7 +701,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         setMode(targetMode);
 
         // Trigger game start using the official handleStart
-        handleStart({ trace: traceToLoad, isRace: true });
+        handleStart({ trace: traceToLoad, isRace: true, challengeSource: 'external' });
       } else {
         console.error('❌ Failed to load ghost trace');
       }
@@ -688,6 +714,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Extract race trace + intent from URL on mount
   const searchParams = useSearchParams();
   useEffect(() => {
+    if (challengeUrlParsedRef.current) return;
+    challengeUrlParsedRef.current = true;
+
     const raceParam = searchParams.get('race');
     const modeParam = searchParams.get('mode');
     const intentParam = searchParams.get('intent');
@@ -705,6 +734,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           console.log('👻 Race trace loaded from URL:', decodedTrace.length, 'frames');
           setRaceTrace(decodedTrace);
           setIsRace(true);
+          setHasIncomingChallenge(true);
+          trackChallengeEvent('challenge_opened', user?.fid, {
+            mode: modeParam || 'unknown',
+            frameCount: decodedTrace.length,
+          });
 
           // Override mode if specified in URL
           if (
@@ -722,7 +756,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         console.error('Failed to decode race trace from URL:', error);
       }
     }
-  }, [searchParams, setIntent]);
+  }, [searchParams, setIntent, user?.fid]);
 
   // Moved memoized webcam after handler functions are defined
 
@@ -763,6 +797,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setCalmSessionActive(false);
     setIsRace(false);
     setRaceTrace(null);
+    setHasIncomingChallenge(false);
     // Welcome component consolidated into InitializationScreen - no need to reset welcome state
     setShowTutorial(true);
     setShowSummary(false);
@@ -876,7 +911,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             !calmSessionActive &&
             (currentMode === 'instructions' ? (
               <div className={isStarting ? 'coach-foyer--starting' : ''}>
-                <CoachFoyer mode={mode} onModeChange={setMode} onStart={() => handleStart()} />
+                <CoachFoyer
+                  mode={mode}
+                  onModeChange={setMode}
+                  onStart={() =>
+                    handleStart({
+                      isRace: hasIncomingChallenge,
+                      trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
+                      challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
+                    })
+                  }
+                  incomingChallenge={hasIncomingChallenge}
+                />
               </div>
             ) : (
               <SplitFlapInstructions
@@ -972,6 +1018,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         isOpen={showSummary}
         onClose={() => {
           setShowSummary(false);
+          // A completed challenge is a single-use doorway. Returning to the
+          // foyer must never silently replay the previous sender's ghost.
+          setIsRace(false);
+          setRaceTrace(null);
+          setHasIncomingChallenge(false);
         }}
         onViewLeaderboard={() => {
           setShowSummary(false);
@@ -982,7 +1033,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           // the next camera session can begin immediately without returning
           // the user to a second foyer decision.
           handleReset();
-          void handleStart({ retryFocus: focus });
+          void handleStart({ retryFocus: focus, isRace: false, trace: null });
         }}
         repCount={repCount}
         timeLeft={timeLeft}

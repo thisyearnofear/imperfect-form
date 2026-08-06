@@ -266,6 +266,49 @@
   color: #f4ecd8;
   font-size: 0.75rem;
 }
+.form-receipt__challenge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem;
+  background: linear-gradient(110deg, rgba(252, 177, 49, 0.14), rgba(117, 223, 205, 0.08));
+  border: 1px solid rgba(252, 177, 49, 0.34);
+  border-radius: 4px;
+}
+.form-receipt__challenge > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.14rem;
+}
+.form-receipt__challenge-eyebrow {
+  margin: 0;
+  color: #fcb131;
+  font-size: 0.53rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.form-receipt__challenge strong {
+  color: #fff4d2;
+  font-size: 0.78rem;
+}
+.form-receipt__challenge span {
+  color: #b8cbc5;
+  font-size: 0.58rem;
+  line-height: 1.3;
+}
+.form-receipt__button--challenge {
+  flex: 0 0 auto;
+  color: #071517;
+  background: #fcb131;
+  border-color: #fcb131;
+}
+.form-receipt__button--challenge:hover {
+  color: #071517;
+  background: #ffd16a;
+  border-color: #ffd16a;
+}
 .form-receipt__actions {
   display: flex;
   gap: 0.45rem;
@@ -525,6 +568,13 @@
 }
 
 @media (max-width: 420px) {
+  .form-receipt__challenge {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .form-receipt__button--challenge {
+    width: 100%;
+  }
   .form-receipt__actions {
     flex-direction: column;
   }
@@ -562,6 +612,7 @@
     stroke-dashoffset: 0;
   }
   .form-receipt__button:hover,
+  .form-receipt__button--challenge:hover,
   .form-signature__ghost-button:hover,
   .form-signature__toggle:hover {
     transform: none;

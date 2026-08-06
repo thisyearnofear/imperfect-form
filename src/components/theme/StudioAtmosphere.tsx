@@ -136,30 +136,36 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
           </div>
         </div>
 
-        {/* The loop, in one composition: camera sees you (pose skeleton, same
-            teal as the in-app trust proof) → the arm shows the fix. Decorative. */}
+        {/* The human half of the loop is a motion study, not an avatar: a
+            quiet gesture trace + sparse joints suggest camera interpretation
+            without turning the backdrop into fitness clip-art. Decorative. */}
         <div className="studio-atmosphere__figure" aria-hidden="true">
-          <svg className="studio-atmosphere__skeleton" viewBox="0 0 120 240" fill="none">
-            <circle className="studio-atmosphere__skeleton-head" cx="60" cy="22" r="10" />
-            <path d="M60 34 L60 116" />
-            <path d="M38 42 L82 42" />
-            <path d="M38 42 L30 70 L24 104" />
-            <path d="M82 42 L88 68 L102 52" />
-            <path d="M48 116 L72 116" />
-            <path d="M48 116 L45 166 L42 212" />
-            <path d="M72 116 L75 166 L78 212" />
-            <circle cx="30" cy="70" r="2.2" />
-            <circle cx="24" cy="104" r="2.2" />
-            <circle cx="88" cy="68" r="2.2" />
-            <circle cx="102" cy="52" r="2.2" />
-            <circle cx="48" cy="116" r="2.2" />
-            <circle cx="72" cy="116" r="2.2" />
-            <circle cx="45" cy="166" r="2.2" />
-            <circle cx="42" cy="212" r="2.2" />
-            <circle cx="75" cy="166" r="2.2" />
-            <circle cx="78" cy="212" r="2.2" />
+          <svg className="studio-atmosphere__motion-study" viewBox="0 0 240 180" fill="none">
+            <path
+              className="studio-atmosphere__motion-trace studio-atmosphere__motion-trace--ghost"
+              transform="translate(-8 4)"
+              d="M38 146 C58 122 62 98 56 76 C51 57 58 38 75 28 C92 18 110 27 113 43 C116 58 104 70 89 78 C75 86 74 104 86 118 C98 132 116 143 140 151"
+            />
+            <path
+              className="studio-atmosphere__motion-trace"
+              d="M48 146 C68 121 72 96 66 74 C61 55 68 36 85 26 C102 16 120 25 123 41 C126 56 114 68 99 76 C85 84 84 102 96 116 C108 130 126 141 150 149"
+            />
+            <path
+              className="studio-atmosphere__motion-axis"
+              d="M86 26 C80 55 80 86 96 116 C108 132 128 143 150 149"
+            />
+            <path className="studio-atmosphere__motion-segment" d="M85 26 L66 74 L96 116" />
+            <circle className="studio-atmosphere__motion-joint" cx="85" cy="26" r="3" />
+            <circle
+              className="studio-atmosphere__motion-joint studio-atmosphere__motion-joint--focus"
+              cx="66"
+              cy="74"
+              r="3.5"
+            />
+            <circle className="studio-atmosphere__motion-joint" cx="96" cy="116" r="3" />
+            <circle className="studio-atmosphere__motion-joint" cx="150" cy="149" r="3" />
+            <circle className="studio-atmosphere__motion-reticle" cx="66" cy="74" r="11" />
           </svg>
-          <span className="studio-atmosphere__figure-label">You</span>
         </div>
 
         <svg

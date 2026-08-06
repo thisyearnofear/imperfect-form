@@ -7,6 +7,7 @@ import '@/styles/session-recap.css';
 import '@/styles/lab-analysis-card.css';
 import '@/styles/studio-motion.css';
 import '@/styles/studio-boot.css';
+import '@/styles/recovery.css';
 import '@/styles/animations.css';
 import '@/styles/session-register.css';
 import '@/styles/buttons.css';

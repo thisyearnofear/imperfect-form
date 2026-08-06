@@ -23,6 +23,7 @@ type CoachFoyerProps = {
   mode: ExerciseMode;
   onModeChange: (mode: ExerciseMode) => void;
   onStart: () => void;
+  incomingChallenge?: boolean;
 };
 
 type ExerciseOption = {
@@ -119,7 +120,12 @@ function CoachSystemMap({
   );
 }
 
-export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
+export function CoachFoyer({
+  mode,
+  onModeChange,
+  onStart,
+  incomingChallenge = false,
+}: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
   const { triggerHaptic } = useHapticFeedback();
   const { immersive, setImmersive } = useImmersive();
@@ -133,6 +139,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
 
   const primaryExercises = exercises.filter((e) => e.category === 'primary');
   const extraExercises = exercises.filter((e) => e.category === 'extra');
+  const selectedExercise = exercises.find((exercise) => exercise.mode === mode) ?? exercises[0];
 
   // Station-aware robot-demo chip on the flagship Curls card: live when the
   // Coach link is up, dormant when it isn't — the robot demo is signposted at
@@ -224,6 +231,22 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{foyer.line2}</p>
 
+        {incomingChallenge && (
+          <div
+            className="coach-foyer__incoming-challenge motion-enter"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="coach-foyer__incoming-challenge-mark" aria-hidden="true">
+              <Sparkles size={16} strokeWidth={2} />
+            </div>
+            <div>
+              <strong>A movement line was sent to you</strong>
+              <span>Meet the ghost, try the same movement, and find your own correction.</span>
+            </div>
+          </div>
+        )}
+
         <div
           className={`coach-foyer__coach-status is-${coachStation.enabled ? coachStatus : 'camera-only'} motion-enter`}
           style={{ animationDelay: '150ms' }}
@@ -253,7 +276,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           id="startButton"
           className="coach-foyer__start coach-foyer__start--hero feel-press motion-enter"
           style={{ animationDelay: '320ms' }}
-          aria-label="Try one rep with camera coaching"
+          aria-label={`Try one rep of ${selectedExercise.label} with camera coaching`}
           onPointerEnter={prefetchWebcamChunk}
           onTouchStart={prefetchWebcamChunk}
           onClick={() => {
@@ -263,7 +286,10 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           }}
         >
           <Camera size={18} strokeWidth={2} aria-hidden="true" />
-          Try one rep
+          <span>{incomingChallenge ? 'Meet the ghost' : 'Try one rep'}</span>
+          <span className="coach-foyer__start-mode" aria-hidden="true">
+            · {selectedExercise.label}
+          </span>
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
 

@@ -194,9 +194,9 @@ const PHASE_CONFIG: Record<
     title: 'Opening the coaching bay…',
     subtitle: 'Your camera stays on this device',
     guidance: 'Allow camera access when prompted, then show us one rep.',
-    color: 'text-blue-300',
-    bgGradient: 'from-blue-950/40 via-blue-900/20 to-blue-950/40',
-    borderColor: 'border-blue-400/30',
+    color: 'studio-loader__phase-color studio-loader__phase-color--initial',
+    bgGradient: 'studio-loader__surface--initial',
+    borderColor: 'studio-loader__border--initial',
     icon: <CameraIcon className="w-14 h-14 sm:w-16 sm:h-16" />,
     estimatedTime: '< 5 seconds',
   },
@@ -204,31 +204,29 @@ const PHASE_CONFIG: Record<
     title: 'Finding your frame…',
     subtitle: 'Waking up the camera coach',
     guidance: 'Step back — head to toes visible.',
-    color: 'text-purple-300',
-    bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
-    borderColor: 'border-purple-400/30',
-    icon: <SpinnerIcon className="w-14 h-14 sm:w-16 sm:h-16 text-purple-400" />,
+    color: 'studio-loader__phase-color studio-loader__phase-color--camera',
+    bgGradient: 'studio-loader__surface--camera',
+    borderColor: 'studio-loader__border--camera',
+    icon: <SpinnerIcon className="studio-loader__spinner w-14 h-14 sm:w-16 sm:h-16" />,
     estimatedTime: '2-3 seconds',
   },
   ai: {
     title: 'Reading your movement…',
     subtitle: 'The coach is learning the shape of your motion',
     guidance: 'This first read can take a little longer.',
-    color: 'text-purple-400',
-    bgGradient: 'from-purple-950/60 via-indigo-950/40 to-purple-950/60',
-    borderColor: 'border-purple-500/40',
-    icon: (
-      <SpinnerIcon className="w-14 h-14 sm:w-16 sm:h-16 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)]" />
-    ),
+    color: 'studio-loader__phase-color studio-loader__phase-color--ai',
+    bgGradient: 'studio-loader__surface--ai',
+    borderColor: 'studio-loader__border--ai',
+    icon: <SpinnerIcon className="studio-loader__spinner w-14 h-14 sm:w-16 sm:h-16" />,
     estimatedTime: '10-30 seconds',
   },
   positioning: {
     title: 'Looking for one useful signal…',
     subtitle: 'Finding your joints and movement line',
     guidance: 'Hold still for a moment, then show us one rep.',
-    color: 'text-yellow-300',
-    bgGradient: 'from-yellow-950/40 via-yellow-900/20 to-yellow-950/40',
-    borderColor: 'border-yellow-400/30',
+    color: 'studio-loader__phase-color studio-loader__phase-color--positioning',
+    bgGradient: 'studio-loader__surface--positioning',
+    borderColor: 'studio-loader__border--positioning',
     icon: <CrosshairIcon className="w-14 h-14 sm:w-16 sm:h-16" />,
     estimatedTime: '2-5 seconds',
   },
@@ -236,9 +234,9 @@ const PHASE_CONFIG: Record<
     title: 'I see your movement.',
     subtitle: 'Coach is watching',
     guidance: 'Show me one rep.',
-    color: 'text-green-300',
-    bgGradient: 'from-green-950/40 via-green-900/20 to-green-950/40',
-    borderColor: 'border-green-400/30',
+    color: 'studio-loader__phase-color studio-loader__phase-color--ready',
+    bgGradient: 'studio-loader__surface--ready',
+    borderColor: 'studio-loader__border--ready',
     icon: <CheckmarkIcon className="w-14 h-14 sm:w-16 sm:h-16" />,
     estimatedTime: '',
   },
@@ -333,40 +331,27 @@ export default function UnifiedLoader({
   if (isOverlay) {
     return (
       <div
-        className={`
+        className={`studio-loader studio-loader--overlay
           absolute inset-0 z-20 flex flex-col items-center justify-center
           transition-all duration-500 pointer-events-none
           ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
-          backdrop-blur-md
           ${className}
         `}
-        style={{
-          background:
-            phase === 'ready'
-              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))'
-              : 'linear-gradient(135deg, rgba(88, 28, 135, 0.4), rgba(30, 27, 75, 0.4))',
-          maxHeight: '100%',
-          maxWidth: '100%',
-          overflow: 'hidden',
-        }}
+        data-phase={phase}
       >
         {/* Animated Background Ring for 'Ready' state */}
         {phase === 'ready' && (
-          <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-            <div className="w-64 h-64 border-4 border-green-500/20 rounded-full animate-ping opacity-20" />
-            <div className="absolute w-48 h-48 border-2 border-green-400/30 rounded-full animate-pulse opacity-30" />
+          <div className="studio-loader__ready-ring absolute inset-0 flex items-center justify-center overflow-hidden">
+            <div className="studio-loader__ready-ring-outer" />
+            <div className="studio-loader__ready-ring-inner absolute" />
           </div>
         )}
 
         {/* Icon with scaling/pulse animation */}
         <div
-          className={`
-            mb-6 p-4 rounded-full transition-all duration-700
-            ${phase === 'ready' ? 'bg-green-500/20 shadow-lg shadow-green-500/30' : 'bg-white/5'}
-          `}
-          style={{
-            animation: phase === 'ready' ? 'victory-bounce 1.5s infinite ease-in-out' : 'none',
-          }}
+          className={`studio-loader__icon mb-6 p-4 rounded-full transition-all duration-700 ${
+            phase === 'ready' ? 'studio-loader__icon--ready' : ''
+          }`}
         >
           {config.icon}
         </div>
@@ -382,7 +367,7 @@ export default function UnifiedLoader({
           <h3
             className={`
             font-bold leading-tight tracking-tight
-            ${phase === 'ready' ? 'text-green-300 text-2xl' : config.color + ' text-lg'}
+            ${phase === 'ready' ? 'studio-loader__ready-title text-2xl' : config.color + ' text-lg'}
           `}
           >
             {phase === 'ready' ? 'I see your movement.' : config.title}
@@ -392,8 +377,12 @@ export default function UnifiedLoader({
           </p>
         </div>
 
+        <span className="sr-only" role="status" aria-live="polite">
+          {config.title}. {phase === 'ai' && progress > 0 ? `${progress}% complete.` : ''}
+        </span>
+
         {/* Step rail — one boot sequence, three milestones */}
-        <div className="mt-6 flex items-center gap-3" aria-hidden="true">
+        <div className="studio-loader__step-rail mt-6 flex items-center gap-3" aria-hidden="true">
           {BOOT_STEPS.map((step, i) => {
             const activeStep = ACTIVE_STEP[phase];
             const done = phase === 'ready' || i < activeStep;
@@ -403,17 +392,21 @@ export default function UnifiedLoader({
                 <span
                   className={`flex h-4 w-4 items-center justify-center rounded-full border text-[8px] font-black transition-colors duration-300 ${
                     done
-                      ? 'border-green-400/60 bg-green-400/20 text-green-300'
+                      ? 'studio-loader__step studio-loader__step--done'
                       : active
-                        ? 'border-yellow-400/60 bg-yellow-400/15 text-yellow-300 animate-pulse'
-                        : 'border-white/15 bg-white/5 text-white/30'
+                        ? 'studio-loader__step studio-loader__step--active animate-pulse'
+                        : 'studio-loader__step studio-loader__step--upcoming'
                   }`}
                 >
                   {done ? '✓' : i + 1}
                 </span>
                 <span
                   className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${
-                    done ? 'text-green-300/80' : active ? 'text-yellow-200/90' : 'text-white/30'
+                    done
+                      ? 'studio-loader__step-label--done'
+                      : active
+                        ? 'studio-loader__step-label--active'
+                        : 'studio-loader__step-label--upcoming'
                   }`}
                 >
                   {step}
@@ -427,17 +420,17 @@ export default function UnifiedLoader({
         {/* Progress indicators */}
         {phase === 'ai' && progress > 0 && (
           <div className="mt-8 flex flex-col items-center gap-3">
-            <div className="text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]">
+            <div className="studio-loader__progress-ring">
               <ProgressRing progress={progress} size={64} strokeWidth={3} />
             </div>
             <div className="text-center">
-              <p className="text-xs font-bold text-white uppercase tracking-widest opacity-60">
+              <p className="studio-loader__progress-label text-xs font-bold uppercase tracking-widest opacity-60">
                 Reading your movement
               </p>
-              <p className="text-sm font-black text-purple-300 mt-1">{progress}%</p>
+              <p className="studio-loader__progress-value text-sm font-black mt-1">{progress}%</p>
               <p
                 key={tipIndex}
-                className="mt-2 max-w-[260px] text-[11px] leading-snug text-white/60"
+                className="studio-loader__tip mt-2 max-w-[260px] text-[11px] leading-snug"
               >
                 {BOOT_TIPS[tipIndex]}
               </p>
@@ -447,35 +440,23 @@ export default function UnifiedLoader({
 
         {/* Loading dots for other non-ready phases */}
         {phase !== 'ai' && phase !== 'ready' && (
-          <div className="mt-8 flex items-center gap-2">
-            <div className="flex gap-1.5 p-2 bg-black/20 rounded-full backdrop-blur-sm">
+          <div className="studio-loader__dots mt-8 flex items-center gap-2">
+            <div className="flex gap-1.5 p-2 rounded-full">
               <div
-                className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"
+                className="studio-loader__dot w-2 h-2 rounded-full animate-bounce"
                 style={{ animationDelay: '0ms' }}
               />
               <div
-                className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
+                className="studio-loader__dot w-2 h-2 rounded-full animate-bounce"
                 style={{ animationDelay: '150ms' }}
               />
               <div
-                className="w-2 h-2 rounded-full bg-pink-400 animate-bounce"
+                className="studio-loader__dot w-2 h-2 rounded-full animate-bounce"
                 style={{ animationDelay: '300ms' }}
               />
             </div>
           </div>
         )}
-
-        <style jsx>{`
-          @keyframes victory-bounce {
-            0%,
-            100% {
-              transform: translateY(0) scale(1.1);
-            }
-            50% {
-              transform: translateY(-10px) scale(1.15);
-            }
-          }
-        `}</style>
       </div>
     );
   }
@@ -483,42 +464,28 @@ export default function UnifiedLoader({
   // Full-screen version (initialization screen)
   return (
     <div
-      className={`
+      className={`studio-loader studio-loader--fullscreen
         fixed inset-0 z-50 flex flex-col items-center justify-center
         transition-all duration-300
         ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}
         ${className}
       `}
-      style={{
-        background:
-          'linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 27, 75) 50%, rgb(15, 23, 42) 100%)',
-      }}
+      data-phase={phase}
     >
-      {/* Animated background gradient */}
-      <div
-        className="absolute inset-0 opacity-30"
-        style={{
-          background: `radial-gradient(circle at ${50 + 20 * Math.sin(Date.now() / 3000)}% ${50 + 20 * Math.cos(Date.now() / 4000)}%, rgba(139, 92, 246, 0.1), transparent)`,
-        }}
-      />
+      {/* Quiet calibration field — the stylesheet owns the atmosphere so the
+          boot frame stays deterministic during capture and render. */}
+      <div className="studio-loader__field absolute inset-0" aria-hidden="true" />
 
-      {/* Premium glassmorphism card */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {config.title}. {phase === 'ai' && progress > 0 ? `${progress}% complete.` : ''}
+      </span>
+
+      {/* Premium calibration card */}
       <div
-        className={`
-          relative z-10 text-center space-y-8 max-w-md w-full mx-auto px-6 sm:px-8
-          backdrop-blur-xl rounded-2xl border
-          ${config.bgGradient} ${config.borderColor}
-          bg-gradient-to-br shadow-2xl
-          py-10 sm:py-12
-        `}
+        className={`studio-loader__card relative z-10 text-center space-y-8 max-w-md w-full mx-auto px-6 sm:px-8 ${config.bgGradient} ${config.borderColor}`}
       >
         {/* Icon with entrance animation */}
-        <div
-          className="flex justify-center transition-all duration-700 ease-out"
-          style={{
-            animation: 'scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          }}
-        >
+        <div className="studio-loader__icon studio-loader__icon--enter flex justify-center transition-all duration-700 ease-out">
           <div className={config.color}>{config.icon}</div>
         </div>
 
@@ -527,67 +494,57 @@ export default function UnifiedLoader({
           <h2 className={`${config.color} text-2xl sm:text-3xl font-bold leading-tight`}>
             {displayTitle}
           </h2>
-          <p className="text-gray-300 text-sm sm:text-base leading-relaxed">{displaySubtitle}</p>
+          <p className="studio-loader__subtitle text-sm sm:text-base leading-relaxed">
+            {displaySubtitle}
+          </p>
         </div>
 
         {/* Guidance text */}
-        <p className="text-gray-400 text-xs sm:text-sm leading-relaxed px-2">{config.guidance}</p>
+        <p className="studio-loader__guidance text-xs sm:text-sm leading-relaxed px-2">
+          {config.guidance}
+        </p>
 
         {/* Progress indicators */}
         <div className="space-y-4">
           {phase === 'ai' && progress > 0 ? (
             <div className="flex flex-col items-center gap-4">
-              <div className={config.color}>
+              <div className="studio-loader__progress-ring">
                 <ProgressRing progress={progress} size={72} strokeWidth={2.5} />
               </div>
               <div className="text-center space-y-1">
-                <p className="text-gray-300 text-sm font-medium">Reading your movement…</p>
-                <p className={`${config.color} text-lg font-semibold`}>{progress}%</p>
+                <p className="studio-loader__progress-label text-sm font-medium">
+                  Reading your movement…
+                </p>
+                <p className="studio-loader__progress-value text-lg font-semibold">{progress}%</p>
               </div>
             </div>
           ) : phase !== 'ready' ? (
-            <div className="flex justify-center">
+            <div className="studio-loader__dots flex justify-center">
               <div className="flex gap-1.5">
                 <div
-                  className={`w-2 h-2 rounded-full ${config.color} animate-bounce`}
+                  className="studio-loader__dot w-2 h-2 rounded-full animate-bounce"
                   style={{ animationDelay: '0ms' }}
                 />
                 <div
-                  className={`w-2 h-2 rounded-full ${config.color} animate-bounce`}
+                  className="studio-loader__dot w-2 h-2 rounded-full animate-bounce"
                   style={{ animationDelay: '150ms' }}
                 />
                 <div
-                  className={`w-2 h-2 rounded-full ${config.color} animate-bounce`}
+                  className="studio-loader__dot w-2 h-2 rounded-full animate-bounce"
                   style={{ animationDelay: '300ms' }}
                 />
               </div>
             </div>
           ) : (
-            <div className={`${config.color} text-lg font-semibold animate-pulse`}>
-              Show me one rep.
-            </div>
+            <div className="studio-loader__ready-copy text-lg font-semibold">Show me one rep.</div>
           )}
         </div>
 
         {/* Estimated time hint */}
         {config.estimatedTime && phase !== 'ready' && (
-          <p className="text-gray-500 text-xs italic pt-2">{config.estimatedTime}</p>
+          <p className="studio-loader__estimate text-xs italic pt-2">{config.estimatedTime}</p>
         )}
       </div>
-
-      {/* CSS for entrance animation */}
-      <style jsx>{`
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
     </div>
   );
 }

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Ghost, Trophy, ChevronRight, Share2, Play, Crown } from 'lucide-react';
 import { useXpProgress } from '@/hooks/useXpProgress';
-import { ghostService } from '@/services/GhostService';
 import { useSearchParams } from 'next/navigation';
 
 interface ChallengeWidgetProps {
@@ -49,28 +48,6 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
   const handleStartChallenge = (mode: 'pushups' | 'squats') => {
     if (onStartGhostRace) {
       onStartGhostRace(mode);
-    }
-  };
-
-  const handleShareChallenge = async () => {
-    // Get the current workout trace from localStorage
-    const lastWorkoutTrace = localStorage.getItem('lastWorkoutTrace');
-    if (!lastWorkoutTrace) {
-      alert('Complete a workout first to share a ghost challenge!');
-      return;
-    }
-
-    try {
-      const trace = JSON.parse(lastWorkoutTrace);
-      const mode = (localStorage.getItem('lastWorkoutMode') as 'pushups' | 'squats') || 'pushups';
-      const shareUrl = ghostService.generateShareUrl(trace, mode);
-
-      // Copy to clipboard
-      await navigator.clipboard.writeText(shareUrl);
-      alert('Ghost challenge link copied to clipboard!');
-    } catch (error) {
-      console.error('Failed to share challenge:', error);
-      alert('Failed to create challenge. Please complete a workout first.');
     }
   };
 
@@ -149,16 +126,9 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
         </div>
       </div>
 
-      {/* Share Your Challenge */}
-      {canUseGhostMode && (
-        <button
-          onClick={handleShareChallenge}
-          className="w-full mb-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
-        >
-          <Share2 size={16} />
-          <span>Share Challenge Link</span>
-        </button>
-      )}
+      <p className="mb-4 text-center text-[10px] text-gray-500">
+        Finish a set to send a private movement correction to someone else.
+      </p>
 
       {/* Champions Section */}
       <div className="border-t border-white/5 pt-4">

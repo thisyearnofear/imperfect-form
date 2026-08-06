@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { Check, PersonStanding } from 'lucide-react';
 import { getStretches } from '@/lib/recovery/recoveryContent';
 
 /**
@@ -36,15 +37,16 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete, ton
   if (done) {
     return (
       <div className="flex flex-col items-center gap-5 py-6 font-sans">
-        <div className="text-4xl" aria-hidden>
-          ✓
+        <div className="recovery-card__completion" aria-hidden="true">
+          <Check size={24} />
         </div>
         <p
           className={`text-sm font-light tracking-wide ${light ? 'text-slate-600' : 'text-teal-100'}`}
         >
           Recovery complete. Your muscles thank you.
-        </p>
+        </p>{' '}
         <button
+          type="button"
           onClick={onComplete}
           className={
             light
@@ -62,8 +64,8 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete, ton
 
   return (
     <div className="flex flex-col items-center gap-4 py-6 font-sans">
-      <div className="text-4xl" aria-hidden>
-        {current.emoji}
+      <div className="recovery-card__movement-mark" aria-hidden="true">
+        <PersonStanding size={24} />
       </div>
       <div className="text-center space-y-1">
         <p
@@ -98,6 +100,7 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete, ton
       </p>
 
       <button
+        type="button"
         onClick={() => {
           setIndex((i) => i + 1);
           setRemaining(stretches[index + 1]?.seconds ?? 20);
