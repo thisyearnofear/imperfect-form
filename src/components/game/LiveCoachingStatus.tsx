@@ -49,7 +49,7 @@ export function LiveCoachingStatus({
     );
   }
 
-  if (phase === 'correction' && warning) {
+  if (phase === 'correction' && warning && mode !== 'curls') {
     return (
       <div
         key={`warning-${warning}`}
@@ -66,6 +66,20 @@ export function LiveCoachingStatus({
     );
   }
 
+  if (phase === 'correction' && mode === 'curls') {
+    return (
+      <div
+        key="curl-instrument"
+        className="live-status live-status--ready motion-cue"
+        role="status"
+        aria-live="polite"
+      >
+        <CheckCircle2 size={16} />
+        <span>Use the angle and drift readout to guide this rep.</span>
+      </div>
+    );
+  }
+
   if (phase === 'your_turn') {
     return (
       <div
@@ -77,11 +91,13 @@ export function LiveCoachingStatus({
         <CheckCircle2 size={16} />
         <span>
           Your turn.{' '}
-          {focusWarning
-            ? `Keep this in mind: ${readableFormWarning(focusWarning).toLowerCase()}.`
-            : retryFocus
-              ? `Retry focus: ${retryFocus.toLowerCase()}`
-              : 'Match the line and keep going.'}
+          {mode === 'curls'
+            ? 'Use the angle and drift readout to guide this rep.'
+            : focusWarning
+              ? `Keep this in mind: ${readableFormWarning(focusWarning).toLowerCase()}.`
+              : retryFocus
+                ? `Retry focus: ${retryFocus.toLowerCase()}`
+                : 'Match the line and keep going.'}
         </span>
       </div>
     );
@@ -98,7 +114,11 @@ export function LiveCoachingStatus({
         <CheckCircle2 size={16} />
         <span>
           I see your movement.{' '}
-          {retryFocus ? `Next set focus: ${retryFocus.toLowerCase()}.` : 'Show me one rep.'}
+          {mode === 'curls'
+            ? 'Show one curl — the instrument will mark the target range.'
+            : retryFocus
+              ? `Next set focus: ${retryFocus.toLowerCase()}.`
+              : 'Show me one rep.'}
         </span>
       </div>
     );

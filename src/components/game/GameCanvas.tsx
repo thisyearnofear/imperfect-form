@@ -8,6 +8,8 @@ import { FirstRepCelebration } from './FirstRepCelebration';
 import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
 import { PoseState, DetectionProgress } from '@/hooks/usePoseDetection';
 import { useCoachingMoment } from '@/hooks/useCoachingMoment';
+import CurlFormInstrument from './CurlFormInstrument';
+import { deriveCurlTelemetry } from '@/lib/curlTelemetry';
 
 interface RepFeedback {
   show: boolean;
@@ -30,6 +32,7 @@ interface GameCanvasProps {
   /** A user-facing focus carried from the recap retry CTA; never drives robot commands. */
   retryFocus?: string | null;
   metrics?: import('@/types/mediapipe').BiomechanicalState | null;
+  curlPoseData?: import('@/types/mediapipe').CurlPoseData | null;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -47,6 +50,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   showFirstRepCelebration = false,
   retryFocus = null,
   metrics = null,
+  curlPoseData = null,
 }) => {
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
@@ -62,6 +66,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     repCount,
     metrics?.warnings ?? []
   );
+
+  const curlTelemetry =
+    mode === 'curls' ? deriveCurlTelemetry(curlPoseData ?? undefined, metrics) : null;
 
   const coachingStatusProps = {
     mode,
@@ -91,7 +98,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <div
           id="canvasContainerMobile"
           aria-label="Game Canvas Mobile"
-          className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/50 ${isFullscreen ? 'video-container-fs' : ''} ${poseState.poseDetected ? 'is-tracking' : ''}`}
+          className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 session-camera-stage ${isFullscreen ? 'video-container-fs' : ''} ${poseState.poseDetected ? 'is-tracking' : ''}`}
           style={{ width: '100%', minHeight: '300px' }}
         >
           {webcam}
@@ -104,6 +111,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <LiveCoachingStatus {...coachingStatusProps} />
+          {mode === 'curls' ? (
+            <CurlFormInstrument telemetry={curlTelemetry} tracking={poseState.poseDetected} />
+          ) : null}
         </div>
         <CoachTwinPeek session />
       </div>
@@ -125,7 +135,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       <div
         id="canvasContainerDesktop"
         aria-label="Game Canvas Desktop"
-        className={`w-full relative flex-grow rounded-lg overflow-hidden border border-white/10 bg-black/50 ${poseState.poseDetected ? 'is-tracking' : ''}`}
+        className={`w-full relative flex-grow rounded-lg overflow-hidden border border-white/10 session-camera-stage ${poseState.poseDetected ? 'is-tracking' : ''}`}
       >
         {webcam}
         <GameLoadingOverlay
@@ -138,6 +148,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
         <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
         <LiveCoachingStatus {...coachingStatusProps} />
+        {mode === 'curls' ? (
+          <CurlFormInstrument telemetry={curlTelemetry} tracking={poseState.poseDetected} />
+        ) : null}
       </div>
       <CoachTwinPeek session />
     </div>

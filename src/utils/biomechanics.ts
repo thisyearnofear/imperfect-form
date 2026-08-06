@@ -166,6 +166,11 @@ export interface EngineRepDetectorState {
     leftElbowAngle?: number;
     rightElbowAngle?: number;
     observedElbowAngle?: number;
+    leftShoulderAngle?: number;
+    rightShoulderAngle?: number;
+    observedShoulderAngle?: number;
+    activeElbowAngle?: number;
+    activeShoulderAngle?: number;
   };
   lastElbowAngle?: number;
 }
@@ -205,6 +210,11 @@ export function detectEngineRep(
     leftElbowAngle: result.poseData.leftElbowAngle,
     rightElbowAngle: result.poseData.rightElbowAngle,
     observedElbowAngle: result.poseData.observedElbowAngle,
+    leftShoulderAngle: result.poseData.leftShoulderAngle,
+    rightShoulderAngle: result.poseData.rightShoulderAngle,
+    observedShoulderAngle: result.poseData.observedShoulderAngle,
+    activeElbowAngle: result.poseData.activeElbowAngle,
+    activeShoulderAngle: result.poseData.activeShoulderAngle,
   };
   state.lastElbowAngle =
     result.poseData.observedElbowAngle ??
@@ -295,15 +305,18 @@ export function analyzeBiomechanics(keypoints: Keypoint[], mode: ExerciseMode): 
     const rw = getPoint(keypoints, 'right_wrist');
     if (le) {
       const leftAngle = calculateAngle(ls, le, lw);
-      // Curl progress: 170° extended -> 50° fully curled
-      metrics.depth = Math.max(0, Math.min(1, (170 - leftAngle) / (170 - 50)));
+      const rightAngle = rs && re && rw ? calculateAngle(rs, re, rw) : null;
+      // Use the same most-curled visible arm as curlProcessor. This keeps the
+      // normalized HUD depth and raw-angle instrument in agreement for
+      // alternating curls.
+      const activeAngle = rightAngle !== null ? Math.min(leftAngle, rightAngle) : leftAngle;
+      metrics.depth = Math.max(0, Math.min(1, (160 - activeAngle) / (160 - 50)));
       // Upper-arm drift = momentum cheat
       if (lh) {
         const shoulderDrift = calculateAngle(lh, ls, le);
         if (shoulderDrift > 30) metrics.warnings.push('PIN ELBOWS');
       }
-      if (rs && re && rw) {
-        const rightAngle = calculateAngle(rs, re, rw);
+      if (rightAngle !== null) {
         metrics.symmetry = Math.max(0, 1 - Math.abs(leftAngle - rightAngle) / 90);
       }
     }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
 import './globals.css';
 import '@/styles/studio-shell.css';
+import '@/styles/curl-instrument.css';
 import '@/styles/studio-card.css';
 import '@/styles/session-recap.css';
 import '@/styles/lab-analysis-card.css';

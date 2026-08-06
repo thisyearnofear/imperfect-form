@@ -319,9 +319,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     poseState,
     detectionProgress,
     metrics,
+    curlPoseData,
     handlePoseStateChange,
     handleDetectionProgress,
     handleMetrics,
+    handleCurlPoseData,
   } = usePoseDetection();
 
   // The atmosphere is a low-cost visual readout of the same session state as
@@ -829,6 +831,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         onPoseStateChange={handlePoseStateChange}
         onDetectionProgress={handleDetectionProgress}
         onMetrics={handleMetrics}
+        onCurlPoseData={handleCurlPoseData}
         onSessionEnd={handleSessionEnd}
         pbTrace={activeTrace || undefined}
       />
@@ -840,6 +843,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       handlePoseStateChange,
       handleDetectionProgress,
       handleMetrics,
+      handleCurlPoseData,
       handleSessionEnd,
       activeTrace,
     ]
@@ -964,6 +968,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               showFirstRepCelebration={showFirstRepCelebration}
               retryFocus={retryFocus}
               metrics={metrics}
+              curlPoseData={curlPoseData}
             />
           )}
         </div>

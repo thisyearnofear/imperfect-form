@@ -72,6 +72,13 @@ correction as `FormEvent.target`. The station clamps both to the active
 simulation/live workspace before generating the `elbow_flex` trajectory;
 omitting either field uses the legacy 160° → 50° fallback.
 
+During a curl session, `CurlFormInstrument` surfaces the same active-arm
+measurement used by the processor: current elbow angle, 50–70° target range,
+phase, and elbow drift. It is a readout, not a second detector. The Coach Bay
+stage is intentionally decorative and fail-silent; camera coaching remains
+usable when the station is offline. The manual browser + station simulation
+stage is still required before hardware bring-up.
+
 Cyberwave sim (optional): `uv sync --extra cyberwave`, then same demo/server
 commands (`COACH_AFFECT=simulation` is the default). See
 [`coach-station/README.md`](../coach-station/README.md).

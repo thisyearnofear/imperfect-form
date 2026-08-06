@@ -69,17 +69,38 @@ export interface BiomechanicalState {
   warnings: string[];
 }
 
+/** Raw curl measurements emitted by the exercise engine for the live instrument. */
+export interface CurlPoseData {
+  leftElbowAngle?: number;
+  rightElbowAngle?: number;
+  observedElbowAngle?: number;
+  leftShoulderAngle?: number;
+  rightShoulderAngle?: number;
+  observedShoulderAngle?: number;
+  /** Active-arm angle selected by the curl processor for consistent UI depth. */
+  activeElbowAngle?: number;
+  /** Active-arm elbow drift selected by the curl processor. */
+  activeShoulderAngle?: number;
+}
+
+export interface CurlTelemetry {
+  elbowAngle: number;
+  elbowDriftDeg: number | null;
+  targetMinDeg: number;
+  targetMaxDeg: number;
+  elbowDriftTargetDeg: number;
+  phase: 'extended' | 'mid-curl' | 'curl-range';
+  rangeProgress: number;
+  depth: number | null;
+}
+
 // Worker response types
 export type WorkerResponse =
   | {
       type: 'result';
       state: BiomechanicalState | null;
       keypoints: Keypoint[];
-      poseData?: {
-        leftElbowAngle?: number;
-        rightElbowAngle?: number;
-        observedElbowAngle?: number;
-      };
+      poseData?: CurlPoseData;
       formCheckSpeak?: { issue: string; phrase: string };
     }
   | { type: 'rep'; count: number }

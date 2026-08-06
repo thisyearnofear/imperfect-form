@@ -111,6 +111,22 @@ XP. Avalanche is a full theme token once earned / wallet-switched.
 
 - Manual stage — browser + station end-to-end (see “What's next” below)
 
+**Shipped (curl evidence surface):**
+
+- Live `CurlFormInstrument` in the curls session: the user can see the active
+  elbow angle, 50–70° target range, curl phase, elbow drift, and a visual
+  target marker rather than relying on generic correction copy.
+- The instrument is a formatter over the existing pose engine, not a second
+  detector. The curl processor selects the most actively curled visible arm so
+  alternating curls do not average an extended arm with a curled arm.
+- Curl depth, coaching status, and the instrument share that active-arm reading;
+  stale telemetry clears when tracking is lost. Accessible status is throttled
+  to meaningful angle/phase changes rather than announcing every camera frame.
+- The in-session camera stage now has a restrained teal Coach Bay treatment
+  with grid/floor grounding. It remains decorative and fail-silent: camera
+  coaching does not depend on the station, and existing overlays retain their
+  positioning.
+
 **Shipped (Milestone 1 — sim choreography software):**
 
 - `coach-station/` — WebSocket bridge + FormEvent → demonstration primitives

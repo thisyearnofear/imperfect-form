@@ -74,6 +74,10 @@ function analyzeDepth(
   metrics: BiomechanicalState,
   mode: import('@/utils/biomechanics').ExerciseMode
 ): CoachingIssue | null {
+  // Curls have a dedicated angle/range instrument in the live session. Do not
+  // compete with it using the generic depth copy ("Lower down more").
+  if (mode === 'curls') return null;
+
   const { depth } = metrics;
   const target = 0.85;
 

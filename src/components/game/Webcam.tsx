@@ -31,6 +31,7 @@ interface WebcamProps {
     percentage: number;
   }) => void;
   onMetrics?: (state: import('@/types/mediapipe').BiomechanicalState) => void;
+  onCurlPoseData?: (poseData: import('@/types/mediapipe').CurlPoseData | undefined) => void;
   onSessionEnd?: (summary: import('@/services/sessionLogger').SessionSummary) => void;
   pbTrace?: import('@/types/workout').SessionSnapshot[];
 }
@@ -46,6 +47,7 @@ const Webcam: React.FC<WebcamProps> = ({
   onPoseStateChange,
   onDetectionProgress,
   onMetrics,
+  onCurlPoseData,
   onSessionEnd,
   pbTrace,
 }) => {
@@ -68,6 +70,7 @@ const Webcam: React.FC<WebcamProps> = ({
     onPoseStateChange,
     onDetectionProgress,
     onMetrics,
+    onCurlPoseData,
     onSessionEnd,
     pbTrace,
     canvasEpoch,
@@ -295,7 +298,7 @@ const Webcam: React.FC<WebcamProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full"
+      className="webcam-layer relative w-full"
       style={{
         // Fix mobile video squeezing by using flex-based sizing instead of conflicting aspect-ratio
         ...(isMobile

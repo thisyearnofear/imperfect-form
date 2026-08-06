@@ -42,6 +42,11 @@ export interface PoseAngles {
   rightShoulderAngle?: number;
   /** Elbow angle from the visible arm that triggered a form cue. */
   observedElbowAngle?: number;
+  /** Upper-arm drift from the torso line for the visible arm. */
+  observedShoulderAngle?: number;
+  /** Selected active-arm readings shared with the session instrument. */
+  activeElbowAngle?: number;
+  activeShoulderAngle?: number;
 }
 
 export interface PoseData extends PoseAngles {

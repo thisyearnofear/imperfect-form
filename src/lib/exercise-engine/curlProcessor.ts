@@ -100,6 +100,19 @@ export const processCurls = ({
   let feedback: string | undefined;
   let formCheckSpeak: { issue: string; phrase: string } | undefined;
 
+  // Pick the most actively curled visible arm for the UI instrument. This keeps
+  // alternating curls truthful instead of averaging an extended arm with a
+  // curled arm and describing neither one.
+  const activeArm = [leftVisible ? left : null, rightVisible ? right : null]
+    .filter((reading): reading is ArmReading => reading !== null)
+    .sort((a, b) => a.elbowAngle - b.elbowAngle)[0];
+  if (activeArm) {
+    poseData.observedElbowAngle = activeArm.elbowAngle;
+    poseData.observedShoulderAngle = activeArm.shoulderAngle;
+    poseData.activeElbowAngle = activeArm.elbowAngle;
+    poseData.activeShoulderAngle = activeArm.shoulderAngle;
+  }
+
   // Cheat detection: upper arm should stay pinned while curling
   const leftSwing =
     leftVisible && left.shoulderAngle > SWING_SHOULDER_DEG && left.elbowAngle < EXTENDED_DEG;
@@ -112,6 +125,7 @@ export const processCurls = ({
     feedback = 'Keep your elbows pinned to your sides!';
     formCheckSpeak = { issue: 'elbow_swing', phrase: 'Pin your elbows' };
     poseData.observedElbowAngle = leftSwing ? left?.elbowAngle : right?.elbowAngle;
+    poseData.observedShoulderAngle = leftSwing ? left?.shoulderAngle : right?.shoulderAngle;
   }
 
   // Per-arm hysteresis (each arm counts independently - alternating curls work)

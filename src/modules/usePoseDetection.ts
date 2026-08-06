@@ -89,6 +89,7 @@ export function usePoseDetection(
     percentage: number;
   }) => void,
   onMetrics?: (state: BiomechanicalState) => void,
+  onCurlPoseData?: (poseData: import('../types/mediapipe').CurlPoseData | undefined) => void,
   onSessionEnd?: (summary: SessionSummary) => void,
   pbTrace?: import('../types/workout').SessionSnapshot[],
   /** Bumps when Webcam replaces a poisoned OffscreenCanvas host */
@@ -138,6 +139,7 @@ export function usePoseDetection(
   const onPoseStateChangeRef = useRef(onPoseStateChange);
   const onDetectionProgressRef = useRef(onDetectionProgress);
   const onMetricsRef = useRef(onMetrics);
+  const onCurlPoseDataRef = useRef(onCurlPoseData);
   const onSessionEndRef = useRef(onSessionEnd);
 
   modeRef.current = safeMode;
@@ -169,8 +171,9 @@ export function usePoseDetection(
     onPoseStateChangeRef.current = onPoseStateChange;
     onDetectionProgressRef.current = onDetectionProgress;
     onMetricsRef.current = onMetrics;
+    onCurlPoseDataRef.current = onCurlPoseData;
     onSessionEndRef.current = onSessionEnd;
-  }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics, onSessionEnd]);
+  }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics, onCurlPoseData, onSessionEnd]);
 
   const notifyStateChange = useCallback(
     (newState: Partial<typeof _poseState>) => {
@@ -431,6 +434,7 @@ export function usePoseDetection(
           } else if (data.type === 'result') {
             const detected = data.keypoints && data.keypoints.length > 0;
             notifyStateChange({ poseDetected: detected });
+            onCurlPoseDataRef.current?.(modeRef.current === 'curls' ? data.poseData : undefined);
             if (data.state) {
               onMetricsRef.current?.(data.state);
               sessionLoggerRef.current?.logFrame(data.state, data.keypoints || []);
@@ -790,6 +794,9 @@ export function usePoseDetection(
                   );
                 }
               }
+              onCurlPoseDataRef.current?.(
+                activeMode === 'curls' ? engineDetector?.lastPoseData : undefined
+              );
 
               onMetricsRef.current?.(metrics);
               sessionLoggerRef.current?.logFrame(metrics, keypoints);
@@ -818,6 +825,7 @@ export function usePoseDetection(
                 }
               }
             } else {
+              onCurlPoseDataRef.current?.(undefined);
               // Clear canvas if no pose, but still render ghost if available
               if (canvasRef.current) {
                 const ctx = canvasRef.current.getContext('2d');

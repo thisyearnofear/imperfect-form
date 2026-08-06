@@ -1,0 +1,334 @@
+/* Evidence-first curl instrument — one measured cue, one visual target. */
+.curl-instrument {
+  position: absolute;
+  right: clamp(0.75rem, 2vw, 1.25rem);
+  bottom: clamp(0.75rem, 2vw, 1.25rem);
+  z-index: 76;
+  width: min(21rem, calc(100% - 1.5rem));
+  padding: 0.8rem 0.9rem 0.7rem;
+  color: #e7fbf6;
+  background: linear-gradient(145deg, rgba(9, 39, 43, 0.94), rgba(5, 20, 25, 0.9));
+  border: 1px solid rgba(122, 235, 216, 0.34);
+  border-radius: 0.8rem;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  pointer-events: none;
+}
+
+.curl-instrument--waiting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 4.5rem;
+  border-color: rgba(139, 227, 212, 0.22);
+  opacity: 0.9;
+}
+
+.curl-instrument--curl-range {
+  border-color: rgba(117, 230, 177, 0.52);
+}
+
+.curl-instrument--mid-curl {
+  border-color: rgba(245, 189, 117, 0.48);
+}
+
+.curl-instrument__eyebrow {
+  margin: 0 0 0.15rem;
+  color: rgba(173, 232, 220, 0.66);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.curl-instrument__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.curl-instrument__header strong {
+  display: block;
+  color: #f0fffb;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.curl-instrument__rep {
+  padding: 0.18rem 0.4rem;
+  border: 1px solid rgba(122, 235, 216, 0.24);
+  border-radius: 999px;
+  color: rgba(197, 243, 234, 0.84);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.56rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.curl-instrument__body {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.55rem;
+}
+
+.curl-instrument__dial {
+  position: relative;
+  width: 5.25rem;
+  height: 5.25rem;
+  flex: 0 0 5.25rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(122, 235, 216, 0.1),
+    rgba(5, 20, 25, 0.15) 68%,
+    transparent 70%
+  );
+}
+
+.curl-instrument__dial-ring {
+  position: absolute;
+  inset: 0.45rem;
+  border: 1px dashed rgba(122, 235, 216, 0.35);
+  border-radius: 50%;
+}
+
+.curl-instrument__forearm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2.15rem;
+  height: 0.18rem;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, #f4cf7f, #79ead4);
+  border-radius: 999px;
+  transition: transform 0.18s ease-out;
+}
+
+.curl-instrument__forearm span {
+  position: absolute;
+  right: -0.2rem;
+  top: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  transform: translateY(-50%);
+  border: 1px solid rgba(244, 207, 127, 0.85);
+  border-radius: 50%;
+}
+
+.curl-instrument__hub {
+  position: absolute;
+  left: calc(50% - 0.25rem);
+  top: calc(50% - 0.25rem);
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 2px solid #8be8d5;
+  border-radius: 50%;
+  background: #0a252b;
+}
+
+.curl-instrument__dial-label {
+  position: absolute;
+  color: rgba(184, 235, 224, 0.64);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.48rem;
+}
+
+.curl-instrument__dial-label--top {
+  top: 0;
+  right: 0.55rem;
+}
+
+.curl-instrument__dial-label--bottom {
+  bottom: 0;
+  left: 0.35rem;
+}
+
+.curl-instrument__readings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.curl-instrument__reading {
+  min-width: 0;
+}
+
+.curl-instrument__reading span,
+.curl-instrument__reading small {
+  display: block;
+  color: rgba(177, 218, 211, 0.62);
+  font-size: 0.52rem;
+  line-height: 1.25;
+}
+
+.curl-instrument__reading strong {
+  display: block;
+  margin: 0.12rem 0;
+  color: #f2fffb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.curl-instrument__reading--primary strong {
+  color: #f5d58d;
+}
+
+.curl-instrument__range {
+  margin-top: 0.62rem;
+}
+
+.curl-instrument__range-track {
+  position: relative;
+  height: 0.35rem;
+  overflow: visible;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(122, 235, 216, 0.25), rgba(245, 189, 117, 0.22));
+}
+
+.curl-instrument__range-target {
+  position: absolute;
+  top: -0.1rem;
+  height: 0.55rem;
+  border: 1px solid rgba(117, 230, 177, 0.9);
+  border-radius: 999px;
+  background: rgba(117, 230, 177, 0.24);
+}
+
+.curl-instrument__range-marker {
+  position: absolute;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  transform: translate(-50%, -50%);
+  border: 2px solid #f7e2a5;
+  border-radius: 50%;
+  background: #102c32;
+  box-shadow: 0 0 0 3px rgba(247, 226, 165, 0.12);
+  transition: left 0.18s ease-out;
+}
+
+.curl-instrument__range-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  color: rgba(181, 220, 213, 0.62);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.48rem;
+}
+
+.curl-instrument__range-labels span:nth-child(2) {
+  color: rgba(244, 207, 127, 0.9);
+  text-align: center;
+}
+
+.curl-instrument__waiting-mark {
+  color: rgba(122, 235, 216, 0.65);
+  font-size: 1.7rem;
+  animation: curl-instrument-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes curl-instrument-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The session remains a Coach Bay: a deep teal stage, not a dead black tile. */
+.session-camera-stage {
+  background:
+    radial-gradient(circle at 70% 18%, rgba(122, 235, 216, 0.14), transparent 34%),
+    linear-gradient(150deg, rgba(13, 48, 57, 0.72), rgba(5, 18, 24, 0.94));
+  border-color: rgba(122, 235, 216, 0.28) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+.session-camera-stage::before,
+.session-camera-stage::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.session-camera-stage::before {
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 49.8%, rgba(122, 235, 216, 0.08) 50%, transparent 50.2%),
+    linear-gradient(0deg, transparent 49.8%, rgba(122, 235, 216, 0.06) 50%, transparent 50.2%);
+  background-size:
+    25% 100%,
+    100% 25%;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+.session-camera-stage::after {
+  left: 5%;
+  right: 5%;
+  bottom: 4%;
+  height: 18%;
+  border-top: 1px solid rgba(122, 235, 216, 0.14);
+  border-radius: 50%;
+  box-shadow: 0 -12px 34px rgba(122, 235, 216, 0.08);
+  transform: perspective(360px) rotateX(58deg);
+}
+
+.session-camera-stage > .webcam-layer {
+  position: relative;
+  z-index: 3;
+}
+
+.session-camera-stage > canvas,
+.session-camera-stage > video {
+  z-index: 3;
+}
+
+.session-camera-stage > .curl-instrument {
+  position: absolute;
+}
+
+@media (max-width: 720px) {
+  .curl-instrument {
+    right: 0.65rem;
+    bottom: 0.65rem;
+    width: min(19rem, calc(100% - 1.3rem));
+    padding: 0.7rem 0.75rem 0.62rem;
+  }
+
+  .curl-instrument__dial {
+    width: 4.5rem;
+    height: 4.5rem;
+    flex-basis: 4.5rem;
+  }
+
+  .curl-instrument__body {
+    gap: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curl-instrument__forearm,
+  .curl-instrument__range-marker,
+  .curl-instrument__waiting-mark {
+    animation: none;
+    transition: none;
+  }
+}

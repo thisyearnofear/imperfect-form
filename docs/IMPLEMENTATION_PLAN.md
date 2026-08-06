@@ -95,8 +95,11 @@ captures the elbow angle associated with an `elbow_swing` cue, sends it as
 `FormEvent.current`, and sends a deterministic 50° correction as
 `FormEvent.target`. The station clamps both values to the active simulation or
 live workspace before producing the `elbow_flex` intent and interpolated
-trajectory. The remaining gate is recording and validating a coached episode
-in LeRobot format.
+trajectory. The session also exposes an evidence-first `CurlFormInstrument`
+that formats the active arm's elbow angle, target range, phase, and drift from
+the same processor output; curl depth and coaching copy use that same reading.
+The remaining gate is recording and validating a coached episode in LeRobot
+format.
 
 ### 2.1 Define the mapping contract ✅ shipped for curl elbow flexion
 
@@ -151,6 +154,10 @@ Every time a demo fires, append a LeRobot-format episode slice to disk (not yet 
 
 - [x] Curls → bad elbow form → `elbow_swing` → station maps to a corrected,
       safety-clamped elbow angle and plays a trajectory.
+- [x] Curl session shows the measured active-arm angle, 50–70° target range,
+      curl phase, and elbow drift without adding a second detector.
+- [x] Curl depth and generic correction status are aligned to the same active
+      arm; stale curl telemetry is cleared when tracking is lost.
 - [ ] Browser + station manual stage validates the mapping in simulation with
       narration and twin telemetry.
 - [ ] Each recorded episode includes: timestamp, user/session id, exercise mode,

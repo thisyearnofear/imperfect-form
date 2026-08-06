@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { BiomechanicalState } from '@/types/mediapipe';
+import type { BiomechanicalState, CurlPoseData } from '@/types/mediapipe';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -26,10 +26,12 @@ interface UsePoseDetectionReturn {
   poseState: PoseState;
   detectionProgress: DetectionProgress | null;
   metrics: BiomechanicalState | null;
+  curlPoseData: CurlPoseData | null;
   showLoadingOverlay: boolean;
   handlePoseStateChange: (state: PoseState) => void;
   handleDetectionProgress: (progress: DetectionProgress) => void;
   handleMetrics: (state: BiomechanicalState) => void;
+  handleCurlPoseData: (poseData: CurlPoseData | undefined) => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -46,6 +48,7 @@ export function usePoseDetection(): UsePoseDetectionReturn {
 
   const [detectionProgress, setDetectionProgress] = useState<DetectionProgress | null>(null);
   const [metrics, setMetrics] = useState<BiomechanicalState | null>(null);
+  const [curlPoseData, setCurlPoseData] = useState<CurlPoseData | null>(null);
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
 
   const handleDetectionProgress = useCallback((progress: DetectionProgress) => {
@@ -75,14 +78,20 @@ export function usePoseDetection(): UsePoseDetectionReturn {
     setMetrics(state);
   }, []);
 
+  const handleCurlPoseData = useCallback((poseData: CurlPoseData | undefined) => {
+    setCurlPoseData(poseData ?? null);
+  }, []);
+
   return {
     poseState,
     detectionProgress,
     metrics,
+    curlPoseData,
     showLoadingOverlay,
     handlePoseStateChange,
     handleDetectionProgress,
     handleMetrics,
+    handleCurlPoseData,
   };
 }
 

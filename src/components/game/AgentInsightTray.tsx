@@ -49,7 +49,9 @@ export function AgentInsightTray({ metrics, mode, voiceEnabled, repCount }: Agen
     lastHash.current = metricsHash;
 
     const analysis = analyzeForm(metrics, mode);
-    const issue = analysis.primaryIssue;
+    // Curls have their own angle + drift instrument in the camera stage. Keep
+    // this tray quiet so it cannot issue a second, generic depth instruction.
+    const issue = mode === 'curls' ? null : analysis.primaryIssue;
     const state: CueState = issue ? (issue.severity === 'info' ? 'good' : 'adjust') : 'good';
     const message =
       issue?.cue ?? (repCount > 0 ? 'Good control. Keep that rhythm.' : DEFAULT_CUES[mode]);
@@ -86,7 +88,7 @@ export function AgentInsightTray({ metrics, mode, voiceEnabled, repCount }: Agen
       <Icon size={17} aria-hidden="true" />
       <div>
         <p>{label}</p>
-        <strong>{cue.message}</strong>
+        <strong>{mode === 'curls' ? 'Follow the angle + drift readout.' : cue.message}</strong>
       </div>
     </section>
   );

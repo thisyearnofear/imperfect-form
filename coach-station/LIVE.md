@@ -10,6 +10,9 @@ stage passes** (browser + station; see [README.md](./README.md) checklist and
 - [ ] Milestone 1 software dry-run green: `./scripts/cohort-dry-run.sh`
 - [ ] Manual cohort stage proven in **simulation** (console or Cyberwave twin)
       — CoachFoyer → Curls → form cue → demo + TTS (+ twin peek / bay pulse)
+- [x] Browser curl evidence surface available: active-arm angle, 50–70° target
+      range, phase, and elbow drift are visible in `CurlFormInstrument`; this
+      is local camera evidence only and does not prove station or hardware motion.
 - [ ] Clear desk radius around the arm; no people in sweep plane
 - [ ] Physical dead-man / e-stop within reach of the operator
 - [ ] `cyberwave pair` completed on the edge machine
