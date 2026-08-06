@@ -16,7 +16,7 @@ export default function GameWrapper() {
   const { address } = wallet;
 
   return (
-    <div className="h-full bg-black flex flex-col relative">
+    <div className="game-wrapper h-full flex flex-col relative">
       <main className="flex-grow">
         {/* Use address from context if available; Game handles no-address gracefully */}
         <Game thirdwebAddress={address || undefined} />

@@ -32,7 +32,7 @@ these questions are answered.
 Record the participant’s first answer to each question:
 
 1. What do you think this is?
-2. What do you think will happen if you press **Start camera coaching**?
+2. What do you think will happen if you press **Try one rep**?
 3. What is the difference between this and a normal workout counter?
 4. Which movement would you choose, and why?
 5. Did you notice that camera coaching is private/on-device?
@@ -82,16 +82,16 @@ NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev
 ### Browser sequence
 
 1. Open a fresh browser profile at `http://localhost:3000`.
-2. Confirm the foyer says **Camera coaching ready** and shows the current Coach state.
+2. Confirm the foyer says **Camera coaching ready** and shows the current Coach state; the bay should remain a quiet, non-blocking readout.
 3. Confirm **Curls** is selected by default.
-4. Start camera coaching without connecting a wallet.
+4. Press **Try one rep** to start camera coaching without connecting a wallet.
 5. Allow the camera.
 6. Produce the `elbow_swing` form cue.
 
 ### Pass criteria
 
 - The camera session starts even if the station is stopped.
-- With the station running, the foyer reports `Camera coaching ready · Coach link connected`.
+- With the station running, the foyer reports `Coach bay connected · camera coaching ready`.
 - The station logs the form event and dispatches the curl demonstration.
 - The browser speaks the station narration.
 - The active twin instrument shows the correction state and progress.

@@ -141,18 +141,26 @@ Landers see, in order:
    (`public/atmosphere/`, see NOTICE.md) on a CSS perspective 3D gaze stage
    (fine-pointer desktop gets stronger rotateY/X; no third-party Spline).
    Soft Celo/Base/Avalanche/Monad blooms only — not a ThemeSync takeover.
-   When `NEXT_PUBLIC_COACH_STATION` is set, `CoachFoyer` reports the Coach link
-   state and `CoachTwinPeek` + bay pulse (`body[data-coach-pulse]`) surface
-   physical-AI demos fail-silently. `?twin=1` provides a deterministic DEMO
+   `CoachFoyer` reports the Coach link state, while the shared bay readout follows
+   the selected movement and session state (`body[data-coach-mode]`,
+   `body[data-coach-state]`, and `body[data-coach-station]`): selected → starting
+   → camera → AI → positioning → tracking. Local form cues pulse the bay even
+   without a station (`body[data-coach-pulse='cue']`); station demonstrations use
+   the stronger demo pulse only when the bridge is enabled. `CoachTwinPeek` and
+   station pulses remain fail-silent. `?twin=1` provides a deterministic DEMO
    rehearsal for UI composition only; it never drives hardware or closes the
    manual-stage gate.
 3. **Home shell** — studio topbar (`IMPERFECT FORM`) even before `hasMounted`.
 4. **`CoachFoyer`** — glass panel over the bay; two pre-answered moves, CTA-first
-   (extras + explainer demoted below START). START fires the browser camera ask
-   directly; `CameraPrimer` is denial-recovery only, and a single step-railed
-   boot overlay (Camera → Coach AI → Finding you, ≥700ms/phase, rotating
-   placement tips during model warmup) replaces micro-flashing loaders.
-   Returning users land on earned chrome synchronously via `imf_hasTrained`.
+   (extras + explainer demoted below START). The bay responds to the selected
+   movement and mirrors the real session handoff: starting, camera, AI,
+   positioning, and tracking. START fires the browser camera ask directly;
+   `CameraPrimer` is denial-recovery only, and a single step-railed boot overlay
+   (Camera → Coach AI → Finding you, ≥700ms/phase, rotating placement tips
+   during model warmup) replaces micro-flashing loaders. Local correction cues
+   remain visible as a lightweight bay pulse when the robot is offline; robot
+   demo emphasis is reserved for actual station demonstrations. Returning users
+   land on earned chrome synchronously via `imf_hasTrained`.
 
 Product differentiation (robot teaches the human; PoseRuntime is primary):
 see [NORTH_STAR.md](./NORTH_STAR.md) “What we are (and are not).”
@@ -184,6 +192,26 @@ Rules in `src/modules/usePoseDetection.ts` + `Webcam.tsx`:
 6. **Smoke the worker path** with `e2e/pose-runtime.spec.ts` (sets
    `window.__IMF_FORCE_POSE_WORKER__ = true` so `next dev` still hits the
    production OffscreenCanvas pipeline).
+
+### Coach Bay state readout
+
+The fixed `StudioAtmosphere` is an environment readout, not a second control
+surface. `Game` owns the state attributes so the bay reflects the same session
+that owns camera and pose detection:
+
+- `data-coach-mode`: selected exercise (`curls`, `pushups`, etc.).
+- `data-coach-state`: `selected`, `starting`, `camera`, `ai`, `positioning`, or
+  `tracking`.
+- `data-coach-station`: `offline`, `connecting`, or `connected`.
+- `data-coach-pulse`: transient `cue` or `demo`; local cues work camera-only,
+  while `demo` is station-backed.
+
+Keep this layer lightweight: CSS opacity, transform, glow, and caption changes
+only. The atmosphere caption/readout is decorative (`aria-hidden`); accessible
+state remains in the foyer/session HUD and live status surfaces. Do not infer
+mechanical arm readiness from a WebSocket connection, and do not make the bay
+state a prerequisite for camera coaching. Reduced-motion users keep the static
+visual state without animation.
 
 ### Coach TTS (demo voice sync)
 

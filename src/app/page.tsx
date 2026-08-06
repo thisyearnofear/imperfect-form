@@ -32,14 +32,10 @@ import { ScreenTransition } from '@/components/ui/ScreenTransition';
 function GameLoadingShell() {
   const { immersive } = useImmersive();
   return (
-    <div
-      className="studio-boot"
-      role="status"
-      aria-live="polite"
-      aria-label="Loading Imperfect Form"
-    >
+    <div className="studio-boot">
       <div className="studio-boot__atmosphere" aria-hidden="true">
         <div className="studio-boot__glow" />
+        <div className="studio-boot__bay-markings" />
       </div>
       <div className="studio-boot__content">
         <p className="studio-boot__brand">{BRAND.studio.brand}</p>
@@ -245,6 +241,7 @@ export default function Home() {
         >
           <div className="studio-boot__atmosphere" aria-hidden="true">
             <div className="studio-boot__glow" />
+            <div className="studio-boot__bay-markings" />
           </div>
           <div className="studio-boot__content">
             <p className="studio-boot__brand">{BRAND.studio.brand}</p>

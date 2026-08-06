@@ -49,6 +49,7 @@ import {
   getCpuFilterMaxPixels,
 } from '../lib/pose/posePreprocessor';
 import { getDeviceInfo } from '../utils/deviceDetection';
+import { emitCoachCue } from '../lib/appEvents';
 
 // Biomechanical types removed - consolidated into src/utils/biomechanics.ts
 
@@ -436,6 +437,9 @@ export function usePoseDetection(
             }
             // Worker can't open WebSockets — forward engine form cues on main thread
             if (data.formCheckSpeak) {
+              if (!coachStation.enabled) {
+                emitCoachCue({ ...data.formCheckSpeak, mode: modeRef.current });
+              }
               coachStation.sendEngineFormCheck(
                 modeRef.current,
                 data.formCheckSpeak,
@@ -774,6 +778,9 @@ export function usePoseDetection(
               if (engineDetector) {
                 const speak = consumeFormCheckSpeak(engineDetector);
                 if (speak) {
+                  if (!coachStation.enabled) {
+                    emitCoachCue({ ...speak, mode: activeMode });
+                  }
                   coachStation.sendEngineFormCheck(
                     activeMode,
                     speak,

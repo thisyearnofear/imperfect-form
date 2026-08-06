@@ -115,9 +115,10 @@ From repo root, automated software dry-run (vitest + pytest + demo CLI):
 
 For the complete first-visit clarity test, camera-only/station-connected variants,
 and evidence requirements, see [`docs/FIRST_VISIT_AND_MANUAL_STAGE.md`](../docs/FIRST_VISIT_AND_MANUAL_STAGE.md).
-The browser foyer reports `Camera coaching ready` in every state and distinguishes
-Coach link connected / connecting / offline; a link connection is not claimed to
-be mechanical arm readiness.
+The browser foyer reports camera coaching readiness in every state and distinguishes
+Coach bay connected / connecting / offline; the fixed bay readout also mirrors the
+selected movement and camera/AI/tracking handoff. Local cues remain visible without
+the station. A link connection is not claimed to be mechanical arm readiness.
 
 **Required next gate** (see [ROADMAP.md](../docs/ROADMAP.md) “What's next —
 required order”): pass this manual browser/session stage before hardware
@@ -135,10 +136,11 @@ cohort gate still requires observing it in a real browser session.
 1. `cd coach-station && COACH_SIM_SPEED_SCALE=1 uv run python -m coach_station`
    (console or Cyberwave sim; use the default scale for timing validation)
 2. From repo root: `NEXT_PUBLIC_COACH_STATION=ws://localhost:8765 pnpm dev`
-3. Browser (Ring 0, no wallet): **CoachFoyer** → pick **Curls** → Start camera
-   coaching → allow camera → produce bad elbow form (`elbow_swing`)
-4. Expect: foyer status remains camera-ready · station logs a demo · browser
-   speaks narration · twin peek / bay pulse react (when UI is on the day-0 shell)
+3. Browser (Ring 0, no wallet): **CoachFoyer** → pick **Curls** → press **Try one
+   rep** → allow camera → produce bad elbow form (`elbow_swing`)
+4. Expect: foyer status remains camera-ready · bay readout follows the session
+   handoff · station logs a demo · browser speaks narration · twin peek / bay pulse
+   react (when UI is on the day-0 shell)
 5. Deterministic UI-only rehearsal: open the app with `?twin=1`, start a session,
    and then see the DEMO twin instrument and progress loop; this never drives a
    real arm and does not close the manual-stage gate

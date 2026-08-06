@@ -105,6 +105,73 @@
     inset 0 0 80px rgba(0, 82, 255, 0.04);
 }
 
+/* Sparse architectural cues turn the backdrop into a room: two rails, a
+   calibration frame, and a contact shadow under the physical coach. */
+.studio-atmosphere__rails {
+  position: absolute;
+  inset: 10% 8% 12%;
+  border-left: 1px solid rgba(139, 227, 212, 0.09);
+  border-right: 1px solid rgba(139, 227, 212, 0.09);
+  opacity: 0.7;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 78%, transparent);
+}
+
+.studio-atmosphere__calibration {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 14%;
+  height: 40%;
+  border: 1px solid rgba(122, 235, 216, 0.08);
+  background:
+    linear-gradient(rgba(122, 235, 216, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122, 235, 216, 0.08) 1px, transparent 1px);
+  background-size: 25% 33.333%;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+  opacity: 0.65;
+}
+
+.studio-atmosphere__calibration::before,
+.studio-atmosphere__calibration::after {
+  content: '';
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-color: rgba(255, 217, 122, 0.35);
+  border-style: solid;
+}
+
+.studio-atmosphere__calibration::before {
+  left: -1px;
+  top: -1px;
+  border-width: 1px 0 0 1px;
+}
+
+.studio-atmosphere__calibration::after {
+  right: -1px;
+  bottom: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+.studio-atmosphere__plinth {
+  position: absolute;
+  right: max(8%, calc(10% - var(--gaze-x) * 8px));
+  bottom: 20%;
+  width: min(28vw, 320px);
+  height: 7%;
+  border: 1px solid rgba(139, 227, 212, 0.12);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    rgba(86, 217, 195, 0.2),
+    rgba(6, 16, 19, 0.05) 68%,
+    transparent 70%
+  );
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.32);
+  transform: perspective(260px) rotateX(58deg);
+  opacity: 0.8;
+}
+
 .studio-atmosphere__floor {
   position: absolute;
   left: 4%;
@@ -163,6 +230,64 @@
     transform: translate3d(calc(var(--gaze-x) * 8px), calc(var(--gaze-y) * 6px), 0)
       rotateY(calc(var(--gaze-x) * 6deg)) rotateX(calc(var(--gaze-y) * -4deg));
   }
+}
+
+.studio-atmosphere__stage-label {
+  position: absolute;
+  right: 11%;
+  top: 9%;
+  color: rgba(214, 240, 234, 0.42);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.studio-atmosphere__state-readout {
+  position: absolute;
+  right: 11%;
+  top: 14%;
+  width: 1.15rem;
+  height: 0.35rem;
+  border: 1px solid rgba(139, 227, 212, 0.35);
+  border-radius: 999px;
+  background: rgba(139, 227, 212, 0.08);
+  opacity: 0.5;
+  transition:
+    width 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    opacity 220ms ease;
+}
+
+/* The readout is deliberately non-verbal: it gives the room a pulse without
+   adding another instruction to the first viewport. */
+body[data-coach-state='starting'] .studio-atmosphere__state-readout,
+body[data-coach-state='camera'] .studio-atmosphere__state-readout,
+body[data-coach-state='ai'] .studio-atmosphere__state-readout {
+  width: 1.7rem;
+  background: rgba(255, 217, 122, 0.36);
+  border-color: rgba(255, 217, 122, 0.62);
+  opacity: 0.9;
+}
+
+body[data-coach-state='positioning'] .studio-atmosphere__state-readout {
+  width: 2.2rem;
+  background: rgba(122, 235, 216, 0.35);
+  border-color: rgba(122, 235, 216, 0.68);
+  opacity: 0.95;
+}
+
+body[data-coach-state='tracking'] .studio-atmosphere__state-readout {
+  width: 2.8rem;
+  background: rgba(122, 235, 216, 0.58);
+  border-color: rgba(122, 235, 216, 0.88);
+  opacity: 1;
+}
+
+body[data-coach-station='connected'] .studio-atmosphere__state-readout {
+  box-shadow: 0 0 12px rgba(255, 217, 122, 0.28);
 }
 
 .studio-atmosphere__arm-glow {
@@ -289,6 +414,31 @@
   }
 }
 
+/* Curls is the clearest physical-AI path: selection warms the arm stage
+   without turning the robot into the landing-page hero. */
+body[data-coach-mode='curls'] .studio-atmosphere__arm-glow {
+  opacity: 0.82;
+  filter: saturate(1.15);
+}
+
+body[data-coach-mode='curls'] .studio-atmosphere__arc {
+  color: rgba(255, 217, 122, 0.72);
+}
+
+body[data-coach-mode='curls'] .studio-atmosphere__plinth {
+  border-color: rgba(252, 177, 49, 0.28);
+}
+
+body[data-coach-mode='pushups'] .studio-atmosphere__figure,
+body[data-coach-mode='squats'] .studio-atmosphere__figure {
+  opacity: 0.24;
+}
+
+body[data-coach-mode='pushups'] .studio-atmosphere__link,
+body[data-coach-mode='squats'] .studio-atmosphere__link {
+  color: rgba(122, 235, 216, 0.62);
+}
+
 /* Demo-moment sync — form cue / station demonstration pulse the bay */
 body[data-coach-pulse='cue'] .studio-atmosphere__arc {
   color: rgba(122, 235, 216, 0.95);
@@ -305,6 +455,16 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arc {
 body[data-coach-pulse='cue'] .studio-atmosphere__arm-glow,
 body[data-coach-pulse='demo'] .studio-atmosphere__arm-glow {
   animation: studio-atmosphere-demo-glow 1.2s ease-out;
+}
+
+body[data-coach-pulse='cue'] .studio-atmosphere__skeleton {
+  animation: studio-atmosphere-cue-skeleton 1.2s ease-out;
+}
+
+body[data-coach-pulse='cue'] .studio-atmosphere__state-readout {
+  width: 2.8rem;
+  background: rgba(255, 217, 122, 0.52);
+  border-color: rgba(255, 217, 122, 0.86);
 }
 
 body[data-coach-pulse='demo'] .studio-atmosphere__caption {
@@ -351,6 +511,18 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   }
   40% {
     opacity: 1;
+  }
+}
+
+@keyframes studio-atmosphere-cue-skeleton {
+  0%,
+  100% {
+    opacity: 0.16;
+    transform: scale(1);
+  }
+  42% {
+    opacity: 0.42;
+    transform: scale(1.025);
   }
 }
 
@@ -442,6 +614,19 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   text-transform: uppercase;
 }
 
+.studio-atmosphere__caption-state {
+  display: none;
+}
+
+body[data-coach-state='selected'] .studio-atmosphere__caption-default,
+body[data-coach-state='starting'] .studio-atmosphere__caption-state.caption-state--starting,
+body[data-coach-state='camera'] .studio-atmosphere__caption-state.caption-state--camera,
+body[data-coach-state='ai'] .studio-atmosphere__caption-state.caption-state--ai,
+body[data-coach-state='positioning'] .studio-atmosphere__caption-state.caption-state--positioning,
+body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-state--tracking {
+  display: inline;
+}
+
 @keyframes studio-atmosphere-glow {
   0%,
   100% {
@@ -467,7 +652,9 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
 }
 
 @media (max-width: 720px) {
-  .studio-atmosphere__stage {
+  /* Position the frame, not its inset child: the frame owns the aspect-ratio
+     and keeps the arm's footprint predictable on narrow phones. */
+  .studio-atmosphere__stage-frame {
     right: -20%;
     top: auto;
     bottom: 10%;
@@ -519,6 +706,35 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
     font-size: 0.62rem;
   }
 
+  .studio-atmosphere__rails {
+    inset: 8% 4% 14%;
+  }
+
+  .studio-atmosphere__calibration {
+    left: 4%;
+    right: 4%;
+    top: 12%;
+    height: 34%;
+    opacity: 0.4;
+  }
+
+  .studio-atmosphere__plinth {
+    right: -2%;
+    bottom: 18%;
+    width: min(54vw, 240px);
+  }
+
+  .studio-atmosphere__stage-label {
+    right: 8%;
+    top: 7%;
+    font-size: 0.42rem;
+  }
+
+  .studio-atmosphere__state-readout {
+    right: 8%;
+    top: 12%;
+  }
+
   .studio-atmosphere__floor {
     height: 14%;
     opacity: 0.4;
@@ -541,6 +757,12 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   .studio-atmosphere__arm-photo--ghost,
   .studio-atmosphere__arc,
   .studio-atmosphere__bloom--monad {
+    transform: none;
+  }
+
+  .studio-atmosphere__rails,
+  .studio-atmosphere__calibration,
+  .studio-atmosphere__plinth {
     transform: none;
   }
 }

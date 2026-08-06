@@ -307,7 +307,8 @@ CoachFoyer (studio) → Start → browser camera prompt (direct from the press)
  ExerciseEngine      Coach bus (fail-silent)   SessionLogger
  (pushups|squats|    HUD · TTS · AgentTray     → Summary
   curls|pullups|     coachStation FormEvents
-  jumps)
+  jumps)             + Coach Bay readout
+                     (mode / state / pulse)
 ```
 
 ### Ownership rules (do not regress)
@@ -356,8 +357,11 @@ Runtime status is published for debug/e2e as `window.__IMF_POSE_RUNTIME__`
 - Unit: `src/lib/pose/poseRuntime.test.ts` — path policy
 - E2E: `e2e/pose-runtime.spec.ts` — curls + forced worker path, no canvas
   poison, session stays alive
-- Ring 0: `e2e/ring0.spec.ts` — wallet-free foyer → primer → start
+- Ring 0: `e2e/ring0.spec.ts` — wallet-free foyer → primer → start, studio shell,
+  bay layers, and selected-mode state synchronization
 - Coach station fail-silent: `e2e/coach-station.spec.ts`
+- Focused Coach Bay contract: local cue event → camera-only bay pulse; station
+  demo event → stronger demo pulse when the bridge is enabled
 
 ### Progress phases (UX)
 
@@ -402,9 +406,14 @@ coachStation.ts  ──ws://localhost:8765──►  coach_station/server.py
 2. Persona motion profiles keep demonstration in character with on-screen coach.
 3. Safety clamps live on the station; the browser never drives joints directly.
 4. UI presence (twin peek, bay pulse, and accessible progress) makes the twin
-   felt in imperfectform.fun without embedding MuJoCo in the browser.
+   felt in imperfectform.fun without embedding MuJoCo in the browser. The fixed
+   `StudioAtmosphere` also mirrors the real local session state: selected mode,
+   starting/camera/AI/positioning/tracking phases, and station availability.
+   Local cues can pulse the bay camera-only; stronger demo emphasis is reserved
+   for an actual station demonstration.
 5. `command_id` correlates lifecycle and progress feedback; the browser ignores
-   stale or invalid versions and remains fail-silent.
+   stale or invalid versions and remains fail-silent. A station connection never
+   implies that the physical arm is ready.
 
 Key files: `coach-station/coach_station/{schema,primitives,trajectory,arm,demo,server,recordings}.py`,
 `src/services/coachStation.ts`, `src/components/theme/CoachTwinPeek.tsx` — the

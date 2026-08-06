@@ -49,6 +49,17 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.getByRole('img', { name: /Camera waiting for you/i })).toHaveCount(0);
     await expect(page.locator('#screen')).toHaveAttribute('data-register', 'studio');
     await expect(page.locator('#game-container')).toHaveAttribute('data-register', 'studio');
+    await expect(page.locator('body')).toHaveAttribute('data-shell', 'studio');
+    await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'curls');
+    await expect(page.locator('body')).toHaveAttribute('data-coach-state', 'selected');
+    await expect(page.locator('.studio-atmosphere__caption')).toContainText(/Path ready/i);
+    await expect(page.locator('.studio-atmosphere__bay')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__stage-frame')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__rails')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__calibration')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__floor')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__plinth')).toHaveCount(1);
+    await expect(page.locator('.game-wrapper')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     // Game-loop tabs stay earned — not the foyer
     await expect(page.getByRole('button', { name: /Switch to Stats/i })).toHaveCount(0);
     const start = page.locator('#startButton');
@@ -68,6 +79,10 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(pushups).toBeVisible();
     await expect(curls).toHaveAttribute('aria-pressed', 'true');
     await expect(pushups).toHaveAttribute('aria-pressed', 'false');
+    await pushups.click();
+    await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'pushups');
+    await expect(curls).toHaveAttribute('aria-pressed', 'false');
+    await expect(pushups).toHaveAttribute('aria-pressed', 'true');
     // The robot-native proof case is signposted at the point of choice:
     // exactly one chip, on the Curls card, never on the camera-only card.
     await expect(page.locator('.coach-foyer__robot-chip')).toHaveCount(1);

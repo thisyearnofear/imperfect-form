@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { COACH_CUE_EVENT } from '@/lib/appEvents';
 import { coachStation } from '@/services/coachStation';
 
 export type CoachBayPulseKind = 'cue' | 'demo' | null;
@@ -12,11 +13,6 @@ export type CoachBayPulseKind = 'cue' | 'demo' | null;
 export function useCoachBayPulse(): void {
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    // No station connected — skip subscribing to the coachStation event bus
-    // and setting up pulse timers on day-0 when the arm is never linked
-    // (PERFORMANT).
-    if (!coachStation.enabled) return;
-
     let clearTimer = 0;
 
     const pulse = (kind: Exclude<CoachBayPulseKind, null>, ms: number) => {
@@ -29,17 +25,29 @@ export function useCoachBayPulse(): void {
       }, ms);
     };
 
-    const unsubDemo = coachStation.onDemonstration((event) => {
-      pulse('demo', Math.max(2200, Math.min(8000, event.duration_s * 1000 || 3200)));
-    });
-
-    const unsubCue = coachStation.onFormCue(() => {
-      // Lighter tip — don't stomp an active demo pulse
+    const onLocalCue = (_event: CustomEvent<{ issue: string; phrase: string; mode: string }>) => {
+      // Local pose coaching remains visible even when the physical coach is not configured.
       if (document.body.getAttribute('data-coach-pulse') === 'demo') return;
       pulse('cue', 1400);
-    });
+    };
+    window.addEventListener(COACH_CUE_EVENT, onLocalCue);
+
+    const unsubDemo = coachStation.enabled
+      ? coachStation.onDemonstration((event) => {
+          pulse('demo', Math.max(2200, Math.min(8000, event.duration_s * 1000 || 3200)));
+        })
+      : () => {};
+
+    const unsubCue = coachStation.enabled
+      ? coachStation.onFormCue(() => {
+          // Lighter tip — don't stomp an active demo pulse
+          if (document.body.getAttribute('data-coach-pulse') === 'demo') return;
+          pulse('cue', 1400);
+        })
+      : () => {};
 
     return () => {
+      window.removeEventListener(COACH_CUE_EVENT, onLocalCue);
       unsubDemo();
       unsubCue();
       window.clearTimeout(clearTimer);

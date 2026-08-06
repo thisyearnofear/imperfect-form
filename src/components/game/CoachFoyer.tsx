@@ -205,7 +205,11 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
   };
 
   return (
-    <section className="coach-foyer" aria-labelledby="coach-foyer-title">
+    <section
+      className={`coach-foyer coach-foyer--${mode}`}
+      aria-labelledby="coach-foyer-title"
+      data-coach-mode={mode}
+    >
       <div className="coach-foyer__atmosphere" aria-hidden="true">
         <div className="coach-foyer__glow" />
         <div className="coach-foyer__grid" />

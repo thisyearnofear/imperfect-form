@@ -308,6 +308,51 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     handleDetectionProgress,
     handleMetrics,
   } = usePoseDetection();
+
+  // The atmosphere is a low-cost visual readout of the same session state as
+  // the camera loop: no prop drilling and no implication that the robot is live
+  // when the station is unavailable.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.setAttribute('data-coach-mode', mode);
+    return () => document.body.removeAttribute('data-coach-mode');
+  }, [mode]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const state = !started
+      ? isStarting
+        ? 'starting'
+        : 'selected'
+      : !poseState.hasCamera
+        ? 'camera'
+        : !poseState.hasPoseDetection
+          ? 'ai'
+          : !poseState.poseDetected
+            ? 'positioning'
+            : 'tracking';
+    document.body.setAttribute('data-coach-state', state);
+    return () => document.body.removeAttribute('data-coach-state');
+  }, [
+    isStarting,
+    poseState.hasCamera,
+    poseState.hasPoseDetection,
+    poseState.poseDetected,
+    started,
+  ]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const updateStationState = (status: import('@/services/coachStation').StationStatus) => {
+      document.body.setAttribute('data-coach-station', status);
+    };
+    const unsubscribe = coachStation.onStatus(updateStationState);
+    return () => {
+      unsubscribe();
+      document.body.removeAttribute('data-coach-station');
+    };
+  }, []);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders

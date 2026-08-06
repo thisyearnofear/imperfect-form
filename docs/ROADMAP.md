@@ -58,11 +58,13 @@ Train / Arcade cabinet mode is later depth, not a day-0 requirement.
 mode hot-swap, worker path policy in `src/lib/pose/poseRuntime.ts`, docs in
 ARCHITECTURE.md, smoke via `e2e/pose-runtime.spec.ts` (forced worker + curls).
 
-**Studio bay atmosphere (shipped → next):** day-0 `StudioAtmosphere` with
-Apache-2.0 SO-101 **alpha cut-outs** (`so101-*-cutout.webp`), gaze parallax,
-and soft Celo / Base / Avalanche / Monad colour blooms (not a day-0 ThemeSync
-takeover). ChainAmbient / ThemeSync still gated until first XP. Avalanche is a
-full theme token once earned / wallet-switched.
+**Studio bay atmosphere (shipped):** day-0 `StudioAtmosphere` with Apache-2.0
+SO-101 **alpha cut-outs** (`so101-*-cutout.webp`), gaze parallax, restrained bay
+architecture (rails, calibration frame, floor/plinth grounding), and soft Celo /
+Base / Avalanche / Monad colour blooms (not a day-0 ThemeSync takeover).
+The boot calibration markings and reactive state readout are CSS-only and remain
+lightweight on the pose path. ChainAmbient / ThemeSync stay gated until first
+XP. Avalanche is a full theme token once earned / wallet-switched.
 
 **Shipped (atmosphere next beats):**
 
@@ -84,6 +86,10 @@ full theme token once earned / wallet-switched.
 - **First-visit protocol** — [`FIRST_VISIT_AND_MANUAL_STAGE.md`](./FIRST_VISIT_AND_MANUAL_STAGE.md)
   defines the stranger test, camera-only vs station-connected variants, and
   evidence required for the manual simulation gate
+- **Reactive Coach Bay** — the fixed atmosphere mirrors the selected movement,
+  session handoff (`selected → starting → camera → AI → positioning → tracking`),
+  and station availability through body state attributes; local form cues pulse
+  the bay camera-only, while stronger demo emphasis remains station-backed
 - **Demo moment sync** — form cues / `demonstration` set `body[data-coach-pulse]`
   so bay arc + glow pulse; earned shell gets a fallback bloom
 - **One-screen doorway** — no interactive boot gate: passive studio splash

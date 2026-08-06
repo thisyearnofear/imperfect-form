@@ -74,12 +74,17 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
         </div>
 
         <div className="studio-atmosphere__bay" />
+        <div className="studio-atmosphere__rails" />
+        <div className="studio-atmosphere__calibration" />
         <div className="studio-atmosphere__floor" />
+        <div className="studio-atmosphere__plinth" />
         <div className="studio-atmosphere__grain" />
 
         <div className="studio-atmosphere__stage-frame">
           <div className="studio-atmosphere__stage">
             <div className="studio-atmosphere__arm-glow" />
+            <span className="studio-atmosphere__stage-label">PHYSICAL COACH</span>
+            <span className="studio-atmosphere__state-readout" aria-hidden="true" />
             <img
               className="studio-atmosphere__arm-photo"
               src="/atmosphere/so101-follower-cutout.webp"
@@ -175,7 +180,29 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
               <span className="is-live">When connected</span>
             </div>
 
-            <p className="studio-atmosphere__caption">Camera sees you · coach shows the fix</p>
+            <p className="studio-atmosphere__caption" aria-hidden="true">
+              <span className="studio-atmosphere__caption-default">
+                Camera sees you · coach shows the fix
+              </span>
+              <span className="studio-atmosphere__caption-state caption-state--selected">
+                Coaching path ready
+              </span>
+              <span className="studio-atmosphere__caption-state caption-state--starting">
+                Arming the coach
+              </span>
+              <span className="studio-atmosphere__caption-state caption-state--camera">
+                Camera online
+              </span>
+              <span className="studio-atmosphere__caption-state caption-state--ai">
+                Loading pose model
+              </span>
+              <span className="studio-atmosphere__caption-state caption-state--positioning">
+                Find your frame
+              </span>
+              <span className="studio-atmosphere__caption-state caption-state--tracking">
+                Tracking live
+              </span>
+            </p>
           </>
         )}
       </div>
