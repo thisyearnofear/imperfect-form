@@ -20,9 +20,9 @@
   pointer-events: none;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 55% 45% at 82% 28%, rgba(86, 217, 195, 0.2), transparent 60%),
-    radial-gradient(ellipse 40% 35% at 8% 20%, rgba(0, 82, 255, 0.14), transparent 55%),
-    linear-gradient(165deg, #0e2a36 0%, var(--bay-mid) 38%, var(--bay-deep) 72%, #030b0e 100%);
+    radial-gradient(ellipse 55% 45% at 82% 28%, rgba(86, 217, 195, 0.22), transparent 60%),
+    radial-gradient(ellipse 40% 35% at 8% 20%, rgba(0, 82, 255, 0.16), transparent 55%),
+    linear-gradient(165deg, #12313e 0%, #0f2b38 38%, #0a1b21 72%, #061013 100%);
 }
 
 .studio-atmosphere__decor {
@@ -54,8 +54,8 @@
   width: min(42vw, 380px);
   aspect-ratio: 1;
   border-radius: 50%;
-  filter: blur(48px);
-  opacity: 0.38;
+  filter: blur(40px);
+  opacity: 0.55;
   mix-blend-mode: screen;
   animation: studio-atmosphere-bloom 9s ease-in-out infinite;
 }
@@ -71,7 +71,7 @@
   top: 42%;
   left: -6%;
   background: var(--chain-base);
-  opacity: 0.32;
+  opacity: 0.5;
   animation-delay: -2s;
 }
 
@@ -80,7 +80,7 @@
   right: 28%;
   width: min(36vw, 300px);
   background: var(--chain-avalanche);
-  opacity: 0.28;
+  opacity: 0.45;
   animation-delay: -4.5s;
 }
 
@@ -88,7 +88,7 @@
   top: 12%;
   right: 8%;
   background: var(--chain-monad);
-  opacity: 0.34;
+  opacity: 0.52;
   animation-delay: -1.5s;
   transform: translate3d(calc(var(--gaze-x) * 12px), calc(var(--gaze-y) * 8px), 0);
 }
@@ -112,16 +112,11 @@
   bottom: 0;
   height: 30%;
   background:
-    linear-gradient(to top, rgba(6, 16, 19, 0.96), transparent),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 47px,
-      rgba(86, 217, 195, 0.05) 48px
-    );
+    linear-gradient(to top, rgba(8, 20, 24, 0.9), transparent),
+    repeating-linear-gradient(90deg, transparent 0, transparent 47px, rgba(86, 217, 195, 0.08) 48px);
   transform: perspective(420px) rotateX(54deg);
   transform-origin: bottom center;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .studio-atmosphere__grain {
@@ -177,7 +172,7 @@
   background:
     radial-gradient(circle at 40% 40%, rgba(86, 217, 195, 0.35), transparent 55%),
     radial-gradient(circle at 70% 60%, rgba(131, 110, 249, 0.18), transparent 50%),
-    radial-gradient(circle at 30% 70%, rgba(240, 219, 24, 0.12), transparent 45%);
+    radial-gradient(circle at 30% 70%, rgba(240, 219, 24, 0.18), transparent 45%);
   transform: scale(1.18);
   animation: studio-atmosphere-glow 4.5s ease-in-out infinite;
 }
@@ -198,10 +193,8 @@
 .studio-atmosphere__arm-photo--ghost {
   opacity: 0.22;
   mix-blend-mode: screen;
-  transform: translate3d(calc(var(--gaze-x) * -14px), calc(var(--gaze-y) * -10px), 8px)
-    scale(1.05);
-  filter: blur(0.5px) brightness(1.15) saturate(1.15)
-    drop-shadow(0 0 20px rgba(0, 82, 255, 0.25));
+  transform: translate3d(calc(var(--gaze-x) * -14px), calc(var(--gaze-y) * -10px), 8px) scale(1.05);
+  filter: blur(0.5px) brightness(1.15) saturate(1.15) drop-shadow(0 0 20px rgba(0, 82, 255, 0.25));
 }
 
 .studio-atmosphere__arc {
@@ -215,6 +208,85 @@
   transition:
     color 0.25s ease,
     filter 0.25s ease;
+}
+
+/* The loop motif — the pose skeleton is the 'camera sees you' half of the
+   story; the dashed link and the arc carry the eye to the arm. Same teal as
+   the in-app trust proof, kept faint so it never fights the foyer. */
+.studio-atmosphere__figure {
+  position: absolute;
+  left: 6%;
+  top: 20%;
+  width: min(24vw, 260px);
+  z-index: 1;
+}
+
+.studio-atmosphere__skeleton {
+  width: 100%;
+  color: rgba(122, 235, 216, 0.9);
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.16;
+  filter: drop-shadow(0 0 14px rgba(86, 217, 195, 0.35));
+  animation: studio-atmosphere-skeleton-breathe 5.5s ease-in-out infinite;
+}
+
+.studio-atmosphere__skeleton circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+.studio-atmosphere__skeleton-head {
+  opacity: 0.85;
+}
+
+.studio-atmosphere__figure-label {
+  position: absolute;
+  left: 0;
+  bottom: -1.15rem;
+  color: rgba(186, 220, 214, 0.55);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.studio-atmosphere__link {
+  position: absolute;
+  left: 30%;
+  top: 30%;
+  width: 20vw;
+  min-width: 7rem;
+  color: rgba(122, 235, 216, 0.45);
+  opacity: 0.5;
+  transform: rotate(-6deg);
+  z-index: 1;
+}
+
+.studio-atmosphere__link path {
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-dasharray: 5 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* The chevron arrowhead must stay solid — only the connector is dashed. */
+.studio-atmosphere__link path:last-child {
+  stroke-dasharray: none;
+}
+
+@keyframes studio-atmosphere-skeleton-breathe {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.2;
+  }
 }
 
 /* Demo-moment sync — form cue / station demonstration pulse the bay */
@@ -332,12 +404,12 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   right: clamp(1rem, 4vw, 2.5rem);
   bottom: clamp(1rem, 3vh, 2rem);
   margin: 0;
-  max-width: 18rem;
-  color: rgba(186, 220, 214, 0.7);
+  max-width: 19rem;
+  color: rgba(214, 240, 234, 0.92);
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
   text-align: right;
   text-transform: uppercase;
 }
@@ -374,6 +446,20 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
     width: min(90vw, 380px);
   }
 
+  .studio-atmosphere__figure {
+    left: -8%;
+    top: 8%;
+    width: 40vw;
+  }
+
+  .studio-atmosphere__figure .studio-atmosphere__skeleton {
+    opacity: 0.1;
+  }
+
+  .studio-atmosphere__link {
+    display: none;
+  }
+
   .studio-atmosphere__arm-photo {
     opacity: 0.78;
   }
@@ -396,7 +482,7 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
     right: 1rem;
     bottom: 0.65rem;
     text-align: center;
-    font-size: 0.58rem;
+    font-size: 0.62rem;
   }
 
   .studio-atmosphere__floor {
@@ -405,14 +491,15 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   }
 
   .studio-atmosphere__bloom {
-    opacity: 0.22;
-    filter: blur(40px);
+    opacity: 0.34;
+    filter: blur(34px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .studio-atmosphere__arm-glow,
-  .studio-atmosphere__bloom {
+  .studio-atmosphere__bloom,
+  .studio-atmosphere__skeleton {
     animation: none;
   }
 

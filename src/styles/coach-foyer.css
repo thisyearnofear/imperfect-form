@@ -7,6 +7,9 @@
   --cf-teal: #56d9c3;
   --cf-teal-bright: #7aebd8;
   --cf-teal-deep: #0b2a2c;
+  /* Warm energy accent — the physical moment. Teal understands, gold shows. */
+  --cf-gold: #fcb131;
+  --cf-gold-bright: #ffd97a;
   --cf-surface: rgba(255, 255, 255, 0.035);
   --cf-border: rgba(181, 229, 221, 0.16);
   --cf-radius: 8px;
@@ -349,10 +352,6 @@
     background-color 160ms ease;
 }
 
-.coach-foyer__robot-chip.is-live {
-  box-shadow: 0 0 10px rgba(86, 217, 195, 0.18);
-}
-
 .coach-foyer__robot-chip.is-connecting {
   color: #d8c98c;
   border-color: rgba(216, 201, 140, 0.42);
@@ -366,7 +365,19 @@
 }
 
 .is-selected .coach-foyer__robot-chip {
-  border-color: rgba(86, 217, 195, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* The physical moment is warm: gold marks the loop's payoff (robot demo),
+   and the system map reads cool → warm — camera + coach are teal, SO-101 is
+   gold when it can actually show the fix. */
+.coach-foyer__robot-chip.is-live {
+  color: var(--cf-gold-bright);
+  border-color: rgba(252, 177, 49, 0.55);
+  background: rgba(252, 177, 49, 0.14);
+  box-shadow:
+    0 0 12px rgba(252, 177, 49, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 /* Keyboard focus — teal rings on the dark glass instead of the UA outline. */
@@ -438,9 +449,13 @@
 }
 
 .coach-foyer__system-node.is-robot.is-connected {
-  color: var(--cf-teal-bright);
-  border-color: rgba(86, 217, 195, 0.46);
-  background: rgba(86, 217, 195, 0.08);
+  color: var(--cf-gold-bright);
+  border-color: rgba(252, 177, 49, 0.5);
+  background: rgba(252, 177, 49, 0.1);
+}
+
+.coach-foyer__system-node.is-robot.is-connected small {
+  color: var(--cf-gold-bright);
 }
 
 .coach-foyer__system-node.is-robot.is-connecting {
@@ -569,6 +584,11 @@
 .coach-foyer__how-it-works-item svg {
   flex: 0 0 auto;
   margin-top: 0.15rem;
+}
+
+/* The third step is the payoff — 'Robot shows the fix' carries the warm accent. */
+.coach-foyer__how-it-works-item:nth-of-type(3) svg {
+  color: var(--cf-gold);
 }
 
 .coach-foyer__how-it-works-item strong {

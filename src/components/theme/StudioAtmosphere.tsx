@@ -105,17 +105,67 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
+              <defs>
+                <marker
+                  id="studio-atmosphere-arrow"
+                  markerWidth="6"
+                  markerHeight="6"
+                  refX="4"
+                  refY="3"
+                  orient="auto"
+                  markerUnits="userSpaceOnUse"
+                >
+                  <path d="M0 0 L6 3 L0 6 z" fill="currentColor" />
+                </marker>
+              </defs>
               <path
                 d="M 30 140 C 50 70, 110 35, 170 40"
                 stroke="currentColor"
                 strokeWidth="1.75"
                 strokeDasharray="5 7"
                 strokeLinecap="round"
+                markerEnd="url(#studio-atmosphere-arrow)"
               />
               <circle cx="170" cy="40" r="4.5" fill="currentColor" />
             </svg>
           </div>
         </div>
+
+        {/* The loop, in one composition: camera sees you (pose skeleton, same
+            teal as the in-app trust proof) → the arm shows the fix. Decorative. */}
+        <div className="studio-atmosphere__figure" aria-hidden="true">
+          <svg className="studio-atmosphere__skeleton" viewBox="0 0 120 240" fill="none">
+            <circle className="studio-atmosphere__skeleton-head" cx="60" cy="22" r="10" />
+            <path d="M60 34 L60 116" />
+            <path d="M38 42 L82 42" />
+            <path d="M38 42 L30 70 L24 104" />
+            <path d="M82 42 L88 68 L102 52" />
+            <path d="M48 116 L72 116" />
+            <path d="M48 116 L45 166 L42 212" />
+            <path d="M72 116 L75 166 L78 212" />
+            <circle cx="30" cy="70" r="2.2" />
+            <circle cx="24" cy="104" r="2.2" />
+            <circle cx="88" cy="68" r="2.2" />
+            <circle cx="102" cy="52" r="2.2" />
+            <circle cx="48" cy="116" r="2.2" />
+            <circle cx="72" cy="116" r="2.2" />
+            <circle cx="45" cy="166" r="2.2" />
+            <circle cx="42" cy="212" r="2.2" />
+            <circle cx="75" cy="166" r="2.2" />
+            <circle cx="78" cy="212" r="2.2" />
+          </svg>
+          <span className="studio-atmosphere__figure-label">You</span>
+        </div>
+
+        <svg
+          className="studio-atmosphere__link"
+          viewBox="0 0 160 40"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path d="M8 20 H116" />
+          <path d="M108 12 l18 8 l-18 8" />
+        </svg>
 
         {quiet ? null : (
           <>
@@ -126,9 +176,7 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
               <span className="is-monad">Monad</span>
             </div>
 
-            <p className="studio-atmosphere__caption">
-              SO-101 Coach · path → physical AI that can show the fix
-            </p>
+            <p className="studio-atmosphere__caption">Camera sees you → SO-101 shows the fix</p>
           </>
         )}
       </div>
