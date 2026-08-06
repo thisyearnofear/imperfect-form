@@ -56,7 +56,7 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.getByRole('button', { name: /Switch to Stats/i })).toHaveCount(0);
     const start = page.locator('#startButton');
     await expect(start).toBeEnabled();
-    await expect(start).toHaveText(/Start camera coaching/i);
+    await expect(start).toHaveText(/Show me my form/i);
   });
 
   test('foyer leads with robot-native coaching; depth is earned/demoted', async ({ page }) => {

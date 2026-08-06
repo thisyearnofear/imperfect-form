@@ -191,9 +191,9 @@ const PHASE_CONFIG: Record<
   }
 > = {
   initial: {
-    title: 'Starting up…',
-    subtitle: 'Requesting camera access',
-    guidance: 'Please allow camera access when prompted',
+    title: 'Opening the coaching bay…',
+    subtitle: 'Your camera stays on this device',
+    guidance: 'Allow camera access when prompted, then show us one rep.',
     color: 'text-blue-300',
     bgGradient: 'from-blue-950/40 via-blue-900/20 to-blue-950/40',
     borderColor: 'border-blue-400/30',
@@ -201,9 +201,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: '< 5 seconds',
   },
   camera: {
-    title: 'Starting camera…',
-    subtitle: 'Waking up the video stream',
-    guidance: 'Step back - full body in frame',
+    title: 'Finding your frame…',
+    subtitle: 'Waking up the camera coach',
+    guidance: 'Step back — head to toes visible.',
     color: 'text-purple-300',
     bgGradient: 'from-purple-950/40 via-purple-900/20 to-purple-950/40',
     borderColor: 'border-purple-400/30',
@@ -211,9 +211,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: '2-3 seconds',
   },
   ai: {
-    title: 'Warming up...',
-    subtitle: 'Loading AI model (one-time)',
-    guidance: 'This may take 10-30 seconds on first load',
+    title: 'Reading your movement…',
+    subtitle: 'The coach is learning the shape of your motion',
+    guidance: 'This first read can take a little longer.',
     color: 'text-purple-400',
     bgGradient: 'from-purple-950/60 via-indigo-950/40 to-purple-950/60',
     borderColor: 'border-purple-500/40',
@@ -223,9 +223,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: '10-30 seconds',
   },
   positioning: {
-    title: 'Detecting...',
-    subtitle: 'Finding your pose',
-    guidance: 'Stand clear - head to toes visible',
+    title: 'Looking for one useful signal…',
+    subtitle: 'Finding your joints and movement line',
+    guidance: 'Hold still for a moment, then show us one rep.',
     color: 'text-yellow-300',
     bgGradient: 'from-yellow-950/40 via-yellow-900/20 to-yellow-950/40',
     borderColor: 'border-yellow-400/30',
@@ -233,9 +233,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: '2-5 seconds',
   },
   ready: {
-    title: 'Ready!',
-    subtitle: 'All systems go',
-    guidance: 'Go for it!',
+    title: 'I see your movement.',
+    subtitle: 'Coach is watching',
+    guidance: 'Show me one rep.',
     color: 'text-green-300',
     bgGradient: 'from-green-950/40 via-green-900/20 to-green-950/40',
     borderColor: 'border-green-400/30',
@@ -383,10 +383,10 @@ export default function UnifiedLoader({
             ${phase === 'ready' ? 'text-green-300 text-2xl' : config.color + ' text-lg'}
           `}
           >
-            {phase === 'ready' ? 'READY!' : config.title}
+            {phase === 'ready' ? 'I see your movement.' : config.title}
           </h3>
           <p className="text-xs sm:text-sm text-white/80 font-medium leading-relaxed">
-            {phase === 'ready' ? config.guidance : config.subtitle || config.guidance}
+            {phase === 'ready' ? 'Show me one rep.' : config.subtitle || config.guidance}
           </p>
         </div>
 
@@ -430,7 +430,7 @@ export default function UnifiedLoader({
             </div>
             <div className="text-center">
               <p className="text-xs font-bold text-white uppercase tracking-widest opacity-60">
-                Initializing
+                Reading your movement
               </p>
               <p className="text-sm font-black text-purple-300 mt-1">{progress}%</p>
               <p
@@ -539,7 +539,7 @@ export default function UnifiedLoader({
                 <ProgressRing progress={progress} size={72} strokeWidth={2.5} />
               </div>
               <div className="text-center space-y-1">
-                <p className="text-gray-300 text-sm font-medium">Loading...</p>
+                <p className="text-gray-300 text-sm font-medium">Reading your movement…</p>
                 <p className={`${config.color} text-lg font-semibold`}>{progress}%</p>
               </div>
             </div>
@@ -562,7 +562,7 @@ export default function UnifiedLoader({
             </div>
           ) : (
             <div className={`${config.color} text-lg font-semibold animate-pulse`}>
-              Ready to start!
+              Show me one rep.
             </div>
           )}
         </div>

@@ -39,6 +39,8 @@ body[data-shell='studio'] .studio-topbar { background: rgba(6, 16, 19, 0.45); }
 .live-status svg { flex: 0 0 auto; color: #a2c2bc; }
 .live-status--ready { border-color: rgba(114, 224, 169, 0.4); }
 .live-status--ready svg { color: #72e0a9; }
+.live-status--adjust { border-color: rgba(252, 177, 49, 0.55); background: rgba(45, 29, 12, 0.92); }
+.live-status--adjust svg { color: #fcb131; }
 .live-status--demo { border-color: rgba(124, 189, 239, 0.55); background: rgba(11, 33, 48, 0.94); }
 .live-status--demo svg { color: #9ed4ff; }
 #canvasContainerMobile.is-tracking, #canvasContainerDesktop.is-tracking { border-color: rgba(112, 224, 201, 0.52); animation: studio-settle 620ms ease-out; }

@@ -431,7 +431,9 @@ export function CoachTwinPeek({
 
   // A configured but unreachable station should not turn into a persistent
   // error card. Return to the camera coaching surface quietly.
-  if (status === 'offline') return null;
+  // Keep the earned-shell strip fail-silent, but let an active session explain
+  // the honest degraded path: camera coaching continues without the arm.
+  if (status === 'offline' && !session) return null;
 
   const statusLabel =
     execution?.kind === 'succeeded'
@@ -441,16 +443,16 @@ export function CoachTwinPeek({
         : execution?.kind === 'error'
           ? 'Station error · coaching continues'
           : demo != null
-            ? 'Demonstrating'
+            ? 'Coach is showing the target line'
             : execution?.kind === 'executing'
-              ? 'Executing correction'
+              ? 'Coach is moving through the correction'
               : intent != null
-                ? 'Correction queued'
+                ? 'Coach is preparing the correction'
                 : status === 'connected'
-                  ? 'Coach standing by'
+                  ? 'Coach is watching'
                   : status === 'connecting'
                     ? 'Connecting Coach…'
-                    : 'Coach station offline · coaching continues';
+                    : 'Coach Bay offline · camera coaching continues';
 
   const isExecutionActive = execution?.kind === 'executing';
   const hasExecutionError = execution?.kind === 'error' || execution?.kind === 'aborted';
@@ -768,7 +770,9 @@ export function CoachTwinPeek({
                   className="coach-twin-peek__tip coach-twin-peek__tip--execution"
                   aria-live="polite"
                 >
-                  {execution.detail}
+                  {execution.detail === 'Move complete'
+                    ? 'Your turn — match the line.'
+                    : execution.detail}
                 </p>
               ) : null}
             </>
@@ -815,7 +819,9 @@ export function CoachTwinPeek({
                   className="coach-twin-peek__tip coach-twin-peek__tip--execution"
                   aria-live="polite"
                 >
-                  {execution.detail}
+                  {execution.detail === 'Move complete'
+                    ? 'Your turn — match the line.'
+                    : execution.detail}
                 </p>
               ) : null}
             </>

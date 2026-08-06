@@ -6,6 +6,7 @@ import type { ExerciseMode } from '@/utils/biomechanics';
 import type { SessionSummary } from '@/services/sessionLogger';
 import FormLine from './FormLine';
 import FormSignatureHistory from './FormSignatureHistory';
+import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
 
 type SessionRecapProps = {
   mode: ExerciseMode;
@@ -27,25 +28,20 @@ function receiptOrigin() {
   );
 }
 
-const NEXT_FOCUS: Record<ExerciseMode, string> = {
-  pushups: 'Keep one long line from shoulders through hips as you lower.',
-  squats: 'Keep your knees tracking over your toes on the way down.',
-  curls: 'Pin your elbows to your sides and avoid swinging.',
-  pullups: 'Finish each rep with a controlled extension at the bottom.',
-  jumps: 'Land softly and keep your knees tracking forward.',
-};
-
 function coachingTakeaway(summary: SessionSummary | null, mode: ExerciseMode) {
-  if (!summary) return { strength: 'Your session is saved locally.', next: NEXT_FOCUS[mode] };
+  if (!summary) return { strength: 'Your session is saved locally.', next: nextFocusFor(mode) };
   if (summary.warningCount === 0) {
-    return { strength: 'No major form issues were detected in this set.', next: NEXT_FOCUS[mode] };
+    return {
+      strength: 'No major form issues were detected in this set.',
+      next: nextFocusFor(mode),
+    };
   }
   if (summary.avgDepth >= 0.7) {
-    return { strength: 'You kept a consistent range through the set.', next: NEXT_FOCUS[mode] };
+    return { strength: 'You kept a consistent range through the set.', next: nextFocusFor(mode) };
   }
   return {
     strength: 'You completed the set and gave the coach a useful baseline.',
-    next: NEXT_FOCUS[mode],
+    next: nextFocusFor(mode),
   };
 }
 
@@ -163,6 +159,7 @@ export function SessionRecap({
   onStartSelfGhost,
 }: SessionRecapProps) {
   const takeaway = coachingTakeaway(summary, mode);
+  const story = sessionStory(summary, mode, reps);
   return (
     <section
       className="session-recap studio-card studio-card__body motion-enter"
@@ -177,6 +174,16 @@ export function SessionRecap({
         </div>
         <span>{summary ? `${Math.round(summary.duration)}s` : 'Saved'}</span>
       </div>
+      <div className="session-recap__story motion-enter motion-delay-1">
+        <div className="session-recap__story-mark" aria-hidden="true">
+          <CheckCircle2 size={17} />
+        </div>
+        <div>
+          <p className="session-recap__story-eyebrow">What the coach learned</p>
+          <h3>{story.title}</h3>
+          <strong>{story.body}</strong>
+        </div>
+      </div>
       <div className="session-recap__item studio-card__item session-recap__item--good motion-enter motion-delay-1">
         <CheckCircle2 size={17} />
         <div>
@@ -188,7 +195,7 @@ export function SessionRecap({
         <ArrowRight size={17} />
         <div>
           <p>Next set focus</p>
-          <strong>{takeaway.next}</strong>
+          <strong>{story.focus}</strong>
         </div>
       </div>
       {summary?.trace && summary.trace.length > 0 && (

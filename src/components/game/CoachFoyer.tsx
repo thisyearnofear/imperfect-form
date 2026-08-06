@@ -225,6 +225,9 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           {foyer.line1}
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{BRAND.visionLine}</p>
+        <p className="coach-foyer__invitation motion-enter motion-delay-2">
+          Show us one rep. We&apos;ll find one useful thing to improve.
+        </p>
 
         <div
           className={`coach-foyer__coach-status is-${coachStation.enabled ? coachStatus : 'camera-only'} motion-enter`}
@@ -255,7 +258,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           id="startButton"
           className="coach-foyer__start coach-foyer__start--hero feel-press motion-enter"
           style={{ animationDelay: '320ms' }}
-          aria-label={foyer.cta}
+          aria-label="Show me my form"
           onPointerEnter={prefetchWebcamChunk}
           onTouchStart={prefetchWebcamChunk}
           onClick={() => {
@@ -265,7 +268,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           }}
         >
           <Camera size={18} strokeWidth={2} />
-          {foyer.cta}
+          Show me my form
           <ArrowRight size={18} strokeWidth={2} />
         </button>
 

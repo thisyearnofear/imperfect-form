@@ -102,11 +102,20 @@
 
 .coach-foyer__lede {
   max-width: 34rem;
-  margin: 0.9rem 0 1.55rem;
+  margin: 0.9rem 0 0.55rem;
   color: var(--cf-muted);
   font-size: clamp(0.92rem, 2.4vw, 1.02rem);
   font-weight: 500;
   line-height: 1.5;
+}
+
+.coach-foyer__invitation {
+  max-width: 32rem;
+  margin: 0 0 1.55rem;
+  color: var(--cf-gold-bright);
+  font-size: clamp(0.86rem, 2.2vw, 0.96rem);
+  font-weight: 750;
+  line-height: 1.4;
 }
 
 .coach-foyer__coach-status {

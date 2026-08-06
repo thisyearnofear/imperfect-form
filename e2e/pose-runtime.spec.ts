@@ -49,7 +49,9 @@ test.describe('PoseRuntime - worker path + curls', () => {
     await start.click();
 
     await expect(
-      page.getByText(/Initializing Engine|Loading camera|Starting/i).first()
+      page
+        .getByText(/Opening the coaching bay|Finding your frame|Reading your movement|Starting/i)
+        .first()
     ).toBeVisible({
       timeout: 15000,
     });

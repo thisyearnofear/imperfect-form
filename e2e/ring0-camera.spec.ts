@@ -60,7 +60,9 @@ test.describe('Ring 0 - camera granted (fake device)', () => {
     await expect(page.getByText('Camera is off')).toHaveCount(0);
 
     // One continuous boot overlay takes over (step rail + honest phase copy).
-    await expect(page.getByText(/Starting camera|Loading camera|Coach AI/i).first()).toBeVisible({
+    await expect(
+      page.getByText(/Finding your frame|Reading your movement|Coach AI/i).first()
+    ).toBeVisible({
       timeout: 15000,
     });
   });
@@ -76,7 +78,9 @@ test.describe('Ring 0 - camera granted (fake device)', () => {
     await start.click();
 
     // Straight to the session boot sequence
-    await expect(page.getByText(/Starting camera|Loading camera|Coach AI/i).first()).toBeVisible({
+    await expect(
+      page.getByText(/Finding your frame|Reading your movement|Coach AI/i).first()
+    ).toBeVisible({
       timeout: 15000,
     });
   });

@@ -82,7 +82,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
-          <LiveCoachingStatus mode={mode} tracking={poseState.poseDetected} />
+          <LiveCoachingStatus
+            mode={mode}
+            tracking={poseState.poseDetected}
+            repCount={repCount}
+            warnings={metrics?.warnings}
+          />
         </div>
         <CoachTwinPeek session />
       </div>

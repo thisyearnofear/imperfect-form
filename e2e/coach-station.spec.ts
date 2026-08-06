@@ -26,7 +26,9 @@ test.describe('Coach station - fail-silent when offline', () => {
     await start.click();
 
     await expect(
-      page.getByText(/Initializing Engine|Loading camera|Starting camera|Coach AI/i).first()
+      page
+        .getByText(/Opening the coaching bay|Finding your frame|Reading your movement|Coach AI/i)
+        .first()
     ).toBeVisible({
       timeout: 15000,
     });
@@ -47,7 +49,9 @@ test.describe('Coach station - fail-silent when offline', () => {
     await start.click();
 
     await expect(
-      page.getByText(/Initializing Engine|Loading camera|Starting camera|Coach AI/i).first()
+      page
+        .getByText(/Opening the coaching bay|Finding your frame|Reading your movement|Coach AI/i)
+        .first()
     ).toBeVisible({
       timeout: 15000,
     });
