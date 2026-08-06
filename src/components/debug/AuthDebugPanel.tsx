@@ -18,13 +18,13 @@ export default function AuthDebugPanel({ show = false, className = '' }: AuthDeb
   const { platform, isReady, wallet, user, error } = usePlatform();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (process.env.NODE_ENV !== 'development' || typeof window === 'undefined') return;
     setIsVisible(show || window.localStorage.getItem('DEBUG_AUTH') === 'true');
   }, [show]);
 
   // Toggle the panel with a keyboard shortcut (Ctrl+Shift+D) or a custom event.
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (process.env.NODE_ENV !== 'development' || typeof window === 'undefined') return;
 
     const togglePanel = () => {
       setIsVisible((prev) => {
@@ -50,7 +50,7 @@ export default function AuthDebugPanel({ show = false, className = '' }: AuthDeb
     };
   }, []);
 
-  if (!isVisible) return null;
+  if (process.env.NODE_ENV !== 'development' || !isVisible) return null;
 
   const getStatusColor = () => {
     if (error) return 'bg-red-900/50 border-red-500';

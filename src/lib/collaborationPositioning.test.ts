@@ -8,9 +8,9 @@ describe('collaboration positioning', () => {
     expect(BRAND.tagline).not.toMatch(/^Cyberwave/);
   });
 
-  it('describes the physical coach as an honest enhancement', () => {
-    expect(BRAND.studio.line2).toContain('SO-101');
-    expect(BRAND.studio.line2).toContain('when connected');
+  it('keeps the physical coach as honest, subordinate proof', () => {
+    expect(BRAND.studio.line2).toBe('Camera catches one thing. Coach shows you the fix.');
+    expect(BRAND.studio.line2).not.toContain('SO-101');
     expect(BRAND.differentiation).toContain('robot exists to teach the human');
   });
 });

@@ -43,15 +43,15 @@
   border-radius: 12px;
   background: linear-gradient(
     145deg,
-    rgba(8, 28, 32, 0.72),
-    rgba(6, 16, 19, 0.55) 55%,
-    rgba(6, 16, 19, 0.4)
+    rgba(8, 28, 32, 0.58),
+    rgba(6, 16, 19, 0.38) 55%,
+    rgba(6, 16, 19, 0.2)
   );
   border: 1px solid rgba(139, 227, 212, 0.12);
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(6px);
 }
 
 .coach-foyer__glow {
@@ -72,10 +72,10 @@
 .coach-foyer__inner {
   position: relative;
   z-index: 1;
-  width: min(100%, 560px);
+  width: min(100%, 520px);
   min-height: 100%;
   margin: 0 auto;
-  padding: clamp(1.35rem, 3.5vw, 2.75rem) clamp(1.15rem, 3vw, 2rem);
+  padding: clamp(1.35rem, 3.5vw, 2.75rem) clamp(1.15rem, 3vw, 2rem) 2rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -414,7 +414,7 @@
   outline-offset: 3px;
 }
 
-/* System map — the product relationship is the hero, not an abstract robot icon. */
+/* System map — progressive detail inside the optional story panel. */
 .coach-foyer__system-map {
   width: min(100%, 31rem);
   margin: 0 auto 1.25rem;
@@ -457,10 +457,11 @@
 
 .coach-foyer__system-node small {
   color: var(--cf-soft);
+  max-width: 100%;
   font-size: 0.54rem;
   font-weight: 700;
   line-height: 1.15;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .coach-foyer__system-node.is-camera,
@@ -529,8 +530,7 @@
   }
 }
 
-/* Story rail — make the product explanation and physical-AI reason discoverable
-   without adding another decision to the first viewport. */
+/* Story rail — one optional explanation, with the physical-AI reason beside it. */
 .coach-foyer__story-links {
   display: flex;
   align-items: center;
@@ -540,8 +540,14 @@
   margin: 0.85rem auto 0;
 }
 
-.coach-foyer__story-links--primary {
+.coach-foyer__story-links--primary,
+.coach-foyer__story-links--secondary {
   margin-top: 0.8rem;
+}
+
+.coach-foyer__story-links--secondary {
+  opacity: 0.9;
+  transform: scale(0.96);
 }
 
 .coach-foyer__why-robot-link {
@@ -620,8 +626,8 @@
   opacity: 0.85;
 }
 
-/* Credibility is present but deliberately quieter than the user promise and
-   CTA: partners lend trust to the loop; they do not become the product. */
+/* Credibility sits below the action: partners lend trust to the loop; they do
+   not become the product's first impression. */
 .coach-foyer__credibility-row {
   display: flex;
   align-items: center;
@@ -629,6 +635,12 @@
   flex-wrap: wrap;
   gap: 0.55rem 0.8rem;
   margin-top: 0.45rem;
+}
+
+.coach-foyer__credibility-row--disclosed {
+  margin-top: 0.2rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(181, 229, 221, 0.1);
 }
 
 .coach-foyer__credibility {
@@ -752,12 +764,18 @@
     gap: 0.45rem;
   }
 
+  .coach-foyer__story-links--secondary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .coach-foyer__why-robot-link,
   .coach-foyer__how-it-works-toggle {
-    flex: 1;
+    width: 100%;
     justify-content: center;
     padding-inline: 0.45rem;
     font-size: 0.7rem;
+    white-space: nowrap;
   }
 
   .coach-foyer__inner {
@@ -786,6 +804,7 @@
   }
 
   .coach-foyer__system-node small {
+    max-width: 7ch;
     font-size: 0.49rem;
   }
 

@@ -228,7 +228,7 @@ export default function Home() {
           {activeTab !== 'workout' && <CoachTwinPeek showFallbackPulse />}
         </>
       ) : (
-        <StudioAtmosphere quiet />
+        <StudioAtmosphere />
       )}
 
       {/* Day-0 boot splash overlay: covers StudioAtmosphere (robot photo) until

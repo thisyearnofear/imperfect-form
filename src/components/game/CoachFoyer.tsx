@@ -213,20 +213,12 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
       </div>
 
       <div className="coach-foyer__inner">
-        <CoachSystemMap
-          status={coachStatus}
-          enabled={coachStation.enabled}
-          className="motion-enter"
-        />
-
         <p className="coach-foyer__brand motion-enter motion-delay-1">{foyer.brand}</p>
-        <p className="coach-foyer__loop-label motion-enter motion-delay-1">{foyer.loopLabel}</p>
 
         <h2 id="coach-foyer-title" className="coach-foyer__title motion-enter motion-delay-2">
           {foyer.line1}
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{foyer.line2}</p>
-        <p className="coach-foyer__invitation motion-enter motion-delay-2">{foyer.invitation}</p>
 
         <div
           className={`coach-foyer__coach-status is-${coachStation.enabled ? coachStatus : 'camera-only'} motion-enter`}
@@ -237,84 +229,14 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           <span className="coach-foyer__coach-status-dot" aria-hidden="true" />
           <span>
             {coachStation.enabled && coachStatus === 'connected'
-              ? 'Camera coaching ready · Coach link connected'
+              ? 'Coach bay connected · camera coaching ready'
               : coachStation.enabled && coachStatus === 'connecting'
-                ? 'Camera coaching ready · Coach link connecting'
+                ? 'Coach bay connecting · camera coaching ready'
                 : coachStation.enabled
-                  ? 'Camera coaching ready · Coach link offline'
-                  : 'Camera coaching ready when you are · Coach shows the fix when connected'}
+                  ? 'Camera coaching ready · coach bay offline'
+                  : 'Private camera coaching · robot shows the fix when connected'}
           </span>
         </div>
-
-        <div className="coach-foyer__story-links coach-foyer__story-links--primary motion-enter">
-          <button
-            type="button"
-            className="coach-foyer__how-it-works-toggle"
-            aria-expanded={showHowItWorks}
-            aria-controls="coach-foyer-loop"
-            onClick={() => {
-              playStudioCue('soft');
-              triggerHaptic(40);
-              setShowHowItWorks((prev) => !prev);
-            }}
-          >
-            {showHowItWorks ? 'Hide loop' : 'See the loop'}
-            {showHowItWorks ? (
-              <ChevronUp size={14} aria-hidden="true" />
-            ) : (
-              <ChevronDown size={14} aria-hidden="true" />
-            )}
-          </button>
-          <a href="/lore" className="coach-foyer__why-robot-link">
-            Why a robot? <ArrowRight size={13} aria-hidden="true" />
-          </a>
-        </div>
-
-        {showHowItWorks && (
-          <div id="coach-foyer-loop" className="coach-foyer__how-it-works motion-enter">
-            {howItWorks.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="coach-foyer__how-it-works-item">
-                  <Icon size={16} aria-hidden="true" />
-                  <div>
-                    <strong>{item.title}</strong>
-                    <span>{item.body}</span>
-                  </div>
-                </div>
-              );
-            })}
-            {/* Immersive mode toggle — opt-in full Sandow storytelling.
-                Default off; the verbose heritage is discoverable, not relentless. */}
-            <label
-              className="coach-foyer__immersive-toggle"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                margin: '0.75rem 0 0',
-                cursor: 'pointer',
-                fontSize: '0.72rem',
-                color: 'var(--cf-soft, #7a9692)',
-                userSelect: 'none',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={immersive}
-                onChange={(e) => {
-                  playStudioCue('soft');
-                  triggerHaptic(40);
-                  setImmersive(e.target.checked);
-                }}
-                style={{ accentColor: 'var(--cf-teal, #56d9c3)' }}
-                aria-label="Immersive heritage mode"
-              />
-              Immersive heritage
-            </label>
-          </div>
-        )}
 
         {/* Two defaults, pre-answered — the only decision offered before START */}
         <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">
@@ -348,17 +270,82 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           <LockKeyhole size={14} strokeWidth={2} aria-hidden="true" />
           {BRAND.trustLine}
         </p>
-        <div
-          className="coach-foyer__credibility-row motion-enter"
-          style={{ animationDelay: '400ms' }}
-        >
-          <p className="coach-foyer__credibility">
-            SO-101 physical coach · Cyberwave bridge · when connected
-          </p>
-          <a href="/collaborate" className="coach-foyer__collaborate-link">
-            Help make the coach <ArrowRight size={11} aria-hidden="true" />
+        <div className="coach-foyer__story-links coach-foyer__story-links--secondary motion-enter">
+          <button
+            type="button"
+            className="coach-foyer__how-it-works-toggle"
+            aria-expanded={showHowItWorks}
+            aria-controls="coach-foyer-loop"
+            onClick={() => {
+              playStudioCue('soft');
+              triggerHaptic(40);
+              setShowHowItWorks((prev) => !prev);
+            }}
+          >
+            {showHowItWorks ? 'Hide how it works' : 'How it works'}
+            {showHowItWorks ? (
+              <ChevronUp size={14} aria-hidden="true" />
+            ) : (
+              <ChevronDown size={14} aria-hidden="true" />
+            )}
+          </button>
+          <a href="/lore" className="coach-foyer__why-robot-link">
+            Why a physical coach? <ArrowRight size={13} aria-hidden="true" />
           </a>
         </div>
+
+        {showHowItWorks && (
+          <div id="coach-foyer-loop" className="coach-foyer__how-it-works motion-enter">
+            <CoachSystemMap status={coachStatus} enabled={coachStation.enabled} />
+            {howItWorks.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="coach-foyer__how-it-works-item">
+                  <Icon size={16} aria-hidden="true" />
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>{item.body}</span>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="coach-foyer__credibility-row coach-foyer__credibility-row--disclosed">
+              <p className="coach-foyer__credibility">
+                SO-101 physical coach · Cyberwave bridge · when connected
+              </p>
+              <a href="/collaborate" className="coach-foyer__collaborate-link">
+                Help make the coach <ArrowRight size={11} aria-hidden="true" />
+              </a>
+            </div>
+            <label
+              className="coach-foyer__immersive-toggle"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                margin: '0.75rem 0 0',
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                color: 'var(--cf-soft, #7a9692)',
+                userSelect: 'none',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={immersive}
+                onChange={(e) => {
+                  playStudioCue('soft');
+                  triggerHaptic(40);
+                  setImmersive(e.target.checked);
+                }}
+                style={{ accentColor: 'var(--cf-teal, #56d9c3)' }}
+                aria-label="Immersive heritage mode"
+              />
+              Immersive heritage
+            </label>
+          </div>
+        )}
 
         {/* Sandow lineage stamp — opt-in (immersive mode). Default experience
             is quiet; the heritage is discoverable via /lore, not relentless. */}

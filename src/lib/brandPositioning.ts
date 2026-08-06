@@ -78,10 +78,9 @@ const ARCADE_FOYER: FoyerCopy = {
 const STUDIO_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM.FUN',
   line1: 'Make one rep better.',
-  line2:
-    'Your camera spots one useful correction. Coach explains it. The SO-101 shows the fix when connected.',
+  line2: 'Camera catches one thing. Coach shows you the fix.',
   loopLabel: 'ONE REP / ONE FIX',
-  invitation: 'Not perfect. Just better.',
+  invitation: 'Start imperfect. Get one useful cue.',
   trust: 'Private camera coaching · no wallet · no video upload',
   hint: 'Camera → understand → show',
   cta: 'Start camera coaching',

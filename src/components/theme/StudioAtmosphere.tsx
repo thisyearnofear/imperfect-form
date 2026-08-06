@@ -169,14 +169,13 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
 
         {quiet ? null : (
           <>
-            <div className="studio-atmosphere__network-row">
-              <span className="is-celo">Celo</span>
-              <span className="is-base">Base</span>
-              <span className="is-avalanche">Avalanche</span>
-              <span className="is-monad">Monad</span>
+            <div className="studio-atmosphere__bay-status" aria-hidden="true">
+              <span>Coach bay</span>
+              <span>SO-101</span>
+              <span className="is-live">When connected</span>
             </div>
 
-            <p className="studio-atmosphere__caption">Camera sees you → SO-101 shows the fix</p>
+            <p className="studio-atmosphere__caption">Camera sees you · coach shows the fix</p>
           </>
         )}
       </div>

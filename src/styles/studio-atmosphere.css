@@ -399,6 +399,34 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   background: rgba(131, 110, 249, 0.14);
 }
 
+.studio-atmosphere__bay-status {
+  position: absolute;
+  right: clamp(1rem, 4vw, 2.5rem);
+  top: clamp(1.5rem, 4vh, 3rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.55rem;
+  color: rgba(214, 240, 234, 0.72);
+  background: rgba(6, 16, 19, 0.42);
+  border: 1px solid rgba(139, 227, 212, 0.2);
+  border-radius: 999px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.studio-atmosphere__bay-status span + span {
+  color: rgba(122, 235, 216, 0.78);
+}
+
+.studio-atmosphere__bay-status .is-live {
+  color: rgba(255, 217, 122, 0.95);
+}
+
 .studio-atmosphere__caption {
   position: absolute;
   right: clamp(1rem, 4vw, 2.5rem);
@@ -466,6 +494,12 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
 
   .studio-atmosphere__arm-photo--ghost {
     opacity: 0.14;
+  }
+
+  .studio-atmosphere__bay-status {
+    right: 1rem;
+    top: 1rem;
+    font-size: 0.48rem;
   }
 
   .studio-atmosphere__network-row {

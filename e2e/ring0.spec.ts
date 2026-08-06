@@ -26,11 +26,9 @@ test.describe('Ring 0 - wallet-free core loop', () => {
 
   test('no interactive boot gate stands in front of the foyer', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /AI watches your exercise form/i })).toBeVisible(
-      {
-        timeout: 20000,
-      }
-    );
+    await expect(page.getByRole('heading', { name: /Make one rep better/i })).toBeVisible({
+      timeout: 20000,
+    });
     // The old ceremony ("Enter the bay" / "Enter quietly") must never come back.
     await expect(page.getByRole('button', { name: /Enter the bay/i })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /Enter quietly/i })).toHaveCount(0);
@@ -38,25 +36,24 @@ test.describe('Ring 0 - wallet-free core loop', () => {
 
   test('day-0 foyer is studio coaching doorway, not XP chrome', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('IMPERFECT FORM').first()).toBeVisible({ timeout: 20000 });
-    await expect(page.getByRole('heading', { name: /AI watches your exercise form/i })).toBeVisible(
-      {
-        timeout: 20000,
-      }
-    );
-    await expect(page.getByText(/Your camera understands your form/i)).toBeVisible();
+    await expect(page.getByText('IMPERFECT FORM.FUN').first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('heading', { name: /Make one rep better/i })).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(page.getByText(/Camera catches one thing/i)).toBeVisible();
     await expect(
-      page.getByRole('img', {
-        name: /Camera ready, form coach ready, robot arm when connected/i,
-      })
+      page.locator('.coach-foyer__coach-status').getByText(/Private camera coaching/i)
     ).toBeVisible();
+    // The full camera → coach → SO-101 relationship is progressive detail,
+    // not part of the first-visit visual stack.
+    await expect(page.getByRole('img', { name: /Camera waiting for you/i })).toHaveCount(0);
     await expect(page.locator('#screen')).toHaveAttribute('data-register', 'studio');
     await expect(page.locator('#game-container')).toHaveAttribute('data-register', 'studio');
     // Game-loop tabs stay earned — not the foyer
     await expect(page.getByRole('button', { name: /Switch to Stats/i })).toHaveCount(0);
     const start = page.locator('#startButton');
     await expect(start).toBeEnabled();
-    await expect(start).toHaveText(/Show me my form/i);
+    await expect(start).toHaveText(/Try one rep/i);
   });
 
   test('foyer leads with robot-native coaching; depth is earned/demoted', async ({ page }) => {
@@ -86,6 +83,7 @@ test.describe('Ring 0 - wallet-free core loop', () => {
 
     await page.getByRole('button', { name: /How it works/i }).click();
     await expect(page.getByText(/Pose detection runs on your device/i)).toBeVisible();
+    await expect(page.getByRole('img', { name: /Camera waiting for you/i })).toBeVisible();
   });
 
   test('first START asks the browser directly — denial gets the recovery card', async ({
