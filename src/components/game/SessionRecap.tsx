@@ -7,6 +7,7 @@ import type { SessionSummary } from '@/services/sessionLogger';
 import FormLine from './FormLine';
 import FormSignatureHistory from './FormSignatureHistory';
 import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
+import { BRAND } from '@/lib/brandPositioning';
 
 type SessionRecapProps = {
   mode: ExerciseMode;
@@ -57,6 +58,7 @@ function FormReceipt({
     () =>
       [
         'FORM RECEIPT',
+        BRAND.loopLabel,
         `${reps} ${mode} · ${depth === null ? 'local session' : `${depth}% average depth`}`,
         observationCount === 0
           ? 'No major form observations detected.'
@@ -103,7 +105,9 @@ function FormReceipt({
       <div className="form-receipt__stamp">FORM RECEIPT</div>
       <div className="form-receipt__body">
         <div>
-          <p className="form-receipt__eyebrow">A record worth keeping</p>
+          {/* The loop label closes the narrative arc: the same ONE REP / ONE FIX
+              promise made on the foyer, stamped on the record of the set. */}
+          <p className="form-receipt__eyebrow">{BRAND.loopLabel}</p>
           <h3 id="form-receipt-title">Your correction starts here.</h3>
         </div>
         <p className="form-receipt__copy">

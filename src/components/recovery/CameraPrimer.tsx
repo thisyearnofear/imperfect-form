@@ -46,7 +46,9 @@ const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, onEnable, onCancel })
           <span>Video stays on your device. Nothing is recorded or uploaded.</span>
         </li>
       </ul>
-      <p className="camera-primer__focus">{guidance.focus}</p>
+      {/* Edge-state coach voice: permission is the only gate, and it is not a
+          rush — the coach stays patient until the camera is allowed. */}
+      <p className="camera-primer__focus">The coach is patient. {guidance.focus}</p>
       <div className="camera-primer__actions">
         <button onClick={onEnable}>Try again</button>
         <button onClick={onCancel}>Not now</button>

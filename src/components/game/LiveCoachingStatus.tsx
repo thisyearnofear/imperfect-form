@@ -58,7 +58,10 @@ export function LiveCoachingStatus({
         aria-live="polite"
       >
         <AlertCircle size={16} />
-        <span>I see your movement. Next rep: {readableFormWarning(warning).toLowerCase()}.</span>
+        {/* The first named correction is the One Fix payoff — the promise the
+            foyer makes (ONE REP / ONE FIX), delivered live. The gold accent
+            comes from .live-status--adjust. */}
+        <span>One fix: {readableFormWarning(warning).toLowerCase()}.</span>
       </div>
     );
   }

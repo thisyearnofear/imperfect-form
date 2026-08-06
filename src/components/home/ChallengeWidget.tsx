@@ -133,8 +133,8 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
             </div>
             <p className="text-xs text-gray-400 mb-3">
               {canUseGhostMode
-                ? 'See your past performance as a ghost to beat!'
-                : 'Complete workouts to unlock and race your Personal Best'}
+                ? 'Your best line, drawn as a ghost — beat it, then move it.'
+                : 'Complete workouts to unlock racing your own line.'}
             </p>
             {canUseGhostMode && (
               <button

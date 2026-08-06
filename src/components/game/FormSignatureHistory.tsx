@@ -96,7 +96,9 @@ export function FormSignatureHistory({
     <section className="form-signature" aria-labelledby="form-signature-title">
       <div className="form-signature__header">
         <div>
-          <p className="form-signature__eyebrow">Personal record</p>
+          {/* The panel compares you across sessions — the story is You vs. you,
+              not you vs. everyone. Matches the self-ghost framing. */}
+          <p className="form-signature__eyebrow">You vs. you</p>
           <h3 id="form-signature-title">Your form signature</h3>
         </div>
         {currentTrend === 'up' && <TrendingUp size={17} aria-label="Depth trending up" />}
@@ -161,7 +163,7 @@ export function FormSignatureHistory({
             <Ghost size={16} aria-hidden="true" />
             <div>
               <strong>Race your best line</strong>
-              <span>{ghostWorkout.reps} reps · your own trace</span>
+              <span>{ghostWorkout.reps} reps · your own line</span>
             </div>
           </div>
           <button

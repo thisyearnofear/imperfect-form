@@ -19,7 +19,7 @@ const MILESTONES: Milestone[] = [
   {
     level: 3,
     title: 'Ghost Mode',
-    description: 'Race against your Personal Best.',
+    description: 'Beat your own line.',
     icon: <Ghost size={18} />,
   },
   {

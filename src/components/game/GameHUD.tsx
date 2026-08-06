@@ -64,7 +64,9 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               }
             >
               {studio ? (
-                'Ghost challenge'
+                // You vs. you: the self-ghost is your own best line, drawn as a
+                // trace to beat — the brand thesis made visible mid-session.
+                'Beat your line'
               ) : (
                 <>
                   <span className="animate-bounce">🏁</span>

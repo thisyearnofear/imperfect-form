@@ -21,7 +21,7 @@ const MILESTONES = [
   {
     level: 3,
     title: 'Ghost Mode',
-    description: 'Race your Personal Best',
+    description: 'Beat your own line',
     icon: <Ghost size={16} />,
     color: 'from-purple-600 to-violet-600',
     feature: 'race-pb',

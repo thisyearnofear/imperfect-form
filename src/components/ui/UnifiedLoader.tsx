@@ -246,7 +246,9 @@ const PHASE_CONFIG: Record<
 
 // Session-boot step rail: one continuous sequence with three honest
 // milestones, so the post-START wait reads as progress — not N random dialogs.
-const BOOT_STEPS = ['Camera', 'Coach AI', 'Finding you'] as const;
+// The labels echo the loop vocabulary (Camera → Coach → your line) so the
+// boot reads as the machine preparing for ONE REP / ONE FIX.
+const BOOT_STEPS = ['Camera', 'Coach', 'Your line'] as const;
 const ACTIVE_STEP: Record<LoadingPhase, number> = {
   initial: 0,
   camera: 0,
