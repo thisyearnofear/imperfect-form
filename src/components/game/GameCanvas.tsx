@@ -7,6 +7,7 @@ import { LiveCoachingStatus } from './LiveCoachingStatus';
 import { FirstRepCelebration } from './FirstRepCelebration';
 import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
 import { PoseState, DetectionProgress } from '@/hooks/usePoseDetection';
+import { useCoachingMoment } from '@/hooks/useCoachingMoment';
 
 interface RepFeedback {
   show: boolean;
@@ -53,6 +54,21 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         : 'ready';
 
   const isLoadingVisible = !poseState.hasPoseDetection || !poseState.poseDetected;
+  const coachingMoment = useCoachingMoment(
+    poseState.poseDetected,
+    repCount,
+    metrics?.warnings ?? []
+  );
+
+  const coachingStatusProps = {
+    mode,
+    tracking: poseState.poseDetected,
+    repCount,
+    warnings: metrics?.warnings,
+    phase: coachingMoment.phase,
+    warning: coachingMoment.warning,
+    focusWarning: coachingMoment.focusWarning,
+  };
 
   if (isMobile) {
     return (
@@ -82,12 +98,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
-          <LiveCoachingStatus
-            mode={mode}
-            tracking={poseState.poseDetected}
-            repCount={repCount}
-            warnings={metrics?.warnings}
-          />
+          <LiveCoachingStatus {...coachingStatusProps} />
         </div>
         <CoachTwinPeek session />
       </div>
@@ -121,7 +132,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
         <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
         <FirstRepCelebration show={showFirstRepCelebration} />
-        <LiveCoachingStatus mode={mode} tracking={poseState.poseDetected} />
+        <LiveCoachingStatus {...coachingStatusProps} />
       </div>
       <CoachTwinPeek session />
     </div>

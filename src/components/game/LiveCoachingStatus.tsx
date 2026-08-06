@@ -4,6 +4,7 @@ import React from 'react';
 import { AlertCircle, CheckCircle2, ScanLine } from 'lucide-react';
 import { guidanceFor } from '@/lib/exerciseGuidance';
 import { readableFormWarning } from '@/lib/coachingStory';
+import type { CoachingMomentPhase } from '@/lib/coachingMoment';
 import type { ExerciseMode } from '@/utils/biomechanics';
 
 interface LiveCoachingStatusProps {
@@ -11,6 +12,9 @@ interface LiveCoachingStatusProps {
   tracking: boolean;
   repCount?: number;
   warnings?: string[];
+  phase?: CoachingMomentPhase;
+  warning?: string | null;
+  focusWarning?: string | null;
 }
 
 export function LiveCoachingStatus({
@@ -18,40 +22,58 @@ export function LiveCoachingStatus({
   tracking,
   repCount = 0,
   warnings = [],
+  phase: suppliedPhase,
+  warning: suppliedWarning,
+  focusWarning: suppliedFocusWarning,
 }: LiveCoachingStatusProps) {
   const guidance = guidanceFor(mode);
-  const activeWarning = warnings[0];
+  const phase = suppliedPhase ?? (tracking ? (repCount > 0 ? 'your_turn' : 'observed') : 'framing');
+  const warning = suppliedWarning ?? warnings[0] ?? null;
+  const focusWarning = suppliedFocusWarning ?? null;
 
-  if (tracking && activeWarning) {
+  if (phase === 'correction' && warning) {
     return (
       <div
-        key={`warning-${activeWarning}`}
+        key={`warning-${warning}`}
         className="live-status live-status--adjust motion-cue"
         role="status"
         aria-live="polite"
       >
         <AlertCircle size={16} />
-        <span>
-          I see your movement. Next rep: {readableFormWarning(activeWarning).toLowerCase()}.
-        </span>
+        <span>I see your movement. Next rep: {readableFormWarning(warning).toLowerCase()}.</span>
       </div>
     );
   }
 
-  if (tracking) {
+  if (phase === 'your_turn') {
     return (
       <div
-        key="tracking"
+        key="your-turn"
         className="live-status live-status--ready motion-cue"
         role="status"
         aria-live="polite"
       >
         <CheckCircle2 size={16} />
         <span>
-          {repCount === 0
-            ? 'I see your movement. Show me one rep.'
-            : 'That line is readable. Keep going and the coach will find the next signal.'}
+          Your turn.{' '}
+          {focusWarning
+            ? `Keep this in mind: ${readableFormWarning(focusWarning).toLowerCase()}.`
+            : 'Match the line and keep going.'}
         </span>
+      </div>
+    );
+  }
+
+  if (phase === 'observed') {
+    return (
+      <div
+        key="observed"
+        className="live-status live-status--ready motion-cue"
+        role="status"
+        aria-live="polite"
+      >
+        <CheckCircle2 size={16} />
+        <span>I see your movement. Show me one rep.</span>
       </div>
     );
   }
