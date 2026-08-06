@@ -206,16 +206,18 @@ const createDebouncedApplyTheme = () => {
         }
       }
 
-      console.log(`Theme applied: ${theme.id}`, {
-        background: theme.palette.background,
-        text: theme.palette.text,
-        primary: theme.palette.primary,
-        shell:
-          typeof document !== 'undefined'
-            ? document.documentElement.getAttribute('data-shell') ||
-              document.body?.getAttribute('data-shell')
-            : null,
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug(`Theme applied: ${theme.id}`, {
+          background: theme.palette.background,
+          text: theme.palette.text,
+          primary: theme.palette.primary,
+          shell:
+            typeof document !== 'undefined'
+              ? document.documentElement.getAttribute('data-shell') ||
+                document.body?.getAttribute('data-shell')
+              : null,
+        });
+      }
     }, 100);
   };
 };

@@ -97,14 +97,14 @@ function CoachSystemMap({
       <div className="coach-foyer__system-node is-camera">
         <Camera size={16} strokeWidth={2} aria-hidden="true" />
         <span className="coach-foyer__system-node-name">Camera</span>
-        <small>Ready</small>
+        <small>Watching</small>
       </div>
       <span className="coach-foyer__system-link" aria-hidden="true">
         →
       </span>
       <div className="coach-foyer__system-node is-coach">
         <Eye size={16} strokeWidth={2} aria-hidden="true" />
-        <span className="coach-foyer__system-node-name">Form coach</span>
+        <span className="coach-foyer__system-node-name">Coach</span>
         <small>{coachLabel}</small>
       </div>
       <span className="coach-foyer__system-link" aria-hidden="true">
@@ -112,7 +112,7 @@ function CoachSystemMap({
       </span>
       <div className={`coach-foyer__system-node is-robot is-${status}`}>
         <Sparkles size={16} strokeWidth={2} aria-hidden="true" />
-        <span className="coach-foyer__system-node-name">SO-101</span>
+        <span className="coach-foyer__system-node-name">SO-101 Coach</span>
         <small>{stationLabel}</small>
       </div>
     </div>
@@ -224,10 +224,8 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
         <h2 id="coach-foyer-title" className="coach-foyer__title motion-enter motion-delay-2">
           {foyer.line1}
         </h2>
-        <p className="coach-foyer__lede motion-enter motion-delay-2">{BRAND.visionLine}</p>
-        <p className="coach-foyer__invitation motion-enter motion-delay-2">
-          Show us one rep. We&apos;ll find one useful thing to improve.
-        </p>
+        <p className="coach-foyer__lede motion-enter motion-delay-2">{foyer.line2}</p>
+        <p className="coach-foyer__invitation motion-enter motion-delay-2">{foyer.invitation}</p>
 
         <div
           className={`coach-foyer__coach-status is-${coachStation.enabled ? coachStatus : 'camera-only'} motion-enter`}
@@ -243,7 +241,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
                 ? 'Camera coaching ready · Coach link connecting'
                 : coachStation.enabled
                   ? 'Camera coaching ready · Coach link offline'
-                  : 'Camera coaching ready · robot demo when Coach is connected'}
+                  : 'Camera coaching ready · Coach shows the fix when connected'}
           </span>
         </div>
 
@@ -258,7 +256,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           id="startButton"
           className="coach-foyer__start coach-foyer__start--hero feel-press motion-enter"
           style={{ animationDelay: '320ms' }}
-          aria-label="Show me my form"
+          aria-label="Try one rep with camera coaching"
           onPointerEnter={prefetchWebcamChunk}
           onTouchStart={prefetchWebcamChunk}
           onClick={() => {
@@ -267,9 +265,9 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
             onStart();
           }}
         >
-          <Camera size={18} strokeWidth={2} />
-          Show me my form
-          <ArrowRight size={18} strokeWidth={2} />
+          <Camera size={18} strokeWidth={2} aria-hidden="true" />
+          Try one rep
+          <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
 
         <p

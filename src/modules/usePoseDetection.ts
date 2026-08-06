@@ -643,19 +643,12 @@ export function usePoseDetection(
           percentage: 60,
         });
 
-        // STEP 3: Create detector (reuse pre-warmed detector if available)
+        // STEP 3: Create the detector only after the user has started coaching.
         const modelType = isMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
-        const preWarmedDetector = window.__imfPreWarmedDetector;
-        if (preWarmedDetector) {
-          detectorRef.current = preWarmedDetector;
-          // Remove the global reference so a later session doesn't try to reuse a disposed detector.
-          delete window.__imfPreWarmedDetector;
-        } else {
-          detectorRef.current = await createDetector(SupportedModels.MoveNet, {
-            modelType: modelType as any,
-            enableSmoothing: true,
-          });
-        }
+        detectorRef.current = await createDetector(SupportedModels.MoveNet, {
+          modelType: modelType as any,
+          enableSmoothing: true,
+        });
 
         notifyStateChange({ hasPoseDetection: true, isLoading: false });
         emitProgress({

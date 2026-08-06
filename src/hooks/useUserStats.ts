@@ -3,7 +3,7 @@
  * Reuses the same data fetching logic as the leaderboard component
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { extractUserStats, formatUserStatsForProfile, UserStats } from '@/utils/userStatsExtractor';
 import { getCachedLeaderboardData } from '@/utils/leaderboardCache';
 import { getLocalWorkouts, WORKOUT_KEYS } from '@/services/integrations/WorkoutDataAdapter';
@@ -26,6 +26,8 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
 
   // Function to extract stats from cache
   const extractStatsFromCache = useCallback(async () => {
@@ -44,10 +46,14 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
   }, [userAddress]);
 
   const fetchUserStats = useCallback(async () => {
-    console.log('🔍 fetchUserStats called with userAddress:', userAddress);
+    requestIdRef.current += 1;
+    const requestId = requestIdRef.current;
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
 
     if (!userAddress) {
-      console.log('❌ No userAddress provided, setting stats to null');
       setUserStats(null);
       setIsLoading(false);
       return;
@@ -58,8 +64,8 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
 
     // First, try to get data from existing cache
     const cachedStats = await extractStatsFromCache();
+    if (requestId !== requestIdRef.current) return;
     if (cachedStats) {
-      console.log('📦 Using cached leaderboard data for user stats');
       setUserStats(cachedStats);
       setIsLoading(false);
       return;
@@ -67,36 +73,36 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
 
     // If no cache available, don't fetch - let the leaderboard component handle it
     // Just wait and poll for cache to be populated
-    console.log('⏳ No cache available, waiting for leaderboard to populate...');
-
     let attempts = 0;
     const maxAttempts = 10; // 10 seconds max wait
 
     const pollForCache = async () => {
+      if (requestId !== requestIdRef.current) return;
       attempts++;
       const stats = await extractStatsFromCache();
+      if (requestId !== requestIdRef.current) return;
 
       if (stats) {
-        console.log('📦 Found cached data after polling');
         setUserStats(stats);
         setIsLoading(false);
       } else if (attempts < maxAttempts) {
-        setTimeout(pollForCache, 1000); // Check every second
+        pollTimerRef.current = setTimeout(pollForCache, 1000); // Check every second
       } else {
-        console.log('❌ No cached data found after polling, showing fallback');
         setUserStats(null);
         setIsLoading(false);
       }
     };
 
     // Start polling after a short delay
-    setTimeout(pollForCache, 500);
+    pollTimerRef.current = setTimeout(pollForCache, 500);
   }, [userAddress, extractStatsFromCache]);
 
-  // Listen for updates via custom events and DataSyncService
+  // Listen for updates only once wallet identity exists. Anonymous Ring 0
+  // should stay quiet and should not subscribe to stats synchronization.
   useEffect(() => {
+    if (!userAddress || typeof window === 'undefined') return;
+
     const handleUpdate = async () => {
-      console.log('🔄 Data updated, refreshing user stats');
       const stats = await extractStatsFromCache();
       if (stats) {
         setUserStats(stats);
@@ -104,23 +110,28 @@ export function useUserStats(userAddress: string | null | undefined): UseUserSta
       }
     };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('leaderboardCacheUpdated', handleUpdate);
+    window.addEventListener('leaderboardCacheUpdated', handleUpdate);
 
-      // Also subscribe to local workout updates
-      const service = getDataSyncService();
-      const unsubscribeWorkouts = service.subscribe(WORKOUT_KEYS.ALL, handleUpdate);
+    const service = getDataSyncService();
+    const unsubscribeWorkouts = service.subscribe(WORKOUT_KEYS.ALL, handleUpdate);
 
-      return () => {
-        window.removeEventListener('leaderboardCacheUpdated', handleUpdate);
-        unsubscribeWorkouts();
-      };
-    }
-  }, [extractStatsFromCache]);
+    return () => {
+      window.removeEventListener('leaderboardCacheUpdated', handleUpdate);
+      unsubscribeWorkouts();
+    };
+  }, [userAddress, extractStatsFromCache]);
 
-  // Initial fetch
+  // Initial fetch; cancel stale polling when identity changes or the component unmounts.
   useEffect(() => {
     fetchUserStats();
+
+    return () => {
+      requestIdRef.current += 1;
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
   }, [fetchUserStats]);
 
   // Format stats for display

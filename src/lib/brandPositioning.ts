@@ -57,6 +57,7 @@ export type FoyerCopy = {
   brand: string;
   line1: string;
   line2: string;
+  invitation: string;
   trust: string;
   hint: string;
   cta: string;
@@ -66,17 +67,19 @@ const ARCADE_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM',
   line1: 'CAMERA READS FORM',
   line2: 'COACH SHOWS THE FIX',
+  invitation: 'PICK a movement. Make one rep better.',
   trust: 'ON-DEVICE · PRIVATE',
   hint: 'PATH → PHYSICAL AI',
   cta: 'PICK A MOVE · START',
 };
 
 const STUDIO_FOYER: FoyerCopy = {
-  brand: 'IMPERFECT FORM',
-  line1: 'AI watches your exercise form.',
+  brand: 'IMPERFECT FORM.FUN',
+  line1: 'Make one rep better.',
   line2:
-    'Get live camera coaching now. When Coach is connected, the robot arm can show the correction — not just describe it.',
-  trust: 'On-device pose · nothing uploads until you choose',
+    'Your camera spots one useful correction. Coach explains it. The SO-101 shows the fix when connected.',
+  invitation: 'Not perfect. Just better.',
+  trust: 'Private camera coaching · no wallet · no video upload',
   hint: 'Camera → understand → show',
   cta: 'Start camera coaching',
 };
@@ -85,6 +88,7 @@ const CALM_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM',
   line1: 'Settle the system',
   line2: 'Breath and recovery after the work',
+  invitation: 'No perfect session required.',
   trust: 'Private · gentle · no scoreboard energy',
   hint: 'Stillness — imperfect-breath DNA',
   cta: 'Start when you are ready',
@@ -101,6 +105,7 @@ const CRAFFT_FOYER: FoyerCopy = {
   brand: 'THE SANDOW MACHINE',
   line1: 'STEP UP · BE GRADED',
   line2: 'Britain invented the form-check in 1897. We finished it with a robot.',
+  invitation: 'One rep in. One correction out.',
   trust: 'ON-DEVICE · GRADED vs. SANDOW 1897',
   hint: 'PHOTO IN → GRADED → ARM SHOWS THE FIX',
   cta: 'INSERT COIN · BEGIN',
@@ -195,7 +200,8 @@ export function parseSessionIntent(raw: string | null | undefined): SessionInten
 export const BRAND = {
   name: 'Imperfect Form',
   /** Short category line for metadata / shares */
-  tagline: 'AI watches your exercise form. Private camera coaching with a path into physical AI.',
+  tagline:
+    'Make one rep better. Private camera coaching with a physical coach that can show the fix.',
   /**
    * Arcade foyer lines — short so Press Start 2P stays legible inside #screen.
    * Alias of Train intent; prefer getIntentDef('train').foyer in new code.
@@ -207,7 +213,7 @@ export const BRAND = {
   crafft: CRAFFT_FOYER,
   /** Prose equivalents for studio surfaces / SEO */
   visionLine:
-    'Private camera coaching that understands your form — with a robot coach built to show the fix when connected.',
+    'Camera coaching for imperfect humans — with a physical coach that can show the fix when connected.',
   trustLine: 'Pose runs on your device. Nothing leaves the browser until you choose.',
   roboticsHint:
     'Built toward physical AI that can demonstrate the correction — not just describe it.',
