@@ -7,6 +7,7 @@ describe('brand positioning foyer copy', () => {
       expect(intent.foyer.brand).toBeTruthy();
       expect(intent.foyer.line1).toBeTruthy();
       expect(intent.foyer.line2).toBeTruthy();
+      expect(intent.foyer.loopLabel).toBeTruthy();
       expect(intent.foyer.invitation).toBeTruthy();
       expect(intent.foyer.cta).toBeTruthy();
     }

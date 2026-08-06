@@ -57,6 +57,7 @@ export type FoyerCopy = {
   brand: string;
   line1: string;
   line2: string;
+  loopLabel: string;
   invitation: string;
   trust: string;
   hint: string;
@@ -67,6 +68,7 @@ const ARCADE_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM',
   line1: 'CAMERA READS FORM',
   line2: 'COACH SHOWS THE FIX',
+  loopLabel: 'ONE REP / ONE FIX',
   invitation: 'PICK a movement. Make one rep better.',
   trust: 'ON-DEVICE · PRIVATE',
   hint: 'PATH → PHYSICAL AI',
@@ -78,6 +80,7 @@ const STUDIO_FOYER: FoyerCopy = {
   line1: 'Make one rep better.',
   line2:
     'Your camera spots one useful correction. Coach explains it. The SO-101 shows the fix when connected.',
+  loopLabel: 'ONE REP / ONE FIX',
   invitation: 'Not perfect. Just better.',
   trust: 'Private camera coaching · no wallet · no video upload',
   hint: 'Camera → understand → show',
@@ -88,6 +91,7 @@ const CALM_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM',
   line1: 'Settle the system',
   line2: 'Breath and recovery after the work',
+  loopLabel: 'BREATHE / RESET / RETURN',
   invitation: 'No perfect session required.',
   trust: 'Private · gentle · no scoreboard energy',
   hint: 'Stillness — imperfect-breath DNA',
@@ -105,6 +109,7 @@ const CRAFFT_FOYER: FoyerCopy = {
   brand: 'THE SANDOW MACHINE',
   line1: 'STEP UP · BE GRADED',
   line2: 'Britain invented the form-check in 1897. We finished it with a robot.',
+  loopLabel: 'PHOTO IN / FIX OUT',
   invitation: 'One rep in. One correction out.',
   trust: 'ON-DEVICE · GRADED vs. SANDOW 1897',
   hint: 'PHOTO IN → GRADED → ARM SHOWS THE FIX',
@@ -214,6 +219,7 @@ export const BRAND = {
   /** Prose equivalents for studio surfaces / SEO */
   visionLine:
     'Camera coaching for imperfect humans — with a physical coach that can show the fix when connected.',
+  loopLabel: 'ONE REP / ONE FIX',
   trustLine: 'Pose runs on your device. Nothing leaves the browser until you choose.',
   roboticsHint:
     'Built toward physical AI that can demonstrate the correction — not just describe it.',
