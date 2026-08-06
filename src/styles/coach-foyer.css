@@ -620,6 +620,49 @@
   opacity: 0.85;
 }
 
+/* Credibility is present but deliberately quieter than the user promise and
+   CTA: partners lend trust to the loop; they do not become the product. */
+.coach-foyer__credibility-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.8rem;
+  margin-top: 0.45rem;
+}
+
+.coach-foyer__credibility {
+  margin: 0;
+  color: rgba(201, 191, 168, 0.72);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.coach-foyer__collaborate-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  color: var(--cf-gold-bright);
+  font-size: 0.62rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.coach-foyer__collaborate-link:hover {
+  color: #fff0bd;
+  text-decoration: underline;
+}
+
+.coach-foyer__collaborate-link:focus-visible {
+  outline: 2px solid var(--cf-gold-bright);
+  outline-offset: 2px;
+}
+
 .coach-foyer__landscape-tip {
   margin: 0.55rem 0 0;
   color: var(--cf-soft);

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Camera, Cpu, Hammer, LockKeyhole, Mail, Wrench } from 'lucide-react';
 import { SandowCabinet } from '@/components/crafft';
 import { useImmersive } from '@/hooks/useImmersive';
+import { Handshake } from 'lucide-react';
 import '@/styles/crafft-exhibit.css';
 
 /**
@@ -86,9 +87,16 @@ function MinimalLore() {
         <p className="crafft-exhibit__coda-line">
           The spring-grip dumbbell corrected grip. The arm demonstrates the whole movement.
         </p>
-        <Link href="/" className="crafft-exhibit__cta crafft-exhibit__cta--ghost">
-          Try the machine <ArrowRight size={16} />
-        </Link>
+        <p className="crafft-exhibit__coda-sub">Want to help shape the physical Coach Bay?</p>
+        <div className="crafft-exhibit__cta-row">
+          <Link href="/collaborate" className="crafft-exhibit__cta">
+            <Handshake size={16} aria-hidden="true" /> Help make the coach{' '}
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+          <Link href="/" className="crafft-exhibit__cta crafft-exhibit__cta--ghost">
+            Try the machine <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        </div>
       </section>
     </>
   );
@@ -258,9 +266,15 @@ function ImmersiveLore() {
         <p className="crafft-exhibit__coda-sub">
           The same loop Sandow ran in 1897 — closed with a robot.
         </p>
-        <Link href="/" className="crafft-exhibit__cta crafft-exhibit__cta--ghost">
-          Return to the machine <ArrowRight size={16} />
-        </Link>
+        <div className="crafft-exhibit__cta-row">
+          <Link href="/collaborate" className="crafft-exhibit__cta">
+            <Handshake size={16} aria-hidden="true" /> Help make the coach{' '}
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+          <Link href="/" className="crafft-exhibit__cta crafft-exhibit__cta--ghost">
+            Return to the machine <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        </div>
       </section>
     </>
   );

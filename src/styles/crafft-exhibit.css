@@ -74,7 +74,9 @@
   border: 1px solid var(--ce-rule);
   border-radius: 3px;
   padding: 0.4rem 0.7rem;
-  transition: border-color 160ms ease, background-color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
 }
 
 .crafft-exhibit__bar-link:hover {
@@ -345,7 +347,9 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
     inset 0 -2px 0 rgba(0, 0, 0, 0.25),
     0 4px 0 var(--ce-gold-dim);
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .crafft-exhibit__cta:hover {
@@ -375,6 +379,15 @@
   border-color: var(--ce-rule-strong);
   box-shadow: none;
   transform: none;
+}
+
+/* —— CTA row —— */
+.crafft-exhibit__cta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 /* —— Coda —— */
@@ -415,6 +428,15 @@
   }
   .crafft-exhibit__bar-sub {
     display: none;
+  }
+
+  .crafft-exhibit__cta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crafft-exhibit__cta-row .crafft-exhibit__cta {
+    justify-content: center;
   }
 }
 

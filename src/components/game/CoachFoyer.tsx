@@ -348,6 +348,17 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
           <LockKeyhole size={14} strokeWidth={2} aria-hidden="true" />
           {BRAND.trustLine}
         </p>
+        <div
+          className="coach-foyer__credibility-row motion-enter"
+          style={{ animationDelay: '400ms' }}
+        >
+          <p className="coach-foyer__credibility">
+            SO-101 physical coach · Cyberwave bridge · when connected
+          </p>
+          <a href="/collaborate" className="coach-foyer__collaborate-link">
+            Help make the coach <ArrowRight size={11} aria-hidden="true" />
+          </a>
+        </div>
 
         {/* Sandow lineage stamp — opt-in (immersive mode). Default experience
             is quiet; the heritage is discoverable via /lore, not relentless. */}
@@ -358,7 +369,7 @@ export function CoachFoyer({ mode, onModeChange, onStart }: CoachFoyerProps) {
         )}
 
         {/* The robot-native proof case is signposted on the Curls card itself;
-            no footnote needed below the CTA. Earned depth is demoted below it. */}
+            the credibility line stays secondary to the user's coaching need. */}
         <button
           type="button"
           ref={moreToggleRef}
