@@ -19,7 +19,8 @@ export function FirstRepCelebration({ show, mode }: FirstRepCelebrationProps) {
         angle: `${(i / 18) * 360}deg`,
         distance: `${60 + Math.random() * 60}px`,
         delay: `${Math.random() * 0.2}s`,
-        color: i % 2 === 0 ? '#56d9c3' : '#7aebd8',
+        // Teal chassis + brass punctuation — intentional mix on the first signal
+        color: i % 3 === 0 ? '#fcb131' : i % 2 === 0 ? '#56d9c3' : '#7aebd8',
       })),
     []
   );
@@ -38,6 +39,9 @@ export function FirstRepCelebration({ show, mode }: FirstRepCelebrationProps) {
     <div className="first-rep-celebration" aria-hidden="true" data-exercise={mode}>
       <div className="first-rep-celebration__burst" />
       <div className="first-rep-celebration__text">
+        <span className="sandow-grade" style={{ marginBottom: '0.35rem' }}>
+          Graded
+        </span>
         <span>First signal captured</span>
         <small>{guidanceFor(mode).label} · Coach is watching your form</small>
       </div>

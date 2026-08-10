@@ -1,21 +1,21 @@
 /*
- * Sandow spine — shared brass tokens for the grading-loop lineage.
+ * Sandow spine — locked studio chassis + brass punctuation vocabulary.
  *
- * One material vocabulary across every surface:
- *  - Brass (#fcb131 / #e6a72c): the grade + the correction. Quiet accent in
- *    studio surfaces (a hairline, a stamp); loud in the cabinet (/crafft).
- *  - Ink (#061013 / #0a0a0a): the surface. Already the app background.
- *  - Paper (#f4ecd8 / #effcf9): the readout. Already the app text.
+ * Doctrine: Studio is the chassis. Arcade is punctuation. Calm/Lab are phases.
+ *   Teal says "this is private." Brass says "this is graded."
  *
- * The teal glass (#56d9c3) stays as the trust/privacy material (on-device,
- * nothing leaves). Brass is the heritage thread. They coexist: teal says
- * "this is private," brass says "this is graded."
+ * Materials:
+ *  - Studio teal: trust / privacy / live coaching chassis
+ *  - Brass: grade + correction. Quiet hairline on studio; loud on Cræft /
+ *    celebrate bursts only
+ *  - Ink / paper: surface + readout
  *
- * Usage: these tokens are inherited by any element with [data-register] or
- * .sandow-spine. Surfaces opt in; nothing is forced.
+ * Prefer these tokens over one-off Tailwind yellow-500 / violet-600 on earned
+ * shell chrome. Press Start stays off shell tabs — punctuation only.
  */
 
 :root {
+  /* —— Brass (grade punctuation) —— */
   --sandow-brass: #fcb131;
   --sandow-brass-dim: #c98c1a;
   --sandow-brass-soft: #e6a72c;
@@ -23,6 +23,23 @@
   --sandow-paper: #f4ecd8;
   --sandow-rule: rgba(252, 177, 49, 0.4);
   --sandow-rule-quiet: rgba(252, 177, 49, 0.18);
+
+  /* —— Studio chassis (earned shell + live coaching) —— */
+  --studio-ink: #061013;
+  --studio-ink-elevated: #071517;
+  --studio-paper: #effcf9;
+  --studio-paper-soft: #e9fffa;
+  --studio-muted: #9bb5b1;
+  --studio-muted-dim: #7a9692;
+  --studio-teal: #56d9c3;
+  --studio-teal-bright: #7aebd8;
+  --studio-teal-cta: #75dfcd;
+  --studio-teal-deep: #0b2a2c;
+  --studio-border: rgba(139, 227, 212, 0.18);
+  --studio-border-strong: rgba(117, 223, 205, 0.28);
+  --studio-surface: rgba(5, 17, 20, 0.72);
+  --studio-surface-item: rgba(9, 33, 34, 0.5);
+  --studio-glow: rgba(86, 217, 195, 0.14);
 }
 
 /* —— Brass nameplate — the cabinet's identity stamp. ——
@@ -145,10 +162,109 @@
   background: var(--sandow-rule-quiet);
 }
 
+/* —— Earned-shell surfaces (studio chassis + brass XP punctuation) —— */
+.earned-surface {
+  color: var(--studio-paper-soft);
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
+  border-radius: 8px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.earned-surface__title {
+  margin: 0;
+  color: var(--studio-muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.earned-level-mark {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: grid;
+  place-items: center;
+  color: var(--studio-ink);
+  background: var(--studio-teal-cta);
+  border: 1px solid var(--studio-border-strong);
+  border-radius: 8px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 4px var(--studio-glow);
+}
+
+.earned-xp-track {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(139, 227, 212, 0.12);
+  overflow: hidden;
+}
+
+.earned-xp-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--sandow-brass-dim), var(--sandow-brass));
+  transition: width 500ms ease;
+}
+
+.earned-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.65rem;
+  color: var(--sandow-brass);
+  background: rgba(252, 177, 49, 0.08);
+  border: 1px solid var(--sandow-rule-quiet);
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.earned-tab-active {
+  color: var(--studio-teal-bright);
+  background: rgba(86, 217, 195, 0.12);
+}
+
+.earned-cta-brass {
+  color: var(--studio-ink);
+  background: var(--sandow-brass);
+  border: 1px solid var(--sandow-brass-soft);
+  border-radius: 6px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.earned-cta-brass:hover {
+  background: var(--sandow-brass-soft);
+}
+
+.earned-cta-studio {
+  color: var(--studio-ink);
+  background: var(--studio-teal-cta);
+  border: 0;
+  border-radius: 6px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+.earned-cta-studio:hover {
+  background: var(--studio-teal-bright);
+}
+
+/* Ghost / challenge surface — slightly louder brass punctuation */
+.earned-surface--ghost {
+  border-color: var(--sandow-rule-quiet);
+  box-shadow: inset 0 1px 0 rgba(252, 177, 49, 0.08);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sandow-stamp,
   .sandow-grade,
-  .sandow-warrant {
+  .sandow-warrant,
+  .earned-xp-fill {
     transition: none;
   }
 }

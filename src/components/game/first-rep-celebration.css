@@ -28,7 +28,7 @@
     first-rep-fade 1.8s 0.5s ease-in forwards;
 }
 
-.first-rep-celebration__text span {
+.first-rep-celebration__text > span:not(.sandow-grade) {
   color: #f5c77d;
   font-size: clamp(1.25rem, 4vw, 1.75rem);
   font-weight: 700;

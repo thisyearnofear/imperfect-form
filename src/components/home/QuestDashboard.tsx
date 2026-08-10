@@ -14,11 +14,14 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
 
   if (loading && quests.length === 0) {
     return (
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 animate-pulse">
-        <div className="h-5 w-32 bg-zinc-800 rounded mb-3" />
+      <div className="earned-surface p-4 animate-pulse">
+        <div
+          className="h-5 w-32 rounded mb-3"
+          style={{ background: 'var(--studio-surface-item)' }}
+        />
         <div className="space-y-2">
-          <div className="h-12 bg-zinc-800 rounded" />
-          <div className="h-12 bg-zinc-800 rounded" />
+          <div className="h-12 rounded" style={{ background: 'var(--studio-surface-item)' }} />
+          <div className="h-12 rounded" style={{ background: 'var(--studio-surface-item)' }} />
         </div>
       </div>
     );
@@ -34,22 +37,20 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
         variant="default"
         title="No quests today"
         description="Check back tomorrow for new daily quests."
-        className="bg-zinc-900/80 border border-zinc-800 rounded-xl"
+        className="earned-surface"
       />
     );
   }
 
   if (compact) {
     return (
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3">
+      <div className="earned-surface p-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-yellow-400" />
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
-              Daily Quests
-            </span>
+            <Target className="w-4 h-4" style={{ color: 'var(--studio-teal)' }} />
+            <span className="earned-surface__title">Daily quests</span>
           </div>
-          <span className="text-xs font-mono text-gray-400">
+          <span className="text-xs font-mono tabular-nums" style={{ color: 'var(--studio-muted)' }}>
             {completedCount}/{totalCount}
           </span>
         </div>
@@ -58,14 +59,27 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
           {quests.slice(0, 3).map((quest) => (
             <div key={quest.id} className="flex items-center gap-2 text-xs">
               {quest.completed ? (
-                <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0 animate-quest-complete" />
+                <CheckCircle
+                  className="w-3.5 h-3.5 flex-shrink-0 animate-quest-complete"
+                  style={{ color: 'var(--studio-teal-bright)' }}
+                />
               ) : (
-                <Circle className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+                <Circle
+                  className="w-3.5 h-3.5 flex-shrink-0"
+                  style={{ color: 'var(--studio-muted-dim)' }}
+                />
               )}
-              <span className={quest.completed ? 'text-green-400' : 'text-gray-400'}>
+              <span
+                style={{
+                  color: quest.completed ? 'var(--studio-teal-bright)' : 'var(--studio-muted)',
+                }}
+              >
                 {quest.title}
               </span>
-              <span className="ml-auto text-yellow-400/60 font-mono text-[10px]">
+              <span
+                className="ml-auto font-mono text-[10px]"
+                style={{ color: 'var(--sandow-brass)', opacity: 0.75 }}
+              >
                 +{quest.xpReward}
               </span>
             </div>
@@ -76,30 +90,40 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
   }
 
   return (
-    <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
-      {/* Header */}
+    <div className="earned-surface p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-yellow-400" />
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Daily Quests</h3>
+          <Target className="w-5 h-5" style={{ color: 'var(--studio-teal)' }} />
+          <h3 className="earned-surface__title" style={{ fontSize: '0.75rem' }}>
+            Daily quests
+          </h3>
         </div>
         <div className="flex items-center gap-2">
           {allComplete && (
-            <span className="bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-500/30">
-              ALL DONE!
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded"
+              style={{
+                background: 'rgba(86, 217, 195, 0.14)',
+                color: 'var(--studio-teal-bright)',
+                border: '1px solid var(--studio-border-strong)',
+              }}
+            >
+              All done
             </span>
           )}
-          <div className="flex items-center gap-1 text-[10px] text-gray-500">
+          <div
+            className="flex items-center gap-1 text-[10px]"
+            style={{ color: 'var(--studio-muted-dim)' }}
+          >
             <Clock className="w-3 h-3" />
             <span>12h</span>
           </div>
         </div>
       </div>
 
-      {/* Progress Bar */}
       <div className="mb-4">
         <div
-          className="h-2 bg-gray-800 rounded-full overflow-hidden"
+          className="earned-xp-track"
           role="progressbar"
           aria-valuenow={completedCount}
           aria-valuemin={0}
@@ -107,58 +131,80 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
           aria-label={`Daily quests: ${completedCount} of ${totalCount} completed`}
         >
           <div
-            className="h-full bg-gradient-to-r from-yellow-500 to-amber-500 transition-all duration-500"
-            style={{ width: `${(completedCount / totalCount) * 100}%` }}
+            className="earned-xp-fill"
+            style={{ width: `${totalCount ? (completedCount / totalCount) * 100 : 0}%` }}
           />
         </div>
       </div>
 
-      {/* Quest List */}
       <div className="space-y-2">
         {quests.map((quest) => (
           <div
             key={quest.id}
-            className={`p-3 rounded-lg border transition-all ${
-              quest.completed
-                ? 'bg-green-500/5 border-green-500/20 animate-fade-in'
-                : 'bg-white/5 border-white/5 hover:border-white/10'
-            }`}
+            className="p-3 rounded-lg transition-colors"
+            style={{
+              background: quest.completed
+                ? 'rgba(86, 217, 195, 0.06)'
+                : 'var(--studio-surface-item)',
+              border: quest.completed
+                ? '1px solid var(--studio-border-strong)'
+                : '1px solid var(--studio-border)',
+            }}
           >
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
                 {quest.completed ? (
-                  <CheckCircle className="w-5 h-5 text-green-400 animate-quest-complete" />
+                  <CheckCircle
+                    className="w-5 h-5 animate-quest-complete"
+                    style={{ color: 'var(--studio-teal-bright)' }}
+                  />
                 ) : (
-                  <Circle className="w-5 h-5 text-gray-600" />
+                  <Circle className="w-5 h-5" style={{ color: 'var(--studio-muted-dim)' }} />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <h4
-                    className={`font-bold text-sm truncate ${
-                      quest.completed ? 'text-green-400' : 'text-white'
-                    }`}
+                    className="font-bold text-sm truncate"
+                    style={{
+                      color: quest.completed
+                        ? 'var(--studio-teal-bright)'
+                        : 'var(--studio-paper-soft)',
+                    }}
                   >
                     {quest.title}
                   </h4>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <Zap className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" />
-                    <span className="text-yellow-400 text-xs font-bold">+{quest.xpReward}</span>
+                    <Zap
+                      className="w-3.5 h-3.5"
+                      fill="currentColor"
+                      style={{ color: 'var(--sandow-brass)' }}
+                    />
+                    <span className="text-xs font-bold" style={{ color: 'var(--sandow-brass)' }}>
+                      +{quest.xpReward}
+                    </span>
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-500 mt-0.5 truncate">{quest.description}</p>
+                <p
+                  className="text-[10px] mt-0.5 truncate"
+                  style={{ color: 'var(--studio-muted-dim)' }}
+                >
+                  {quest.description}
+                </p>
                 {!quest.completed && (
                   <div className="mt-2">
-                    <div className="flex justify-between text-[10px] font-mono mb-1">
-                      <span className="text-gray-500">
+                    <div
+                      className="flex justify-between text-[10px] font-mono mb-1"
+                      style={{ color: 'var(--studio-muted-dim)' }}
+                    >
+                      <span>
                         {quest.progress}/{quest.target}
                       </span>
-                      <span className="text-gray-600">
-                        {Math.round((quest.progress / quest.target) * 100)}%
-                      </span>
+                      <span>{Math.round((quest.progress / quest.target) * 100)}%</span>
                     </div>
                     <div
-                      className="h-1 bg-gray-800 rounded-full overflow-hidden"
+                      className="earned-xp-track"
+                      style={{ height: '0.25rem' }}
                       role="progressbar"
                       aria-valuenow={quest.progress}
                       aria-valuemin={0}
@@ -166,8 +212,11 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
                       aria-label={`${quest.title}: ${quest.progress} of ${quest.target}`}
                     >
                       <div
-                        className="h-full bg-gray-500 transition-all"
-                        style={{ width: `${(quest.progress / quest.target) * 100}%` }}
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${(quest.progress / quest.target) * 100}%`,
+                          background: 'var(--studio-teal)',
+                        }}
                       />
                     </div>
                   </div>
@@ -178,13 +227,15 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
         ))}
       </div>
 
-      {/* XP Summary */}
       {completedCount > 0 && (
-        <div className="mt-4 pt-3 border-t border-white/5 text-center">
-          <span className="text-xs text-gray-400">
-            <span className="text-yellow-400 font-bold">{completedCount * 100}</span> XP earned
-            today
-          </span>
+        <div
+          className="mt-4 pt-3 text-center text-xs"
+          style={{ borderTop: '1px solid var(--studio-border)', color: 'var(--studio-muted)' }}
+        >
+          <span className="font-bold" style={{ color: 'var(--sandow-brass)' }}>
+            {completedCount * 100}
+          </span>{' '}
+          XP earned today
         </div>
       )}
     </div>

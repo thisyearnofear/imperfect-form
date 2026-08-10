@@ -159,19 +159,23 @@ export default function UnifiedConnectButton({
     lg: 'py-3 px-4 text-base',
   };
 
-  // Platform-specific styling
+  // Topbar / earned shell: studio chassis (soft-demote neon platform skins).
+  // Larger CTAs keep light platform tint for context, still teal-led.
   const getPlatformStyles = () => {
+    if (size === 'sm') {
+      return 'earned-cta-studio hover:opacity-95';
+    }
     switch (platform) {
       case 'farcaster':
-        return 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700';
+        return 'earned-cta-studio';
       case 'mobile':
-        return 'bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700';
+        return 'earned-cta-studio';
       case 'desktop':
-        return 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700';
+        return 'earned-cta-studio';
       case 'pwa':
-        return 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700';
+        return 'earned-cta-brass';
       default:
-        return 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800';
+        return 'earned-cta-studio';
     }
   };
 
@@ -345,11 +349,10 @@ export default function UnifiedConnectButton({
           ${sizeClasses[size]}
           ${getPlatformStyles()}
           ${className}
-          text-white font-semibold rounded-lg
-          transition-all duration-200 transform hover:scale-105
-          shadow-lg hover:shadow-xl
+          font-semibold rounded-lg
+          transition-colors duration-200
           flex items-center justify-center space-x-2
-          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+          disabled:opacity-50 disabled:cursor-not-allowed
           w-full
         `}
       >

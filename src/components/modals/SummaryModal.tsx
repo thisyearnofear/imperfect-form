@@ -155,9 +155,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         }
       });
       getRecentProgressSeries().then(setProgressSeries);
-      if (sessionRegister === 'arcade') {
-        playUiCue('success', { register: sessionRegister });
-      }
+      // Celebrate is arcade punctuation even on a studio session — brief cue, then chassis.
+      playUiCue('success', { register: 'arcade' });
     } else {
       setNewAchievements([]);
       setProgressSeries(null);
@@ -465,29 +464,40 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 {immersive ? (
                   <span className="sandow-warrant">Royal Warrant · New Personal Best</span>
                 ) : (
-                  <span className="bg-primary text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(252,177,49,0.5)]">
-                    🔥 NEW PERSONAL BEST!
-                  </span>
+                  <span className="sandow-grade">New personal best</span>
                 )}
               </div>
             )}
             {/* Value-moment wallet ask: only at a PB, only when no wallet -
                 on-chain is an earned upgrade, never a prerequisite */}
             {isPB && !effectiveAddress && ONCHAIN_MODES.includes(mode) && (
-              <div className="mt-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-3 text-center space-y-2">
-                <p className="text-xs text-yellow-200/90 font-sans">
+              <div
+                className="mt-3 rounded-lg p-3 text-center space-y-2"
+                style={{
+                  background: 'rgba(252, 177, 49, 0.08)',
+                  border: '1px solid var(--sandow-rule-quiet)',
+                }}
+              >
+                <p className="text-xs font-sans" style={{ color: 'var(--sandow-brass-soft)' }}>
                   Make this record permanent — etch it on-chain and join the global leaderboard.
                 </p>
-                <UniversalConnectButton />
+                <UniversalConnectButton size="sm" />
               </div>
             )}
             {streakInfo && streakInfo.currentStreak > 1 && (
               <div className="mt-2 flex items-center gap-1.5">
-                <span className="text-orange-500 font-bold">
-                  🔥 {streakInfo.currentStreak} DAY STREAK
+                <span className="earned-streak text-sm font-bold">
+                  <span aria-hidden="true">🔥</span> {streakInfo.currentStreak} day streak
                 </span>
                 {streakInfo.multiplier > 1 && (
-                  <span className="bg-orange-500/20 text-orange-400 text-[10px] px-1.5 py-0.5 rounded border border-orange-500/30">
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                    style={{
+                      background: 'rgba(252, 177, 49, 0.16)',
+                      color: 'var(--sandow-brass)',
+                      border: '1px solid var(--sandow-rule-quiet)',
+                    }}
+                  >
                     {streakInfo.multiplier}x XP
                   </span>
                 )}
@@ -541,13 +551,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {repCount > 0 && progressSeries && (
                 <ProgressSpark
                   points={progressSeries.points}
-                  register={
-                    sessionRegister === 'studio'
-                      ? 'studio'
-                      : sessionRegister === 'calm'
-                        ? 'calm'
-                        : 'arcade'
-                  }
+                  register="arcade"
                   title={sessionRegister === 'studio' ? 'Form signal' : 'Recent progress'}
                   animate={!isPB}
                   className="summary-progress-spark"
@@ -625,22 +629,27 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         <div className="flex flex-col gap-2.5">
                           <button
                             onClick={handleStartVerification}
-                            className="relative w-full p-4 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white shadow-lg shadow-orange-900/30 border border-yellow-500/30 transition-all active:scale-[0.98] group overflow-hidden"
+                            className="earned-cta-brass relative w-full p-4 transition-transform active:scale-[0.98] group overflow-hidden"
                           >
-                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="flex items-center justify-between relative z-10">
                               <div className="text-left">
-                                <div className="font-black text-lg sm:text-xl text-white flex items-center gap-2">
+                                <div className="font-bold text-lg sm:text-xl flex items-center gap-2">
                                   <span>Verify & Submit</span>
-                                  <span className="bg-black/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                                    BONUS
+                                  <span
+                                    className="text-[10px] px-1.5 py-0.5 rounded"
+                                    style={{
+                                      background: 'rgba(6, 16, 19, 0.2)',
+                                      color: 'var(--studio-ink)',
+                                    }}
+                                  >
+                                    Bonus
                                   </span>
                                 </div>
-                                <div className="text-xs sm:text-sm text-yellow-50 font-medium opacity-90 mt-0.5">
+                                <div className="text-xs sm:text-sm font-medium opacity-80 mt-0.5">
                                   Get +{bonusPoints} points boost
                                 </div>
                               </div>
-                              <div className="text-3xl sm:text-4xl font-black tracking-tighter drop-shadow-md">
+                              <div className="text-3xl sm:text-4xl font-black tracking-tighter tabular-nums">
                                 {verifiedScore}
                               </div>
                             </div>

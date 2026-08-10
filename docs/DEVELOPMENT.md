@@ -94,12 +94,12 @@ pnpm lint:fix
 
 ### Session intent → aesthetic register
 
-**Source of truth:** `src/lib/brandPositioning.ts` (`SESSION_INTENTS`,
-`INTENT_TO_REGISTER`, control labels, energy ladder). Persist via
-`imf_sessionIntent`; read/write with `useSessionIntent`. Apply chrome with
-`#game-container[data-register]` / `#screen[data-register]`,
-`src/styles/coach-foyer.css` / `studio-shell.css`, and
-`src/styles/session-register.css` (loaded from root layout).
+**Source of truth:** `src/lib/brandPositioning.ts` + root `design.md`.
+Doctrine: **Studio is the chassis. Arcade is punctuation. Calm/Lab are phases.**
+Persist via `imf_sessionIntent`; read/write with `useSessionIntent`. Apply
+chrome with `#game-container[data-register]` / `#screen[data-register]`,
+`src/styles/coach-foyer.css` / `studio-shell.css`, `session-register.css`,
+and locked tokens in `src/styles/sandow-spine.css` (`--studio-*`, `--sandow-*`).
 
 **Day-0 doorway:** `CoachFoyer` (studio). Default intent is `understand`
 (Coach / Studio). Do not put a Train / Coach / Breathe chooser on the first
@@ -110,22 +110,27 @@ chrome first. See [NORTH_STAR.md](./NORTH_STAR.md) (energy ladder).
 | Intent  | Register | Primary entry                                                  |
 | ------- | -------- | -------------------------------------------------------------- |
 | Coach   | Studio   | **Default** — `CoachFoyer` → primer → session; summary Analyze |
-| Train   | Arcade   | Earned play energy (Celebrate / UI sound); future Train mode   |
+| Train   | Arcade   | Punctuation on celebrate / ghost; full cabinet on Train/Cræft  |
 | Breathe | Calm     | Post-set recover stage; camera-free `RecoveryCard` panel       |
 
 `PreStartFoyer` (intent chooser) is legacy — keep for reference / SplitFlap
 fallback only; do not reintroduce it as the mass-market front door.
 
+**Earned shell:** studio chassis + brass XP accents (`.earned-surface`,
+`.earned-xp-fill`). No yellow/violet Tailwind SaaS skins. No floating
+multi-widget feature drawers. Press Start never on bottom tabs / Stats chrome.
+
 ### Delight / progress (register-aware)
 
 Progress is a **curve**, not the live HUD counter. Charts belong on Celebrate
 and the earned home dashboard (`totalXp > 0`) — never the day-0 foyer.
-Play energy enters on the **first celebrate**, not before the first coached feel.
+Play energy enters as **arcade punctuation** on the first celebrate, then the
+shell returns to studio + brass — not a permanent yellow reskin.
 
 - **Data:** `getRecentProgressSeries()` in `src/lib/progress/recentProgress.ts`
   (last ~7 local sessions → XP estimate series).
 - **Viz:** lightweight `ProgressSpark` (`src/components/progress/`) — SVG/CSS,
-  register language (arcade gold / studio teal / calm muted). No chart-kit
+  register language (arcade gold burst / studio teal / calm muted). No chart-kit
   vendor lock until it proves sticky.
 - **UI sound:** Cuelume via `src/lib/uiSound.ts` — Arcade Train energy only
   (`press` / `success` on celebrate / quest). Gated by `prefUiSound`

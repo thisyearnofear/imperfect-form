@@ -9,7 +9,6 @@ interface ChallengeWidgetProps {
   onStartGhostRace?: (mode: 'pushups' | 'squats') => void;
 }
 
-// Sample champions data for display
 const SAMPLE_CHAMPIONS = [
   { name: 'The Pro', mode: 'pushups' as const, reps: 52, date: '2026-04-15', level: 12 },
   { name: 'Base God', mode: 'pushups' as const, reps: 48, date: '2026-04-10', level: 11 },
@@ -32,13 +31,10 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Check for incoming ghost challenge in URL
     const raceParam = searchParams?.get('race');
     if (raceParam) {
       setHasIncomingChallenge(true);
     }
-
-    // Use sample champions for display
     setChampions(SAMPLE_CHAMPIONS);
   }, [searchParams]);
 
@@ -52,136 +48,207 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
   };
 
   return (
-    <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
-      {/* Header */}
+    <div className="earned-surface earned-surface--ghost p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Ghost className="w-5 h-5 text-purple-400" />
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-            Ghost Challenges
+          <Ghost className="w-5 h-5" style={{ color: 'var(--sandow-brass)' }} />
+          <h3 className="earned-surface__title" style={{ fontSize: '0.75rem' }}>
+            Ghost challenges
           </h3>
         </div>
       </div>
 
-      {/* Incoming Challenge Alert */}
       {hasIncomingChallenge && (
-        <div className="mb-4 p-3 bg-purple-500/20 border border-purple-500/30 rounded-lg animate-pulse">
+        <div
+          className="mb-4 p-3 rounded-lg"
+          role="status"
+          style={{
+            background: 'rgba(252, 177, 49, 0.12)',
+            border: '1px solid var(--sandow-rule)',
+          }}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-purple-500/30 flex items-center justify-center">
-              <Ghost className="w-5 h-5 text-purple-400" />
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(252, 177, 49, 0.2)' }}
+            >
+              <Ghost className="w-5 h-5" style={{ color: 'var(--sandow-brass)' }} />
             </div>
             <div className="flex-1">
-              <div className="text-white font-bold text-sm">Incoming Challenge!</div>
-              <div className="text-purple-300 text-xs">
+              <div className="font-bold text-sm" style={{ color: 'var(--studio-paper-soft)' }}>
+                Incoming challenge
+              </div>
+              <div className="text-xs" style={{ color: 'var(--sandow-brass-soft)' }}>
                 A friend challenged you to race their ghost
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-purple-400" />
+            <ChevronRight className="w-5 h-5" style={{ color: 'var(--sandow-brass)' }} />
           </div>
         </div>
       )}
 
-      {/* Ghost Mode Feature */}
       <div
-        className={`mb-4 p-4 rounded-xl ${canUseGhostMode ? 'bg-gradient-to-br from-purple-500/20 to-violet-500/20 border border-purple-500/30' : 'bg-gray-800/50 border border-gray-700/50'}`}
+        className="mb-4 p-4 rounded-lg"
+        style={{
+          background: canUseGhostMode ? 'rgba(252, 177, 49, 0.08)' : 'var(--studio-surface-item)',
+          border: canUseGhostMode
+            ? '1px solid var(--sandow-rule-quiet)'
+            : '1px solid var(--studio-border)',
+        }}
       >
         <div className="flex items-start gap-3">
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${canUseGhostMode ? 'bg-purple-500/30' : 'bg-gray-700'}`}
+            className="w-10 h-10 rounded-lg flex items-center justify-center"
+            style={{
+              background: canUseGhostMode ? 'rgba(252, 177, 49, 0.18)' : 'rgba(9, 33, 34, 0.8)',
+            }}
           >
-            <Ghost className={`w-5 h-5 ${canUseGhostMode ? 'text-purple-400' : 'text-gray-500'}`} />
+            <Ghost
+              className="w-5 h-5"
+              style={{
+                color: canUseGhostMode ? 'var(--sandow-brass)' : 'var(--studio-muted-dim)',
+              }}
+            />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h4
-                className={`font-bold text-sm ${canUseGhostMode ? 'text-white' : 'text-gray-400'}`}
+                className="font-bold text-sm"
+                style={{
+                  color: canUseGhostMode ? 'var(--studio-paper-soft)' : 'var(--studio-muted)',
+                }}
               >
-                Race Your Ghost
+                Race your ghost
               </h4>
               {canUseGhostMode ? (
-                <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded font-bold">
-                  ACTIVE
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                  style={{
+                    background: 'rgba(86, 217, 195, 0.14)',
+                    color: 'var(--studio-teal-bright)',
+                  }}
+                >
+                  Active
                 </span>
               ) : (
-                <span className="text-[10px] bg-gray-600/50 text-gray-400 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1"
+                  style={{
+                    background: 'var(--studio-surface-item)',
+                    color: 'var(--studio-muted-dim)',
+                  }}
+                >
                   <Lock size={10} /> LVL 3
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mb-3">
+            <p className="text-xs mb-3" style={{ color: 'var(--studio-muted)' }}>
               {canUseGhostMode
                 ? 'Your best line, drawn as a ghost — beat it, then move it.'
                 : 'Complete workouts to unlock racing your own line.'}
             </p>
             {canUseGhostMode && (
               <button
+                type="button"
                 onClick={() => handleStartChallenge('pushups')}
-                className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2"
+                className="earned-cta-brass w-full py-2 text-xs flex items-center justify-center gap-2"
               >
                 <Play size={14} />
-                Start Ghost Race
+                Start ghost race
               </button>
             )}
           </div>
         </div>
       </div>
 
-      <p className="mb-4 text-center text-[10px] text-gray-500">
+      <p className="mb-4 text-center text-[10px]" style={{ color: 'var(--studio-muted-dim)' }}>
         Finish a set to send a private movement correction to someone else.
       </p>
 
-      {/* Champions Section */}
-      <div className="border-t border-white/5 pt-4">
+      <div style={{ borderTop: '1px solid var(--studio-border)', paddingTop: '1rem' }}>
         <div className="flex items-center gap-2 mb-3">
-          <Trophy className="w-4 h-4 text-yellow-400" />
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider">Race Champions</h4>
+          <Trophy className="w-4 h-4" style={{ color: 'var(--sandow-brass)' }} />
+          <h4 className="earned-surface__title">Race champions</h4>
         </div>
 
         {champions.length > 0 ? (
           <div className="space-y-2">
             {champions.slice(0, 4).map((champion, index) => (
-              <div
+              <button
+                type="button"
                 key={`${champion.name}-${index}`}
-                className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors"
+                style={{ background: 'var(--studio-surface-item)' }}
                 onClick={() => handleStartChallenge(champion.mode)}
               >
-                <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: 'rgba(252, 177, 49, 0.14)' }}
+                >
                   {index === 0 ? (
-                    <Crown className="w-4 h-4 text-yellow-400" />
+                    <Crown className="w-4 h-4" style={{ color: 'var(--sandow-brass)' }} />
                   ) : (
-                    <span className="text-yellow-400 font-bold text-sm">#{index + 1}</span>
+                    <span className="font-bold text-sm" style={{ color: 'var(--sandow-brass)' }}>
+                      #{index + 1}
+                    </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-white text-sm font-bold truncate">{champion.name}</div>
-                  <div className="text-gray-500 text-[10px] font-mono uppercase">
-                    {champion.mode} • Lvl {champion.level}
+                  <div
+                    className="text-sm font-bold truncate"
+                    style={{ color: 'var(--studio-paper-soft)' }}
+                  >
+                    {champion.name}
+                  </div>
+                  <div
+                    className="text-[10px] font-mono uppercase"
+                    style={{ color: 'var(--studio-muted-dim)' }}
+                  >
+                    {champion.mode} · Lvl {champion.level}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-white font-black text-sm">{champion.reps}</div>
-                  <div className="text-gray-500 text-[10px] font-mono">reps</div>
+                  <div
+                    className="font-bold text-sm tabular-nums"
+                    style={{ color: 'var(--studio-paper-soft)' }}
+                  >
+                    {champion.reps}
+                  </div>
+                  <div
+                    className="text-[10px] font-mono"
+                    style={{ color: 'var(--studio-muted-dim)' }}
+                  >
+                    reps
+                  </div>
                 </div>
-                <Play className="w-4 h-4 text-gray-500" />
-              </div>
+                <Play className="w-4 h-4" style={{ color: 'var(--studio-muted-dim)' }} />
+              </button>
             ))}
           </div>
         ) : (
-          <div className="text-center py-6 text-gray-500">
+          <div className="text-center py-6" style={{ color: 'var(--studio-muted-dim)' }}>
             <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-xs">No champions yet. Be the first!</p>
           </div>
         )}
       </div>
 
-      {/* On-chain Sync Preview */}
       {canUseOnChain && (
-        <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-          <div className="flex items-center gap-2 text-blue-400 text-xs font-bold">
+        <div
+          className="mt-4 p-3 rounded-lg"
+          style={{
+            background: 'rgba(86, 217, 195, 0.08)',
+            border: '1px solid var(--studio-border)',
+          }}
+        >
+          <div
+            className="flex items-center gap-2 text-xs font-bold"
+            style={{ color: 'var(--studio-teal-bright)' }}
+          >
             <Share2 size={14} />
-            <span>On-chain Challenges Active</span>
+            <span>On-chain challenges active</span>
           </div>
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] mt-1" style={{ color: 'var(--studio-muted-dim)' }}>
             Your challenges are now recorded on-chain for verified competition
           </p>
         </div>
@@ -190,7 +257,6 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
   );
 };
 
-// Mini Lock icon component
 function Lock({ size = 16 }: { size?: number }) {
   return (
     <svg

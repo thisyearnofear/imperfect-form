@@ -191,34 +191,33 @@ them tell someone.
 private camera coaching first, physical demonstration second, learned policies
 from real sessions third.
 
-**Aesthetic registers** (one surface, one register — see
-`src/lib/brandPositioning.ts`):
+**Aesthetic registers** — intentional mix (see `src/lib/brandPositioning.ts`
+and root `design.md`):
 
-- **Night studio (DEFAULT doorway)** — Coach / `understand` intent. Day-0
-  foyer (`CoachFoyer`), camera primer, live coaching HUD: readable sans
-  (Manrope), teal glass on black. Inherited from imperfectcoach DNA.
-- **Arcade** — Train / play energy. Earned after the first coached feel
-  (Celebrate, XP, UI sound) and a future explicit Train mode — not the
-  mass-market front door. Press Start 2P, black / white / gold (`#fcb131`).
-  **Cræft / Sandow cabinet** is a variant of this register for the physical
-  exhibit and the [Cræft Prize](./CRAFFT_PRIZE.md) submission: Victorian
-  seaside strength-tester aesthetic, Sandow 1897 lineage, the arm as a
-  mechanical form-corrector. Satire with a steel core — playful cabinet,
-  real instrument. See `CRAFFT_FOYER` in `src/lib/brandPositioning.ts`.
+> **Studio is the chassis. Arcade is punctuation. Calm/Lab are phase modes.**
+
+- **Night studio (DEFAULT chassis)** — Coach / `understand` intent. Day-0
+  foyer (`CoachFoyer`), camera primer, live coaching HUD, earned shell chrome:
+  readable sans (Manrope), teal glass on black. Brass (`sandow-spine`) only
+  as quiet grade hairlines on chassis surfaces.
+- **Arcade punctuation** — celebrate / first signal / level-up / ghost accept
+  / grade stamp / XP tick: brief gold flash + arcade UI sound, then return to
+  studio. Press Start 2P only on these bursts — never as Stats/tab wallpaper.
+- **Arcade full cabinet** — explicit Train intent + `/lore` Cræft: loud gold,
+  Press Start allowed on the whole surface. **Cræft / Sandow cabinet** is the
+  Victorian seaside strength-tester variant for the [Cræft Prize](./CRAFFT_PRIZE.md).
 - **Calm** — Recover / breathe: post-workout recovery + optional calm entry.
-  Soft light, Manrope, teal fields — no dark mode. Not competing in the
-  day-0 hero viewport. Inherited from imperfect-breath.
-- **Lab** — post-workout AI clinical review only (not an entry intent): purple
-  / mono metrics. Physical AI presence in the bay is lab-adjacent: precise,
-  alive, not arcade-loud.
+  Soft light, Manrope — no scoreboard energy.
+- **Lab** — post-workout AI clinical review only: precise, alive, not arcade-loud.
 
 **Energy ladder** (not a mid-rep theme toggle):
 
-1. **Session 0 — Studio trust** — `CoachFoyer` → primer → live cues. Brand +
-   one promise + pick a move + start. Physical AI is path, not day-0 pitch.
-2. **First celebrate — introduce play** — ProgressSpark, Arcade UI sound,
-   gold accents on Celebrate / earned dashboard.
-3. **Explicit Train / Arcade cabinet** — later depth for users who want the
+1. **Session 0 — Studio trust** — `CoachFoyer` → primer → live cues.
+2. **First celebrate — arcade punctuation** — ProgressSpark, Arcade UI sound,
+   brass grade accents — then back to studio chassis.
+3. **Earned shell — studio + brass** — XP/level use brass accents; no yellow
+   SaaS dashboard skins.
+4. **Explicit Train / Arcade cabinet** — later depth for users who want the
    game cabinet; same engine, different chrome.
 
 | Intent               | Register | When it surfaces                        | Job                        |
@@ -229,8 +228,10 @@ from real sessions third.
 
 Rules:
 
-1. **One surface, one register** — never mix Press Start gold with calm glass
-   on the same viewport.
+1. **Intentional mix, not accidental collision** — studio chassis may carry
+   quiet brass; arcade bursts are scored moments. Never paint whole earned
+   screens in yellow/violet Tailwind that ignore studio tokens. Never mix
+   Press Start gold with calm glass on the same viewport.
 2. **Studio opens the door** — day-0 commits Coach / Studio
    (`DEFAULT_SESSION_INTENT = understand`). No intent chooser on the first
    viewport. Register stays for the session via `imf_sessionIntent`.

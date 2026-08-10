@@ -11,26 +11,36 @@
  * - Scripted understand→show first; learned policies from real sessions later.
  * - Honest SO-101 scope: upper-body demonstrations only.
  *
- * Aesthetic registers (one surface, one register — do not mix):
- * - Night studio (DEFAULT doorway): Coach intent. Day-0 foyer, camera primer, live coaching.
- *   Type: readable sans (Manrope). Color: teal glass on black. (imperfectcoach DNA)
- * - Arcade: Train / play energy. Earned after first coached feel (Celebrate, XP, UI sound).
- *   Type: Press Start 2P. Color: black / white / gold (#fcb131).
- * - Calm: Breathe / recover. Post-set recovery + optional calm entry — not the day-0 hero.
- *   Soft light, stillness. (imperfect-breath DNA)
- * - Lab: post-workout AI clinical review only — not an entry intent.
- *   Physical AI bay presence is lab-adjacent (precise, alive) — not arcade-loud.
+ * Aesthetic registers — intentional mix (chassis + punctuation), not a ban:
+ *
+ *   Studio is the chassis. Arcade is punctuation. Calm/Lab are phase modes.
+ *
+ * - Night studio (DEFAULT chassis): Coach intent. Day-0 foyer, camera primer,
+ *   live coaching, earned shell chrome. Type: Manrope. Color: teal glass on
+ *   black. Brass (`sandow-spine`) appears only as quiet grade hairlines.
+ * - Arcade punctuation: celebrate / first signal / level-up / ghost accept /
+ *   grade stamp / XP tick — brief gold flash + arcade UI sound, then return
+ *   to studio. Press Start 2P only on these bursts (and full Train / Cræft),
+ *   never on Stats tabs or bottom nav wallpaper.
+ * - Arcade full cabinet: explicit Train intent + `/lore` Cræft — loud gold,
+ *   Press Start allowed on the whole surface.
+ * - Calm: Breathe / recover. Post-set recovery + optional calm entry.
+ * - Lab: post-workout AI clinical review only — precise, not arcade-loud.
  *
  * Energy ladder (not a mid-rep theme toggle):
  * 1. Session 0 — Studio trust (CoachFoyer → primer → live cues)
- * 2. First celebrate — introduce play (ProgressSpark, Arcade UI sound, gold accents)
- * 3. Explicit Train / Arcade cabinet — later / earned depth, not the mass-market front door
+ * 2. First celebrate — arcade punctuation (ProgressSpark, UI sound, brass)
+ * 3. Earned shell — studio chassis + brass accents for XP/grade (not yellow SaaS)
+ * 4. Explicit Train / Arcade cabinet — later depth, not the mass-market front door
+ *
+ * Anti-pattern: whole screens painted in yellow/violet Tailwind that ignore
+ * studio tokens — that reads as a second app, not playful punctuation.
  *
  * Day-0 doorway is CoachFoyer (studio). Intent chooser is not on the first viewport.
  * Landing marketing is deferred; deepen the foyer first (see docs/NORTH_STAR.md).
  *
  * Crafted play stays; puerile slogans do not. Game-loop chrome is earned
- * after the first coached feel — never the foyer.
+ * after the first coached feel — never the foyer. See design.md.
  */
 
 /** Entry + surface registers. Lab is post-workout only. Cræft is the

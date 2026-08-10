@@ -24,7 +24,7 @@ interface ProgressSparkProps {
  */
 export const ProgressSpark: React.FC<ProgressSparkProps> = ({
   points,
-  register = 'arcade',
+  register = 'studio',
   animate = true,
   title = 'Recent progress',
   className = '',

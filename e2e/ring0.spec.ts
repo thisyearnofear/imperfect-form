@@ -156,6 +156,9 @@ test.describe('Ring 0 - wallet-free core loop', () => {
       timeout: 20000,
     });
     await expect(page.locator('body')).toHaveAttribute('data-shell', 'earned');
+    // Accidental dashboard chrome must stay gone (intentional mix, not feature drawer).
+    await expect(page.getByRole('button', { name: /Hide Features|Show Features/i })).toHaveCount(0);
+    await expect(page.getByText(/Quick Actions/i)).toHaveCount(0);
     // (The foyer still exists — as the pre-start doorway inside the Workout
     // tab — it just isn't the naked day-0 surface.)
   });

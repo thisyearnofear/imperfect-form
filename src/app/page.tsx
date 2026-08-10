@@ -22,7 +22,6 @@ import {
 } from '@/components/home';
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { getHasTrained } from '@/lib/hasTrained';
-import { ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import { UniversalConnectButton } from '@/components/wallet';
 import { ScreenTransition } from '@/components/ui/ScreenTransition';
 
@@ -86,7 +85,6 @@ export default function Home() {
   const isInMiniApp = platform === 'farcaster';
   const [showFirstTimePrompt, setShowFirstTimePrompt] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('workout');
-  const [showDashboard, setShowDashboard] = useState(true);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
 
   // Gradual tab reveal: Workout + Stats always; Ghost at L3; Roadmap at L5.
@@ -319,61 +317,14 @@ export default function Home() {
                 <GameReadyGate onReady={() => setGameReady(true)} />
               </div>
 
+              {/* Mobile: retention widgets below the bay. Desktop: Stats tab only —
+                  no floating multi-widget feature drawer (intentional mix, not dashboard). */}
               {hasTrained && (
-                <>
-                  <div className="md:hidden px-4 pb-20 pt-4 space-y-4">
-                    <QuestDashboard />
-                    <ChallengeWidget />
-                    <AchievementShowcase />
-                  </div>
-
-                  <div className="hidden md:block fixed bottom-0 left-0 right-0 z-0">
-                    <button
-                      onClick={() => setShowDashboard(!showDashboard)}
-                      className="absolute -top-10 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-2 rounded-t-lg font-bold text-xs flex items-center gap-2 shadow-lg hover:bg-yellow-400 transition-colors"
-                    >
-                      {showDashboard ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-                      {showDashboard ? 'Hide Features' : 'Show Features'}
-                    </button>
-                    <div
-                      className={`bg-black/95 backdrop-blur-md border-t border-gray-800 transition-all duration-300 ${
-                        showDashboard
-                          ? 'max-h-[40vh] opacity-100'
-                          : 'max-h-0 opacity-0 overflow-hidden'
-                      }`}
-                    >
-                      <div className="grid grid-cols-4 gap-4 p-4 overflow-y-auto max-h-[40vh]">
-                        <div>
-                          <QuestDashboard compact />
-                        </div>
-                        <div>
-                          <AchievementShowcase compact />
-                        </div>
-                        <div>
-                          <ChallengeWidget />
-                        </div>
-                        <div>
-                          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Activity className="w-4 h-4 text-green-400" />
-                              <span className="text-xs font-bold text-white uppercase tracking-wider">
-                                Quick Actions
-                              </span>
-                            </div>
-                            <div className="space-y-2">
-                              <button className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors">
-                                View Leaderboard
-                              </button>
-                              <button className="w-full px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold rounded-lg transition-colors">
-                                Share Ghost
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
+                <div className="md:hidden px-4 pb-20 pt-4 space-y-4">
+                  <QuestDashboard />
+                  <ChallengeWidget />
+                  <AchievementShowcase />
+                </div>
               )}
             </ScreenTransition>
           )}
@@ -385,10 +336,8 @@ export default function Home() {
                   <HeroSection />
                   <QuestDashboard />
                   <AchievementShowcase />
-                  <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                      Top Performers
-                    </h3>
+                  <div className="earned-surface p-4">
+                    <h3 className="earned-surface__title mb-4">Top performers</h3>
                     <Leaderboard limit={5} onViewMore={handleViewMore} />
                   </div>
                 </div>
@@ -417,9 +366,16 @@ export default function Home() {
           )}
         </div>
 
-        {/* Mobile bottom tabs — only after first session */}
+        {/* Mobile bottom tabs — studio chassis; teal active (no yellow wallpaper) */}
         {hasTrained && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10">
+          <div
+            className="md:hidden fixed bottom-0 left-0 right-0 z-50"
+            style={{
+              background: 'rgba(6, 16, 19, 0.94)',
+              borderTop: '1px solid var(--studio-border)',
+              backdropFilter: 'blur(14px)',
+            }}
+          >
             <div
               className="grid gap-1 p-2"
               style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
@@ -428,11 +384,11 @@ export default function Home() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex flex-col items-center py-2 rounded-lg transition-all ${
-                    activeTab === tab.id
-                      ? 'text-yellow-400 bg-yellow-500/10'
-                      : 'text-gray-500 hover:text-gray-300'
+                  className={`flex flex-col items-center py-2 rounded-lg transition-colors ${
+                    activeTab === tab.id ? 'earned-tab-active' : ''
                   }`}
+                  style={activeTab === tab.id ? undefined : { color: 'var(--studio-muted-dim)' }}
+                  aria-current={activeTab === tab.id ? 'page' : undefined}
                 >
                   <span className="text-[10px] font-bold uppercase tracking-wider">
                     {tab.label}
