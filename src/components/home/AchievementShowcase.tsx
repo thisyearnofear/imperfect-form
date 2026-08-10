@@ -2,21 +2,39 @@
 
 import React from 'react';
 import { useAchievements } from '@/hooks/useAchievements';
-import { Award, Lock, Trophy, ChevronRight } from 'lucide-react';
+import {
+  Award,
+  Lock,
+  Trophy,
+  Rocket,
+  Flame,
+  Crown,
+  Medal,
+  Dumbbell,
+  type LucideIcon,
+} from 'lucide-react';
 import { EmptyState } from '@/components/ui/EmptyState';
-import Link from 'next/link';
 
 export const AchievementShowcase: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
   const { unlockedAchievements, isLoading } = useAchievements();
 
+  const ACHIEVEMENT_ICONS: Record<string, LucideIcon> = {
+    first_workout: Rocket,
+    streak_3: Flame,
+    streak_7: Crown,
+    centurion: Medal,
+    powerhouse: Dumbbell,
+  };
+
   const allAchievements = [
-    { id: 'first_workout', name: 'First Workout', icon: '🚀', locked: true },
-    { id: 'streak_3', name: '3-Day Streak', icon: '🔥', locked: true },
-    { id: 'streak_7', name: '7-Day Streak', icon: '👑', locked: true },
-    { id: 'centurion', name: 'Centurion', icon: '💯', locked: true },
-    { id: 'powerhouse', name: 'Powerhouse', icon: '💪', locked: true },
+    { id: 'first_workout', name: 'First Workout', locked: true },
+    { id: 'streak_3', name: '3-Day Streak', locked: true },
+    { id: 'streak_7', name: '7-Day Streak', locked: true },
+    { id: 'centurion', name: 'Centurion', locked: true },
+    { id: 'powerhouse', name: 'Powerhouse', locked: true },
   ].map((a) => ({
     ...a,
+    icon: ACHIEVEMENT_ICONS[a.id] ?? Medal,
     unlocked: unlockedAchievements.some((u) => u.id === a.id),
   }));
 
@@ -50,7 +68,7 @@ export const AchievementShowcase: React.FC<{ compact?: boolean }> = ({ compact =
           {allAchievements.map((achievement) => (
             <div
               key={achievement.id}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-lg border-2"
+              className="w-8 h-8 rounded-full flex items-center justify-center border-2"
               style={{
                 borderColor: 'var(--studio-ink)',
                 background: achievement.unlocked
@@ -60,9 +78,13 @@ export const AchievementShowcase: React.FC<{ compact?: boolean }> = ({ compact =
               title={achievement.name}
             >
               {achievement.unlocked ? (
-                achievement.icon
+                <achievement.icon
+                  size={14}
+                  style={{ color: 'var(--sandow-brass)' }}
+                  aria-hidden="true"
+                />
               ) : (
-                <Lock size={12} style={{ color: 'var(--studio-muted-dim)' }} />
+                <Lock size={12} style={{ color: 'var(--studio-muted)' }} />
               )}
             </div>
           ))}
@@ -93,21 +115,11 @@ export const AchievementShowcase: React.FC<{ compact?: boolean }> = ({ compact =
 
   return (
     <div className="earned-surface p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5" style={{ color: 'var(--sandow-brass)' }} />
-          <h3 className="earned-surface__title" style={{ fontSize: '0.75rem' }}>
-            Achievements
-          </h3>
-        </div>
-        <Link
-          href="/achievements"
-          className="text-xs transition-colors flex items-center gap-1"
-          style={{ color: 'var(--studio-muted-dim)' }}
-        >
-          <span>View all</span>
-          <ChevronRight className="w-4 h-4" />
-        </Link>
+      <div className="flex items-center gap-2 mb-4">
+        <Trophy className="w-5 h-5" style={{ color: 'var(--sandow-brass)' }} />
+        <h3 className="earned-surface__title" style={{ fontSize: '0.75rem' }}>
+          Achievements
+        </h3>
       </div>
 
       <div className="mb-4 text-center">
@@ -133,7 +145,7 @@ export const AchievementShowcase: React.FC<{ compact?: boolean }> = ({ compact =
             }}
           >
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-xl mb-1"
+              className="w-10 h-10 rounded-full flex items-center justify-center mb-1"
               style={{
                 background: achievement.unlocked
                   ? 'linear-gradient(180deg, var(--sandow-brass), var(--sandow-brass-dim))'
@@ -141,17 +153,19 @@ export const AchievementShowcase: React.FC<{ compact?: boolean }> = ({ compact =
               }}
             >
               {achievement.unlocked ? (
-                achievement.icon
+                <achievement.icon
+                  size={18}
+                  style={{ color: 'var(--studio-ink)' }}
+                  aria-hidden="true"
+                />
               ) : (
-                <Lock size={16} style={{ color: 'var(--studio-muted-dim)' }} />
+                <Lock size={16} style={{ color: 'var(--studio-muted)' }} />
               )}
             </div>
             <span
-              className="text-[10px] font-bold text-center"
+              className="text-[11px] font-bold text-center"
               style={{
-                color: achievement.unlocked
-                  ? 'var(--studio-paper-soft)'
-                  : 'var(--studio-muted-dim)',
+                color: achievement.unlocked ? 'var(--studio-paper-soft)' : 'var(--studio-muted)',
               }}
             >
               {achievement.name}

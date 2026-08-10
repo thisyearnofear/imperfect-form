@@ -75,7 +75,7 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete, ton
         >
           {current.name}
         </p>
-        <p className={`text-[10px] font-mono ${light ? 'text-teal-600/70' : 'text-teal-300/60'}`}>
+        <p className={`text-[11px] font-mono ${light ? 'text-teal-600/70' : 'text-teal-300/60'}`}>
           {index + 1} of {stretches.length} · {remaining}s
         </p>
       </div>
@@ -107,8 +107,8 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete, ton
         }}
         className={
           light
-            ? 'text-[10px] text-slate-400 hover:text-teal-700 transition-colors'
-            : 'text-[10px] text-teal-300/50 hover:text-teal-200 transition-colors'
+            ? 'text-[11px] text-slate-400 hover:text-teal-700 transition-colors'
+            : 'text-[11px] text-teal-300/50 hover:text-teal-200 transition-colors'
         }
       >
         skip →

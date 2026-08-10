@@ -1,6 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
+import {
+  CheckCircle2,
+  Dumbbell,
+  FileText,
+  Flame,
+  Ghost,
+  Lock,
+  Medal,
+  Pin,
+  RotateCcw,
+  Save,
+  Sparkles,
+  Trophy,
+  Wind,
+  type LucideIcon,
+} from 'lucide-react';
 import { chainConfigs } from '@/utils/chainSwitching';
 import { AccessibleDialog } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
@@ -26,6 +42,7 @@ import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useAchievements } from '@/hooks/useAchievements';
 import { xpService, StreakInfo } from '@/services/XPService';
 import { Achievement } from '@/services/AchievementService';
+import { AchievementIcon } from '@/components/ui/AchievementIcon';
 import { useScaleTransition } from '@/hooks';
 import { ProgressSpark } from '@/components/progress';
 import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/recentProgress';
@@ -114,6 +131,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [reportStatus, setReportStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [personality] = useCoachPersonality();
   const { intent: sessionIntent, register: sessionRegister } = useSessionIntent();
+  const arcade = sessionRegister === 'arcade';
 
   // Staged post-workout flow: analyze -> recover -> celebrate.
   // Entry stage is coaching-first (analyze). Earned celebration is the final stage.
@@ -127,6 +145,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const summaryRegister =
     stage === 'analyze' ? 'lab' : stage === 'recover' ? 'calm' : sessionRegister;
   const retryFocus = sessionStory(sessionSummary ?? null, mode, repCount).focus;
+  const showArcadeResults = arcade && stage === 'celebrate' && submissionStatus !== 'success';
 
   // Auto-close modal 2.5 seconds after successful submission
   React.useEffect(() => {
@@ -327,19 +346,22 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     }
   };
 
-  // Determine the medal based on rep count
-  const getMedalEmoji = () => {
+  // Medal tier by rep count — rendered as a brass lucide mark, not emoji.
+  const getMedalTier = (): 'gold' | 'silver' | 'bronze' | 'none' => {
     if (mode === 'pushups') {
-      if (repCount >= 30) return '🥇';
-      else if (repCount >= 20) return '🥈';
-      else if (repCount >= 10) return '🥉';
+      if (repCount >= 30) return 'gold';
+      else if (repCount >= 20) return 'silver';
+      else if (repCount >= 10) return 'bronze';
     } else {
-      if (repCount >= 40) return '🥇';
-      else if (repCount >= 25) return '🥈';
-      else if (repCount >= 15) return '🥉';
+      if (repCount >= 40) return 'gold';
+      else if (repCount >= 25) return 'silver';
+      else if (repCount >= 15) return 'bronze';
     }
-    return '💪';
+    return 'none';
   };
+
+  const medalTier = getMedalTier();
+  const MedalGlyph: LucideIcon = medalTier === 'none' ? Dumbbell : Medal;
 
   const isPB = repCount > 0 && repCount === pbs[mode];
 
@@ -434,34 +456,75 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         title={
           submissionStatus === 'success'
             ? 'Synced to leaderboard'
-            : immersive
-              ? 'Graded'
-              : 'Your coaching recap'
+            : showArcadeResults
+              ? 'ARCADE SCORE'
+              : immersive
+                ? 'Graded'
+                : 'Your coaching recap'
         }
         description={
-          <div className="flex flex-col items-center">
-            <div className="flex items-center gap-2">
-              {immersive ? (
-                <span className="sandow-grade">{getMedalEmoji()}</span>
-              ) : (
-                <span>{getMedalEmoji()}</span>
-              )}
-              <span>
-                {submissionStatus === 'success'
-                  ? 'Rank updated on-chain'
-                  : `${repCount} ${mode} • ${120 - timeLeft}s`}
-              </span>
-            </div>
+          <div
+            className={`flex flex-col items-center${showArcadeResults ? ' summary-arcade-description' : ''}`}
+          >
+            {showArcadeResults ? (
+              <div
+                className="summary-arcade-score-plate"
+                aria-label={`Score ${repCount}, ${mode}, ${120 - timeLeft} seconds`}
+              >
+                <span className="summary-arcade-score-label">SCORE</span>
+                <strong className="summary-arcade-score-value tabular-nums">{repCount}</strong>
+                <span className="summary-arcade-score-meta">
+                  {mode} · {120 - timeLeft}s
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                {immersive ? (
+                  <span className="sandow-grade">
+                    <MedalGlyph size={12} aria-hidden="true" /> {repCount} reps
+                  </span>
+                ) : (
+                  <MedalGlyph
+                    size={18}
+                    aria-hidden="true"
+                    style={{
+                      color:
+                        medalTier === 'gold'
+                          ? 'var(--sandow-brass)'
+                          : medalTier === 'silver'
+                            ? '#c8d6d3'
+                            : medalTier === 'bronze'
+                              ? '#cd7f32'
+                              : 'var(--studio-muted-dim)',
+                    }}
+                  />
+                )}
+                <span>
+                  {submissionStatus === 'success'
+                    ? 'Rank updated on-chain'
+                    : `${repCount} ${mode} • ${120 - timeLeft}s`}
+                </span>
+              </div>
+            )}
             {isRace && (
               <div className="mt-2">
-                <span className="bg-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(147,51,234,0.5)] uppercase tracking-tighter">
-                  👻 Ghost Challenge Completed
+                <span
+                  className="inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-full uppercase tracking-tight"
+                  style={{
+                    background: 'rgba(252, 177, 49, 0.14)',
+                    color: 'var(--sandow-brass-soft)',
+                    border: '1px solid var(--sandow-rule-quiet)',
+                  }}
+                >
+                  <Ghost size={12} aria-hidden="true" /> Ghost challenge completed
                 </span>
               </div>
             )}
             {isPB && submissionStatus !== 'success' && (
-              <div className="mt-2 summary-pb-badge">
-                {immersive ? (
+              <div className={`mt-2 summary-pb-badge${arcade ? ' summary-arcade-high-score' : ''}`}>
+                {arcade ? (
+                  <span aria-label="New personal best">HIGH SCORE</span>
+                ) : immersive ? (
                   <span className="sandow-warrant">Royal Warrant · New Personal Best</span>
                 ) : (
                   <span className="sandow-grade">New personal best</span>
@@ -487,11 +550,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             {streakInfo && streakInfo.currentStreak > 1 && (
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="earned-streak text-sm font-bold">
-                  <span aria-hidden="true">🔥</span> {streakInfo.currentStreak} day streak
+                  <Flame size={14} aria-hidden="true" /> {streakInfo.currentStreak} day streak
                 </span>
                 {streakInfo.multiplier > 1 && (
                   <span
-                    className="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                    className="text-xs px-2 py-0.5 rounded font-bold"
                     style={{
                       background: 'rgba(252, 177, 49, 0.16)',
                       color: 'var(--sandow-brass)',
@@ -522,23 +585,27 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
             >
               {(
                 [
-                  { key: 'analyze', label: 'Recap', emoji: '📝' },
-                  { key: 'recover', label: 'Recover', emoji: '🌬️' },
-                  { key: 'celebrate', label: 'Score', emoji: '🏆' },
+                  { key: 'analyze', label: 'Recap', icon: FileText },
+                  { key: 'recover', label: 'Recover', icon: Wind },
+                  { key: 'celebrate', label: 'Score', icon: Trophy },
                 ] as const
-              ).map((s) => (
-                <button
-                  key={s.key}
-                  role="tab"
-                  aria-selected={stage === s.key}
-                  onClick={() => setStage(s.key)}
-                  className={`summary-stage-tab px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    stage === s.key ? 'is-active' : ''
-                  }`}
-                >
-                  {s.emoji} {s.label}
-                </button>
-              ))}
+              ).map((s) => {
+                const TabIcon = s.icon;
+                return (
+                  <button
+                    key={s.key}
+                    role="tab"
+                    aria-selected={stage === s.key}
+                    onClick={() => setStage(s.key)}
+                    className={`summary-stage-tab px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 ${
+                      stage === s.key ? 'is-active' : ''
+                    }`}
+                  >
+                    <TabIcon size={12} aria-hidden="true" />
+                    {s.label}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -552,7 +619,13 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 <ProgressSpark
                   points={progressSeries.points}
                   register="arcade"
-                  title={sessionRegister === 'studio' ? 'Form signal' : 'Recent progress'}
+                  title={
+                    arcade
+                      ? 'Score history'
+                      : sessionRegister === 'studio'
+                        ? 'Form signal'
+                        : 'Recent progress'
+                  }
                   animate={!isPB}
                   className="summary-progress-spark"
                 />
@@ -565,10 +638,10 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     onPlayAgain(retryFocus);
                     onClose();
                   }}
-                  className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
+                  className="earned-cta-studio w-full px-4 py-3 text-base flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
                 >
-                  <span>↺</span>
-                  <span>Try another set</span>
+                  <RotateCcw size={16} aria-hidden="true" />
+                  <span>{arcade ? 'PLAY AGAIN' : 'Try another set'}</span>
                 </button>
               )}
 
@@ -583,8 +656,8 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                           Select Submission Type
                         </span>
                         {isCelo && (
-                          <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full font-bold border border-green-500/20">
-                            Celo Bonus Active
+                          <span className="text-xs bg-teal-500/10 text-teal-300 px-2 py-0.5 rounded-full font-bold border border-teal-500/25">
+                            Celo bonus active
                           </span>
                         )}
                       </div>
@@ -594,21 +667,40 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         <div className="flex flex-col gap-2">
                           <button
                             onClick={handleSubmitVerified}
-                            className="relative w-full p-4 rounded-xl bg-gradient-to-br from-green-600 to-emerald-700 hover:from-green-500 hover:to-emerald-600 text-white shadow-lg shadow-green-900/30 border border-green-500/30 transition-all active:scale-[0.98] group"
+                            className="relative w-full p-4 rounded-xl text-white shadow-lg transition-all active:scale-[0.98] group"
+                            style={{
+                              background:
+                                'linear-gradient(115deg, #7aebd8 0%, #56d9c3 55%, #4cc9b0 100%)',
+                              color: 'var(--studio-ink)',
+                              border: '1px solid #9af3e2',
+                              boxShadow: '0 10px 28px rgba(86, 217, 195, 0.2)',
+                            }}
                           >
                             <div className="flex items-center justify-between">
                               <div className="text-left">
-                                <div className="font-black text-lg sm:text-xl flex items-center gap-2">
+                                <div
+                                  className="font-black text-lg sm:text-xl flex items-center gap-2"
+                                  style={{ color: 'var(--studio-ink)' }}
+                                >
                                   <span>Verified Score</span>
-                                  <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                  <span
+                                    className="text-xs px-1.5 py-0.5 rounded"
+                                    style={{ background: 'rgba(6, 16, 19, 0.14)' }}
+                                  >
                                     +10%
                                   </span>
                                 </div>
-                                <div className="text-xs sm:text-sm text-green-100 font-medium opacity-90 mt-0.5">
+                                <div
+                                  className="text-xs sm:text-sm font-medium opacity-80 mt-0.5"
+                                  style={{ color: 'var(--studio-ink)' }}
+                                >
                                   Submit with verified human badge
                                 </div>
                               </div>
-                              <div className="text-3xl sm:text-4xl font-black tracking-tighter drop-shadow-md">
+                              <div
+                                className="text-3xl sm:text-4xl font-black tracking-tighter tabular-nums"
+                                style={{ color: 'var(--studio-ink)' }}
+                              >
                                 {verifiedScore}
                               </div>
                             </div>
@@ -636,7 +728,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                                 <div className="font-bold text-lg sm:text-xl flex items-center gap-2">
                                   <span>Verify & Submit</span>
                                   <span
-                                    className="text-[10px] px-1.5 py-0.5 rounded"
+                                    className="text-xs px-2 py-0.5 rounded"
                                     style={{
                                       background: 'rgba(6, 16, 19, 0.2)',
                                       color: 'var(--studio-ink)',
@@ -717,12 +809,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                       ) : (
                         <div>
                           <div className="flex items-center justify-center gap-2 text-gray-500 mb-2">
-                            <span className="text-lg">🔒</span>
+                            <Lock size={16} className="text-gray-500" aria-hidden="true" />
                             <span className="text-sm font-bold uppercase tracking-widest">
                               On-chain Sync Locked
                             </span>
                           </div>
-                          <p className="text-[10px] text-gray-400">
+                          <p className="text-xs text-gray-400">
                             Reach <span className="text-primary font-bold">Level 5</span> to sync
                             your workouts to the blockchain.
                           </p>
@@ -742,8 +834,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {/* Non-on-chain mode: quiet local-saved note (no wallet wall) */}
               {stage === 'celebrate' && !ONCHAIN_MODES.includes(mode) && (
                 <div className="studio-card studio-card__body text-center">
-                  <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-                    💾 Saved locally — on-chain leaderboards coming for this exercise
+                  <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-gray-500 font-bold">
+                    <Save size={12} aria-hidden="true" /> Saved locally — on-chain leaderboards
+                    coming for this exercise
                   </span>
                 </div>
               )}
@@ -751,7 +844,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {/* Highlight Card — only when a best pose exists */}
               {highlightCardUrl && (
                 <div className="space-y-3">
-                  <p className="studio-card__section-title text-center">✨ AI Highlight Card</p>
+                  <p className="studio-card__section-title text-center inline-flex items-center gap-1.5">
+                    <Sparkles size={13} aria-hidden="true" /> AI Highlight Card
+                  </p>
                   <div className="studio-card overflow-hidden aspect-[9/16] max-h-[400px] mx-auto relative group">
                     <img
                       src={highlightCardUrl}
@@ -797,9 +892,10 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     />
                     {!isInMiniApp && (
                       <button
-                        className="twitter-button transition-all transform hover:scale-105"
+                        className="w-10 h-10 rounded-full bg-[#1da1f2] text-white font-black flex items-center justify-center transition-all hover:scale-105"
+                        aria-label="Share on X (Twitter)"
                         onClick={() => {
-                          const text = `${repCount} ${mode} • Onchain Olympics 💪`;
+                          const text = `${repCount} ${mode} • Onchain Olympics`;
                           const url = `https://imperfect-form.vercel.app`;
                           window.open(
                             `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
@@ -817,7 +913,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {/* Pin app — Farcaster only */}
               {isInMiniApp && repCount > 0 && (
                 <div className="studio-card studio-card__body text-center">
-                  <p className="text-xs text-purple-300 font-medium">📌 Pin app</p>
+                  <p
+                    className="text-xs font-medium inline-flex items-center gap-1.5"
+                    style={{ color: 'var(--studio-teal-bright)' }}
+                  >
+                    <Pin size={12} aria-hidden="true" /> Pin app
+                  </p>
                   <AddMiniAppButton
                     variant="secondary"
                     showAfterWorkout={true}
@@ -829,9 +930,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {/* Forward nav to recover */}
               <button
                 onClick={() => setStage('recover')}
-                className="w-full px-4 py-3 bg-gradient-to-r from-teal-600/60 to-teal-700/60 hover:from-teal-500/60 hover:to-teal-600/60 text-teal-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-[transform,background-color,border-color] duration-200 border border-teal-400/20 active:scale-[0.96]"
+                className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 text-teal-100 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-white/10 active:scale-[0.96] inline-flex items-center justify-center gap-2"
               >
-                🌬️ Cool Down →
+                <Wind size={14} aria-hidden="true" /> {arcade ? 'COOL DOWN →' : 'Cool down →'}
               </button>
             </>
           )}
@@ -839,10 +940,10 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           {/* Success state — replaces the celebrate flow after on-chain submit */}
           {stage === 'celebrate' && submissionStatus === 'success' && (
             <div className="studio-card studio-card__body text-center animate-in fade-in zoom-in duration-300">
-              <div className="text-teal-300 text-xl font-semibold tracking-tight">
-                Synced to leaderboard
+              <div className="flex items-center justify-center gap-2 text-teal-300 text-xl font-semibold tracking-tight">
+                <CheckCircle2 size={18} aria-hidden="true" /> Synced to leaderboard
               </div>
-              <div className="text-[10px] text-teal-300/60 uppercase font-semibold tracking-widest">
+              <div className="text-xs text-teal-300/60 uppercase font-semibold tracking-widest">
                 On-chain record stored
               </div>
               {onPlayAgain && (
@@ -851,9 +952,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     onPlayAgain(retryFocus);
                     onClose();
                   }}
-                  className="w-full px-4 py-3 bg-teal-600/80 hover:bg-teal-500/80 text-white font-semibold rounded-lg transition-all duration-200 active:scale-[0.98] border border-teal-400/30 flex items-center justify-center gap-2"
+                  className="earned-cta-studio w-full px-4 py-3 text-base flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
                 >
-                  <span>↺</span>
+                  <RotateCcw size={16} aria-hidden="true" />
                   <span>Try another set</span>
                 </button>
               )}
@@ -866,9 +967,10 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {repCount > 0 && <RecoveryCard mode={mode} />}
               <button
                 onClick={() => setStage('celebrate')}
-                className="w-full px-4 py-3 bg-gradient-to-r from-purple-600/60 to-violet-700/60 hover:from-purple-500/60 hover:to-violet-600/60 text-purple-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-purple-400/20 active:scale-[0.96]"
+                className="earned-cta-studio w-full px-4 py-3 text-sm flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
               >
-                🏆 Save score →
+                <Trophy size={14} aria-hidden="true" />{' '}
+                {summaryRegister === 'arcade' ? 'SAVE SCORE →' : 'Save score →'}
               </button>
               <button
                 onClick={onClose}
@@ -910,9 +1012,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           {stage === 'analyze' && (
             <button
               onClick={() => setStage('celebrate')}
-              className="w-full px-4 py-3 bg-gradient-to-r from-teal-600/60 to-teal-700/60 hover:from-teal-500/60 hover:to-teal-600/60 text-teal-50 font-bold rounded-xl text-xs uppercase tracking-widest transition-[transform,background-color,border-color] duration-200 border border-teal-400/20 active:scale-[0.96]"
+              className="earned-cta-studio w-full px-4 py-3 text-sm flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
             >
-              🏆 Save score →
+              <Trophy size={14} aria-hidden="true" /> Save score →
             </button>
           )}
 
@@ -929,8 +1031,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
           {/* Non-Celo success summary - show transaction and summary on other chains */}
           {submissionStatus === 'success' && submittedChainId !== 42220 && transactionHash && (
             <div className="studio-card studio-card__body text-center">
-              <div className="bg-green-900/20 border border-green-700/30 rounded p-2 text-center text-xs text-green-300">
-                ✅ On {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
+              <div className="bg-green-900/20 border border-green-700/30 rounded p-2 text-center text-xs text-green-300 inline-flex items-center justify-center gap-1.5">
+                <CheckCircle2 size={12} aria-hidden="true" /> On{' '}
+                {networkType.charAt(0).toUpperCase() + networkType.slice(1)}
               </div>
               <a
                 href={`${chainConfigs[networkType as 'polygon' | 'base' | 'monad' | 'celo' | 'avalanche'].blockExplorerUrls?.[0]}/tx/${transactionHash}`}
@@ -949,9 +1052,15 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                     onClose();
                   }
                 }}
-                className="w-full px-3 py-2 bg-gradient-to-r from-primary to-primary-dark text-black font-bold rounded text-xs hover:from-primary-dark hover:to-primary transition-all"
+                className="earned-cta-studio w-full px-3 py-2 text-sm flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
               >
-                {onViewLeaderboard ? '🏆 LEADERBOARD' : '← BACK TO MENU'}
+                {onViewLeaderboard ? (
+                  <>
+                    <Trophy size={13} aria-hidden="true" /> Leaderboard
+                  </>
+                ) : (
+                  <>← Back to menu</>
+                )}
               </button>
             </div>
           )}
@@ -984,7 +1093,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 className="bg-black/80 backdrop-blur-md border-2 border-primary rounded-2xl p-6 flex flex-col items-center gap-2 shadow-[0_0_30px_rgba(252,177,49,0.4)] max-w-sm animate-fade-in animate-slide-up"
                 style={{ animationDelay: `${index * 200}ms` }}
               >
-                <span className="text-5xl">{achievement.icon}</span>
+                <span className="text-5xl" style={{ color: 'var(--sandow-brass)' }}>
+                  <AchievementIcon icon={achievement.icon} size={48} />
+                </span>
                 <div className="text-center">
                   <div className="text-primary font-black text-xl uppercase tracking-tighter">
                     Achievement Unlocked!

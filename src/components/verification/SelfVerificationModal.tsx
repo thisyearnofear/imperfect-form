@@ -175,7 +175,7 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
           <span className="text-lg">🔒</span>
           <div>
             <p className="text-xs font-bold text-cyan-200">Privacy First</p>
-            <p className="text-[10px] text-cyan-100/70 leading-relaxed">
+            <p className="text-[11px] text-cyan-100/70 leading-relaxed">
               We only verify that you are a unique human over 16. No personal identity data is
               stored on our servers.
             </p>

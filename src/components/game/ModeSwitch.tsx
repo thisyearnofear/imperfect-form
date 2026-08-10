@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { Dumbbell, PersonStanding, Activity, MoveUp, Zap, type LucideIcon } from 'lucide-react';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/mode-switch.css';
@@ -24,7 +25,7 @@ interface ModeOption {
   value: Mode;
   label: string;
   ariaLabel?: string;
-  icon?: string;
+  icon?: LucideIcon;
   category?: 'upper-body' | 'lower-body' | 'full-body' | 'cardio';
 }
 
@@ -33,35 +34,35 @@ const ALL_MODE_OPTIONS: ModeOption[] = [
   {
     value: 'pushups',
     label: 'Push-ups',
-    icon: '💪',
+    icon: Dumbbell,
     ariaLabel: 'Switch to push-ups mode',
     category: 'upper-body',
   },
   {
     value: 'squats',
     label: 'Squats',
-    icon: '🏋️',
+    icon: PersonStanding,
     ariaLabel: 'Switch to squats mode',
     category: 'lower-body',
   },
   {
     value: 'curls',
     label: 'Curls',
-    icon: '🦾',
+    icon: Activity,
     ariaLabel: 'Switch to bicep curls mode',
     category: 'upper-body',
   },
   {
     value: 'pullups',
     label: 'Pull-ups',
-    icon: '🧗',
+    icon: MoveUp,
     ariaLabel: 'Switch to pull-ups mode',
     category: 'upper-body',
   },
   {
     value: 'jumps',
     label: 'Jumps',
-    icon: '🦘',
+    icon: Zap,
     ariaLabel: 'Switch to jumps mode',
     category: 'cardio',
   },
@@ -128,7 +129,7 @@ const ModeSwitch: React.FC<ModeSwitchProps> = memo(
               data-category={mode.category}
             >
               <span className="mode-icon" aria-hidden="true">
-                {mode.icon}
+                {mode.icon ? <mode.icon size={16} strokeWidth={2} /> : null}
               </span>
               <span className="mode-label">{mode.label}</span>
             </button>

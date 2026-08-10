@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Ghost, Trophy, ChevronRight, Share2, Play, Crown } from 'lucide-react';
+import { Ghost, Trophy, ChevronRight, Share2, Play } from 'lucide-react';
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { useSearchParams } from 'next/navigation';
 
@@ -9,24 +9,8 @@ interface ChallengeWidgetProps {
   onStartGhostRace?: (mode: 'pushups' | 'squats') => void;
 }
 
-const SAMPLE_CHAMPIONS = [
-  { name: 'The Pro', mode: 'pushups' as const, reps: 52, date: '2026-04-15', level: 12 },
-  { name: 'Base God', mode: 'pushups' as const, reps: 48, date: '2026-04-10', level: 11 },
-  { name: 'Squat King', mode: 'squats' as const, reps: 75, date: '2026-04-12', level: 10 },
-  { name: 'Ghost Rider', mode: 'squats' as const, reps: 68, date: '2026-04-08', level: 9 },
-];
-
 export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRace }) => {
   const { progress } = useXpProgress();
-  const [champions, setChampions] = useState<
-    Array<{
-      name: string;
-      mode: 'pushups' | 'squats';
-      reps: number;
-      date: string;
-      level: number;
-    }>
-  >([]);
   const [hasIncomingChallenge, setHasIncomingChallenge] = useState(false);
   const searchParams = useSearchParams();
 
@@ -35,7 +19,6 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
     if (raceParam) {
       setHasIncomingChallenge(true);
     }
-    setChampions(SAMPLE_CHAMPIONS);
   }, [searchParams]);
 
   const canUseGhostMode = progress.currentLevel >= 3;
@@ -122,7 +105,7 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
               </h4>
               {canUseGhostMode ? (
                 <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                  className="text-xs font-bold px-2 py-0.5 rounded"
                   style={{
                     background: 'rgba(86, 217, 195, 0.14)',
                     color: 'var(--studio-teal-bright)',
@@ -132,10 +115,10 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
                 </span>
               ) : (
                 <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1"
+                  className="text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1"
                   style={{
                     background: 'var(--studio-surface-item)',
-                    color: 'var(--studio-muted-dim)',
+                    color: 'var(--studio-muted)',
                   }}
                 >
                   <Lock size={10} /> LVL 3
@@ -161,7 +144,7 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
         </div>
       </div>
 
-      <p className="mb-4 text-center text-[10px]" style={{ color: 'var(--studio-muted-dim)' }}>
+      <p className="mb-4 text-center text-xs" style={{ color: 'var(--studio-muted)' }}>
         Finish a set to send a private movement correction to someone else.
       </p>
 
@@ -171,66 +154,12 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
           <h4 className="earned-surface__title">Race champions</h4>
         </div>
 
-        {champions.length > 0 ? (
-          <div className="space-y-2">
-            {champions.slice(0, 4).map((champion, index) => (
-              <button
-                type="button"
-                key={`${champion.name}-${index}`}
-                className="w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors"
-                style={{ background: 'var(--studio-surface-item)' }}
-                onClick={() => handleStartChallenge(champion.mode)}
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: 'rgba(252, 177, 49, 0.14)' }}
-                >
-                  {index === 0 ? (
-                    <Crown className="w-4 h-4" style={{ color: 'var(--sandow-brass)' }} />
-                  ) : (
-                    <span className="font-bold text-sm" style={{ color: 'var(--sandow-brass)' }}>
-                      #{index + 1}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div
-                    className="text-sm font-bold truncate"
-                    style={{ color: 'var(--studio-paper-soft)' }}
-                  >
-                    {champion.name}
-                  </div>
-                  <div
-                    className="text-[10px] font-mono uppercase"
-                    style={{ color: 'var(--studio-muted-dim)' }}
-                  >
-                    {champion.mode} · Lvl {champion.level}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div
-                    className="font-bold text-sm tabular-nums"
-                    style={{ color: 'var(--studio-paper-soft)' }}
-                  >
-                    {champion.reps}
-                  </div>
-                  <div
-                    className="text-[10px] font-mono"
-                    style={{ color: 'var(--studio-muted-dim)' }}
-                  >
-                    reps
-                  </div>
-                </div>
-                <Play className="w-4 h-4" style={{ color: 'var(--studio-muted-dim)' }} />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-6" style={{ color: 'var(--studio-muted-dim)' }}>
-            <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-xs">No champions yet. Be the first!</p>
-          </div>
-        )}
+        <div className="text-center py-6" style={{ color: 'var(--studio-muted-dim)' }}>
+          <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-xs max-w-[24rem] mx-auto">
+            No champions yet — finish a set and your best line becomes the first ghost to beat.
+          </p>
+        </div>
       </div>
 
       {canUseOnChain && (
@@ -248,7 +177,7 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
             <Share2 size={14} />
             <span>On-chain challenges active</span>
           </div>
-          <p className="text-[10px] mt-1" style={{ color: 'var(--studio-muted-dim)' }}>
+          <p className="text-xs mt-1" style={{ color: 'var(--studio-muted)' }}>
             Your challenges are now recorded on-chain for verified competition
           </p>
         </div>

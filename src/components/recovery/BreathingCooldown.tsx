@@ -102,7 +102,7 @@ const BreathingCooldown: React.FC<BreathingCooldownProps> = ({ onComplete, tone 
               {phase === 'inhale' ? 'Breathe In' : 'Release'}
             </p>
             <p
-              className={`text-[10px] font-mono ${light ? 'text-teal-600/70' : 'text-teal-300/60'}`}
+              className={`text-[11px] font-mono ${light ? 'text-teal-600/70' : 'text-teal-300/60'}`}
             >
               breath {Math.min(breaths + 1, TOTAL_BREATHS)} of {TOTAL_BREATHS}
             </p>

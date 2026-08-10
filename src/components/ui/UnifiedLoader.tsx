@@ -192,7 +192,7 @@ const PHASE_CONFIG: Record<
 > = {
   initial: {
     title: 'Opening the coaching bay…',
-    subtitle: 'Your camera stays on this device',
+    subtitle: 'Video is processed on this device · not uploaded',
     guidance: 'Allow camera access when prompted, then show us one rep.',
     color: 'studio-loader__phase-color studio-loader__phase-color--initial',
     bgGradient: 'studio-loader__surface--initial',
@@ -202,7 +202,7 @@ const PHASE_CONFIG: Record<
   },
   camera: {
     title: 'Finding your frame…',
-    subtitle: 'Waking up the camera coach',
+    subtitle: 'Video is processed on this device · waking up the camera coach',
     guidance: 'Step back — head to toes visible.',
     color: 'studio-loader__phase-color studio-loader__phase-color--camera',
     bgGradient: 'studio-loader__surface--camera',
@@ -212,7 +212,7 @@ const PHASE_CONFIG: Record<
   },
   ai: {
     title: 'Reading your movement…',
-    subtitle: 'The coach is learning the shape of your motion',
+    subtitle: 'Motion is processed on this device · coaching your form',
     guidance: 'This first read can take a little longer.',
     color: 'studio-loader__phase-color studio-loader__phase-color--ai',
     bgGradient: 'studio-loader__surface--ai',
@@ -372,13 +372,17 @@ export default function UnifiedLoader({
           >
             {phase === 'ready' ? 'I see your movement.' : config.title}
           </h3>
-          <p className="text-xs sm:text-sm text-white/80 font-medium leading-relaxed">
+          <p
+            className="text-xs sm:text-sm text-white/80 font-medium leading-relaxed"
+            aria-hidden="true"
+          >
             {phase === 'ready' ? 'Show me one rep.' : config.subtitle || config.guidance}
           </p>
         </div>
 
         <span className="sr-only" role="status" aria-live="polite">
-          {config.title}. {phase === 'ai' && progress > 0 ? `${progress}% complete.` : ''}
+          {config.title}. {config.subtitle}.{' '}
+          {phase === 'ai' && progress > 0 ? `${progress}% complete.` : ''}
         </span>
 
         {/* Step rail — one boot sequence, three milestones */}
@@ -401,7 +405,7 @@ export default function UnifiedLoader({
                   {done ? '✓' : i + 1}
                 </span>
                 <span
-                  className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${
+                  className={`text-[11px] font-bold uppercase tracking-wider transition-colors duration-300 ${
                     done
                       ? 'studio-loader__step-label--done'
                       : active
@@ -430,7 +434,7 @@ export default function UnifiedLoader({
               <p className="studio-loader__progress-value text-sm font-black mt-1">{progress}%</p>
               <p
                 key={tipIndex}
-                className="studio-loader__tip mt-2 max-w-[260px] text-[11px] leading-snug"
+                className="studio-loader__tip mt-2 max-w-[260px] text-xs leading-snug"
               >
                 {BOOT_TIPS[tipIndex]}
               </p>

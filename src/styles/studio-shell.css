@@ -115,6 +115,89 @@ body[data-shell='studio'] .studio-topbar {
   color: #08211f;
   background: #75dfcd;
 }
+
+/* Register entry pills — the arcade (Train) + calm (Breathe) doorways in the
+   earned shell. Earned chrome: they live in the shell, never the day-0 foyer.
+   Each is a real toggle (active register ↔ Coach) that lands on the workout
+   tab. Outline when idle, solid when its register is active. */
+.studio-entry-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.1rem;
+  padding: 0 0.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  box-shadow: none;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 200ms ease;
+}
+
+.studio-entry-pill:active {
+  transform: scale(0.96);
+}
+
+.studio-entry-pill:focus-visible {
+  outline: 2px solid #9bb2af;
+  outline-offset: 2px;
+}
+
+/* Arcade — brass/gold punctuation on the studio chassis. */
+.studio-entry-pill--arcade {
+  color: var(--sandow-brass, #fcb131);
+  background: rgba(252, 177, 49, 0.06);
+  border-color: rgba(252, 177, 49, 0.38);
+}
+
+.studio-entry-pill--arcade:hover,
+.studio-entry-pill--arcade.is-active {
+  color: #1a1206;
+  background: var(--sandow-brass, #fcb131);
+  border-color: var(--sandow-brass-soft, #e6a72c);
+  box-shadow: 0 0 14px rgba(252, 177, 49, 0.28);
+}
+
+.studio-entry-pill--arcade:focus-visible {
+  outline-color: var(--sandow-brass, #fcb131);
+}
+
+/* Calm — teal, the stillness register. */
+.studio-entry-pill--calm {
+  color: #5eead4;
+  background: rgba(94, 234, 212, 0.06);
+  border-color: rgba(94, 234, 212, 0.32);
+}
+
+.studio-entry-pill--calm:hover,
+.studio-entry-pill--calm.is-active {
+  color: #06211e;
+  background: #5eead4;
+  border-color: #9af3e2;
+  box-shadow: 0 0 14px rgba(94, 234, 212, 0.25);
+}
+
+.studio-entry-pill--calm:focus-visible {
+  outline-color: #5eead4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-entry-pill {
+    transition: none;
+  }
+
+  .studio-entry-pill:active {
+    transform: none;
+  }
+}
 #game-container[data-register] .game-hud-container {
   width: 100%;
   display: flex;
@@ -203,6 +286,49 @@ body[data-shell='studio'] .studio-topbar {
   transform: none;
   background: #64272d;
   box-shadow: none;
+}
+
+/* Studio start/reset controls — explicit styling now that the legacy global
+   gold button rule is gone (globals.css holds only a neutral reset). */
+#game-container[data-register] #startButton {
+  margin: 0;
+  padding: 0.75rem 1.25rem;
+  color: #06211e;
+  background: linear-gradient(115deg, #7aebd8 0%, #56d9c3 55%, #4cc9b0 100%);
+  border: 1px solid #9af3e2;
+  border-radius: 5px;
+  box-shadow: 0 6px 18px rgba(86, 217, 195, 0.18);
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: none;
+  transition: transform 160ms ease, box-shadow 200ms ease;
+}
+#game-container[data-register] #startButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(86, 217, 195, 0.26);
+}
+#game-container[data-register] #startButton:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+#game-container[data-register] #resetButton {
+  margin: 0;
+  padding: 0.75rem 1.25rem;
+  color: #d8eeea;
+  background: rgba(9, 33, 34, 0.5);
+  border: 1px solid rgba(139, 227, 212, 0.28);
+  border-radius: 5px;
+  box-shadow: none;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+#game-container[data-register] #resetButton:hover:not(:disabled) {
+  background: rgba(86, 217, 195, 0.1);
+  border-color: rgba(86, 217, 195, 0.42);
 }
 .coach-cue {
   min-height: 3.5rem;

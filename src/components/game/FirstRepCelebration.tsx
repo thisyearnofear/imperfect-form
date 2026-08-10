@@ -44,6 +44,7 @@ export function FirstRepCelebration({ show, mode }: FirstRepCelebrationProps) {
         </span>
         <span>First signal captured</span>
         <small>{guidanceFor(mode).label} · Coach is watching your form</small>
+        <strong>Now try the one fix.</strong>
       </div>
       {particles.map((particle, i) => (
         <span

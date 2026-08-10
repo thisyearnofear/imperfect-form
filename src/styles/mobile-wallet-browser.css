@@ -268,17 +268,6 @@
     padding: 0 16px;
   }
 
-  .olympic-rings {
-    margin-right: 12px !important;
-  }
-
-  .ring {
-    width: 24px !important;
-    height: 24px !important;
-    margin: 0 3px !important;
-    border-width: 2px !important;
-  }
-
   /* Better video container for mobile */
   #canvasContainer {
     border-width: 2px !important;
@@ -390,10 +379,6 @@
 (min-resolution: 192dpi) {
 
   .leaderboard-container {
-    border-width: 1px !important;
-  }
-
-  .ring {
     border-width: 1px !important;
   }
 }

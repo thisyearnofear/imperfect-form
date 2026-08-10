@@ -2,6 +2,7 @@
    and #screen[data-register]. Intent chooser commits chrome for the session. */
 
 .prestart-foyer {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -9,6 +10,51 @@
   padding: 0.75rem 0.5rem 1rem;
   max-width: 100%;
   line-height: 1.7;
+  /* Atmosphere settle — the whole register washes in under the stagger. */
+  animation: prestart-atmosphere-in 560ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes prestart-atmosphere-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Keep in-flow children above the arcade glow layer. */
+.prestart-foyer > * {
+  position: relative;
+}
+
+/* Arcade atmosphere — a gold corner glow settles in with the Press Start copy.
+   pointer-events: none so it never intercepts input; PreStartFoyer renders
+   alone inside #instructions, so the wash stays within the screen surface. */
+.prestart-foyer--arcade::before {
+  content: '';
+  position: absolute;
+  inset: -6% -6% auto;
+  height: 60%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 58% 48% at 32% 0%,
+    rgba(252, 177, 49, 0.15),
+    transparent 72%
+  );
+  animation: prestart-glow-in 820ms ease-out both;
+}
+
+@keyframes prestart-glow-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* —— Arcade (Train) — Press Start + gold —— */
@@ -138,7 +184,6 @@
   font-size: clamp(0.75rem, 1.7vw, 0.85rem);
   font-weight: 600;
   color: #5eead4;
-  animation: prestartSoftPulse 2.2s ease-in-out infinite;
 }
 
 .prestart-foyer--studio .prestart-foyer__intent {
@@ -228,7 +273,6 @@
   font-size: clamp(0.78rem, 1.7vw, 0.88rem);
   font-weight: 600;
   color: #0d9488;
-  animation: prestartSoftPulse 2.8s ease-in-out infinite;
 }
 
 .prestart-foyer--calm .prestart-foyer__intent {
@@ -291,16 +335,57 @@
 .prestart-foyer--arcade .prestart-foyer__cta.prestart-foyer__reveal {
   animation:
     prestartReveal 0.45s steps(3, end) forwards,
-    prestartBlink 1.4s steps(2, end) infinite;
+    prestartBlink 1.4s steps(2, end) infinite,
+    prestart-arcade-attention 1.5s ease-out 1.15s both;
+  animation-delay: 520ms, 1s, 1.15s;
+}
+
+/* One-shot gold flash that introduces the arcade CTA, then the blink owns it. */
+@keyframes prestart-arcade-attention {
+  0%,
+  100% {
+    text-shadow: none;
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(252, 177, 49, 0.85);
+  }
+}
+
+.prestart-foyer--studio .prestart-foyer__cta.prestart-foyer__reveal {
+  animation:
+    prestartRevealSmooth 0.5s ease-out forwards,
+    prestart-studio-attention 2.2s ease-in-out 1s both;
   animation-delay: 520ms, 1s;
 }
 
-.prestart-foyer--studio .prestart-foyer__cta.prestart-foyer__reveal,
 .prestart-foyer--calm .prestart-foyer__cta.prestart-foyer__reveal {
   animation:
     prestartRevealSmooth 0.5s ease-out forwards,
-    prestartSoftPulse 2.4s ease-in-out infinite;
+    prestart-calm-attention 2.4s ease-in-out 1s both;
   animation-delay: 520ms, 1s;
+}
+
+/* One soft attention breathe after the reveal, then stillness — matching the
+   studio foyer's one-shot pulse and the calm register's own 'Stillness' copy.
+   The arcade blink is the one loud exception (register identity). */
+@keyframes prestart-studio-attention {
+  0%,
+  100% {
+    text-shadow: none;
+  }
+  50% {
+    text-shadow: 0 0 14px rgba(94, 234, 212, 0.55);
+  }
+}
+
+@keyframes prestart-calm-attention {
+  0%,
+  100% {
+    text-shadow: none;
+  }
+  50% {
+    text-shadow: 0 0 12px rgba(13, 148, 136, 0.38);
+  }
 }
 
 @keyframes prestartReveal {
@@ -323,14 +408,83 @@
   }
 }
 
-@keyframes prestartSoftPulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
+/* Arcade cabinet frame — the arcade foyer, not the whole arcade session.
+   Scoped with :has(.prestart-foyer) so the gold edge appears only while the
+   foyer shows; a live Train workout keeps the standard #screen frame. */
+#screen[data-register='arcade']:has(.prestart-foyer) {
+  border-color: rgba(252, 177, 49, 0.4);
+  box-shadow: 0 0 20px rgba(252, 177, 49, 0.18);
+  overflow-y: auto;
+}
+
+/* —— Movement picker (functional foyer — arcade entry) —— */
+.prestart-foyer__moves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0.25rem;
+}
+
+.prestart-foyer--arcade .prestart-foyer__move {
+  font-family: 'Press Start 2P', cursive;
+  font-size: clamp(0.3rem, 1vw, 0.38rem);
+  padding: 0.45rem 0.55rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: 1px solid rgba(252, 177, 49, 0.35);
+  border-radius: 0;
+  box-shadow: none;
+  text-transform: uppercase;
+  margin: 0;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.prestart-foyer--arcade .prestart-foyer__move:hover {
+  color: #fff;
+  border-color: #fcb131;
+  transform: none;
+}
+
+.prestart-foyer--arcade .prestart-foyer__move.is-selected {
+  color: #000;
+  background: #fcb131;
+  border-color: #fcb131;
+}
+
+.prestart-foyer--arcade .prestart-foyer__move:focus-visible {
+  outline: 2px solid #fcb131;
+  outline-offset: 2px;
+}
+
+/* CTA as a real START button (functional foyer) — gold outline, fills on
+   hover. Transform hover is skipped: the reveal animation's forwards fill
+   holds translateY(0), so color/bg/border carry the affordance. */
+.prestart-foyer--arcade button.prestart-foyer__cta {
+  padding: 0.55rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(252, 177, 49, 0.55);
+  border-radius: 0;
+  box-shadow: none;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.prestart-foyer--arcade button.prestart-foyer__cta:hover {
+  color: #000;
+  background: #fcb131;
+  border-color: #fcb131;
+}
+
+.prestart-foyer--arcade button.prestart-foyer__cta:focus-visible {
+  outline: 2px solid #fcb131;
+  outline-offset: 2px;
 }
 
 /* Screen shell picks up session register (set on #screen in Game) */
@@ -356,6 +510,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .prestart-foyer,
+  .prestart-foyer--arcade::before {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
   .prestart-foyer__reveal,
   .prestart-foyer__cta,
   .prestart-foyer__cta.prestart-foyer__reveal {

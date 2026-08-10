@@ -7,71 +7,84 @@ export const DailyQuests: React.FC = () => {
 
   if (loading && quests.length === 0) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 animate-pulse">
-        <div className="h-6 w-48 bg-zinc-800 rounded mb-4"></div>
-        <div className="space-y-3">
-          <div className="h-20 bg-zinc-800 rounded"></div>
-          <div className="h-20 bg-zinc-800 rounded"></div>
-          <div className="h-20 bg-zinc-800 rounded"></div>
-        </div>
+      <div className="studio-card studio-card__body" aria-busy="true">
+        <div className="h-4 w-32 rounded animate-pulse bg-[rgba(139,227,212,0.12)]" />
+        <div className="h-16 rounded animate-pulse bg-[rgba(139,227,212,0.06)]" />
+        <div className="h-16 rounded animate-pulse bg-[rgba(139,227,212,0.06)]" />
+        <div className="h-16 rounded animate-pulse bg-[rgba(139,227,212,0.06)]" />
       </div>
     );
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <Target className="text-yellow-400 w-5 h-5" />
+    <div className="studio-card studio-card__body">
+      <div className="flex items-center justify-between">
+        <h3 className="studio-card__section-title flex items-center gap-1.5">
+          <Target size={13} style={{ color: 'var(--sandow-brass)' }} aria-hidden="true" />
           Daily Quests
         </h3>
-        <span className="text-xs text-zinc-500 font-mono">Resets in 12h</span>
+        <span className="text-[11px] font-mono text-[var(--studio-muted)]">Resets in 12h</span>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {quests.map((quest) => (
           <div
             key={quest.id}
-            className={`p-4 rounded-lg border transition-all ${
+            className={`p-4 rounded-lg border transition-colors ${
               quest.completed
-                ? 'bg-yellow-400/5 border-yellow-400/20'
-                : 'bg-zinc-800/50 border-zinc-700'
+                ? 'bg-[rgba(252,177,49,0.07)] border-[color:var(--sandow-rule-quiet)]'
+                : 'bg-[rgba(9,33,34,0.5)] border-[color:var(--studio-border)]'
             }`}
           >
             <div className="flex justify-between items-start mb-2">
               <div>
                 <h4
-                  className={`font-bold ${quest.completed ? 'text-yellow-400' : 'text-zinc-200'}`}
+                  className={`font-bold text-sm ${
+                    quest.completed
+                      ? 'text-[var(--sandow-brass)]'
+                      : 'text-[var(--studio-paper-soft)]'
+                  }`}
                 >
                   {quest.title}
                 </h4>
-                <p className="text-xs text-zinc-400 mt-1">{quest.description}</p>
+                <p className="text-xs text-[var(--studio-muted)] mt-1">{quest.description}</p>
               </div>
               <div className="flex flex-col items-end">
-                <div className="flex items-center gap-1 text-yellow-400 text-xs font-bold mb-1">
-                  <Zap size={12} fill="currentColor" />+{quest.xpReward} XP
+                <div
+                  className="flex items-center gap-1 text-xs font-bold mb-1"
+                  style={{ color: 'var(--sandow-brass)' }}
+                >
+                  <Zap size={12} fill="currentColor" aria-hidden="true" />+{quest.xpReward} XP
                 </div>
                 {quest.completed ? (
-                  <CheckCircle className="text-yellow-400 w-5 h-5" />
+                  <CheckCircle
+                    size={20}
+                    className="text-[var(--sandow-brass)]"
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <Circle className="text-zinc-600 w-5 h-5" />
+                  <Circle size={20} className="text-[var(--studio-muted-dim)]" aria-hidden="true" />
                 )}
               </div>
             </div>
 
             <div className="mt-3">
-              <div className="flex justify-between text-[10px] font-mono mb-1">
-                <span className={quest.completed ? 'text-yellow-400' : 'text-zinc-400'}>
+              <div className="flex justify-between text-[11px] font-mono mb-1">
+                <span
+                  className={
+                    quest.completed ? 'text-[var(--sandow-brass)]' : 'text-[var(--studio-muted)]'
+                  }
+                >
                   PROGRESS: {quest.progress} / {quest.target}
                 </span>
-                <span className="text-zinc-500">
+                <span className="text-[var(--studio-muted-dim)]">
                   {Math.round((quest.progress / quest.target) * 100)}%
                 </span>
               </div>
-              <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full rounded-full overflow-hidden bg-[rgba(139,227,212,0.12)]">
                 <div
                   className={`h-full transition-all duration-500 ${
-                    quest.completed ? 'bg-yellow-400' : 'bg-zinc-500'
+                    quest.completed ? 'bg-[var(--sandow-brass)]' : 'bg-[var(--studio-teal-bright)]'
                   }`}
                   style={{ width: `${(quest.progress / quest.target) * 100}%` }}
                 />

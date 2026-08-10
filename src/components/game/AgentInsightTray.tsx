@@ -6,6 +6,7 @@ import { analyzeForm } from '@/lib/coachingEngine';
 import { speakCoachLine } from '@/lib/tts';
 import { coachStation } from '@/services/coachStation';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 import type { BiomechanicalState } from '@/types/mediapipe';
 import type { ExerciseMode } from '@/utils/biomechanics';
 
@@ -75,9 +76,24 @@ export function AgentInsightTray({ metrics, mode, voiceEnabled, repCount }: Agen
     }
   }, [metrics, metricsHash, mode, personality, repCount, voiceEnabled]);
 
+  const { register } = useSessionIntent();
+  // Arcade cabinet: the tray keeps the same form cues (coaching content must
+  // not degrade) but reads them as brass pixel labels — FIX / NICE / GET READY
+  // (styling via the arcade register in session-register.css).
+  const arcade = register === 'arcade';
+
   const Icon = cue.state === 'adjust' ? TriangleAlert : cue.state === 'good' ? Check : Focus;
-  const label =
-    cue.state === 'adjust' ? 'Adjust' : cue.state === 'good' ? 'Looking good' : 'Get ready';
+  const label = arcade
+    ? cue.state === 'adjust'
+      ? 'Fix'
+      : cue.state === 'good'
+        ? 'Nice'
+        : 'Get ready'
+    : cue.state === 'adjust'
+      ? 'Adjust'
+      : cue.state === 'good'
+        ? 'Looking good'
+        : 'Get ready';
 
   return (
     <section

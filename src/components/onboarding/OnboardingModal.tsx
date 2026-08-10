@@ -76,7 +76,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) 
         </button>
 
         <div className="px-6 pt-6 pb-0 space-y-3">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-teal-300/50 font-medium">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-teal-300/50 font-medium">
             {BRAND.name}
           </p>
           <div className="flex gap-1.5">

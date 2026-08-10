@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CoachPersonality, getCoachInfo } from '@/lib/coachPersonalities';
+import { PersonaIcon } from './PersonaIcon';
 
 /**
  * The "lab register" post-workout analysis card - the clinical counterpoint
@@ -49,7 +50,7 @@ const LabAnalysisCard: React.FC<LabAnalysisCardProps> = ({
       <div className="lab-analysis-card__header studio-card__header">
         <span className="lab-analysis-card__header-title">Coaching analysis</span>
         <span className="lab-analysis-card__badge studio-card__badge">
-          {coach.emoji} {coach.name}
+          <PersonaIcon personality={coach.personality} size={12} /> {coach.name}
         </span>
       </div>
 
@@ -143,7 +144,8 @@ const LabAnalysisCard: React.FC<LabAnalysisCardProps> = ({
             )}
 
             <p className="lab-analysis-card__byline">
-              — {coach.emoji} {coach.name}, your {coach.theme} coach
+              — <PersonaIcon personality={coach.personality} size={12} /> {coach.name}, your{' '}
+              {coach.theme} coach
             </p>
           </>
         )}

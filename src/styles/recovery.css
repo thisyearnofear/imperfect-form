@@ -134,6 +134,66 @@
   }
 }
 
+/* Calm foyer entrance — the Breathe panel settles in like the studio foyer:
+   one soft fade on open, header first, options, then the note. */
+.recovery-card--foyer {
+  animation: recovery-foyer-in 620ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.recovery-card--foyer .recovery-card__header,
+.recovery-card--foyer .recovery-card__options,
+.recovery-card--foyer .recovery-card__note {
+  animation: recovery-foyer-rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.recovery-card--foyer .recovery-card__options {
+  animation-delay: 130ms;
+}
+
+.recovery-card--foyer .recovery-card__note {
+  animation-delay: 220ms;
+}
+
+@keyframes recovery-foyer-in {
+  from {
+    opacity: 0;
+    transform: scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes recovery-foyer-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* One-shot attention on the primary calm action — a gentle teal breathe once
+   the stagger lands, then stillness (the register's own copy says so). */
+.recovery-card__option--attention {
+  animation: recovery-option-breathe 2.1s ease-in-out 850ms both;
+}
+
+@keyframes recovery-option-breathe {
+  0%,
+  100% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px rgba(13, 148, 136, 0.12),
+      0 10px 26px rgba(13, 148, 136, 0.16);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .recovery-card__option,
   .recovery-card__close {
@@ -144,5 +204,13 @@
   .recovery-card__option:active,
   .recovery-card__close:active {
     transform: none;
+  }
+
+  .recovery-card--foyer,
+  .recovery-card--foyer .recovery-card__header,
+  .recovery-card--foyer .recovery-card__options,
+  .recovery-card--foyer .recovery-card__note,
+  .recovery-card__option--attention {
+    animation: none;
   }
 }

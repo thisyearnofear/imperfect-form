@@ -66,7 +66,7 @@ export const getMedalStyle = (position: number) => {
   switch (position) {
     case 0: // Gold
       return {
-        medal: '🥇',
+        medal: '',
         bg: 'bg-primary/20',
         textColor: 'text-primary',
         border: 'border-primary',
@@ -74,7 +74,7 @@ export const getMedalStyle = (position: number) => {
       };
     case 1: // Silver
       return {
-        medal: '🥈',
+        medal: '',
         bg: 'bg-gray-400/20',
         textColor: 'text-gray-300',
         border: 'border-gray-400',
@@ -82,7 +82,7 @@ export const getMedalStyle = (position: number) => {
       };
     case 2: // Bronze
       return {
-        medal: '🥉',
+        medal: '',
         bg: 'bg-orange-600/20',
         textColor: 'text-orange-400',
         border: 'border-orange-600',
@@ -90,7 +90,7 @@ export const getMedalStyle = (position: number) => {
       };
     default:
       return {
-        medal: `${position + 1}`,
+        medal: '',
         bg: '',
         textColor: 'text-white',
         border: 'border-white/20',

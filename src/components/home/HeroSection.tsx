@@ -8,6 +8,7 @@ import { xpService, StreakInfo } from '@/services/XPService';
 import { getLocalWorkouts } from '@/services/integrations/WorkoutDataAdapter';
 import { ProgressSpark } from '@/components/progress';
 import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/recentProgress';
+import { CountUp } from '@/components/ui/CountUp';
 
 interface HeroSectionProps {
   onStartWorkout?: () => void;
@@ -56,7 +57,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onStartWorkout, onView
                 className="font-bold text-lg tabular-nums"
                 style={{ color: 'var(--studio-paper-soft)' }}
               >
-                {progress.totalXp.toLocaleString()} XP
+                <CountUp to={progress.totalXp} format /> XP
               </div>
             </div>
           </div>
@@ -66,18 +67,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onStartWorkout, onView
               <Flame className="w-4 h-4" fill="currentColor" aria-hidden="true" />
               <div>
                 <div className="font-bold text-sm tabular-nums leading-none">
-                  {streakInfo.currentStreak}
+                  <CountUp to={streakInfo.currentStreak} />
                 </div>
                 <div
-                  className="text-[10px] leading-tight mt-0.5"
-                  style={{ color: 'var(--sandow-brass-soft)', opacity: 0.75 }}
+                  className="text-xs leading-tight mt-0.5"
+                  style={{ color: 'var(--sandow-brass-soft)', opacity: 0.85 }}
                 >
                   day streak
                 </div>
               </div>
               {streakInfo.multiplier > 1 && (
                 <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                  className="text-xs font-bold px-2 py-0.5 rounded"
                   style={{
                     background: 'var(--sandow-brass)',
                     color: 'var(--studio-ink)',
@@ -92,8 +93,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onStartWorkout, onView
 
         <div className="mb-4">
           <div
-            className="flex justify-between text-[10px] mb-1 font-mono uppercase tracking-wider"
-            style={{ color: 'var(--studio-muted-dim)' }}
+            className="flex justify-between text-xs mb-1 font-mono uppercase tracking-wider"
+            style={{ color: 'var(--studio-muted)' }}
           >
             <span>Progress to Level {progress.currentLevel + 1}</span>
             <span className="tabular-nums">
@@ -128,8 +129,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onStartWorkout, onView
             value={`${completedQuests}/${totalQuests}`}
             icon={<Target className="w-4 h-4" style={{ color: 'var(--studio-teal)' }} />}
           />
-          <StatTile label="Pushups" value={String(pbs.pushups || 0)} accent="teal" />
-          <StatTile label="Squats" value={String(pbs.squats || 0)} accent="teal" />
+          <StatTile label="Pushups" value={<CountUp to={pbs.pushups || 0} />} accent="teal" />
+          <StatTile label="Squats" value={<CountUp to={pbs.squats || 0} />} accent="teal" />
         </div>
 
         {nextUnlockLevel && (
@@ -190,7 +191,7 @@ function StatTile({
   accent,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   icon?: React.ReactNode;
   accent?: 'teal';
 }) {

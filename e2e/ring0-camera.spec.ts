@@ -65,6 +65,12 @@ test.describe('Ring 0 - camera granted (fake device)', () => {
     ).toBeVisible({
       timeout: 15000,
     });
+    await expect(
+      page
+        .locator('.studio-loader:visible')
+        .getByText(/Video is processed on this device|Motion is processed on this device/i)
+        .first()
+    ).toBeVisible();
   });
 
   test('returning guest (intro handled) starts directly', async ({ page }) => {
@@ -83,5 +89,11 @@ test.describe('Ring 0 - camera granted (fake device)', () => {
     ).toBeVisible({
       timeout: 15000,
     });
+    await expect(
+      page
+        .locator('.studio-loader:visible')
+        .getByText(/Video is processed on this device|Motion is processed on this device/i)
+        .first()
+    ).toBeVisible();
   });
 });

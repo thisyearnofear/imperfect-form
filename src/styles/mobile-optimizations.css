@@ -76,16 +76,6 @@
     font-size: 1.25rem;
   }
 
-  .mobile-olympic-rings {
-    margin-right: 0.5rem;
-  }
-
-  .mobile-olympic-rings .ring {
-    width: 1.25rem;
-    height: 1.25rem;
-    margin: 0 0.125rem;
-  }
-
   /* HUD Style - Core Principle: BEAUTIFUL & EQUAL */
   .game-hud-container {
     display: flex;

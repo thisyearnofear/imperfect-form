@@ -9,6 +9,15 @@
 @import "../styles/mobile-optimizations.css";
 @import "../styles/chain-effects.css";
 
+/*
+ * Studio chassis base.
+ *
+ * Doctrine: Studio is the chassis. Arcade is punctuation. Calm/Lab are phases.
+ * This file intentionally carries NO arcade-era chrome (no global Press Start,
+ * no gold buttons, no Olympic rings). Arcade styling lives only on burst
+ * surfaces via their own components. See design.md + sandow-spine.css.
+ */
+
 /* Base styles */
 body,
 html {
@@ -19,7 +28,6 @@ html {
   background-color: #061013;
   color: #effcf9;
   overflow-y: auto;
-  /* Allow vertical scrolling */
   min-height: 100vh;
   transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
 }
@@ -29,19 +37,17 @@ html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Center content horizontally */
   min-height: calc(100vh - 65px);
   padding: 1.5rem;
   box-sizing: border-box;
   overflow-y: auto;
-  /* Allow vertical scrolling */
   justify-content: flex-start;
-  /* Changed to align content from the top */
   background: #061013;
   transition: background-color 300ms ease-in-out;
 }
 
-/* Game Screen - single source of truth */
+/* Game screen — single source of truth. Day-0 foyer expands out of the
+   cabinet; live sessions keep the 4:3 stage. */
 #screen {
   position: relative;
   width: 100%;
@@ -53,6 +59,8 @@ html {
   border-radius: 8px;
   overflow: hidden;
   aspect-ratio: 4 / 3;
+  transition: background-color 300ms ease-in-out, border-color 300ms ease-in-out,
+    box-shadow 300ms ease-in-out;
 }
 
 /* Day-0 foyer: sit in the coaching bay, not a black card floating in a void */
@@ -84,144 +92,14 @@ html {
   #game-container {
     padding: 5px;
   }
-}
 
-/* Banner */
-#banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin-bottom: 15px;
-}
-
-.olympic-rings {
-  display: flex;
-  margin-right: 15px;
-}
-
-.ring {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  margin: 0 3px;
-  border: 3px solid transparent;
-  /* Change to transparent to show filled color */
-  /* Add this to ensure the rings are filled */
-  display: inline-block;
-  /* Ensure they are inline */
-}
-
-/* Mobile optimizations for banner */
-@media (max-width: 768px) {
-  #banner {
-    margin-bottom: 10px;
-  }
-
-  .olympic-rings {
-    margin-right: 10px;
-  }
-
-  .ring {
-    width: 20px;
-    height: 20px;
-    margin: 0 2px;
-  }
-
-  h1 {
-    font-size: 20px;
+  #screen {
+    max-width: 90vw;
   }
 }
 
-.blue {
-  background-color: #416ced;
-  /* Fill color for the blue ring */
-  border-color: #416ced;
-  /* Same color for the border */
-}
-
-.red {
-  background-color: #ff69b4;
-  /* Fill color for the red ring */
-  border-color: #ff69b4;
-  /* Same color for the border */
-}
-
-.yellow {
-  background-color: #fcb131;
-  /* Fill color for the yellow ring */
-  border-color: #fcb131;
-  /* Same color for the border */
-}
-
-.black {
-  background-color: #000000;
-  /* Fill color for the black ring */
-  border-color: #ffffff;
-  /* White border for visibility on black background */
-}
-
-.green {
-  background-color: #11aa11;
-  /* Fill color for the green ring */
-  border-color: #11aa11;
-  /* Same color for the border */
-}
-
-h1 {
-  font-size: 24px;
-  color: var(--color-primary, #fcb131);
-  text-shadow: 2px 2px var(--color-background, #000);
-  transition: color 300ms ease-in-out;
-}
-
-/* Celo chain specific text styling for visibility on yellow background */
-body[data-chain="celo"] h1 {
-  color: #000000;
-  text-shadow: 2px 2px #ffffff;
-}
-
-body[data-chain="celo"] {
-  color: #000000;
-}
-
-body[data-chain="celo"] .olympic-rings {
-  filter: brightness(0.7);
-}
-
-/* Game screen */
-#screen {
-  position: relative;
-  width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-  background-color: #071517;
-  border: 1px solid rgba(139, 227, 212, 0.2);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
-  border-radius: 8px;
-  overflow: hidden;
-  /* Fixed height for desktop, flexible for mobile */
-  height: 480px;
-  transition: background-color 300ms ease-in-out, border-color 300ms ease-in-out, box-shadow 300ms ease-in-out;
-}
-
-#screen:has(.coach-foyer) {
-  height: auto;
-  min-height: min(520px, 70vh);
-  aspect-ratio: auto;
-  overflow-y: auto;
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
-}
-
-#game-container:has(.coach-foyer) {
-  background: transparent;
-}
-
-/* Mobile override for screen */
-@media (max-width: 768px),
-(hover: none) and (pointer: coarse) {
+/* Mobile / touch override for the stage — flexible height on phones */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
   #screen {
     height: auto !important;
     min-height: 300px !important;
@@ -229,101 +107,48 @@ body[data-chain="celo"] .olympic-rings {
   }
 }
 
-/* Messages and instructions */
-#welcomeMessage,
+/* Instructions / legacy panel surface */
 #instructions {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0.8);
   color: #fff;
-  font-size: 16px;
-  line-height: 1.5;
   text-align: center;
-  z-index: 100;
-  pointer-events: auto;
 }
 
-/* Controls */
+/* Controls row */
 #controls {
   display: flex;
   justify-content: center;
   margin-top: 20px;
   width: 100%;
-  max-width: 640px;
+  max-width: 720px;
 }
 
+@media (max-width: 768px) {
+  #controls {
+    max-width: 90vw;
+    flex-wrap: wrap;
+  }
+}
+
+/*
+ * Neutral button base — the studio shell.
+ * No Press Start, no gold: buttons inherit Manrope and get their look from
+ * component classes (earned-cta-*, coach-foyer__*, studio-tabs, Tailwind…).
+ * Arcade font is punctuation-only on burst surfaces (see design.md).
+ */
 button {
-  font-family: "Press Start 2P", cursive;
-  font-size: 14px;
-  margin: 0 10px;
-  padding: 12px 24px;
-  color: #000;
-  background-color: #fcb131;
-  border: 2px solid #fff;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  text-transform: uppercase;
-  position: relative;
-  box-shadow: 0 4px 0 rgba(255, 255, 255, 0.2);
-}
-
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 rgba(255, 255, 255, 0.3), 0 0 15px rgba(252, 177, 49, 0.6);
-}
-
-button:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.2);
-}
-
-#startButton {
-  background-color: #00a651;
-  color: #fff;
-}
-
-#stopButton {
-  background-color: #ee334e;
-  color: #fff;
-}
-
-#resetButton {
-  background-color: #0081c8;
-  color: #fff;
-}
-
-#modeButton {
-  background-color: #800080;
-  /* Purple color for the mode button */
-  color: #fff;
-}
-
-/* Filter button states */
-#modeButton.filter-none {
-  background-color: #fcb131;
-}
-
-#modeButton.filter-nose {
-  background-color: #ff5e5e;
-}
-
-#modeButton.filter-mustache {
-  background-color: #5e5eff;
-}
-
-#modeButton.filter-arch {
-  background-color: #5eff5e;
-}
-
-#modeButton.filter-degen {
-  background-color: #ff5eff;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:disabled {
@@ -331,440 +156,76 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Timer and Rep Counter */
-.timer,
-.rep-counter-container {
-  background-color: rgba(0, 0, 0, 0.85);
-  padding: 10px 20px;
-  border-radius: 12px;
-  font-family: inherit;
-  color: #fcb131;
-  z-index: 100;
-  border: 2px solid rgba(252, 177, 49, 0.6);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(252, 177, 49, 0.2);
-  text-align: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.timer {
-  min-width: 100px;
-}
-
-.rep-counter-container {
-  min-width: 80px;
-}
-
-/* Legacy absolute classes if needed */
-.timer-abs {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.rep-abs {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-}
-
-/* Tutorial Overlay */
-.tutorial-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.9);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100;
-  font-size: 14px;
-  line-height: 2;
-  color: #fff;
-  text-align: center;
-  cursor: pointer;
-}
-
-/* Loading screen styles */
-.loading-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.95);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-}
-
-.loading-text {
-  font-size: 28px;
-  margin-bottom: 20px;
-  color: #fcb131;
-  text-shadow: 0 0 10px rgba(252, 177, 49, 0.7);
-}
-
-.loading-instruction {
-  font-size: 18px;
-  text-align: center;
-  max-width: 80%;
-  margin-top: 20px;
-  color: #ffffff;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-}
-
-/* Typewriter effect */
-.typewriter-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.typewriter h2 {
-  color: #fcb131;
-  font-size: 20px;
-  overflow: hidden;
-  border-right: 3px solid #fcb131;
-  white-space: nowrap;
-  margin: 0 auto;
-  letter-spacing: 2px;
-  animation:
-    typing 3.5s steps(40, end),
-    blink-caret 0.75s step-end infinite;
-}
-
-@keyframes typing {
-  from {
-    width: 0
-  }
-
-  to {
-    width: 100%
+/* Comfortable touch targets on coarse pointers */
+@media (hover: none) and (pointer: coarse) {
+  button {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
-@keyframes blink-caret {
-
-  from,
-  to {
-    border-color: transparent
-  }
-
-  50% {
-    border-color: #fcb131
-  }
-}
-
-/* Wallet Connection Styles */
-.wallet-connection {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 8px 0;
-  margin-bottom: 12px;
-  position: relative;
-}
-
-/* Mobile optimizations for wallet connection */
-@media (max-width: 768px) {
-  .wallet-connection {
-    padding: 6px 0;
-    margin-bottom: 8px;
-  }
-}
-
-/* Wallet Switcher styles */
-.wallet-switcher-button {
-  font-family: "Press Start 2P", cursive;
-  font-size: 12px;
-  padding: 8px 15px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-}
-
-.wallet-selection-dialog {
-  background-color: #000;
-  border-radius: 8px;
-}
-
-/* Wallet Type Indicator */
-.wallet-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.wallet-type-indicator {
-  font-size: 10px;
-  color: #fcb131;
-  background-color: rgba(0, 0, 0, 0.8);
-  border: 1px solid #fcb131;
-  border-radius: 4px;
-  padding: 3px 8px;
-  margin-bottom: 5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.wallet-type-indicator:hover {
-  background-color: #fcb131;
-  color: #000;
-}
-
-.wallet-prompt {
-  display: flex;
-  justify-content: center;
-}
-
-.wallet-connected {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  border: 2px solid #fcb131;
-  border-radius: 8px;
-  padding: 5px 10px;
-  font-size: 14px;
-}
-
-.reset-wallet-button {
-  background-color: #ee334e;
-  color: white;
-  border: none;
+/* Split-flap settings chips — studio-tinted, not traffic-light colours */
+.button-text {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  margin: 2px;
   border-radius: 5px;
-  padding: 5px 10px;
-  font-size: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: bold;
-  box-shadow: 0 0 5px rgba(238, 51, 78, 0.5);
-  margin-left: 10px;
+  text-transform: uppercase;
+  color: #d8eeea;
+  background: rgba(139, 227, 212, 0.1);
+  border: 1px solid rgba(139, 227, 212, 0.22);
 }
 
-.wallet-button {
-  background-color: #800080;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 8px 15px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: bold;
-  box-shadow: 0 0 10px rgba(128, 0, 128, 0.5);
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.button-text.start {
+  color: #06211e;
+  background: var(--studio-teal-cta, #75dfcd);
+  border-color: transparent;
 }
 
-.wallet-button:hover {
-  transform: scale(1.05);
-  background-color: #9932cc;
-  box-shadow: 0 0 15px #fcb131;
+.button-text.stop {
+  color: #d8eeea;
+  background: rgba(139, 227, 212, 0.14);
+  border-color: rgba(139, 227, 212, 0.3);
 }
 
-.wallet-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+.button-text.reset {
+  color: #d8eeea;
+  background: transparent;
+  border-color: rgba(139, 227, 212, 0.18);
 }
 
-.wallet-modal-content {
-  background-color: #000;
-  border: 4px solid #fcb131;
-  border-radius: 10px;
-  padding: 20px;
-  max-width: 400px;
-  width: 90%;
-  color: #fff;
-  text-align: center;
-  position: relative;
+/* Spinner — teal, not gold */
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border-left-color: #56d9c3;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
 }
 
-.wallet-details {
-  margin: 15px 0;
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-.address-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 5px;
-}
-
-.address-text {
-  font-size: 12px;
-  word-break: break-all;
-  background-color: rgba(128, 0, 128, 0.2);
-  border: 1px solid #fcb131;
-  border-radius: 4px;
-  padding: 8px;
-  max-width: 280px;
-  margin: 0;
-}
-
-.wallet-address-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 10px 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  border: 1px solid #fcb131;
-  border-radius: 8px;
-  padding: 10px;
-}
-
-.wallet-address {
-  font-size: 14px;
-  font-family: monospace;
-  margin: 0;
-  color: white;
-}
-
-.copy-button {
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.copy-button:hover {
-  transform: scale(1.05);
-  background-color: #2563eb;
-}
-
-/* Social identities styles */
-.social-identities {
-  margin: 15px 0;
-  padding: 10px;
-  background-color: rgba(128, 0, 128, 0.1);
-  border-radius: 8px;
-  border: 1px solid #fcb131;
-}
-
-.social-identities h4 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #fcb131;
-  font-size: 14px;
-}
-
-.identities-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.identity-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.identity-label {
-  color: #fcb131;
-  font-weight: bold;
-  min-width: 80px;
-  text-align: right;
-}
-
-.identity-value {
-  color: white;
-  background-color: rgba(128, 0, 128, 0.3);
-  padding: 4px 8px;
-  border-radius: 4px;
-  flex-grow: 1;
-  text-align: left;
-}
-
-/* Leaderboard */
-.leaderboard-container {
-  margin-top: 30px;
-  width: 100%;
-  max-width: 640px;
-  background-color: #000;
-  border: 4px solid #fff;
-  box-shadow: 0 0 10px #fcb131;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.leaderboard-container h2 {
-  color: #fcb131;
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 20px;
-}
-
-#leaderboardTable {
-  width: 100%;
-  border-collapse: collapse;
-  color: #fff;
-  font-size: 12px;
-}
-
-#leaderboardTable th,
-#leaderboardTable td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #fcb131;
-}
-
-.load-button,
-.view-more-button {
-  font-family: "Press Start 2P", cursive;
-  background-color: #000;
-  color: #fff;
-  border: 2px solid #fcb131;
-  border-radius: 5px;
-  padding: 5px 10px;
-  margin: 10px auto;
-  cursor: pointer;
-  font-size: 10px;
-  display: block;
-}
-
-/* Radix UI Dialog Styling */
+/* Radix UI Dialog layering */
 [data-radix-popper-content-wrapper] {
   z-index: 2001 !important;
 }
 
-/* Thirdweb Modal Styling - Fix transparency issues */
+/* Thirdweb / modal legibility — solid dark backdrop + content so wallet
+   surfaces never show transparency bugs. No text-shadow hacks. */
 .tw-connect-wallet {
   --tw-bg-opacity: 1 !important;
 }
 
-/* Target all thirdweb modal backdrops */
 div[data-dialog-backdrop],
 div[data-modal-backdrop],
 div[data-overlay],
@@ -777,315 +238,36 @@ div[data-backdrop],
   opacity: 1 !important;
 }
 
-/* Note: Removed automatic backdrop overlays that were causing initialization issues */
-/* Modal backdrops are now handled individually by each modal component */
-
-/* ENHANCEMENT: Force all modal content to have solid black backgrounds with improved contrast */
 [data-dialog-content],
 [data-modal-content],
 .tw-connect-wallet-modal-content,
 .tw-modal-content {
   background-color: #000000 !important;
   color: #ffffff !important;
-  /* ENHANCEMENT: Ensure all text is white */
 }
 
-/* ENHANCEMENT: Improve text visibility in all modal contexts */
-[data-dialog-content] *,
-[data-modal-content] *,
-.tw-connect-wallet-modal-content *,
-.tw-modal-content * {
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 20px;
-  color: #fcb131;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-
-.medal {
-  width: 100px;
-  height: 100px;
-  margin: 20px auto;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 24px;
-  color: #000;
-  font-weight: bold;
-}
-
-.gold {
-  background-color: gold;
-  box-shadow: 0 0 20px gold;
-}
-
-.silver {
-  background-color: silver;
-  box-shadow: 0 0 20px silver;
-}
-
-.bronze {
-  background-color: #cd7f32;
-  box-shadow: 0 0 20px #cd7f32;
-}
-
-.share-button {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.farcaster-button,
-.twitter-button,
-.lens-button {
-  margin: 0 10px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-family: "Press Start 2P", cursive;
-  font-size: 9px;
-  transition: all 0.3s ease;
-}
-
-.farcaster-button {
-  background-color: #9146ff;
-  color: #fff;
-}
-
-.twitter-button {
-  background-color: #1da1f2;
-  color: #fff;
-}
-
-.lens-button {
-  background-color: #00a651;
-  color: #fff;
-}
-
-/* Blockchain submission */
-.blockchain-submission {
-  margin-top: 20px;
-  padding: 15px;
-  border: 4px solid #fcb131;
-  border-radius: 10px;
-  position: relative;
-  background-color: rgba(0, 0, 0, 0.8);
-  box-shadow: 0 0 15px rgba(252, 177, 49, 0.3);
-}
-
-.blockchain-submission p {
-  margin-top: 0;
-  font-size: 14px;
-  color: #fcb131;
-  font-weight: bold;
-}
-
-/* Submit button special styling */
-#submit-score-btn {
-  animation: pulse-border 2s infinite;
-  position: relative;
-  z-index: 100;
-  font-size: 18px !important;
-  font-weight: 700 !important;
-  letter-spacing: 1px;
-  color: white !important;
-  opacity: 1 !important;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8) !important;
-}
-
-@keyframes pulse-border {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
-    border-color: white;
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .imf-mode-segment:hover:not(:disabled) {
+    background: transparent;
+    transform: none;
   }
 
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
-    border-color: #fcb131;
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-    border-color: white;
+  .imf-mode-segment:active:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
   }
 }
 
-/* Add animation for the submit container */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
-  }
-
-  50% {
-    transform: scale(1.01);
-    opacity: 1;
-    box-shadow: 0 0 10px 5px rgba(255, 215, 0, 0.5);
-  }
-
-  100% {
-    transform: scale(1);
-    opacity: 1;
-    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7);
-  }
-}
-
-.animate-pulse {
-  animation: pulse 2s infinite;
-  background-color: rgba(0, 0, 0, 0.9) !important;
-  backdrop-filter: blur(0) !important;
-  border: 2px solid #fcb131 !important;
-}
-
-#networkSelect {
-  font-family: "Press Start 2P", cursive;
-  background-color: #000;
-  color: #fff;
-  border: 2px solid #fcb131;
-  border-radius: 5px;
-  padding: 8px;
-  margin-right: 10px;
-  font-size: 10px;
-}
-
-/* Loading Animation */
-.loading-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.9);
-  z-index: 1500;
-}
-
-.loading-text {
-  color: #fcb131;
-  font-size: 18px;
-  margin-bottom: 20px;
-}
-
-.loading-rings {
-  display: flex;
-  justify-content: center;
-}
-
-.loading-ring {
-  width: 20px;
-  height: 20px;
-  margin: 0 5px;
-  border-radius: 50%;
-  background-color: #fcb131;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-.loading-ring:nth-child(2) {
-  animation-delay: 0.5s;
-}
-
-.loading-ring:nth-child(3) {
-  animation-delay: 1s;
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  50% {
-    transform: scale(1.3);
-    opacity: 0.7;
-  }
-}
-
-/* Typewriter effect */
-.typewriter {
-  overflow: hidden;
-  white-space: nowrap;
-  margin: 0 auto;
-  animation: typing 3.5s steps(40, end);
-}
-
-@keyframes typing {
-  from {
-    width: 0
-  }
-
-  to {
-    width: 100%
-  }
-}
-
-/* Button text styling */
-.button-text {
-  display: inline-block;
-  font-size: 18px;
-  padding: 5px 10px;
-  margin: 2px;
-  border-radius: 5px;
-  text-transform: uppercase;
-}
-
-.button-text.start {
-  background-color: #00a651;
-  color: #fff;
-}
-
-.button-text.stop {
-  background-color: #ee334e;
-  color: #fff;
-}
-
-.button-text.reset {
-  background-color: #0081c8;
-  color: #fff;
-}
-
-/* Responsiveness */
-@media (max-width: 768px) {
-  h1 {
-    font-size: 18px;
-  }
-
-  #screen {
-    max-width: 90vw;
-  }
-
-  #controls {
-    max-width: 90vw;
-    flex-wrap: wrap;
-  }
-
-  button {
-    margin: 5px;
-    font-size: 10px;
-    padding: 8px 12px;
-  }
-
-  .leaderboard-container {
-    max-width: 90vw;
-  }
-
-  #leaderboardTable {
-    font-size: 8px;
-  }
+/* General touch-friendly enhancements */
+.touch-manipulation {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* Extra small devices (phones, 480px and down) */
@@ -1114,115 +296,24 @@ div[data-backdrop],
   }
 }
 
-/* Spinner Component */
-.spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border-left-color: #fcb131;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Ensure native HTML tooltips are visible and styled */
-[title]:hover::after {
-  content: attr(title);
-  position: fixed;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-family: 'Press Start 2P', cursive;
-  white-space: nowrap;
-  z-index: 9999;
-  pointer-events: none;
-  margin-bottom: 8px;
-  border: 1px solid #fcb131;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-[title]:hover::before {
-  content: '';
-  position: fixed;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: #fcb131;
-  z-index: 10000;
-  pointer-events: none;
-  margin-bottom: 2px;
-}
-
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .imf-mode-segment:hover:not(:disabled) {
-    background: transparent;
-    transform: none;
-  }
-
-  .imf-mode-segment:active:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(0.98);
-  }
-}
-
-/* General touch-friendly enhancements */
-.touch-manipulation {
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-/* ENHANCEMENT: Mobile-optimized wallet button layout */
-@media (max-width: 640px) {
-  .wallet-connection {
-    padding-bottom: 0.5rem;
-  }
-
-  /* Ensure buttons have adequate spacing on mobile */
-  .wallet-connection .bg-white\/10 {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Improve text contrast in wallet buttons */
-  .wallet-connection .text-white {
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-  }
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════
    MICRO-ANIMATIONS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Quest completion pop */
 @keyframes quest-complete {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.15); }
-  70% { transform: scale(0.95); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.15);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .animate-quest-complete {
   animation: quest-complete 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -1230,9 +321,18 @@ div[data-backdrop],
 
 /* XP gain flash */
 @keyframes xp-flash {
-  0% { opacity: 1; transform: translateY(0); }
-  60% { opacity: 1; transform: translateY(-8px); }
-  100% { opacity: 0; transform: translateY(-16px); }
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
 }
 .animate-xp-flash {
   animation: xp-flash 0.8s ease-out forwards;
@@ -1240,10 +340,21 @@ div[data-backdrop],
 
 /* Level-up celebration */
 @keyframes level-up {
-  0% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 0 rgba(252, 177, 49, 0.7); }
-  30% { transform: scale(1.2) rotate(-3deg); box-shadow: 0 0 0 10px rgba(252, 177, 49, 0); }
-  60% { transform: scale(1.1) rotate(3deg); }
-  100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 0 rgba(252, 177, 49, 0); }
+  0% {
+    transform: scale(1) rotate(0deg);
+    box-shadow: 0 0 0 0 rgba(252, 177, 49, 0.7);
+  }
+  30% {
+    transform: scale(1.2) rotate(-3deg);
+    box-shadow: 0 0 0 10px rgba(252, 177, 49, 0);
+  }
+  60% {
+    transform: scale(1.1) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    box-shadow: 0 0 0 0 rgba(252, 177, 49, 0);
+  }
 }
 .animate-level-up {
   animation: level-up 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -1251,8 +362,14 @@ div[data-backdrop],
 
 /* Slide-in from bottom (for modals/toasts) */
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .animate-slide-up {
   animation: slide-up 0.3s ease-out forwards;
@@ -1260,8 +377,12 @@ div[data-backdrop],
 
 /* Fade-in */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .animate-fade-in {
   animation: fade-in 0.25s ease-out forwards;
@@ -1269,23 +390,15 @@ div[data-backdrop],
 
 /* Shimmer for skeleton loaders */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 .animate-shimmer {
   background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-}
-
-/* Larger touch targets for buttons on touch devices */
-@media (hover: none) and (pointer: coarse) {
-  button {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  .wallet-button {
-    min-height: 48px;
-  }
 }

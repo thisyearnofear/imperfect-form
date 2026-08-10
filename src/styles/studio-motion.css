@@ -85,6 +85,12 @@
 .motion-delay-3 {
   animation-delay: 210ms;
 }
+.motion-delay-4 {
+  animation-delay: 280ms;
+}
+.motion-delay-5 {
+  animation-delay: 350ms;
+}
 
 @keyframes coach-pulse {
   0%,
@@ -106,6 +112,13 @@
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+  }
+
+  /* Hover lift is a state change, not motion — but keep cards put for users
+     who ask for stillness. */
+  .studio-card:hover,
+  .earned-surface:hover {
+    transform: none;
   }
 }
 

@@ -161,7 +161,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
           </div>
         </div>
       )}
-      {!started && (
+      {/* Engineering-only: CV preprocessing toggles stay out of the consumer
+          UI. They remain reachable in dev builds for tuning; production users
+          see a clean coaching surface. */}
+      {process.env.NODE_ENV === 'development' && !started && (
         <div className="pt-3 border-t border-white/10 mt-3 w-full flex flex-col gap-2">
           <div className="flex items-center justify-center gap-2">
             <ToggleSwitch

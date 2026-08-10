@@ -76,7 +76,7 @@ const WalletSelectorModal: React.FC = () => {
                 </span>
 
                 {connector.id.includes('coinbase') && (
-                  <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-bold border border-blue-500/30">
+                  <span className="text-[11px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded font-bold border border-blue-500/30">
                     RECOMMENDED
                   </span>
                 )}

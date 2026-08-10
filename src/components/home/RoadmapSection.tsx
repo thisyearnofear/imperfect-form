@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { useXpProgress } from '@/hooks/useXpProgress';
-import { Lock, Ghost, Share2, Award, Trophy, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
+import { Lock, Ghost, Share2, Award, Trophy } from 'lucide-react';
 
 interface RoadmapSectionProps {
   onViewAll?: () => void;
@@ -46,21 +45,11 @@ export const RoadmapSection: React.FC<RoadmapSectionProps> = ({ onViewAll: _onVi
 
   return (
     <div className="earned-surface p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5" style={{ color: 'var(--sandow-brass)' }} />
-          <h3 className="earned-surface__title" style={{ fontSize: '0.75rem' }}>
-            Feature roadmap
-          </h3>
-        </div>
-        <Link
-          href="/roadmap"
-          className="text-xs transition-colors flex items-center gap-1"
-          style={{ color: 'var(--studio-muted-dim)' }}
-        >
-          <span>View all</span>
-          <ChevronRight className="w-4 h-4" />
-        </Link>
+      <div className="flex items-center gap-2 mb-4">
+        <Trophy className="w-5 h-5" style={{ color: 'var(--sandow-brass)' }} />
+        <h3 className="earned-surface__title" style={{ fontSize: '0.75rem' }}>
+          Feature roadmap
+        </h3>
       </div>
 
       <div
@@ -136,7 +125,7 @@ export const RoadmapSection: React.FC<RoadmapSectionProps> = ({ onViewAll: _onVi
                 <div className="flex-1 pb-4">
                   <div className="flex items-center gap-2 mb-1">
                     <span
-                      className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded"
+                      className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded"
                       style={{
                         background: isUnlocked
                           ? 'rgba(86, 217, 195, 0.14)'
@@ -191,7 +180,7 @@ export const RoadmapSection: React.FC<RoadmapSectionProps> = ({ onViewAll: _onVi
                         />
                       </div>
                       <span
-                        className="text-[10px] font-mono"
+                        className="text-[11px] font-mono"
                         style={{ color: 'var(--sandow-brass)', opacity: 0.75 }}
                       >
                         {Math.round(progress.progressToNextLevel * 100)}% to unlock
@@ -202,7 +191,7 @@ export const RoadmapSection: React.FC<RoadmapSectionProps> = ({ onViewAll: _onVi
                   {isUnlocked && milestone.level <= currentLevel && (
                     <div className="mt-2 flex items-center gap-1">
                       <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded"
+                        className="text-[11px] font-bold px-2 py-0.5 rounded"
                         style={{
                           background: 'rgba(86, 217, 195, 0.14)',
                           color: 'var(--studio-teal-bright)',

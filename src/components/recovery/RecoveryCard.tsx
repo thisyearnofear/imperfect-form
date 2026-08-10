@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Check, Wind, X, PersonStanding } from 'lucide-react';
 import BreathingCooldown from './BreathingCooldown';
 import StretchSequence from './StretchSequence';
+import { CountUp } from '@/components/ui/CountUp';
 
 /**
  * Recovery register surface.
@@ -22,8 +23,18 @@ interface RecoveryCardProps {
 const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onDismiss }) => {
   const [active, setActive] = useState<ActiveRecovery>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [showAttention, setShowAttention] = useState(false);
+  const attentionPlayedRef = useRef(false);
   const panel = variant === 'panel';
   const tone = panel ? 'light' : 'dark';
+
+  // One-shot attention: pulse only the first time the calm menu renders per
+  // panel open — returning from a Breathe/Stretch session shouldn't nudge again.
+  useEffect(() => {
+    if (attentionPlayedRef.current) return;
+    attentionPlayedRef.current = true;
+    setShowAttention(true);
+  }, []);
 
   const finish = (kind: 'breathe' | 'stretch') => {
     setCompleted((prev) => new Set(prev).add(kind));
@@ -35,7 +46,7 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
     <div
       className={
         panel
-          ? 'h-full w-full flex flex-col justify-center rounded-none border-0 bg-transparent p-4 text-left'
+          ? 'h-full w-full flex flex-col justify-center rounded-none border-0 bg-transparent p-4 text-left recovery-card--foyer'
           : 'studio-card studio-card__body text-left'
       }
       data-testid={panel ? 'calm-session-panel' : 'recovery-card'}
@@ -43,7 +54,7 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
       <div className="recovery-card__header flex items-center justify-between">
         <div>
           <span
-            className={`recovery-card__eyebrow text-[10px] font-medium uppercase tracking-[0.25em] font-sans ${
+            className={`recovery-card__eyebrow text-[11px] font-medium uppercase tracking-[0.25em] font-sans ${
               panel ? 'text-teal-700/80' : 'text-teal-300/80'
             }`}
           >
@@ -84,8 +95,11 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
               type="button"
               onClick={() => setActive('breathe')}
               className={`recovery-card__option ${
-                panel ? 'recovery-card__option--light' : 'recovery-card__option--dark'
+                panel
+                  ? `recovery-card__option--light${showAttention ? ' recovery-card__option--attention' : ''}`
+                  : 'recovery-card__option--dark'
               }`}
+              onAnimationEnd={() => setShowAttention(false)}
             >
               <span className="recovery-card__option-icon" aria-hidden="true">
                 {completed.has('breathe') ? <Check size={18} /> : <Wind size={20} />}
@@ -93,8 +107,8 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
               <span className={`text-xs font-light ${panel ? 'text-teal-900' : 'text-teal-100'}`}>
                 Breathe
               </span>
-              <span className={`text-[10px] ${panel ? 'text-slate-500' : 'text-teal-300/50'}`}>
-                4 breaths · 30s
+              <span className={`text-[11px] ${panel ? 'text-slate-500' : 'text-teal-300/50'}`}>
+                <CountUp to={4} duration={600} /> breaths · <CountUp to={32} duration={900} />s
               </span>
             </button>
             <button
@@ -110,13 +124,13 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
               <span className={`text-xs font-light ${panel ? 'text-teal-900' : 'text-teal-100'}`}>
                 Stretch
               </span>
-              <span className={`text-[10px] ${panel ? 'text-slate-500' : 'text-teal-300/50'}`}>
-                3 moves · 1 min
+              <span className={`text-[11px] ${panel ? 'text-slate-500' : 'text-teal-300/50'}`}>
+                <CountUp to={3} duration={600} /> moves · <CountUp to={1} duration={600} /> min
               </span>
             </button>
           </div>
           <p
-            className={`recovery-card__note text-[10px] font-light text-center ${
+            className={`recovery-card__note text-[11px] font-light text-center ${
               panel ? 'text-slate-500' : 'text-teal-100/40'
             }`}
           >

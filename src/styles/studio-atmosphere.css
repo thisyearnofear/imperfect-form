@@ -20,8 +20,8 @@
   pointer-events: none;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 55% 45% at 82% 28%, rgba(86, 217, 195, 0.22), transparent 60%),
-    radial-gradient(ellipse 40% 35% at 8% 20%, rgba(0, 82, 255, 0.16), transparent 55%),
+    radial-gradient(ellipse 55% 45% at 82% 28%, rgba(86, 217, 195, 0.16), transparent 60%),
+    radial-gradient(ellipse 40% 35% at 8% 20%, rgba(0, 82, 255, 0.08), transparent 55%),
     linear-gradient(165deg, #12313e 0%, #0f2b38 38%, #0a1b21 72%, #061013 100%);
 }
 
@@ -54,8 +54,8 @@
   width: min(42vw, 380px);
   aspect-ratio: 1;
   border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.55;
+  filter: blur(44px);
+  opacity: 0.28;
   mix-blend-mode: screen;
   animation: studio-atmosphere-bloom 9s ease-in-out infinite;
 }
@@ -71,7 +71,7 @@
   top: 42%;
   left: -6%;
   background: var(--chain-base);
-  opacity: 0.5;
+  opacity: 0.24;
   animation-delay: -2s;
 }
 
@@ -80,7 +80,7 @@
   right: 28%;
   width: min(36vw, 300px);
   background: var(--chain-avalanche);
-  opacity: 0.45;
+  opacity: 0.22;
   animation-delay: -4.5s;
 }
 
@@ -88,7 +88,7 @@
   top: 12%;
   right: 8%;
   background: var(--chain-monad);
-  opacity: 0.52;
+  opacity: 0.26;
   animation-delay: -1.5s;
   transform: translate3d(calc(var(--gaze-x) * 12px), calc(var(--gaze-y) * 8px), 0);
 }
@@ -236,11 +236,11 @@
   position: absolute;
   right: 11%;
   top: 9%;
-  color: rgba(214, 240, 234, 0.42);
+  color: rgba(214, 240, 234, 0.5);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.5rem;
+  font-size: 0.56rem;
   font-weight: 800;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
@@ -647,9 +647,9 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   border: 1px solid rgba(139, 227, 212, 0.2);
   border-radius: 999px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   backdrop-filter: blur(8px);
 }
@@ -750,7 +750,7 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
   .studio-atmosphere__bay-status {
     right: 1rem;
     top: 1rem;
-    font-size: 0.48rem;
+    font-size: 0.56rem;
   }
 
   .studio-atmosphere__network-row {
@@ -791,7 +791,7 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
   .studio-atmosphere__stage-label {
     right: 8%;
     top: 7%;
-    font-size: 0.42rem;
+    font-size: 0.5rem;
   }
 
   .studio-atmosphere__state-readout {
@@ -805,8 +805,8 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
   }
 
   .studio-atmosphere__bloom {
-    opacity: 0.34;
-    filter: blur(34px);
+    opacity: 0.16;
+    filter: blur(36px);
   }
 }
 

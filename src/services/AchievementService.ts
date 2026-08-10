@@ -13,6 +13,7 @@ export interface Achievement {
   id: string;
   name: string;
   description: string;
+  /** Semantic icon key — render via <AchievementIcon icon={...} /> (no emoji). */
   icon: string;
   unlockedAt?: number;
 }
@@ -22,31 +23,31 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'first_workout',
     name: 'First Workout',
     description: 'Completed your first workout session!',
-    icon: '🚀',
+    icon: 'rocket',
   },
   {
     id: 'streak_3',
     name: '3-Day Streak',
     description: 'Exercised for 3 consecutive days!',
-    icon: '🔥',
+    icon: 'flame',
   },
   {
     id: 'streak_7',
     name: '7-Day Streak',
     description: 'Exercised for a full week! You are on fire!',
-    icon: '👑',
+    icon: 'crown',
   },
   {
     id: 'centurion',
     name: 'Centurion',
     description: 'Reached 100 total reps across all workouts!',
-    icon: '💯',
+    icon: 'award',
   },
   {
     id: 'powerhouse',
     name: 'Powerhouse',
     description: 'Completed 50 reps in a single session!',
-    icon: '💪',
+    icon: 'dumbbell',
   },
 ];
 

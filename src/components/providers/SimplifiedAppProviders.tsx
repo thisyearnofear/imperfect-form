@@ -225,57 +225,58 @@ const queryClient = new QueryClient({
   },
 });
 
-// Toast configuration optimized for all platforms
+// Toast configuration — studio chassis (Manrope, teal/brass accents).
+// Arcade font stays off global toast chrome (see design.md).
 const toastConfig = {
   position: 'top-center' as const,
   toastOptions: {
     style: {
-      background: '#111',
-      color: 'primary',
-      border: '2px solid primary',
-      fontFamily: '"Press Start 2P", cursive',
-      fontSize: '12px',
-      padding: '16px',
+      background: '#061013',
+      color: '#effcf9',
+      border: '1px solid rgba(139, 227, 212, 0.25)',
+      fontFamily: 'Manrope, ui-sans-serif, system-ui, sans-serif',
+      fontSize: '14px',
+      padding: '14px 16px',
       maxWidth: '400px',
       textAlign: 'center' as const,
-      boxShadow: '0 0 10px rgba(252, 177, 49, 0.5)',
+      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
       wordBreak: 'break-word' as const,
       whiteSpace: 'pre-wrap' as const,
       overflowWrap: 'break-word' as const,
     },
     success: {
       style: {
-        background: '#111',
-        color: '#00a651',
-        border: '2px solid #00a651',
+        background: '#061013',
+        color: '#7aebd8',
+        border: '1px solid rgba(86, 217, 195, 0.45)',
       },
       iconTheme: {
-        primary: '#00a651',
-        secondary: '#111',
+        primary: '#56d9c3',
+        secondary: '#061013',
       },
       duration: 3000,
     },
     error: {
       style: {
-        background: '#111',
-        color: '#ff4500',
-        border: '2px solid #ff4500',
+        background: '#061013',
+        color: '#ff8a8a',
+        border: '1px solid rgba(239, 68, 68, 0.5)',
       },
       iconTheme: {
-        primary: '#ff4500',
-        secondary: '#111',
+        primary: '#ef4444',
+        secondary: '#061013',
       },
       duration: 5000,
     },
     loading: {
       style: {
-        background: '#111',
-        color: '#3498db',
-        border: '2px solid #3498db',
+        background: '#061013',
+        color: '#7aebd8',
+        border: '1px solid rgba(86, 217, 195, 0.35)',
       },
       iconTheme: {
-        primary: '#3498db',
-        secondary: '#111',
+        primary: '#56d9c3',
+        secondary: '#061013',
       },
     },
     duration: 3000,
@@ -321,7 +322,7 @@ export default function SimplifiedAppProviders({ children }: AppProvidersProps) 
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
           <Spinner />
-          <p className="text-yellow-400 font-bold animate-pulse">Initializing ...</p>
+          <p className="text-teal-300 font-bold animate-pulse">Preparing the bay ...</p>
         </div>
       </div>
     );

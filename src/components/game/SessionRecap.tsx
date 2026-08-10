@@ -267,7 +267,7 @@ export function SessionRecap({
       <div className="session-recap__item studio-card__item motion-enter motion-delay-2">
         <ArrowRight size={17} />
         <div>
-          <p>Next set focus</p>
+          <p>Next focus</p>
           <strong>{story.focus}</strong>
         </div>
       </div>
@@ -289,7 +289,7 @@ export function SessionRecap({
           type="button"
           className="studio-card__button min-h-11"
           onClick={() => onTryAgain(story.focus)}
-          aria-label={`Try another ${mode} set focusing on ${story.focus}`}
+          aria-label={`Try another ${mode} set with focus on ${story.focus}`}
         >
           <RotateCcw size={16} aria-hidden="true" />
           <span>Try this correction now</span>

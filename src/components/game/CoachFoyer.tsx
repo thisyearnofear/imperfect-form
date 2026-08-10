@@ -17,6 +17,7 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useImmersive } from '@/hooks/useImmersive';
 import { coachStation, type StationStatus } from '@/services/coachStation';
 import type { ExerciseMode } from '@/utils/biomechanics';
+import { CountUp } from '@/components/ui/CountUp';
 import '@/styles/coach-foyer.css';
 
 type CoachFoyerProps = {
@@ -230,6 +231,10 @@ export function CoachFoyer({
           {foyer.line1}
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{foyer.line2}</p>
+        <p className="coach-foyer__promise motion-enter" style={{ animationDelay: '300ms' }}>
+          Camera coaching works on its own. The physical coach shows the fix when the station is
+          connected.
+        </p>
 
         {incomingChallenge && (
           <div
@@ -267,7 +272,12 @@ export function CoachFoyer({
 
         {/* Two defaults, pre-answered — the only decision offered before START */}
         <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">
-          <legend>Choose a movement to coach</legend>
+          <legend className="coach-foyer__exercise-legend">
+            <span>Choose a movement to coach</span>
+            <span className="coach-foyer__exercise-count">
+              <CountUp to={exercises.length} duration={650} /> movements
+            </span>
+          </legend>
           {primaryExercises.map(renderExerciseButton)}
         </fieldset>
 

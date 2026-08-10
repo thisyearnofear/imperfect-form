@@ -45,6 +45,14 @@
   font-weight: 500;
 }
 
+.first-rep-celebration__text strong {
+  color: #ffd97a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .first-rep-celebration__burst {
   position: absolute;
   width: 8rem;

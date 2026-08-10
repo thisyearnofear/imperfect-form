@@ -130,9 +130,10 @@ export const advancedAnimations = {
   },
 } satisfies Record<string, AnimationConfig>;
 
-// Common typography configuration
+// Common typography configuration — Manrope chassis for every chain register.
+// Press Start remains punctuation-only on burst surfaces (see design.md).
 const commonTypography = {
-  fontFamily: '"Press Start 2P", cursive',
+  fontFamily: 'var(--font-manrope), Manrope, ui-sans-serif, system-ui, sans-serif',
   fontSize: {
     xs: '0.75rem',
     sm: '0.875rem',

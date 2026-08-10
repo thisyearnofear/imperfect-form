@@ -84,12 +84,15 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
       description=""
       maxWidth="380px"
     >
-      <div className="olympic-rings mb-4 justify-center" aria-label="Olympic Rings">
-        <div className="ring blue" />
-        <div className="ring black" />
-        <div className="ring red" />
-        <div className="ring yellow" />
-        <div className="ring green" />
+      <div className="mb-4 text-center" aria-hidden="true">
+        <div
+          className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em]"
+          style={{ color: 'var(--studio-muted)' }}
+        >
+          <span className="w-6 h-px" style={{ background: 'var(--studio-border)' }} />
+          <span>Studio networks</span>
+          <span className="w-6 h-px" style={{ background: 'var(--studio-border)' }} />
+        </div>
       </div>
 
       <div className="network-selection-dialog p-3">

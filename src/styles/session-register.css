@@ -110,11 +110,6 @@
   text-shadow: none;
 }
 
-#game-container[data-register='calm'] .olympic-rings {
-  opacity: 0.35;
-  filter: saturate(0.6);
-}
-
 #game-container[data-register='calm'] #controls button {
   font-family: ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
   text-transform: none;
@@ -220,6 +215,227 @@
 #game-container[data-register='studio'] #canvasContainerMobile {
   border-color: rgba(94, 234, 212, 0.25);
   border-radius: 0.75rem;
+}
+
+/* —— Arcade (Train) mid-session chrome — the full cabinet. Gold punctuation
+   on the same HUD/controls as studio, keyed off the register attribute so an
+   explicit Train session reads as one register end to end. —— */
+#game-container[data-register='arcade'] .game-hud-container .hud-block {
+  background: rgba(24, 16, 4, 0.92);
+  border: 1px solid rgba(252, 177, 49, 0.4);
+  border-radius: 0;
+  box-shadow: 0 0 14px rgba(252, 177, 49, 0.1);
+}
+
+#game-container[data-register='arcade'] .hud-label {
+  color: var(--sandow-brass, #fcb131);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  /* Cabinet voice: mode renders as CURLS, not curls — same all-caps register
+     as the coachy lines and the foyer's movement chips. */
+  text-transform: uppercase;
+}
+
+#game-container[data-register='arcade'] .hud-value {
+  color: #ffd97a;
+}
+
+#game-container[data-register='arcade'] .hud-depth__fill {
+  background: linear-gradient(90deg, #e6a72c, #ffd97a);
+}
+
+#game-container[data-register='arcade'] #controls button {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  border-radius: 0;
+}
+
+#game-container[data-register='arcade'] #startButton {
+  color: #1a1206;
+  background: linear-gradient(115deg, #ffd97a 0%, #fcb131 55%, #e6a72c 100%);
+  border-color: #ffe29a;
+  box-shadow: 0 6px 18px rgba(252, 177, 49, 0.25);
+}
+
+#game-container[data-register='arcade'] #resetButton {
+  color: #ffd97a;
+  background: rgba(252, 177, 49, 0.08);
+  border-color: rgba(252, 177, 49, 0.4);
+}
+
+#game-container[data-register='arcade'] #stopButton {
+  background: #4e2025;
+  border-color: #9a4b51;
+}
+
+#game-container[data-register='arcade'] .imf-mode-switch {
+  border-radius: 0;
+  background: rgba(24, 16, 4, 0.85);
+  border-color: rgba(252, 177, 49, 0.5) !important;
+}
+
+#game-container[data-register='arcade'] .imf-mode-segment {
+  font-family: inherit;
+  font-size: 0.55rem;
+  color: rgba(255, 217, 122, 0.75);
+  background: transparent;
+  border-color: transparent;
+  text-shadow: none;
+}
+
+#game-container[data-register='arcade'] .imf-mode-segment.selected {
+  color: #1a1206;
+  background: #fcb131;
+  border-color: #fcb131;
+}
+
+#game-container[data-register='arcade'] .coachy-tray {
+  background: rgba(24, 16, 4, 0.92);
+  border-color: rgba(252, 177, 49, 0.35);
+}
+
+#game-container[data-register='arcade'] .pose-status-indicator {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  color: #ffd97a;
+}
+
+/* —— Arcade coachy lines — the same gold Press Start voice for every line the
+   cabinet speaks mid-session: the live cue on the camera stage, the first-
+   signal banner, and the insight tray in the controls. Copy stays the coach's
+   content (uppercased here); the register only changes the delivery. —— */
+#game-container[data-register='arcade'] .live-status {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffd97a;
+  background: rgba(24, 16, 4, 0.94);
+  border: 1px solid rgba(252, 177, 49, 0.45);
+  border-radius: 0;
+}
+
+#game-container[data-register='arcade'] .live-status svg {
+  color: var(--sandow-brass, #fcb131);
+}
+
+#game-container[data-register='arcade'] .live-status--ready {
+  border-color: rgba(252, 177, 49, 0.5);
+}
+
+#game-container[data-register='arcade'] .live-status--ready svg {
+  color: #ffd97a;
+}
+
+#game-container[data-register='arcade'] .live-status--adjust {
+  border-color: rgba(255, 138, 92, 0.65);
+  background: rgba(46, 12, 10, 0.94);
+}
+
+#game-container[data-register='arcade'] .live-status--adjust svg {
+  color: #ff8a5c;
+}
+
+#game-container[data-register='arcade'] .live-status--signal {
+  border-color: rgba(252, 177, 49, 0.6);
+  background: rgba(39, 29, 15, 0.94);
+}
+
+#game-container[data-register='arcade'] .live-status--signal svg {
+  color: var(--sandow-brass, #fcb131);
+}
+
+#game-container[data-register='arcade'] .coach-cue {
+  font-family: 'Press Start 2P', cursive;
+  color: #ffd97a;
+  background: rgba(24, 16, 4, 0.94);
+  border: 1px solid rgba(252, 177, 49, 0.4);
+  border-radius: 0;
+}
+
+#game-container[data-register='arcade'] .coach-cue > svg {
+  color: var(--sandow-brass, #fcb131);
+}
+
+#game-container[data-register='arcade'] .coach-cue p {
+  color: #e6a72c;
+  letter-spacing: 0.12em;
+}
+
+#game-container[data-register='arcade'] .coach-cue strong {
+  color: #ffd97a;
+  font-size: 0.6rem;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+#game-container[data-register='arcade'] .coach-cue--adjust {
+  border-color: rgba(255, 138, 92, 0.55);
+}
+
+#game-container[data-register='arcade'] .coach-cue--good > svg {
+  color: #ffd97a;
+}
+
+/* —— Arcade recap score plate — the description sits beside the stage wrapper
+   inside AccessibleDialog, so it gets its own semantic scope. The content
+   below remains keyed to [data-register='arcade']. —— */
+.summary-arcade-description {
+  gap: 0.35rem;
+}
+
+.summary-arcade-score-plate {
+  min-width: min(13rem, 80vw);
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 0.75rem 1.4rem 0.85rem;
+  color: #ffd97a;
+  background:
+    linear-gradient(180deg, rgba(252, 177, 49, 0.16), rgba(24, 16, 4, 0.96)),
+    repeating-linear-gradient(0deg, transparent 0, transparent 3px, rgba(252, 177, 49, 0.035) 4px);
+  border: 2px solid rgba(252, 177, 49, 0.72);
+  border-radius: 0;
+  box-shadow: 0 0 22px rgba(252, 177, 49, 0.2), inset 0 0 18px rgba(252, 177, 49, 0.06);
+  font-family: 'Press Start 2P', cursive;
+  text-transform: uppercase;
+}
+
+.summary-arcade-score-label {
+  color: #e6a72c;
+  font-size: 0.55rem;
+  letter-spacing: 0.16em;
+}
+
+.summary-arcade-score-value {
+  color: #ffe29a;
+  font-size: clamp(2.5rem, 12vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 16px rgba(252, 177, 49, 0.48);
+}
+
+.summary-arcade-score-meta {
+  color: #c98c1a;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+}
+
+.summary-arcade-high-score {
+  padding: 0.35rem 0.7rem;
+  color: #1a1206;
+  background: #fcb131;
+  border: 1px solid #ffe29a;
+  border-radius: 0;
+  box-shadow: 0 0 14px rgba(252, 177, 49, 0.35);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  text-transform: uppercase;
 }
 
 /* —— Summary modal stage tabs (register follows stage / intent) —— */

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useImmersive } from '@/hooks/useImmersive';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 
 interface GameHUDProps {
   mode: string;
@@ -24,7 +25,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   depth,
   warnings,
 }) => {
-  const studio = true;
+  const { register } = useSessionIntent();
+  // The live HUD follows the session register: an explicit Train session keeps
+  // the full cabinet (gold Press Start chrome + arcade copy) end to end, while
+  // the studio coach keeps the quiet teal instrument look. The register is
+  // preserved through the session, so this never flips mid-workout.
+  const studio = register !== 'arcade';
   const { immersive } = useImmersive();
 
   // Logic for scaling based on rep count to create "delight"
@@ -45,7 +51,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   return (
     <div
       className={`game-hud-container ${isOverlay ? 'hud-overlay-fs' : ''}`}
-      data-register="studio"
+      data-register={register}
     >
       {isRace && (
         <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-30">
@@ -69,9 +75,9 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                 'Beat your line'
               ) : (
                 <>
-                  <span className="animate-bounce">🏁</span>
+                  <span className="animate-bounce">›</span>
                   <span className="drop-shadow-sm">RACING</span>
-                  <span className="animate-bounce">🏁</span>
+                  <span className="animate-bounce">‹</span>
                 </>
               )}
             </span>
@@ -98,10 +104,12 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           transition: 'transform 0.1s ease-out',
         }}
       >
-        <span className="hud-label sandow-gauge__label">{immersive ? 'Graded' : 'Reps'}</span>
+        <span className="hud-label sandow-gauge__label">
+          {studio ? (immersive ? 'Graded' : 'Reps') : 'Score'}
+        </span>
         <span
           key={repCount}
-          className={`hud-value motion-rep sandow-gauge__value ${studio ? 'text-teal-200' : 'text-blue-400'}`}
+          className={`hud-value motion-rep sandow-gauge__value ${studio ? 'text-teal-200' : 'text-yellow-500'}`}
         >
           {repCount}
         </span>
@@ -135,9 +143,10 @@ interface RepFeedbackProps {
 }
 
 export const RepFeedbackOverlay: React.FC<RepFeedbackProps> = ({ show, count }) => {
-  if (!show) return null;
+  const { register } = useSessionIntent();
+  const studio = register !== 'arcade';
 
-  const studio = true;
+  if (!show) return null;
 
   const getFeedbackMessage = (c: number) => {
     if (studio) {
@@ -145,29 +154,29 @@ export const RepFeedbackOverlay: React.FC<RepFeedbackProps> = ({ show, count }) 
       if (c % 5 === 0) return 'Solid form';
       return 'Good';
     }
-    if (c % 10 === 0) return 'UNSTOPPABLE! 🔥';
-    if (c % 5 === 0) return 'GREAT FORM! 💪';
-    return 'NICE! ✨';
+    if (c % 10 === 0) return 'UNSTOPPABLE!';
+    if (c % 5 === 0) return 'GREAT FORM!';
+    return 'NICE!';
   };
 
   return (
     <div
       className="absolute inset-0 flex items-center justify-center z-[85] pointer-events-none"
       style={{ transform: 'translate3d(0, 0, 10px)' }}
-      data-register="studio"
+      data-register={register}
     >
       <div
         className={
           studio
             ? 'motion-rep bg-teal-950/70 backdrop-blur-md rounded-2xl px-8 py-6 flex flex-col items-center gap-2 border border-teal-400/40 shadow-[0_0_24px_rgba(45,212,191,0.2)]'
-            : 'bg-green-500/30 backdrop-blur-md rounded-3xl p-8 flex flex-col items-center gap-2 border-2 border-green-400/50 animate-bounce shadow-[0_0_30px_rgba(34,197,94,0.4)]'
+            : 'motion-rep bg-[#241503]/90 backdrop-blur-md rounded-none px-8 py-6 flex flex-col items-center gap-2 border-2 border-[#fcb131]/70 shadow-[0_0_30px_rgba(252,177,49,0.35)]'
         }
       >
         <span
           className={
             studio
               ? 'text-6xl font-semibold text-teal-50 tabular-nums'
-              : 'text-8xl font-black text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
+              : 'text-8xl font-black text-[#ffd97a] drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
           }
         >
           {count}
@@ -176,7 +185,7 @@ export const RepFeedbackOverlay: React.FC<RepFeedbackProps> = ({ show, count }) 
           className={
             studio
               ? 'text-sm font-medium text-teal-100/90 tracking-wide'
-              : 'text-xl font-black text-green-100 tracking-widest uppercase drop-shadow-md'
+              : 'text-xl font-black text-[#fcb131] tracking-widest uppercase drop-shadow-md'
           }
         >
           {getFeedbackMessage(count)}

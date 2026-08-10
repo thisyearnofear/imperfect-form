@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, createElement } from 'react';
 import { xpService } from '@/services/XPService';
 import { questService } from '@/services/QuestService';
 import { getLocalWorkouts, WORKOUT_KEYS } from '@/services/integrations/WorkoutDataAdapter';
 import { getDataSyncService, createDataKey } from '@/services/DataSyncService';
 import { LocalWorkout } from '@/types/workout';
 import { toast } from 'react-hot-toast';
+import { Rocket, Ghost, Link2 } from 'lucide-react';
 
 export const useXpProgress = () => {
   const [workouts, setWorkouts] = useState<LocalWorkout[]>([]);
@@ -65,20 +66,34 @@ export const useXpProgress = () => {
 
     if (lastSeenLevel && parseInt(lastSeenLevel) < currentLevel) {
       toast.success(`LEVEL UP! You reached Level ${currentLevel}!`, {
-        icon: '🚀',
+        icon: createElement(Rocket, { size: 18, style: { color: 'var(--sandow-brass)' } }),
         duration: 5000,
         style: {
-          background: '#000',
-          color: '#fff',
-          border: '2px solid #FFD700',
+          background: '#061013',
+          color: '#effcf9',
+          border: '1px solid rgba(252, 177, 49, 0.45)',
         },
       });
 
       // Additional unlocks feedback
       if (currentLevel === 3) {
-        toast.success('UNLOCKED: Ghost Mode!', { icon: '👻' });
+        toast.success('UNLOCKED: Ghost Mode!', {
+          icon: createElement(Ghost, { size: 18, style: { color: 'var(--sandow-brass)' } }),
+          style: {
+            background: '#061013',
+            color: '#effcf9',
+            border: '1px solid rgba(252, 177, 49, 0.45)',
+          },
+        });
       } else if (currentLevel === 5) {
-        toast.success('UNLOCKED: On-chain Sync!', { icon: '🔗' });
+        toast.success('UNLOCKED: On-chain Sync!', {
+          icon: createElement(Link2, { size: 18, style: { color: 'var(--studio-teal-bright)' } }),
+          style: {
+            background: '#061013',
+            color: '#effcf9',
+            border: '1px solid rgba(86, 217, 195, 0.4)',
+          },
+        });
       }
     }
 

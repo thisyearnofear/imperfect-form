@@ -4,6 +4,7 @@ import React from 'react';
 import { AlertCircle, CheckCircle2, ScanLine } from 'lucide-react';
 import { guidanceFor } from '@/lib/exerciseGuidance';
 import { readableFormWarning } from '@/lib/coachingStory';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 import type { CoachingMomentPhase } from '@/lib/coachingMoment';
 import type { ExerciseMode } from '@/utils/biomechanics';
 
@@ -30,6 +31,13 @@ export function LiveCoachingStatus({
   firstSignal = false,
   retryFocus = null,
 }: LiveCoachingStatusProps) {
+  const { register } = useSessionIntent();
+  // The full arcade cabinet: an explicit Train session keeps every coachy line
+  // in the same gold Press Start voice (uppercased + styled via the arcade
+  // register in session-register.css). Studio keeps the spoken coach tone.
+  // Copy stays short enough to be pixel-legible.
+  const arcade = register === 'arcade';
+
   const guidance = guidanceFor(mode);
   const phase = suppliedPhase ?? (tracking ? (repCount > 0 ? 'your_turn' : 'observed') : 'framing');
   const warning = suppliedWarning ?? warnings[0] ?? null;
@@ -44,7 +52,11 @@ export function LiveCoachingStatus({
         aria-live="polite"
       >
         <CheckCircle2 size={16} />
-        <span>First signal captured. Coach is watching your form.</span>
+        <span>
+          {arcade
+            ? 'Signal locked — keep your form.'
+            : 'First signal captured. Coach is watching your form. Now try the one fix.'}
+        </span>
       </div>
     );
   }
@@ -59,9 +71,12 @@ export function LiveCoachingStatus({
       >
         <AlertCircle size={16} />
         {/* The first named correction is the One Fix payoff — the promise the
-            foyer makes (ONE REP / ONE FIX), delivered live. The gold accent
-            comes from .live-status--adjust. */}
-        <span>One fix: {readableFormWarning(warning).toLowerCase()}.</span>
+            foyer makes (ONE REP / ONE FIX), delivered live. The arcade cabinet
+            reads it as a brass FIX banner; the studio coach as a spoken cue. */}
+        <span>
+          {arcade ? 'Fix: ' : 'One fix: '}
+          {readableFormWarning(warning).toLowerCase()}.
+        </span>
       </div>
     );
   }
@@ -90,14 +105,18 @@ export function LiveCoachingStatus({
       >
         <CheckCircle2 size={16} />
         <span>
-          Your turn.{' '}
+          {arcade ? 'Your turn — ' : 'Your turn. '}
           {mode === 'curls'
             ? 'Use the angle and drift readout to guide this rep.'
             : focusWarning
-              ? `Keep this in mind: ${readableFormWarning(focusWarning).toLowerCase()}.`
+              ? arcade
+                ? `watch: ${readableFormWarning(focusWarning).toLowerCase()}.`
+                : `Keep this in mind: ${readableFormWarning(focusWarning).toLowerCase()}.`
               : retryFocus
-                ? `Retry focus: ${retryFocus.toLowerCase()}`
-                : 'Match the line and keep going.'}
+                ? arcade
+                  ? `focus: ${retryFocus.toLowerCase()}`
+                  : `Retry focus: ${retryFocus.toLowerCase()}`
+                : 'match the line.'}
         </span>
       </div>
     );
@@ -113,11 +132,13 @@ export function LiveCoachingStatus({
       >
         <CheckCircle2 size={16} />
         <span>
-          I see your movement.{' '}
+          {arcade ? 'Sync locked — ' : 'I see your movement. '}
           {mode === 'curls'
             ? 'Show one curl — the instrument will mark the target range.'
             : retryFocus
-              ? `Next set focus: ${retryFocus.toLowerCase()}.`
+              ? arcade
+                ? `next set: ${retryFocus.toLowerCase()}.`
+                : `Next set focus: ${retryFocus.toLowerCase()}.`
               : 'Show me one rep.'}
         </span>
       </div>

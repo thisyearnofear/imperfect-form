@@ -20,10 +20,21 @@ import {
   ChallengeWidget,
   AchievementShowcase,
 } from '@/components/home';
+import {
+  Dumbbell,
+  BarChart3,
+  Ghost,
+  Map as MapIcon,
+  Gamepad2,
+  Wind,
+  type LucideIcon,
+} from 'lucide-react';
 import { useXpProgress } from '@/hooks/useXpProgress';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { getHasTrained } from '@/lib/hasTrained';
 import { UniversalConnectButton } from '@/components/wallet';
 import { ScreenTransition } from '@/components/ui/ScreenTransition';
+import { CountUp } from '@/components/ui/CountUp';
 
 // Branded shell while the game chunk loads — visually identical to the
 // InitializationScreen first frame so the boot splash → foyer swap is a
@@ -82,19 +93,29 @@ type ActiveTab = 'workout' | 'dashboard' | 'roadmap' | 'challenges';
 export default function Home() {
   const { platform, user } = usePlatform();
   const { progress } = useXpProgress();
+  const { intent: sessionIntent, setIntent } = useSessionIntent();
   const isInMiniApp = platform === 'farcaster';
   const [showFirstTimePrompt, setShowFirstTimePrompt] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>('workout');
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
+  // Level-up pulse: when the level mark increases, replay the brass ring.
+  const prevLevelRef = React.useRef(progress.currentLevel);
+  const [levelPulse, setLevelPulse] = useState(0);
 
-  // Gradual tab reveal: Workout + Stats always; Ghost at L3; Roadmap at L5.
+  // Gradual tab reveal: Workout + Stats + Roadmap always (the roadmap is the
+  // motivational 'what unlocks next' surface — honest about locks); Ghost at L3.
   // Avoids the 0->100 chrome flip on the first earned session.
-  const visibleTabs: { id: ActiveTab; label: string; minLevel: number }[] = (
+  const visibleTabs: {
+    id: ActiveTab;
+    label: string;
+    minLevel: number;
+    icon: LucideIcon;
+  }[] = (
     [
-      { id: 'workout', label: 'Workout', minLevel: 0 },
-      { id: 'dashboard', label: 'Stats', minLevel: 0 },
-      { id: 'challenges', label: 'Ghost', minLevel: 3 },
-      { id: 'roadmap', label: 'Roadmap', minLevel: 5 },
+      { id: 'workout', label: 'Workout', minLevel: 0, icon: Dumbbell },
+      { id: 'dashboard', label: 'Stats', minLevel: 0, icon: BarChart3 },
+      { id: 'roadmap', label: 'Roadmap', minLevel: 0, icon: MapIcon },
+      { id: 'challenges', label: 'Ghost', minLevel: 3, icon: Ghost },
     ] as const
   ).filter((t) => progress.currentLevel >= t.minLevel);
 
@@ -155,12 +176,18 @@ export default function Home() {
     };
   }, [hasTrained]);
 
-  // Gradual reveal guard: if the active tab is gated out by level (e.g. the
-  // user was on Ghost but dropped below Level 3), fall back to Workout so the
-  // content area is never empty.
+  // Level-up pulse + gradual reveal guard: if the active tab is gated out by
+  // level (e.g. the user was on Ghost but dropped below Level 3), fall back to
+  // Workout so the content area is never empty. Roadmap is always visible.
+  useEffect(() => {
+    if (progress.currentLevel > prevLevelRef.current) {
+      setLevelPulse(Date.now());
+    }
+    prevLevelRef.current = progress.currentLevel;
+  }, [progress.currentLevel]);
+
   useEffect(() => {
     if (activeTab === 'challenges' && progress.currentLevel < 3) setActiveTab('workout');
-    else if (activeTab === 'roadmap' && progress.currentLevel < 5) setActiveTab('workout');
   }, [activeTab, progress.currentLevel]);
 
   useEffect(() => {
@@ -261,7 +288,10 @@ export default function Home() {
             <div className="studio-topbar__inner px-4 py-2 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
-                  className={`studio-level-mark${immersive ? ' sandow-stamp' : ''}`}
+                  key={levelPulse || undefined}
+                  className={`studio-level-mark${immersive ? ' sandow-stamp' : ''}${
+                    levelPulse ? ' animate-level-up' : ''
+                  }`}
                   aria-label="Level"
                 >
                   <span>{progress.currentLevel}</span>
@@ -269,15 +299,14 @@ export default function Home() {
                 <div>
                   <div className="studio-meta">Level {progress.currentLevel}</div>
                   <div className="studio-xp">
-                    {progress.totalXp.toLocaleString()} {immersive ? 'graded reps' : 'XP'}
+                    <CountUp to={progress.totalXp} format /> {immersive ? 'graded reps' : 'XP'}
                   </div>
                 </div>
               </div>
 
-              <div className="studio-tabs flex items-center gap-1 p-1">
-                {/* Gradual reveal: Workout always; Stats after first session;
-                    Ghost (Challenges) at Level 3+; Roadmap at Level 5+. Avoids the
-                    0->100 chrome flip on the first earned session. */}
+              {/* Desktop-only tabs — on mobile the bottom bar owns navigation,
+                  so the topbar stays level + wallet (no duplicate chrome). */}
+              <div className="studio-tabs hidden md:flex items-center gap-1 p-1">
                 {visibleTabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -288,15 +317,50 @@ export default function Home() {
                     aria-label={`Switch to ${tab.label} tab`}
                     aria-current={activeTab === tab.id ? 'page' : undefined}
                   >
-                    <span className="font-mono text-[10px] opacity-70">
-                      {tab.id.charAt(0).toUpperCase()}
-                    </span>
-                    <span className="hidden sm:inline">{tab.label}</span>
+                    <tab.icon className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{tab.label}</span>
                   </button>
                 ))}
               </div>
-              <div className="hidden sm:block">
-                <UniversalConnectButton size="sm" showProfileWhenConnected />
+              <div className="flex items-center gap-2">
+                {/* Register entry pills — the arcade + calm doorways. Earned
+                    chrome: they live in the shell, never the day-0 foyer.
+                    Each toggles its register (↔ Coach) and lands on the
+                    workout tab, where the matching foyer appears. Active
+                    while their register is set. */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIntent(sessionIntent === 'train' ? 'understand' : 'train');
+                    setActiveTab('workout');
+                  }}
+                  className={`studio-entry-pill studio-entry-pill--arcade${
+                    sessionIntent === 'train' ? ' is-active' : ''
+                  }`}
+                  aria-label="Train — arcade workout mode"
+                  aria-pressed={sessionIntent === 'train'}
+                >
+                  <Gamepad2 size={14} strokeWidth={2.2} aria-hidden="true" />
+                  <span>Train</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIntent(sessionIntent === 'recover' ? 'understand' : 'recover');
+                    setActiveTab('workout');
+                  }}
+                  className={`studio-entry-pill studio-entry-pill--calm${
+                    sessionIntent === 'recover' ? ' is-active' : ''
+                  }`}
+                  aria-label="Breathe — calm recovery mode"
+                  aria-pressed={sessionIntent === 'recover'}
+                >
+                  <Wind size={14} strokeWidth={2.2} aria-hidden="true" />
+                  <span>Breathe</span>
+                </button>
+                <div className="hidden sm:block">
+                  <UniversalConnectButton size="sm" showProfileWhenConnected />
+                </div>
               </div>
             </div>
           </div>
@@ -317,15 +381,8 @@ export default function Home() {
                 <GameReadyGate onReady={() => setGameReady(true)} />
               </div>
 
-              {/* Mobile: retention widgets below the bay. Desktop: Stats tab only —
-                  no floating multi-widget feature drawer (intentional mix, not dashboard). */}
-              {hasTrained && (
-                <div className="md:hidden px-4 pb-20 pt-4 space-y-4">
-                  <QuestDashboard />
-                  <ChallengeWidget />
-                  <AchievementShowcase />
-                </div>
-              )}
+              {/* Retention widgets live in the Stats tab only — the bay stays
+                  the coaching loop, not a widget stack (see design.md anti-pattern). */}
             </ScreenTransition>
           )}
 
@@ -333,12 +390,21 @@ export default function Home() {
             <ScreenTransition key="dashboard" mode="slide-up" className="flex-1 flex flex-col">
               <div className="flex-1 px-4 py-6 space-y-6 overflow-y-auto pb-24">
                 <div className="max-w-2xl mx-auto space-y-6">
-                  <HeroSection />
-                  <QuestDashboard />
-                  <AchievementShowcase />
-                  <div className="earned-surface p-4">
-                    <h3 className="earned-surface__title mb-4">Top performers</h3>
-                    <Leaderboard limit={5} onViewMore={handleViewMore} />
+                  {/* Staggered cascade — the shell settles in, not all at once */}
+                  <div className="motion-enter motion-delay-1">
+                    <HeroSection onViewRoadmap={() => setActiveTab('roadmap')} />
+                  </div>
+                  <div className="motion-enter motion-delay-2">
+                    <QuestDashboard />
+                  </div>
+                  <div className="motion-enter motion-delay-3">
+                    <AchievementShowcase />
+                  </div>
+                  <div className="motion-enter motion-delay-4">
+                    <div className="earned-surface p-4">
+                      <h3 className="earned-surface__title mb-4">Top performers</h3>
+                      <Leaderboard limit={5} onViewMore={handleViewMore} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -349,7 +415,9 @@ export default function Home() {
             <ScreenTransition key="challenges" mode="slide-up" className="flex-1 flex flex-col">
               <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
                 <div className="max-w-2xl mx-auto">
-                  <ChallengeWidget />
+                  <div className="motion-enter">
+                    <ChallengeWidget />
+                  </div>
                 </div>
               </div>
             </ScreenTransition>
@@ -359,7 +427,9 @@ export default function Home() {
             <ScreenTransition key="roadmap" mode="slide-up" className="flex-1 flex flex-col">
               <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
                 <div className="max-w-2xl mx-auto">
-                  <RoadmapSection />
+                  <div className="motion-enter">
+                    <RoadmapSection />
+                  </div>
                 </div>
               </div>
             </ScreenTransition>
@@ -380,21 +450,25 @@ export default function Home() {
               className="grid gap-1 p-2"
               style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}
             >
-              {visibleTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex flex-col items-center py-2 rounded-lg transition-colors ${
-                    activeTab === tab.id ? 'earned-tab-active' : ''
-                  }`}
-                  style={activeTab === tab.id ? undefined : { color: 'var(--studio-muted-dim)' }}
-                  aria-current={activeTab === tab.id ? 'page' : undefined}
-                >
-                  <span className="text-[10px] font-bold uppercase tracking-wider">
-                    {tab.label}
-                  </span>
-                </button>
-              ))}
+              {visibleTabs.map((tab) => {
+                const TabIcon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex flex-col items-center gap-0.5 py-2 rounded-lg transition-colors ${
+                      activeTab === tab.id ? 'earned-tab-active' : ''
+                    }`}
+                    style={activeTab === tab.id ? undefined : { color: 'var(--studio-muted)' }}
+                    aria-current={activeTab === tab.id ? 'page' : undefined}
+                  >
+                    <TabIcon className="w-4 h-4" aria-hidden="true" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">
+                      {tab.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

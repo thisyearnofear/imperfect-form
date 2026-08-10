@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Wallet, Smartphone } from 'lucide-react';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 
 interface WalletBrowserIndicatorProps {
@@ -45,33 +46,12 @@ export default function WalletBrowserIndicator({
     return displayNames[type] || 'Wallet Browser';
   };
 
-  const getWalletIcon = (type: string | null) => {
-    const icons: Record<string, string> = {
-      metamask: '🦊',
-      coinbase: '🔵',
-      trust: '🛡️',
-      rainbow: '🌈',
-      phantom: '👻',
-      walletconnect: '🔗',
-      imtoken: '💎',
-      tokenpocket: '🎒',
-      safepal: '🔐',
-      mathwallet: '🧮',
-      binance: '🟡',
-      okx: '⭕',
-      bitget: '🎯',
-      unknown_wallet: '👛',
-    };
-
-    return icons[type || 'unknown_wallet'] || '👛';
-  };
-
   return (
     <div className={`wallet-browser-indicator ${className}`}>
       {showDetails ? (
         <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border border-purple-500 rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">{getWalletIcon(walletBrowserType)}</span>
+            <Wallet size={18} className="text-purple-200" aria-hidden="true" />
             <span className="text-sm font-bold text-purple-200">
               {getWalletDisplayName(walletBrowserType)} Detected
             </span>
@@ -84,9 +64,9 @@ export default function WalletBrowserIndicator({
         </div>
       ) : (
         <div className="flex items-center gap-2 text-xs text-purple-300 bg-purple-900/30 px-2 py-1 rounded border border-purple-500/50">
-          <span>{getWalletIcon(walletBrowserType)}</span>
+          <Wallet size={14} aria-hidden="true" />
           <span>{getWalletDisplayName(walletBrowserType)}</span>
-          {isMobile && <span className="text-green-400">📱</span>}
+          {isMobile && <Smartphone size={14} className="text-green-400" aria-hidden="true" />}
         </div>
       )}
     </div>

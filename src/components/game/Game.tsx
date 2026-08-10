@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
+import { Lock, Unlock } from 'lucide-react';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 // Code-split the recap modals — they drag ethers, supabase, the verification
@@ -43,6 +44,7 @@ import { useRepCounter } from '../../hooks/useRepCounter';
 import { useCameraSetup } from '../../hooks/useCameraSetup';
 import { GameCanvas } from './GameCanvas';
 import CoachFoyer from './CoachFoyer';
+import PreStartFoyer from '@/components/home/PreStartFoyer';
 import LandscapePrompt from './LandscapePrompt';
 import {
   saveLocalWorkout,
@@ -66,9 +68,9 @@ const LazyWebcam = dynamic(() => import('./LazyWebcam'), {
   loading: () => (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm z-50">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-16 h-16 border-4 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin shadow-[0_0_15px_rgba(252,177,49,0.3)]" />
-        <span className="text-[10px] text-yellow-500 font-black uppercase tracking-widest animate-pulse">
-          Initializing Engine...
+        <div className="w-16 h-16 border-4 border-teal-400/20 border-t-teal-400 rounded-full animate-spin" />
+        <span className="text-xs text-teal-200/90 font-bold uppercase tracking-widest animate-pulse">
+          Preparing camera coaching
         </span>
       </div>
     </div>
@@ -496,8 +498,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       const isFocusedRetry = Boolean(options?.retryFocus);
 
       // A recap retry is an explicit coaching action, even if the user was
-      // previously in Breathe/Recover. Ordinary starts preserve that intent.
-      if (isFocusedRetry) setIntent('understand');
+      // previously in Breathe/Recover. Train is preserved (an arcade session
+      // replays as arcade); everything else returns to the coaching door.
+      if (isFocusedRetry && sessionIntent !== 'train') setIntent('understand');
       else if (sessionIntent === 'recover') {
         setCalmSessionActive(true);
         return;
@@ -511,9 +514,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       else setRetryFocus(null);
       setShowFirstRepCelebration(false);
       setIsStarting(true);
-
-      // Day-0 coaching doorway commits Coach / Studio (noop if already set).
-      setIntent('understand');
 
       // Gesture-sensitive work stays synchronous with the press: fullscreen
       // and orientation lock must run BEFORE any await, or browsers reject them.
@@ -584,6 +584,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       setShowTutorial(false); // Hide tutorial when starting
       setStarted(true);
       setHasIncomingChallenge(false);
+      // Session intent is preserved (Train stays Train): a reset returns to
+      // the arcade foyer instead of committing back to the studio door, and
+      // the register stays arcade through the session — the full cabinet.
+      // No commit here: the day-0 studio start was already a no-op, and the
+      // recap retry commits Coach earlier via isFocusedRetry.
       setIsStarting(false); // session live — foyer handoff complete
 
       // Physical AI: session start (no-op unless station URL configured)
@@ -814,6 +819,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     if (sessionIntent !== 'recover') setCalmSessionActive(false);
   }, [sessionIntent]);
 
+  // Entering Breathe (shell pill, foyer chip, deep-link) opens the calm panel
+  // directly — the calm register lands on Breathe, not a two-step coach door.
+  // Dismissing the panel stays on the foyer: this effect only re-fires when
+  // the intent or started state actually changes, and recover never starts a
+  // camera session.
+  useEffect(() => {
+    if (sessionIntent === 'recover' && !started) setCalmSessionActive(true);
+  }, [sessionIntent, started]);
+
   // Memoize the webcam component to prevent re-renders when timer updates
   // When racing against a ghost, prioritize raceTrace over pbTrace
   const activeTrace = raceTrace || pbTrace;
@@ -821,6 +835,24 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Rotate hint only matters once a session is running — it must never
   // gate the day-0 foyer (that made it decision #1 on portrait phones).
   const showLandscapePrompt = started && isMobile && isPortrait && !dismissLandscapePrompt;
+
+  // Pre-start foyer follows the register: Coach/Studio → CoachFoyer,
+  // Train/Arcade → the arcade foyer. Breathe still opens its calm panel
+  // from the studio door (BEGIN), so pre-start chrome stays studio unless
+  // Train is explicit. (handleStart defers its intent commit until the
+  // session is live, so the arcade foyer never flips mid-fade.)
+  const showingArcadeFoyer =
+    !started &&
+    !calmSessionActive &&
+    currentMode === 'instructions' &&
+    sessionRegister === 'arcade';
+
+  const foyerRegister =
+    !started && !calmSessionActive && currentMode === 'instructions'
+      ? showingArcadeFoyer
+        ? 'arcade'
+        : 'studio'
+      : sessionRegister;
 
   const memoizedWebcam = useMemo(
     () => (
@@ -856,11 +888,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       <div
         id="game-container"
         ref={gameRef}
-        data-register={
-          !started && !calmSessionActive && currentMode === 'instructions'
-            ? 'studio'
-            : sessionRegister
-        }
+        data-register={foyerRegister}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -884,7 +912,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               aria-label={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
               title={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
             >
-              <span className="text-white text-lg">{isLandscapeLocked ? '🔒' : '🔓'}</span>
+              {isLandscapeLocked ? (
+                <Lock size={18} className="text-white" aria-hidden="true" />
+              ) : (
+                <Unlock size={18} className="text-white" aria-hidden="true" />
+              )}
             </button>
           )}
 
@@ -903,31 +935,40 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           )}
         </div>
 
-        <div
-          id="screen"
-          data-register={
-            !started && !calmSessionActive && currentMode === 'instructions'
-              ? 'studio'
-              : sessionRegister
-          }
-        >
+        <div id="screen" data-register={foyerRegister}>
           {!started &&
             !calmSessionActive &&
             (currentMode === 'instructions' ? (
-              <div className={isStarting ? 'coach-foyer--starting' : ''}>
-                <CoachFoyer
-                  mode={mode}
-                  onModeChange={setMode}
-                  onStart={() =>
-                    handleStart({
-                      isRace: hasIncomingChallenge,
-                      trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
-                      challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
-                    })
-                  }
-                  incomingChallenge={hasIncomingChallenge}
-                />
-              </div>
+              showingArcadeFoyer ? (
+                <div className={isStarting ? 'coach-foyer--starting' : ''}>
+                  <PreStartFoyer
+                    onStart={() =>
+                      handleStart({
+                        isRace: hasIncomingChallenge,
+                        trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
+                        challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
+                      })
+                    }
+                    mode={mode}
+                    onModeChange={setMode}
+                  />
+                </div>
+              ) : (
+                <div className={isStarting ? 'coach-foyer--starting' : ''}>
+                  <CoachFoyer
+                    mode={mode}
+                    onModeChange={setMode}
+                    onStart={() =>
+                      handleStart({
+                        isRace: hasIncomingChallenge,
+                        trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
+                        challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
+                      })
+                    }
+                    incomingChallenge={hasIncomingChallenge}
+                  />
+                </div>
+              )
             ) : (
               <SplitFlapInstructions
                 mode={currentMode}

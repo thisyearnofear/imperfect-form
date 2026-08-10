@@ -4,6 +4,7 @@ import React from 'react';
 import { useQuests } from '@/hooks/useQuests';
 import { CheckCircle, Circle, Target, Zap, Clock } from 'lucide-react';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { CountUp } from '@/components/ui/CountUp';
 
 interface QuestDashboardProps {
   compact?: boolean;
@@ -77,8 +78,8 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
                 {quest.title}
               </span>
               <span
-                className="ml-auto font-mono text-[10px]"
-                style={{ color: 'var(--sandow-brass)', opacity: 0.75 }}
+                className="ml-auto font-mono text-xs"
+                style={{ color: 'var(--sandow-brass)', opacity: 0.85 }}
               >
                 +{quest.xpReward}
               </span>
@@ -101,7 +102,7 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
         <div className="flex items-center gap-2">
           {allComplete && (
             <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded"
+              className="text-xs font-bold px-2 py-0.5 rounded"
               style={{
                 background: 'rgba(86, 217, 195, 0.14)',
                 color: 'var(--studio-teal-bright)',
@@ -111,10 +112,7 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
               All done
             </span>
           )}
-          <div
-            className="flex items-center gap-1 text-[10px]"
-            style={{ color: 'var(--studio-muted-dim)' }}
-          >
+          <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--studio-muted)' }}>
             <Clock className="w-3 h-3" />
             <span>12h</span>
           </div>
@@ -185,17 +183,14 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
                     </span>
                   </div>
                 </div>
-                <p
-                  className="text-[10px] mt-0.5 truncate"
-                  style={{ color: 'var(--studio-muted-dim)' }}
-                >
+                <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--studio-muted)' }}>
                   {quest.description}
                 </p>
                 {!quest.completed && (
                   <div className="mt-2">
                     <div
-                      className="flex justify-between text-[10px] font-mono mb-1"
-                      style={{ color: 'var(--studio-muted-dim)' }}
+                      className="flex justify-between text-xs font-mono mb-1"
+                      style={{ color: 'var(--studio-muted)' }}
                     >
                       <span>
                         {quest.progress}/{quest.target}
@@ -233,7 +228,7 @@ export const QuestDashboard: React.FC<QuestDashboardProps> = ({ compact = false 
           style={{ borderTop: '1px solid var(--studio-border)', color: 'var(--studio-muted)' }}
         >
           <span className="font-bold" style={{ color: 'var(--sandow-brass)' }}>
-            {completedCount * 100}
+            <CountUp to={completedCount * 100} />
           </span>{' '}
           XP earned today
         </div>

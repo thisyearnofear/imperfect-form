@@ -29,6 +29,7 @@ import {
   CELO_FALLBACK_RPCS,
 } from '@/utils/rpcUtils';
 import { DataLoader } from '@/components/ui';
+import { RankMedal } from '@/components/leaderboard/RankMedal';
 import toast from 'react-hot-toast';
 import { Score, ContractScore } from '@/types';
 import {
@@ -771,7 +772,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                   >
                     <td className={`px-3 py-3 font-bold ${medalStyle.textColor}`}>
                       <div className="flex items-center justify-center space-x-1">
-                        <span className="text-lg">{medalStyle.medal}</span>
+                        <RankMedal rank={i} size={18} />
                         <span>{i + 1}</span>
                       </div>
                     </td>
@@ -846,7 +847,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                   >
                     <td className={`px-3 py-3 font-bold ${medalStyle.textColor}`}>
                       <div className="flex items-center justify-center space-x-1">
-                        <span className="text-lg">{medalStyle.medal}</span>
+                        <RankMedal rank={i} size={18} />
                         <span>{i + 1}</span>
                       </div>
                     </td>

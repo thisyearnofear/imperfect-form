@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { Trophy, Dumbbell, PersonStanding, Ghost } from 'lucide-react';
+import { RankMedal } from '@/components/leaderboard/RankMedal';
 import '@/styles/leaderboard.css';
 import '@/styles/expanded-leaderboard.css';
 import { shortenAddress } from '@/utils/formatters';
@@ -130,7 +132,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
     <AccessibleDialog
       isOpen={isOpen}
       onClose={onClose}
-      title="🏆 Onchain Olympians 🏆"
+      title="Onchain Olympians"
       description="Out of difficulties grow miracles"
       maxWidth="900px"
     >
@@ -139,7 +141,9 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
         className={`bg-black/80 border-2 border-primary rounded-lg p-4 mb-4 shadow-[0_0_20px_rgba(252,177,49,0.5)] ${transitionClass}`}
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-primary">🏆 Leaderboard</h2>
+          <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+            <Trophy size={20} aria-hidden="true" /> Leaderboard
+          </h2>
           <div className="flex space-x-2">
             <button
               onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
@@ -174,8 +178,8 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
 
       {/* Push-ups Leaderboard - Compact styling */}
       <div className="mb-4 bg-black/20 rounded-lg p-2 md:p-3 border border-primary/30 shadow-[0_0_10px_rgba(252,177,49,0.3)] expanded-leaderboard-container">
-        <h3 className="text-sm md:text-base font-bold mb-2 text-primary text-center border-b border-primary/50 pb-1 section-header section-title">
-          💪 Push-ups Champions 💪
+        <h3 className="text-sm md:text-base font-bold mb-2 text-primary text-center border-b border-primary/50 pb-1 section-header section-title flex items-center justify-center gap-2">
+          <Dumbbell size={16} aria-hidden="true" /> Push-ups Champions
         </h3>
 
         {/* Desktop Table View - Enhanced with main leaderboard styling */}
@@ -202,7 +206,9 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                   >
                     <td className={`rank-cell ${medalStyle.textColor}`}>
                       <div className="medal-display">
-                        <span className="medal-icon">{medalStyle.medal}</span>
+                        <span className="medal-icon">
+                          <RankMedal rank={i} size={16} />
+                        </span>
                         <span className="rank-number">{i + 1}</span>
                       </div>
                     </td>
@@ -230,8 +236,8 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                           className="p-1 hover:bg-white/10 rounded-full transition-colors group relative"
                           title="Race against ghost"
                         >
-                          <span className="text-lg group-hover:scale-125 transition-transform inline-block">
-                            👻
+                          <span className="inline-flex group-hover:scale-125 transition-transform">
+                            <Ghost size={18} aria-hidden="true" />
                           </span>
                         </button>
                       )}
@@ -279,9 +285,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
               >
                 <div className="card-content">
                   <div className="medal-section">
-                    <span className={`text-base font-bold ${medalStyle.textColor}`}>
-                      {medalStyle.medal}
-                    </span>
+                    <RankMedal rank={i} size={18} />
                   </div>
                   <div className="profile-section">
                     <div className="profile-display-compact">
@@ -313,7 +317,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                         }}
                         className="p-1 hover:bg-white/10 rounded-full transition-colors"
                       >
-                        <span className="text-lg">👻</span>
+                        <Ghost size={18} aria-hidden="true" />
                       </button>
                     )}
                   </div>
@@ -326,8 +330,8 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
 
       {/* Squats Leaderboard - Compact styling */}
       <div className="mb-4 bg-black/20 rounded-lg p-2 md:p-3 border border-[#00a651]/30 shadow-[0_0_10px_rgba(0,166,81,0.3)] expanded-leaderboard-container">
-        <h3 className="text-sm md:text-base font-bold mb-2 text-[#00a651] text-center border-b border-[#00a651]/50 pb-1 section-header section-title">
-          🏋️ Squats Champions 🏋️
+        <h3 className="text-sm md:text-base font-bold mb-2 text-[#00a651] text-center border-b border-[#00a651]/50 pb-1 section-header section-title flex items-center justify-center gap-2">
+          <PersonStanding size={16} aria-hidden="true" /> Squats Champions
         </h3>
 
         {/* Desktop Table View - Enhanced with main leaderboard styling */}
@@ -354,7 +358,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                   >
                     <td className={`px-1 py-1 font-bold text-xs ${medalStyle.textColor}`}>
                       <div className="flex items-center justify-center space-x-1">
-                        <span className="text-sm">{medalStyle.medal}</span>
+                        <RankMedal rank={i} size={14} />
                         <span className="text-xs">{i + 1}</span>
                       </div>
                     </td>
@@ -384,8 +388,8 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                           className="p-1 hover:bg-white/10 rounded-full transition-colors group"
                           title="Race against ghost"
                         >
-                          <span className="text-lg group-hover:scale-125 transition-transform inline-block">
-                            👻
+                          <span className="inline-flex group-hover:scale-125 transition-transform">
+                            <Ghost size={18} aria-hidden="true" />
                           </span>
                         </button>
                       )}
@@ -437,9 +441,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
               >
                 <div className="card-content">
                   <div className="medal-section">
-                    <span className={`text-base font-bold ${medalStyle.textColor}`}>
-                      {medalStyle.medal}
-                    </span>
+                    <RankMedal rank={i} size={18} />
                   </div>
                   <div className="profile-section">
                     <div className="profile-display-compact">
@@ -471,7 +473,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                         }}
                         className="p-1 hover:bg-white/10 rounded-full transition-colors"
                       >
-                        <span className="text-lg">👻</span>
+                        <Ghost size={18} aria-hidden="true" />
                       </button>
                     )}
                   </div>
@@ -505,7 +507,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                 />
               </div>
               <p className="text-primary text-sm font-bold tracking-wide uppercase opacity-90">
-                {breakdownType === 'pushups' ? '💪 Push-ups' : '🏋️ Squats'} performance
+                {breakdownType === 'pushups' ? 'Push-ups' : 'Squats'} performance
               </p>
             </div>
 

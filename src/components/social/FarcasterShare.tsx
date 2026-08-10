@@ -138,7 +138,7 @@ export default function FarcasterShare({
             </svg>
             <span className="tracking-tight uppercase text-sm">Achievement Shared!</span>
           </div>
-          <p className="text-[10px] text-green-400/80 font-bold uppercase tracking-wider">
+          <p className="text-[11px] text-green-400/80 font-bold uppercase tracking-wider">
             Broadcasting to {getNetworkDisplayName(network)}
           </p>
         </div>
@@ -182,7 +182,7 @@ export default function FarcasterShare({
             </button>
           ) : (
             <div className="studio-card studio-card__body w-full items-center">
-              <p className="text-[10px] text-teal-200/70 uppercase font-black tracking-widest text-center">
+              <p className="text-[11px] text-teal-200/70 uppercase font-black tracking-widest text-center">
                 Identity Required
               </p>
               <NeynarAuth

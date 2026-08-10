@@ -41,12 +41,12 @@ export const Roadmap: React.FC = () => {
   const currentLevel = progress.currentLevel;
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-      <h3 className="text-xl font-bold text-white mb-6">Unlocks Roadmap</h3>
+    <div className="studio-card studio-card__body">
+      <h3 className="studio-card__section-title">Unlocks Roadmap</h3>
 
       <div className="relative">
         {/* Timeline Path */}
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-800" />
+        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-[color:var(--studio-border)]" />
 
         <div className="space-y-8 relative">
           {MILESTONES.map((milestone) => {
@@ -58,11 +58,11 @@ export const Roadmap: React.FC = () => {
                 <div
                   className={`z-10 flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all ${
                     isUnlocked
-                      ? 'bg-yellow-400 border-yellow-400 text-black'
-                      : 'bg-zinc-900 border-zinc-700 text-zinc-500'
+                      ? 'bg-[var(--sandow-brass)] border-[var(--sandow-brass)] text-[var(--studio-ink)]'
+                      : 'bg-[rgba(9,33,34,0.5)] border-[color:var(--studio-border)] text-[var(--studio-muted)]'
                   }`}
                 >
-                  {isUnlocked ? milestone.icon : <Lock size={18} />}
+                  {isUnlocked ? milestone.icon : <Lock size={18} aria-hidden="true" />}
                 </div>
 
                 {/* Content */}
@@ -71,24 +71,34 @@ export const Roadmap: React.FC = () => {
                     <span
                       className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
                         isUnlocked
-                          ? 'bg-yellow-400/20 text-yellow-400'
-                          : 'bg-zinc-800 text-zinc-500'
+                          ? 'bg-[rgba(252,177,49,0.16)] text-[var(--sandow-brass)]'
+                          : 'bg-[rgba(5,17,20,0.5)] text-[var(--studio-muted)]'
                       }`}
                     >
                       LVL {milestone.level}
                     </span>
-                    <h4 className={`font-bold ${isUnlocked ? 'text-white' : 'text-zinc-500'}`}>
+                    <h4
+                      className={`font-bold ${
+                        isUnlocked
+                          ? 'text-[var(--studio-paper-soft)]'
+                          : 'text-[var(--studio-muted)]'
+                      }`}
+                    >
                       {milestone.title}
                     </h4>
                   </div>
-                  <p className={`text-sm ${isUnlocked ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  <p
+                    className={`text-sm ${
+                      isUnlocked ? 'text-[var(--studio-muted)]' : 'text-[var(--studio-muted-dim)]'
+                    }`}
+                  >
                     {milestone.description}
                   </p>
 
                   {!isUnlocked && milestone.level > currentLevel && (
-                    <div className="mt-2 h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="mt-2 h-1 w-full rounded-full overflow-hidden bg-[rgba(139,227,212,0.12)]">
                       <div
-                        className="h-full bg-zinc-700"
+                        className="h-full bg-[var(--studio-teal-bright)]"
                         style={{ width: `${(currentLevel / milestone.level) * 100}%` }}
                       />
                     </div>

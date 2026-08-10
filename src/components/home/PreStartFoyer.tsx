@@ -3,16 +3,20 @@
 import React from 'react';
 import { BRAND, SESSION_INTENTS, getIntentDef, type SessionIntent } from '@/lib/brandPositioning';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
+import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/prestart-foyer.css';
 
 /**
- * Legacy intent-chooser foyer (Train / Coach / Breathe).
+ * Register foyer (Train / Coach / Breathe) with the intent chooser.
  * Day-0 mass-market door is CoachFoyer (studio) — see docs/NORTH_STAR.md.
- * Kept for SplitFlap fallback / reference; do not reintroduce as the front door.
+ * When `onStart` is provided (arcade entry), the CTA becomes a real START
+ * button and a movement picker appears so "PICK A MOVE · START" is honest.
+ * Without props it stays the legacy display-only foyer (SplitFlap fallback).
  */
-export const PreStartFoyer: React.FC = () => {
+export const PreStartFoyer: React.FC<PreStartFoyerProps> = ({ onStart, mode, onModeChange }) => {
   const { intent, setIntent, register } = useSessionIntent();
   const foyer = getIntentDef(intent).foyer;
+  const interactive = Boolean(onStart && mode && onModeChange);
 
   return (
     <div
@@ -71,12 +75,75 @@ export const PreStartFoyer: React.FC = () => {
       >
         {foyer.hint}
       </p>
-      <p className="prestart-foyer__cta prestart-foyer__reveal" style={{ animationDelay: '520ms' }}>
-        {foyer.cta}
-      </p>
+
+      {interactive && (
+        <div
+          className="prestart-foyer__moves prestart-foyer__reveal"
+          style={{ animationDelay: '460ms' }}
+          role="radiogroup"
+          aria-label="Choose a movement"
+        >
+          {ARCADE_MOVES.map((move) => {
+            const selected = mode === move.mode;
+            return (
+              <button
+                key={move.mode}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={`${move.label} movement`}
+                className={`prestart-foyer__move${selected ? ' is-selected' : ''}`}
+                onClick={() => onModeChange?.(move.mode)}
+              >
+                {move.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {interactive ? (
+        <button
+          type="button"
+          className="prestart-foyer__cta prestart-foyer__reveal"
+          style={{ animationDelay: '560ms' }}
+          aria-label={foyer.cta}
+          onClick={onStart}
+        >
+          {foyer.cta}
+        </button>
+      ) : (
+        <p
+          className="prestart-foyer__cta prestart-foyer__reveal"
+          style={{ animationDelay: '520ms' }}
+        >
+          {foyer.cta}
+        </p>
+      )}
     </div>
   );
 };
+
+/** Same movement set as the studio foyer / mode switch — arcade-labelled.
+ *  Only used by the interactive (arcade) entry today; the move chips carry
+ *  arcade-only styling (.prestart-foyer--arcade .prestart-foyer__move), so
+ *  extend those selectors before wiring the picker into another register. */
+const ARCADE_MOVES: { mode: ExerciseMode; label: string }[] = [
+  { mode: 'curls', label: 'CURLS' },
+  { mode: 'pushups', label: 'PUSH-UPS' },
+  { mode: 'squats', label: 'SQUATS' },
+  { mode: 'pullups', label: 'PULL-UPS' },
+  { mode: 'jumps', label: 'JUMPS' },
+];
+
+interface PreStartFoyerProps {
+  /** When provided, the CTA becomes a real START button (functional foyer). */
+  onStart?: () => void;
+  /** Current exercise mode — only relevant when onStart is provided. */
+  mode?: ExerciseMode;
+  /** Pick a movement before starting — only relevant when onStart is provided. */
+  onModeChange?: (mode: ExerciseMode) => void;
+}
 
 function IntentChip({
   intent,

@@ -7,7 +7,7 @@ import '@/styles/animations.css';
  * CONSOLIDATION: Single unified Button component
  * Replaces: ThemeButton + MemoryButton
  * Features:
- * - Default to app branding (gold/yellow theme, Press Start 2P)
+ * - Studio-branded defaults (teal primary, no Press Start)
  * - Supports variants: primary, secondary, success, danger
  * - Responsive sizing: sm, md, lg
  * - Loading, disabled, and fullWidth states
@@ -42,17 +42,17 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
   lg: 'px-6 py-4 text-base',
 };
 
-// Default variant styles (app branding: gold/yellow theme)
+// Default variant styles (studio chassis: teal primary, brass accents)
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: [
-    'bg-gradient-to-r from-primary to-primary-dark text-black',
-    'hover:from-primary-dark hover:to-primary border-primary',
-    'hover:shadow-[0_0_20px_rgba(252,177,49,0.5)] focus:ring-primary',
+    'bg-teal-600 text-white border-teal-500/60',
+    'hover:bg-teal-500 border-teal-400/70',
+    'hover:shadow-[0_0_20px_rgba(86,217,195,0.35)] focus:ring-teal-500',
   ].join(' '),
   secondary: [
-    'bg-gray-800 text-primary border-primary',
-    'hover:bg-primary hover:text-black',
-    'hover:shadow-[0_0_15px_rgba(252,177,49,0.3)] focus:ring-primary',
+    'bg-white/5 text-teal-100 border-teal-400/30',
+    'hover:bg-white/10 border-teal-400/50',
+    'focus:ring-teal-500',
   ].join(' '),
   success: [
     'bg-gradient-to-r from-green-600 to-green-700 text-white',
@@ -64,12 +64,6 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     'hover:from-red-700 hover:to-red-600 border-red-500',
     'hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] focus:ring-red-500',
   ].join(' '),
-};
-
-// Retro font for primary buttons
-const PRIMARY_FONT_STYLE: React.CSSProperties = {
-  fontFamily: "'Press Start 2P', monospace",
-  fontSize: '12px',
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -106,7 +100,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Merge styles
     const mergedStyle: React.CSSProperties = {
-      ...(variant === 'primary' ? PRIMARY_FONT_STYLE : {}),
       ...style,
     };
 
