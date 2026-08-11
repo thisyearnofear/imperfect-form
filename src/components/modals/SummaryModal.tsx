@@ -49,6 +49,7 @@ import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/rec
 import { playUiCue } from '@/lib/uiSound';
 import { SessionRecap } from '@/components/game/SessionRecap';
 import { sessionStory } from '@/lib/coachingStory';
+import type { MovementAssessment } from '@/types/movementAssessment';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -82,6 +83,7 @@ export interface SummaryModalProps {
   mode?: import('@/utils/biomechanics').ExerciseMode;
   address?: string; // Optional wallet address
   sessionSummary?: import('@/services/sessionLogger').SessionSummary | null;
+  movementAssessment?: MovementAssessment | null;
   onStartSelfGhost?: (workoutId: string) => void;
   isRace?: boolean;
 }
@@ -96,6 +98,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   mode = 'pushups',
   address,
   sessionSummary,
+  movementAssessment,
   onStartSelfGhost,
   isRace = false,
 }) => {
@@ -987,6 +990,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               mode={mode}
               reps={repCount}
               summary={sessionSummary ?? null}
+              movementAssessment={movementAssessment}
               userAddress={effectiveAddress ?? undefined}
               isRace={isRace}
               onStartSelfGhost={onStartSelfGhost}

@@ -111,6 +111,26 @@ XP. Avalanche is a full theme token once earned / wallet-switched.
 
 - Manual stage — browser + station end-to-end (see “What's next” below)
 
+**Shipped (Movement Intelligence local foundation):**
+
+- Versioned five-rep curl assessment protocol with confidence and explicit inconclusive states
+- Local Movement Card with range, control, trace stability, supported symmetry, and confidence
+- Compact user-scoped Movement History with protocol-matched self-versus-self deltas
+- Local-only assessment persistence with ordered writes, verification, and guest-to-wallet re-keying
+
+**Planned (Movement Intelligence — after measurement gates):**
+
+- Setup calibration and cross-device test–retest validation
+- Privacy-safe “Take the same test” assessment challenges
+- Self trajectory and next movement unlocks
+- Age-band / opt-in cohort benchmarking only after protocol and sample-size gates
+- Historical and fictional movement archetypes as a narrative layer, not an objective benchmark
+
+The full sequence, guardrails, data boundaries, and success metrics live in
+[`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md). This is a product
+extension around the camera → understand → show loop; it does not reorder the
+manual-stage → hardware → episode gates for the physical Coach.
+
 **Shipped (curl evidence surface):**
 
 - Live `CurlFormInstrument` in the curls session: the user can see the active
@@ -162,7 +182,10 @@ XP. Avalanche is a full theme token once earned / wallet-switched.
 
 ## What's next — required order
 
-Do these in order. Polish items are **not** the gate.
+Do these in order. Polish items are **not** the gate. Movement Intelligence
+protocol work can begin as a measurement-quality track after Ring 0 is stable,
+but age-band comparisons, cohort rankings, and trajectory claims remain gated by
+[`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md) M0–M4 evidence.
 
 | #     | Gate                      | Done when                                                                                                                                                     | Where                                                                    |
 | ----- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -268,6 +291,29 @@ datasets as the product’s starting point.
   mirroring deferred
 - [ ] Persona selection for the station (matches app)
 
+### Milestone 5 — Movement Intelligence
+
+**Start with M0 measurement quality, not with a leaderboard.** M0–M3 may run as a
+parallel product track once Ring 0 is stable; M4–M5 remain gated by validated
+population data and privacy review. This track never reorders the
+manual-stage → hardware → episode gates for the physical Coach. The product goal is
+a valid assessment → useful Movement Card → accepted challenge → recipient
+assessment → repeat test. See [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md)
+for the detailed plan.
+
+- [x] M0 foundation: versioned curl protocol, confidence, repeatability primitives, inconclusive state
+- [x] M1 foundation: local MovementAssessment and Movement Card
+- [x] M3 foundation: compact protocol-matched Movement History and self deltas
+- [ ] M0 completion: setup calibration and cross-device test–retest evidence
+- [ ] M2: versioned “Take the same test” challenge and recipient route
+- [ ] M3 completion: trajectory and next unlocks with confidence states
+- [ ] M4: privacy-reviewed age-band / opt-in cohort benchmarks
+- [ ] M5: original historical / fictional archetypes layered over real measurements
+
+**First-slice success:** accepted assessment challenges per activated user,
+plus a second valid assessment within 7–14 days. No wallet or raw camera upload
+is required for this slice.
+
 ## What we're deliberately not doing
 
 - **Robot-as-hero product.** The SO-101 teaches the human; it is not the
@@ -281,6 +327,10 @@ datasets as the product’s starting point.
   push-ups, and pull-ups. Engine still coaches those moves on-screen.
 - **Gating training on-chain.** Ring 0 stays wallet-free. On-chain is an
   earned upgrade at value moments (PB, streak milestone, verified board).
+- **Premature Movement Intelligence comparison.** We do not ship body age,
+  biological age, a universal stiffness/flexibility leaderboard, or guaranteed
+  trajectory outcomes before protocol quality, sample size, and privacy gates
+  pass. Self-versus-self progress and challenge flows come first.
 - **Cross-platform identity aggregation.** The Memory Protocol integration
   (Phase 6) is descoped: upstream `memoryproto.co` returns
   `DEPLOYMENT_DISABLED`, our API key 500s, and the graceful-degradation path

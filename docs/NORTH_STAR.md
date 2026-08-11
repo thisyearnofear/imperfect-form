@@ -123,8 +123,81 @@ Browser (Next.js, MoveNet/TFJS)            coach-station/ (Python)
 
 ## Product shape: three rings
 
-Hard lesson from past projects: gating actions on-chain kills adoption.
-On-chain is an earned delight, never a prerequisite.
+Hard lesson from past projects: gating actions on-chain kills adoption. On-chain is an earned delight, never a prerequisite.
+
+## Movement Intelligence: the durable product outcome
+
+The physical-AI loop gives Imperfect Form its moat; **Movement Intelligence** gives
+that loop a reason to compound for the person using it. The product should grow
+from “the coach found one form correction” into:
+
+> **See how you move today. Understand what is changing. Find the next movement you can unlock.**
+
+A privacy-first **Movement Passport** records a small, repeatable set of movement
+signals — range, control, symmetry, tempo, consistency, and measurement
+confidence — without becoming a medical record, biological-age claim, or
+universal fitness score.
+
+The sequence is deliberate:
+
+1. Self versus self: show what changed from the user's own baseline.
+2. Similar people: add broad, protocol-matched age bands only after measurement
+   quality and sample size are credible.
+3. Opt-in cohorts: let friends, gyms, clubs, and groups compare supportive
+   progress rather than compete on a global leaderboard.
+4. Archetypes: use original historical or fictional movement characters to make
+   real measurements memorable; real data powers the score, fiction powers the
+   imagination.
+
+The first distribution object is the **Movement Card**, not a generic workout
+badge. A valid assessment produces one surprising insight, one next focus, and a
+privacy-safe **Take the same test** challenge. The recipient completes the same
+protocol and receives their own card without a wallet, account, or raw camera
+upload:
+
+```
+valid assessment → useful card → accepted challenge → recipient assessment → repeat test
+```
+
+Trajectory estimates are scenarios, not promises. They become more useful as
+protocol-matched assessments accumulate, and they must show their confidence.
+The app can say “you are trending toward this movement milestone”; it must not
+promise a medical, injury, or athletic outcome.
+
+Movement Intelligence is an outcome around the physical-AI loop, not a reason to
+weaken it. Camera coaching remains Ring 0, the Coach remains a teacher, and the
+manual-stage → hardware → episode order remains the robotics gate. See the
+[Movement Intelligence plan](./MOVEMENT_INTELLIGENCE.md) for the phased delivery,
+data boundaries, privacy rules, and success metrics.
+
+### Movement Intelligence guardrails
+
+- Start with a few repeatable protocols; do not launch a composite score before
+  the individual measurements are understood.
+- Use general-wellness language such as range signal, movement control,
+  observed asymmetry, and form consistency — never diagnosis, stiffness,
+  biological age, or guaranteed outcomes.
+- Calibrate camera conditions and preserve an explicit inconclusive state when
+  confidence or repeatability is poor.
+- Share the least revealing aggregate result by default; approximate traces
+  require explicit opt-in, and raw video is never shared by default.
+- Keep the first loop local and wallet-free. Add age-band, cohort, and on-chain
+  layers only after the measurement and privacy gates pass.
+
+### Movement Intelligence within the three rings
+
+- **Ring 0 — baseline:** Camera coaching, valid Movement Cards, and private
+  self-history work with the local guest ID; no wallet or account is required.
+- **Ring 1 — social context:** Names, cross-device continuity, challenge replies,
+  and opt-in cohorts arrive without making comparison a prerequisite.
+- **Ring 2 — earned proof:** Age-band/cohort benchmarks and portable attestations
+  arrive only after protocol, population, and privacy review. On-chain remains
+  an earned delight, never a prerequisite.
+
+### Ring inventory
+
+The detailed Ring 0 / Ring 1 / Ring 2 feature inventory remains below as the
+implementation detail for the product shape.
 
 - **Ring 0 — just train (no account):** the full loop - camera, all five
   exercises, AI coach, personas, recovery, robot demos - plus all progression

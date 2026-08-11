@@ -11,11 +11,15 @@ import { BRAND } from '@/lib/brandPositioning';
 import { ghostService } from '@/services/GhostService';
 import { trackChallengeEvent } from '@/lib/challengeAnalytics';
 import { usePlatform } from '@/contexts/PlatformContext';
+import MovementCard from './MovementCard';
+import MovementAssessmentHistory from './MovementAssessmentHistory';
+import type { MovementAssessment } from '@/types/movementAssessment';
 
 type SessionRecapProps = {
   mode: ExerciseMode;
   reps: number;
   summary: SessionSummary | null;
+  movementAssessment?: MovementAssessment | null;
   userAddress?: string;
   onTryAgain?: (focus: string) => void;
   onStartSelfGhost?: (workoutId: string) => void;
@@ -55,7 +59,7 @@ function FormReceipt({
   reps,
   summary,
   isRace = false,
-}: Omit<SessionRecapProps, 'onTryAgain' | 'userAddress'>) {
+}: Omit<SessionRecapProps, 'onTryAgain' | 'userAddress' | 'movementAssessment'>) {
   const [action, setAction] = useState<ReceiptAction>('idle');
   const [challengeAction, setChallengeAction] = useState<ReceiptAction>('idle');
   const { user } = usePlatform();
@@ -226,6 +230,7 @@ export function SessionRecap({
   mode,
   reps,
   summary,
+  movementAssessment,
   userAddress,
   onTryAgain,
   onStartSelfGhost,
@@ -273,6 +278,15 @@ export function SessionRecap({
       </div>
       {summary?.trace && summary.trace.length > 0 && (
         <FormLine trace={summary.trace} avgDepth={summary.avgDepth} />
+      )}
+      {mode === 'curls' && (
+        <>
+          <MovementCard assessment={movementAssessment} />
+          <MovementAssessmentHistory
+            userAddress={userAddress}
+            currentAssessment={movementAssessment}
+          />
+        </>
       )}
       {/* The response action follows the correction immediately; history is
           earned context beneath it, not a prerequisite for sharing. */}

@@ -1,6 +1,9 @@
 # Implementation Plan — Mentor Feedback into Action
 
-This plan translates the Q&A with Francesco De Pascale (Cyberwave) into ordered, shippable work. It is designed to be executed **after** the current manual-stage gate, but each phase can start as soon as its dependencies are met.
+> Product extension: [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md)
+> defines the Movement Passport vision and the separate M0–M5 product gates.
+
+This plan translates the Q&A with Francesco De Pascale (Cyberwave) into ordered, shippable work. The existing CV, robot-mapping, and edge-performance phases protect the physical-AI gate. The Movement Intelligence M0–M3 product track may begin once Ring 0 is stable, while M4–M5 remain gated by validated population data and privacy review; none of it reorders the manual-stage → hardware → episode path.
 
 ## Guiding principle
 
@@ -201,6 +204,142 @@ Pick the configuration that gives the best **median FPS × accuracy** product on
 
 ---
 
+## Phase 4: Movement Intelligence first public slice
+
+**Goal:** Turn validated camera observations into a durable, privacy-safe product
+loop without weakening the Physical AI gates.
+
+This is a product track around the existing PoseRuntime and exercise engine. It
+is not permission to introduce a second detector, a global leaderboard, or
+unsupported health predictions.
+
+### 4.1 M0 — Assessment protocol and measurement quality
+
+**Status: first local curl protocol shipped; validation across setup/device conditions remains open.**
+
+- Select one flagship protocol and one fallback from movements the current pose
+  engine already understands.
+- Define setup calibration, valid-attempt rules, confidence thresholds, and an
+  explicit inconclusive state.
+- Record protocol version, normalized measurements, confidence, repeatability,
+  timestamp, and local provenance.
+- Run test–retest sessions across lighting, camera angle, distance, device, and
+  warm-up conditions.
+- Reuse `PoseRuntime`, the exercise engine, `SessionLogger`, `SessionSummary`,
+  `poseBaseline`, and the existing curl evidence instrument.
+
+**Gate:** Comparable attempts under comparable conditions produce materially
+similar results; low-confidence attempts are not silently scored.
+
+### 4.2 M1 — Local Movement Card
+
+**Status: local curl Movement Card shipped; profile export/delete surfaces remain open.**
+
+- Add typed local `MovementAssessment` and `MovementProfile` objects using the
+  existing offline-first store patterns. Keep them in a versioned assessment
+  namespace in `OfflineDataStore`, separate from `LocalWorkout`, wallet-sync,
+  and leaderboard records; “user-owned” means local-first control and explicit
+  export/delete semantics, not automatic cloud or on-chain portability.
+- Expand the recap surface into a card with one useful insight, one next focus,
+  protocol label, and measurement confidence.
+- Keep the first result self-referential; no age percentile or global rank.
+- Add local reset/delete behavior and general-wellness copy.
+- Add unit tests for scoring, confidence, inconclusive states, and persistence.
+
+**Gate:** A first-time user understands the card without explanation and receives
+a concrete next action rather than only a number.
+
+### 4.3 M2 — Assessment challenge and recipient route
+
+- Create a versioned, share-safe payload containing protocol, headline, next
+  action, and optional approximate trace.
+- Add a focused recipient route with one CTA: **Take the same test**.
+- Reuse `GhostService`, `SessionRecap`, `ChallengeWidget`, `PlatformContext`, and
+  `challengeAnalytics`, but keep assessment challenges distinct from workout
+  races.
+- Add non-blocking events: `assessment_card_shared`,
+  `assessment_challenge_opened`, `assessment_started`,
+  `assessment_completed`, and `assessment_replied`.
+- Never place raw video, images, or unnecessary identifiers in the payload.
+
+**Gate:** A recipient can begin the same protocol without a wallet or confusing
+onboarding, and the sender's card remains useful if sharing is cancelled. The
+share sheet must preview the exact payload, default to the least revealing
+aggregate form, and require an explicit opt-in before including an approximate
+trace.
+
+**Primary metric:** accepted assessment challenges per activated user.
+
+### 4.4 M3 — Self trajectory and next unlocks
+
+**Status: compact local Movement History shipped; trajectory estimation remains open.**
+
+- Compare only protocol-matched, sufficiently confident assessments.
+- Add a compact trend view and next-milestone model with early/emerging/reliable
+  confidence states.
+- Recommend one practice focus and a sensible re-test interval; do not encourage
+  daily measurement or shame-based streak pressure.
+- Support restart design for missed sessions, illness, travel, and changed setup.
+
+**Gate:** The trajectory explains its confidence and remains useful when progress
+is flat or a session is inconclusive.
+
+**Primary metric:** second valid assessment within 7–14 days.
+
+### 4.5 M4 — Age-band and cohort benchmarking
+
+Only after M0–M3 evidence passes:
+
+- Define broad age bands and protocol-matched cohort rules. Benchmarking is
+  limited to the product's eligible adult population; it must not imply norms
+  for minors.
+- Aggregate only confidence-qualified observations and suppress small samples
+  below a documented minimum cohort threshold.
+- Use pseudonymous aggregation with no exact age, timestamps, device metadata,
+  or raw traces exposed to other users. Document retention, deletion, and what
+  withdrawal can and cannot remove after an aggregate has been published.
+- Show scope, sample size, and uncertainty.
+- Prefer supportive cohorts over a universal leaderboard.
+- Make participation optional with plain-language data-use copy.
+
+**Gate:** Measurement and privacy review pass; comparison cannot be mistaken for a
+medical norm, destiny, or diagnosis.
+
+### 4.6 M5 — Historical and fictional movement archetypes
+
+- Create original archetypes before using third-party fictional characters.
+- Keep measured result and confidence visible beneath the playful interpretation.
+- Map archetypes to movement patterns, never claims of physical equivalence.
+- Experiment on sharing and retention before making archetypes a major surface.
+
+**Gate:** Users can distinguish measurement, cohort comparison, and narrative
+interpretation.
+
+### 4.7 Current implementation boundary
+
+The current code has shipped the M0/M1/M3 local foundation for the curl protocol:
+versioned assessment evaluation, explicit inconclusive states, local-only
+persistence, a recap Movement Card, and a protocol-matched self-history view.
+This does not close the broader gates. Setup calibration, test–retest evidence,
+challenge routing, trajectory estimates, cohorts, and archetypes remain pending.
+
+### 4.8 Movement Intelligence definition of done
+
+The first public slice is complete when a new user can:
+
+1. Start the flagship assessment without a wallet or account.
+2. Receive a valid card or a clear inconclusive result.
+3. Understand one insight, one next focus, and confidence.
+4. Share a privacy-safe **Take the same test** challenge.
+5. Have a recipient open the challenge and start their own assessment.
+6. Return later and see a self-versus-self comparison after a second valid attempt.
+
+The loop to prove is:
+
+```text
+valid assessment → useful card → accepted challenge → recipient assessment → repeat test
+```
+
 ## Ordering and dependencies
 
 ```
@@ -214,18 +353,24 @@ Phase 2 (robot mapping)        │
     │                         │
     ▼                         │
 Phase 3 (edge perf) ◄──────────┘
+    │
+    ▼
+Phase 4 (Movement Intelligence local M0/M1/M3 foundation) ──► M2 challenges ──► M3 trajectory evidence ──► M4 benchmarks ──► M5 archetypes
 ```
 
-Phase 1 and Phase 2 can run in parallel after Phase 0. Phase 3 should wait until Phase 1 is done so we do not conflate pre-processing effects with model/quantization effects.
+Phase 1 and Phase 2 can run in parallel after Phase 0. Phase 3 should wait until Phase 1 is done so we do not conflate pre-processing effects with model/quantization effects. Movement Intelligence M0 can begin once Ring 0 is stable, but its comparisons and trajectory claims remain gated by protocol quality. It does not reorder the manual-stage → hardware → episode gates for the physical Coach.
 
 ---
 
 ## What we are explicitly not doing yet
 
-- **End-to-end VLA:** Per Francesco, learned policies are a Phase 4 milestone, not a Phase 1 shortcut.
+- **End-to-end VLA:** Per Francesco, learned policies remain a later robotics/data-flywheel milestone after the manual stage, hardware proof, and trusted episodes; they are not a Phase 1 shortcut.
 - **Robot mirroring by default:** Third-person demonstration is safer and clearer; mirror is a later experiment.
 - **Lower-body robot demonstrations:** Out of scope for SO-101, consistent with `docs/NORTH_STAR.md`.
 - **Remote data lake:** Episodes are local/edge first; batch export to Cyberwave/LeRobot comes after we trust the pipeline.
+- **Body age or universal mobility ranking:** Self-versus-self progress and assessment challenges come before age bands, cohorts, or global leaderboards.
+- **Medical or guaranteed trajectory claims:** Movement Intelligence is general wellness guidance with explicit confidence, not diagnosis or a promise of future ability.
+- **Raw-camera distribution:** Movement Cards and challenges share aggregate results or approximate traces by default, never raw video by default.
 
 ---
 
@@ -235,4 +380,6 @@ Phase 1 and Phase 2 can run in parallel after Phase 0. Phase 3 should wait until
 - [ ] Phase 1 pre-processor toggle shipped and measured
 - [ ] Phase 2 human→robot mapper records first LeRobot episode
 - [ ] Phase 3 edge perf matrix decided and default config updated
+- [x] Phase 4 Movement Intelligence local M0/M1/M3 foundation shipped
+- [ ] Phase 4 Movement Intelligence setup/test–retest/challenge/trajectory evidence validated
 - [ ] `docs/ROADMAP.md` updated with the new gates

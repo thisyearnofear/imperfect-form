@@ -18,6 +18,12 @@ game-loop play is earned after the first coached feel; the robot exists to
 pose → form events → physical demonstration · Cyberwave twin · SmolVLA flywheel
 from real sessions.
 
+**Movement Intelligence:** the first local slice now turns validated curl
+signals into a private Movement Card and self-versus-self Movement History. The
+broader Movement Passport, trajectories, and privacy-safe **Take the same test**
+challenges remain gated by measurement quality, sample size, and privacy review.
+See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIGENCE.md).
+
 **✅ Self Protocol**: Live on Celo Mainnet - Real passport verification with zero-knowledge proofs.
 
 ## Features
@@ -30,6 +36,7 @@ from real sessions.
 - **Multi-Chain Support**: Base, Celo, Polygon, Monad, and Avalanche themes (leaderboards where contracts are live)
 - **Human Verification**: Self Protocol integration for verified leaderboards
 - **Social Integration**: Farcaster mini-app, ghost replays, quests and XP
+- **Movement Intelligence** _(local first slice shipped)_: repeatable curl assessment, private Movement Cards, and self-versus-self history; trajectories and challenge-based distribution remain planned
 - **Mobile-First**: Responsive design optimized for mobile fitness tracking
 
 ## Live Demo
@@ -52,6 +59,7 @@ Project source is MIT where applicable; bundled third-party assets retain their 
 - [North Star](./docs/NORTH_STAR.md) - Differentiation, three rings, data flywheel, Sandow heritage
 - [The Cræft Prize](./docs/CRAFFT_PRIZE.md) - Submission strategy: Sandow lineage + arcade cabinet exhibit
 - [Roadmap](./docs/ROADMAP.md) - **Required next order** (manual stage → telemetry → hardware)
+- [Movement Intelligence](./docs/MOVEMENT_INTELLIGENCE.md) - Movement Passport vision, distribution loop, guardrails, and implementation gates
 - [First-visit + manual-stage protocol](./docs/FIRST_VISIT_AND_MANUAL_STAGE.md) - User clarity test, Coach-link states, and repeatable simulation evidence
 - [Coach station checklist](./coach-station/README.md) - Cohort day stage steps
 - [Architecture Overview](./docs/ARCHITECTURE.md) - PoseRuntime primary; station as subscriber

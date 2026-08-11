@@ -184,6 +184,296 @@
   opacity: 0.7;
 }
 
+/* Movement Card — the first private baseline object, not a health score. */
+.movement-card {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.2rem 0 0;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, rgba(117, 223, 205, 0.1), rgba(7, 24, 26, 0.72));
+  border: 1px solid rgba(117, 223, 205, 0.28);
+  border-radius: 6px;
+}
+.movement-card--inconclusive {
+  background: rgba(252, 177, 49, 0.06);
+  border-color: rgba(252, 177, 49, 0.25);
+}
+.movement-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.movement-card__icon {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  color: #071917;
+  background: #75dfcd;
+  border-radius: 50%;
+}
+.movement-card--inconclusive .movement-card__icon {
+  color: #071517;
+  background: #fcb131;
+}
+.movement-card__eyebrow {
+  margin: 0;
+  color: #83e8d5;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.movement-card--inconclusive .movement-card__eyebrow {
+  color: #d19a32;
+}
+.movement-card h3 {
+  margin: 0.15rem 0 0;
+  color: #f1fffc;
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+.movement-card__confidence {
+  margin-left: auto;
+  color: #83e8d5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.movement-card__copy {
+  margin: 0;
+  color: #b8cbc5;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+.movement-card__dimensions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+.movement-card__dimension {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.55rem;
+  background: rgba(117, 223, 205, 0.05);
+  border: 1px solid rgba(117, 223, 205, 0.12);
+  border-radius: 4px;
+}
+.movement-card__dimension-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  color: #829e98;
+  font-size: 0.55rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+.movement-card__dimension-top svg {
+  color: #75dfcd;
+}
+.movement-card__dimension strong {
+  color: #f4ecd8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.movement-card__bar {
+  display: block;
+  height: 0.2rem;
+  overflow: hidden;
+  background: rgba(117, 223, 205, 0.12);
+  border-radius: 999px;
+}
+.movement-card__bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #75dfcd, #fcb131);
+  border-radius: inherit;
+}
+.movement-card__quality {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  color: #a9c7c2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+}
+.movement-card__next {
+  display: grid;
+  gap: 0.12rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(117, 223, 205, 0.14);
+}
+.movement-card__next-label {
+  color: #d19a32;
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.movement-card__next strong {
+  color: #dff7f1;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Movement history — private self-comparison, never a population rank. */
+.movement-history {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.2rem 0 0;
+  padding: 0.85rem;
+  background: rgba(7, 24, 26, 0.58);
+  border: 1px solid rgba(252, 177, 49, 0.18);
+  border-radius: 6px;
+}
+.movement-history__header,
+.movement-history__title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.movement-history__header {
+  justify-content: space-between;
+}
+.movement-history__icon {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  color: #071917;
+  background: #fcb131;
+  border-radius: 50%;
+}
+.movement-history__eyebrow {
+  margin: 0;
+  color: #d19a32;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.movement-history h3 {
+  margin: 0.15rem 0 0;
+  color: #f1fffc;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.movement-history__count,
+.movement-history__footer {
+  color: #829e98;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.56rem;
+  text-transform: uppercase;
+}
+.movement-history__comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+.movement-history__comparison > div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.55rem;
+  background: rgba(252, 177, 49, 0.06);
+  border: 1px solid rgba(252, 177, 49, 0.14);
+  border-radius: 4px;
+}
+.movement-history__comparison span:first-child {
+  color: #829e98;
+  font-size: 0.54rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.movement-history__comparison strong {
+  color: #f4ecd8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.movement-history__comparison p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #b8cbc5;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+.movement-history__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #d19a32;
+}
+.movement-history__delta--up {
+  color: #83e8d5;
+}
+.movement-history__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.65rem;
+  color: #d8e8e6;
+  background: rgba(117, 223, 205, 0.05);
+  border: 1px solid rgba(117, 223, 205, 0.12);
+  border-radius: 4px;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+.movement-history__notice svg {
+  flex: 0 0 auto;
+  margin-top: 0.05rem;
+  color: #75dfcd;
+}
+.movement-history__notice--quiet {
+  color: #b8cbc5;
+  background: rgba(252, 177, 49, 0.05);
+  border-color: rgba(252, 177, 49, 0.14);
+}
+.movement-history__notice--quiet svg {
+  color: #d19a32;
+}
+.movement-history__list {
+  display: grid;
+  gap: 0.35rem;
+}
+.movement-history__row {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.5rem;
+  color: #a9c7c2;
+  background: rgba(117, 223, 205, 0.035);
+  border-bottom: 1px solid rgba(117, 223, 205, 0.08);
+  font-size: 0.62rem;
+}
+.movement-history__date {
+  color: #f4ecd8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.movement-history__status {
+  overflow: hidden;
+  color: #9eb8b2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.movement-history__signal {
+  color: #83e8d5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.56rem;
+  white-space: nowrap;
+}
+.movement-history__footer {
+  margin: 0;
+}
+
 /* Form receipt — a shareable proof object with no camera image or identity. */
 .form-receipt {
   position: relative;

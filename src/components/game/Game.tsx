@@ -59,6 +59,10 @@ import { ghostService } from '@/services/GhostService';
 import { getChampionTrace, isChampion } from '@/constants/championTraces';
 import { playStudioCue } from '@/lib/uiSound';
 import { trackChallengeEvent } from '@/lib/challengeAnalytics';
+import { evaluateMovementAssessment } from '@/lib/movementAssessment';
+import { CURL_BASELINE_PROTOCOL } from '@/types/movementAssessment';
+import type { MovementAssessment } from '@/types/movementAssessment';
+import { saveLocalMovementAssessment } from '@/services/integrations/MovementAssessmentDataAdapter';
 
 import { Score } from '@/types';
 
@@ -111,6 +115,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [sessionSummary, setSessionSummary] = useState<
     import('@/services/sessionLogger').SessionSummary | null
   >(null);
+  const [movementAssessment, setMovementAssessment] = useState<MovementAssessment | null>(null);
 
   const [pbTrace, setPbTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(null);
   const [raceTrace, setRaceTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(
@@ -124,6 +129,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     (summary: import('@/services/sessionLogger').SessionSummary) => {
       console.log('📊 Session ended with summary:', summary);
       setSessionSummary(summary);
+      const assessment =
+        summary.mode === CURL_BASELINE_PROTOCOL.mode
+          ? evaluateMovementAssessment(summary, CURL_BASELINE_PROTOCOL)
+          : null;
+      setMovementAssessment(assessment);
       if (isRace) {
         trackChallengeEvent('challenge_completed', user?.fid, {
           mode: summary.mode,
@@ -133,22 +143,33 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
       // Auto-save workout locally for freemium model
       if (summary.repCount > 0) {
-        const workoutId =
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `session-${Date.now()}`;
-
+        // Use the session start as the local join key so a duplicate end event
+        // updates the same workout/assessment instead of creating another record.
         const exerciseMode =
           (summary.mode as import('@/utils/biomechanics').ExerciseMode) || 'pushups';
 
         // Guests get a stable local ID so PBs/XP/ghosts work without a wallet
         const effectiveUserId = getEffectiveUserId(finalAddress);
+        // Include the local user in the fallback key so simultaneous users cannot
+        // overwrite one another when they share a start timestamp.
+        const workoutId = `session-${summary.startTime}-${summary.mode}-${effectiveUserId}`;
 
-        // Check if this is a new PB BEFORE saving the current one
-        getPersonalBestWorkout(effectiveUserId, exerciseMode).then((pb) => {
+        void (async () => {
+          // Check if this is a new PB BEFORE saving the current one
+          const pb = await getPersonalBestWorkout(effectiveUserId, exerciseMode);
           const isNewPB = !pb || summary.repCount > pb.reps;
+          // Keep the assessment in its own local-only namespace. An assessment
+          // write must never prevent the workout itself from being saved if
+          // browser storage is unavailable.
+          if (assessment) {
+            try {
+              await saveLocalMovementAssessment(assessment, effectiveUserId, workoutId);
+            } catch (err) {
+              console.warn('Movement assessment persistence failed:', err);
+            }
+          }
 
-          saveLocalWorkout({
+          await saveLocalWorkout({
             id: workoutId,
             reps: summary.repCount,
             timestamp: summary.startTime,
@@ -156,17 +177,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             type: exerciseMode,
             userAddress: effectiveUserId,
             formSignature: buildFormSignature(summary),
-          })
-            .then(async () => {
-              console.log('✅ Workout auto-saved locally:', workoutId);
+          });
+          console.log('✅ Workout auto-saved locally:', workoutId);
 
-              if (isNewPB) {
-                console.log('🔥 NEW PERSONAL BEST! Saving trace...');
-                await saveWorkoutTrace(workoutId, summary.trace);
-              }
-            })
-            .catch((err) => console.error('❌ Failed to auto-save workout:', err));
-        });
+          if (isNewPB) {
+            console.log('🔥 NEW PERSONAL BEST! Saving trace...');
+            await saveWorkoutTrace(workoutId, summary.trace);
+          }
+        })().catch((err) => console.error('❌ Failed to auto-save workout:', err));
       }
     },
     [finalAddress, isRace, user?.fid]
@@ -809,6 +827,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setShowTutorial(true);
     setShowSummary(false);
     setRetryFocus(null);
+    setMovementAssessment(null);
 
     // Also stop the camera when resetting
     stopAllCameras();
@@ -1086,6 +1105,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         mode={mode}
         address={finalAddress}
         sessionSummary={sessionSummary}
+        movementAssessment={movementAssessment}
         onStartSelfGhost={handleSelfGhostRace}
         isRace={isRace}
       />

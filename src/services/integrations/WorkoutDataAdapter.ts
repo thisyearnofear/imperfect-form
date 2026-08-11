@@ -9,6 +9,7 @@ import { getDataSyncService, createDataKey } from '@/services/DataSyncService';
 import { getOfflineDataStore } from '@/services/OfflineDataStore';
 import { LocalWorkout, SessionSnapshot } from '@/types/workout';
 import { markHasTrained } from '@/lib/hasTrained';
+import { migrateLocalMovementAssessments } from './MovementAssessmentDataAdapter';
 
 // Data keys for workout-related data
 export const WORKOUT_KEYS = {
@@ -170,6 +171,11 @@ export async function migrateGuestWorkouts(address: string): Promise<number> {
     await saveLocalWorkout({ ...workout, userAddress: address });
   }
   if (guestWorkouts.length > 0) {
+    await migrateLocalMovementAssessments(
+      guestId,
+      address,
+      guestWorkouts.map((workout) => workout.id)
+    );
     console.log(`🔗 Merged ${guestWorkouts.length} guest workout(s) into ${address}`);
   }
   return guestWorkouts.length;
