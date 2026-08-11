@@ -251,7 +251,7 @@ a concrete next action rather than only a number.
 
 ### 4.3 M2 — Assessment challenge and recipient route
 
-**Status: full five-event funnel journey wired end-to-end; durable sink key and distribution experiments remain open.**
+**Status: full five-event funnel journey wired end-to-end with the free-tier sink key configured in Vercel; distribution experiments remain open.**
 
 The recap creates a strict `curls-baseline@1.0` aggregate-only payload, shares
 through Web Share or clipboard, and sends recipients to `/challenge` with one
@@ -261,9 +261,10 @@ organic baseline path (start → complete → share) and the incoming-challenge
 path (open → start → complete → reply) — with `challengeId` so PostHog can
 stitch one card's journey. Events are validated at the API boundary and
 forwarded to a durable, fail-silent PostHog sink through a strict metadata
-allowlist (no raw payloads, traces, or addresses) when the free-tier key is
-configured. The current in-memory tracker remains the fallback; a configured key
-and rate-limit/dashboard review are still required before using the funnel as
+allowlist (no raw payloads, traces, or addresses). The free-tier key is set in
+Vercel (Production/Preview/Development) and end-to-end delivery through
+`posthog-node` is verified. The current in-memory tracker remains the fallback;
+rate-limit and dashboard review are still required before using the funnel as
 production truth.
 
 - Create a versioned, share-safe payload containing protocol, headline, next

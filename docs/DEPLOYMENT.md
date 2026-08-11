@@ -54,6 +54,8 @@ Durable analytics (optional, free tier):
 - `POSTHOG_HOST` — optional PostHog host override (defaults to the US cloud).
 - `POSTHOG_DISABLED` — set `true` to force-disable the sink without removing
   the key.
+- `POSTHOG_PERSONAL_API_KEY` — optional PostHog personal key (`phx_...`) used
+  only for read/verification API queries; the app itself never needs it.
 
 ## Network Configuration
 

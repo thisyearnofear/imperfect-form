@@ -131,7 +131,7 @@ XP. Avalanche is a full theme token once earned / wallet-switched.
 **Planned (Movement Intelligence — after measurement gates):**
 
 - Setup calibration and cross-device test–retest validation (protocol + local harness shipped; real evidence open)
-- Durable funnel analytics (PostHog free-tier sink wired; key + review open) and distribution experiments
+- Durable funnel analytics (PostHog free-tier sink configured in Vercel; dashboard/rate-limit review open) and distribution experiments
 - Cross-device test–retest validation for trajectory claims
 - Self trajectory and next movement unlocks (local curl slice shipped)
 - Age-band / opt-in cohort benchmarking only after protocol and sample-size gates
@@ -317,7 +317,7 @@ for the detailed plan.
 - [x] M3 foundation: compact protocol-matched Movement History and self deltas
 - [ ] M0 completion: setup calibration and cross-device test–retest evidence (local protocol + harness ready)
 - [x] M2 foundation: versioned “Take the same test” challenge and recipient route
-- [ ] M2 completion: durable PostHog sink configured + funnel experiments (sink wired, fail-silent, full five-event journey client-wired)
+- [ ] M2 completion: funnel experiments (sink configured — free-tier key in Vercel — with the full five-event journey client-wired; distribution experiments open)
 - [x] M3 foundation: local confidence-aware trajectory and next unlock surface
 - [ ] M3 completion: cross-device evidence and trajectory experiments
 - [ ] M4: privacy-reviewed age-band / opt-in cohort benchmarks

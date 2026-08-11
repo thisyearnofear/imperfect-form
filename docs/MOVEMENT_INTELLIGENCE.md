@@ -373,7 +373,7 @@ Shipped in the first local slice:
 Still gated:
 
 - Setup calibration and cross-device test–retest evidence; the repeatable study protocol and local analysis harness are documented and ready, but no real study result is claimed yet. The screening report also guards against inconclusive and low-confidence rates above 25%.
-- Durable PostHog sink is wired and fail-silent with the full journey forwarded; configuring the free-tier key, rate-limit review, and dashboard validation remain open.
+- Durable PostHog sink is wired, fail-silent, and configured: the free-tier project key is set in Vercel (Production/Preview/Development) and end-to-end delivery through `posthog-node` is verified. Rate-limit review and dashboard validation remain open.
 - Recipient challenge experiments and distribution optimization.
 - Trajectory experiments after repeated-read evidence validates the local model.
 - Age-band/cohort benchmarking and historical/fictional archetypes.

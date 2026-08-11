@@ -24,10 +24,10 @@ privacy-safe **Take the same test** challenge with a focused recipient route. A
 repeatable curl test–retest protocol and local evidence harness are ready for
 study; a fail-silent PostHog free-tier sink captures the full aggregate
 assessment journey — share → open → start → complete → reply — for organic
-baselines and incoming-challenge replies alike when configured. Stronger
-trajectory claims, age-band comparisons, and cohorts remain gated by real
-measurement quality, sample size, privacy review, and validated durable
-analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIGENCE.md).
+baselines and incoming-challenge replies alike (free-tier key configured in
+Vercel). Stronger trajectory claims, age-band comparisons, and cohorts remain
+gated by real measurement quality, sample size, privacy review, and validated
+durable analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIGENCE.md).
 
 **✅ Self Protocol**: Live on Celo Mainnet - Real passport verification with zero-knowledge proofs.
 
