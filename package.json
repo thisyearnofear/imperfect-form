@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "license": "MIT",
+  "description": "Private camera coaching with an open physical-AI coach station; project source is MIT where applicable.",
   "packageManager": "pnpm@10.33.2",
   "engines": {
     "node": ">=22.11.0"
@@ -22,6 +24,7 @@
     "test:pose:errors": "node scripts/test-pose-detection.cjs --suite error-handling",
     "test:pose:all": "node scripts/test-pose-detection.cjs --platform all --suite pose-detection",
     "test:pose:headed": "node scripts/test-pose-detection.cjs --headed",
+    "benchmark:arm": "node scripts/arm-benchmark.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",

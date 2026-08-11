@@ -47,6 +47,8 @@ Visit `http://localhost:3000` to see the app running.
 
 ## Documentation
 
+Project source is MIT where applicable; bundled third-party assets retain their own licenses (see [`public/atmosphere/NOTICE.md`](./public/atmosphere/NOTICE.md)).
+
 - [North Star](./docs/NORTH_STAR.md) - Differentiation, three rings, data flywheel, Sandow heritage
 - [The Cræft Prize](./docs/CRAFFT_PRIZE.md) - Submission strategy: Sandow lineage + arcade cabinet exhibit
 - [Roadmap](./docs/ROADMAP.md) - **Required next order** (manual stage → telemetry → hardware)

@@ -169,14 +169,16 @@ inference latency, FPS, startup time, memory, form-detection quality retained.
 - The arm can only be demonstrated in simulation
 - A credible Arm-target benchmark cannot be produced in time
 
-## Evidence plan (if GO)
+## Submission kit
 
-Sub-three-minute video:
-
-1. First 20s — problem + product (private camera coaching)
-2. Next 60–90s — live system loop (camera → elbow_swing → SO-101 curl demo →
-   telemetry)
-3. Final 30s — Arm target + benchmark result
+- **Benchmark:** use the single canonical workflow in
+  [`PERFORMANCE_BASELINE.md`](./PERFORMANCE_BASELINE.md); keep both raw reports
+  plus the generated comparison.
+- **Live proof:** Arm host inference → `elbow_swing` → safe intent → live SO-101
+  → measured `·obs` telemetry. Keep simulation clearly labeled.
+- **Hygiene:** public repo, visible MIT project license, exact setup command,
+  raw evidence, one <3-minute demo, and limitations. Claims stay conditional
+  until tomorrow's hardware and Arm measurements exist.
 
 ## What we are NOT doing
 

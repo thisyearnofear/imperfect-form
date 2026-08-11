@@ -12,6 +12,7 @@
  *   // ... run a workout ...
  *   window.__IMF_BASELINE__.stop();
  *   window.__IMF_BASELINE__.exportMarkdown();
+ *   window.__IMF_BASELINE__.exportJson();
  */
 
 import { getDeviceInfo } from '@/utils/deviceDetection';
@@ -41,6 +42,8 @@ export interface PoseBaselineFrame {
   path: 'worker' | 'main';
 }
 
+export type PoseBaselineMetadata = Record<string, string | number | boolean | null>;
+
 export interface PoseBaselineReport {
   /** Unique run id */
   runId: string;
@@ -50,6 +53,8 @@ export interface PoseBaselineReport {
   endedAt: number;
   /** Device / browser snapshot */
   device: ReturnType<typeof getDeviceInfo>;
+  /** Configuration labels captured with the run for reproducibility. */
+  metadata: PoseBaselineMetadata;
   /** Aggregated statistics */
   summary: {
     durationMs: number;
@@ -100,6 +105,7 @@ class PoseBaselineRecorder {
   private runId = '';
   private startedAt = 0;
   private fpsWindow: number[] = [];
+  private metadata: PoseBaselineMetadata = {};
 
   constructor(options: PoseBaselineOptions = {}) {
     this.options = {
@@ -111,10 +117,11 @@ class PoseBaselineRecorder {
   /**
    * Start a new baseline run.
    */
-  start(): void {
+  start(metadata: PoseBaselineMetadata = {}): void {
     this.frames = [];
     this.fpsWindow = [];
     this.lastFrameTime = 0;
+    this.metadata = { ...metadata };
     this.isRunning = true;
     this.runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     // Use wall-clock time so the markdown report dates and durations are correct.
@@ -196,6 +203,7 @@ class PoseBaselineRecorder {
       startedAt: this.startedAt,
       endedAt,
       device: getDeviceInfo(),
+      metadata: { ...this.metadata },
       summary: {
         durationMs,
         frames: samples.length,
@@ -240,9 +248,9 @@ function getRecorder(): PoseBaselineRecorder {
   return recorder;
 }
 
-/** Start recording a baseline run. */
-export function startPoseBaseline(): void {
-  getRecorder().start();
+/** Start recording a baseline run with optional model/backend labels. */
+export function startPoseBaseline(metadata: PoseBaselineMetadata = {}): void {
+  getRecorder().start(metadata);
   console.log('[poseBaseline] started run:', getRecorder().buildReport().runId);
 }
 
@@ -291,6 +299,20 @@ export function exportPoseBaselineMarkdown(): string {
 | OffscreenCanvas | ${device.offscreenCanvasSupport ? 'yes' : 'no'} |
 | Viewport | ${device.viewport.width}x${device.viewport.height} |
 
+## Configuration
+
+| Property | Value |
+|----------|-------|
+${
+  Object.entries(report.metadata ?? {})
+    .map(([key, value]) => {
+      const safeKey = String(key).replace(/[|\\n]/g, ' ');
+      const safeValue = String(value ?? 'unknown').replace(/[|\\n]/g, ' ');
+      return `| ${safeKey} | ${safeValue} |`;
+    })
+    .join('\\n') || '| none | not supplied |'
+}
+
 ## Summary
 
 | Metric | Value |
@@ -311,6 +333,12 @@ export function exportPoseBaselineMarkdown(): string {
 `;
 }
 
+/** Export the last stored report as JSON for reproducible comparisons. */
+export function exportPoseBaselineJson(): string {
+  const report = getRecorder().loadLastReport();
+  return report ? `${JSON.stringify(report, null, 2)}\n` : '{"error":"No baseline recorded yet"}\n';
+}
+
 /** Copy the markdown report to the clipboard. */
 export async function copyPoseBaselineMarkdown(): Promise<void> {
   const markdown = exportPoseBaselineMarkdown();
@@ -327,6 +355,7 @@ export interface PoseBaselineWindowApi {
   start: typeof startPoseBaseline;
   stop: typeof stopPoseBaseline;
   exportMarkdown: typeof exportPoseBaselineMarkdown;
+  exportJson: typeof exportPoseBaselineJson;
   copyMarkdown: typeof copyPoseBaselineMarkdown;
   getReport: () => PoseBaselineReport | null;
 }
@@ -337,6 +366,7 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     start: startPoseBaseline,
     stop: stopPoseBaseline,
     exportMarkdown: exportPoseBaselineMarkdown,
+    exportJson: exportPoseBaselineJson,
     copyMarkdown: copyPoseBaselineMarkdown,
     getReport: () => getRecorder().loadLastReport(),
   } as PoseBaselineWindowApi;

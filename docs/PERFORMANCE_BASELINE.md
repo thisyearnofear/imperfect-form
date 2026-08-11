@@ -2,24 +2,43 @@
 
 > Before changing models, pre-processing, or quantization, measure the current setup. This document is the place to record those numbers.
 
-## How to run the baseline
+## Capture and compare
 
-1. Start the dev server and open the app in the browser/device you want to test.
-2. Open the browser console.
-3. Start recording:
+1. Start the dev server on the Arm target and open the app in a real browser.
+2. Open the browser console and start a labeled run:
    ```js
-   window.__IMF_BASELINE__.start();
+   window.__IMF_BASELINE__.start({
+     target: 'exact Arm device + OS',
+     model: 'SinglePose.Thunder',
+     backend: 'webgl',
+     input: '640x480 camera',
+     camera: 'exact camera model',
+     exercise: 'curls',
+     lighting: 'same room / describe setup',
+     path: 'worker or main',
+   });
    ```
-4. Run a normal workout (or wave/move in front of the camera for ~30–60s).
-5. Stop recording:
+3. Run the same curl sequence for ~30–60s, then save the report:
    ```js
-   window.__IMF_BASELINE__.stop();
+   const report = window.__IMF_BASELINE__.stop();
+   copy(JSON.stringify(report, null, 2));
    ```
-6. Copy the markdown report to the clipboard:
-   ```js
-   window.__IMF_BASELINE__.copyMarkdown();
+4. Repeat with one intentional optimization (for example Lightning instead of
+   Thunder), keeping target, camera, lighting, exercise, and run length fixed.
+5. Save the two JSON files, then compare them:
+   ```sh
+   pnpm benchmark:arm -- \\
+     --baseline evidence/baseline.json \\
+     --optimized evidence/optimized.json \\
+     --target 'exact Arm device + OS' \\
+     --baseline-label 'Thunder / WebGL' \\
+     --optimized-label 'Lightning / WebGL' \\
+     --out evidence/arm-comparison
    ```
-7. Paste the output into the **Latest run** section below, replacing the placeholder table.
+
+The command writes JSON plus a concise Markdown table. It rejects zero-frame or
+invalid pose-count reports and does not invent missing measurements. Keep raw
+reports and the generated comparison together.
 
 ## What we are measuring
 

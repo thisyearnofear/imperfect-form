@@ -83,12 +83,13 @@ caps, operator on dead-man. Confirm the `·obs` encoder readout appears.
 
 ### Step 5 — Arm-target benchmark
 
-The challenge needs Arm-targeted optimization evidence on the compute host
-(not the servo electronics). Baseline vs. reduced input resolution / alternate
-backend / smaller model on the Arm64 target.
+The challenge needs Arm-targeted optimization evidence on the compute host,
+not the servo electronics. Follow the single capture/compare workflow in
+[`docs/PERFORMANCE_BASELINE.md`](../docs/PERFORMANCE_BASELINE.md).
 
-- [ ] Benchmark plan defined (latency / FPS / startup / memory / quality kept)
-- [ ] Before/after result recorded for the submission
+- [ ] Target, model, backend, camera, and path recorded
+- [ ] Before/after p50/p95 latency, FPS, memory, and quality retained
+- [ ] Raw JSON plus generated Markdown preserved for the submission
 
 **GO** to the bring-up sequence only when Steps 1–3 pass. **STOP** (stay on
 the existing product/evidence path) if the arm cannot connect / power /
