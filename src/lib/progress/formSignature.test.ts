@@ -105,6 +105,16 @@ describe('form signature helpers', () => {
     expect(best?.id).toBe('newer-best');
   });
 
+  it('can choose a legacy trace even when no form signature was stored', () => {
+    const best = chooseSelfGhostWorkout(
+      [workout({ id: 'legacy', timestamp: 1000, userAddress: 'guest-a', hasTrace: true })],
+      'pushups',
+      undefined,
+      'guest-a'
+    );
+    expect(best?.id).toBe('legacy');
+  });
+
   it('isolates history and self-ghost candidates by identity', () => {
     const signature = buildFormSignature(summary());
     const workouts = [

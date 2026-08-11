@@ -21,18 +21,39 @@ type FormSignatureHistoryProps = {
   summary: SessionSummary | null;
   userAddress?: string;
   onStartSelfGhost?: (workoutId: string) => void;
+  /** Reuse a caller-owned workout snapshot when one is already loaded. */
+  workouts?: LocalWorkout[];
+  /** Curls use Movement History as the canonical self-comparison surface. */
+  compact?: boolean;
 };
 
-function percent(value: number) {
-  return `${Math.round(value * 100)}%`;
-}
-
-function trend(points: FormSignaturePoint[]) {
-  if (points.length < 2) return null;
-  const first = points[0].signature.averageDepth;
-  const last = points[points.length - 1].signature.averageDepth;
-  if (Math.abs(last - first) < 0.03) return 'steady';
-  return last > first ? 'up' : 'down';
+function SelfGhostPrompt({
+  workoutId,
+  reps,
+  onStart,
+}: {
+  workoutId: string;
+  reps: number;
+  onStart: (workoutId: string) => void;
+}) {
+  return (
+    <div className="form-signature__ghost">
+      <div className="form-signature__ghost-copy">
+        <Ghost size={16} aria-hidden="true" />
+        <div>
+          <strong>Race your best line</strong>
+          <span>{reps} reps · your own line</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        className="form-signature__ghost-button"
+        onClick={() => onStart(workoutId)}
+      >
+        <Play size={13} aria-hidden="true" /> Run it back
+      </button>
+    </div>
+  );
 }
 
 export function FormSignatureHistory({
@@ -41,46 +62,69 @@ export function FormSignatureHistory({
   summary,
   userAddress,
   onStartSelfGhost,
+  workouts: providedWorkouts,
+  compact = false,
 }: FormSignatureHistoryProps) {
-  const [workouts, setWorkouts] = useState<LocalWorkout[]>([]);
+  const [storedWorkouts, setStoredWorkouts] = useState<LocalWorkout[]>([]);
   const [expanded, setExpanded] = useState(false);
   const effectiveUserId = useMemo(() => getEffectiveUserId(userAddress), [userAddress]);
 
   useEffect(() => {
+    if (providedWorkouts) return;
     let active = true;
-    void getLocalWorkouts().then((stored) => {
-      if (active) setWorkouts(stored);
-    });
+    void getLocalWorkouts()
+      .then((stored) => {
+        if (active) setStoredWorkouts(stored);
+      })
+      .catch(() => {
+        if (active) setStoredWorkouts([]);
+      });
     return () => {
       active = false;
     };
-  }, [effectiveUserId, mode, summary?.startTime]);
+  }, [effectiveUserId, mode, providedWorkouts, summary?.startTime]);
 
-  const current = useMemo(
-    () =>
-      summary
-        ? {
-            timestamp: summary.startTime,
-            reps,
-            signature: buildFormSignature(summary),
-          }
-        : null,
-    [reps, summary]
-  );
-
-  const points = useMemo(
-    () =>
-      appendCurrentSignature(
-        buildFormSignatureHistory(workouts, mode, 6, effectiveUserId),
-        current
-      ),
-    [current, effectiveUserId, mode, workouts]
-  );
-
+  const workouts = providedWorkouts ?? storedWorkouts;
   const ghostWorkout = useMemo(
     () => chooseSelfGhostWorkout(workouts, mode, summary?.startTime, effectiveUserId),
     [effectiveUserId, mode, summary?.startTime, workouts]
   );
+
+  const current = useMemo(
+    () =>
+      compact || !summary
+        ? null
+        : {
+            timestamp: summary.startTime,
+            reps,
+            signature: buildFormSignature(summary),
+          },
+    [compact, reps, summary]
+  );
+
+  const points = useMemo(
+    () =>
+      compact
+        ? []
+        : appendCurrentSignature(
+            buildFormSignatureHistory(workouts, mode, 6, effectiveUserId),
+            current
+          ),
+    [compact, current, effectiveUserId, mode, workouts]
+  );
+
+  if (compact) {
+    return ghostWorkout && onStartSelfGhost ? (
+      <section className="form-signature form-signature--compact" aria-label="Self ghost replay">
+        <SelfGhostPrompt
+          workoutId={ghostWorkout.id}
+          reps={ghostWorkout.reps}
+          onStart={onStartSelfGhost}
+        />
+      </section>
+    ) : null;
+  }
+
   const latest = points[points.length - 1];
   const previous = points.length > 1 ? points[points.length - 2] : null;
   const depthDelta =
@@ -158,22 +202,11 @@ export function FormSignatureHistory({
       </div>
 
       {ghostWorkout && onStartSelfGhost && (
-        <div className="form-signature__ghost">
-          <div className="form-signature__ghost-copy">
-            <Ghost size={16} aria-hidden="true" />
-            <div>
-              <strong>Race your best line</strong>
-              <span>{ghostWorkout.reps} reps · your own line</span>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="form-signature__ghost-button"
-            onClick={() => onStartSelfGhost(ghostWorkout.id)}
-          >
-            <Play size={13} aria-hidden="true" /> Run it back
-          </button>
-        </div>
+        <SelfGhostPrompt
+          workoutId={ghostWorkout.id}
+          reps={ghostWorkout.reps}
+          onStart={onStartSelfGhost}
+        />
       )}
 
       {points.length > 2 && (
@@ -188,6 +221,18 @@ export function FormSignatureHistory({
       )}
     </section>
   );
+}
+
+function percent(value: number) {
+  return `${Math.round(value * 100)}%`;
+}
+
+function trend(points: FormSignaturePoint[]) {
+  if (points.length < 2) return null;
+  const first = points[0].signature.averageDepth;
+  const last = points[points.length - 1].signature.averageDepth;
+  if (Math.abs(last - first) < 0.03) return 'steady';
+  return last > first ? 'up' : 'down';
 }
 
 export default FormSignatureHistory;

@@ -203,6 +203,9 @@
   align-items: center;
   gap: 0.55rem;
 }
+.movement-card__header > div:nth-child(2) {
+  min-width: 0;
+}
 .movement-card__icon {
   display: grid;
   place-items: center;
@@ -219,6 +222,7 @@
 }
 .movement-card__eyebrow {
   margin: 0;
+  overflow-wrap: anywhere;
   color: #83e8d5;
   font-size: 0.56rem;
   font-weight: 800;
@@ -333,12 +337,16 @@
 }
 .movement-history__header,
 .movement-history__title {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 0.55rem;
 }
 .movement-history__header {
   justify-content: space-between;
+}
+.movement-history__title > div:last-child {
+  min-width: 0;
 }
 .movement-history__icon {
   display: grid;
@@ -366,6 +374,7 @@
 }
 .movement-history__count,
 .movement-history__footer {
+  flex: 0 0 auto;
   color: #829e98;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.56rem;
@@ -678,6 +687,14 @@
   border: 1px solid rgba(117, 223, 205, 0.18);
   border-radius: 6px;
 }
+.form-signature--compact {
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.form-signature--compact .form-signature__ghost {
+  padding-top: 0.7rem;
+}
 .form-signature__header {
   display: flex;
   align-items: center;
@@ -879,6 +896,19 @@
   }
 }
 @media (max-width: 360px) {
+  .movement-card__confidence {
+    align-self: flex-start;
+    max-width: 4.5rem;
+    overflow-wrap: anywhere;
+    text-align: right;
+    white-space: normal;
+  }
+  .movement-history__count {
+    max-width: 3.6rem;
+    overflow-wrap: anywhere;
+    text-align: right;
+    white-space: normal;
+  }
   .form-line__header {
     align-items: flex-start;
     flex-wrap: wrap;

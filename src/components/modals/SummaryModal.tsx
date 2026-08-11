@@ -50,6 +50,7 @@ import { playUiCue } from '@/lib/uiSound';
 import { SessionRecap } from '@/components/game/SessionRecap';
 import { sessionStory } from '@/lib/coachingStory';
 import type { MovementAssessment } from '@/types/movementAssessment';
+import type { LocalWorkout } from '@/types/workout';
 
 // Initialize window properties if they don't exist (client-side only)
 const initializeWindowProperties = () => {
@@ -109,6 +110,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
   const [progressSeries, setProgressSeries] = useState<ProgressSeries | null>(null);
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
+  // An explicit empty snapshot prevents recap children from issuing their own
+  // full storage read while this modal-owned snapshot is loading.
+  const [localWorkouts, setLocalWorkouts] = useState<LocalWorkout[]>([]);
   const { address: walletAddress, chainId } = wallet;
   const isInMiniApp = platform === 'farcaster';
 
@@ -162,27 +166,44 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
 
   // Calculate streak, achievements, and progress spark when modal opens
   React.useEffect(() => {
-    if (isOpen) {
-      getLocalWorkouts().then(async (workouts) => {
-        const info = xpService.getStreakInfo(workouts);
-        setStreakInfo(info);
+    let active = true;
+    let achievementTimer: ReturnType<typeof setTimeout> | undefined;
 
-        const newlyUnlocked = await checkNewAchievements(workouts);
-        if (newlyUnlocked.length > 0) {
+    if (isOpen) {
+      setLocalWorkouts([]);
+      getLocalWorkouts()
+        .then(async (workouts) => {
+          if (!active) return;
+          setLocalWorkouts(workouts);
+          const info = xpService.getStreakInfo(workouts);
+          setStreakInfo(info);
+
+          const newlyUnlocked = await checkNewAchievements(workouts);
+          if (!active || newlyUnlocked.length === 0) return;
+
           setNewAchievements(newlyUnlocked);
           // Auto-clear achievements after 5 seconds
-          setTimeout(() => {
-            setNewAchievements([]);
+          achievementTimer = setTimeout(() => {
+            if (active) setNewAchievements([]);
           }, 5000);
-        }
+        })
+        .catch(() => {
+          if (active) setLocalWorkouts([]);
+        });
+      getRecentProgressSeries().then((series) => {
+        if (active) setProgressSeries(series);
       });
-      getRecentProgressSeries().then(setProgressSeries);
       // Celebrate is arcade punctuation even on a studio session — brief cue, then chassis.
       playUiCue('success', { register: 'arcade' });
     } else {
       setNewAchievements([]);
       setProgressSeries(null);
     }
+
+    return () => {
+      active = false;
+      if (achievementTimer) clearTimeout(achievementTimer);
+    };
   }, [isOpen, checkNewAchievements, sessionRegister]);
 
   // Post-session AI report (post mode)
@@ -991,6 +1012,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               reps={repCount}
               summary={sessionSummary ?? null}
               movementAssessment={movementAssessment}
+              workouts={localWorkouts}
               userAddress={effectiveAddress ?? undefined}
               isRace={isRace}
               onStartSelfGhost={onStartSelfGhost}

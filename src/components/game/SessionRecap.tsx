@@ -14,12 +14,15 @@ import { usePlatform } from '@/contexts/PlatformContext';
 import MovementCard from './MovementCard';
 import MovementAssessmentHistory from './MovementAssessmentHistory';
 import type { MovementAssessment } from '@/types/movementAssessment';
+import type { LocalWorkout } from '@/types/workout';
 
 type SessionRecapProps = {
   mode: ExerciseMode;
   reps: number;
   summary: SessionSummary | null;
   movementAssessment?: MovementAssessment | null;
+  /** Reuse the modal-owned workout snapshot for replay/history calculations. */
+  workouts?: LocalWorkout[];
   userAddress?: string;
   onTryAgain?: (focus: string) => void;
   onStartSelfGhost?: (workoutId: string) => void;
@@ -231,6 +234,7 @@ export function SessionRecap({
   reps,
   summary,
   movementAssessment,
+  workouts,
   userAddress,
   onTryAgain,
   onStartSelfGhost,
@@ -295,8 +299,10 @@ export function SessionRecap({
         mode={mode}
         reps={reps}
         summary={summary}
+        workouts={workouts}
         userAddress={userAddress}
         onStartSelfGhost={onStartSelfGhost}
+        compact={mode === 'curls'}
       />
       {onTryAgain && (
         <button
