@@ -251,6 +251,15 @@ a concrete next action rather than only a number.
 
 ### 4.3 M2 — Assessment challenge and recipient route
 
+**Status: first privacy-safe local challenge slice shipped; durable production analytics and distribution experiments remain open.**
+
+The recap creates a strict `curls-baseline@1.0` aggregate-only payload, shares
+through Web Share or clipboard, and sends recipients to `/challenge` with one
+**Take the same test** CTA. The existing Ghost/form-line share remains separate.
+Anonymous and Farcaster funnel events are validated at the API boundary, but the
+current tracker is process-local; durable, rate-limited storage is still required
+before using the funnel as production truth.
+
 - Create a versioned, share-safe payload containing protocol, headline, next
   action, and optional approximate trace.
 - Add a focused recipient route with one CTA: **Take the same test**.
@@ -272,14 +281,18 @@ trace.
 
 ### 4.4 M3 — Self trajectory and next unlocks
 
-**Status: compact local Movement History shipped; trajectory estimation remains open.**
+**Status: local self-trajectory and next-unlock slice shipped; measurement evidence remains open.**
 
-- Compare only protocol-matched, sufficiently confident assessments.
+- Compare only protocol-matched, sufficiently confident assessments. **Shipped locally** for the curl protocol.
 - Add a compact trend view and next-milestone model with early/emerging/reliable
-  confidence states.
+  confidence states. **Shipped locally** as a pure confidence-aware trajectory
+  model and recap surface.
 - Recommend one practice focus and a sensible re-test interval; do not encourage
-  daily measurement or shame-based streak pressure.
+  daily measurement or shame-based streak pressure. **Shipped locally** with an
+  approximately-seven-day retest prompt.
 - Support restart design for missed sessions, illness, travel, and changed setup.
+- Validate repeated comparable reads before strengthening trajectory language or
+  opening later benchmark surfaces.
 
 **Gate:** The trajectory explains its confidence and remains useful when progress
 is flat or a session is inconclusive.
@@ -317,11 +330,13 @@ interpretation.
 
 ### 4.7 Current implementation boundary
 
-The current code has shipped the M0/M1/M3 local foundation for the curl protocol:
-versioned assessment evaluation, explicit inconclusive states, local-only
-persistence, a recap Movement Card, and a protocol-matched self-history view.
-This does not close the broader gates. Setup calibration, test–retest evidence,
-challenge routing, trajectory estimates, cohorts, and archetypes remain pending.
+The current code has shipped the M0/M1/M3 local foundation for the curl protocol,
+plus the first M2 challenge slice: versioned assessment evaluation, explicit
+inconclusive states, local-only persistence, a recap Movement Card, a
+protocol-matched self-history view, a strict aggregate-only payload, and a
+focused `/challenge` recipient route. Setup calibration, test–retest evidence,
+durable production funnel analytics, trajectory estimates, cohorts, and
+archetypes remain pending.
 
 ### 4.8 Movement Intelligence definition of done
 
@@ -381,5 +396,5 @@ Phase 1 and Phase 2 can run in parallel after Phase 0. Phase 3 should wait until
 - [ ] Phase 2 human→robot mapper records first LeRobot episode
 - [ ] Phase 3 edge perf matrix decided and default config updated
 - [x] Phase 4 Movement Intelligence local M0/M1/M3 foundation shipped
-- [ ] Phase 4 Movement Intelligence setup/test–retest/challenge/trajectory evidence validated
+- [ ] Phase 4 Movement Intelligence setup/test–retest/trajectory evidence and durable funnel validated (local trajectory slice shipped)
 - [ ] `docs/ROADMAP.md` updated with the new gates

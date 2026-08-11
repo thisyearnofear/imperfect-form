@@ -13,6 +13,7 @@ import {
   measurementDelta,
 } from '@/lib/movementAssessmentHistory';
 import type { MovementAssessment } from '@/types/movementAssessment';
+import MovementTrajectoryView from './MovementTrajectory';
 
 const INCONCLUSIVE_COPY: Record<string, string> = {
   invalid_protocol: 'This capture belongs to a different baseline protocol.',
@@ -177,6 +178,7 @@ export function MovementAssessmentHistory({
       {records.records.length > 4 && (
         <p className="movement-history__footer">Showing the latest four local reads.</p>
       )}
+      <MovementTrajectoryView records={records.records} protocolId="curls-baseline" />
     </section>
   );
 }

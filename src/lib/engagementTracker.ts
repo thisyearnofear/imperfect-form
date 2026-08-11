@@ -2,7 +2,8 @@
 // Tracks user interactions, retention, and app usage patterns
 
 export interface EngagementEvent {
-  fid: number;
+  fid?: number;
+  anonymousId?: string;
   eventType: EngagementEventType;
   timestamp: Date;
   metadata: Record<string, unknown>;
@@ -23,6 +24,11 @@ export type EngagementEventType =
   | 'challenge_completed'
   | 'challenge_replied'
   | 'challenge_shared'
+  | 'assessment_card_shared'
+  | 'assessment_challenge_opened'
+  | 'assessment_started'
+  | 'assessment_completed'
+  | 'assessment_replied'
   | 'chain_switched'
   | 'wallet_connected'
   | 'pose_detection_started'
@@ -72,12 +78,24 @@ export interface EngagementAnalytics {
     removedUsers: number;
     additionRate: number;
   };
+  assessmentFunnel: Record<
+    | 'assessment_card_shared'
+    | 'assessment_challenge_opened'
+    | 'assessment_started'
+    | 'assessment_completed'
+    | 'assessment_replied',
+    number
+  >;
   topChains: Array<{ chain: string; users: number; percentage: number }>;
 }
 
 // In-memory storage for demo (replace with database in production)
-const engagementEvents = new Map<number, EngagementEvent[]>();
+const engagementEvents = new Map<string, EngagementEvent[]>();
 const userStats = new Map<number, UserEngagementStats>();
+
+function eventKey(event: EngagementEvent): string {
+  return event.fid ? `fid:${event.fid}` : `anon:${event.anonymousId ?? 'unknown'}`;
+}
 
 export class EngagementTracker {
   /**
@@ -86,15 +104,16 @@ export class EngagementTracker {
   static async trackEvent(event: EngagementEvent): Promise<void> {
     const { fid } = event;
 
-    // Store the event
-    const userEvents = engagementEvents.get(fid) || [];
+    // Store the event under a privacy-safe anonymous or Farcaster key.
+    const key = eventKey(event);
+    const userEvents = engagementEvents.get(key) || [];
     userEvents.push(event);
-    engagementEvents.set(fid, userEvents);
+    engagementEvents.set(key, userEvents);
 
-    // Update user stats
-    await this.updateUserStats(fid, event);
+    // Population stats remain attributed only to Farcaster users.
+    if (fid) await this.updateUserStats(fid, event);
 
-    console.log(`📊 Tracked engagement: ${event.eventType} for FID ${fid}`);
+    console.log(`📊 Tracked engagement: ${event.eventType} for ${key}`);
   }
 
   /**
@@ -186,7 +205,7 @@ export class EngagementTracker {
    * Get all user events
    */
   static async getUserEvents(fid: number): Promise<EngagementEvent[]> {
-    return engagementEvents.get(fid) || [];
+    return engagementEvents.get(`fid:${fid}`) || [];
   }
 
   /**
@@ -225,6 +244,25 @@ export class EngagementTracker {
     // Calculate mini app metrics
     const miniAppAddedUsers = allStats.filter((s) => s.miniAppAdded).length;
     const miniAppRemovedUsers = allStats.length - miniAppAddedUsers;
+
+    const assessmentEventTypes = [
+      'assessment_card_shared',
+      'assessment_challenge_opened',
+      'assessment_started',
+      'assessment_completed',
+      'assessment_replied',
+    ] as const;
+    const assessmentFunnel = Object.fromEntries(
+      assessmentEventTypes.map((eventType) => [eventType, 0])
+    ) as EngagementAnalytics['assessmentFunnel'];
+    for (const events of engagementEvents.values()) {
+      for (const event of events) {
+        if (event.eventType in assessmentFunnel) {
+          const eventType = event.eventType as keyof typeof assessmentFunnel;
+          assessmentFunnel[eventType] += 1;
+        }
+      }
+    }
 
     // Calculate top chains
     const chainCounts = new Map<string, number>();
@@ -270,6 +308,7 @@ export class EngagementTracker {
         removedUsers: miniAppRemovedUsers,
         additionRate: miniAppAddedUsers / Math.max(allStats.length, 1),
       },
+      assessmentFunnel,
       topChains,
     };
   }

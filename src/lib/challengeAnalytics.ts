@@ -11,30 +11,71 @@ type ChallengeEventType = Extract<
   | 'challenge_shared'
 >;
 
+export type MovementChallengeEventType = Extract<
+  EngagementEventType,
+  | 'assessment_card_shared'
+  | 'assessment_challenge_opened'
+  | 'assessment_started'
+  | 'assessment_completed'
+  | 'assessment_replied'
+>;
+
+const ANONYMOUS_ANALYTICS_KEY = 'imf_assessment_analytics_id';
+
+function getAnonymousAnalyticsId(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const existing = window.localStorage.getItem(ANONYMOUS_ANALYTICS_KEY);
+    if (existing) return existing;
+    const generated =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `anon-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    window.localStorage.setItem(ANONYMOUS_ANALYTICS_KEY, generated);
+    return generated;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Record a challenge milestone without blocking the coaching flow.
- *
- * Anonymous users are intentionally not assigned a synthetic identity here;
- * the existing analytics endpoint records events for Farcaster users only.
- * The shared payload contains challenge metadata, never camera frames.
+ * The payload contains challenge metadata only; no camera frames are sent.
  */
 export function trackChallengeEvent(
   eventType: ChallengeEventType,
   fid: number | undefined,
   metadata: Record<string, unknown> = {}
 ): void {
-  if (!fid || typeof window === 'undefined') return;
+  trackEvent(eventType, fid, metadata);
+}
+
+/** Movement Intelligence funnel telemetry; payloads remain aggregate-only. */
+export function trackMovementChallengeEvent(
+  eventType: MovementChallengeEventType,
+  fid: number | undefined,
+  metadata: Record<string, unknown> = {}
+): void {
+  trackEvent(eventType, fid, { ...metadata, challengeType: 'movement-assessment' });
+}
+
+function trackEvent(
+  eventType: EngagementEventType,
+  fid: number | undefined,
+  metadata: Record<string, unknown>
+): void {
+  if (typeof window === 'undefined') return;
 
   void fetch('/api/analytics/engagement', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     keepalive: true,
     body: JSON.stringify({
-      fid,
+      ...(fid ? { fid } : { anonymousId: getAnonymousAnalyticsId() }),
       eventType,
       metadata: {
         ...metadata,
-        privacy: 'pose-trace-only',
+        privacy: 'aggregate-only',
       },
     }),
   }).catch(() => {

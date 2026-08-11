@@ -50,6 +50,7 @@ import { playUiCue } from '@/lib/uiSound';
 import { SessionRecap } from '@/components/game/SessionRecap';
 import { sessionStory } from '@/lib/coachingStory';
 import type { MovementAssessment } from '@/types/movementAssessment';
+import type { MovementChallengePayload } from '@/types/movementChallenge';
 import type { LocalWorkout } from '@/types/workout';
 
 // Initialize window properties if they don't exist (client-side only)
@@ -85,6 +86,7 @@ export interface SummaryModalProps {
   address?: string; // Optional wallet address
   sessionSummary?: import('@/services/sessionLogger').SessionSummary | null;
   movementAssessment?: MovementAssessment | null;
+  movementChallenge?: MovementChallengePayload | null;
   onStartSelfGhost?: (workoutId: string) => void;
   isRace?: boolean;
 }
@@ -100,6 +102,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   address,
   sessionSummary,
   movementAssessment,
+  movementChallenge,
   onStartSelfGhost,
   isRace = false,
 }) => {
@@ -1012,6 +1015,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               reps={repCount}
               summary={sessionSummary ?? null}
               movementAssessment={movementAssessment}
+              movementChallenge={movementChallenge}
               workouts={localWorkouts}
               userAddress={effectiveAddress ?? undefined}
               isRace={isRace}

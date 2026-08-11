@@ -58,10 +58,12 @@ import { buildFormSignature } from '@/lib/progress/formSignature';
 import { ghostService } from '@/services/GhostService';
 import { getChampionTrace, isChampion } from '@/constants/championTraces';
 import { playStudioCue } from '@/lib/uiSound';
-import { trackChallengeEvent } from '@/lib/challengeAnalytics';
+import { trackChallengeEvent, trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
 import { evaluateMovementAssessment } from '@/lib/movementAssessment';
 import { CURL_BASELINE_PROTOCOL } from '@/types/movementAssessment';
 import type { MovementAssessment } from '@/types/movementAssessment';
+import type { MovementChallengePayload } from '@/types/movementChallenge';
+import { decodeMovementChallenge, MOVEMENT_CHALLENGE_PARAM } from '@/lib/movementChallenge';
 import { saveLocalMovementAssessment } from '@/services/integrations/MovementAssessmentDataAdapter';
 
 import { Score } from '@/types';
@@ -123,7 +125,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   );
   const [isRace, setIsRace] = useState(false);
   const [hasIncomingChallenge, setHasIncomingChallenge] = useState(false);
+  const [movementChallenge, setMovementChallenge] = useState<MovementChallengePayload | null>(null);
   const challengeUrlParsedRef = useRef(false);
+  const assessmentStartedRef = useRef(false);
+  const assessmentCompletedRef = useRef<string | null>(null);
 
   const handleSessionEnd = useCallback(
     (summary: import('@/services/sessionLogger').SessionSummary) => {
@@ -138,6 +143,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         trackChallengeEvent('challenge_completed', user?.fid, {
           mode: summary.mode,
           reps: summary.repCount,
+        });
+      }
+      if (movementChallenge && assessmentCompletedRef.current !== movementChallenge.challengeId) {
+        assessmentCompletedRef.current = movementChallenge.challengeId;
+        trackMovementChallengeEvent('assessment_completed', user?.fid, {
+          mode: summary.mode,
+          protocolId: movementChallenge.protocolId,
+          challengeId: movementChallenge.challengeId,
+          status:
+            summary.mode === CURL_BASELINE_PROTOCOL.mode
+              ? evaluateMovementAssessment(summary, CURL_BASELINE_PROTOCOL).status
+              : 'inconclusive',
         });
       }
 
@@ -187,7 +204,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         })().catch((err) => console.error('❌ Failed to auto-save workout:', err));
       }
     },
-    [finalAddress, isRace, user?.fid]
+    [finalAddress, isRace, movementChallenge, user?.fid]
   );
 
   // Swipe gesture handling for mobile
@@ -568,6 +585,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         markCameraIntroHandled();
       }
 
+      if (movementChallenge && !assessmentStartedRef.current) {
+        assessmentStartedRef.current = true;
+        trackMovementChallengeEvent('assessment_started', user?.fid, {
+          mode: movementChallenge.mode,
+          protocolId: movementChallenge.protocolId,
+          challengeId: movementChallenge.challengeId,
+        });
+      }
+
       // Incoming peer challenges are available on day one. Only personal-best
       // racing remains progression-aware; a shared correction is the acquisition doorway.
       const effectiveIsRace = options?.isRace ?? isRace;
@@ -618,6 +644,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     },
     [
       sessionIntent,
+      movementChallenge,
       setIntent,
       isMobile,
       autoFs,
@@ -745,11 +772,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     const raceParam = searchParams.get('race');
     const modeParam = searchParams.get('mode');
     const intentParam = searchParams.get('intent');
+    const assessmentParam = searchParams.get(MOVEMENT_CHALLENGE_PARAM);
 
     // Deep-link the session intent (?intent=train|recover|understand) so the
     // PWA manifest shortcuts and shared links land on the right entrance.
     if (intentParam === 'train' || intentParam === 'recover' || intentParam === 'understand') {
       setIntent(intentParam);
+    }
+
+    const decodedAssessment = decodeMovementChallenge(assessmentParam);
+    if (decodedAssessment) {
+      setMovementChallenge(decodedAssessment);
+      if (decodedAssessment.mode === 'curls') setMode('curls');
     }
 
     if (raceParam) {
@@ -823,6 +857,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setIsRace(false);
     setRaceTrace(null);
     setHasIncomingChallenge(false);
+    setMovementChallenge(null);
+    assessmentStartedRef.current = false;
+    assessmentCompletedRef.current = null;
     // Welcome component consolidated into InitializationScreen - no need to reset welcome state
     setShowTutorial(true);
     setShowSummary(false);
@@ -1088,6 +1125,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           setIsRace(false);
           setRaceTrace(null);
           setHasIncomingChallenge(false);
+          setMovementChallenge(null);
         }}
         onViewLeaderboard={() => {
           setShowSummary(false);
@@ -1106,6 +1144,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         address={finalAddress}
         sessionSummary={sessionSummary}
         movementAssessment={movementAssessment}
+        movementChallenge={movementChallenge}
         onStartSelfGhost={handleSelfGhostRace}
         isRace={isRace}
       />

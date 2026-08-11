@@ -483,6 +483,163 @@
   margin: 0;
 }
 
+/* Local trajectory — a confidence-aware next unlock, never a prediction. */
+.movement-trajectory {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(252, 177, 49, 0.14);
+}
+.movement-trajectory__header,
+.movement-trajectory__title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.movement-trajectory__header {
+  justify-content: space-between;
+}
+.movement-trajectory__title > div:last-child {
+  min-width: 0;
+}
+.movement-trajectory__icon,
+.movement-trajectory__signal-mark {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  color: #071917;
+  background: #75dfcd;
+  border-radius: 50%;
+}
+.movement-trajectory__eyebrow {
+  margin: 0;
+  color: #83e8d5;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.movement-trajectory h3 {
+  margin: 0.15rem 0 0;
+  color: #f1fffc;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.movement-trajectory__confidence {
+  max-width: 7rem;
+  color: #d19a32;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-align: right;
+  text-transform: uppercase;
+}
+.movement-trajectory__signal {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem;
+  background: rgba(117, 223, 205, 0.05);
+  border: 1px solid rgba(117, 223, 205, 0.13);
+  border-radius: 4px;
+}
+.movement-trajectory__signal-mark {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #071917;
+  background: #fcb131;
+}
+.movement-trajectory__signal > div:last-child {
+  display: grid;
+  gap: 0.14rem;
+}
+.movement-trajectory__signal strong {
+  color: #f4ecd8;
+  font-size: 0.72rem;
+}
+.movement-trajectory__signal span {
+  color: #b8cbc5;
+  font-size: 0.64rem;
+  line-height: 1.4;
+}
+.movement-trajectory__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+.movement-trajectory__stats > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.48rem;
+  background: rgba(252, 177, 49, 0.05);
+  border: 1px solid rgba(252, 177, 49, 0.12);
+  border-radius: 4px;
+}
+.movement-trajectory__stats span {
+  color: #829e98;
+  font-size: 0.52rem;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.movement-trajectory__stats strong {
+  color: #f4ecd8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.movement-trajectory__unlock {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.65rem;
+  background: linear-gradient(110deg, rgba(252, 177, 49, 0.1), rgba(117, 223, 205, 0.06));
+  border: 1px solid rgba(252, 177, 49, 0.2);
+  border-radius: 4px;
+}
+.movement-trajectory__unlock-heading,
+.movement-trajectory__unlock-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.movement-trajectory__unlock-heading {
+  color: #fcb131;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.movement-trajectory__unlock strong {
+  color: #dff7f1;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.movement-trajectory__unlock-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.35rem 0.6rem;
+  color: #a9c7c2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.53rem;
+}
+.movement-trajectory__unlock-meta svg {
+  color: #75dfcd;
+}
+.movement-trajectory__note {
+  margin: 0;
+  color: #718d88;
+  font-size: 0.59rem;
+  line-height: 1.4;
+}
+
 /* Form receipt — a shareable proof object with no camera image or identity. */
 .form-receipt {
   position: relative;
@@ -575,10 +732,16 @@
   border: 1px solid rgba(252, 177, 49, 0.34);
   border-radius: 4px;
 }
-.form-receipt__challenge > div {
+.form-receipt__challenge > div:first-child {
   min-width: 0;
   display: grid;
   gap: 0.14rem;
+}
+.form-receipt__challenge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
 }
 .form-receipt__challenge-eyebrow {
   margin: 0;
@@ -607,6 +770,11 @@
   color: #071517;
   background: #ffd16a;
   border-color: #ffd16a;
+}
+.form-receipt__button--secondary-challenge {
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.35);
+  background: rgba(124, 58, 237, 0.12);
 }
 .form-receipt__actions {
   display: flex;
@@ -879,7 +1047,12 @@
     align-items: stretch;
     flex-direction: column;
   }
-  .form-receipt__button--challenge {
+  .form-receipt__challenge-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  .form-receipt__button--challenge,
+  .form-receipt__button--secondary-challenge {
     width: 100%;
   }
   .form-receipt__actions {
@@ -903,7 +1076,8 @@
     text-align: right;
     white-space: normal;
   }
-  .movement-history__count {
+  .movement-history__count,
+  .movement-trajectory__confidence {
     max-width: 3.6rem;
     overflow-wrap: anywhere;
     text-align: right;

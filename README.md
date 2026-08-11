@@ -18,11 +18,11 @@ game-loop play is earned after the first coached feel; the robot exists to
 pose → form events → physical demonstration · Cyberwave twin · SmolVLA flywheel
 from real sessions.
 
-**Movement Intelligence:** the first local slice now turns validated curl
-signals into a private Movement Card and self-versus-self Movement History. The
-broader Movement Passport, trajectories, and privacy-safe **Take the same test**
-challenges remain gated by measurement quality, sample size, and privacy review.
-See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIGENCE.md).
+**Movement Intelligence:** validated curl signals now produce a private Movement
+Card, self-versus-self history, and a privacy-safe **Take the same test** challenge
+with a focused recipient route. Trajectories, age-band comparisons, and cohorts
+remain gated by measurement quality, sample size, privacy review, and durable
+production analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIGENCE.md).
 
 **✅ Self Protocol**: Live on Celo Mainnet - Real passport verification with zero-knowledge proofs.
 
@@ -36,7 +36,7 @@ See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIGENCE.md).
 - **Multi-Chain Support**: Base, Celo, Polygon, Monad, and Avalanche themes (leaderboards where contracts are live)
 - **Human Verification**: Self Protocol integration for verified leaderboards
 - **Social Integration**: Farcaster mini-app, ghost replays, quests and XP
-- **Movement Intelligence** _(local first slice shipped)_: repeatable curl assessment, private Movement Cards, and self-versus-self history; trajectories and challenge-based distribution remain planned
+- **Movement Intelligence** _(local challenge slice shipped)_: repeatable curl assessment, private Movement Cards, self-versus-self history, and a wallet-free **Take the same test** route; trajectories and population benchmarking remain planned
 - **Mobile-First**: Responsive design optimized for mobile fitness tracking
 
 ## Live Demo

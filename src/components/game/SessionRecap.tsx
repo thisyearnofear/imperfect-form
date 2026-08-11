@@ -9,12 +9,17 @@ import FormSignatureHistory from './FormSignatureHistory';
 import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
 import { BRAND } from '@/lib/brandPositioning';
 import { ghostService } from '@/services/GhostService';
-import { trackChallengeEvent } from '@/lib/challengeAnalytics';
+import { trackChallengeEvent, trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
+import {
+  createMovementChallengePayload,
+  createMovementChallengeUrl,
+} from '@/lib/movementChallenge';
 import { usePlatform } from '@/contexts/PlatformContext';
 import MovementCard from './MovementCard';
 import MovementAssessmentHistory from './MovementAssessmentHistory';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { LocalWorkout } from '@/types/workout';
+import type { MovementChallengePayload } from '@/types/movementChallenge';
 
 type SessionRecapProps = {
   mode: ExerciseMode;
@@ -23,6 +28,8 @@ type SessionRecapProps = {
   movementAssessment?: MovementAssessment | null;
   /** Reuse the modal-owned workout snapshot for replay/history calculations. */
   workouts?: LocalWorkout[];
+  /** Incoming assessment challenge metadata, if this session is a reply. */
+  movementChallenge?: MovementChallengePayload | null;
   userAddress?: string;
   onTryAgain?: (focus: string) => void;
   onStartSelfGhost?: (workoutId: string) => void;
@@ -62,7 +69,9 @@ function FormReceipt({
   reps,
   summary,
   isRace = false,
-}: Omit<SessionRecapProps, 'onTryAgain' | 'userAddress' | 'movementAssessment'>) {
+  movementAssessment,
+  movementChallenge,
+}: Omit<SessionRecapProps, 'onTryAgain' | 'userAddress'>) {
   const [action, setAction] = useState<ReceiptAction>('idle');
   const [challengeAction, setChallengeAction] = useState<ReceiptAction>('idle');
   const { user } = usePlatform();
@@ -101,7 +110,7 @@ function FormReceipt({
     }
   };
 
-  const handleSendCorrection = async () => {
+  const handleSendGhostCorrection = async () => {
     if (!summary?.trace?.length) {
       setChallengeAction('error');
       return;
@@ -131,6 +140,105 @@ function FormReceipt({
           reps,
           source: isRace ? 'incoming-challenge' : 'session-recap',
         });
+        setChallengeAction('copied');
+        return;
+      }
+      setChallengeAction('error');
+    } catch (error) {
+      setChallengeAction(
+        error instanceof Error && error.name === 'AbortError' ? 'cancelled' : 'error'
+      );
+    }
+  };
+
+  const handleSendCorrection = async () => {
+    if (!movementAssessment || movementAssessment.status !== 'valid') {
+      if (!summary?.trace?.length) {
+        setChallengeAction('error');
+        return;
+      }
+
+      try {
+        const challengeUrl = ghostService.generateShareUrl(summary.trace, mode, receiptOrigin());
+        const challengeText = `The coach found one useful correction in my ${mode}. Try the same movement and find yours. No video shared.`;
+        if (navigator.share) {
+          await navigator.share({
+            title: 'Send this correction',
+            text: challengeText,
+            url: challengeUrl,
+          });
+          trackChallengeEvent(isRace ? 'challenge_replied' : 'challenge_shared', user?.fid, {
+            mode,
+            reps,
+            source: isRace ? 'incoming-challenge' : 'session-recap',
+          });
+          setChallengeAction('shared');
+          return;
+        }
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(`${challengeText}\n${challengeUrl}`);
+          trackChallengeEvent(isRace ? 'challenge_replied' : 'challenge_shared', user?.fid, {
+            mode,
+            reps,
+            source: isRace ? 'incoming-challenge' : 'session-recap',
+          });
+          setChallengeAction('copied');
+          return;
+        }
+        setChallengeAction('error');
+      } catch (error) {
+        setChallengeAction(
+          error instanceof Error && error.name === 'AbortError' ? 'cancelled' : 'error'
+        );
+      }
+      return;
+    }
+
+    try {
+      const challengePayload = createMovementChallengePayload(
+        movementAssessment,
+        nextFocusFor(mode),
+        movementChallenge?.challengeId
+      );
+      const challengeUrl = createMovementChallengeUrl(challengePayload, receiptOrigin());
+      const challengeText = `I found one useful movement signal in my ${mode}. Take the same test and find yours. No video shared.`;
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Take the same test',
+          text: challengeText,
+          url: challengeUrl,
+        });
+        if (movementChallenge) {
+          trackMovementChallengeEvent('assessment_replied', user?.fid, {
+            mode,
+            protocolId: movementAssessment.protocolId,
+            source: 'session-recap',
+          });
+        } else {
+          trackMovementChallengeEvent('assessment_card_shared', user?.fid, {
+            mode,
+            protocolId: movementAssessment.protocolId,
+            source: 'session-recap',
+          });
+        }
+        setChallengeAction('shared');
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${challengeText}\n${challengeUrl}`);
+        if (movementChallenge) {
+          trackMovementChallengeEvent('assessment_replied', user?.fid, {
+            mode,
+            protocolId: movementAssessment.protocolId,
+            source: 'session-recap',
+          });
+        } else {
+          trackMovementChallengeEvent('assessment_card_shared', user?.fid, {
+            mode,
+            protocolId: movementAssessment.protocolId,
+            source: 'session-recap',
+          });
+        }
         setChallengeAction('copied');
         return;
       }
@@ -183,20 +291,39 @@ function FormReceipt({
             <strong>{observationCount}</strong> observations
           </span>
         </div>
-        {summary?.trace?.length ? (
+        {movementAssessment?.status === 'valid' || summary?.trace?.length ? (
           <div className="form-receipt__challenge">
             <div>
               <p className="form-receipt__challenge-eyebrow">The social loop</p>
-              <strong>Send this correction</strong>
-              <span>No video or image shared · approximate movement trace only</span>
+              <strong>
+                {movementAssessment?.status === 'valid'
+                  ? 'Take the same test'
+                  : 'Send this correction'}
+              </strong>
+              <span>
+                {movementAssessment?.status === 'valid'
+                  ? 'Aggregate movement signal only · no video or image shared'
+                  : 'No video or image shared · compressed movement trace only'}
+              </span>
             </div>
-            <button
-              type="button"
-              className="form-receipt__button form-receipt__button--challenge"
-              onClick={handleSendCorrection}
-            >
-              <Share2 size={15} aria-hidden="true" /> Send
-            </button>
+            <div className="form-receipt__challenge-actions">
+              <button
+                type="button"
+                className="form-receipt__button form-receipt__button--challenge"
+                onClick={handleSendCorrection}
+              >
+                <Share2 size={15} aria-hidden="true" /> Share
+              </button>
+              {movementAssessment?.status === 'valid' && summary?.trace?.length ? (
+                <button
+                  type="button"
+                  className="form-receipt__button form-receipt__button--secondary-challenge"
+                  onClick={handleSendGhostCorrection}
+                >
+                  Send form line
+                </button>
+              ) : null}
+            </div>
           </div>
         ) : null}
         <div className="form-receipt__actions">
@@ -216,10 +343,11 @@ function FormReceipt({
           {action === 'shared' && 'Ready to show someone your form line.'}
           {action === 'cancelled' && 'Share cancelled. Your receipt is still here.'}
           {action === 'error' && 'Sharing is unavailable. Select the receipt text below.'}
-          {challengeAction === 'copied' && 'Correction link copied — no camera image included.'}
-          {challengeAction === 'shared' && 'Correction sent. They can answer with their own line.'}
+          {challengeAction === 'copied' &&
+            'Assessment challenge copied — no camera image included.'}
+          {challengeAction === 'shared' && 'Challenge shared. They can take the same test.'}
           {challengeAction === 'cancelled' && 'Challenge cancelled. Your receipt is still here.'}
-          {challengeAction === 'error' && 'Could not create the correction link.'}
+          {challengeAction === 'error' && 'Could not create the assessment challenge.'}
         </p>
         <pre className="form-receipt__text" aria-label="Copyable form receipt text">
           {receiptText}
@@ -235,6 +363,7 @@ export function SessionRecap({
   summary,
   movementAssessment,
   workouts,
+  movementChallenge,
   userAddress,
   onTryAgain,
   onStartSelfGhost,
@@ -294,7 +423,14 @@ export function SessionRecap({
       )}
       {/* The response action follows the correction immediately; history is
           earned context beneath it, not a prerequisite for sharing. */}
-      <FormReceipt mode={mode} reps={reps} summary={summary} isRace={isRace} />
+      <FormReceipt
+        mode={mode}
+        reps={reps}
+        summary={summary}
+        movementAssessment={movementAssessment}
+        movementChallenge={movementChallenge}
+        isRace={isRace}
+      />
       <FormSignatureHistory
         mode={mode}
         reps={reps}

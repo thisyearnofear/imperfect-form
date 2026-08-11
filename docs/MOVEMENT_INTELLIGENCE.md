@@ -198,6 +198,16 @@ Likely reuse points: `SessionRecap`, `coachingStory`, `FormSignature`, `OfflineD
 
 ### M2 — Assessment challenge and recipient route
 
+**Status: privacy-safe recipient route and local share loop shipped; production funnel durability and measurement validation remain open.**
+
+The recap now creates a strict, versioned `curls-baseline@1.0` aggregate-only
+challenge and sends recipients to `/challenge` with one **Take the same test**
+CTA. Native Web Share and clipboard fallback are supported. The legacy Ghost
+form-line share remains a separate action. Anonymous and Farcaster funnel events
+are accepted with basic input validation, but the current tracker is process-local
+and must move to durable, rate-limited storage before metrics are treated as
+production truth.
+
 **Goal:** Engineer distribution into the result itself.
 
 Deliverables:
@@ -222,14 +232,18 @@ Primary metric:
 
 ### M3 — Self trajectory and next unlocks
 
-**Status: compact local Movement History shipped; trajectory estimates remain open.**
+**Status: local self-trajectory and next-unlock slice shipped; measurement evidence and durable funnel analytics remain open.**
 
 The recap loads user-scoped local assessment history, orders valid protocol-matched
 reads newest-first, shows recent baseline rows, and compares the latest valid read
 with the previous valid read using explicit range and trace-stability deltas. It
-suppresses deltas for inconclusive or malformed records and treats storage failure
-as an empty-history fallback. This is self-comparison only, not a population norm,
-health score, or future-ability prediction.
+now adds a local trajectory line with explicit **insufficient data**, **early
+estimate**, **emerging trend**, and **reliable local trend** states. Only valid
+reads above the confidence floor can move that line; inconclusive and unclear
+captures remain context. The next unlock is a practice focus plus an approximately
+seven-day retest prompt, not a guaranteed timeline. This is self-comparison only,
+not a population norm, health score, medical interpretation, or future-ability
+prediction.
 
 **Goal:** Make the product worth returning to because the user's own movement history changes.
 
@@ -340,13 +354,18 @@ Shipped in the first local slice:
 - Fixed five-rep curl baseline with valid/inconclusive outcomes and confidence quality.
 - Local-only assessment persistence with user-scoped upsert, ordered writes, verification, and guest-to-wallet re-keying.
 - Recap Movement Card and compact self-versus-self Movement History.
-- Focused tests for scoring, persistence, comparison, malformed records, and inconclusive states.
+- Strict aggregate-only `MovementChallenge` payloads and a focused `/challenge` recipient route with a single **Take the same test** CTA.
+- Separate legacy Ghost/form-line sharing remains available.
+- Anonymous and Farcaster assessment funnel events with basic input validation.
+- Pure confidence-aware local trajectory model and recap next-unlock surface; only clear, protocol-matched reads can move the line.
+- Focused tests for scoring, persistence, comparison, malformed records, inconclusive states, challenge encoding, and trajectory states.
 
 Still gated:
 
 - Setup calibration and cross-device test–retest evidence.
-- Assessment challenge recipient route and distribution analytics.
-- Trajectory estimates and next-milestone recommendations.
+- Durable, rate-limited production storage for assessment funnel analytics.
+- Recipient challenge experiments and distribution optimization.
+- Trajectory experiments after repeated-read evidence validates the local model.
 - Age-band/cohort benchmarking and historical/fictional archetypes.
 
 ## Definition of done for the first public slice

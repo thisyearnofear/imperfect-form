@@ -118,11 +118,20 @@ XP. Avalanche is a full theme token once earned / wallet-switched.
 - Compact user-scoped Movement History with protocol-matched self-versus-self deltas
 - Local-only assessment persistence with ordered writes, verification, and guest-to-wallet re-keying
 
+**Shipped (Movement Intelligence — first distribution slice):**
+
+- Strict aggregate-only `curls-baseline@1.0` assessment challenges
+- Focused `/challenge` recipient route with a single **Take the same test** CTA
+- Native Web Share and clipboard fallback without a wallet
+- Separate assessment funnel events for anonymous and Farcaster users
+- Existing Ghost/form-line challenges preserved as a distinct path
+
 **Planned (Movement Intelligence — after measurement gates):**
 
 - Setup calibration and cross-device test–retest validation
-- Privacy-safe “Take the same test” assessment challenges
-- Self trajectory and next movement unlocks
+- Durable, rate-limited production storage and distribution experiments
+- Cross-device test–retest validation for trajectory claims
+- Self trajectory and next movement unlocks (local curl slice shipped)
 - Age-band / opt-in cohort benchmarking only after protocol and sample-size gates
 - Historical and fictional movement archetypes as a narrative layer, not an objective benchmark
 
@@ -305,8 +314,10 @@ for the detailed plan.
 - [x] M1 foundation: local MovementAssessment and Movement Card
 - [x] M3 foundation: compact protocol-matched Movement History and self deltas
 - [ ] M0 completion: setup calibration and cross-device test–retest evidence
-- [ ] M2: versioned “Take the same test” challenge and recipient route
-- [ ] M3 completion: trajectory and next unlocks with confidence states
+- [x] M2 foundation: versioned “Take the same test” challenge and recipient route
+- [ ] M2 completion: durable funnel storage and distribution experiments
+- [x] M3 foundation: local confidence-aware trajectory and next unlock surface
+- [ ] M3 completion: cross-device evidence and trajectory experiments
 - [ ] M4: privacy-reviewed age-band / opt-in cohort benchmarks
 - [ ] M5: original historical / fictional archetypes layered over real measurements
 

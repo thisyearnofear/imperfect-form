@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import EngagementTracker from '@/lib/engagementTracker';
 
+const VALID_EVENT_TYPES = new Set([
+  'mini_app_added',
+  'mini_app_removed',
+  'notifications_enabled',
+  'notifications_disabled',
+  'workout_completed',
+  'score_submitted',
+  'leaderboard_viewed',
+  'app_launched',
+  'app_shared',
+  'challenge_opened',
+  'challenge_started',
+  'challenge_completed',
+  'challenge_replied',
+  'challenge_shared',
+  'assessment_card_shared',
+  'assessment_challenge_opened',
+  'assessment_started',
+  'assessment_completed',
+  'assessment_replied',
+  'chain_switched',
+  'wallet_connected',
+  'pose_detection_started',
+  'pose_detection_failed',
+  'transaction_initiated',
+  'transaction_completed',
+  'transaction_failed',
+]);
+
 // Simple authentication check (replace with proper auth in production)
 function isAuthorized(request: NextRequest): boolean {
   const authHeader = request.headers.get('authorization');
@@ -48,14 +77,27 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { fid, eventType, metadata = {} } = body;
+    const { fid, anonymousId, eventType, metadata = {} } = body;
 
-    if (!fid || !eventType) {
-      return NextResponse.json({ error: 'fid and eventType are required' }, { status: 400 });
+    if ((!fid && !anonymousId) || !eventType) {
+      return NextResponse.json(
+        { error: 'fid or anonymousId and eventType are required' },
+        { status: 400 }
+      );
+    }
+    if (!VALID_EVENT_TYPES.has(eventType)) {
+      return NextResponse.json({ error: 'Unsupported event type' }, { status: 400 });
+    }
+    if (
+      anonymousId &&
+      (typeof anonymousId !== 'string' || !/^anon-|^[0-9a-f-]{20,}$/i.test(anonymousId))
+    ) {
+      return NextResponse.json({ error: 'Invalid anonymous analytics id' }, { status: 400 });
     }
 
     await EngagementTracker.trackEvent({
-      fid,
+      ...(fid ? { fid } : {}),
+      ...(anonymousId ? { anonymousId } : {}),
       eventType,
       timestamp: new Date(),
       metadata,
