@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import EngagementTracker from '@/lib/engagementTracker';
+import { durableEventProperties, flushDurableEvents, trackDurableEvent } from '@/lib/posthogSink';
 
 const VALID_EVENT_TYPES = new Set([
   'mini_app_added',
@@ -77,7 +78,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { fid, anonymousId, eventType, metadata = {} } = body;
+    const { fid, anonymousId, eventType, metadata: rawMetadata } = body;
+    // Coerce hostile/non-object metadata so the tracker and the durable sink
+    // never see a null or array where an object is expected.
+    const metadata: Record<string, unknown> =
+      rawMetadata && typeof rawMetadata === 'object' && !Array.isArray(rawMetadata)
+        ? rawMetadata
+        : {};
 
     if ((!fid && !anonymousId) || !eventType) {
       return NextResponse.json(
@@ -95,6 +102,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid anonymous analytics id' }, { status: 400 });
     }
 
+    const eventTypeValue = eventType as string;
     await EngagementTracker.trackEvent({
       ...(fid ? { fid } : {}),
       ...(anonymousId ? { anonymousId } : {}),
@@ -102,6 +110,18 @@ export async function POST(request: NextRequest) {
       timestamp: new Date(),
       metadata,
     });
+
+    // Durable sink: aggregate metadata only; no camera frames or wallet data.
+    // durableEventProperties is the allowlist boundary — challengeId and status
+    // pass through so PostHog can stitch one card's open → start → complete →
+    // reply journey; everything else in the payload is dropped here.
+    const distinctId = fid ? String(fid) : anonymousId;
+    await trackDurableEvent({
+      distinctId,
+      eventType: eventTypeValue,
+      properties: durableEventProperties(metadata),
+    });
+    await flushDurableEvents();
 
     return NextResponse.json({
       success: true,

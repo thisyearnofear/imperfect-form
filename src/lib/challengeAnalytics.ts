@@ -39,6 +39,30 @@ function getAnonymousAnalyticsId(): string | undefined {
 }
 
 /**
+ * Pure metadata builder for the share side of the assessment funnel. A reply
+ * continues the incoming thread — same `challengeId`, so the durable sink can
+ * stitch open → start → complete → reply for one shared card. A fresh share
+ * opens a new thread with the new card's own `challengeId`. `source` marks the
+ * share surface so the two journeys stay separable in PostHog.
+ */
+export function movementShareMetadata(input: {
+  mode: string;
+  protocolId: string;
+  /** The thread key: incoming card id when replying, new card id when sharing fresh. */
+  challengeId: string;
+  /** Set on a fresh share when the payload itself continues a thread. */
+  replyToChallengeId?: string;
+}): Record<string, unknown> {
+  return {
+    mode: input.mode,
+    protocolId: input.protocolId,
+    source: 'session-recap',
+    challengeId: input.challengeId,
+    ...(input.replyToChallengeId ? { replyToChallengeId: input.replyToChallengeId } : {}),
+  };
+}
+
+/**
  * Record a challenge milestone without blocking the coaching flow.
  * The payload contains challenge metadata only; no camera frames are sent.
  */

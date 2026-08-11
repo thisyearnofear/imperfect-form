@@ -198,15 +198,24 @@ Likely reuse points: `SessionRecap`, `coachingStory`, `FormSignature`, `OfflineD
 
 ### M2 — Assessment challenge and recipient route
 
-**Status: privacy-safe recipient route and local share loop shipped; production funnel durability and measurement validation remain open.**
+**Status: full five-event funnel journey wired end-to-end; production sink key and measurement validation remain open.**
 
 The recap now creates a strict, versioned `curls-baseline@1.0` aggregate-only
 challenge and sends recipients to `/challenge` with one **Take the same test**
 CTA. Native Web Share and clipboard fallback are supported. The legacy Ghost
-form-line share remains a separate action. Anonymous and Farcaster funnel events
-are accepted with basic input validation, but the current tracker is process-local
-and must move to durable, rate-limited storage before metrics are treated as
-production truth.
+form-line share remains a separate action. All five funnel events
+(`assessment_card_shared` → `assessment_challenge_opened` →
+`assessment_started` → `assessment_completed` → `assessment_replied`) are now
+emitted client-side at their lifecycle moments — including the organic
+baseline path (start → complete → share), not only incoming-challenge replies —
+and forwarded to a durable PostHog sink (free tier, fail-silent) when
+`POSTHOG_API_KEY` is configured. The route forwards only an allowlisted,
+aggregate metadata set (`source`, `mode`, `protocolId`, `challengeType`,
+`challengeId`, `replyToChallengeId`, `status`, `confidence`) so PostHog can
+stitch one shared card's open → start → complete → reply journey; raw
+payloads, traces, addresses, and free text never leave the boundary. The
+in-memory tracker remains the fallback store; funnel metrics become production
+truth only once the sink is configured and reviewed for rate limits.
 
 **Goal:** Engineer distribution into the result itself.
 
@@ -232,7 +241,7 @@ Primary metric:
 
 ### M3 — Self trajectory and next unlocks
 
-**Status: local self-trajectory and next-unlock slice shipped; measurement evidence and durable funnel analytics remain open.**
+**Status: local self-trajectory and next-unlock slice shipped; measurement evidence remains open and the durable funnel sink is wired but needs a configured key.**
 
 The recap loads user-scoped local assessment history, orders valid protocol-matched
 reads newest-first, shows recent baseline rows, and compares the latest valid read
@@ -356,14 +365,15 @@ Shipped in the first local slice:
 - Recap Movement Card and compact self-versus-self Movement History.
 - Strict aggregate-only `MovementChallenge` payloads and a focused `/challenge` recipient route with a single **Take the same test** CTA.
 - Separate legacy Ghost/form-line sharing remains available.
-- Anonymous and Farcaster assessment funnel events with basic input validation.
+- Full assessment funnel wiring: anonymous and Farcaster events for shared → opened → started → completed → replied, fired for both organic baselines and incoming-challenge replies, with `challengeId` thread stitching and a strict metadata allowlist at the durable-sink boundary.
 - Pure confidence-aware local trajectory model and recap next-unlock surface; only clear, protocol-matched reads can move the line.
-- Focused tests for scoring, persistence, comparison, malformed records, inconclusive states, challenge encoding, and trajectory states.
+- Repeatable curl test–retest protocol and dependency-free evidence analysis harness with versioned JSON/Markdown reports.
+- Focused tests for scoring, persistence, comparison, malformed records, inconclusive states, challenge encoding, trajectory states, and retest evidence aggregation.
 
 Still gated:
 
-- Setup calibration and cross-device test–retest evidence.
-- Durable, rate-limited production storage for assessment funnel analytics.
+- Setup calibration and cross-device test–retest evidence; the repeatable study protocol and local analysis harness are documented and ready, but no real study result is claimed yet. The screening report also guards against inconclusive and low-confidence rates above 25%.
+- Durable PostHog sink is wired and fail-silent with the full journey forwarded; configuring the free-tier key, rate-limit review, and dashboard validation remain open.
 - Recipient challenge experiments and distribution optimization.
 - Trajectory experiments after repeated-read evidence validates the local model.
 - Age-band/cohort benchmarking and historical/fictional archetypes.

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Camera, LockKeyhole, Move, ShieldCheck } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -21,12 +21,18 @@ function ChallengeContent() {
     [searchParams]
   );
 
-  React.useEffect(() => {
-    if (!challenge) return;
+  // Fire the opened event exactly once per view. Without the guard, a late-
+  // loading fid re-runs the effect and double-counts the funnel step.
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (!challenge || openedRef.current) return;
+    openedRef.current = true;
     trackMovementChallengeEvent('assessment_challenge_opened', user?.fid, {
       protocolId: challenge.protocolId,
       mode: challenge.mode,
       confidence: challenge.confidence,
+      challengeId: challenge.challengeId,
+      source: 'incoming-challenge',
     });
   }, [challenge, user?.fid]);
 

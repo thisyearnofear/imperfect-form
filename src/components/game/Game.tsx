@@ -145,16 +145,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           reps: summary.repCount,
         });
       }
-      if (movementChallenge && assessmentCompletedRef.current !== movementChallenge.challengeId) {
-        assessmentCompletedRef.current = movementChallenge.challengeId;
+      if (
+        assessment &&
+        assessmentCompletedRef.current !== (movementChallenge?.challengeId ?? 'baseline')
+      ) {
+        assessmentCompletedRef.current = movementChallenge?.challengeId ?? 'baseline';
         trackMovementChallengeEvent('assessment_completed', user?.fid, {
           mode: summary.mode,
-          protocolId: movementChallenge.protocolId,
-          challengeId: movementChallenge.challengeId,
-          status:
-            summary.mode === CURL_BASELINE_PROTOCOL.mode
-              ? evaluateMovementAssessment(summary, CURL_BASELINE_PROTOCOL).status
-              : 'inconclusive',
+          protocolId: movementChallenge?.protocolId ?? CURL_BASELINE_PROTOCOL.id,
+          source: movementChallenge ? 'incoming-challenge' : 'baseline',
+          ...(movementChallenge ? { challengeId: movementChallenge.challengeId } : {}),
+          status: assessment.status,
         });
       }
 
@@ -502,6 +503,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setStarted(false);
     setShowTutorial(false);
 
+    // A stopped session releases the started guard so the next session re-fires
+    // assessment_started (each set is its own funnel entry). The completed
+    // guard stays keyed per-session and is reset by the next curl start.
+    assessmentStartedRef.current = false;
+
     // Physical AI: end-of-session signal (no-op unless station URL configured)
     coachStation.sendSessionEvent('session_end', mode, personality);
 
@@ -585,12 +591,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         markCameraIntroHandled();
       }
 
-      if (movementChallenge && !assessmentStartedRef.current) {
+      // Every curl baseline session starts the assessment funnel — the organic
+      // path (start → complete → share) and the incoming-challenge path
+      // (open → start → complete → reply) both count. `source` separates the
+      // journeys and `challengeId` lets PostHog stitch a reply to its opener.
+      if (mode === CURL_BASELINE_PROTOCOL.mode && !assessmentStartedRef.current) {
         assessmentStartedRef.current = true;
+        assessmentCompletedRef.current = null;
         trackMovementChallengeEvent('assessment_started', user?.fid, {
-          mode: movementChallenge.mode,
-          protocolId: movementChallenge.protocolId,
-          challengeId: movementChallenge.challengeId,
+          mode,
+          protocolId: movementChallenge?.protocolId ?? CURL_BASELINE_PROTOCOL.id,
+          source: movementChallenge ? 'incoming-challenge' : 'baseline',
+          ...(movementChallenge ? { challengeId: movementChallenge.challengeId } : {}),
         });
       }
 

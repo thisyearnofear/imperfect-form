@@ -9,7 +9,11 @@ import FormSignatureHistory from './FormSignatureHistory';
 import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
 import { BRAND } from '@/lib/brandPositioning';
 import { ghostService } from '@/services/GhostService';
-import { trackChallengeEvent, trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
+import {
+  movementShareMetadata,
+  trackChallengeEvent,
+  trackMovementChallengeEvent,
+} from '@/lib/challengeAnalytics';
 import {
   createMovementChallengePayload,
   createMovementChallengeUrl,
@@ -202,43 +206,32 @@ function FormReceipt({
       );
       const challengeUrl = createMovementChallengeUrl(challengePayload, receiptOrigin());
       const challengeText = `I found one useful movement signal in my ${mode}. Take the same test and find yours. No video shared.`;
+      // A reply continues the incoming thread — same challengeId, so PostHog
+      // can stitch open → start → complete → reply for one shared card. A
+      // fresh share opens a new thread with the new card's own challengeId.
+      const sharedEvent = movementChallenge ? 'assessment_replied' : 'assessment_card_shared';
+      const sharedMetadata = movementShareMetadata({
+        mode,
+        protocolId: movementAssessment.protocolId,
+        challengeId: movementChallenge
+          ? movementChallenge.challengeId
+          : challengePayload.challengeId,
+        // A fresh share may itself continue a thread; a reply never re-links it.
+        replyToChallengeId: movementChallenge ? undefined : challengePayload.replyToChallengeId,
+      });
       if (navigator.share) {
         await navigator.share({
           title: 'Take the same test',
           text: challengeText,
           url: challengeUrl,
         });
-        if (movementChallenge) {
-          trackMovementChallengeEvent('assessment_replied', user?.fid, {
-            mode,
-            protocolId: movementAssessment.protocolId,
-            source: 'session-recap',
-          });
-        } else {
-          trackMovementChallengeEvent('assessment_card_shared', user?.fid, {
-            mode,
-            protocolId: movementAssessment.protocolId,
-            source: 'session-recap',
-          });
-        }
+        trackMovementChallengeEvent(sharedEvent, user?.fid, sharedMetadata);
         setChallengeAction('shared');
         return;
       }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(`${challengeText}\n${challengeUrl}`);
-        if (movementChallenge) {
-          trackMovementChallengeEvent('assessment_replied', user?.fid, {
-            mode,
-            protocolId: movementAssessment.protocolId,
-            source: 'session-recap',
-          });
-        } else {
-          trackMovementChallengeEvent('assessment_card_shared', user?.fid, {
-            mode,
-            protocolId: movementAssessment.protocolId,
-            source: 'session-recap',
-          });
-        }
+        trackMovementChallengeEvent(sharedEvent, user?.fid, sharedMetadata);
         setChallengeAction('copied');
         return;
       }

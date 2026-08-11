@@ -251,14 +251,20 @@ a concrete next action rather than only a number.
 
 ### 4.3 M2 — Assessment challenge and recipient route
 
-**Status: first privacy-safe local challenge slice shipped; durable production analytics and distribution experiments remain open.**
+**Status: full five-event funnel journey wired end-to-end; durable sink key and distribution experiments remain open.**
 
 The recap creates a strict `curls-baseline@1.0` aggregate-only payload, shares
 through Web Share or clipboard, and sends recipients to `/challenge` with one
 **Take the same test** CTA. The existing Ghost/form-line share remains separate.
-Anonymous and Farcaster funnel events are validated at the API boundary, but the
-current tracker is process-local; durable, rate-limited storage is still required
-before using the funnel as production truth.
+All five funnel events are emitted client-side at their lifecycle moments — the
+organic baseline path (start → complete → share) and the incoming-challenge
+path (open → start → complete → reply) — with `challengeId` so PostHog can
+stitch one card's journey. Events are validated at the API boundary and
+forwarded to a durable, fail-silent PostHog sink through a strict metadata
+allowlist (no raw payloads, traces, or addresses) when the free-tier key is
+configured. The current in-memory tracker remains the fallback; a configured key
+and rate-limit/dashboard review are still required before using the funnel as
+production truth.
 
 - Create a versioned, share-safe payload containing protocol, headline, next
   action, and optional approximate trace.
@@ -334,9 +340,9 @@ The current code has shipped the M0/M1/M3 local foundation for the curl protocol
 plus the first M2 challenge slice: versioned assessment evaluation, explicit
 inconclusive states, local-only persistence, a recap Movement Card, a
 protocol-matched self-history view, a strict aggregate-only payload, and a
-focused `/challenge` recipient route. Setup calibration, test–retest evidence,
-durable production funnel analytics, trajectory estimates, cohorts, and
-archetypes remain pending.
+focused `/challenge` recipient route, and a local test–retest evidence harness.
+Setup calibration and real test–retest evidence, durable production funnel
+analytics, trajectory experiments, cohorts, and archetypes remain pending.
 
 ### 4.8 Movement Intelligence definition of done
 
@@ -396,5 +402,5 @@ Phase 1 and Phase 2 can run in parallel after Phase 0. Phase 3 should wait until
 - [ ] Phase 2 human→robot mapper records first LeRobot episode
 - [ ] Phase 3 edge perf matrix decided and default config updated
 - [x] Phase 4 Movement Intelligence local M0/M1/M3 foundation shipped
-- [ ] Phase 4 Movement Intelligence setup/test–retest/trajectory evidence and durable funnel validated (local trajectory slice shipped)
+- [ ] Phase 4 Movement Intelligence setup/test–retest/trajectory evidence and durable funnel validated (protocol + local harness shipped; real evidence still open)
 - [ ] `docs/ROADMAP.md` updated with the new gates

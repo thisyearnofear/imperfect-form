@@ -19,10 +19,15 @@ pose → form events → physical demonstration · Cyberwave twin · SmolVLA fly
 from real sessions.
 
 **Movement Intelligence:** validated curl signals now produce a private Movement
-Card, self-versus-self history, and a privacy-safe **Take the same test** challenge
-with a focused recipient route. Trajectories, age-band comparisons, and cohorts
-remain gated by measurement quality, sample size, privacy review, and durable
-production analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIGENCE.md).
+Card, self-versus-self history, a local trajectory/next-unlock surface, and a
+privacy-safe **Take the same test** challenge with a focused recipient route. A
+repeatable curl test–retest protocol and local evidence harness are ready for
+study; a fail-silent PostHog free-tier sink captures the full aggregate
+assessment journey — share → open → start → complete → reply — for organic
+baselines and incoming-challenge replies alike when configured. Stronger
+trajectory claims, age-band comparisons, and cohorts remain gated by real
+measurement quality, sample size, privacy review, and validated durable
+analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIGENCE.md).
 
 **✅ Self Protocol**: Live on Celo Mainnet - Real passport verification with zero-knowledge proofs.
 
@@ -36,7 +41,7 @@ production analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTEL
 - **Multi-Chain Support**: Base, Celo, Polygon, Monad, and Avalanche themes (leaderboards where contracts are live)
 - **Human Verification**: Self Protocol integration for verified leaderboards
 - **Social Integration**: Farcaster mini-app, ghost replays, quests and XP
-- **Movement Intelligence** _(local challenge slice shipped)_: repeatable curl assessment, private Movement Cards, self-versus-self history, and a wallet-free **Take the same test** route; trajectories and population benchmarking remain planned
+- **Movement Intelligence** _(local assessment + evidence slice shipped)_: repeatable curl assessment, private Movement Cards, self-versus-self history, local trajectory/next-unlock guidance, a wallet-free **Take the same test** route, and a test–retest evidence harness; population benchmarking remains gated
 - **Mobile-First**: Responsive design optimized for mobile fitness tracking
 
 ## Live Demo

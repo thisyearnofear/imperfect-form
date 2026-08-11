@@ -46,6 +46,15 @@ Required for production:
 - Network-specific RPC URLs
 - API keys for external services
 
+Durable analytics (optional, free tier):
+
+- `POSTHOG_API_KEY` — PostHog project key for the aggregate assessment funnel.
+  Unset means the durable sink stays disabled and the in-memory tracker remains
+  the only store.
+- `POSTHOG_HOST` — optional PostHog host override (defaults to the US cloud).
+- `POSTHOG_DISABLED` — set `true` to force-disable the sink without removing
+  the key.
+
 ## Network Configuration
 
 ### Chain Setup

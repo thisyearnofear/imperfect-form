@@ -123,13 +123,15 @@ XP. Avalanche is a full theme token once earned / wallet-switched.
 - Strict aggregate-only `curls-baseline@1.0` assessment challenges
 - Focused `/challenge` recipient route with a single **Take the same test** CTA
 - Native Web Share and clipboard fallback without a wallet
-- Separate assessment funnel events for anonymous and Farcaster users
+- Full five-event assessment funnel wired for anonymous and Farcaster users —
+  shared → opened → started → completed → replied — for organic baselines and
+  incoming-challenge replies, with `challengeId` thread stitching
 - Existing Ghost/form-line challenges preserved as a distinct path
 
 **Planned (Movement Intelligence — after measurement gates):**
 
-- Setup calibration and cross-device test–retest validation
-- Durable, rate-limited production storage and distribution experiments
+- Setup calibration and cross-device test–retest validation (protocol + local harness shipped; real evidence open)
+- Durable funnel analytics (PostHog free-tier sink wired; key + review open) and distribution experiments
 - Cross-device test–retest validation for trajectory claims
 - Self trajectory and next movement unlocks (local curl slice shipped)
 - Age-band / opt-in cohort benchmarking only after protocol and sample-size gates
@@ -313,9 +315,9 @@ for the detailed plan.
 - [x] M0 foundation: versioned curl protocol, confidence, repeatability primitives, inconclusive state
 - [x] M1 foundation: local MovementAssessment and Movement Card
 - [x] M3 foundation: compact protocol-matched Movement History and self deltas
-- [ ] M0 completion: setup calibration and cross-device test–retest evidence
+- [ ] M0 completion: setup calibration and cross-device test–retest evidence (local protocol + harness ready)
 - [x] M2 foundation: versioned “Take the same test” challenge and recipient route
-- [ ] M2 completion: durable funnel storage and distribution experiments
+- [ ] M2 completion: durable PostHog sink configured + funnel experiments (sink wired, fail-silent, full five-event journey client-wired)
 - [x] M3 foundation: local confidence-aware trajectory and next unlock surface
 - [ ] M3 completion: cross-device evidence and trajectory experiments
 - [ ] M4: privacy-reviewed age-band / opt-in cohort benchmarks
