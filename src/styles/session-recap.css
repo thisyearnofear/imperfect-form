@@ -1164,3 +1164,230 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.52rem;
 }
+
+/* Movement Card Polish */
+.movement-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.movement-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(117, 223, 205, 0.15);
+}
+
+.movement-card__dimension {
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.movement-card__dimension:hover {
+  background: rgba(117, 223, 205, 0.08);
+  border-color: rgba(117, 223, 205, 0.2);
+}
+
+.movement-card__bar span {
+  animation: movement-bar-fill 0.8s ease-out forwards;
+}
+
+@keyframes movement-bar-fill {
+  from {
+    width: 0;
+  }
+}
+
+.movement-card__icon {
+  animation: movement-icon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes movement-icon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(117, 223, 205, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(117, 223, 205, 0);
+  }
+}
+
+.movement-card--inconclusive .movement-card__icon {
+  animation: movement-icon-pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes movement-icon-pulse-warning {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(252, 177, 49, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(252, 177, 49, 0);
+  }
+}
+
+.movement-card__confidence {
+  animation: confidence-fade-in 0.5s ease-out;
+}
+
+@keyframes confidence-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.movement-card__next {
+  animation: next-slide-in 0.6s ease-out;
+}
+
+@keyframes next-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Movement Trajectory Polish */
+.movement-trajectory {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.movement-trajectory:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(117, 223, 205, 0.15);
+}
+
+.movement-trajectory__signal {
+  animation: signal-slide-in 0.5s ease-out;
+}
+
+@keyframes signal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.movement-trajectory__stats {
+  animation: stats-fade-in 0.6s ease-out;
+}
+
+@keyframes stats-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.movement-trajectory__unlock {
+  animation: unlock-pulse 2s ease-in-out infinite;
+}
+
+@keyframes unlock-pulse {
+  0%, 100% {
+    border-color: rgba(117, 223, 205, 0.2);
+  }
+  50% {
+    border-color: rgba(117, 223, 205, 0.4);
+  }
+}
+
+.movement-trajectory__sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 32px;
+  padding: 4px 0;
+}
+
+.movement-trajectory__sparkline-bar {
+  flex: 1;
+  min-width: 4px;
+  background: linear-gradient(to top, #75dfcd, #fcb131);
+  border-radius: 2px 2px 0 0;
+  animation: sparkline-grow 0.5s ease-out forwards;
+  transform-origin: bottom;
+}
+
+@keyframes sparkline-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Movement History Polish */
+.movement-history {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.movement-history:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(117, 223, 205, 0.15);
+}
+
+.movement-history__comparison {
+  animation: comparison-slide-in 0.5s ease-out;
+}
+
+@keyframes comparison-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.movement-history__row {
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.movement-history__row:hover {
+  background: rgba(117, 223, 205, 0.05);
+  border-color: rgba(117, 223, 205, 0.15);
+}
+
+.movement-history__delta--up {
+  animation: delta-bounce 0.4s ease-out;
+}
+
+@keyframes delta-bounce {
+  0% {
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.movement-history__list {
+  animation: list-fade-in 0.6s ease-out;
+}
+
+@keyframes list-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

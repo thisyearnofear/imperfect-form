@@ -117,6 +117,30 @@ export function MovementTrajectory({
         </div>
       </div>
 
+      {/* Sparkline visualization */}
+      {trajectory.qualifyingReads > 1 && (
+        <div className="movement-trajectory__sparkline" aria-hidden="true">
+          {Array.from({ length: Math.min(trajectory.qualifyingReads, 10) }).map((_, i) => {
+            const height =
+              trajectory.direction === 'up'
+                ? 20 + (i * 80) / Math.min(trajectory.qualifyingReads, 10)
+                : trajectory.direction === 'down'
+                  ? 100 - (i * 80) / Math.min(trajectory.qualifyingReads, 10)
+                  : 50 + (Math.random() - 0.5) * 20;
+            return (
+              <div
+                key={i}
+                className="movement-trajectory__sparkline-bar"
+                style={{
+                  height: `${Math.max(10, Math.min(100, height))}%`,
+                  animationDelay: `${i * 0.1}s`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+
       <div className="movement-trajectory__unlock">
         <div className="movement-trajectory__unlock-heading">
           <Sparkles size={14} aria-hidden="true" />
