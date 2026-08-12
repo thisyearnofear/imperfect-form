@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import type { CurlTelemetry } from '@/types/mediapipe';
 import { playStudioCue } from '@/lib/uiSound';
 import { coachStation, type StationTrajectoryProgressEvent } from '@/services/coachStation';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface CurlFormInstrumentProps {
   telemetry: CurlTelemetry | null;
@@ -67,6 +68,9 @@ interface ScoreEntry {
 }
 
 export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFormInstrumentProps) {
+  // Haptic feedback
+  const { triggerSuccessFeedback, triggerErrorFeedback } = useHapticFeedback();
+
   // SO-101 robot elbow angle from station trajectory progress
   const [robotElbowDeg, setRobotElbowDeg] = useState<number | null>(null);
   const [robotMeasuredDeg, setRobotMeasuredDeg] = useState<number | null>(null);
@@ -74,6 +78,8 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
   // Score history for tracking improvement
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([]);
   const prevRepCountRef = useRef(repCount);
+  const [currentGrade, setCurrentGrade] = useState<string | null>(null);
+  const prevGradeRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!coachStation.enabled) return;
@@ -166,6 +172,49 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
     }
     prevRepCountRef.current = repCount;
   }, [repCount, telemetry, robotElbowDeg]);
+
+  // Calculate grade from telemetry (must be before early return)
+  useEffect(() => {
+    if (!tracking || !telemetry) {
+      setCurrentGrade(null);
+      return;
+    }
+    const angle = clampAngle(telemetry.elbowAngle);
+    const targetMid = (telemetry.targetMinDeg + telemetry.targetMaxDeg) / 2;
+    const targetAngle = robotElbowDeg ?? targetMid;
+    const rangeReached = angle <= telemetry.targetMaxDeg;
+    const score = calculateFormScore(
+      angle,
+      targetAngle,
+      telemetry.elbowDriftDeg,
+      telemetry.elbowDriftTargetDeg,
+      rangeReached
+    );
+    const { grade } = getFormGrade(score);
+    setCurrentGrade(grade);
+  }, [tracking, telemetry, robotElbowDeg]);
+
+  // Haptic feedback on grade change (must be before early return)
+  useEffect(() => {
+    if (!tracking || !telemetry || currentGrade === null) return;
+    const prevGrade = prevGradeRef.current;
+    if (prevGrade !== null && prevGrade !== currentGrade) {
+      // Grade changed - trigger haptic feedback
+      const gradeOrder = ['F', 'D', 'C', 'B', 'A'];
+      const prevIndex = gradeOrder.indexOf(prevGrade);
+      const newIndex = gradeOrder.indexOf(currentGrade);
+      const improved = newIndex > prevIndex;
+
+      if (improved) {
+        // Improving - success feedback
+        triggerSuccessFeedback();
+      } else {
+        // Declining - error feedback
+        triggerErrorFeedback();
+      }
+    }
+    prevGradeRef.current = currentGrade;
+  }, [currentGrade, tracking, telemetry, triggerSuccessFeedback, triggerErrorFeedback]);
 
   if (!tracking || !telemetry) {
     return (
