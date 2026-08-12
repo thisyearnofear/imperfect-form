@@ -1,0 +1,126 @@
+/* Challenge Card Spring Animations */
+
+/* Ghost challenge cards - hover lift with spring feel */
+.challenge-card,
+.earned-surface--ghost {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+
+.challenge-card:hover,
+.earned-surface--ghost:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Challenge buttons - spring press/release */
+.challenge-button,
+.earned-cta-brass {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background-color 0.2s ease,
+              box-shadow 0.2s ease;
+}
+
+.challenge-button:active,
+.earned-cta-brass:active {
+  transform: scale(0.95);
+}
+
+.challenge-button:hover,
+.earned-cta-brass:hover {
+  transform: scale(1.02);
+}
+
+/* Challenge notification - bounce in */
+.challenge-notification {
+  animation: challenge-bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes challenge-bounce-in {
+  0% {
+    transform: scale(0.8) translateY(10px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05) translateY(-2px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Challenge icon pulse */
+.challenge-icon {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.challenge-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Ghost trail animation - spring physics */
+.ghost-trail {
+  animation: ghost-trail-spring 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ghost-trail-spring {
+  0% {
+    transform: translateX(-20px) scale(0.9);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(5px) scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Challenge countdown - elastic number change */
+.challenge-countdown {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.challenge-countdown.tick {
+  animation: countdown-tick 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes countdown-tick {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Challenge progress bar - spring fill */
+.challenge-progress-fill {
+  transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .challenge-card,
+  .earned-surface--ghost,
+  .challenge-button,
+  .earned-cta-brass,
+  .challenge-icon {
+    transition: none;
+    transform: none;
+  }
+  
+  .challenge-notification,
+  .ghost-trail,
+  .challenge-countdown.tick {
+    animation: none;
+  }
+}
