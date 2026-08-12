@@ -54,6 +54,14 @@ import {
 } from '../lib/pose/posePreprocessor';
 import { getDeviceInfo } from '../utils/deviceDetection';
 import { emitCoachCue } from '../lib/appEvents';
+import {
+  AdaptiveMobileQualityController,
+  getMobileQualityConstraints,
+  hasMaterialCameraQualityChange,
+  MOBILE_QUALITY_PROFILES,
+  type MobileQualityDecision,
+  type MobileQualityTier,
+} from '../lib/pose/mobileQuality';
 
 // Biomechanical types removed - consolidated into src/utils/biomechanics.ts
 
@@ -91,6 +99,7 @@ export function usePoseDetection(
     phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
     message: string;
     percentage: number;
+    qualityTier?: MobileQualityTier;
   }) => void,
   onMetrics?: (state: BiomechanicalState) => void,
   onCurlPoseData?: (poseData: import('../types/mediapipe').CurlPoseData | undefined) => void,
@@ -134,6 +143,7 @@ export function usePoseDetection(
     poseDetected: false,
     isLoading: false,
   });
+  const poseStateRef = useRef(_poseState);
 
   const sessionLoggerRef = useRef<SessionLogger | null>(null);
   const sessionStartTimeRef = useRef<number>(0);
@@ -164,6 +174,7 @@ export function usePoseDetection(
       phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
       message: string;
       percentage: number;
+      qualityTier?: MobileQualityTier;
     }) => {
       if (!onDetectionProgressRef.current) return;
       scheduleCallback(() => onDetectionProgressRef.current?.(progress));
@@ -182,13 +193,21 @@ export function usePoseDetection(
 
   const notifyStateChange = useCallback(
     (newState: Partial<typeof _poseState>) => {
-      setPoseState((prev) => {
-        const updated = { ...prev, ...newState };
-        if (onPoseStateChangeRef.current) {
-          scheduleCallback(() => onPoseStateChangeRef.current?.(updated));
-        }
-        return updated;
-      });
+      const previous = poseStateRef.current;
+      const updated = { ...previous, ...newState };
+      const changed = Object.keys(updated).some(
+        (key) => updated[key as keyof typeof updated] !== previous[key as keyof typeof previous]
+      );
+      if (!changed) return;
+
+      // Keep the callback outside the state updater. React may invoke updater
+      // functions more than once in development; publishing from inside one
+      // caused parent state updates to feed back into the pose loop.
+      poseStateRef.current = updated;
+      setPoseState(updated);
+      if (onPoseStateChangeRef.current) {
+        scheduleCallback(() => onPoseStateChangeRef.current?.(updated));
+      }
     },
     [scheduleCallback]
   );
@@ -265,6 +284,115 @@ export function usePoseDetection(
     );
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const isMobileDevice = isMobile || isMobileUA || (window.innerWidth < 768 && isTouchDevice);
+    const isFarcasterSession = isFarcasterMiniApp();
+    const mobileQualityController =
+      isMobileDevice && !isFarcasterSession
+        ? new AdaptiveMobileQualityController('balanced')
+        : null;
+    let qualityUpdateInFlight = false;
+    let pendingQualityDecision: MobileQualityDecision | null = null;
+    const applyMobileQualityDecision = (decision: MobileQualityDecision) => {
+      if (!mobileQualityController || decision.from !== mobileQualityController.currentTier) return;
+      if (qualityUpdateInFlight) {
+        // Keep the newest completed window while Safari is applying the prior
+        // request. The controller will reject stale decisions after a commit.
+        pendingQualityDecision = decision;
+        return;
+      }
+
+      const videoTrack = streamRef.current
+        ?.getVideoTracks()
+        .find((track) => track.kind === 'video');
+      if (!videoTrack || typeof videoTrack.applyConstraints !== 'function') {
+        pendingQualityDecision = decision;
+        return;
+      }
+
+      qualityUpdateInFlight = true;
+      const profile = MOBILE_QUALITY_PROFILES[decision.tier];
+      const beforeSettings = videoTrack.getSettings();
+      const profileConstraints = getMobileQualityConstraints(decision.tier);
+      const restorePriorSettings = async () => {
+        const restoreConstraints: MediaTrackConstraints = {};
+        if (Number.isFinite(beforeSettings.width)) {
+          restoreConstraints.width = { exact: beforeSettings.width };
+        }
+        if (Number.isFinite(beforeSettings.height)) {
+          restoreConstraints.height = { exact: beforeSettings.height };
+        }
+        if (Number.isFinite(beforeSettings.frameRate)) {
+          restoreConstraints.frameRate = { exact: beforeSettings.frameRate };
+        }
+        if (Object.keys(restoreConstraints).length > 0) {
+          await videoTrack.applyConstraints(restoreConstraints);
+        }
+      };
+      void videoTrack
+        .applyConstraints({ ...profileConstraints, facingMode: 'user' })
+        .then(async () => {
+          const afterSettings = videoTrack.getSettings();
+          if (
+            !hasMaterialCameraQualityChange(
+              beforeSettings,
+              afterSettings,
+              profile,
+              decision.direction
+            )
+          ) {
+            try {
+              await restorePriorSettings();
+            } catch (restoreError) {
+              console.warn('Unable to restore prior camera quality settings:', restoreError);
+            }
+            throw new Error('Camera did not materially change toward the requested profile');
+          }
+          if (!mobileQualityController.commit(decision, performance.now())) {
+            try {
+              await restorePriorSettings();
+            } catch (restoreError) {
+              console.warn('Unable to restore stale camera quality settings:', restoreError);
+            }
+            return;
+          }
+
+          const message =
+            decision.direction === 'down'
+              ? decision.tier === 'light'
+                ? 'Using light camera mode — coaching continues.'
+                : 'Using lighter camera mode — coaching continues.'
+              : 'Camera mode restored — coaching continues.';
+          emitProgress({
+            phase: 'ready',
+            message,
+            percentage: 100,
+            qualityTier: decision.tier,
+          });
+        })
+        .catch((error) => {
+          // Some iOS/browser camera implementations reject or ignore
+          // applyConstraints. Keep coaching alive at the current capture
+          // settings; the controller remains on the old tier and will retry
+          // after another sustained measurement window.
+          console.warn('Adaptive mobile camera quality change skipped:', error);
+        })
+        .finally(() => {
+          qualityUpdateInFlight = false;
+          if (!cancelled && pendingQualityDecision) {
+            const nextDecision = pendingQualityDecision;
+            pendingQualityDecision = null;
+            applyMobileQualityDecision(nextDecision);
+          }
+        });
+    };
+    const observeMobileQuality = (sample: {
+      fps: number;
+      detectionTimeMs: number;
+      timestampMs: number;
+    }) => {
+      if (!mobileQualityController) return;
+      const decision = mobileQualityController.observe(sample);
+      if (decision) applyMobileQualityDecision(decision);
+    };
 
     // Path selection: see src/lib/pose/poseRuntime.ts + docs/ARCHITECTURE.md
     const preferWorker = shouldUsePoseWorker({
@@ -323,12 +451,14 @@ export function usePoseDetection(
         const constraints = isFarcasterMiniApp()
           ? getFarcasterCameraConstraints()
           : {
-              video: {
-                width: isMobile ? { ideal: 640 } : 640,
-                height: isMobile ? { ideal: 480 } : 480,
-                facingMode: 'user',
-                frameRate: { ideal: 30 },
-              },
+              video: isMobileDevice
+                ? { ...getMobileQualityConstraints('balanced'), facingMode: 'user' }
+                : {
+                    width: 640,
+                    height: 480,
+                    facingMode: 'user',
+                    frameRate: { ideal: 30 },
+                  },
             };
 
         const cameraResult = await requestCameraPermission(constraints);
@@ -527,6 +657,13 @@ export function usePoseDetection(
             }
             // Worker can't open WebSockets — forward engine form cues on main thread
             if (data.formCheckSpeak) {
+              if (data.state) {
+                sessionLoggerRef.current?.logObservation(
+                  data.state,
+                  data.keypoints || [],
+                  data.formCheckSpeak.issue
+                );
+              }
               if (!coachStation.enabled) {
                 emitCoachCue({ ...data.formCheckSpeak, mode: modeRef.current });
               }
@@ -574,12 +711,14 @@ export function usePoseDetection(
         const constraints = isFarcaster
           ? getFarcasterCameraConstraints()
           : {
-              video: {
-                width: isMobile ? { ideal: 640 } : 640,
-                height: isMobile ? { ideal: 480 } : 480,
-                facingMode: 'user',
-                frameRate: { ideal: 30 },
-              },
+              video: isMobileDevice
+                ? { ...getMobileQualityConstraints('balanced'), facingMode: 'user' }
+                : {
+                    width: 640,
+                    height: 480,
+                    facingMode: 'user',
+                    frameRate: { ideal: 30 },
+                  },
             };
 
         const cameraResult = await requestCameraPermission(constraints);
@@ -794,6 +933,7 @@ export function usePoseDetection(
         // Start detection loop
         let inferenceInFlight = false;
         let coalescedFrames = 0;
+        let lastCompletedDetectionAt = 0;
         let rafScheduled = false;
         const scheduleDetect = () => {
           if (cancelled || !isActiveRef.current || !detectorRef.current || rafScheduled) return;
@@ -847,6 +987,20 @@ export function usePoseDetection(
             const poses = await detectorRef.current!.estimatePoses(detectInput);
             const detectionTimeMs = performance.now() - detectStart;
             if (cancelled || !isActiveRef.current) return;
+
+            const completedAt = performance.now();
+            const measuredFps =
+              lastCompletedDetectionAt > 0
+                ? 1000 / Math.max(1, completedAt - lastCompletedDetectionAt)
+                : 0;
+            lastCompletedDetectionAt = completedAt;
+            if (measuredFps > 0) {
+              observeMobileQuality({
+                fps: measuredFps,
+                detectionTimeMs,
+                timestampMs: completedAt,
+              });
+            }
 
             const activeMode = modeRef.current;
             const firstPose = poses.find((pose) => pose?.keypoints?.length);
@@ -913,6 +1067,7 @@ export function usePoseDetection(
               if (engineDetector) {
                 const speak = consumeFormCheckSpeak(engineDetector);
                 if (speak) {
+                  sessionLoggerRef.current?.logObservation(metrics, keypoints, speak.issue);
                   if (!coachStation.enabled) {
                     emitCoachCue({ ...speak, mode: activeMode });
                   }

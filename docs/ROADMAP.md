@@ -142,6 +142,14 @@ The full sequence, guardrails, data boundaries, and success metrics live in
 extension around the camera → understand → show loop; it does not reorder the
 manual-stage → hardware → episode gates for the physical Coach.
 
+**Shipped (mobile performance guardrail):**
+
+- Adaptive ordinary-mobile camera quality tiers use sustained completed-loop FPS
+  and `estimatePoses()` latency to move between 640×480 / 30 FPS, 480×360 /
+  24 FPS, and 320×240 / 15 FPS. Changes are hysteretic, verified against actual
+  camera-track settings, and fail-silent when Safari rejects or ignores a
+  request; Farcaster keeps its dedicated camera path.
+
 **Shipped (curl evidence surface):**
 
 - Live `CurlFormInstrument` in the curls session: the user can see the active
@@ -225,11 +233,11 @@ evidence opportunities.
 
 These gates sit alongside the hardware gates above and are detailed in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). They can be worked in parallel with Milestone 1 and each other, but they should not delay the manual stage.
 
-| #     | Gate                        | Done when                                                                                                                                              | Where                                 |
-| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
-| **A** | **CV robustness**           | Pre-processing toggle (exposure / calibration) improves keypoint confidence on bad lighting by ≥10% with <5% mobile FPS regression                     | `docs/IMPLEMENTATION_PLAN.md` Phase 1 |
-| **B** | **Human → robot mapping**   | ✅ Deterministic curl angle mapping + safety-clamped SO-101 waypoints shipped; first LeRobot episode still needs recording from a coached curl session | `docs/IMPLEMENTATION_PLAN.md` Phase 2 |
-| **C** | **Edge performance matrix** | MoveNet A/B matrix (input size / model variant / quantization) decides a new default mobile config with no Ring 0 e2e regression                       | `docs/IMPLEMENTATION_PLAN.md` Phase 3 |
+| #     | Gate                        | Done when                                                                                                                                                                          | Where                                 |
+| ----- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| **A** | **CV robustness**           | Pre-processing toggle (exposure / calibration) improves keypoint confidence on bad lighting by ≥10% with <5% mobile FPS regression                                                 | `docs/IMPLEMENTATION_PLAN.md` Phase 1 |
+| **B** | **Human → robot mapping**   | ✅ Deterministic curl angle mapping + safety-clamped SO-101 waypoints shipped; first LeRobot episode still needs recording from a coached curl session                             | `docs/IMPLEMENTATION_PLAN.md` Phase 2 |
+| **C** | **Edge performance matrix** | Adaptive mobile camera guardrail shipped; MoveNet A/B matrix (input size / model variant / quantization) still needs to decide the validated default with no Ring 0 e2e regression | `docs/IMPLEMENTATION_PLAN.md` Phase 3 |
 
 **Rule of thumb:** `A` and `B` can start as soon as the manual stage is solid; `C` waits until `A` is done so pre-processing and model/quantization effects are not conflated. All three are inputs to the SmolVLA milestone, not blockers for it.
 

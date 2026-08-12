@@ -224,6 +224,22 @@
   color: var(--cf-teal-bright);
   border-color: rgba(86, 217, 195, 0.3);
   background: rgba(86, 217, 195, 0.08);
+  animation: coach-connected-settle 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes coach-connected-settle {
+  0% {
+    box-shadow: 0 0 0 0 rgba(86, 217, 195, 0.3);
+    transform: translateY(2px);
+  }
+  55% {
+    box-shadow: 0 0 0 7px rgba(86, 217, 195, 0.08);
+    transform: translateY(0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(86, 217, 195, 0);
+    transform: translateY(0);
+  }
 }
 
 .coach-foyer__coach-status.is-connected .coach-foyer__coach-status-dot {
@@ -875,6 +891,13 @@
   line-height: 1.35;
 }
 
+/* The page shell's sticky topbar sits above the game surface. Keep the
+   optional orientation/fullscreen controls below it while the foyer is open,
+   instead of letting the nav cover the top-right affordance. */
+#game-container:has(.coach-foyer) .game-container__top-controls {
+  top: 3.75rem;
+}
+
 @media (max-width: 520px) {
   .coach-foyer__incoming-challenge {
     align-items: start;
@@ -944,7 +967,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .coach-foyer__orbit,
-  .coach-foyer__system-link::after {
+  .coach-foyer__system-link::after,
+  .coach-foyer__coach-status.is-connected {
     animation: none;
   }
 }

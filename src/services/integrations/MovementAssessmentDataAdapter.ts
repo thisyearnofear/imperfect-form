@@ -11,6 +11,13 @@ export interface StoredMovementAssessment {
   assessment: MovementAssessment;
 }
 
+export interface MovementAssessmentExport {
+  schema: 'imperfect-form.movement-assessments-export.v1';
+  exportedAt: string;
+  userId: string | null;
+  records: StoredMovementAssessment[];
+}
+
 function createId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
@@ -88,6 +95,27 @@ export async function getLocalMovementAssessments(
   return userId ? records.filter((record) => record.userId === userId) : records;
 }
 
+export function createMovementAssessmentExport(
+  records: StoredMovementAssessment[],
+  userId?: string,
+  exportedAt = new Date().toISOString()
+): MovementAssessmentExport {
+  return {
+    schema: 'imperfect-form.movement-assessments-export.v1',
+    exportedAt,
+    userId: userId ?? null,
+    records,
+  };
+}
+
+/** Build a local-only JSON export. No network request is made. */
+export async function exportLocalMovementAssessments(
+  userId?: string
+): Promise<MovementAssessmentExport> {
+  const records = await getLocalMovementAssessments(userId);
+  return createMovementAssessmentExport(records, userId);
+}
+
 /** Re-key local assessment history when guest workouts are adopted by a wallet. */
 export function migrateLocalMovementAssessments(
   fromUserId: string,
@@ -117,8 +145,26 @@ export function migrateLocalMovementAssessments(
   });
 }
 
-export function clearLocalMovementAssessments(): Promise<void> {
+/**
+ * Delete local assessment history. With a user ID, only that local profile is
+ * removed; omitting it preserves the test helper's ability to clear the whole
+ * namespace.
+ */
+export function clearLocalMovementAssessments(userId?: string): Promise<number> {
   return enqueueWrite(async () => {
-    await getOfflineDataStore().remove(MOVEMENT_ASSESSMENTS_KEY);
+    const store = getOfflineDataStore();
+    const current = (await store.get<StoredMovementAssessment[]>(MOVEMENT_ASSESSMENTS_KEY)) ?? [];
+
+    if (!userId) {
+      await store.remove(MOVEMENT_ASSESSMENTS_KEY);
+      return current.length;
+    }
+
+    const remaining = current.filter((record) => record.userId !== userId);
+    const deleted = current.length - remaining.length;
+    if (deleted > 0) {
+      await store.set(MOVEMENT_ASSESSMENTS_KEY, remaining);
+    }
+    return deleted;
   });
 }

@@ -57,6 +57,31 @@ reports and the generated comparison together.
 | Median / p95 pipeline latency     | Capture-to-baseline feedback delay      |
 | Device info                       | Reproducibility across phones/browsers  |
 
+## Runtime adaptive mobile quality
+
+Ordinary mobile sessions start at a balanced camera profile of 480×360 / 24 FPS.
+The main-thread pose loop ignores the first 4 seconds, then evaluates sustained
+30-inference windows using elapsed-window throughput and average
+`estimatePoses()` latency. It can move one tier at a time between:
+
+| Tier     | Camera profile   |
+| -------- | ---------------- |
+| High     | 640×480 / 30 FPS |
+| Balanced | 480×360 / 24 FPS |
+| Light    | 320×240 / 15 FPS |
+
+Quality changes use hysteresis and an 8-second cooldown. A tier is announced
+only when the camera track's `getSettings()` shows a material move toward the
+requested profile; rejected or ignored constraints leave coaching and the
+current tier unchanged. The previous settings are restored on a failed
+verification when the browser permits it. Rep detection and physical-coach cue
+semantics are independent of the camera tier.
+
+Farcaster retains its dedicated camera-permission and initial-constraint path and
+is not included in this ordinary-mobile controller. Record the actual device,
+browser, path, starting tier, and any observed tier changes alongside each
+production baseline run.
+
 ## Latest run
 
 Run date: 2026-07-24

@@ -4,6 +4,7 @@ import { usePoseDetection } from '@/modules/usePoseDetection';
 import useDeviceDetect from '@/hooks/useDeviceDetect';
 import { createRemoteLogger } from '@/utils/remoteLogger';
 import { normalizeExerciseMode } from '@/utils/biomechanics';
+import type { MobileQualityTier } from '@/lib/pose/mobileQuality';
 
 // Add type declaration for window object
 declare global {
@@ -29,6 +30,7 @@ interface WebcamProps {
     phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
     message: string;
     percentage: number;
+    qualityTier?: MobileQualityTier;
   }) => void;
   onMetrics?: (state: import('@/types/mediapipe').BiomechanicalState) => void;
   onCurlPoseData?: (poseData: import('@/types/mediapipe').CurlPoseData | undefined) => void;

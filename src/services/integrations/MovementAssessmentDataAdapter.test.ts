@@ -23,6 +23,8 @@ vi.mock('@/services/OfflineDataStore', () => ({
 
 import {
   clearLocalMovementAssessments,
+  createMovementAssessmentExport,
+  exportLocalMovementAssessments,
   getLocalMovementAssessments,
   migrateLocalMovementAssessments,
   saveLocalMovementAssessment,
@@ -105,5 +107,34 @@ describe('MovementAssessmentDataAdapter', () => {
       'guest-2',
       'guest-1',
     ]);
+  });
+
+  it('exports a versioned local-only payload without changing stored records', async () => {
+    await saveLocalMovementAssessment(assessment, 'guest-1', 'session-1');
+
+    const exported = await exportLocalMovementAssessments('guest-1');
+
+    expect(exported).toEqual({
+      schema: 'imperfect-form.movement-assessments-export.v1',
+      exportedAt: expect.any(String),
+      userId: 'guest-1',
+      records: [expect.objectContaining({ userId: 'guest-1', sourceSessionId: 'session-1' })],
+    });
+    expect(await getLocalMovementAssessments('guest-1')).toHaveLength(1);
+    expect(createMovementAssessmentExport([], undefined, '2026-08-12T00:00:00.000Z')).toEqual({
+      schema: 'imperfect-form.movement-assessments-export.v1',
+      exportedAt: '2026-08-12T00:00:00.000Z',
+      userId: null,
+      records: [],
+    });
+  });
+
+  it('deletes only the selected local profile', async () => {
+    await saveLocalMovementAssessment(assessment, 'guest-1', 'session-1');
+    await saveLocalMovementAssessment(assessment, 'guest-2', 'session-2');
+
+    expect(await clearLocalMovementAssessments('guest-1')).toBe(1);
+    expect(await getLocalMovementAssessments('guest-1')).toEqual([]);
+    expect(await getLocalMovementAssessments('guest-2')).toHaveLength(1);
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Camera, LockKeyhole, MonitorUp, ShieldCheck } from 'lucide-react';
 import { guidanceFor } from '@/lib/exerciseGuidance';
 import type { ExerciseMode } from '@/utils/biomechanics';
@@ -8,6 +8,8 @@ import '@/styles/camera-primer.css';
 
 interface CameraPrimerProps {
   mode: ExerciseMode;
+  /** iOS Safari has a different permission recovery path than desktop browsers. */
+  isIOS?: boolean;
   onEnable: () => void;
   onCancel: () => void;
 }
@@ -18,8 +20,44 @@ interface CameraPrimerProps {
  * surface exists only for one job: when permission was denied, explain the
  * fix and offer a retry — it is no longer a gate on a healthy first run.
  */
-const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, onEnable, onCancel }) => {
+const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, isIOS = false, onEnable, onCancel }) => {
   const guidance = guidanceFor(mode);
+  const retryButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const permissionRecovery = isIOS
+    ? 'In Safari, open the page menu (aA) → Website Settings → Camera → Allow, then return and try again.'
+    : "Allow camera access via the icon in your browser's address bar, then try again.";
+
+  useEffect(() => {
+    retryButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCancel();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = [retryButtonRef.current, cancelButtonRef.current].filter(
+        (element): element is HTMLButtonElement => element !== null && !element.disabled
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onCancel]);
 
   return (
     <div className="camera-primer motion-enter">
@@ -28,18 +66,18 @@ const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, onEnable, onCancel })
       </div>
       <div className="camera-primer__heading">
         <p>Camera is off</p>
-        <h3>Present your form — the camera grades your {guidance.label.toLowerCase()}</h3>
+        <h3 id="camera-primer-title">
+          Present your form — the camera grades your {guidance.label.toLowerCase()}
+        </h3>
       </div>
-      <ul className="camera-primer__steps">
+      <ul id="camera-primer-description" className="camera-primer__steps">
         <li>
           <MonitorUp size={17} />
           <span>{guidance.camera}</span>
         </li>
         <li>
           <ShieldCheck size={17} />
-          <span>
-            Allow camera access via the icon in your browser&apos;s address bar, then try again.
-          </span>
+          <span>{permissionRecovery}</span>
         </li>
         <li>
           <LockKeyhole size={17} />
@@ -48,10 +86,17 @@ const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, onEnable, onCancel })
       </ul>
       {/* Edge-state coach voice: permission is the only gate, and it is not a
           rush — the coach stays patient until the camera is allowed. */}
-      <p className="camera-primer__focus">The coach is patient. {guidance.focus}</p>
+      <p className="camera-primer__focus">
+        <strong>{isIOS ? 'Safari setup' : 'Camera setup'}</strong>
+        <span>The coach is patient. {guidance.focus}</span>
+      </p>
       <div className="camera-primer__actions">
-        <button onClick={onEnable}>Try again</button>
-        <button onClick={onCancel}>Not now</button>
+        <button type="button" ref={retryButtonRef} onClick={onEnable}>
+          Try again
+        </button>
+        <button type="button" ref={cancelButtonRef} onClick={onCancel}>
+          Not now
+        </button>
       </div>
     </div>
   );

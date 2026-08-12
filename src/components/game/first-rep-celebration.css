@@ -28,6 +28,56 @@
     first-rep-fade 1.8s 0.5s ease-in forwards;
 }
 
+.first-rep-celebration__eyebrow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.first-rep-celebration__eyebrow .sandow-grade {
+  color: #7aebd8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.first-rep-celebration__index {
+  color: rgba(255, 217, 122, 0.72);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.first-rep-celebration__sequence {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  margin-top: 0.25rem;
+  color: rgba(185, 213, 207, 0.48);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.first-rep-celebration__sequence i {
+  width: 0.8rem;
+  height: 1px;
+  background: rgba(185, 213, 207, 0.24);
+}
+
+.first-rep-celebration__sequence .is-complete {
+  color: #7aebd8;
+}
+
+.first-rep-celebration__sequence .is-current {
+  color: #ffd97a;
+}
+
 .first-rep-celebration__text > span:not(.sandow-grade) {
   color: #f5c77d;
   font-size: clamp(1.25rem, 4vw, 1.75rem);

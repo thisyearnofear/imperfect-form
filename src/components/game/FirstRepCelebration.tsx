@@ -11,6 +11,7 @@ interface FirstRepCelebrationProps {
 }
 
 export function FirstRepCelebration({ show, mode }: FirstRepCelebrationProps) {
+  const guidance = guidanceFor(mode);
   const [visible, setVisible] = useState(show);
 
   const particles = useMemo(
@@ -39,11 +40,21 @@ export function FirstRepCelebration({ show, mode }: FirstRepCelebrationProps) {
     <div className="first-rep-celebration" aria-hidden="true" data-exercise={mode}>
       <div className="first-rep-celebration__burst" />
       <div className="first-rep-celebration__text">
-        <span className="sandow-grade" style={{ marginBottom: '0.35rem' }}>
-          Graded
-        </span>
+        <div className="first-rep-celebration__eyebrow">
+          <span className="sandow-grade">FIRST SIGNAL</span>
+          <span className="first-rep-celebration__index">01</span>
+        </div>
         <span>First signal captured</span>
-        <small>{guidanceFor(mode).label} · Coach is watching your form</small>
+        <small>
+          {guidance.label} · {guidance.focus}
+        </small>
+        <div className="first-rep-celebration__sequence" aria-hidden="true">
+          <span className="is-complete">READ</span>
+          <i />
+          <span className="is-current">NOTICE</span>
+          <i />
+          <span>ADJUST</span>
+        </div>
         <strong>Now try the one fix.</strong>
       </div>
       {particles.map((particle, i) => (

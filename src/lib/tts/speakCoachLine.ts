@@ -14,6 +14,7 @@ import {
 } from '@/config/ttsProviders';
 
 let currentAudio: HTMLAudioElement | null = null;
+const CLIENT_TTS_TIMEOUT_MS = 2500;
 
 export function getStoredTtsPreference(): TtsProviderPreference {
   if (typeof window === 'undefined') return 'auto';
@@ -67,10 +68,13 @@ export async function speakCoachLine(
     return { provider: 'browser' };
   }
 
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), CLIENT_TTS_TIMEOUT_MS);
   try {
     const res = await fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         text: trimmed,
         personality: opts?.personality,
@@ -100,8 +104,13 @@ export async function speakCoachLine(
       URL.revokeObjectURL(url);
     }
   } catch {
+    // Cloud narration is an enhancement, never a reason to make a correction
+    // wait. If a provider is slow or unreachable, speak locally within a
+    // bounded window so the camera/station loop remains responsive.
     speakBrowser(trimmed, opts?.personality);
     return { provider: 'browser' };
+  } finally {
+    window.clearTimeout(timeout);
   }
 }
 

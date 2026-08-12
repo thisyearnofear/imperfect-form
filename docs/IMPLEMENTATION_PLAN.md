@@ -174,6 +174,14 @@ Every time a demo fires, append a LeRobot-format episode slice to disk (not yet 
 
 **Goal:** Find the cheapest latency / battery win on mobile browsers.
 
+**Current runtime guardrail:** Ordinary mobile sessions now ship an adaptive
+camera-quality controller in `src/lib/pose/mobileQuality.ts` and
+`src/modules/usePoseDetection.ts`. It measures sustained completed-loop FPS and
+`estimatePoses()` latency, moves between balanced/high/light camera profiles with
+hysteresis, verifies actual track settings, and leaves rep/station semantics
+untouched. This protects the live experience while the broader model/input/
+quantization matrix remains open; Farcaster keeps its dedicated camera path.
+
 ### 3.1 Three-knob matrix
 
 Run controlled A/B tests. Use the baseline from Phase 0.
@@ -198,6 +206,7 @@ Pick the configuration that gives the best **median FPS × accuracy** product on
 
 ### 3.4 Success criteria
 
+- [x] Adaptive mobile camera quality is guarded by sustained FPS and detection latency, with focused controller tests.
 - [ ] A matrix of results checked into `docs/EDGE_PERF_MATRIX.md`.
 - [ ] Default mobile config is updated to the winning configuration.
 - [ ] No regression on Ring 0 e2e tests (`e2e/ring0.spec.ts`, `e2e/pose-runtime.spec.ts`).

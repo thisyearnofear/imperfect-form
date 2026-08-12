@@ -209,7 +209,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   );
 
   // Swipe gesture handling for mobile
-  const { isMobile } = useDeviceDetect();
+  const { isMobile, isClient } = useDeviceDetect();
+  // iPhone/iPad Safari does not support the same fullscreen gesture path as
+  // Android Chrome. Keep this explicit so the camera session remains in the
+  // normal Safari viewport instead of entering a half-working fullscreen mode.
+  const isIOSDevice = useMemo(() => {
+    if (!isClient || typeof navigator === 'undefined') return false;
+    return (
+      /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    );
+  }, [isClient]);
   const { isPortrait } = useOrientation();
   const [dismissLandscapePrompt, setDismissLandscapePrompt] = useState(false);
 
@@ -252,9 +262,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     if (!coachStation.enabled) return;
     return coachStation.onDemonstration((event) => {
       if (!voiceEnabled) return;
+      // Station demonstrations are time-sensitive: use the local voice path
+      // so a cloud provider can never delay or duplicate a correction while the
+      // simulated/physical Coach is moving.
       void speakCoachLine(event.narration, {
         voiceEnabled: true,
         personality: event.personality,
+        preferredProvider: 'browser',
       });
     });
   }, [voiceEnabled]);
@@ -283,6 +297,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Cleared when `started` flips (session live) or the camera primer shows.
   const [isStarting, setIsStarting] = useState(false);
   const [showCameraPrimer, setShowCameraPrimer] = useState(false);
+  const cameraPrimerReturnFocusRef = useRef<HTMLElement | null>(null);
   const [showFirstRepCelebration, setShowFirstRepCelebration] = useState(false);
   const firstSignalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingStartRef = useRef<
@@ -417,7 +432,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Check if fullscreen is available in current context (not restricted by iframe)
   const isFullscreenAvailable = useMemo(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined' || isIOSDevice) return false;
 
     // Check if we're in a Farcaster Mini App (iframe context)
     const inFarcaster = isFarcasterMiniApp();
@@ -463,7 +478,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     }
 
     return hasFullscreenAPI;
-  }, []);
+  }, [isIOSDevice]);
 
   // Camera setup and viewport tracking
   const { stopAllCameras } = useCameraSetup();
@@ -539,6 +554,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       retryFocus?: string;
       challengeSource?: 'incoming' | 'self' | 'external';
     }) => {
+      if (
+        !showCameraPrimer &&
+        typeof document !== 'undefined' &&
+        document.activeElement instanceof HTMLElement
+      ) {
+        cameraPrimerReturnFocusRef.current = document.activeElement;
+      }
       const isFocusedRetry = Boolean(options?.retryFocus);
 
       // A recap retry is an explicit coaching action, even if the user was
@@ -664,6 +686,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       isMobile,
       autoFs,
       isFullscreenAvailable,
+      showCameraPrimer,
       enterFullscreen,
       exitFullscreen,
       mode,
@@ -905,7 +928,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Rotate hint only matters once a session is running — it must never
   // gate the day-0 foyer (that made it decision #1 on portrait phones).
-  const showLandscapePrompt = started && isMobile && isPortrait && !dismissLandscapePrompt;
+  const showLandscapePrompt =
+    started && isMobile && isPortrait && mode !== 'curls' && !dismissLandscapePrompt;
 
   // Pre-start foyer follows the register: Coach/Studio → CoachFoyer,
   // Train/Arcade → the arcade foyer. Breathe still opens its calm panel
@@ -963,10 +987,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className={`${isMobile ? 'touch-manipulation' : ''}${showCameraPrimer ? ' pointer-events-none' : ''}`}
+        aria-hidden={showCameraPrimer}
+        className={`${isMobile ? 'touch-manipulation' : ''}${isIOSDevice ? ' game-container--ios' : ''}${showCameraPrimer ? ' pointer-events-none' : ''}`}
       >
         {/* Top-right control buttons - orientation lock only */}
-        <div className="absolute top-2 right-2 flex gap-1 z-20">
+        <div className="game-container__top-controls absolute top-2 right-2 flex gap-1 z-20">
           {/* Orientation Lock Toggle - Mobile Only */}
           {isMobile && (
             <button
@@ -1074,6 +1099,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               isFullscreen={isFullscreen}
               isRace={isRace}
               isMobile={isMobile}
+              isIOS={isIOSDevice}
               poseState={poseState}
               detectionProgress={detectionProgress}
               webcam={memoizedWebcam}
@@ -1109,10 +1135,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       {showLandscapePrompt && <LandscapePrompt onDismiss={() => setDismissLandscapePrompt(true)} />}
 
       {showCameraPrimer && (
-        <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-teal-500/20 bg-teal-500/5 overflow-y-auto max-h-[calc(100vh-2rem)]">
+        <div
+          className="camera-primer-backdrop fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="camera-primer-title"
+          aria-describedby="camera-primer-description"
+        >
+          <div className="camera-primer-modal w-full max-w-sm rounded-2xl border border-teal-500/20 bg-teal-500/5 overflow-y-auto max-h-[calc(100vh-2rem)]">
             <CameraPrimer
               mode={mode}
+              isIOS={isIOSDevice}
               onEnable={() => {
                 // Denial-recovery retry: re-ask the browser first; only boot
                 // the session once permission is actually granted.
@@ -1129,6 +1162,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               onCancel={() => {
                 setShowCameraPrimer(false);
                 pendingStartRef.current = undefined;
+                const returnFocus = cameraPrimerReturnFocusRef.current;
+                cameraPrimerReturnFocusRef.current = null;
+                window.setTimeout(() => returnFocus?.focus(), 0);
               }}
             />
           </div>

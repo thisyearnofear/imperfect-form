@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { BiomechanicalState, CurlPoseData } from '@/types/mediapipe';
+import type { MobileQualityTier } from '@/lib/pose/mobileQuality';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -22,6 +23,7 @@ export interface DetectionProgress {
   phase: DetectionPhase;
   message: string;
   percentage: number;
+  qualityTier?: MobileQualityTier;
 }
 
 interface UsePoseDetectionReturn {

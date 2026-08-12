@@ -193,7 +193,9 @@
   background: linear-gradient(135deg, rgba(117, 223, 205, 0.1), rgba(7, 24, 26, 0.72));
   border: 1px solid rgba(117, 223, 205, 0.28);
   border-radius: 6px;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease;
 }
 
 .movement-card:hover {
@@ -341,7 +343,9 @@
   background: rgba(7, 24, 26, 0.58);
   border: 1px solid rgba(252, 177, 49, 0.18);
   border-radius: 6px;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease;
 }
 
 .movement-history:hover {
@@ -357,6 +361,151 @@
 }
 .movement-history__header {
   justify-content: space-between;
+}
+.movement-history__header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.movement-history__data-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 1.65rem;
+  padding: 0.25rem 0.45rem;
+  color: #dff7f1;
+  background: rgba(117, 223, 205, 0.08);
+  border: 1px solid rgba(117, 223, 205, 0.2);
+  border-radius: 4px;
+  font-size: 0.58rem;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+.movement-history__data-button:hover {
+  background: rgba(117, 223, 205, 0.16);
+  border-color: rgba(117, 223, 205, 0.38);
+  transform: translateY(-1px);
+}
+.movement-history__data-button:focus-visible,
+.movement-history__privacy summary:focus-visible,
+.movement-history__reset-confirm button:focus-visible {
+  outline: 2px solid #fcb131;
+  outline-offset: 2px;
+}
+.movement-history__data-button--danger {
+  color: #f6c5a8;
+  background: rgba(191, 88, 61, 0.1);
+  border-color: rgba(191, 88, 61, 0.28);
+}
+.movement-history__data-button--danger:hover {
+  background: rgba(191, 88, 61, 0.18);
+  border-color: rgba(191, 88, 61, 0.48);
+}
+.movement-history__privacy {
+  border-top: 1px solid rgba(117, 223, 205, 0.1);
+  padding-top: 0.55rem;
+}
+.movement-history__privacy summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #a9c7c2;
+  cursor: pointer;
+  font-size: 0.6rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  list-style: none;
+  text-transform: uppercase;
+}
+.movement-history__privacy summary::-webkit-details-marker {
+  display: none;
+}
+.movement-history__privacy summary::after {
+  content: '+';
+  color: #fcb131;
+  font-size: 0.8rem;
+}
+.movement-history__privacy[open] summary::after {
+  content: '−';
+}
+.movement-history__privacy-copy {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+  padding: 0.65rem;
+  color: #b8cbc5;
+  background: rgba(117, 223, 205, 0.035);
+  border: 1px solid rgba(117, 223, 205, 0.1);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+.movement-history__privacy-copy p {
+  margin: 0;
+}
+.movement-history__privacy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+.movement-history__reset-confirm {
+  display: grid;
+  gap: 0.45rem;
+  width: 100%;
+  padding-top: 0.45rem;
+  color: #f6c5a8;
+  border-top: 1px solid rgba(191, 88, 61, 0.2);
+}
+.movement-history__reset-confirm > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.movement-history__reset-confirm button {
+  min-height: 1.55rem;
+  padding: 0.2rem 0.4rem;
+  color: #dff7f1;
+  background: rgba(117, 223, 205, 0.08);
+  border: 1px solid rgba(117, 223, 205, 0.18);
+  border-radius: 3px;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+.movement-history__reset-confirm button:last-child {
+  color: #f6c5a8;
+  border-color: rgba(191, 88, 61, 0.3);
+}
+.movement-history__data-status {
+  margin: 0;
+  color: #83e8d5;
+  font-size: 0.64rem;
+  line-height: 1.4;
+}
+.movement-history__setup-reminder {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  color: #b8cbc5;
+  background: rgba(252, 177, 49, 0.045);
+  border: 1px solid rgba(252, 177, 49, 0.14);
+  border-radius: 4px;
+  font-size: 0.63rem;
+  line-height: 1.45;
+}
+.movement-history__setup-reminder svg {
+  flex: 0 0 auto;
+  margin-top: 0.05rem;
+  color: #fcb131;
 }
 .movement-history__title > div:last-child {
   min-width: 0;
@@ -405,7 +554,9 @@
   background: rgba(252, 177, 49, 0.06);
   border: 1px solid rgba(252, 177, 49, 0.14);
   border-radius: 4px;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.2s ease;
 }
 
 .movement-history__comparison > div:hover {
@@ -509,7 +660,9 @@
   margin-top: 0.2rem;
   padding-top: 0.7rem;
   border-top: 1px solid rgba(252, 177, 49, 0.14);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease;
 }
 
 .movement-trajectory:hover {
@@ -626,7 +779,9 @@
   background: linear-gradient(110deg, rgba(252, 177, 49, 0.1), rgba(117, 223, 205, 0.06));
   border: 1px solid rgba(252, 177, 49, 0.2);
   border-radius: 4px;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease;
 }
 
 .movement-trajectory__unlock:hover {
@@ -1198,7 +1353,9 @@
 
 /* Movement Card Polish */
 .movement-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .movement-card:hover {
@@ -1207,7 +1364,9 @@
 }
 
 .movement-card__dimension {
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .movement-card__dimension:hover {
@@ -1230,7 +1389,8 @@
 }
 
 @keyframes movement-icon-pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(117, 223, 205, 0.4);
   }
   50% {
@@ -1243,7 +1403,8 @@
 }
 
 @keyframes movement-icon-pulse-warning {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(252, 177, 49, 0.4);
   }
   50% {
@@ -1283,7 +1444,9 @@
 
 /* Movement Trajectory Polish */
 .movement-trajectory {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .movement-trajectory:hover {
@@ -1324,7 +1487,8 @@
 }
 
 @keyframes unlock-pulse {
-  0%, 100% {
+  0%,
+  100% {
     border-color: rgba(117, 223, 205, 0.2);
   }
   50% {
@@ -1360,7 +1524,9 @@
 
 /* Movement History Polish */
 .movement-history {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .movement-history:hover {
@@ -1384,7 +1550,9 @@
 }
 
 .movement-history__row {
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .movement-history__row:hover {

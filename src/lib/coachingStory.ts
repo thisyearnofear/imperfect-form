@@ -16,13 +16,16 @@ export function nextFocusFor(mode: ExerciseMode): string {
 
 /** Turn detector labels into a cue that sounds like a coach, not a console. */
 export function readableFormWarning(warning: string): string {
-  return warning
-    .toLowerCase()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
-    .replace('Knees In', 'Knees are tracking inward')
-    .replace('Pin Elbows', 'Keep your elbows quiet')
-    .replace('Leaning Too Far', 'Keep your chest more upright')
-    .replace('Pull Evenly', 'Pull evenly through both sides');
+  const normalized = warning.trim().toLowerCase().replace(/\s+/g, '_');
+  if (normalized === 'elbow_swing' || normalized === 'pin_elbows') {
+    return 'Keep your elbows quiet';
+  }
+  if (normalized === 'knees_in') return 'Knees are tracking inward';
+  if (normalized === 'leaning_too_far') return 'Keep your chest more upright';
+  if (normalized === 'pull_evenly' || normalized === 'asymmetry') {
+    return 'Pull evenly through both sides';
+  }
+  return warning.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export type SessionStory = {

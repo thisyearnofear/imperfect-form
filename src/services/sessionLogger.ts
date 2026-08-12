@@ -79,6 +79,20 @@ export class SessionLogger {
   }
 
   /**
+   * Record an engine-level coaching observation alongside the biomechanical
+   * trace. Engine cues (for example, elbow_swing) can be more specific than
+   * the generic frame warnings, so they must still appear in the recap.
+   */
+  public logObservation(metrics: BiomechanicalState, keypoints: Keypoint[], observation: string) {
+    if (this.anomalies.length >= 50 || !observation.trim()) return;
+    this.anomalies.push({
+      timestamp: Date.now() - this.startTime,
+      metrics: { ...metrics, warnings: [...metrics.warnings, observation] },
+      keypoints: [...keypoints],
+    });
+  }
+
+  /**
    * Generate a summary for AI analysis
    */
   public getSummary(repCount: number): SessionSummary {

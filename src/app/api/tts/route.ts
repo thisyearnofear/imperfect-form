@@ -17,6 +17,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const MAX_CHARS = 400;
+const PROVIDER_TIMEOUT_MS = 4000;
 
 function hasElevenLabs(): boolean {
   return !!process.env.ELEVENLABS_API_KEY;
@@ -69,6 +70,7 @@ async function synthesizeElevenLabs(text: string, personality?: CoachPersonality
       Accept: 'audio/mpeg',
       'xi-api-key': process.env.ELEVENLABS_API_KEY as string,
     },
+    signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     body: JSON.stringify({
       text,
       model_id: process.env.ELEVENLABS_MODEL_ID || 'eleven_turbo_v2_5',
@@ -88,18 +90,25 @@ async function synthesizeElevenLabs(text: string, personality?: CoachPersonality
 async function synthesizePolly(text: string, personality?: CoachPersonality): Promise<Buffer> {
   const region = process.env.AWS_REGION || 'us-east-1';
   const client = new PollyClient({ region });
-  const out = await client.send(
-    new SynthesizeSpeechCommand({
-      Text: text,
-      OutputFormat: 'mp3',
-      VoiceId: pollyVoiceId(personality),
-      Engine: 'neural',
-      TextType: 'text',
-    })
-  );
-  if (!out.AudioStream) throw new Error('Polly returned empty audio');
-  const bytes = await out.AudioStream.transformToByteArray();
-  return Buffer.from(bytes);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
+  try {
+    const out = await client.send(
+      new SynthesizeSpeechCommand({
+        Text: text,
+        OutputFormat: 'mp3',
+        VoiceId: pollyVoiceId(personality),
+        Engine: 'neural',
+        TextType: 'text',
+      }),
+      { abortSignal: controller.signal }
+    );
+    if (!out.AudioStream) throw new Error('Polly returned empty audio');
+    const bytes = await out.AudioStream.transformToByteArray();
+    return Buffer.from(bytes);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function POST(req: NextRequest) {

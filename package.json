@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test e2e/ring0.spec.ts --project=chromium --grep \"no interactive boot gate stands in front of the foyer\" --workers=1",
     "test:pose": "node scripts/test-pose-detection.cjs",
     "test:pose:desktop": "node scripts/test-pose-detection.cjs --platform desktop",
     "test:pose:mobile": "node scripts/test-pose-detection.cjs --platform mobile",

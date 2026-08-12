@@ -154,13 +154,36 @@ This document outlines the supported devices, browsers, and platforms for pose d
 - Memory usage > 80%
 - Error rate > 5%
 
+### Adaptive Mobile Quality
+
+Ordinary mobile sessions start at the balanced 480×360 / 24 FPS camera profile.
+After a 4-second warm-up, the main-thread pose loop evaluates 30 completed
+inferences at a time using elapsed-window throughput and average
+`estimatePoses()` latency. Sustained poor performance moves one tier at a time:
+
+- **High:** 640×480 / 30 FPS
+- **Balanced:** 480×360 / 24 FPS
+- **Light:** 320×240 / 15 FPS
+
+A healthy balanced session may restore high quality; a struggling high or
+balanced session downshifts toward light. Hysteresis, cooldowns, and sustained
+windows prevent oscillation. Camera track changes are applied in place and are
+announced only when `getSettings()` reports a material move toward the requested
+profile. If Safari rejects or ignores a request, coaching continues at the
+current settings and a later sustained window can retry it. Rep detection and
+physical-coach cue timing are not changed by the quality tier.
+
+Farcaster keeps its dedicated camera-permission and initial-constraint path; the
+adaptive controller does not reinterpret that path. Validate Farcaster
+performance separately on the target host.
+
 ## Future Enhancements
 
 ### Planned Improvements
 
 - WebAssembly backend support for better performance
 - Progressive model loading
-- Adaptive quality based on motion
+- Broader adaptive quality support for Farcaster and worker-backed sessions
 - GPU acceleration where available
 - Edge detection for better accuracy
 

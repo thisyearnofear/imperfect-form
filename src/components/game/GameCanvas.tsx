@@ -25,6 +25,7 @@ interface GameCanvasProps {
   isFullscreen: boolean;
   isRace: boolean;
   isMobile: boolean;
+  isIOS?: boolean;
   poseState: PoseState;
   detectionProgress: DetectionProgress | null;
   webcam: React.ReactNode;
@@ -45,6 +46,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   isFullscreen,
   isRace,
   isMobile,
+  isIOS = false,
   poseState,
   detectionProgress,
   webcam,
@@ -63,6 +65,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         : 'ready';
 
   const isLoadingVisible = !poseState.hasPoseDetection || !poseState.poseDetected;
+  const qualityMessage =
+    isMobile && detectionProgress?.qualityTier ? detectionProgress.message : null;
   const coachingMoment = useCoachingMoment(
     poseState.poseDetected,
     repCount,
@@ -100,8 +104,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <div
           id="canvasContainerMobile"
           aria-label="Game Canvas Mobile"
-          className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 session-camera-stage ${isFullscreen ? 'video-container-fs' : ''} ${poseState.poseDetected ? 'is-tracking' : ''}`}
-          style={{ width: '100%', minHeight: '300px' }}
+          className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 session-camera-stage session-camera-stage--mobile ${isIOS ? 'session-camera-stage--ios' : ''} ${isFullscreen ? 'video-container-fs' : ''} ${poseState.poseDetected ? 'is-tracking' : ''}`}
+          style={{ width: '100%' }}
         >
           {webcam}
           <GameLoadingOverlay
@@ -112,6 +116,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
+          {qualityMessage && (
+            <div
+              className="mobile-quality-status"
+              data-quality-tier={detectionProgress?.qualityTier}
+              role="status"
+              aria-live="polite"
+            >
+              {qualityMessage}
+            </div>
+          )}
           <LiveCoachingStatus {...coachingStatusProps} />
           {mode === 'curls' ? (
             <CurlFormInstrument
