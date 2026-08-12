@@ -84,7 +84,7 @@ export function CurlFormInstrument({
   const { triggerSuccessFeedback, triggerErrorFeedback } = useHapticFeedback();
 
   // Current coach personality
-  const [currentPersonality] = useCoachPersonality();
+  const [currentPersonality, setPersonality] = useCoachPersonality();
 
   // SO-101 robot elbow angle from station trajectory progress
   const [robotElbowDeg, setRobotElbowDeg] = useState<number | null>(null);
@@ -483,6 +483,28 @@ export function CurlFormInstrument({
         <p className="curl-instrument__coach-compare-feedback">
           {getPersonalityFeedback(currentPersonality, 'form_feedback', formScore)}
         </p>
+
+        {/* Compact Coach Switcher */}
+        <div className="curl-instrument__coach-switcher">
+          {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[]).map((personality) => {
+            const coach = COACH_PERSONALITIES[personality];
+            const selected = currentPersonality === personality;
+            return (
+              <button
+                key={personality}
+                type="button"
+                className={`curl-instrument__coach-switcher-btn${selected ? ' is-selected' : ''}`}
+                onClick={() => setPersonality(personality)}
+                aria-label={`Switch to ${coach.name} coach`}
+                aria-pressed={selected}
+              >
+                <span>{coach.emoji}</span>
+                <span>{coach.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="curl-instrument__coach-compare-others">
           {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[])
             .filter((p) => p !== currentPersonality)
