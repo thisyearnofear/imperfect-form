@@ -142,14 +142,9 @@ export function CompactNeynarAuth({
   );
 }
 
-// Hook to get Neynar client ID from environment
-export function useNeynarClientId(): string {
-  const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID;
-
-  if (!clientId) {
-    logger.error('NEXT_PUBLIC_NEYNAR_CLIENT_ID environment variable is not set');
-    throw new Error('Neynar client ID is not configured');
-  }
-
-  return clientId;
+// Hook to get the optional Neynar client ID from the environment.
+// A missing ID disables Neynar sign-in without affecting camera coaching,
+// local movement history, or the manual sharing fallback.
+export function useNeynarClientId(): string | null {
+  return process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || null;
 }

@@ -1,0 +1,36 @@
+{
+  "schema": "imperfect-form.movement-retest.v1",
+  "protocolId": "curls-baseline",
+  "capturedAt": "2026-08-11T23:19:48.686Z",
+  "totalRecords": 12,
+  "protocolRecords": 10,
+  "malformedRecords": 2,
+  "validReads": 8,
+  "inconclusiveReads": 2,
+  "lowConfidenceValidReads": 1,
+  "inconclusiveRate": 0.2,
+  "lowConfidenceRate": 0.125,
+  "qualifyingReads": 7,
+  "comparablePairs": 6,
+  "averageConfidence": 0.84,
+  "averageSimilarity": 0.9379,
+  "repeatablePairRate": 0.8333,
+  "averageAbsoluteRangeDelta": 0.0383,
+  "averageAbsoluteControlDelta": 0.0717,
+  "averageAbsoluteTraceStabilityDelta": 0.0633,
+  "spanDays": 11,
+  "status": "passes-screen",
+  "gates": {
+    "enoughPairs": true,
+    "confidenceFloor": true,
+    "similarityFloor": true,
+    "repeatablePairRateFloor": true,
+    "inconclusiveRate": true,
+    "lowConfidenceRate": true
+  },
+  "notes": [
+    "Descriptive local protocol evidence only; this report is not clinical validation or a population norm.",
+    "Only valid, protocol-matched reads at or above the confidence floor contribute to comparable pairs.",
+    "Review setup, device, lighting, camera angle, and warm-up conditions alongside these aggregates."
+  ]
+}

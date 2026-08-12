@@ -180,7 +180,7 @@ export default function FarcasterShare({
                 </svg>
               </div>
             </button>
-          ) : (
+          ) : clientId ? (
             <div className="studio-card studio-card__body w-full items-center">
               <p className="text-[11px] text-teal-200/70 uppercase font-black tracking-widest text-center">
                 Identity Required
@@ -193,6 +193,13 @@ export default function FarcasterShare({
                 onError={handleAuthError}
               />
             </div>
+          ) : (
+            <button
+              onClick={handleFallbackShare}
+              className="w-full bg-gray-800 text-white font-black py-3 px-6 rounded-xl hover:bg-gray-700 transition-colors"
+            >
+              Share via Warpcast
+            </button>
           )}
 
           {/* Error Display */}
@@ -211,7 +218,7 @@ export default function FarcasterShare({
       )}
 
       {/* Help Text */}
-      {!shareCompleted && !isAuthenticated && !isInMiniApp && (
+      {!shareCompleted && !isAuthenticated && !isInMiniApp && clientId && (
         <div className="mt-2 text-xs text-gray-500 text-center">
           Sign in to share with Farcaster
         </div>

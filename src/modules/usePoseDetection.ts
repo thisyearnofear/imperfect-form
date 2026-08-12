@@ -653,9 +653,12 @@ export function usePoseDetection(
 
         // STEP 3: Create the detector only after the user has started coaching.
         const modelType = isMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
+        // Keep the main-thread fallback aligned with the worker. MoveNet's
+        // smoothing tracker can dereference a missing bounding box on transient
+        // frames (`null.yMin`). Temporal context comes from the session trace.
         detectorRef.current = await createDetector(SupportedModels.MoveNet, {
           modelType: modelType as any,
-          enableSmoothing: true,
+          enableSmoothing: false,
         });
 
         notifyStateChange({ hasPoseDetection: true, isLoading: false });
@@ -722,7 +725,8 @@ export function usePoseDetection(
             if (cancelled || !isActiveRef.current) return;
 
             const activeMode = modeRef.current;
-            const detected = poses.length > 0 && poses[0].keypoints.length > 0;
+            const firstPose = poses.find((pose) => pose?.keypoints?.length);
+            const detected = Boolean(firstPose?.keypoints?.length);
             notifyStateChange({ poseDetected: detected });
 
             // Memory management: periodic cleanup for mini apps and mobile
@@ -738,8 +742,8 @@ export function usePoseDetection(
               }
             }
 
-            if (poses.length > 0) {
-              const keypoints = poses[0].keypoints as Keypoint[];
+            if (firstPose?.keypoints?.length) {
+              const keypoints = firstPose.keypoints as Keypoint[];
               const scored = keypoints.filter((kp) => typeof kp.score === 'number');
               const avgScore =
                 scored.length > 0
@@ -844,7 +848,12 @@ export function usePoseDetection(
               }
             }
           } catch (error) {
-            console.error('Detection error:', error);
+            // MoveNet can briefly lose its internal bounding box on a noisy
+            // frame. Keep the session alive without logging avoidable noise.
+            const message = error instanceof Error ? error.message : String(error);
+            if (!message.includes('yMin')) {
+              console.error('Detection error:', error);
+            }
           }
 
           animationRef.current = requestAnimationFrame(detect);

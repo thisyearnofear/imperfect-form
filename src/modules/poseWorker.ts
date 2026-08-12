@@ -123,9 +123,12 @@ self.addEventListener('message', async (event) => {
 
       await disposeDetector();
 
+      // MoveNet's smoothing tracker can dereference a missing bounding box
+      // on transient frames (`null.yMin`). The raw detector is more robust for
+      // this camera loop; the session logger still provides temporal context.
       detector = await createDetector(SupportedModels.MoveNet, {
         modelType,
-        enableSmoothing: true,
+        enableSmoothing: false,
       });
 
       // Warm up the detector
@@ -219,8 +222,8 @@ self.addEventListener('message', async (event) => {
           }
         }
 
-        if (poses.length > 0) {
-          const keypoints = poses[0].keypoints as Keypoint[];
+        if (firstPose?.keypoints?.length) {
+          const keypoints = firstPose.keypoints as Keypoint[];
 
           // Biomechanical Analysis
           const metrics = analyzeBiomechanics(keypoints, workerMode);
@@ -256,7 +259,14 @@ self.addEventListener('message', async (event) => {
           self.postMessage({ type: 'result', state: null, keypoints: [] });
         }
       } catch (err) {
-        console.error('In-worker processing error:', err);
+        // MoveNet can briefly lose its internal bounding box on a noisy frame.
+        // Treat that frame as undetected instead of spamming the production
+        // console or interrupting the rest of the session.
+        const message = err instanceof Error ? err.message : String(err);
+        if (!message.includes('yMin')) {
+          console.error('In-worker processing error:', err);
+        }
+        self.postMessage({ type: 'result', state: null, keypoints: [] });
       } finally {
         // Close the processed bitmap if we created a new one
         if (processedBitmap !== bitmap) {

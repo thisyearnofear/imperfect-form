@@ -164,39 +164,23 @@ export const mobileTFUtils = {
     if (isMobile) {
       return {
         modelType: 'lightning',
-        enableSmoothing: true,
+        // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
+        enableSmoothing: false,
         minPoseScore: 0.15, // Lower threshold for mobile to detect poses from further away
         multiPoseMaxDimension: 256, // Smaller dimension for better performance
-        enableTracking: true, // Enable tracking for smoother results
-        trackerType: 'boundingBox',
-        trackerConfig: {
-          maxTracks: 1, // Only track one person for better performance
-          maxAge: 10, // Frames to keep track
-          minSimilarity: 0.2, // More lenient similarity threshold for mobile
-          keypointTrackerParams: {
-            keypointConfidenceThreshold: 0.2,
-            keypointFalloff: [0.1, 0.1, 0.1, 0.1], // [head, shoulder, elbow, wrist]
-          },
-        },
+        // Keep the legacy bounding-box tracker off for transient null boxes.
+        enableTracking: false,
       };
     } else {
       // Desktop can use more accurate but computation-heavy settings
       return {
         modelType: 'thunder',
-        enableSmoothing: true,
+        // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
+        enableSmoothing: false,
         minPoseScore: 0.25,
         multiPoseMaxDimension: 512,
-        enableTracking: true,
-        trackerType: 'boundingBox',
-        trackerConfig: {
-          maxTracks: 2, // Can track more people on desktop
-          maxAge: 15,
-          minSimilarity: 0.4, // Higher threshold for better accuracy
-          keypointTrackerParams: {
-            keypointConfidenceThreshold: 0.3,
-            keypointFalloff: [0.05, 0.05, 0.05, 0.05], // More precise tracking
-          },
-        },
+        // Keep the legacy bounding-box tracker off for transient null boxes.
+        enableTracking: false,
       };
     }
   },

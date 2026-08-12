@@ -1,0 +1,367 @@
+{
+  "records": [
+    {
+      "id": "p1-s1-day0-a",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day0-a",
+      "savedAt": 1760000000000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760000000000,
+        "status": "valid",
+        "confidence": 0.88,
+        "quality": {
+          "poseConfidence": 0.88,
+          "observedFrameRatio": 0.96,
+          "bilateralFrameRatio": 0.92,
+          "stableFrameRatio": 0.9,
+          "traceFrames": 13,
+          "repCount": 5
+        },
+        "measurements": {
+          "range": 0.55,
+          "control": 0.8,
+          "symmetry": 0.9,
+          "traceStability": 0.72
+        }
+      },
+      "setup": { "device": "desktop", "lighting": "bright", "angle": "front", "warmup": "fresh" }
+    },
+    {
+      "id": "p1-s1-day0-b",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day0-b",
+      "savedAt": 1760007200000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760007200000,
+        "status": "valid",
+        "confidence": 0.86,
+        "quality": {
+          "poseConfidence": 0.86,
+          "observedFrameRatio": 0.95,
+          "bilateralFrameRatio": 0.93,
+          "stableFrameRatio": 0.9,
+          "traceFrames": 13,
+          "repCount": 5
+        },
+        "measurements": {
+          "range": 0.56,
+          "control": 0.81,
+          "symmetry": 0.9,
+          "traceStability": 0.73
+        }
+      },
+      "setup": { "device": "desktop", "lighting": "bright", "angle": "front", "warmup": "fresh" }
+    },
+    {
+      "id": "p2-s2-day1-a",
+      "userId": "study-participant-02",
+      "sourceSessionId": "session-p2-day1-a",
+      "savedAt": 1760086400000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760086400000,
+        "status": "valid",
+        "confidence": 0.6,
+        "quality": {
+          "poseConfidence": 0.62,
+          "observedFrameRatio": 0.85,
+          "bilateralFrameRatio": 0.78,
+          "stableFrameRatio": 0.8,
+          "traceFrames": 11,
+          "repCount": 5
+        },
+        "measurements": {
+          "range": 0.51,
+          "control": 0.72,
+          "symmetry": 0.88,
+          "traceStability": 0.65
+        }
+      },
+      "setup": { "device": "mobile", "lighting": "dim", "angle": "front", "warmup": "fresh" }
+    },
+    {
+      "id": "p1-s3-day2-a",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day2-a",
+      "savedAt": 1760172800000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760172800000,
+        "status": "inconclusive",
+        "confidence": 0.72,
+        "quality": {
+          "poseConfidence": 0.7,
+          "observedFrameRatio": 0.55,
+          "bilateralFrameRatio": 0.8,
+          "stableFrameRatio": 0.7,
+          "traceFrames": 7,
+          "repCount": 3
+        },
+        "measurements": null,
+        "inconclusiveReason": "insufficient_trace"
+      },
+      "setup": { "device": "mobile", "lighting": "dim", "angle": "slight-angle", "warmup": "fresh" }
+    },
+    {
+      "id": "p1-s4-day3-a",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day3-a",
+      "savedAt": 1760259200000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760259200000,
+        "status": "valid",
+        "confidence": 0.84,
+        "quality": {
+          "poseConfidence": 0.85,
+          "observedFrameRatio": 0.94,
+          "bilateralFrameRatio": 0.9,
+          "stableFrameRatio": 0.88,
+          "traceFrames": 14,
+          "repCount": 5
+        },
+        "measurements": {
+          "range": 0.58,
+          "control": 0.83,
+          "symmetry": 0.91,
+          "traceStability": 0.74
+        }
+      },
+      "setup": {
+        "device": "desktop",
+        "lighting": "bright",
+        "angle": "front",
+        "warmup": "warmed-up"
+      }
+    },
+    {
+      "id": "p1-s5-day5-a",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day5-a",
+      "savedAt": 1760432000000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760432000000,
+        "status": "inconclusive",
+        "confidence": 0.68,
+        "quality": {
+          "poseConfidence": 0.55,
+          "observedFrameRatio": 0.6,
+          "bilateralFrameRatio": 0.82,
+          "stableFrameRatio": 0.72,
+          "traceFrames": 10,
+          "repCount": 5
+        },
+        "measurements": null,
+        "inconclusiveReason": "low_visibility"
+      },
+      "setup": {
+        "device": "desktop",
+        "lighting": "backlit",
+        "angle": "front",
+        "warmup": "warmed-up"
+      }
+    },
+    {
+      "id": "p1-s6-day6-a",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day6-a",
+      "savedAt": 1760518400000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760518400000,
+        "status": "valid",
+        "confidence": 0.82,
+        "quality": {
+          "poseConfidence": 0.84,
+          "observedFrameRatio": 0.93,
+          "bilateralFrameRatio": 0.89,
+          "stableFrameRatio": 0.87,
+          "traceFrames": 12,
+          "repCount": 5
+        },
+        "measurements": {
+          "range": 0.57,
+          "control": 0.82,
+          "symmetry": 0.89,
+          "traceStability": 0.72
+        }
+      },
+      "setup": { "device": "desktop", "lighting": "mixed", "angle": "front", "warmup": "fresh" }
+    },
+    {
+      "id": "p1-s7-day7-a",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day7-a",
+      "savedAt": 1760604800000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760604800000,
+        "status": "valid",
+        "confidence": 0.8,
+        "quality": {
+          "poseConfidence": 0.81,
+          "observedFrameRatio": 0.9,
+          "bilateralFrameRatio": 0.85,
+          "stableFrameRatio": 0.82,
+          "traceFrames": 12,
+          "repCount": 5
+        },
+        "measurements": {
+          "range": 0.4,
+          "control": 0.45,
+          "symmetry": 0.65,
+          "traceStability": 0.4
+        }
+      },
+      "setup": {
+        "device": "desktop",
+        "lighting": "mixed",
+        "angle": "slight-angle",
+        "warmup": "post-session"
+      }
+    },
+    {
+      "id": "p1-s8-day9-a",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day9-a",
+      "savedAt": 1760777600000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760777600000,
+        "status": "valid",
+        "confidence": 0.85,
+        "quality": {
+          "poseConfidence": 0.86,
+          "observedFrameRatio": 0.95,
+          "bilateralFrameRatio": 0.91,
+          "stableFrameRatio": 0.9,
+          "traceFrames": 14,
+          "repCount": 5
+        },
+        "measurements": {
+          "range": 0.41,
+          "control": 0.46,
+          "symmetry": 0.66,
+          "traceStability": 0.41
+        }
+      },
+      "setup": {
+        "device": "desktop",
+        "lighting": "bright",
+        "angle": "front",
+        "warmup": "warmed-up"
+      }
+    },
+    {
+      "id": "p1-s9-day11-a",
+      "userId": "study-participant-01",
+      "sourceSessionId": "session-p1-day11-a",
+      "savedAt": 1760950400000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760950400000,
+        "status": "valid",
+        "confidence": 0.83,
+        "quality": {
+          "poseConfidence": 0.84,
+          "observedFrameRatio": 0.94,
+          "bilateralFrameRatio": 0.9,
+          "stableFrameRatio": 0.88,
+          "traceFrames": 13,
+          "repCount": 5
+        },
+        "measurements": {
+          "range": 0.4,
+          "control": 0.45,
+          "symmetry": 0.66,
+          "traceStability": 0.4
+        }
+      },
+      "setup": {
+        "device": "desktop",
+        "lighting": "bright",
+        "angle": "front",
+        "warmup": "warmed-up"
+      }
+    },
+    {
+      "id": "p9-other-squats",
+      "userId": "study-participant-09",
+      "sourceSessionId": "session-p9-other-a",
+      "savedAt": 1760518400000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "squats-baseline",
+        "protocolVersion": "1.0",
+        "mode": "squats",
+        "capturedAt": 1760518400000,
+        "status": "valid",
+        "confidence": 0.85,
+        "quality": {
+          "poseConfidence": 0.85,
+          "observedFrameRatio": 0.94,
+          "bilateralFrameRatio": 0.9,
+          "stableFrameRatio": 0.88,
+          "traceFrames": 15,
+          "repCount": 8
+        },
+        "measurements": {
+          "range": 0.62,
+          "control": 0.78,
+          "symmetry": 0.92,
+          "traceStability": 0.7
+        }
+      },
+      "setup": { "device": "desktop", "lighting": "bright", "angle": "front", "warmup": "fresh" }
+    },
+    {
+      "id": "p9-malformed-a",
+      "userId": "study-participant-09",
+      "sourceSessionId": "session-p9-bad-a",
+      "savedAt": 1760604800000,
+      "assessment": {
+        "version": "1.0",
+        "protocolId": "curls-baseline",
+        "protocolVersion": "1.0",
+        "mode": "curls",
+        "capturedAt": 1760604800000,
+        "status": "valid",
+        "confidence": 0.8
+      },
+      "setup": { "device": "desktop", "lighting": "bright", "angle": "front", "warmup": "fresh" }
+    }
+  ]
+}

@@ -60,7 +60,8 @@ export class PoseDetectionService {
     if (isMobile) {
       return {
         modelType: 'SinglePose.Lightning',
-        enableSmoothing: true,
+        // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
+        enableSmoothing: false,
         minPoseScore: 0.2,
       };
     }
@@ -69,7 +70,8 @@ export class PoseDetectionService {
       enableSmoothing: true,
       minPoseScore: 0.25,
       multiPoseMaxDimension: 512,
-      enableTracking: true,
+      // Keep the legacy bounding-box tracker off for the same null-box reason.
+      enableTracking: false,
     };
   }
 
