@@ -1112,3 +1112,55 @@
     transform: none;
   }
 }
+/* Form Scores Summary in Session Recap */
+.session-recap__form-scores {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(181, 229, 221, 0.1);
+}
+
+.session-recap__form-scores-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.session-recap__form-scores-header p {
+  color: rgba(181, 229, 221, 0.7);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.session-recap__form-scores-header span {
+  color: rgba(181, 229, 221, 0.6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6rem;
+}
+
+.session-recap__form-scores-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 36px;
+  padding: 4px 0;
+}
+
+.session-recap__form-scores-bar {
+  flex: 1;
+  min-width: 6px;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.3s ease-out;
+}
+
+.session-recap__form-scores-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+}
+
+.session-recap__form-scores-stats span {
+  color: rgba(181, 229, 221, 0.5);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.52rem;
+}

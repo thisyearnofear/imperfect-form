@@ -87,6 +87,7 @@ export interface SummaryModalProps {
   sessionSummary?: import('@/services/sessionLogger').SessionSummary | null;
   movementAssessment?: MovementAssessment | null;
   movementChallenge?: MovementChallengePayload | null;
+  formScores?: number[];
   onStartSelfGhost?: (workoutId: string) => void;
   isRace?: boolean;
 }
@@ -103,6 +104,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   sessionSummary,
   movementAssessment,
   movementChallenge,
+  formScores = [],
   onStartSelfGhost,
   isRace = false,
 }) => {
@@ -1018,6 +1020,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               movementChallenge={movementChallenge}
               workouts={localWorkouts}
               userAddress={effectiveAddress ?? undefined}
+              formScores={formScores}
               isRace={isRace}
               onStartSelfGhost={onStartSelfGhost}
               onTryAgain={

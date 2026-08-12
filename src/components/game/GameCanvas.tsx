@@ -33,6 +33,7 @@ interface GameCanvasProps {
   retryFocus?: string | null;
   metrics?: import('@/types/mediapipe').BiomechanicalState | null;
   curlPoseData?: import('@/types/mediapipe').CurlPoseData | null;
+  onFormScore?: (score: number) => void;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -51,6 +52,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   retryFocus = null,
   metrics = null,
   curlPoseData = null,
+  onFormScore,
 }) => {
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
@@ -116,6 +118,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               telemetry={curlTelemetry}
               tracking={poseState.poseDetected}
               repCount={repCount}
+              onFormScore={onFormScore}
             />
           ) : null}
         </div>

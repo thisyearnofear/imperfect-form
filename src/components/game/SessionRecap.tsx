@@ -35,6 +35,7 @@ type SessionRecapProps = {
   /** Incoming assessment challenge metadata, if this session is a reply. */
   movementChallenge?: MovementChallengePayload | null;
   userAddress?: string;
+  formScores?: number[];
   onTryAgain?: (focus: string) => void;
   onStartSelfGhost?: (workoutId: string) => void;
   isRace?: boolean;
@@ -358,6 +359,7 @@ export function SessionRecap({
   workouts,
   movementChallenge,
   userAddress,
+  formScores = [],
   onTryAgain,
   onStartSelfGhost,
   isRace = false,
@@ -378,6 +380,47 @@ export function SessionRecap({
         </div>
         <span>{summary ? `${Math.round(summary.duration)}s` : 'Saved'}</span>
       </div>
+
+      {/* Form Scores Summary (curls only) */}
+      {mode === 'curls' && formScores.length > 0 && (
+        <div className="session-recap__form-scores motion-enter motion-delay-1">
+          <div className="session-recap__form-scores-header">
+            <p>Form Scores</p>
+            <span>
+              Average: {Math.round(formScores.reduce((a, b) => a + b, 0) / formScores.length)}/100
+            </span>
+          </div>
+          <div className="session-recap__form-scores-chart">
+            {formScores.map((score, i) => {
+              const grade =
+                score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
+              const color =
+                score >= 90
+                  ? '#4ade80'
+                  : score >= 80
+                    ? '#75e6b1'
+                    : score >= 70
+                      ? '#fbbf24'
+                      : score >= 60
+                        ? '#f97316'
+                        : '#ef4444';
+              return (
+                <div
+                  key={i}
+                  className="session-recap__form-scores-bar"
+                  style={{ height: `${Math.max(8, (score / 100) * 32)}px`, backgroundColor: color }}
+                  title={`Rep ${i + 1}: ${score}/100 (${grade})`}
+                />
+              );
+            })}
+          </div>
+          <div className="session-recap__form-scores-stats">
+            <span>Best: {Math.max(...formScores)}/100</span>
+            <span>Reps: {formScores.length}</span>
+          </div>
+        </div>
+      )}
+
       <div className="session-recap__story motion-enter motion-delay-1">
         <div className="session-recap__story-mark" aria-hidden="true">
           <CheckCircle2 size={17} />

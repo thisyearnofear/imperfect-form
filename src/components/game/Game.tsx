@@ -310,6 +310,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [personality] = useCoachPersonality();
 
+  // Form scores for curls (exported to session recap)
+  const [formScores, setFormScores] = useState<number[]>([]);
+
   // Rep counting, haptic + visual feedback via hook
   const {
     repCount,
@@ -1078,6 +1081,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               retryFocus={retryFocus}
               metrics={metrics}
               curlPoseData={curlPoseData}
+              onFormScore={(score) => {
+                setFormScores((prev) => [...prev.slice(-9), score]);
+              }}
             />
           )}
         </div>
@@ -1157,6 +1163,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         sessionSummary={sessionSummary}
         movementAssessment={movementAssessment}
         movementChallenge={movementChallenge}
+        formScores={formScores}
         onStartSelfGhost={handleSelfGhostRace}
         isRace={isRace}
       />

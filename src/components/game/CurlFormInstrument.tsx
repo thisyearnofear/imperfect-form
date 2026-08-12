@@ -10,6 +10,7 @@ interface CurlFormInstrumentProps {
   telemetry: CurlTelemetry | null;
   tracking: boolean;
   repCount?: number;
+  onFormScore?: (score: number) => void;
 }
 
 const phaseLabel: Record<NonNullable<CurlTelemetry>['phase'], string> = {
@@ -67,7 +68,12 @@ interface ScoreEntry {
   timestamp: number;
 }
 
-export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFormInstrumentProps) {
+export function CurlFormInstrument({
+  telemetry,
+  tracking,
+  repCount = 0,
+  onFormScore,
+}: CurlFormInstrumentProps) {
   // Haptic feedback
   const { triggerSuccessFeedback, triggerErrorFeedback } = useHapticFeedback();
 
@@ -79,6 +85,7 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([]);
   const prevRepCountRef = useRef(repCount);
   const [currentGrade, setCurrentGrade] = useState<string | null>(null);
+  const [currentFormScore, setCurrentFormScore] = useState(0);
   const prevGradeRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -173,10 +180,11 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
     prevRepCountRef.current = repCount;
   }, [repCount, telemetry, robotElbowDeg]);
 
-  // Calculate grade from telemetry (must be before early return)
+  // Calculate grade and form score from telemetry (must be before early return)
   useEffect(() => {
     if (!tracking || !telemetry) {
       setCurrentGrade(null);
+      setCurrentFormScore(0);
       return;
     }
     const angle = clampAngle(telemetry.elbowAngle);
@@ -192,7 +200,11 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
     );
     const { grade } = getFormGrade(score);
     setCurrentGrade(grade);
-  }, [tracking, telemetry, robotElbowDeg]);
+    setCurrentFormScore(score);
+    if (onFormScore) {
+      onFormScore(score);
+    }
+  }, [tracking, telemetry, robotElbowDeg, onFormScore]);
 
   // Haptic feedback on grade change (must be before early return)
   useEffect(() => {
