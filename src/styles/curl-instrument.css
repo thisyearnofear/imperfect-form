@@ -395,3 +395,72 @@
   color: rgba(122, 235, 216, 0.3);
   font-size: 0.6rem;
 }
+/* SO-101 Robot Joint Readout */
+.curl-instrument__robot {
+  border-top: 1px solid rgba(117, 230, 177, 0.15);
+  padding-top: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.curl-instrument__robot-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.curl-instrument__robot-badge {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.48rem;
+  font-weight: 700;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.curl-instrument__robot-label {
+  color: rgba(181, 229, 221, 0.7);
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.curl-instrument__robot-angles {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.curl-instrument__robot-angle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.curl-instrument__robot-angle span {
+  color: rgba(181, 229, 221, 0.5);
+  font-size: 0.44rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.curl-instrument__robot-angle strong {
+  color: #4ade80;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.curl-instrument__robot-angle--diff strong {
+  color: #fbbf24;
+}
+
+.curl-instrument__robot-tip {
+  color: rgba(181, 229, 221, 0.5);
+  font-size: 0.44rem;
+  margin-top: 0.4rem;
+  font-style: italic;
+}

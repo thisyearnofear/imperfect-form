@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import type { CurlTelemetry } from '@/types/mediapipe';
 import { playStudioCue } from '@/lib/uiSound';
+import { coachStation, type StationTrajectoryProgressEvent } from '@/services/coachStation';
 
 interface CurlFormInstrumentProps {
   telemetry: CurlTelemetry | null;
@@ -21,6 +22,19 @@ function clampAngle(angle: number): number {
 }
 
 export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFormInstrumentProps) {
+  // SO-101 robot elbow angle from station trajectory progress
+  const [robotElbowDeg, setRobotElbowDeg] = useState<number | null>(null);
+  const [robotMeasuredDeg, setRobotMeasuredDeg] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!coachStation.enabled) return;
+    const unsub = coachStation.onTrajectoryProgress((event: StationTrajectoryProgressEvent) => {
+      setRobotElbowDeg(event.current_deg);
+      setRobotMeasuredDeg(event.measured_deg ?? null);
+    });
+    return () => unsub();
+  }, []);
+
   const liveAngleBucket = telemetry ? Math.round(telemetry.elbowAngle / 10) * 10 : null;
   const telemetryPhase = telemetry?.phase;
   const telemetryTargetMin = telemetry?.targetMinDeg;
@@ -190,6 +204,37 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
           <span>Curl</span>
         </div>
       </div>
+
+      {/* SO-101 Robot Joint Readout */}
+      {coachStation.enabled && (
+        <div className="curl-instrument__robot">
+          <div className="curl-instrument__robot-header">
+            <span className="curl-instrument__robot-badge">SO-101</span>
+            <span className="curl-instrument__robot-label">Robot elbow</span>
+          </div>
+          <div className="curl-instrument__robot-angles">
+            <div className="curl-instrument__robot-angle">
+              <span>Commanded</span>
+              <strong>{robotElbowDeg !== null ? `${Math.round(robotElbowDeg)}°` : '—'}</strong>
+            </div>
+            <div className="curl-instrument__robot-angle">
+              <span>Observed</span>
+              <strong>
+                {robotMeasuredDeg !== null ? `${Math.round(robotMeasuredDeg)}°` : '—'}
+              </strong>
+            </div>
+            {telemetry && robotElbowDeg !== null && (
+              <div className="curl-instrument__robot-angle curl-instrument__robot-angle--diff">
+                <span>Delta</span>
+                <strong>{Math.abs(Math.round(telemetry.elbowAngle - robotElbowDeg))}°</strong>
+              </div>
+            )}
+          </div>
+          <p className="curl-instrument__robot-tip">
+            Match the robot's target angle with your elbow
+          </p>
+        </div>
+      )}
 
       {/* Live form score */}
       {repCount > 0 && (
