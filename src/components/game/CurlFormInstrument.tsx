@@ -21,6 +21,45 @@ function clampAngle(angle: number): number {
   return Math.max(0, Math.min(180, angle));
 }
 
+/**
+ * Calculate form score (0-100) based on how well user matches robot target.
+ * Factors: delta from target, drift penalty, range bonus.
+ */
+function calculateFormScore(
+  userAngle: number,
+  targetAngle: number | null,
+  driftDeg: number | null,
+  driftTarget: number | null,
+  inRange: boolean
+): number {
+  if (targetAngle === null) return 0;
+
+  // Base score from angle delta (0° delta = 100, 30°+ delta = 0)
+  const delta = Math.abs(userAngle - targetAngle);
+  const deltaScore = Math.max(0, 100 - (delta / 30) * 100);
+
+  // Drift penalty (if available)
+  let driftPenalty = 0;
+  if (driftDeg !== null && driftTarget !== null && driftDeg > driftTarget) {
+    const driftExcess = driftDeg - driftTarget;
+    driftPenalty = Math.min(20, (driftExcess / 15) * 20);
+  }
+
+  // Range bonus
+  const rangeBonus = inRange ? 10 : 0;
+
+  return Math.round(Math.max(0, Math.min(100, deltaScore - driftPenalty + rangeBonus)));
+}
+
+/** Get form grade and color from score */
+function getFormGrade(score: number): { grade: string; color: string } {
+  if (score >= 90) return { grade: 'A', color: '#4ade80' };
+  if (score >= 80) return { grade: 'B', color: '#75e6b1' };
+  if (score >= 70) return { grade: 'C', color: '#fbbf24' };
+  if (score >= 60) return { grade: 'D', color: '#f97316' };
+  return { grade: 'F', color: '#ef4444' };
+}
+
 export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFormInstrumentProps) {
   // SO-101 robot elbow angle from station trajectory progress
   const [robotElbowDeg, setRobotElbowDeg] = useState<number | null>(null);
@@ -119,6 +158,17 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
   const drift = telemetry.elbowDriftDeg;
   const driftDelta = drift === null ? null : Math.round(drift - telemetry.elbowDriftTargetDeg);
   const rangeReached = angle <= telemetry.targetMaxDeg;
+
+  // Calculate live form score
+  const targetAngle = robotElbowDeg ?? targetMid;
+  const formScore = calculateFormScore(
+    angle,
+    targetAngle,
+    drift,
+    telemetry.elbowDriftTargetDeg,
+    rangeReached
+  );
+  const { grade, color: gradeColor } = getFormGrade(formScore);
 
   return (
     <section
@@ -236,7 +286,40 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
         </div>
       )}
 
-      {/* Live form score */}
+      {/* Live Form Score */}
+      <div className="curl-instrument__form-score">
+        <div className="curl-instrument__form-score-header">
+          <span className="curl-instrument__form-score-label">Form Score</span>
+          <span className="curl-instrument__form-score-grade" style={{ color: gradeColor }}>
+            {grade}
+          </span>
+        </div>
+        <div className="curl-instrument__form-score-bar">
+          <div
+            className="curl-instrument__form-score-fill"
+            style={{
+              width: `${formScore}%`,
+              backgroundColor: gradeColor,
+            }}
+          />
+        </div>
+        <div className="curl-instrument__form-score-details">
+          <span>{formScore}/100</span>
+          <span>
+            {formScore >= 90
+              ? 'Excellent match!'
+              : formScore >= 80
+                ? 'Good form'
+                : formScore >= 70
+                  ? 'Almost there'
+                  : formScore >= 60
+                    ? 'Keep adjusting'
+                    : 'Match the target angle'}
+          </span>
+        </div>
+      </div>
+
+      {/* Reps and Form Status */}
       {repCount > 0 && (
         <div className="curl-instrument__score">
           <span className="curl-instrument__score-label">Reps</span>

@@ -464,3 +464,62 @@
   margin-top: 0.4rem;
   font-style: italic;
 }
+/* Live Form Score */
+.curl-instrument__form-score {
+  border-top: 1px solid rgba(117, 230, 177, 0.15);
+  padding-top: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.curl-instrument__form-score-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.curl-instrument__form-score-label {
+  color: rgba(181, 229, 221, 0.7);
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.curl-instrument__form-score-grade {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.curl-instrument__form-score-bar {
+  height: 4px;
+  background: rgba(181, 229, 221, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+
+.curl-instrument__form-score-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease-out, background-color 0.3s ease-out;
+}
+
+.curl-instrument__form-score-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.curl-instrument__form-score-details span:first-child {
+  color: rgba(181, 229, 221, 0.5);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.48rem;
+}
+
+.curl-instrument__form-score-details span:last-child {
+  color: rgba(181, 229, 221, 0.6);
+  font-size: 0.44rem;
+  font-style: italic;
+}
