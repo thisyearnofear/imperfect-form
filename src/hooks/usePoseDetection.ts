@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { BiomechanicalState, CurlPoseData } from '@/types/mediapipe';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -8,6 +8,8 @@ import type { BiomechanicalState, CurlPoseData } from '@/types/mediapipe';
 // ═══════════════════════════════════════════════════════════════════════════
 
 export type DetectionPhase = 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
+
+const LIVE_UI_UPDATE_INTERVAL_MS = 50;
 
 export interface PoseState {
   hasCamera: boolean;
@@ -50,6 +52,44 @@ export function usePoseDetection(): UsePoseDetectionReturn {
   const [metrics, setMetrics] = useState<BiomechanicalState | null>(null);
   const [curlPoseData, setCurlPoseData] = useState<CurlPoseData | null>(null);
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
+  const latestMetricsRef = useRef<BiomechanicalState | null>(null);
+  const latestCurlPoseDataRef = useRef<CurlPoseData | null>(null);
+  const liveUiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastLiveUiUpdateRef = useRef(0);
+
+  const publishLiveUiState = useCallback(() => {
+    liveUiTimerRef.current = null;
+    const elapsed = performance.now() - lastLiveUiUpdateRef.current;
+    if (elapsed < LIVE_UI_UPDATE_INTERVAL_MS) {
+      liveUiTimerRef.current = setTimeout(publishLiveUiState, LIVE_UI_UPDATE_INTERVAL_MS - elapsed);
+      return;
+    }
+
+    lastLiveUiUpdateRef.current = performance.now();
+    setMetrics(latestMetricsRef.current);
+    setCurlPoseData(latestCurlPoseDataRef.current);
+  }, []);
+
+  const scheduleLiveUiState = useCallback(() => {
+    if (liveUiTimerRef.current !== null) return;
+    const elapsed = performance.now() - lastLiveUiUpdateRef.current;
+    liveUiTimerRef.current = setTimeout(
+      publishLiveUiState,
+      Math.max(0, LIVE_UI_UPDATE_INTERVAL_MS - elapsed)
+    );
+  }, [publishLiveUiState]);
+
+  useEffect(() => {
+    return () => {
+      if (liveUiTimerRef.current !== null) {
+        clearTimeout(liveUiTimerRef.current);
+        liveUiTimerRef.current = null;
+      }
+      latestMetricsRef.current = null;
+      latestCurlPoseDataRef.current = null;
+      lastLiveUiUpdateRef.current = 0;
+    };
+  }, []);
 
   const handleDetectionProgress = useCallback((progress: DetectionProgress) => {
     if (progress.phase !== 'ready') {
@@ -74,13 +114,21 @@ export function usePoseDetection(): UsePoseDetectionReturn {
     });
   }, []);
 
-  const handleMetrics = useCallback((state: BiomechanicalState) => {
-    setMetrics(state);
-  }, []);
+  const handleMetrics = useCallback(
+    (state: BiomechanicalState) => {
+      latestMetricsRef.current = state;
+      scheduleLiveUiState();
+    },
+    [scheduleLiveUiState]
+  );
 
-  const handleCurlPoseData = useCallback((poseData: CurlPoseData | undefined) => {
-    setCurlPoseData(poseData ?? null);
-  }, []);
+  const handleCurlPoseData = useCallback(
+    (poseData: CurlPoseData | undefined) => {
+      latestCurlPoseDataRef.current = poseData ?? null;
+      scheduleLiveUiState();
+    },
+    [scheduleLiveUiState]
+  );
 
   return {
     poseState,

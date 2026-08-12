@@ -15,6 +15,7 @@ import {
   analyzeBiomechanics,
 } from '../utils/biomechanics';
 import { drawSkeleton } from '../utils/poseDrawing';
+import { PoseSmoother } from '../lib/pose/poseSmoother';
 import { SessionLogger, SessionSummary } from '../services/sessionLogger';
 import { coachStation } from '../services/coachStation';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
@@ -108,6 +109,7 @@ export function usePoseDetection(
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<PoseDetector | null>(null);
+  const poseSmootherRef = useRef<PoseSmoother | null>(null);
   const preprocessCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const preprocessorSettingsRef = useRef<PosePreprocessorSettings>(
     getInitialPreprocessorSettings()
@@ -228,6 +230,7 @@ export function usePoseDetection(
     if (!canvasRef.current || !videoRef.current) return;
 
     let cancelled = false;
+    let pendingWorkerBitmap: ImageBitmap | null = null;
 
     notifyStateChange({ isLoading: true });
     emitProgress({
@@ -243,6 +246,7 @@ export function usePoseDetection(
     lastRepCountRef.current = 0;
     repCounter = createInitialRepCounterState();
     engineDetector = isEngineMode(startMode) ? createEngineRepDetectorState(startMode) : null;
+    poseSmootherRef.current = new PoseSmoother();
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
@@ -378,19 +382,72 @@ export function usePoseDetection(
         };
         worker.postMessage(initMessage, [offscreen]);
 
-        let isProcessing = false;
-        const frameCallback = async () => {
-          if (!videoRef.current || !workerRef.current || !isActiveRef.current || cancelled) return;
+        let inferenceInFlight = false;
+        let workerReady = false;
+        let workerFailed = false;
 
-          if (!isProcessing) {
-            isProcessing = true;
-            try {
-              const bitmap = await createImageBitmap(video);
-              worker.postMessage({ type: 'frame', bitmap }, [bitmap]);
-            } catch (_e) {
-              // Silently handle frame capture errors
+        const dispatchPendingFrame = () => {
+          if (cancelled || workerFailed || !workerRef.current) {
+            pendingWorkerBitmap?.close();
+            pendingWorkerBitmap = null;
+            inferenceInFlight = false;
+            return;
+          }
+
+          const nextBitmap = pendingWorkerBitmap;
+          pendingWorkerBitmap = null;
+          if (!nextBitmap) {
+            inferenceInFlight = false;
+            return;
+          }
+
+          inferenceInFlight = true;
+          try {
+            workerRef.current.postMessage({ type: 'frame', bitmap: nextBitmap }, [nextBitmap]);
+          } catch (_e) {
+            nextBitmap.close();
+            inferenceInFlight = false;
+          }
+        };
+
+        const frameCallback = async () => {
+          if (!videoRef.current || !workerRef.current || !isActiveRef.current || cancelled) {
+            return;
+          }
+          if (workerFailed) return;
+          if (!workerReady) {
+            if ('requestVideoFrameCallback' in video) {
+              video.requestVideoFrameCallback(frameCallback);
+            } else {
+              animationRef.current = requestAnimationFrame(frameCallback);
             }
-            isProcessing = false;
+            return;
+          }
+
+          try {
+            const bitmap = await createImageBitmap(video);
+            if (
+              cancelled ||
+              workerFailed ||
+              !workerReady ||
+              !isActiveRef.current ||
+              !workerRef.current
+            ) {
+              bitmap.close();
+              return;
+            }
+
+            // Keep exactly one newest frame while inference is running. This
+            // prevents a slow worker from accumulating stale ImageBitmaps.
+            if (inferenceInFlight) {
+              pendingWorkerBitmap?.close();
+              pendingWorkerBitmap = bitmap;
+            } else {
+              pendingWorkerBitmap = bitmap;
+              dispatchPendingFrame();
+            }
+          } catch (_e) {
+            // Silently handle frame capture errors
           }
 
           if ('requestVideoFrameCallback' in video) {
@@ -408,6 +465,11 @@ export function usePoseDetection(
 
         worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
           const data = e.data;
+          if (data.type === 'result' || data.type === 'error') {
+            // Immediately consume the newest staged frame, if any. This keeps
+            // the worker continuously fed without ever building a queue.
+            dispatchPendingFrame();
+          }
           if (data.type === 'baseline') {
             recordPoseBaselineFrame({
               detectionTimeMs: data.detectionTimeMs ?? 0,
@@ -421,6 +483,7 @@ export function usePoseDetection(
             return;
           }
           if (data.type === 'ready') {
+            workerReady = true;
             notifyStateChange({ hasPoseDetection: true, isLoading: false });
             emitProgress({
               phase: 'ready',
@@ -453,6 +516,18 @@ export function usePoseDetection(
               );
             }
           }
+        };
+
+        worker.onerror = () => {
+          // A crashed worker cannot consume the staged bitmap; release it so
+          // a failed session never leaks camera-frame memory.
+          pendingWorkerBitmap?.close();
+          pendingWorkerBitmap = null;
+          inferenceInFlight = false;
+          workerFailed = true;
+          workerReady = false;
+          worker.terminate();
+          workerRef.current = null;
         };
       } catch (error) {
         console.error('Failed to start worker-based detection:', error);
@@ -651,8 +726,10 @@ export function usePoseDetection(
           percentage: 60,
         });
 
-        // STEP 3: Create the detector only after the user has started coaching.
-        const modelType = isMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
+        // STEP 3: Create the latency-friendly detector only after the user
+        // has started coaching. The 17-keypoint output is sufficient for the
+        // current single-person exercise engine.
+        const modelType = 'SinglePose.Lightning';
         // Keep the main-thread fallback aligned with the worker. MoveNet's
         // smoothing tracker can dereference a missing bounding box on transient
         // frames (`null.yMin`). Temporal context comes from the session trace.
@@ -692,9 +769,20 @@ export function usePoseDetection(
         }
 
         // Start detection loop
+        let inferenceInFlight = false;
+        let pendingFrame = false;
         const detect = async () => {
           if (!isActiveRef.current || cancelled || !videoRef.current || !detectorRef.current)
             return;
+
+          if (inferenceInFlight) {
+            // The video element itself is the latest-frame mailbox. Avoid
+            // starting another inference, then sample the newest frame as soon
+            // as the current inference completes.
+            pendingFrame = true;
+            return;
+          }
+          inferenceInFlight = true;
 
           try {
             const preprocessStart = performance.now();
@@ -743,7 +831,9 @@ export function usePoseDetection(
             }
 
             if (firstPose?.keypoints?.length) {
-              const keypoints = firstPose.keypoints as Keypoint[];
+              const keypoints =
+                poseSmootherRef.current?.update(firstPose.keypoints as Keypoint[]) ??
+                (firstPose.keypoints as Keypoint[]);
               const scored = keypoints.filter((kp) => typeof kp.score === 'number');
               const avgScore =
                 scored.length > 0
@@ -854,9 +944,15 @@ export function usePoseDetection(
             if (!message.includes('yMin')) {
               console.error('Detection error:', error);
             }
+          } finally {
+            inferenceInFlight = false;
+            if (pendingFrame) {
+              pendingFrame = false;
+            }
+            if (!cancelled && isActiveRef.current && detectorRef.current) {
+              animationRef.current = requestAnimationFrame(detect);
+            }
           }
-
-          animationRef.current = requestAnimationFrame(detect);
         };
 
         animationRef.current = requestAnimationFrame(detect);
@@ -924,6 +1020,9 @@ export function usePoseDetection(
 
       // Session end is handled by the isActive→false effect — not here.
       // Emitting on every cleanup races React Strict Mode and kills real sessions.
+      // Release the one-slot frame mailbox before terminating the worker.
+      pendingWorkerBitmap?.close();
+      pendingWorkerBitmap = null;
 
       // Clean up worker
       if (workerRef.current) {
@@ -940,6 +1039,8 @@ export function usePoseDetection(
         }
         detectorRef.current = null;
       }
+      poseSmootherRef.current?.reset();
+      poseSmootherRef.current = null;
 
       // Clean up animation frame
       if (animationRef.current) {

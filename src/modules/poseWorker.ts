@@ -21,6 +21,7 @@ import {
   analyzeBiomechanics,
 } from '../utils/biomechanics';
 import { drawSkeleton } from '../utils/poseDrawing';
+import { PoseSmoother } from '../lib/pose/poseSmoother';
 
 let detector: PoseDetector;
 let ctx: OffscreenCanvasRenderingContext2D;
@@ -28,14 +29,12 @@ let ctx: OffscreenCanvasRenderingContext2D;
 
 let repCounter: RepCounterState = createInitialRepCounterState();
 let engineDetector: EngineRepDetectorState | null = null;
+const poseSmoother = new PoseSmoother();
 let workerMode: ExerciseMode = 'pushups';
-let lastProcessTime = 0;
-let workerIsMobile = false;
 let workerPbTrace: import('../types/workout').SessionSnapshot[] | undefined;
 let workerStartTime = 0;
 let preprocessorSettings: PosePreprocessorSettings = getDefaultPreprocessorSettings();
 let preprocessCanvas: OffscreenCanvas | null = null;
-const DESKTOP_FRAME_INTERVAL_MS = 66; // ~15fps for stability
 const _MIN_TIME_BETWEEN_REPS = 800; // ms
 
 // Biomechanical Helpers removed - consolidated into src/utils/biomechanics.ts
@@ -104,7 +103,6 @@ self.addEventListener('message', async (event) => {
       const offscreen: OffscreenCanvas = data.canvas;
       // Defensive: ensure mode is never null/undefined
       workerMode = (data.mode ?? 'pushups') as ExerciseMode;
-      workerIsMobile = !!data.isMobile;
       workerPbTrace = data.pbTrace;
       workerStartTime = Date.now();
       preprocessorSettings = data.preprocessor ?? preprocessorSettings;
@@ -116,10 +114,9 @@ self.addEventListener('message', async (event) => {
       const backend = await initTfBackend();
       self.postMessage({ type: 'backend', backend });
 
-      // Consolidate model selection logic:
-      // Desktop Squats/Pushups -> Thunder (Best accuracy)
-      // Mobile -> Lightning (Best performance)
-      const modelType = workerIsMobile ? 'SinglePose.Lightning' : 'SinglePose.Thunder';
+      // Lightning keeps live coaching responsive; the 17-keypoint output is
+      // sufficient for the current single-person exercise engine.
+      const modelType = 'SinglePose.Lightning';
 
       await disposeDetector();
 
@@ -136,12 +133,14 @@ self.addEventListener('message', async (event) => {
 
       repCounter = createInitialRepCounterState();
       engineDetector = isEngineMode(workerMode) ? createEngineRepDetectorState(workerMode) : null;
+      poseSmoother.reset();
 
       self.postMessage({ type: 'ready' });
     } else if (data.type === 'setMode') {
       workerMode = (data.mode ?? 'pushups') as ExerciseMode;
       repCounter = createInitialRepCounterState();
       engineDetector = isEngineMode(workerMode) ? createEngineRepDetectorState(workerMode) : null;
+      poseSmoother.reset();
     } else if (data.type === 'frame') {
       if (!detector || !ctx) {
         if (data.bitmap) data.bitmap.close();
@@ -149,13 +148,6 @@ self.addEventListener('message', async (event) => {
       }
 
       const bitmap: ImageBitmap = data.bitmap;
-      const now = performance.now();
-      if (!workerIsMobile && now - lastProcessTime < DESKTOP_FRAME_INTERVAL_MS) {
-        if (data.bitmap) data.bitmap.close();
-        return;
-      }
-      lastProcessTime = now;
-
       let processedBitmap = bitmap;
       let preprocessTimeMs = 0;
       const preprocessingActive =
@@ -223,7 +215,7 @@ self.addEventListener('message', async (event) => {
         }
 
         if (firstPose?.keypoints?.length) {
-          const keypoints = firstPose.keypoints as Keypoint[];
+          const keypoints = poseSmoother.update(firstPose.keypoints as Keypoint[]);
 
           // Biomechanical Analysis
           const metrics = analyzeBiomechanics(keypoints, workerMode);

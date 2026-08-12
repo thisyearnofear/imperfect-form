@@ -115,6 +115,35 @@ export function usePoseWorker(
     const worker = new Worker(new URL('./poseWorker.ts', import.meta.url), { type: 'module' });
     workerRef.current = worker;
 
+    // Keep at most one in-flight bitmap and one newest pending bitmap.
+    let isProcessing = false;
+    let workerReady = false;
+    let workerFailed = false;
+    let pendingBitmap: ImageBitmap | null = null;
+    const dispatchPendingFrame = () => {
+      if (workerFailed || !workerRef.current || !isActive) {
+        pendingBitmap?.close();
+        pendingBitmap = null;
+        isProcessing = false;
+        return;
+      }
+
+      const nextBitmap = pendingBitmap;
+      pendingBitmap = null;
+      if (!nextBitmap) {
+        isProcessing = false;
+        return;
+      }
+
+      isProcessing = true;
+      try {
+        worker.postMessage({ type: 'frame', bitmap: nextBitmap }, [nextBitmap]);
+      } catch (_e) {
+        nextBitmap.close();
+        isProcessing = false;
+      }
+    };
+
     async function start() {
       try {
         const video = videoRef.current!;
@@ -147,21 +176,35 @@ export function usePoseWorker(
         };
         worker.postMessage(initMessage, [offscreen]);
 
-        // Process each video frame
-        let isProcessing = false;
-
+        // Process each video frame with a one-slot latest-frame mailbox.
         const frameCallback = async () => {
           if (!videoRef.current || !workerRef.current || !isActive) return;
-
-          if (!isProcessing) {
-            isProcessing = true;
-            try {
-              const bitmap = await createImageBitmap(video);
-              worker.postMessage({ type: 'frame', bitmap }, [bitmap]);
-            } catch (_e) {
-              // Silently handle frame capture errors
+          if (workerFailed) return;
+          if (!workerReady) {
+            if ('requestVideoFrameCallback' in video) {
+              video.requestVideoFrameCallback(frameCallback);
+            } else {
+              requestAnimationFrame(frameCallback);
             }
-            isProcessing = false;
+            return;
+          }
+
+          try {
+            const bitmap = await createImageBitmap(video);
+            if (!workerRef.current || !workerReady || workerFailed || !isActive) {
+              bitmap.close();
+              return;
+            }
+
+            if (isProcessing) {
+              pendingBitmap?.close();
+              pendingBitmap = bitmap;
+            } else {
+              pendingBitmap = bitmap;
+              dispatchPendingFrame();
+            }
+          } catch (_e) {
+            // Silently handle frame capture errors
           }
 
           if ('requestVideoFrameCallback' in video) {
@@ -189,13 +232,16 @@ export function usePoseWorker(
     ) => {
       const data = e.data;
       if (data.type === 'ready') {
+        workerReady = true;
         notifyStateChange({ hasPoseDetection: true, isLoading: false });
         onDetectionProgressRef.current?.({ phase: 'ready', message: 'Ready!', percentage: 100 });
       } else if (data.type === 'rep') {
         const count = (data as any).count;
         lastRepCountRef.current = count;
         onRepCountRef.current(count);
-      } else if (data.type === 'result') {
+      } else if (data.type === 'result' || data.type === 'error') {
+        dispatchPendingFrame();
+        if (data.type === 'error') return;
         const { state, keypoints } = data;
         const detected = keypoints && keypoints.length > 0;
 
@@ -209,8 +255,20 @@ export function usePoseWorker(
       }
     };
 
+    worker.onerror = () => {
+      pendingBitmap?.close();
+      pendingBitmap = null;
+      isProcessing = false;
+      workerFailed = true;
+      workerReady = false;
+      worker.terminate();
+      workerRef.current = null;
+    };
+
     return () => {
       console.log('🧹 Cleaning up pose worker and stream');
+      pendingBitmap?.close();
+      pendingBitmap = null;
 
       // Calculate and trigger session end callback before clearing
       if (sessionLoggerRef.current) {

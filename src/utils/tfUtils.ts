@@ -146,13 +146,10 @@ export const mobileTFUtils = {
    * @param isMobile Whether the app is running on a mobile device
    * @returns The appropriate model type to use
    */
-  getOptimalModelType: (isMobile: boolean): string => {
-    // For mobile, use a lighter model
-    if (isMobile) {
-      return 'lightning';
-    }
-    // For desktop, use a more accurate model
-    return 'thunder';
+  getOptimalModelType: (_isMobile: boolean): string => {
+    // Lightning keeps live feedback responsive on both paths. Thunder is
+    // reserved for an explicit accuracy benchmark rather than the default.
+    return 'SinglePose.Lightning';
   },
 
   /**
@@ -161,27 +158,14 @@ export const mobileTFUtils = {
    * @returns Configuration object for the pose detector
    */
   getDetectorConfig: (isMobile: boolean): Record<string, unknown> => {
-    if (isMobile) {
-      return {
-        modelType: 'lightning',
-        // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
-        enableSmoothing: false,
-        minPoseScore: 0.15, // Lower threshold for mobile to detect poses from further away
-        multiPoseMaxDimension: 256, // Smaller dimension for better performance
-        // Keep the legacy bounding-box tracker off for transient null boxes.
-        enableTracking: false,
-      };
-    } else {
-      // Desktop can use more accurate but computation-heavy settings
-      return {
-        modelType: 'thunder',
-        // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
-        enableSmoothing: false,
-        minPoseScore: 0.25,
-        multiPoseMaxDimension: 512,
-        // Keep the legacy bounding-box tracker off for transient null boxes.
-        enableTracking: false,
-      };
-    }
+    return {
+      modelType: 'SinglePose.Lightning',
+      // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
+      enableSmoothing: false,
+      minPoseScore: isMobile ? 0.15 : 0.25,
+      multiPoseMaxDimension: isMobile ? 256 : 512,
+      // Keep the legacy bounding-box tracker off for transient null boxes.
+      enableTracking: false,
+    };
   },
 };

@@ -49,27 +49,22 @@ export class PoseDetectionService {
   /**
    * Get the optimal model type for device
    */
-  static getOptimalModelType(isMobile: boolean): string {
-    return isMobile ? 'lightning' : 'thunder';
+  static getOptimalModelType(_isMobile: boolean): string {
+    // Lightning keeps the live feedback loop responsive on both paths. Keep
+    // Thunder available for an explicit accuracy benchmark, not the default.
+    return 'SinglePose.Lightning';
   }
 
   /**
    * Get detector config based on device type
    */
   static getDetectorConfig(isMobile: boolean) {
-    if (isMobile) {
-      return {
-        modelType: 'SinglePose.Lightning',
-        // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
-        enableSmoothing: false,
-        minPoseScore: 0.2,
-      };
-    }
     return {
-      modelType: 'SinglePose.Thunder',
-      enableSmoothing: true,
-      minPoseScore: 0.25,
-      multiPoseMaxDimension: 512,
+      modelType: 'SinglePose.Lightning',
+      // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
+      enableSmoothing: false,
+      minPoseScore: isMobile ? 0.2 : 0.25,
+      multiPoseMaxDimension: isMobile ? undefined : 512,
       // Keep the legacy bounding-box tracker off for the same null-box reason.
       enableTracking: false,
     };
