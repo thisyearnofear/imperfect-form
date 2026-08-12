@@ -81,7 +81,7 @@ export function CurlFormInstrument({
   onFormScore,
 }: CurlFormInstrumentProps) {
   // Haptic feedback
-  const { triggerSuccessFeedback, triggerErrorFeedback } = useHapticFeedback();
+  const { triggerCoachHaptic } = useHapticFeedback();
 
   // Current coach personality
   const [currentPersonality, setPersonality] = useCoachPersonality();
@@ -185,9 +185,11 @@ export function CurlFormInstrument({
         ...prev.slice(-9), // Keep last 10 reps
         { rep: repCount, score, timestamp: Date.now() },
       ]);
+      // Coach-specific haptic feedback for rep completion
+      triggerCoachHaptic(currentPersonality, 'rep');
     }
     prevRepCountRef.current = repCount;
-  }, [repCount, telemetry, robotElbowDeg]);
+  }, [repCount, telemetry, robotElbowDeg, triggerCoachHaptic, currentPersonality]);
 
   // Calculate grade and form score from telemetry (must be before early return)
   useEffect(() => {
@@ -220,7 +222,7 @@ export function CurlFormInstrument({
     if (!tracking || !telemetry || currentGrade === null) return;
     const prevGrade = prevGradeRef.current;
     if (prevGrade !== null && prevGrade !== currentGrade) {
-      // Grade changed - trigger haptic feedback
+      // Grade changed - trigger coach-specific haptic feedback
       const gradeOrder = ['F', 'D', 'C', 'B', 'A'];
       const prevIndex = gradeOrder.indexOf(prevGrade);
       const newIndex = gradeOrder.indexOf(currentGrade);
@@ -228,14 +230,14 @@ export function CurlFormInstrument({
 
       if (improved) {
         // Improving - success feedback
-        triggerSuccessFeedback();
+        triggerCoachHaptic(currentPersonality, 'success');
       } else {
         // Declining - error feedback
-        triggerErrorFeedback();
+        triggerCoachHaptic(currentPersonality, 'error');
       }
     }
     prevGradeRef.current = currentGrade;
-  }, [currentGrade, tracking, telemetry, triggerSuccessFeedback, triggerErrorFeedback]);
+  }, [currentGrade, tracking, telemetry, triggerCoachHaptic, currentPersonality]);
 
   if (!tracking || !telemetry) {
     return (
