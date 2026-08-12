@@ -292,13 +292,19 @@ function isTwinDemoRequested(): boolean {
 export function CoachTwinPeek({
   showFallbackPulse = false,
   session = false,
+  mode,
 }: {
   showFallbackPulse?: boolean;
   /** Rendered inside the active workout rather than the earned shell. */
   session?: boolean;
+  /** Exercise mode — when 'curls' and no station is connected, show the simulated arm as a form reference. */
+  mode?: string;
 }) {
   const demoBusRef = useRef<DemoBus | null>(null);
-  const isDemo = !coachStation.enabled && isTwinDemoRequested();
+  // Enable demo mode when: (1) explicitly requested via ?twin=1, OR
+  // (2) doing curls with no station connected — the simulated arm serves as
+  // a visual form reference so users can see the target elbow angle.
+  const isDemo = !coachStation.enabled && (isTwinDemoRequested() || mode === 'curls');
   if (isDemo && !demoBusRef.current) demoBusRef.current = makeDemoBus();
   const enabled = coachStation.enabled || isDemo;
   const [status, setStatus] = useState<StationStatus>(coachStation.status);
@@ -435,6 +441,10 @@ export function CoachTwinPeek({
   // the honest degraded path: camera coaching continues without the arm.
   if (status === 'offline' && !session) return null;
 
+  // Determine if this is a curls form-reference demo (no real station)
+  // isDemo already ensures !coachStation.enabled, so we only check mode here.
+  const isCurlsFormRef = isDemo && mode === 'curls';
+
   const statusLabel =
     execution?.kind === 'succeeded'
       ? 'Correction complete'
@@ -443,16 +453,22 @@ export function CoachTwinPeek({
         : execution?.kind === 'error'
           ? 'Station error · coaching continues'
           : demo != null
-            ? 'Coach is showing the target line'
+            ? isCurlsFormRef
+              ? 'Form reference — match the target line'
+              : 'Coach is showing the target line'
             : execution?.kind === 'executing'
-              ? 'Coach is moving through the correction'
+              ? isCurlsFormRef
+                ? 'Demonstrating the target angle'
+                : 'Coach is moving through the correction'
               : intent != null
                 ? 'Coach is preparing the correction'
                 : status === 'connected'
                   ? 'Coach is watching'
                   : status === 'connecting'
                     ? 'Connecting Coach…'
-                    : 'Coach Bay offline · camera coaching continues';
+                    : isCurlsFormRef
+                      ? 'Watch the target — match it with your elbow'
+                      : 'Coach Bay offline · camera coaching continues';
 
   const isExecutionActive = execution?.kind === 'executing';
   const hasExecutionError = execution?.kind === 'error' || execution?.kind === 'aborted';
@@ -685,8 +701,12 @@ export function CoachTwinPeek({
             <>
               <div className="coach-twin-peek__header">
                 <div>
-                  <p className="coach-twin-peek__eyebrow">Coach Bay</p>
-                  <p className="coach-twin-peek__label">SO-101 · form instrument</p>
+                  <p className="coach-twin-peek__eyebrow">
+                    {isCurlsFormRef ? 'Form Reference' : 'Coach Bay'}
+                  </p>
+                  <p className="coach-twin-peek__label">
+                    {isCurlsFormRef ? 'Target angle guide · SO-101' : 'SO-101 · form instrument'}
+                  </p>
                 </div>
                 {affectLabel ? (
                   <span
@@ -812,7 +832,9 @@ export function CoachTwinPeek({
               ) : null}
               {demo ? (
                 <p className="coach-twin-peek__tip" aria-live="polite">
-                  {demo.narration}
+                  {isCurlsFormRef
+                    ? 'Match the target angle with your elbow during the curl.'
+                    : demo.narration}
                 </p>
               ) : execution ? (
                 <p

@@ -9,7 +9,7 @@
    ```js
    window.__IMF_BASELINE__.start({
      target: 'exact Arm device + OS',
-     model: 'SinglePose.Thunder',
+     model: 'SinglePose.Lightning',
      backend: 'webgl',
      input: '640x480 camera',
      camera: 'exact camera model',
@@ -23,16 +23,17 @@
    const report = window.__IMF_BASELINE__.stop();
    copy(JSON.stringify(report, null, 2));
    ```
-4. Repeat with one intentional optimization (for example Lightning instead of
-   Thunder), keeping target, camera, lighting, exercise, and run length fixed.
+4. Repeat with one controlled variable (for example worker versus main-thread
+   path, or preprocessing off versus on), keeping target, camera, lighting,
+   exercise, model, and run length fixed.
 5. Save the two JSON files, then compare them:
    ```sh
    pnpm benchmark:arm -- \\
      --baseline evidence/baseline.json \\
      --optimized evidence/optimized.json \\
      --target 'exact Arm device + OS' \\
-     --baseline-label 'Thunder / WebGL' \\
-     --optimized-label 'Lightning / WebGL' \\
+     --baseline-label 'Worker / Lightning / WebGL' \\
+     --optimized-label 'Main / Lightning / WebGL' \\
      --out evidence/arm-comparison
    ```
 
@@ -50,6 +51,10 @@ reports and the generated comparison together.
 | Avg keypoint confidence           | Robustness under current lighting/angle |
 | Pose detected frames              | How often the model loses the subject   |
 | Memory growth                     | Leak or runaway memory use              |
+| Estimated capture FPS             | Camera/scheduler input rate             |
+| Coalesced frames                  | Frames replaced while inference ran     |
+| Capture failures                  | Worker ImageBitmap acquisition health   |
+| Median / p95 pipeline latency     | Capture-to-baseline feedback delay      |
 | Device info                       | Reproducibility across phones/browsers  |
 
 ## Latest run
@@ -122,6 +127,8 @@ Use these thresholds to decide whether a change is worth keeping:
 - **Median preprocess time > 20ms on desktop / > 40ms on mobile:** the Phase 2 pipeline is too expensive for real-time use.
 - **Avg keypoint confidence drops by > 10%:** measure robustness before/after the change.
 - **Memory growth > 50MB over 60s:** leak suspected.
+- **p95 pipeline latency > 150ms:** feedback may feel delayed even when inference FPS looks acceptable.
+- **Coalesced frames > 20% of processed frames:** inference is falling behind the camera cadence; compare Lightning, path, and preprocessing before changing UX.
 
 ## Phase 2 CV robustness measurement
 
@@ -136,5 +143,8 @@ Copy each markdown report into the **Historical runs** table and note the active
 ## Known limitations
 
 - The baseline utility samples frames and keeps a rolling buffer to avoid unbounded memory growth.
+- Estimated capture FPS is derived from processed frames plus coalesced frames; it is a scheduler proxy, not a camera sensor measurement.
+- Coalesced frames are counted without storing raw camera data, and the metric is intentionally aggregate-only.
+- Capture failures currently cover worker-side `ImageBitmap` acquisition; the main path reads the live video element directly.
 - Memory readings rely on `performance.memory`, which is only available in Chromium-based browsers.
 - `performance.now()` inside a Web Worker may differ slightly from the main thread; relative numbers are still valid.

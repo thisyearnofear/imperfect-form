@@ -40,6 +40,10 @@ export interface PoseBaselineFrame {
   mode: string;
   /** Whether the frame was processed on the worker or main thread */
   path: 'worker' | 'main';
+  /** Number of newer/stale frames coalesced before this processed frame. */
+  coalescedFrames?: number;
+  /** Time from camera-frame capture to baseline recording (ms), when available. */
+  pipelineLatencyMs?: number;
 }
 
 export type PoseBaselineMetadata = Record<string, string | number | boolean | null>;
@@ -68,6 +72,11 @@ export interface PoseBaselineReport {
     avgKeypointConfidence: number | null;
     poseDetectedFrames: number;
     memoryGrowthBytes: number | null;
+    totalCoalescedFrames: number;
+    estimatedCaptureFps: number;
+    totalCaptureFailures: number;
+    medianPipelineLatencyMs: number;
+    p95PipelineLatencyMs: number;
   };
   /** Per-frame samples (may be downsampled) */
   frames: PoseBaselineFrame[];
@@ -106,6 +115,7 @@ class PoseBaselineRecorder {
   private startedAt = 0;
   private fpsWindow: number[] = [];
   private metadata: PoseBaselineMetadata = {};
+  private captureFailures = 0;
 
   constructor(options: PoseBaselineOptions = {}) {
     this.options = {
@@ -122,6 +132,7 @@ class PoseBaselineRecorder {
     this.fpsWindow = [];
     this.lastFrameTime = 0;
     this.metadata = { ...metadata };
+    this.captureFailures = 0;
     this.isRunning = true;
     this.runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     // Use wall-clock time so the markdown report dates and durations are correct.
@@ -174,6 +185,12 @@ class PoseBaselineRecorder {
     }
   }
 
+  /** Record a camera-frame capture failure without fabricating a frame sample. */
+  recordCaptureFailure(count = 1): void {
+    if (!this.isRunning || !Number.isFinite(count) || count <= 0) return;
+    this.captureFailures += Math.floor(count);
+  }
+
   /**
    * Build a report from the current frames even while running.
    */
@@ -188,6 +205,14 @@ class PoseBaselineRecorder {
       .filter((t) => t > 0)
       .sort((a, b) => a - b);
     const fpsValues = samples.map((f) => f.fps);
+    const pipelineLatencies = samples
+      .map((f) => f.pipelineLatencyMs)
+      .filter((latency): latency is number => latency !== undefined && latency >= 0)
+      .sort((a, b) => a - b);
+    const totalCoalescedFrames = samples.reduce(
+      (total, frame) => total + Math.max(0, frame.coalescedFrames ?? 0),
+      0
+    );
     const confidences = samples
       .map((f) => f.keypointConfidence)
       .filter((c): c is number => c !== null && c !== undefined);
@@ -220,6 +245,15 @@ class PoseBaselineRecorder {
           : null,
         poseDetectedFrames: withPose,
         memoryGrowthBytes,
+        totalCoalescedFrames,
+        estimatedCaptureFps:
+          durationMs > 0
+            ? Math.round(((samples.length + totalCoalescedFrames) / (durationMs / 1000)) * 100) /
+              100
+            : 0,
+        totalCaptureFailures: this.captureFailures,
+        medianPipelineLatencyMs: median(pipelineLatencies),
+        p95PipelineLatencyMs: percentile(pipelineLatencies, 95),
       },
       frames: samples,
     };
@@ -266,6 +300,11 @@ export function recordPoseBaselineFrame(
   frame: Omit<PoseBaselineFrame, 't' | 'fps' | 'frameDeltaMs'>
 ): void {
   getRecorder().record(frame);
+}
+
+/** Record a failed camera-frame capture for the active baseline run. */
+export function recordPoseBaselineCaptureFailure(count = 1): void {
+  getRecorder().recordCaptureFailure(count);
 }
 
 /** Export the last stored report as a markdown table. */
@@ -326,6 +365,11 @@ ${
 | Avg keypoint confidence | ${summary.avgKeypointConfidence ?? 'N/A'} |
 | Pose detected frames | ${summary.poseDetectedFrames} / ${summary.frames} |
 | Memory growth (bytes) | ${summary.memoryGrowthBytes ?? 'N/A'} |
+| Total coalesced frames | ${summary.totalCoalescedFrames ?? 'N/A'} |
+| Estimated capture FPS | ${summary.estimatedCaptureFps ?? 'N/A'} |
+| Total capture failures | ${summary.totalCaptureFailures ?? 'N/A'} |
+| Median pipeline latency (ms) | ${summary.medianPipelineLatencyMs ?? 'N/A'} |
+| p95 pipeline latency (ms) | ${summary.p95PipelineLatencyMs ?? 'N/A'} |
 
 ## Notes
 

@@ -201,6 +201,8 @@ self.addEventListener('message', async (event) => {
           memoryUsed: memory?.usedJSHeapSize,
           memoryTotal: memory?.totalJSHeapSize,
           mode: workerMode,
+          coalescedFrames: data.coalescedFrames ?? 0,
+          captureTimeMs: data.captureTimeMs,
         });
 
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);

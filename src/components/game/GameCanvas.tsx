@@ -115,7 +115,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             <CurlFormInstrument telemetry={curlTelemetry} tracking={poseState.poseDetected} />
           ) : null}
         </div>
-        <CoachTwinPeek session />
+        <CoachTwinPeek session mode={mode} />
       </div>
     );
   }
@@ -152,7 +152,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <CurlFormInstrument telemetry={curlTelemetry} tracking={poseState.poseDetected} />
         ) : null}
       </div>
-      <CoachTwinPeek session />
+      <CoachTwinPeek session mode={mode} />
     </div>
   );
 };

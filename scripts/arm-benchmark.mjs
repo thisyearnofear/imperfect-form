@@ -11,6 +11,11 @@ const METRICS = [
   ['medianPreprocessTimeMs', 'Median preprocess (ms)', 'lower'],
   ['p95PreprocessTimeMs', 'p95 preprocess (ms)', 'lower'],
   ['avgKeypointConfidence', 'Average keypoint confidence', 'higher'],
+  ['estimatedCaptureFps', 'Estimated capture FPS', 'higher'],
+  ['totalCoalescedFrames', 'Coalesced frames', 'lower'],
+  ['totalCaptureFailures', 'Capture failures', 'lower'],
+  ['medianPipelineLatencyMs', 'Median pipeline latency (ms)', 'lower'],
+  ['p95PipelineLatencyMs', 'p95 pipeline latency (ms)', 'lower'],
   ['memoryGrowthBytes', 'Memory growth (bytes)', 'lower'],
 ];
 
@@ -20,8 +25,8 @@ function usage() {
     --baseline evidence/baseline.json \\
     --optimized evidence/optimized.json \\
     --target "Arm device name" \\
-    --baseline-label "Thunder / WebGL" \\
-    --optimized-label "Lightning / WebGL" \\
+    --baseline-label "Worker / Lightning / WebGL" \\
+    --optimized-label "Main / Lightning / WebGL" \\
     --out evidence/arm-comparison
 
 The input files are JSON copied from window.__IMF_BASELINE__.exportJson().
@@ -89,7 +94,7 @@ function assertComparableTargets(base, opt, target) {
   }
 
   // Model/backend are the variables under test; the capture conditions are not.
-  const invariantKeys = ['target', 'input', 'camera', 'exercise', 'lighting', 'path'];
+  const invariantKeys = ['target', 'input', 'camera', 'exercise', 'lighting'];
   for (const key of invariantKeys) {
     const baseValue = base.metadata[key];
     const optValue = opt.metadata[key];
@@ -117,6 +122,7 @@ function formatValue(key, value) {
   if (key.includes('Fps')) return value.toFixed(2);
   if (key.includes('Time')) return `${value.toFixed(2)} ms`;
   if (key === 'memoryGrowthBytes') return `${value} B`;
+  if (key === 'totalCoalescedFrames' || key === 'totalCaptureFailures') return String(value);
   return String(value);
 }
 
@@ -165,7 +171,7 @@ export function buildComparison({ baseline, optimized, target, baselineLabel, op
         rows.find((row) => row.key === 'avgKeypointConfidence')?.changePercent ?? null,
     },
     notes: [
-      'Model and backend may differ; target, camera, input, exercise, lighting, and path are held constant.',
+      'Model, backend, or path may differ as the controlled variable; target, camera, input, exercise, and lighting are held constant.',
       'Report p50/p95 and quality together; do not claim an optimization from latency alone.',
       'This artifact contains measured reports only; review labels and configuration before submission.',
     ],

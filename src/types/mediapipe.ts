@@ -55,7 +55,14 @@ export type WorkerMessage =
       pbTrace?: SessionSnapshot[];
       preprocessor?: PosePreprocessorSettings;
     }
-  | { type: 'frame'; bitmap: ImageBitmap }
+  | {
+      type: 'frame';
+      bitmap: ImageBitmap;
+      /** Sender performance timestamp used for pipeline-latency measurement. */
+      captureTimeMs?: number;
+      /** Number of pending frames replaced before this frame was dispatched. */
+      coalescedFrames?: number;
+    }
   | { type: 'setMode'; mode: string }
   | { type: 'stop' };
 
@@ -116,4 +123,6 @@ export type WorkerResponse =
       memoryUsed?: number;
       memoryTotal?: number;
       mode: string;
+      coalescedFrames?: number;
+      captureTimeMs?: number;
     };

@@ -42,7 +42,10 @@ import {
   shouldUsePoseWorker,
   type PoseRuntimeWindow,
 } from '../lib/pose/poseRuntime';
-import { recordPoseBaselineFrame } from '../lib/pose/poseBaseline';
+import {
+  recordPoseBaselineCaptureFailure,
+  recordPoseBaselineFrame,
+} from '../lib/pose/poseBaseline';
 import {
   PosePreprocessorSettings,
   loadPreprocessorSettings,
@@ -230,7 +233,11 @@ export function usePoseDetection(
     if (!canvasRef.current || !videoRef.current) return;
 
     let cancelled = false;
-    let pendingWorkerBitmap: ImageBitmap | null = null;
+    let pendingWorkerFrame: {
+      bitmap: ImageBitmap;
+      captureTimeMs: number;
+      coalescedFrames: number;
+    } | null = null;
 
     notifyStateChange({ isLoading: true });
     emitProgress({
@@ -388,24 +395,32 @@ export function usePoseDetection(
 
         const dispatchPendingFrame = () => {
           if (cancelled || workerFailed || !workerRef.current) {
-            pendingWorkerBitmap?.close();
-            pendingWorkerBitmap = null;
+            pendingWorkerFrame?.bitmap.close();
+            pendingWorkerFrame = null;
             inferenceInFlight = false;
             return;
           }
 
-          const nextBitmap = pendingWorkerBitmap;
-          pendingWorkerBitmap = null;
-          if (!nextBitmap) {
+          const nextFrame = pendingWorkerFrame;
+          pendingWorkerFrame = null;
+          if (!nextFrame) {
             inferenceInFlight = false;
             return;
           }
 
           inferenceInFlight = true;
           try {
-            workerRef.current.postMessage({ type: 'frame', bitmap: nextBitmap }, [nextBitmap]);
+            workerRef.current.postMessage(
+              {
+                type: 'frame',
+                bitmap: nextFrame.bitmap,
+                captureTimeMs: nextFrame.captureTimeMs,
+                coalescedFrames: nextFrame.coalescedFrames,
+              },
+              [nextFrame.bitmap]
+            );
           } catch (_e) {
-            nextBitmap.close();
+            nextFrame.bitmap.close();
             inferenceInFlight = false;
           }
         };
@@ -425,6 +440,7 @@ export function usePoseDetection(
           }
 
           try {
+            const captureTimeMs = performance.now();
             const bitmap = await createImageBitmap(video);
             if (
               cancelled ||
@@ -440,13 +456,15 @@ export function usePoseDetection(
             // Keep exactly one newest frame while inference is running. This
             // prevents a slow worker from accumulating stale ImageBitmaps.
             if (inferenceInFlight) {
-              pendingWorkerBitmap?.close();
-              pendingWorkerBitmap = bitmap;
+              const coalescedFrames = (pendingWorkerFrame?.coalescedFrames ?? 0) + 1;
+              pendingWorkerFrame?.bitmap.close();
+              pendingWorkerFrame = { bitmap, captureTimeMs, coalescedFrames };
             } else {
-              pendingWorkerBitmap = bitmap;
+              pendingWorkerFrame = { bitmap, captureTimeMs, coalescedFrames: 0 };
               dispatchPendingFrame();
             }
           } catch (_e) {
+            recordPoseBaselineCaptureFailure();
             // Silently handle frame capture errors
           }
 
@@ -479,6 +497,11 @@ export function usePoseDetection(
               memoryTotal: data.memoryTotal,
               mode: data.mode ?? modeRef.current,
               path: 'worker',
+              coalescedFrames: data.coalescedFrames ?? 0,
+              pipelineLatencyMs:
+                typeof data.captureTimeMs === 'number'
+                  ? Math.max(0, performance.now() - data.captureTimeMs)
+                  : undefined,
             });
             return;
           }
@@ -521,8 +544,8 @@ export function usePoseDetection(
         worker.onerror = () => {
           // A crashed worker cannot consume the staged bitmap; release it so
           // a failed session never leaks camera-frame memory.
-          pendingWorkerBitmap?.close();
-          pendingWorkerBitmap = null;
+          pendingWorkerFrame?.bitmap.close();
+          pendingWorkerFrame = null;
           inferenceInFlight = false;
           workerFailed = true;
           workerReady = false;
@@ -770,19 +793,32 @@ export function usePoseDetection(
 
         // Start detection loop
         let inferenceInFlight = false;
-        let pendingFrame = false;
+        let coalescedFrames = 0;
+        let rafScheduled = false;
+        const scheduleDetect = () => {
+          if (cancelled || !isActiveRef.current || !detectorRef.current || rafScheduled) return;
+          rafScheduled = true;
+          animationRef.current = requestAnimationFrame(() => {
+            rafScheduled = false;
+            void detect();
+          });
+        };
         const detect = async () => {
           if (!isActiveRef.current || cancelled || !videoRef.current || !detectorRef.current)
             return;
 
           if (inferenceInFlight) {
-            // The video element itself is the latest-frame mailbox. Avoid
-            // starting another inference, then sample the newest frame as soon
-            // as the current inference completes.
-            pendingFrame = true;
+            // Keep a guarded display-tick observer alive while inference runs so
+            // the baseline can measure scheduler coalescing without starting a
+            // second inference.
+            coalescedFrames += 1;
+            scheduleDetect();
             return;
           }
           inferenceInFlight = true;
+          const frameCaptureTimeMs = performance.now();
+          const coalescedForFrame = coalescedFrames;
+          coalescedFrames = 0;
 
           try {
             const preprocessStart = performance.now();
@@ -817,6 +853,27 @@ export function usePoseDetection(
             const detected = Boolean(firstPose?.keypoints?.length);
             notifyStateChange({ poseDetected: detected });
 
+            const baselineKeypoints = firstPose?.keypoints as Keypoint[] | undefined;
+            const scored = baselineKeypoints?.filter((kp) => typeof kp.score === 'number') ?? [];
+            const avgScore =
+              scored.length > 0
+                ? scored.reduce((sum, kp) => sum + (kp.score ?? 0), 0) / scored.length
+                : null;
+            const memory = (performance as any).memory as
+              { usedJSHeapSize?: number; totalJSHeapSize?: number } | undefined;
+            recordPoseBaselineFrame({
+              detectionTimeMs: Math.round(detectionTimeMs * 100) / 100,
+              preprocessTimeMs: Math.round(preprocessTimeMs * 100) / 100,
+              keypointConfidence: avgScore,
+              keypointCount: baselineKeypoints?.length ?? 0,
+              memoryUsed: memory?.usedJSHeapSize,
+              memoryTotal: memory?.totalJSHeapSize,
+              mode: activeMode,
+              path: 'main',
+              coalescedFrames: coalescedForFrame,
+              pipelineLatencyMs: Math.max(0, performance.now() - frameCaptureTimeMs),
+            });
+
             // Memory management: periodic cleanup for mini apps and mobile
             const isFarcaster = isFarcasterMiniApp();
 
@@ -834,26 +891,6 @@ export function usePoseDetection(
               const keypoints =
                 poseSmootherRef.current?.update(firstPose.keypoints as Keypoint[]) ??
                 (firstPose.keypoints as Keypoint[]);
-              const scored = keypoints.filter((kp) => typeof kp.score === 'number');
-              const avgScore =
-                scored.length > 0
-                  ? scored.reduce((sum, kp) => sum + (kp.score ?? 0), 0) / scored.length
-                  : null;
-
-              const memory = (performance as any).memory as
-                { usedJSHeapSize?: number; totalJSHeapSize?: number } | undefined;
-
-              recordPoseBaselineFrame({
-                detectionTimeMs: Math.round(detectionTimeMs * 100) / 100,
-                preprocessTimeMs: Math.round(preprocessTimeMs * 100) / 100,
-                keypointConfidence: avgScore,
-                keypointCount: keypoints.length,
-                memoryUsed: memory?.usedJSHeapSize,
-                memoryTotal: memory?.totalJSHeapSize,
-                mode: activeMode,
-                path: 'main',
-              });
-
               // Biomechanical Analysis
               const metrics = analyzeBiomechanics(keypoints, activeMode);
 
@@ -946,16 +983,11 @@ export function usePoseDetection(
             }
           } finally {
             inferenceInFlight = false;
-            if (pendingFrame) {
-              pendingFrame = false;
-            }
-            if (!cancelled && isActiveRef.current && detectorRef.current) {
-              animationRef.current = requestAnimationFrame(detect);
-            }
+            scheduleDetect();
           }
         };
 
-        animationRef.current = requestAnimationFrame(detect);
+        scheduleDetect();
       } catch (error) {
         console.error('Failed to start main-thread detection:', error);
 
@@ -1021,8 +1053,8 @@ export function usePoseDetection(
       // Session end is handled by the isActive→false effect — not here.
       // Emitting on every cleanup races React Strict Mode and kills real sessions.
       // Release the one-slot frame mailbox before terminating the worker.
-      pendingWorkerBitmap?.close();
-      pendingWorkerBitmap = null;
+      pendingWorkerFrame?.bitmap.close();
+      pendingWorkerFrame = null;
 
       // Clean up worker
       if (workerRef.current) {

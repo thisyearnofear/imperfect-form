@@ -25,6 +25,7 @@
     "test:pose:all": "node scripts/test-pose-detection.cjs --platform all --suite pose-detection",
     "test:pose:headed": "node scripts/test-pose-detection.cjs --headed",
     "benchmark:arm": "node scripts/arm-benchmark.mjs",
+    "benchmark:matrix": "node scripts/edge-perf-matrix.mjs",
     "evaluate:movement-retest": "node scripts/evaluate-movement-retest.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

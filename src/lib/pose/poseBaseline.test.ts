@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   exportPoseBaselineJson,
   exportPoseBaselineMarkdown,
+  recordPoseBaselineCaptureFailure,
   recordPoseBaselineFrame,
   startPoseBaseline,
   stopPoseBaseline,
@@ -73,6 +74,37 @@ describe('pose baseline evidence metadata', () => {
     const exported = JSON.parse(exportPoseBaselineJson());
     expect(exported.metadata.model).toBe('SinglePose.Lightning');
     expect(exported.summary.frames).toBe(1);
+  });
+
+  it('summarizes coalesced frames, capture failures, and pipeline latency', () => {
+    startPoseBaseline({ path: 'worker' });
+
+    recordPoseBaselineFrame({
+      detectionTimeMs: 10,
+      keypointConfidence: 0.8,
+      keypointCount: 17,
+      mode: 'curls',
+      path: 'worker',
+      coalescedFrames: 2,
+      pipelineLatencyMs: 24,
+    });
+    recordPoseBaselineFrame({
+      detectionTimeMs: 12,
+      keypointConfidence: 0.9,
+      keypointCount: 17,
+      mode: 'curls',
+      path: 'worker',
+      coalescedFrames: 1,
+      pipelineLatencyMs: 36,
+    });
+    recordPoseBaselineCaptureFailure();
+
+    const report = stopPoseBaseline();
+    expect(report?.summary.totalCoalescedFrames).toBe(3);
+    expect(report?.summary.totalCaptureFailures).toBe(1);
+    expect(report?.summary.medianPipelineLatencyMs).toBe(30);
+    expect(report?.summary.p95PipelineLatencyMs).toBe(36);
+    expect(report?.summary.estimatedCaptureFps).toBeGreaterThanOrEqual(0);
   });
 
   it('exports legacy reports without metadata', () => {
