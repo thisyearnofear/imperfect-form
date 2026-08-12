@@ -10,6 +10,7 @@ import {
   Eye,
   Hand,
   Sparkles,
+  Activity,
 } from 'lucide-react';
 import { BRAND, getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
@@ -60,7 +61,12 @@ const exercises: ExerciseOption[] = [
     category: 'primary',
   },
   { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line', category: 'primary' },
-  { mode: 'squats', label: 'Squats', detail: 'Depth · knees · tempo', category: 'extra' },
+  {
+    mode: 'squats',
+    label: 'Squats',
+    detail: 'Mobility · depth · knee tracking',
+    category: 'extra',
+  },
   { mode: 'pullups', label: 'Pull-ups', detail: 'Extension · symmetry', category: 'extra' },
   { mode: 'jumps', label: 'Jumps', detail: 'Landing · knee track', category: 'extra' },
 ];
@@ -202,6 +208,11 @@ export function CoachFoyer({
               <span className={`coach-foyer__robot-chip is-${robotChipState}`}>
                 <Sparkles size={10} strokeWidth={2} aria-hidden="true" />
                 Robot demo
+              </span>
+            ) : exercise.mode === 'squats' ? (
+              <span className="coach-foyer__robot-chip is-mobility">
+                <Activity size={10} strokeWidth={2} aria-hidden="true" />
+                Mobility check
               </span>
             ) : null}
           </span>
