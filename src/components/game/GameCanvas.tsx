@@ -112,7 +112,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <LiveCoachingStatus {...coachingStatusProps} />
           {mode === 'curls' ? (
-            <CurlFormInstrument telemetry={curlTelemetry} tracking={poseState.poseDetected} />
+            <CurlFormInstrument
+              telemetry={curlTelemetry}
+              tracking={poseState.poseDetected}
+              repCount={repCount}
+            />
           ) : null}
         </div>
         <CoachTwinPeek session mode={mode} />
@@ -149,7 +153,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
         <LiveCoachingStatus {...coachingStatusProps} />
         {mode === 'curls' ? (
-          <CurlFormInstrument telemetry={curlTelemetry} tracking={poseState.poseDetected} />
+          <CurlFormInstrument
+            telemetry={curlTelemetry}
+            tracking={poseState.poseDetected}
+            repCount={repCount}
+          />
         ) : null}
       </div>
       <CoachTwinPeek session mode={mode} />

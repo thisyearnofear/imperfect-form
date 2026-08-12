@@ -332,3 +332,66 @@
     transition: none;
   }
 }
+/* Animated target line — shows where the arm should be */
+.curl-instrument__target-line {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2.15rem;
+  height: 0.12rem;
+  transform-origin: 0 50%;
+  background: rgba(117, 230, 177, 0.5);
+  border-radius: 999px;
+  transition: transform 0.18s ease-out;
+  pointer-events: none;
+}
+
+/* Pulse animation when entering target range */
+.curl-instrument__dial--pulse .curl-instrument__dial-ring {
+  animation: curl-target-pulse 0.4s ease-out;
+}
+
+@keyframes curl-target-pulse {
+  0% {
+    border-color: rgba(117, 230, 177, 0.9);
+    box-shadow: 0 0 0 0 rgba(117, 230, 177, 0.4);
+  }
+  100% {
+    border-color: rgba(122, 235, 216, 0.35);
+    box-shadow: 0 0 0 8px rgba(117, 230, 177, 0);
+  }
+}
+
+/* Live form score */
+.curl-instrument__score {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(122, 235, 216, 0.15);
+}
+
+.curl-instrument__score-label {
+  color: rgba(177, 218, 211, 0.62);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.48rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.curl-instrument__score-value {
+  color: #f2fffb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.curl-instrument__score-value--good {
+  color: #75e6b1;
+}
+
+.curl-instrument__score-divider {
+  color: rgba(122, 235, 216, 0.3);
+  font-size: 0.6rem;
+}

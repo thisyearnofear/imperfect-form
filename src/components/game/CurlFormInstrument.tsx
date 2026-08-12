@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import type { CurlTelemetry } from '@/types/mediapipe';
+import { playStudioCue } from '@/lib/uiSound';
 
 interface CurlFormInstrumentProps {
   telemetry: CurlTelemetry | null;
   tracking: boolean;
+  repCount?: number;
 }
 
 const phaseLabel: Record<NonNullable<CurlTelemetry>['phase'], string> = {
@@ -18,7 +20,7 @@ function clampAngle(angle: number): number {
   return Math.max(0, Math.min(180, angle));
 }
 
-export function CurlFormInstrument({ telemetry, tracking }: CurlFormInstrumentProps) {
+export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFormInstrumentProps) {
   const liveAngleBucket = telemetry ? Math.round(telemetry.elbowAngle / 10) * 10 : null;
   const telemetryPhase = telemetry?.phase;
   const telemetryTargetMin = telemetry?.targetMinDeg;
@@ -30,6 +32,28 @@ export function CurlFormInstrument({ telemetry, tracking }: CurlFormInstrumentPr
       ? telemetryDrift > telemetryDriftTarget
       : null;
   const [accessibleStatus, setAccessibleStatus] = useState('Show one curl to begin.');
+  const prevPhaseRef = useRef<CurlTelemetry['phase'] | null>(null);
+  const [showPulse, setShowPulse] = useState(false);
+
+  // Sound feedback on phase transitions
+  useEffect(() => {
+    if (!telemetry || !tracking) return;
+    const prevPhase = prevPhaseRef.current;
+    const currentPhase = telemetry.phase;
+
+    if (prevPhase !== currentPhase) {
+      if (currentPhase === 'curl-range') {
+        // In target range — success sound
+        playStudioCue('chime');
+        setShowPulse(true);
+        setTimeout(() => setShowPulse(false), 400);
+      } else if (prevPhase === 'curl-range' && currentPhase === 'mid-curl') {
+        // Left target range — soft feedback
+        playStudioCue('soft');
+      }
+    }
+    prevPhaseRef.current = currentPhase;
+  }, [telemetry?.phase, tracking]);
 
   useEffect(() => {
     if (!tracking || !telemetry || liveAngleBucket === null) {
@@ -100,8 +124,16 @@ export function CurlFormInstrument({ telemetry, tracking }: CurlFormInstrumentPr
       </div>
 
       <div className="curl-instrument__body">
-        <div className="curl-instrument__dial" aria-hidden="true">
+        <div
+          className={`curl-instrument__dial${showPulse ? ' curl-instrument__dial--pulse' : ''}`}
+          aria-hidden="true"
+        >
           <div className="curl-instrument__dial-ring" />
+          {/* Animated target line — shows where the arm should be */}
+          <div
+            className="curl-instrument__target-line"
+            style={{ transform: `rotate(${180 - targetMid}deg)` }}
+          />
           <div
             className="curl-instrument__forearm"
             style={{ transform: `rotate(${180 - angle}deg)` }}
@@ -152,12 +184,27 @@ export function CurlFormInstrument({ telemetry, tracking }: CurlFormInstrumentPr
           <span>Extend</span>
           <span>
             {rangeReached
-              ? 'In curl range · rep gate 50°'
+              ? 'In curl range ✓'
               : `${Math.max(0, Math.round(angle - targetMid))}° to target`}
           </span>
           <span>Curl</span>
         </div>
       </div>
+
+      {/* Live form score */}
+      {repCount > 0 && (
+        <div className="curl-instrument__score">
+          <span className="curl-instrument__score-label">Reps</span>
+          <span className="curl-instrument__score-value">{repCount}</span>
+          <span className="curl-instrument__score-divider">·</span>
+          <span className="curl-instrument__score-label">Form</span>
+          <span
+            className={`curl-instrument__score-value${rangeReached ? ' curl-instrument__score-value--good' : ''}`}
+          >
+            {rangeReached ? '✓' : '—'}
+          </span>
+        </div>
+      )}
     </section>
   );
 }
