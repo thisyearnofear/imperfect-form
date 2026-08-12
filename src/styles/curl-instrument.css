@@ -523,3 +523,55 @@
   font-size: 0.44rem;
   font-style: italic;
 }
+/* Score History */
+.curl-instrument__history {
+  border-top: 1px solid rgba(117, 230, 177, 0.15);
+  padding-top: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.curl-instrument__history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.curl-instrument__history-label {
+  color: rgba(181, 229, 221, 0.7);
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.curl-instrument__history-trend {
+  font-size: 0.48rem;
+  font-weight: 600;
+}
+
+.curl-instrument__history-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 44px;
+  padding: 2px 0;
+}
+
+.curl-instrument__history-bar {
+  flex: 1;
+  min-width: 4px;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.3s ease-out, background-color 0.3s ease-out;
+}
+
+.curl-instrument__history-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.3rem;
+}
+
+.curl-instrument__history-stats span {
+  color: rgba(181, 229, 221, 0.5);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.44rem;
+}

@@ -60,10 +60,20 @@ function getFormGrade(score: number): { grade: string; color: string } {
   return { grade: 'F', color: '#ef4444' };
 }
 
+interface ScoreEntry {
+  rep: number;
+  score: number;
+  timestamp: number;
+}
+
 export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFormInstrumentProps) {
   // SO-101 robot elbow angle from station trajectory progress
   const [robotElbowDeg, setRobotElbowDeg] = useState<number | null>(null);
   const [robotMeasuredDeg, setRobotMeasuredDeg] = useState<number | null>(null);
+
+  // Score history for tracking improvement
+  const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([]);
+  const prevRepCountRef = useRef(repCount);
 
   useEffect(() => {
     if (!coachStation.enabled) return;
@@ -135,6 +145,28 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
     tracking,
   ]);
 
+  // Store score when rep completes (must be before early return)
+  useEffect(() => {
+    if (repCount > prevRepCountRef.current && repCount > 0 && telemetry) {
+      // Rep just completed - store the score
+      const angle = clampAngle(telemetry.elbowAngle);
+      const targetMid = (telemetry.targetMinDeg + telemetry.targetMaxDeg) / 2;
+      const targetAngle = robotElbowDeg ?? targetMid;
+      const score = calculateFormScore(
+        angle,
+        targetAngle,
+        telemetry.elbowDriftDeg,
+        telemetry.elbowDriftTargetDeg,
+        angle <= telemetry.targetMaxDeg
+      );
+      setScoreHistory((prev) => [
+        ...prev.slice(-9), // Keep last 10 reps
+        { rep: repCount, score, timestamp: Date.now() },
+      ]);
+    }
+    prevRepCountRef.current = repCount;
+  }, [repCount, telemetry, robotElbowDeg]);
+
   if (!tracking || !telemetry) {
     return (
       <section className="curl-instrument curl-instrument--waiting" aria-live="polite">
@@ -169,6 +201,22 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
     rangeReached
   );
   const { grade, color: gradeColor } = getFormGrade(formScore);
+
+  // Calculate improvement trend
+  const improvementTrend =
+    scoreHistory.length >= 2
+      ? scoreHistory[scoreHistory.length - 1].score - scoreHistory[scoreHistory.length - 2].score
+      : 0;
+  const trendLabel =
+    improvementTrend > 5 ? '↑ Improving' : improvementTrend < -5 ? '↓ Declining' : '→ Stable';
+  const trendColor =
+    improvementTrend > 5 ? '#4ade80' : improvementTrend < -5 ? '#ef4444' : '#fbbf24';
+
+  // Calculate average score
+  const avgScore =
+    scoreHistory.length > 0
+      ? Math.round(scoreHistory.reduce((sum, e) => sum + e.score, 0) / scoreHistory.length)
+      : null;
 
   return (
     <section
@@ -318,6 +366,40 @@ export function CurlFormInstrument({ telemetry, tracking, repCount = 0 }: CurlFo
           </span>
         </div>
       </div>
+
+      {/* Score History */}
+      {scoreHistory.length > 0 && (
+        <div className="curl-instrument__history">
+          <div className="curl-instrument__history-header">
+            <span className="curl-instrument__history-label">Score History</span>
+            <span className="curl-instrument__history-trend" style={{ color: trendColor }}>
+              {trendLabel}
+            </span>
+          </div>
+          <div className="curl-instrument__history-chart">
+            {scoreHistory.map((entry) => {
+              const height = Math.max(10, (entry.score / 100) * 40);
+              const { color } = getFormGrade(entry.score);
+              return (
+                <div
+                  key={entry.rep}
+                  className="curl-instrument__history-bar"
+                  style={{
+                    height: `${height}px`,
+                    backgroundColor: color,
+                  }}
+                  title={`Rep ${entry.rep}: ${entry.score}/100`}
+                />
+              );
+            })}
+          </div>
+          <div className="curl-instrument__history-stats">
+            <span>Avg: {avgScore !== null ? `${avgScore}/100` : '—'}</span>
+            <span>Best: {Math.max(...scoreHistory.map((e) => e.score))}/100</span>
+            <span>Reps: {scoreHistory.length}</span>
+          </div>
+        </div>
+      )}
 
       {/* Reps and Form Status */}
       {repCount > 0 && (
