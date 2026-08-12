@@ -5,6 +5,12 @@ import type { CurlTelemetry } from '@/types/mediapipe';
 import { playStudioCue } from '@/lib/uiSound';
 import { coachStation, type StationTrajectoryProgressEvent } from '@/services/coachStation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import {
+  COACH_PERSONALITIES,
+  type CoachPersonality,
+  getPersonalityFeedback,
+} from '@/lib/coachPersonalities';
+import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 
 interface CurlFormInstrumentProps {
   telemetry: CurlTelemetry | null;
@@ -76,6 +82,9 @@ export function CurlFormInstrument({
 }: CurlFormInstrumentProps) {
   // Haptic feedback
   const { triggerSuccessFeedback, triggerErrorFeedback } = useHapticFeedback();
+
+  // Current coach personality
+  const [currentPersonality] = useCoachPersonality();
 
   // SO-101 robot elbow angle from station trajectory progress
   const [robotElbowDeg, setRobotElbowDeg] = useState<number | null>(null);
@@ -461,6 +470,32 @@ export function CurlFormInstrument({
           </div>
         </div>
       )}
+
+      {/* Coach Comparison */}
+      <div className="curl-instrument__coach-compare">
+        <div className="curl-instrument__coach-compare-header">
+          <span className="curl-instrument__coach-compare-label">Coach Feedback</span>
+          <span className="curl-instrument__coach-compare-personality">
+            {COACH_PERSONALITIES[currentPersonality].emoji}{' '}
+            {COACH_PERSONALITIES[currentPersonality].name}
+          </span>
+        </div>
+        <p className="curl-instrument__coach-compare-feedback">
+          {getPersonalityFeedback(currentPersonality, 'form_feedback', formScore)}
+        </p>
+        <div className="curl-instrument__coach-compare-others">
+          {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[])
+            .filter((p) => p !== currentPersonality)
+            .map((personality) => (
+              <div key={personality} className="curl-instrument__coach-compare-other">
+                <span>{COACH_PERSONALITIES[personality].emoji}</span>
+                <span className="curl-instrument__coach-compare-other-feedback">
+                  {getPersonalityFeedback(personality, 'form_feedback', formScore)}
+                </span>
+              </div>
+            ))}
+        </div>
+      </div>
 
       {/* Reps and Form Status */}
       {repCount > 0 && (
