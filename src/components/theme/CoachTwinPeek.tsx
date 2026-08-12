@@ -715,6 +715,10 @@ export function CoachTwinPeek({
                   >
                     {affectLabel}
                   </span>
+                ) : isDemo ? (
+                  <span className="coach-twin-peek__affect" title="Powered by Cyberwave">
+                    via Cyberwave
+                  </span>
                 ) : null}
               </div>
 
@@ -806,6 +810,10 @@ export function CoachTwinPeek({
                     title={`Cyberwave affect: ${affect}`}
                   >
                     {affectLabel}
+                  </span>
+                ) : isDemo ? (
+                  <span className="coach-twin-peek__affect" title="Powered by Cyberwave">
+                    via Cyberwave
                   </span>
                 ) : null}
               </div>

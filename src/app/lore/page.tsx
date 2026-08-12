@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Camera, Cpu, Hammer, LockKeyhole, Mail, Wrench } from 'lucide-react';
+import { ArrowRight, Bot, Camera, Cpu, Hammer, LockKeyhole, Mail, Wrench } from 'lucide-react';
 import { SandowCabinet } from '@/components/crafft';
 import { useImmersive } from '@/hooks/useImmersive';
 import { Handshake } from 'lucide-react';
@@ -256,6 +256,61 @@ function ImmersiveLore() {
               <p>The model runs in the browser. The arm runs on the edge.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="crafft-exhibit__section crafft-exhibit__cyberwave">
+        <h2 className="crafft-exhibit__section-title">Built with Cyberwave</h2>
+        <p className="crafft-exhibit__section-intro">
+          Imperfect Form is a proud member of the Cyberwave Builders program. The SO-101 robot arm
+          is the physical extension of our coaching intelligence — it doesn&apos;t just show you the
+          correction, it <em>demonstrates</em> it in your space.
+        </p>
+        <div className="crafft-exhibit__machine-grid">
+          <div className="crafft-exhibit__machine-card">
+            <Bot size={22} />
+            <h3>SO-101 Arm</h3>
+            <p>
+              Open-hardware robot arm via Cyberwave. Seven degrees of freedom, real-time joint
+              control, and safety clamps that prevent injury. The arm mirrors your elbow angle and
+              shows the target correction.
+            </p>
+          </div>
+          <div className="crafft-exhibit__machine-card">
+            <Cpu size={22} />
+            <h3>Cyberwave SDK</h3>
+            <p>
+              WebSocket-based control for real-time teleoperation. The coach station sends
+              demonstration intents, and the arm executes precise trajectories with sub-degree
+              accuracy.
+            </p>
+          </div>
+          <div className="crafft-exhibit__machine-card">
+            <Hammer size={22} />
+            <h3>Builder Story</h3>
+            <p>
+              Sessions feed into LeRobot episodes. Episodes fine-tune SmolVLA. The arm learns from
+              real coaching sessions — not synthetic data. The loop is closed.
+            </p>
+          </div>
+        </div>
+        <div className="crafft-exhibit__cta-row">
+          <a
+            href="https://cyberwave.com/builders"
+            className="crafft-exhibit__cta"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Bot size={16} /> Cyberwave Builders <ArrowRight size={16} />
+          </a>
+          <a
+            href="https://docs.cyberwave.com/overview"
+            className="crafft-exhibit__cta crafft-exhibit__cta--ghost"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Cyberwave Docs <ArrowRight size={16} />
+          </a>
         </div>
       </section>
 
