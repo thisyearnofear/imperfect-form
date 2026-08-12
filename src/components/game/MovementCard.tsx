@@ -80,8 +80,8 @@ export function MovementCard({ assessment }: MovementCardProps) {
         <span className="movement-card__confidence">{confidenceLabel(assessment.confidence)}</span>
       </div>
       <p className="movement-card__copy">
-        A private starting line from this five-rep curl protocol. This is a movement signal, not a
-        medical assessment.
+        A private baseline from this five-rep curl protocol. Curls show what the robot can mirror —
+        control and consistency, not mobility. This is a movement signal, not a medical assessment.
       </p>
       <div className="movement-card__dimensions">
         {dimensions.map(({ label, value, icon: Icon }) => (

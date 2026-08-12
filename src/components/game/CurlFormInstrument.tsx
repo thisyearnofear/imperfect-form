@@ -62,9 +62,9 @@ export function CurlFormInstrument({ telemetry, tracking }: CurlFormInstrumentPr
     return (
       <section className="curl-instrument curl-instrument--waiting" aria-live="polite">
         <div>
-          <p className="curl-instrument__eyebrow">Form instrument</p>
+          <p className="curl-instrument__eyebrow">Robot demo</p>
           <strong>Show one curl</strong>
-          <span>We’ll compare your elbow angle and elbow position.</span>
+          <span>The arm will mirror your elbow angle in real time.</span>
         </div>
         <div className="curl-instrument__waiting-mark" aria-hidden="true">
           ◌
@@ -93,10 +93,10 @@ export function CurlFormInstrument({ telemetry, tracking }: CurlFormInstrumentPr
       </span>
       <div className="curl-instrument__header">
         <div>
-          <p className="curl-instrument__eyebrow">Curl instrument</p>
+          <p className="curl-instrument__eyebrow">Robot demo</p>
           <strong>{phaseLabel[telemetry.phase]}</strong>
         </div>
-        <span className="curl-instrument__rep">Current movement</span>
+        <span className="curl-instrument__rep">Match the arm</span>
       </div>
 
       <div className="curl-instrument__body">

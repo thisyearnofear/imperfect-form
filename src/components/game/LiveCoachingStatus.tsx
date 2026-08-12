@@ -90,7 +90,7 @@ export function LiveCoachingStatus({
         aria-live="polite"
       >
         <CheckCircle2 size={16} />
-        <span>Use the angle and drift readout to guide this rep.</span>
+        <span>Watch the arm — match the target angle.</span>
       </div>
     );
   }
@@ -107,7 +107,7 @@ export function LiveCoachingStatus({
         <span>
           {arcade ? 'Your turn — ' : 'Your turn. '}
           {mode === 'curls'
-            ? 'Use the angle and drift readout to guide this rep.'
+            ? 'Watch the arm — match the target angle.'
             : focusWarning
               ? arcade
                 ? `watch: ${readableFormWarning(focusWarning).toLowerCase()}.`
@@ -134,7 +134,7 @@ export function LiveCoachingStatus({
         <span>
           {arcade ? 'Sync locked — ' : 'I see your movement. '}
           {mode === 'curls'
-            ? 'Show one curl — the instrument will mark the target range.'
+            ? 'Show one curl — the arm will show you the target.'
             : retryFocus
               ? arcade
                 ? `next set: ${retryFocus.toLowerCase()}.`

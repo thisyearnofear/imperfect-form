@@ -9,9 +9,10 @@ import type { EngineKeypoint, PoseData, ProcessorResult, RepState } from './type
  * original lacked: elbow swing (upper arm should stay pinned - shoulder
  * angle beyond ~30° during the curl means momentum is doing the work).
  *
- * Curls are the most universal exercise (a water bottle works) and the
- * flagship robot demonstration - elbow flexion is literally what the SO-101
- * does best. See docs/NORTH_STAR.md.
+ * Curls are the flagship robot demonstration — elbow flexion is literally
+ * what the SO-101 does best. Curls teach users what the robot can do
+ * (mirror a single joint 1:1), not what their body can do (mobility).
+ * Squats and pull-ups are the mobility-revealing exercises. See docs/NORTH_STAR.md.
  */
 
 const EXTENDED_DEG = 160; // arm considered extended (arms the rep)
