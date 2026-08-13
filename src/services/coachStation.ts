@@ -41,6 +41,24 @@ export interface StationDemonstrationEvent {
   duration_s: number;
   issue: string;
   mode: string;
+  /** True when this is a multi-joint choreography (not a single-joint sweep). */
+  choreography?: boolean;
+  /** Human-readable choreography description. */
+  description?: string;
+  /** Total keyframes in the choreography for progress tracking. */
+  total_keyframes?: number;
+}
+
+/** Station → browser as each keyframe completes during a choreography. */
+export interface StationChoreographyProgressEvent {
+  type: 'choreography_progress';
+  version: '1.0';
+  command_id: string;
+  keyframe_index: number;
+  total_keyframes: number;
+  progress_pct: number;
+  label: string;
+  timestamp_ms: number;
 }
 
 /** Station-internal normalized intent mirror for protocol documentation/tests. */
@@ -104,6 +122,7 @@ export type DemonstrationIntentListener = (event: StationDemonstrationIntentV1) 
 export type CommandResultListener = (event: StationCommandResultEvent) => void;
 export type RobotStateListener = (event: StationRobotStateEvent) => void;
 export type TrajectoryProgressListener = (event: StationTrajectoryProgressEvent) => void;
+export type ChoreographyProgressListener = (event: StationChoreographyProgressEvent) => void;
 /** Fired when a form cue is bridged to the station (bay pulse / twin peek). */
 export type FormCueListener = (event: StationFormEvent) => void;
 export type StationStatus = 'offline' | 'connecting' | 'connected';
@@ -144,6 +163,36 @@ function parseDemonstration(raw: unknown): StationDemonstrationEvent | null {
     duration_s: isFiniteNumber(o.duration_s) ? o.duration_s : 0,
     issue: typeof o.issue === 'string' ? o.issue : '',
     mode: typeof o.mode === 'string' ? o.mode : '',
+    choreography: o.choreography === true ? true : undefined,
+    description: typeof o.description === 'string' ? o.description : undefined,
+    total_keyframes: typeof o.total_keyframes === 'number' ? o.total_keyframes : undefined,
+  };
+}
+
+function parseChoreographyProgress(raw: unknown): StationChoreographyProgressEvent | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  if (
+    o.type !== 'choreography_progress' ||
+    o.version !== '1.0' ||
+    typeof o.command_id !== 'string' ||
+    typeof o.keyframe_index !== 'number' ||
+    typeof o.total_keyframes !== 'number' ||
+    !isFiniteNumber(o.progress_pct) ||
+    typeof o.label !== 'string' ||
+    !isFiniteNumber(o.timestamp_ms)
+  ) {
+    return null;
+  }
+  return {
+    type: 'choreography_progress',
+    version: '1.0',
+    command_id: o.command_id,
+    keyframe_index: o.keyframe_index,
+    total_keyframes: o.total_keyframes,
+    progress_pct: o.progress_pct,
+    label: o.label,
+    timestamp_ms: o.timestamp_ms,
   };
 }
 
@@ -296,6 +345,7 @@ class CoachStationClient {
   private commandResultListeners = new Set<CommandResultListener>();
   private robotStateListeners = new Set<RobotStateListener>();
   private trajectoryProgressListeners = new Set<TrajectoryProgressListener>();
+  private choreographyProgressListeners = new Set<ChoreographyProgressListener>();
   private formCueListeners = new Set<FormCueListener>();
   private statusListeners = new Set<StationStatusListener>();
   private connectionStatus: StationStatus = 'offline';
@@ -332,6 +382,12 @@ class CoachStationClient {
   onTrajectoryProgress(listener: TrajectoryProgressListener): () => void {
     this.trajectoryProgressListeners.add(listener);
     return () => this.trajectoryProgressListeners.delete(listener);
+  }
+
+  /** Subscribe to choreography keyframe progress events. */
+  onChoreographyProgress(listener: ChoreographyProgressListener): () => void {
+    this.choreographyProgressListeners.add(listener);
+    return () => this.choreographyProgressListeners.delete(listener);
   }
 
   /** Subscribe to outbound form cues for bay pulse and twin presence. */
@@ -421,6 +477,16 @@ class CoachStationClient {
     }
   }
 
+  private emitChoreographyProgress(event: StationChoreographyProgressEvent): void {
+    for (const listener of this.choreographyProgressListeners) {
+      try {
+        listener(event);
+      } catch {
+        // fail-silent
+      }
+    }
+  }
+
   private emitFormCue(event: StationFormEvent): void {
     for (const listener of this.formCueListeners) {
       try {
@@ -464,6 +530,11 @@ class CoachStationClient {
           const progress = parseTrajectoryProgress(data);
           if (progress) {
             this.emitTrajectoryProgress(progress);
+            return;
+          }
+          const choreoProgress = parseChoreographyProgress(data);
+          if (choreoProgress) {
+            this.emitChoreographyProgress(choreoProgress);
             return;
           }
           const state = parseRobotState(data);

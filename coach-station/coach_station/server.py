@@ -21,6 +21,7 @@ import websockets
 from pydantic import ValidationError
 
 from .arm import ArmAdapter, create_arm
+from .choreography import CHOREOGRAPHIES, Choreography
 from .primitives import resolve_demonstration, to_demonstration_intent
 from .schema import (
     CommandResultV1,
@@ -81,8 +82,151 @@ class CoachStation:
         if self._busy.locked():
             return  # one demonstration at a time; drop rather than queue stale corrections
 
+        # Route: choreography (multi-joint) or single-joint primitive?
+        choreo = self._resolve_choreography(event)
+        if choreo:
+            await self._execute_choreography(websocket, event, demo, choreo)
+        else:
+            await self._execute_single_joint(websocket, event, demo)
+
+    async def _send_json(self, websocket, payload: dict) -> None:
+        try:
+            await websocket.send(json.dumps(payload))
+        except Exception as exc:
+            logger.debug("Could not emit station feedback: %s", exc)
+
+    async def _send_state(self, websocket, state: RobotStateV1) -> None:
+        await self._send_json(websocket, state.model_dump())
+
+    def _resolve_choreography(self, event: FormEvent) -> Choreography | None:
+        """Route form events to multi-joint choreographies when available.
+
+        Choreographies are the 'impressive' path — the arm performs the full
+        movement rather than just sweeping a single joint. Falls back to None
+        so the single-joint primitive handles it.
+        """
+        if event.issue == "elbow_swing" and event.mode == "curls":
+            return CHOREOGRAPHIES["bicep_curl"]
+        if event.issue == "momentum" and event.mode == "curls":
+            return CHOREOGRAPHIES["demo_curl"]  # slow, exaggerated = tempo coaching
+        return None
+
+    async def _execute_choreography(
+        self,
+        websocket,
+        event: FormEvent,
+        demo,
+        choreo: Choreography,
+    ) -> None:
+        """Execute a multi-joint choreography and emit UI events."""
         async with self._busy:
-            self._last_demo[demo.name] = loop.time()
+            command_id = uuid.uuid4().hex
+            self._last_demo[demo.name] = asyncio.get_running_loop().time()
+
+            logger.info(
+                "Choreography %s for %s (%s, rep %d) · %s",
+                choreo.name,
+                event.issue,
+                event.personality,
+                event.rep_count,
+                choreo.description,
+            )
+
+            # Tell the UI the robot is executing
+            await self._send_state(websocket, RobotStateV1(
+                status="executing",
+                adapter=self.arm.name,
+                affect=self.arm.affect,
+                command_id=command_id,
+                detail=choreo.name,
+                updated_at_ms=int(time.time() * 1000),
+            ))
+
+            # Emit demonstration event for voice sync + UI
+            total_keyframes = len(choreo.keyframes)
+            try:
+                await websocket.send(json.dumps({
+                    "type": "demonstration",
+                    "name": choreo.name,
+                    "narration": demo.narration,
+                    "personality": event.personality,
+                    "duration_s": 13.0,  # approximate choreography duration
+                    "issue": event.issue,
+                    "mode": event.mode,
+                    "command_id": command_id,
+                    "version": "1.0",
+                    "choreography": True,
+                    "description": choreo.description,
+                    "total_keyframes": total_keyframes,
+                }))
+            except Exception as exc:
+                logger.debug("Could not emit choreography event: %s", exc)
+
+            # Keyframe progress callback — emits to the browser on each keyframe
+            async def on_keyframe(idx: int, kf) -> None:
+                try:
+                    await websocket.send(json.dumps({
+                        "type": "choreography_progress",
+                        "version": "1.0",
+                        "command_id": command_id,
+                        "keyframe_index": idx,
+                        "total_keyframes": total_keyframes,
+                        "progress_pct": round((idx + 1) / total_keyframes, 3),
+                        "label": kf.label,
+                        "timestamp_ms": int(time.time() * 1000),
+                    }))
+                except Exception as exc:
+                    logger.debug("Could not emit choreography progress: %s", exc)
+
+            # Execute the choreography
+            started = time.monotonic()
+            try:
+                await self.arm.run_choreography(choreo, on_keyframe=on_keyframe)
+                status = "succeeded"
+                error = None
+            except Exception as exc:
+                logger.exception("Choreography %s failed", choreo.name)
+                status = "aborted"
+                error = str(exc)
+
+            duration_s = round(time.monotonic() - started, 2)
+
+            # Emit result
+            result = CommandResultV1(
+                command_id=command_id,
+                status=status,
+                adapter=self.arm.name,
+                affect=self.arm.affect,
+                duration_s=duration_s,
+                error=error,
+                completed_at_ms=int(time.time() * 1000),
+            )
+            await self._send_json(websocket, result.model_dump())
+
+            if status != "succeeded":
+                publish = getattr(self.arm, "publish_fault", None)
+                if callable(publish):
+                    try:
+                        publish(
+                            name=f"Choreography failed: {choreo.name}",
+                            description=f"{status}: {error or 'unknown'}",
+                        )
+                    except Exception:
+                        pass
+
+            await self._send_state(websocket, RobotStateV1(
+                status="idle" if status == "succeeded" else "error",
+                adapter=self.arm.name,
+                affect=self.arm.affect,
+                command_id=command_id,
+                detail=error,
+                updated_at_ms=int(time.time() * 1000),
+            ))
+
+    async def _execute_single_joint(self, websocket, event: FormEvent, demo) -> None:
+        """Execute a single-joint primitive (legacy path)."""
+        async with self._busy:
+            self._last_demo[demo.name] = asyncio.get_running_loop().time()
             duration = trajectory_duration_s(demo)
             intent = to_demonstration_intent(
                 event,
@@ -108,15 +252,11 @@ class CoachStation:
                 updated_at_ms=int(time.time() * 1000),
             ))
 
-            # Mirror the executable intent so consumers can render the sweep
-            # target truthfully (ended arm pose, target ticks) instead of
-            # decoding it from a name heuristic.
             try:
                 await websocket.send(intent.model_dump_json())
             except Exception as exc:
                 logger.debug("Could not emit demonstration intent: %s", exc)
 
-            # Voice sync cue — browser TTS speaks while the arm moves.
             try:
                 await websocket.send(
                     json.dumps(
@@ -154,8 +294,6 @@ class CoachStation:
                 )
 
             try:
-                # Keep compatibility with simple/legacy adapters that still
-                # implement execute(intent) without the optional callback.
                 execute_params = inspect.signature(self.arm.execute).parameters
                 if "on_progress" in execute_params:
                     raw_result = await self.arm.execute(intent, on_progress=on_progress)
@@ -200,15 +338,6 @@ class CoachStation:
                 detail=result.error,
                 updated_at_ms=result.completed_at_ms,
             ))
-
-    async def _send_json(self, websocket, payload: dict) -> None:
-        try:
-            await websocket.send(json.dumps(payload))
-        except Exception as exc:
-            logger.debug("Could not emit station feedback: %s", exc)
-
-    async def _send_state(self, websocket, state: RobotStateV1) -> None:
-        await self._send_json(websocket, state.model_dump())
 
     async def handler(self, websocket) -> None:
         peer = websocket.remote_address

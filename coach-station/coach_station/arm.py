@@ -104,6 +104,40 @@ class ConsoleArm:
     name = "console"
     affect = "simulation"
 
+    async def send_joints(self, joints: dict[str, float]) -> None:
+        """Multi-joint sender for choreography execution (console logging)."""
+        mapped = {schema_joint(k): v for k, v in joints.items()}
+        logger.debug("[SIM-MULTI] %s", {k: f"{v:.1f}°" for k, v in mapped.items()})
+
+    async def run_choreography(
+        self,
+        choreography: "Choreography",
+        *,
+        speed_scale: float = 1.0,
+        on_keyframe=None,
+    ) -> None:
+        """Execute a multi-joint choreography in console simulation."""
+        from .choreography import execute_choreography
+
+        logger.info(
+            "[SIM-CHOREO] %s: %s (%d keyframes, %d repeats)",
+            choreography.name,
+            choreography.description,
+            len(choreography.keyframes),
+            choreography.repeats,
+        )
+        # Apply COACH_SIM_SPEED_SCALE for fast local iteration
+        try:
+            sim_scale = max(float(os.environ.get("COACH_SIM_SPEED_SCALE", "1")), 0.01)
+        except ValueError:
+            sim_scale = 1.0
+        await execute_choreography(
+            choreography,
+            self.send_joints,
+            speed_scale=speed_scale * sim_scale,
+            on_keyframe=on_keyframe,
+        )
+
     async def execute(
         self,
         intent: DemonstrationIntentV1,
@@ -238,6 +272,40 @@ class CyberwaveArm:
                 error=str(exc),
                 completed_at_ms=int(time.time() * 1000),
             )
+
+    async def send_joints(self, joints: dict[str, float]) -> None:
+        """Multi-joint sender for choreography execution (Cyberwave twin).
+
+        Accepts {friendly_name: degrees}, maps to schema keys, converts to
+        radians, and sends all joints in a single call.
+        """
+        mapped = {schema_joint(k): math.radians(v) for k, v in joints.items()}
+        self._joint_api.set(mapped)
+
+    async def run_choreography(
+        self,
+        choreography,
+        *,
+        speed_scale: float = 1.0,
+        on_keyframe=None,
+    ) -> None:
+        """Execute a multi-joint choreography against the Cyberwave twin."""
+        from .choreography import execute_choreography
+
+        logger.info(
+            "[CW-CHOREO] %s: %s (%d keyframes, %d repeats) affect=%s",
+            choreography.name,
+            choreography.description,
+            len(choreography.keyframes),
+            choreography.repeats,
+            self._affect,
+        )
+        await execute_choreography(
+            choreography,
+            self.send_joints,
+            speed_scale=speed_scale,
+            on_keyframe=on_keyframe,
+        )
 
     def read_joint_deg(self, joint: str) -> float | None:
         """Best-effort read of the *measured* elbow from the twin cache.

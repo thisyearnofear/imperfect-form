@@ -4,6 +4,10 @@ Usage:
   uv run python -m coach_station.demo --demo curl
   uv run python -m coach_station.demo --demo all
   COACH_AFFECT=simulation uv run python -m coach_station.demo --demo extension
+
+Multi-joint choreographies (the arm actually performs a full curl):
+  uv run python -m coach_station.demo --choreo bicep_curl
+  uv run python -m coach_station.demo --choreo demo_curl
 """
 
 from __future__ import annotations
@@ -14,6 +18,7 @@ import logging
 import time
 
 from .arm import create_arm
+from .choreography import CHOREOGRAPHIES
 from .primitives import resolve_demonstration
 from .schema import FormEvent
 
@@ -83,24 +88,52 @@ async def run_demo(name: str) -> None:
     logger.info("Done: %s", demo.name)
 
 
-async def main_async(selected: list[str]) -> None:
-    for name in selected:
-        await run_demo(name)
+async def run_choreography(name: str) -> None:
+    choreo = CHOREOGRAPHIES[name]
+    arm = create_arm()
+    logger.info(
+        "Running choreography: %s — %s (%d keyframes)",
+        choreo.name,
+        choreo.description,
+        len(choreo.keyframes),
+    )
+    await arm.run_choreography(choreo)
+    logger.info("Done: %s", choreo.name)
+
+
+async def main_async(selected: list[str], *, choreo: str | None = None) -> None:
+    if choreo:
+        await run_choreography(choreo)
+    else:
+        for name in selected:
+            await run_demo(name)
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Coach station demonstration CLI")
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--demo",
         choices=[*DEMOS.keys(), "all"],
-        default="curl",
-        help="Which primitive to run (default: curl — cohort flagship)",
+        default=None,
+        help="Single-joint primitive to run (legacy)",
+    )
+    group.add_argument(
+        "--choreo",
+        choices=[*CHOREOGRAPHIES.keys()],
+        default=None,
+        help="Multi-joint choreography: bicep_curl (normal) or demo_curl (slow coaching)",
     )
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
-    selected = list(DEMOS.keys()) if args.demo == "all" else [args.demo]
-    asyncio.run(main_async(selected))
+
+    if args.choreo:
+        asyncio.run(main_async([], choreo=args.choreo))
+    else:
+        demo = args.demo or "curl"
+        selected = list(DEMOS.keys()) if demo == "all" else [demo]
+        asyncio.run(main_async(selected))
 
 
 if __name__ == "__main__":

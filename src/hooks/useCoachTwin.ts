@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   coachStation,
+  type StationChoreographyProgressEvent,
   type StationCommandResultEvent,
   type StationDemonstrationEvent,
   type StationDemonstrationIntentV1,
@@ -26,6 +27,7 @@ type DemoBus = {
   onDemonstration: (fn: (e: StationDemonstrationEvent) => void) => () => void;
   onDemonstrationIntent: (fn: (e: StationDemonstrationIntentV1) => void) => () => void;
   onTrajectoryProgress: (fn: (e: StationTrajectoryProgressEvent) => void) => () => void;
+  onChoreographyProgress: (fn: (e: StationChoreographyProgressEvent) => void) => () => void;
   onRobotState: (fn: (e: StationRobotStateEvent) => void) => () => void;
   onCommandResult: (fn: (e: StationCommandResultEvent) => void) => () => void;
 };
@@ -183,6 +185,7 @@ function makeDemoBus(): DemoBus {
     onDemonstration: add('demonstration'),
     onDemonstrationIntent: add('intent'),
     onTrajectoryProgress: add('progress'),
+    onChoreographyProgress: add('choreography_progress'),
     onRobotState: add('robot_state'),
     onCommandResult: add('command_result'),
   };
@@ -222,6 +225,7 @@ export type CoachTwinState = {
   status: StationStatus;
   demo: StationDemonstrationEvent | null;
   progress: StationTrajectoryProgressEvent | null;
+  choreographyProgress: StationChoreographyProgressEvent | null;
   execution: TwinExecution | null;
   intent: StationDemonstrationIntentV1 | null;
   affect: string | null;
@@ -238,6 +242,7 @@ const IDLE_TWIN: CoachTwinState = {
   status: 'offline',
   demo: null,
   progress: null,
+  choreographyProgress: null,
   execution: null,
   intent: null,
   affect: null,
@@ -268,6 +273,8 @@ export function useCoachTwin({
   const [status, setStatus] = useState<StationStatus>(coachStation.status);
   const [demo, setDemo] = useState<StationDemonstrationEvent | null>(null);
   const [progress, setProgress] = useState<StationTrajectoryProgressEvent | null>(null);
+  const [choreographyProgress, setChoreographyProgress] =
+    useState<StationChoreographyProgressEvent | null>(null);
   const [execution, setExecution] = useState<TwinExecution | null>(null);
   const [intent, setIntent] = useState<StationDemonstrationIntentV1 | null>(null);
   const [affect, setAffect] = useState<string | null>(null);
@@ -292,6 +299,7 @@ export function useCoachTwin({
       activeCommandIdRef.current = null;
       setDemo(null);
       setProgress(null);
+      setChoreographyProgress(null);
       setExecution(null);
       setIntent(null);
       setTrail([]);
@@ -336,6 +344,11 @@ export function useCoachTwin({
       setProgress(event);
       setTrail((current) => [...current.slice(-(TRAIL_LENGTH - 1)), event.current_deg]);
     });
+    const unsubChoreoProgress = source.onChoreographyProgress((event) => {
+      if (!activeCommandIdRef.current || event.command_id !== activeCommandIdRef.current) return;
+      window.clearTimeout(executionTimeout);
+      setChoreographyProgress(event);
+    });
     const unsubState = source.onRobotState((event: StationRobotStateEvent) => {
       setAffect(event.affect);
       if (event.status === 'executing') {
@@ -367,6 +380,7 @@ export function useCoachTwin({
       unsubIntent();
       unsubDemo();
       unsubProgress();
+      unsubChoreoProgress();
       unsubState();
       unsubResult();
       window.clearTimeout(demoTimeout);
@@ -388,6 +402,7 @@ export function useCoachTwin({
     status,
     demo,
     progress,
+    choreographyProgress,
     execution,
     intent,
     affect,
@@ -403,6 +418,7 @@ export function isTwinHeroActive(twin: CoachTwinState): boolean {
   return (
     twin.demo != null ||
     twin.progress != null ||
+    twin.choreographyProgress != null ||
     twin.execution?.kind === 'executing' ||
     twin.intent != null
   );
