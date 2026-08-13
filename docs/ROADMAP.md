@@ -18,86 +18,16 @@ We reviewed the roadmap and technical questions with Francesco De Pascale at Cyb
 **Shipped (Ring 0 — wallet-free core loop):**
 
 - MoveNet pose detection in-browser (no video leaves the device)
-- Exercise engine with per-rep form scoring: push-ups, squats, pull-ups,
-  jumps, bicep curls
-- AI coaching (Gemini / Groq / Venice / AWS Bedrock / local heuristics) with three personas
-  (SNEL / STEDDIE / RASTA)
-- Guest identity (`imf_guestId`) — PBs, XP, streaks, ghosts work with no
-  sign-in; workouts merge into a wallet on connect
-- Recovery register (breath cooldown + per-exercise stretches)
-- Staged post-workout flow: celebrate → recover → analyze
-- Ring 0 e2e guards — wallet-free core loop + PoseRuntime:
-  - `e2e/ring0.spec.ts` — no boot gate, ungated START, browser-direct camera
-    ask (primer = denial recovery), studio `CoachFoyer`, earned tabs only
-    after XP, earned chrome paints synchronously (`imf_hasTrained`)
-  - `e2e/ring0-camera.spec.ts` — granted-permission path on desktop Chromium
-    (fake media device): no pre-screen, straight into the boot overlay
-  - `e2e/pose-runtime.spec.ts` — curls + forced worker path stays alive
-    (session-scoped camera/model; mode is not a remount)
-- Tailwind v4 (`@tailwindcss/postcss`) — migrated `globals.css` to
-  `@import "tailwindcss"` + `@config` compat; fixed design-token spacing
-  collision that was silently breaking `max-w-sm`, `max-w-md`, and other
-  named-scale utilities; Google Fonts moved to `<link>` in `layout.tsx`
-- Day-0 foyer — studio-default `CoachFoyer` (brand-first, pick a move, start);
-  game-loop chrome demoted until first XP; see company posture + energy ladder
-  in NORTH_STAR
-- Session intent → register — single source of truth in `brandPositioning.ts`,
-  persisted `imf_sessionIntent`, `#screen` / `#game-container[data-register]`.
-  **Default is Coach / Studio** (`understand`). Train / Arcade is earned play
-  energy (Celebrate, UI sound), not the day-0 chooser. Calm is post-set
-  recovery (`RecoveryCard`). Summary stages follow intent (Coach→Analyze,
-  Breathe→Recover). Marketing landing deferred until acquisition needs category
-  copy outside the cabinet.
-
-**Next (product surface):** Dedicated marketing/landing route only if
-`CoachFoyer` fails web acquisition. Progress spark + Arcade UI cues are earned
-surfaces (Celebrate / dashboard) — keep charts out of the day-0 foyer. Explicit
-Train / Arcade cabinet mode is later depth, not a day-0 requirement.
-
-**PoseRuntime guardrails (shipped):** session-scoped camera/model ownership,
-mode hot-swap, worker path policy in `src/lib/pose/poseRuntime.ts`, docs in
-ARCHITECTURE.md, smoke via `e2e/pose-runtime.spec.ts` (forced worker + curls).
-
-**Studio bay atmosphere (shipped):** day-0 `StudioAtmosphere` with Apache-2.0
-SO-101 **alpha cut-outs** (`so101-*-cutout.webp`), gaze parallax, restrained bay
-architecture (rails, calibration frame, floor/plinth grounding), and soft Celo /
-Base / Avalanche / Monad colour blooms (not a day-0 ThemeSync takeover).
-The boot calibration markings and reactive state readout are CSS-only and remain
-lightweight on the pose path. ChainAmbient / ThemeSync stay gated until first
-XP. Avalanche is a full theme token once earned / wallet-switched.
-
-**Shipped (atmosphere next beats):**
-
-- **Avalanche theme token** — `ChainId: 'avalanche'`, full `CHAIN_THEMES` entry,
-  wagmi/network switching (C-Chain `43114`), ambient CSS; leaderboard contract
-  optional via `NEXT_PUBLIC_AVALANCHE_CONTRACT_ADDRESS`
-- **Lightweight 3D SO-101 gaze** — CSS perspective stage on Apache cut-outs
-  (no third-party Spline); fine-pointer desktop gets stronger rotateY/X follow
-
-**Shipped (physical-AI presence):**
-
-- **Live twin peek** — `CoachTwinPeek` when `NEXT_PUBLIC_COACH_STATION` is set
-  (fail-silent status + data-driven silhouette/progress during demos;
-  Cyberwave/MuJoCo stay on the station machine — no browser embed)
-- **Coach-link clarity** — `CoachFoyer` reports camera coaching readiness and
-  distinguishes Coach link connected / connecting / offline without gating the
-  camera path; Curls is the default robot-native movement and Push-ups remains
-  the broad camera-coaching alternative
-- **First-visit protocol** — [`FIRST_VISIT_AND_MANUAL_STAGE.md`](./FIRST_VISIT_AND_MANUAL_STAGE.md)
-  defines the stranger test, camera-only vs station-connected variants, and
-  evidence required for the manual simulation gate
-- **Reactive Coach Bay** — the fixed atmosphere mirrors the selected movement,
-  session handoff (`selected → starting → camera → AI → positioning → tracking`),
-  and station availability through body state attributes; local form cues pulse
-  the bay camera-only, while stronger demo emphasis remains station-backed
-- **Demo moment sync** — form cues / `demonstration` set `body[data-coach-pulse]`
-  so bay arc + glow pulse; earned shell gets a fallback bloom
-- **One-screen doorway** — no interactive boot gate: passive studio splash
-  while providers hydrate, then `CoachFoyer` (2 pre-answered moves, CTA-first).
-  Sound consent folded into the first CTA press (real gesture); the camera ask
-  fires straight from START — primer survives only as denial-recovery; a single
-  step-railed boot overlay replaces the old loader cascade; rotate-hint /
-  notification asks deferred until a session exists
+- Exercise engine: push-ups, squats, pull-ups, jumps, bicep curls
+- AI coaching (Gemini / Groq / Venice / AWS Bedrock / local) with three personas
+- Guest identity — PBs, XP, streaks, ghosts with no sign-in
+- Recovery register, staged post-workout flow
+- Ring 0 e2e guards (`ring0.spec.ts`, `ring0-camera.spec.ts`, `pose-runtime.spec.ts`)
+- Tailwind v4 migration, Day-0 foyer, session intent → register
+- Studio bay atmosphere with SO-101 cut-outs, gaze parallax, chain ambient
+- Avalanche theme token, lightweight 3D SO-101 gaze
+- Live twin peek, coach-link clarity, first-visit protocol, reactive Coach Bay
+- Demo moment sync, one-screen doorway (no boot gate)
 
 **Shipped (Ring 1/2 — earned upgrades):**
 
@@ -111,93 +41,35 @@ XP. Avalanche is a full theme token once earned / wallet-switched.
 
 - Manual stage — browser + station end-to-end (see “What's next” below)
 
-**Shipped (Movement Intelligence local foundation):**
+**Shipped (Movement Intelligence local foundation):** versioned curl assessment,
+local Movement Card, Movement History, local persistence with verification.
+Full details: [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md).
 
-- Versioned five-rep curl assessment protocol with confidence and explicit inconclusive states
-- Local Movement Card with range, control, trace stability, supported symmetry, and confidence
-- Compact user-scoped Movement History with protocol-matched self-versus-self deltas
-- Local-only assessment persistence with ordered writes, verification, and guest-to-wallet re-keying
+**Shipped (Movement Intelligence — first distribution slice):** aggregate-only
+challenges, `/challenge` recipient route, Web Share + clipboard, five-event funnel.
 
-**Shipped (Movement Intelligence — first distribution slice):**
-
-- Strict aggregate-only `curls-baseline@1.0` assessment challenges
-- Focused `/challenge` recipient route with a single **Take the same test** CTA
-- Native Web Share and clipboard fallback without a wallet
-- Full five-event assessment funnel wired for anonymous and Farcaster users —
-  shared → opened → started → completed → replied — for organic baselines and
-  incoming-challenge replies, with `challengeId` thread stitching
-- Existing Ghost/form-line challenges preserved as a distinct path
-
-**Planned (Movement Intelligence — after measurement gates):**
-
-- Setup calibration and cross-device test–retest validation (protocol + local harness shipped; real evidence open)
-- Durable funnel analytics (PostHog free-tier sink configured in Vercel; dashboard/rate-limit review open) and distribution experiments
-- Cross-device test–retest validation for trajectory claims
-- Self trajectory and next movement unlocks (local curl slice shipped)
-- Age-band / opt-in cohort benchmarking only after protocol and sample-size gates
-- Historical and fictional movement archetypes as a narrative layer, not an objective benchmark
+**Planned (Movement Intelligence — after measurement gates):** setup calibration,
+cross-device test–retest, durable funnel analytics, age-band/cohort benchmarks,
+archetypes.
 
 The full sequence, guardrails, data boundaries, and success metrics live in
 [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md). This is a product
 extension around the camera → understand → show loop; it does not reorder the
 manual-stage → hardware → episode gates for the physical Coach.
 
-**Shipped (mobile performance guardrail):**
+**Shipped (mobile performance guardrail):** adaptive camera quality tiers
+(640×480 → 480×360 → 320×240) with hysteresis and Safari fail-silent.
+See [PERFORMANCE_BASELINE.md](./PERFORMANCE_BASELINE.md).
 
-- Adaptive ordinary-mobile camera quality tiers use sustained completed-loop FPS
-  and `estimatePoses()` latency to move between 640×480 / 30 FPS, 480×360 /
-  24 FPS, and 320×240 / 15 FPS. Changes are hysteretic, verified against actual
-  camera-track settings, and fail-silent when Safari rejects or ignores a
-  request; Farcaster keeps its dedicated camera path.
+**Shipped (curl evidence surface):** live `CurlFormInstrument` shows elbow angle,
+target range, curl phase, drift. Active-arm selection prevents alternating-curl
+averaging. See ARCHITECTURE.md.
 
-**Shipped (curl evidence surface):**
-
-- Live `CurlFormInstrument` in the curls session: the user can see the active
-  elbow angle, 50–70° target range, curl phase, elbow drift, and a visual
-  target marker rather than relying on generic correction copy.
-- The instrument is a formatter over the existing pose engine, not a second
-  detector. The curl processor selects the most actively curled visible arm so
-  alternating curls do not average an extended arm with a curled arm.
-- Curl depth, coaching status, and the instrument share that active-arm reading;
-  stale telemetry clears when tracking is lost. Accessible status is throttled
-  to meaningful angle/phase changes rather than announcing every camera frame.
-- The in-session camera stage now has a restrained teal Coach Bay treatment
-  with grid/floor grounding. It remains decorative and fail-silent: camera
-  coaching does not depend on the station, and existing overlays retain their
-  positioning.
-
-**Shipped (Milestone 1 — sim choreography software):**
-
-- `coach-station/` — WebSocket bridge + FormEvent → demonstration primitives
-  (`demonstrate_strict_curl`, `demonstrate_extension`, `demonstrate_tempo`,
-  `mirror_asymmetry`) with per-persona motion profiles; interpolated
-  trajectories + elbow workspace clamps; CyberwaveArm uses
-  `cw.affect("simulation")` + `joints.set`; ConsoleArm for zero-dep local runs
-- Browser bridge (`src/services/coachStation.ts`) — FormEvent + session
-  start/end, fail-silent; engine `formCheckSpeak` (e.g. `elbow_swing` on curls)
-  streams through the pose loop
-- Demo voice sync — station emits `demonstration` (narration + duration); web
-  TTS cascade ElevenLabs → Amazon Polly → browser Web Speech; user preference
-  via settings VOICE ENGINE (`prefTtsProvider`); not Nova-locked
-- Demo CLI: `cd coach-station && uv run python -m coach_station.demo --demo all`
-- Recordings CLI: `uv run python -m coach_station.recordings --since ...`
-  fetches twin actuation recordings (per-joint telemetry) for the SmolVLA
-  episode pipeline
-- Versioned station feedback: `robot_state`, `trajectory_progress`, and
-  `command_result` events correlate through `command_id`; trajectory progress
-  is throttled to at most 10Hz and rendered accessibly in the twin peek;
-  `trajectory_progress.measured_deg` (additive in v1) surfaces the observed
-  elbow from `twin.joints.get_all()` when the adapter can read it, versus
-  echoing only commanded waypoints (UI `·obs` suffix)
-- Twin-visibility alerts (`COACH_TWIN_ALERTS=1`): aborted/rejected demos post
-  to the Cyberwave dashboard alert feed via `twin.alerts.create`, not just
-  station logs
-- Deterministic curl mapping: `elbow_swing` FormEvents carry the observed
-  elbow angle plus a 50° correction target; the station normalizes both to
-  the active safety workspace before generating the `elbow_flex` trajectory.
-  Older clients that omit angles retain the 160° → 50° scripted fallback.
-- Station tests: `uv sync --extra dev && uv run pytest` (45 passing, 9 failing — known regression from multi-joint choreography)
-- Soft dry-run: `./scripts/cohort-dry-run.sh`
+**Shipped (Milestone 1 — sim choreography software):** WebSocket bridge,
+FormEvent → demonstration primitives, per-persona motion profiles, interpolated
+trajectories, CyberwaveArm/ConsoleArm adapters, demo voice sync, twin-visibility
+alerts, deterministic curl mapping, 45 passing station tests.
+See [`coach-station/`](../coach-station/).
 
 ## What's next — required order
 
@@ -243,97 +115,53 @@ These gates sit alongside the hardware gates above and are detailed in [`IMPLEME
 
 ### Milestone 1 — Sim choreography (software ✅ · stage gate open)
 
-Goal: camera on, curls, arm moves in MuJoCo (or console [SIM]), voice narrates.
-Software path is shipped; **cohort is not closed until manual stage passes.**
-
-- [x] Wire `coach-station/` to FormEvent stream at `ws://localhost:8765`
-      (client tap live; station server receives + dispatches primitives)
-- [x] Fail-silent client behavior when no station is running
-      (`coachStation.test.ts` + `e2e/coach-station.spec.ts`)
-- [x] Three demonstration primitives against the MuJoCo twin
-      (`cw.affect("simulation")` via CyberwaveArm + trajectory executor):
-  - [x] `demonstrate_extension(target_deg)` — pull-up extension 150° → 155°
-  - [x] `demonstrate_tempo()` — pace correction
-  - [x] `mirror_asymmetry()` — L/R asymmetry >30°
-  - plus cohort flagship `demonstrate_strict_curl` (curls + `elbow_swing`)
-- [x] Per-persona motion profiles: SNEL slow-deliberate, STEDDIE
-      smooth-centered, RASTA fast-energetic
-- [x] Demo voice sync (station `demonstration` event + provider-agnostic TTS:
-      ElevenLabs → Polly → browser; user preference in settings)
-- [x] Software dry-run: `./scripts/cohort-dry-run.sh`
-- [ ] **Manual stage (required next):** browser + optional Cyberwave twin —
-      see [`FIRST_VISIT_AND_MANUAL_STAGE.md`](./FIRST_VISIT_AND_MANUAL_STAGE.md)
-      and the `coach-station/README.md` cohort checklist. Telemetry and the
-      Coach-link status UI are implemented; this gate still requires a real
-      browser/session validation.
-
-Demo without the browser: `cd coach-station && uv run python -m coach_station.demo --demo all`
+Software shipped: WebSocket bridge, four demonstration primitives, per-persona
+profiles, demo voice sync, deterministic curl mapping. **Cohort not closed until
+manual stage passes.** Dry-run: `./scripts/cohort-dry-run.sh`
 
 ### Milestone 2 — Hardware bring-up (SO-101 "Coach")
 
 **Start only after Milestone 1 manual stage.** Runbook:
 [`coach-station/LIVE.md`](../coach-station/LIVE.md).
+Paused after 2026-08-13 servo stall incident — elbow_flex servo needs
+replacement + bounded re-calibration.
 
 - [ ] `cyberwave pair` on the edge machine
-- [~] `affect("live")` behind dead-man — software gate shipped:
-  `COACH_AFFECT=live` requires `COACH_LIVE_CONFIRM=1` else falls back to
-  simulation (`resolve_affect`); physical dead-man still required
-- [~] Workspace + motion clamps — `coach_station/safety.py`:
-  elbow min/max, `COACH_MAX_SPEED_DEG_S`, `COACH_MAX_STEP_DEG` (live
-  defaults tighter than sim); CyberwaveArm re-clamps every waypoint.
-  True torque/current limits still open until SDK exposes them
-- [x] One-primitive-at-a-time policy (server lock + demo cooldown already in
-      `coach_station/server.py`)
-- [ ] Validate sim → hardware transfer before compound motions (curl-first)
+- [~] `affect("live")` behind dead-man (software gate shipped)
+- [~] Workspace + motion clamps (shipped; true torque limits open until SDK)
+- [x] One-primitive-at-a-time policy
+- [ ] Validate sim → hardware transfer (curl-first)
 
 ### Milestone 3 — Data flywheel (SmolVLA)
 
-**Start only after hardware curl proof (Milestone 2).** Episodes come from
-**coached human sessions** (form cue → demonstration), not from teleop-only
-datasets as the product’s starting point.
+**Start only after hardware curl proof.** Episodes from coached human sessions,
+not teleop-only datasets.
 
-- [ ] Every coached session records to Cyberwave in LeRobot-format episodes
-      — fetch/inspect plumbing shipped via `coach_station/recordings.py`;
-      capture still dashboard-driven per Cyberwave SDK (no programmatic
-      start/stop API, verified against current docs)
-- [ ] Built-in face anonymization on-device (privacy-first stays true)
-- [ ] Episode slicing per exercise / per persona / per form-issue class
-- [ ] SmolVLA fine-tuning experiment #1: extension-cue → arm motion
-      end-to-end (small closed dataset, sim-only first)
+- [ ] LeRobot-format episode recording from coached sessions
+- [ ] Face anonymization, episode slicing, SmolVLA experiment #1
 
 ### Milestone 4 — Coach station wedge
 
-- [ ] Kiosk mode for a paired camera + arm at a gym
-- [~] Per-station telemetry back to Cyberwave — fault alerts shipped behind
-  `COACH_TWIN_ALERTS=1` (`coach_station/arm.py::publish_fault`,
-  surfaced as twin alerts in the Cyberwave dashboard); broader twin-state
-  mirroring deferred
-- [ ] Persona selection for the station (matches app)
+- [ ] Kiosk mode for paired camera + arm at a gym
+- [~] Per-station telemetry (fault alerts shipped)
+- [ ] Persona selection for the station
 
 ### Milestone 5 — Movement Intelligence
 
-**Start with M0 measurement quality, not with a leaderboard.** M0–M3 may run as a
-parallel product track once Ring 0 is stable; M4–M5 remain gated by validated
-population data and privacy review. This track never reorders the
-manual-stage → hardware → episode gates for the physical Coach. The product goal is
-a valid assessment → useful Movement Card → accepted challenge → recipient
-assessment → repeat test. See [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md)
-for the detailed plan.
+M0–M3 may run as a parallel product track once Ring 0 is stable; M4–M5 remain
+gated by validated population data and privacy review.
+See [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md) for the detailed plan.
 
-- [x] M0 foundation: versioned curl protocol, confidence, repeatability primitives, inconclusive state
-- [x] M1 foundation: local MovementAssessment and Movement Card
-- [x] M3 foundation: compact protocol-matched Movement History and self deltas
-- [ ] M0 completion: setup calibration and cross-device test–retest evidence (local protocol + harness ready)
-- [x] M2 foundation: versioned “Take the same test” challenge and recipient route
-- [ ] M2 completion: funnel experiments (sink configured — free-tier key in Vercel — with the full five-event journey client-wired; distribution experiments open)
-- [x] M3 foundation: local confidence-aware trajectory and next unlock surface
-- [ ] M3 completion: cross-device evidence and trajectory experiments
-- [ ] M4: privacy-reviewed age-band / opt-in cohort benchmarks
-- [ ] M5: original historical / fictional archetypes layered over real measurements
+- [x] M0/M1/M3 local foundation shipped (curl protocol, card, history, trajectory)
+- [x] M2 foundation shipped (challenge route, five-event funnel)
+- [ ] M0 completion: setup calibration + cross-device test–retest evidence
+- [ ] M2 completion: funnel experiments + distribution
+- [ ] M3 completion: cross-device evidence + trajectory experiments
+- [ ] M4: age-band / opt-in cohort benchmarks (after privacy review)
+- [ ] M5: historical / fictional archetypes
 
 **First-slice success:** accepted assessment challenges per activated user,
-plus a second valid assessment within 7–14 days. No wallet or raw camera upload
-is required for this slice.
+plus a second valid assessment within 7–14 days.
 
 ## What we're deliberately not doing
 

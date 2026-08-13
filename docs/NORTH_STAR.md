@@ -128,118 +128,26 @@ Hard lesson from past projects: gating actions on-chain kills adoption. On-chain
 ## Movement Intelligence: the durable product outcome
 
 The physical-AI loop gives Imperfect Form its moat; **Movement Intelligence** gives
-that loop a reason to compound for the person using it. The product should grow
-from “the coach found one form correction” into:
-
-> **See how you move today. Understand what is changing. Find the next movement you can unlock.**
-
-A privacy-first **Movement Passport** records a small, repeatable set of movement
-signals — range, control, symmetry, tempo, consistency, and measurement
-confidence — without becoming a medical record, biological-age claim, or
-universal fitness score.
-
-The sequence is deliberate:
-
-1. Self versus self: show what changed from the user's own baseline.
-2. Similar people: add broad, protocol-matched age bands only after measurement
-   quality and sample size are credible.
-3. Opt-in cohorts: let friends, gyms, clubs, and groups compare supportive
-   progress rather than compete on a global leaderboard.
-4. Archetypes: use original historical or fictional movement characters to make
-   real measurements memorable; real data powers the score, fiction powers the
-   imagination.
-
-The first distribution object is the **Movement Card**, not a generic workout
-badge. A valid assessment produces one surprising insight, one next focus, and a
-privacy-safe **Take the same test** challenge. The recipient completes the same
-protocol and receives their own card without a wallet, account, or raw camera
-upload:
+that loop a reason to compound. A privacy-first **Movement Passport** records
+range, control, symmetry, tempo, consistency, and measurement confidence — without
+becoming a medical record or universal fitness score. The first distribution
+object is the **Movement Card**: one insight, one next focus, and a privacy-safe
+**Take the same test** challenge.
 
 ```
 valid assessment → useful card → accepted challenge → recipient assessment → repeat test
 ```
 
-Trajectory estimates are scenarios, not promises. They become more useful as
-protocol-matched assessments accumulate, and they must show their confidence.
-The app can say “you are trending toward this movement milestone”; it must not
-promise a medical, injury, or athletic outcome.
-
-Movement Intelligence is an outcome around the physical-AI loop, not a reason to
-weaken it. Camera coaching remains Ring 0, the Coach remains a teacher, and the
-manual-stage → hardware → episode order remains the robotics gate. See the
-[Movement Intelligence plan](./MOVEMENT_INTELLIGENCE.md) for the phased delivery,
-data boundaries, privacy rules, and success metrics.
-
-### Movement Intelligence guardrails
-
-- Start with a few repeatable protocols; do not launch a composite score before
-  the individual measurements are understood.
-- Use general-wellness language such as range signal, movement control,
-  observed asymmetry, and form consistency — never diagnosis, stiffness,
-  biological age, or guaranteed outcomes.
-- Calibrate camera conditions and preserve an explicit inconclusive state when
-  confidence or repeatability is poor.
-- Share the least revealing aggregate result by default; approximate traces
-  require explicit opt-in, and raw video is never shared by default.
-- Keep the first loop local and wallet-free. Add age-band, cohort, and on-chain
-  layers only after the measurement and privacy gates pass.
-
-### Movement Intelligence within the three rings
-
-- **Ring 0 — baseline:** Camera coaching, valid Movement Cards, and private
-  self-history work with the local guest ID; no wallet or account is required.
-- **Ring 1 — social context:** Names, cross-device continuity, challenge replies,
-  and opt-in cohorts arrive without making comparison a prerequisite.
-- **Ring 2 — earned proof:** Age-band/cohort benchmarks and portable attestations
-  arrive only after protocol, population, and privacy review. On-chain remains
-  an earned delight, never a prerequisite.
-
-### Ring inventory
-
-The detailed Ring 0 / Ring 1 / Ring 2 feature inventory remains below as the
-implementation detail for the product shape.
-
-- **Ring 0 — just train (no account):** the full loop - camera, all five
-  exercises, AI coach, personas, recovery, robot demos - plus all progression
-  (XP, quests, streaks, PBs, ghosts) keyed to a local guest ID
-  (`imf_guestId`). A user can reach level 5 without ever seeing a wallet.
-- **Ring 1 — connect (free, zero transactions):** identity and social. Names
-  on things, global rank preview, Farcaster sharing, cross-device continuity.
-  Guest data merges into the address on connect (`migrateGuestWorkouts`).
-- **Ring 2 — on-chain delights, catered to chain primitives:** permanence
-  (etch a PB - offered at the PB moment, when the user is euphoric), global
-  competition (leaderboard submission), provable humanity (verified board),
-  collectibility (mint the AI highlight card), and later social stakes
-  (wager on beating a friend's ghost). Rewards you've earned the right to
-  take - never tolls.
-
-The cohort demo is Ring 0 by design: camera on, curls, robot moves. No
-wallet popup on stage.
+Camera coaching remains Ring 0, the Coach remains a teacher, and the
+manual-stage → hardware → episode order remains the robotics gate. Full plan:
+[`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md).
 
 ## Phases
 
-**Do this next:** Manual stage — browser + station, curls → arm moves + voice
-(see [ROADMAP.md](./ROADMAP.md) required order +
-[`coach-station/README.md`](../coach-station/README.md) checklist). Then richer
-twin telemetry, then hardware. Do not start SmolVLA before that proof.
-
-1. **Bridge (shipped):** `coach-station/` WebSocket + FormEvent schema + web
-   tap (`coachStation.ts`). Fail-silent when the station is offline.
-   Deliberately "dumb": form issue → scripted demonstration primitive.
-2. **Sim choreography (software shipped · stage gate open):** demonstration
-   primitives against the Cyberwave MuJoCo / Playground twin via
-   `cw.affect("simulation")` + interpolated `joints.set` trajectories —
-   `demonstrate_strict_curl` (flagship), `demonstrate_extension`,
-   `demonstrate_tempo`, `mirror_asymmetry` — each with per-persona motion
-   profiles and narration. Station emits `demonstration` for voice sync +
-   bay/twin UI; web TTS is provider-agnostic. Demo CLI:
-   `python -m coach_station.demo`. **Manual stage still required** before
-   calling the cohort closed.
-3. **Hardware bring-up:** after manual stage —
-   `cyberwave pair`, `affect("live")`, clamps (`LIVE.md`). Curl-first.
-4. **Flywheel:** record every coached session via Cyberwave (face anonymization
-   keeps privacy-first intact); slice episodes; SmolVLA experiments that start
-   from _human form cues_, not from teleop-only datasets.
+See [ROADMAP.md](./ROADMAP.md) for the required order, hardware bring-up gates,
+and current status. The short version: Bridge → Sim choreography → Manual stage →
+Hardware bring-up → Data flywheel. Do not start SmolVLA before the manual stage
+passes.
 
 ## Pitch (cohort)
 
@@ -264,61 +172,8 @@ them tell someone.
 private camera coaching first, physical demonstration second, learned policies
 from real sessions third.
 
-**Aesthetic registers** — intentional mix (see `src/lib/brandPositioning.ts`
-and root `design.md`):
+**Aesthetic registers** — Studio is the chassis, Arcade is punctuation, Calm/Lab
+are phase modes. See `src/lib/brandPositioning.ts` and root `design.md` for the
+full register spec, energy ladder, and design rules.
 
-> **Studio is the chassis. Arcade is punctuation. Calm/Lab are phase modes.**
-
-- **Night studio (DEFAULT chassis)** — Coach / `understand` intent. Day-0
-  foyer (`CoachFoyer`), camera primer, live coaching HUD, earned shell chrome:
-  readable sans (Manrope), teal glass on black. Brass (`sandow-spine`) only
-  as quiet grade hairlines on chassis surfaces.
-- **Arcade punctuation** — celebrate / first signal / level-up / ghost accept
-  / grade stamp / XP tick: brief gold flash + arcade UI sound, then return to
-  studio. Press Start 2P only on these bursts — never as Stats/tab wallpaper.
-- **Arcade full cabinet** — explicit Train intent + `/lore` Cræft: loud gold,
-  Press Start allowed on the whole surface. **Cræft / Sandow cabinet** is the
-  Victorian seaside strength-tester variant for the [Cræft Prize](./CRAFFT_PRIZE.md).
-- **Calm** — Recover / breathe: post-workout recovery + optional calm entry.
-  Soft light, Manrope — no scoreboard energy.
-- **Lab** — post-workout AI clinical review only: precise, alive, not arcade-loud.
-
-**Energy ladder** (not a mid-rep theme toggle):
-
-1. **Session 0 — Studio trust** — `CoachFoyer` → primer → live cues.
-2. **First celebrate — arcade punctuation** — ProgressSpark, Arcade UI sound,
-   brass grade accents — then back to studio chassis.
-3. **Earned shell — studio + brass** — XP/level use brass accents; no yellow
-   SaaS dashboard skins.
-4. **Explicit Train / Arcade cabinet** — later depth for users who want the
-   game cabinet; same engine, different chrome.
-
-| Intent               | Register | When it surfaces                        | Job                        |
-| -------------------- | -------- | --------------------------------------- | -------------------------- |
-| Coach (`understand`) | Studio   | **Day-0 default** (`CoachFoyer`)        | Trust + form understanding |
-| Train                | Arcade   | Earned / explicit play mode (not foyer) | Challenge + play           |
-| Breathe (`recover`)  | Calm     | Post-set recovery; optional calm entry  | Stillness + recover        |
-
-Rules:
-
-1. **Intentional mix, not accidental collision** — studio chassis may carry
-   quiet brass; arcade bursts are scored moments. Never paint whole earned
-   screens in yellow/violet Tailwind that ignore studio tokens. Never mix
-   Press Start gold with calm glass on the same viewport.
-2. **Studio opens the door** — day-0 commits Coach / Studio
-   (`DEFAULT_SESSION_INTENT = understand`). No intent chooser on the first
-   viewport. Register stays for the session via `imf_sessionIntent`.
-3. **Landing is deferred** — deepen `CoachFoyer` + register chrome before
-   spinning a separate marketing route. Ship a landing when acquisition data
-   says the foyer is not enough.
-4. **Same engine under all registers** — camera → understanding → guidance.
-   Different door and chrome; not three apps.
-5. **Alive lives in the loop** — cue timing, persona voice, settle motion,
-   celebrate hits, twin peek / bay pulse when the station is linked. Not
-   puerile foyer slogans.
-
-**App one-liner:** Private camera coaching with game-quality feedback, and
-a path into physical AI that can show the correction. (See
-`src/lib/brandPositioning.ts`.)
-
-**Stack:** Python, MoveNet (browser), MuJoCo, Cyberwave SDK, Nova 2, SmolVLA, SO-101.
+**Stack:** Python, MoveNet (browser), MuJoCo, Cyberwave SDK, SmolVLA, SO-101.
