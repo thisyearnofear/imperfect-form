@@ -21,7 +21,11 @@
   flex-direction: column;
   gap: 0.65rem;
   min-width: 0;
-  width: 17.5rem;
+  width: 14.5rem;
+}
+
+.session-bay__rail--lead {
+  justify-content: space-between;
 }
 
 .session-bay__rail:empty {
@@ -64,6 +68,42 @@
   animation: none;
 }
 
+/* Left spine: You / Gap / Coach stacked to camera height, not a clipped row. */
+.session-bay .see-show-moment--spine {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+  padding: 0.55rem 0.6rem 0.5rem;
+}
+
+.session-bay .see-show-moment--spine .see-show-moment__split {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 0;
+}
+
+.session-bay .see-show-moment--spine .see-show-moment__arm,
+.session-bay .see-show-moment--spine.is-hero .see-show-moment__arm {
+  width: 5.6rem;
+  height: 5.8rem;
+}
+
+.session-bay .see-show-moment--spine .see-show-moment__gap i {
+  width: 1px;
+  height: 1.35rem;
+  background: linear-gradient(
+    180deg,
+    rgb(var(--ssm-you)),
+    rgb(var(--ssm-coach))
+  );
+}
+
 .session-bay .see-show-moment.is-hero {
   border-color: rgba(252, 177, 49, 0.55);
   box-shadow:
@@ -90,6 +130,11 @@
   scrollbar-width: thin;
 }
 
+.session-bay .curl-instrument--rail {
+  overflow-y: visible;
+  max-height: none;
+}
+
 .session-bay .curl-instrument.is-stale,
 .session-bay .curl-instrument.curl-instrument--waiting {
   opacity: 0.78;
@@ -102,8 +147,8 @@
   transform: none;
   max-width: none;
   width: 100%;
-  justify-content: center;
-  text-align: center;
+  justify-content: flex-start;
+  text-align: left;
   z-index: 1;
 }
 
@@ -132,10 +177,8 @@
     flex-wrap: wrap;
   }
 
-  .session-bay__rail .see-show-moment,
-  .session-bay__rail .curl-instrument {
-    flex: 1 1 16rem;
-    max-height: none;
+  .session-bay__rail--lead {
+    flex-direction: column;
   }
 
   .session-bay__camera {

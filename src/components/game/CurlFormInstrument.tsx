@@ -341,7 +341,7 @@ export function CurlFormInstrument({
 
   return (
     <section
-      className={`curl-instrument curl-instrument--${displayTelemetry.phase}${collapsed ? ' is-collapsed' : ''}${layout === 'rail' && !tracking ? ' is-stale' : ''}`}
+      className={`curl-instrument curl-instrument--${displayTelemetry.phase}${collapsed && layout !== 'rail' ? ' is-collapsed' : ''}${layout === 'rail' ? ' curl-instrument--rail' : ''}${layout === 'rail' && !tracking ? ' is-stale' : ''}`}
       aria-label="Live curl form instrument"
       role="region"
     >
@@ -350,25 +350,27 @@ export function CurlFormInstrument({
       </span>
       <div className="curl-instrument__header">
         <div>
-          <p className="curl-instrument__eyebrow">Robot demo</p>
+          <p className="curl-instrument__eyebrow">{layout === 'rail' ? 'Elbow' : 'Robot demo'}</p>
           <strong>{phaseLabel[displayTelemetry.phase]}</strong>
         </div>
-        <div className="curl-instrument__header-actions">
-          <span className="curl-instrument__rep">Match the arm</span>
-          <button
-            type="button"
-            className="curl-instrument__toggle"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-expanded={!collapsed}
-            aria-controls="curl-instrument-body"
-            aria-label={collapsed ? 'Show form instrument' : 'Hide form instrument'}
-          >
-            {collapsed ? 'Show' : 'Hide'}
-          </button>
-        </div>
+        {layout === 'rail' ? null : (
+          <div className="curl-instrument__header-actions">
+            <span className="curl-instrument__rep">Match the arm</span>
+            <button
+              type="button"
+              className="curl-instrument__toggle"
+              onClick={() => setCollapsed((c) => !c)}
+              aria-expanded={!collapsed}
+              aria-controls="curl-instrument-body"
+              aria-label={collapsed ? 'Show form instrument' : 'Hide form instrument'}
+            >
+              {collapsed ? 'Show' : 'Hide'}
+            </button>
+          </div>
+        )}
       </div>
 
-      {collapsed && (
+      {layout !== 'rail' && collapsed && (
         <div className="curl-instrument__collapsed-status" aria-hidden="true">
           <span>
             Angle <strong>{Math.round(angle)}°</strong>
@@ -431,27 +433,29 @@ export function CurlFormInstrument({
           </div>
         </div>
 
-        <div
-          className="curl-instrument__range"
-          aria-label={`Elbow angle ${Math.round(angle)} degrees, target ${displayTelemetry.targetMinDeg} to ${displayTelemetry.targetMaxDeg} degrees`}
-        >
-          <div className="curl-instrument__range-track">
-            <span
-              className="curl-instrument__range-target"
-              style={{ left: targetStart, width: targetWidth }}
-            />
-            <span className="curl-instrument__range-marker" style={{ left: anglePosition }} />
+        {layout === 'rail' ? null : (
+          <div
+            className="curl-instrument__range"
+            aria-label={`Elbow angle ${Math.round(angle)} degrees, target ${displayTelemetry.targetMinDeg} to ${displayTelemetry.targetMaxDeg} degrees`}
+          >
+            <div className="curl-instrument__range-track">
+              <span
+                className="curl-instrument__range-target"
+                style={{ left: targetStart, width: targetWidth }}
+              />
+              <span className="curl-instrument__range-marker" style={{ left: anglePosition }} />
+            </div>
+            <div className="curl-instrument__range-labels">
+              <span>Extend</span>
+              <span>
+                {rangeReached
+                  ? 'In curl range ✓'
+                  : `${Math.max(0, Math.round(angle - targetMid))}° to target`}
+              </span>
+              <span>Curl</span>
+            </div>
           </div>
-          <div className="curl-instrument__range-labels">
-            <span>Extend</span>
-            <span>
-              {rangeReached
-                ? 'In curl range ✓'
-                : `${Math.max(0, Math.round(angle - targetMid))}° to target`}
-            </span>
-            <span>Curl</span>
-          </div>
-        </div>
+        )}
 
         {/* SO-101 Robot Joint Readout */}
         {coachStation.enabled && (
@@ -556,7 +560,7 @@ export function CurlFormInstrument({
         {/* Coach Comparison — meaningful only after the first measured rep, so
           it's staged in via progressive disclosure instead of crowding the
           pre-rep surface. */}
-        {repCount > 0 && (
+        {layout !== 'rail' && repCount > 0 && (
           <div className="curl-instrument__coach-compare">
             <div className="curl-instrument__coach-compare-header">
               <span className="curl-instrument__coach-compare-label">Coach Feedback</span>
@@ -606,7 +610,7 @@ export function CurlFormInstrument({
         )}
 
         {/* Reps and Form Status */}
-        {repCount > 0 && (
+        {layout !== 'rail' && repCount > 0 && (
           <div className="curl-instrument__score">
             <span className="curl-instrument__score-label">Reps</span>
             <span className="curl-instrument__score-value">{repCount}</span>

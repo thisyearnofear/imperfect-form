@@ -211,6 +211,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               yieldToFirstSignal={showFirstRepCelebration}
             />
           ) : null}
+          <LiveCoachingStatus {...coachingStatusProps} animate={false} />
         </aside>
         <div
           id="canvasContainerDesktop"
@@ -239,9 +240,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             />
           ) : null}
         </aside>
-      </div>
-      <div className="session-bay__cue">
-        <LiveCoachingStatus {...coachingStatusProps} animate={false} />
       </div>
       <CoachTwinPeek session mode={mode} twin={twin} suppressed={mode === 'curls' || showSeeShow} />
     </div>

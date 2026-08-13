@@ -355,8 +355,8 @@ is required for this slice.
 - **Cross-platform identity aggregation.** The Memory Protocol integration
   (Phase 6) is descoped: upstream `memoryproto.co` returns
   `DEPLOYMENT_DISABLED`, our API key 500s, and the graceful-degradation path
-  already covers what users actually see. The Farcaster + Neynar path we
-  already own delivers the identity slice we need. If a cross-platform graph
+  already covers what users actually see. Farcaster / Neynar remain an optional
+  mini-app path, not a day-0 identity requirement. If a cross-platform graph
   becomes a real requirement, we'll pick a live provider then.
 
 ## Success criteria

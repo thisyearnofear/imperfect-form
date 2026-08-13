@@ -59,8 +59,6 @@ export const metadata: Metadata = {
     'MoveNet',
     'on-device pose',
     'private fitness',
-    'Farcaster mini app',
-    'onchain fitness',
   ],
   category: 'health-fitness',
   alternates: {
@@ -164,7 +162,6 @@ const jsonLd = {
     'Real-time rep counting and form scoring',
     'AI coaching personas',
     'Path into physical AI demonstration',
-    'Farcaster mini app',
   ],
   publisher: {
     '@type': 'Organization',

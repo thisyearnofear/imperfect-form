@@ -45,37 +45,41 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
 
   // Social identity rows — one config entry per platform, rendered by a single
   // studio-card item below (icon, label, follower count, external link).
+  const farcasterUsername =
+    profile?.identities.find((id) => id.platform === 'farcaster')?.username ||
+    farcasterUser?.username;
+  const twitterUsername = profile?.identities.find((id) => id.platform === 'twitter')?.username;
+  const lensUsername = profile?.identities.find((id) => id.platform === 'lens')?.username;
+
   const socialRows = [
-    {
-      key: 'farcaster',
-      label: 'Farcaster',
-      icon: Users,
-      url: `https://farcaster.xyz/${
-        profile?.identities.find((id) => id.platform === 'farcaster')?.username ||
-        farcasterUser?.username ||
-        'papa'
-      }`,
-      followers: `${profile?.socialStats?.farcasterFollowers?.toLocaleString() || '0'} followers`,
-    },
-    {
-      key: 'twitter',
-      label: 'Twitter',
-      icon: MessageCircle,
-      url: `https://x.com/${
-        profile?.identities.find((id) => id.platform === 'twitter')?.username || 'unknown'
-      }`,
-      followers: `${profile?.socialStats?.twitterFollowers?.toLocaleString() || '0'} followers`,
-    },
-    {
-      key: 'lens',
-      label: 'Lens',
-      icon: Eye,
-      url: `https://hey.xyz/u/${
-        profile?.identities.find((id) => id.platform === 'lens')?.username || 'unknown'
-      }`,
-      followers: `${profile?.socialStats?.lensFollowers?.toLocaleString() || '0'} followers`,
-    },
-  ];
+    farcasterUsername
+      ? {
+          key: 'farcaster',
+          label: 'Farcaster',
+          icon: Users,
+          url: `https://farcaster.xyz/${farcasterUsername}`,
+          followers: `${profile?.socialStats?.farcasterFollowers?.toLocaleString() || '0'} followers`,
+        }
+      : null,
+    twitterUsername
+      ? {
+          key: 'twitter',
+          label: 'Twitter',
+          icon: MessageCircle,
+          url: `https://x.com/${twitterUsername}`,
+          followers: `${profile?.socialStats?.twitterFollowers?.toLocaleString() || '0'} followers`,
+        }
+      : null,
+    lensUsername
+      ? {
+          key: 'lens',
+          label: 'Lens',
+          icon: Eye,
+          url: `https://hey.xyz/u/${lensUsername}`,
+          followers: `${profile?.socialStats?.lensFollowers?.toLocaleString() || '0'} followers`,
+        }
+      : null,
+  ].filter((row): row is NonNullable<typeof row> => row != null);
 
   // Show loading state while loading — studio skeleton, not the split-flap readout
   if (loading) {
@@ -244,7 +248,7 @@ export const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
               </div>
             </div>
 
-            {/* Farcaster · Twitter · Lens */}
+            {/* Linked identities — only rows with a real username */}
             {socialRows.map((row) => {
               const RowIcon = row.icon;
               return (

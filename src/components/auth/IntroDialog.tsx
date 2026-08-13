@@ -6,7 +6,7 @@ const ACCENT = 'var(--accent)';
 interface IntroDialogProps {
   open?: boolean; // allow controlled or auto
   onOpenChange?: (open: boolean) => void;
-  onFarcaster: () => void;
+  onFarcaster?: () => void;
   onWallet: () => void;
   onSkip: () => void;
 }
@@ -19,12 +19,6 @@ const OPTIONS = [
     label: 'Just Start Training',
     desc: 'No sign-in needed. Your progress saves on this device.',
     onClickProp: 'onSkip',
-  },
-  {
-    key: 'farcaster',
-    label: 'Login with Farcaster',
-    desc: 'Sign in with your social identity.',
-    onClickProp: 'onFarcaster',
   },
   {
     key: 'wallet',
@@ -59,10 +53,7 @@ export default function IntroDialog(props: IntroDialogProps) {
   }
 
   const handleOption = (key: string) => {
-    const handler =
-      props[
-        OPTIONS.find((o) => o.key === key)!.onClickProp as 'onFarcaster' | 'onWallet' | 'onSkip'
-      ];
+    const handler = props[OPTIONS.find((o) => o.key === key)!.onClickProp as 'onWallet' | 'onSkip'];
     if (handler) handler();
     setOpen(false);
     if (key === 'demo') {

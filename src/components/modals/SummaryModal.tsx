@@ -920,35 +920,33 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
-              {/* Share row — Farcaster + Twitter, guests too */}
+              {/* Optional share — Farcaster is a quiet compose link, not a sign-in wall. */}
               {repCount > 0 && (
-                <div className="border-t border-gray-700 pt-4">
-                  <div className="flex flex-col items-center space-y-4">
-                    <FarcasterShare
-                      reps={repCount}
-                      exerciseMode={mode}
-                      timeSpent={formatExerciseTime(120 - timeLeft)}
-                      network={networkType}
-                      isInMiniApp={isInMiniApp}
-                      user={user}
-                    />
-                    {!isInMiniApp && (
-                      <button
-                        className="w-10 h-10 rounded-full bg-[#1da1f2] text-white font-black flex items-center justify-center transition-all hover:scale-105"
-                        aria-label="Share on X (Twitter)"
-                        onClick={() => {
-                          const text = `${repCount} ${mode} • Onchain Olympics`;
-                          const url = `https://imperfect-form.vercel.app`;
-                          window.open(
-                            `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-                            '_blank'
-                          );
-                        }}
-                      >
-                        𝕏
-                      </button>
-                    )}
-                  </div>
+                <div className="border-t border-white/10 pt-3 flex flex-col items-center gap-2">
+                  <FarcasterShare
+                    reps={repCount}
+                    exerciseMode={mode}
+                    timeSpent={formatExerciseTime(120 - timeLeft)}
+                    network={networkType}
+                    isInMiniApp={isInMiniApp}
+                    user={user}
+                  />
+                  {!isInMiniApp && (
+                    <button
+                      className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-200/55 hover:text-teal-100/90 transition-colors"
+                      aria-label="Share on X (Twitter)"
+                      onClick={() => {
+                        const text = `${repCount} ${mode} on Imperfect Form`;
+                        const url = `https://imperfectform.fun`;
+                        window.open(
+                          `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                          '_blank'
+                        );
+                      }}
+                    >
+                      Share on X
+                    </button>
+                  )}
                 </div>
               )}
 

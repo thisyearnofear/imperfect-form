@@ -18,7 +18,9 @@ describe('FarcasterShare', () => {
       </NeynarAuthProvider>
     );
 
-    expect(markup).toContain('Share via Warpcast');
+    expect(markup).toContain('Share to Farcaster');
+    expect(markup).not.toContain('Identity Required');
+    expect(markup).not.toContain('neynar_signin');
     expect(markup).not.toContain('Neynar client ID is not configured');
   });
 });

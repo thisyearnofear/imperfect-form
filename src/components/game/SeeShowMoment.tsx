@@ -59,7 +59,7 @@ export function SeeShowMoment({
 
   return (
     <div
-      className={`see-show-moment${hero ? ' is-hero' : ' is-dock'}${rail && yieldToFirstSignal ? ' is-yield' : ''}${rail && !hasUser ? ' is-waiting' : ''}`}
+      className={`see-show-moment${hero ? ' is-hero' : ' is-dock'}${rail ? ' see-show-moment--spine' : ''}${rail && yieldToFirstSignal ? ' is-yield' : ''}${rail && !hasUser ? ' is-waiting' : ''}`}
       role="group"
       aria-label={
         gap != null
@@ -109,7 +109,7 @@ export function SeeShowMoment({
         <p className="see-show-moment__narration" aria-live="polite">
           {narration}
         </p>
-      ) : (
+      ) : rail ? null : (
         <p className="see-show-moment__hint">Match the coach — close the gap.</p>
       )}
     </div>
