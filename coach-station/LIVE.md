@@ -29,8 +29,13 @@ not physically possible` is FATAL** — never proceed past it. The sufficiency
    trajectory is allowed.
 3. **Monitor servo temperature** during the first live session. ~66 °C with
    smoke = stall → **cut power immediately** (dead-man exists for exactly this).
-4. Torque/current limits are **not** yet commanded via the SDK; step/speed
-   caps are a software stand-in and do NOT protect against hard-stop stalls.
+4. Protection registers (torque/current/thermal) are now commanded for every
+   joint in the driver's `configure()` (see “Layered safety controls” below) —
+   but they are **not** a substitute for the dead-man or for bounded
+   calibration. A hard-stop stall must still be treated as power-down-and-
+   inspect.
+5. **First-motion gate**: live streams are refused until
+   `COACH_MOTION_VERIFIED=1` is set after a visually confirmed ≤ 5° nudge.
 
 ## Preconditions
 
@@ -46,16 +51,57 @@ not physically possible` is FATAL** — never proceed past it. The sufficiency
 
 ## Software gates (already shipped)
 
-| Control            | How                                                                  |
-| ------------------ | -------------------------------------------------------------------- |
-| Live confirm       | `COACH_AFFECT=live` **and** `COACH_LIVE_CONFIRM=1` — else simulation |
-| Elbow workspace    | `COACH_ELBOW_MIN` / `COACH_ELBOW_MAX` (live defaults 20–160°)        |
-| Speed cap          | `COACH_MAX_SPEED_DEG_S` (live default 45°/s)                         |
-| Step / jerk proxy  | `COACH_MAX_STEP_DEG` (live default 3° per tick)                      |
-| One demo at a time | server lock + 8s cooldown                                            |
+| Control            | How                                                                    |
+| ------------------ | ---------------------------------------------------------------------- |
+| Live confirm       | `COACH_AFFECT=live` **and** `COACH_LIVE_CONFIRM=1` — else simulation   |
+| Elbow workspace    | `COACH_ELBOW_MIN` / `COACH_ELBOW_MAX` (live defaults 20–160°)          |
+| Speed cap          | `COACH_MAX_SPEED_DEG_S` (live default 45°/s)                           |
+| Step / jerk proxy  | `COACH_MAX_STEP_DEG` (live default 3° per tick)                        |
+| One demo at a time | server lock + 8s cooldown                                              |
+| First-motion gate  | `COACH_MOTION_VERIFIED=1` after a visually confirmed ≤ 5° nudge        |
+| Stall watchdog     | aborts a live demo if measured stops tracking commanded (6° / 6 ticks) |
 
-Torque/current limits are **not** yet commanded via the SDK — step/speed
-caps are the software stand-in until Cyberwave exposes them.
+## Layered safety controls (post-incident)
+
+Protection is layered so a single failure can't reach full stall current at a
+hard stop, as it did on 2026-08-13:
+
+**Layer 0 — servo-side registers (prevention, most effective).** The driver's
+`SO101Follower.configure()` now writes protection registers to **every joint**
+(not just the gripper):
+
+- `Max_Torque_Limit = 500` (50% — halves stall current at a hard stop)
+- `Protection_Current = 250` (~1.6 A over-current trip)
+- `Overload_Torque = 25` (sustained-overload torque release)
+- `Max_Temperature_Limit = 60` °C (servo thermal trip; factory default ~100 °C
+  is far past the ~66 °C smoke point)
+
+Trade-off to accept: 50% torque means a weaker hold against gravity — fine
+for slow coaching sweeps. If the arm droops under load, tune the `SAFETY_*`
+constants in `so101/follower.py`, don't remove the cap.
+
+**Layer 1 — driver thermal watchdog (detection + stop).** In
+`motor_writer_worker` (`utils/cw_remoteoperate_helpers.py`), on the same
+periodic cadence as the load check, `check_over_temperature()` reads
+`Present_Temperature`; after `TEMPERATURE_CONSECUTIVE_CHECKS` (2) consecutive
+readings above `TEMPERATURE_THRESHOLD_C` (60 °C) the worker **releases all
+torque, publishes a twin alert, and stops** — no auto-recovery, a human must
+intervene. The existing per-motor `create_temperature_alert` (warning 42 °C /
+critical 50 °C) provides early visibility before the stop threshold.
+
+**Layer 2 — station gates (imperfect-form).** In `CyberwaveArm.demonstrate`:
+
+- **First-motion gate**: live mode refuses streamed trajectories until
+  `COACH_MOTION_VERIFIED=1` — set only after a visually confirmed single
+  ≤ 5° nudge (the software twin of the dead-man).
+- **Stall watchdog**: each waypoint compares the measured joint to the
+  commanded value; after `COACH_STALL_TICKS` (6) consecutive ticks over
+  `COACH_STALL_TOLERANCE_DEG` (6°) it raises `StallError`, the demo aborts,
+  and the server surfaces the fault via `publish_fault`.
+
+**Layer 3 — process.** Dead-man / e-stop within reach (non-negotiable),
+watch Terminal C's live temperature column, and keep the power cable within
+reach. On any stall signature: cut power first, inspect second.
 
 ## Hardware feasibility sprint — pre-bring-up gate
 
