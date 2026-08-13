@@ -36,6 +36,7 @@ export function SeeShowMoment({
   if (!rail && !hasUser && !twin.enabled) return null;
   if (!rail && yieldToFirstSignal) return null;
 
+  const isChoreography = twin.demo?.choreography === true;
   const observed = twin.progress?.measured_deg;
   const coachCurrent =
     observed !== undefined
@@ -48,62 +49,95 @@ export function SeeShowMoment({
   const userDeg = hasUser ? clampElbowDeg(userElbowDeg as number) : null;
   const gap = elbowGapDeg(userDeg, coachDeg);
   const hero = isTwinHeroActive(twin) && twin.enabled;
+  const choreoLabel = twin.choreographyProgress?.label ?? null;
+  const choreoPct = twin.choreographyProgress
+    ? Math.round(twin.choreographyProgress.progress_pct * 100)
+    : null;
   const narration =
-    twin.demo?.narration ??
-    twin.intent?.narration ??
-    (hero ? 'Watch the arm — then match the sweep.' : BRAND.loopLabel);
+    isChoreography && choreoLabel
+      ? choreoLabel
+      : (twin.demo?.narration ??
+        twin.intent?.narration ??
+        (hero ? 'Watch the arm — then match the sweep.' : BRAND.loopLabel));
   const userLabel = userDeg != null ? `${Math.round(userDeg)}°` : '—';
-  const coachLabel = `${Math.round(clampElbowDeg(coachDeg))}°`;
+  const coachLabel =
+    isChoreography && choreoPct !== null
+      ? `${choreoPct}%`
+      : `${Math.round(clampElbowDeg(coachDeg))}°`;
 
   if (!rail && !hero && !hasUser) return null;
 
   return (
     <div
-      className={`see-show-moment${hero ? ' is-hero' : ' is-dock'}${rail ? ' see-show-moment--spine' : ''}${rail && yieldToFirstSignal ? ' is-yield' : ''}${rail && !hasUser ? ' is-waiting' : ''}`}
+      className={`see-show-moment${hero ? ' is-hero' : ' is-dock'}${rail ? ' see-show-moment--spine' : ''}${rail && yieldToFirstSignal ? ' is-yield' : ''}${rail && !hasUser ? ' is-waiting' : ''}${isChoreography ? ' is-choreography' : ''}`}
       role="group"
       aria-label={
-        gap != null
-          ? `Your elbow ${userLabel}, coach ${coachLabel}, gap ${gap} degrees`
-          : `Coach arm ${coachLabel}`
+        isChoreography
+          ? `Coach demonstrating: ${twin.demo?.description ?? 'full movement'}`
+          : gap != null
+            ? `Your elbow ${userLabel}, coach ${coachLabel}, gap ${gap} degrees`
+            : `Coach arm ${coachLabel}`
       }
     >
-      <p className="see-show-moment__eyebrow">{hero ? 'WATCH THE GAP' : 'YOU · COACH'}</p>
+      <p className="see-show-moment__eyebrow">
+        {isChoreography ? 'COACH IS DEMONSTRATING' : hero ? 'WATCH THE GAP' : 'YOU · COACH'}
+      </p>
 
-      <div className="see-show-moment__split">
-        <div className="see-show-moment__side see-show-moment__side--you">
-          <span className="see-show-moment__who">You</span>
-          <div className="see-show-moment__arm" aria-hidden="true">
-            <ArmSchematic
-              schematic
-              currentDeg={userDeg ?? undefined}
-              targetDeg={coachTarget}
-              markerId="see-show-you-arrow"
-            />
+      {isChoreography && hero ? (
+        <div className="see-show-moment__choreo">
+          <p className="see-show-moment__choreo-what">
+            <strong>
+              {twin.demo?.issue === 'elbow_swing'
+                ? 'Elbow drifting detected'
+                : (twin.demo?.issue ?? 'Form issue detected')}
+            </strong>
+            <span>Robot is showing the correct form</span>
+          </p>
+          {choreoPct !== null ? (
+            <div className="see-show-moment__choreo-bar">
+              <span style={{ width: `${choreoPct}%` }} />
+              <small>{choreoPct}%</small>
+            </div>
+          ) : null}
+          {choreoLabel ? <p className="see-show-moment__choreo-label">{choreoLabel}</p> : null}
+        </div>
+      ) : (
+        <div className="see-show-moment__split">
+          <div className="see-show-moment__side see-show-moment__side--you">
+            <span className="see-show-moment__who">You</span>
+            <div className="see-show-moment__arm" aria-hidden="true">
+              <ArmSchematic
+                schematic
+                currentDeg={userDeg ?? undefined}
+                targetDeg={coachTarget}
+                markerId="see-show-you-arrow"
+              />
+            </div>
+            <strong className="see-show-moment__deg">{userLabel}</strong>
           </div>
-          <strong className="see-show-moment__deg">{userLabel}</strong>
-        </div>
 
-        <div className="see-show-moment__gap" aria-hidden={!hero}>
-          <span className="see-show-moment__gap-label">Gap</span>
-          <strong>{gap != null ? `${gap}°` : '—'}</strong>
-          <i />
-        </div>
-
-        <div className="see-show-moment__side see-show-moment__side--coach">
-          <span className="see-show-moment__who">Coach</span>
-          <div className="see-show-moment__arm" aria-hidden="true">
-            <ArmSchematic
-              schematic
-              currentDeg={coachDeg}
-              targetDeg={coachTarget}
-              fromDeg={twin.intent?.from_deg}
-              trail={twin.trail}
-              markerId="see-show-coach-arrow"
-            />
+          <div className="see-show-moment__gap" aria-hidden={!hero}>
+            <span className="see-show-moment__gap-label">Gap</span>
+            <strong>{gap != null ? `${gap}°` : '—'}</strong>
+            <i />
           </div>
-          <strong className="see-show-moment__deg">{coachLabel}</strong>
+
+          <div className="see-show-moment__side see-show-moment__side--coach">
+            <span className="see-show-moment__who">Coach</span>
+            <div className="see-show-moment__arm" aria-hidden="true">
+              <ArmSchematic
+                schematic
+                currentDeg={coachDeg}
+                targetDeg={coachTarget}
+                fromDeg={twin.intent?.from_deg}
+                trail={twin.trail}
+                markerId="see-show-coach-arrow"
+              />
+            </div>
+            <strong className="see-show-moment__deg">{coachLabel}</strong>
+          </div>
         </div>
-      </div>
+      )}
 
       {hero ? (
         <p className="see-show-moment__narration" aria-live="polite">

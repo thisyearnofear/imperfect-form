@@ -276,3 +276,69 @@
   opacity: 0.4;
   transition: opacity 0.35s ease;
 }
+
+
+/* Choreography mode — robot performing full movement demonstration */
+.see-show-moment.is-choreography.is-hero {
+  border-color: rgba(122, 235, 216, 0.35);
+}
+
+.see-show-moment__choreo {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  text-align: center;
+}
+
+.see-show-moment__choreo-what {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+}
+
+.see-show-moment__choreo-what strong {
+  color: rgba(247, 232, 106, 0.95);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.see-show-moment__choreo-what span {
+  color: rgba(200, 230, 222, 0.75);
+  font-size: 0.62rem;
+}
+
+.see-show-moment__choreo-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 0.35rem;
+  background: rgba(122, 235, 216, 0.12);
+  border-radius: 0.2rem;
+  overflow: visible;
+}
+
+.see-show-moment__choreo-bar > span {
+  height: 100%;
+  background: rgba(122, 235, 216, 0.7);
+  border-radius: 0.2rem;
+  transition: width 0.3s ease;
+}
+
+.see-show-moment__choreo-bar > small {
+  position: absolute;
+  right: 0;
+  top: -1rem;
+  color: rgba(122, 235, 216, 0.75);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 700;
+}
+
+.see-show-moment__choreo-label {
+  margin: 0;
+  color: rgba(232, 248, 245, 0.88);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}

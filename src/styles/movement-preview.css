@@ -1,0 +1,187 @@
+/* Foyer living movement preview — silhouette figures animated per exercise.
+   Figures borrow the framing-diagram stroke language: teal bones, brass joints,
+   dim supports. Each mode has its own loop; the parent keys the card by mode
+   so switching exercises restarts the animation. */
+
+.movement-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 0.75rem 0.55rem;
+  color: var(--cf-muted, #9bb5b1);
+  background: rgba(4, 22, 25, 0.55);
+  border: 1px solid rgba(122, 235, 216, 0.18);
+  border-radius: var(--cf-radius, 0.75rem);
+}
+
+.movement-preview__eyebrow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cf-teal-bright, #56d9c3);
+}
+
+.movement-preview__figure {
+  width: 100%;
+  max-width: 13rem;
+  margin-top: 0.3rem;
+}
+
+.movement-preview__figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.movement-preview__caption {
+  margin-top: 0.3rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  color: #b4d8d0;
+}
+
+/* ── shared figure styling ─────────────────────────────────────────────── */
+
+.movement-preview__bone {
+  stroke: #d8eeea;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+
+.movement-preview__head {
+  fill: rgba(216, 238, 234, 0.14);
+  stroke: #d8eeea;
+  stroke-width: 2.2;
+}
+
+.movement-preview__hand,
+.movement-preview__foot {
+  fill: var(--cf-gold-bright, #fcb131);
+  stroke: rgba(252, 177, 49, 0.35);
+  stroke-width: 1.6;
+}
+
+.movement-preview__joint,
+.movement-preview__shoulder {
+  fill: var(--cf-gold-bright, #fcb131);
+}
+
+.movement-preview__floor,
+.movement-preview__bar {
+  stroke: rgba(122, 235, 216, 0.22);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.movement-preview__arc {
+  fill: none;
+  stroke: rgba(122, 235, 216, 0.4);
+  stroke-width: 1.6;
+  stroke-dasharray: 3 3;
+  stroke-linecap: round;
+}
+
+/* ── curls: forearm sweeps about the elbow ─────────────────────────────── */
+
+.movement-preview--curls .movement-preview__forearm {
+  transform-box: view-box;
+  transform-origin: 78px 92px;
+  animation: movement-preview-curl 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes movement-preview-curl {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-68deg);
+  }
+}
+
+/* ── pushups: body pivots about the planted toes ───────────────────────── */
+
+.movement-preview--pushups .movement-preview__body {
+  transform-box: view-box;
+  transform-origin: 170px 118px;
+  animation: movement-preview-pushup 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes movement-preview-pushup {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-5.5deg);
+  }
+}
+
+/* ── squats: upper body sinks and leans over planted feet ──────────────── */
+
+.movement-preview--squats .movement-preview__sink {
+  transform-box: view-box;
+  transform-origin: 110px 96px;
+  animation: movement-preview-squat 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes movement-preview-squat {
+  from {
+    transform: translateY(0) rotate(0deg);
+  }
+  to {
+    transform: translateY(9px) rotate(4.5deg);
+  }
+}
+
+/* ── pullups: body pulls up toward the bar, arms stay at the hands ─────── */
+
+.movement-preview--pullups .movement-preview__hang {
+  animation: movement-preview-pullup 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes movement-preview-pullup {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-9px);
+  }
+}
+
+/* ── jumps: crouch, leap, land ─────────────────────────────────────────── */
+
+.movement-preview--jumps .movement-preview__leap {
+  transform-box: view-box;
+  transform-origin: 110px 128px;
+  animation: movement-preview-jump 2.3s ease-in-out infinite;
+}
+
+@keyframes movement-preview-jump {
+  0%,
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+  35% {
+    transform: translateY(8px) scaleY(0.96);
+  }
+  62% {
+    transform: translateY(-24px) scaleY(1);
+  }
+  78% {
+    transform: translateY(2px) scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .movement-preview .movement-preview__forearm,
+  .movement-preview .movement-preview__body,
+  .movement-preview .movement-preview__sink,
+  .movement-preview .movement-preview__hang,
+  .movement-preview .movement-preview__leap {
+    animation: none;
+  }
+}

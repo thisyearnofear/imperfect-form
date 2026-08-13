@@ -19,6 +19,7 @@ import { useImmersive } from '@/hooks/useImmersive';
 import { coachStation, type StationStatus } from '@/services/coachStation';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import { cleanupCameraStream, requestCameraPermission } from '@/utils/cameraPermissions';
+import { MovementPreview } from '@/components/game/MovementPreview';
 import '@/styles/coach-foyer.css';
 
 type CoachFoyerProps = {
@@ -416,6 +417,12 @@ export function CoachFoyer({
           <legend className="sr-only">Pick a movement</legend>
           {primaryExercises.map(renderExerciseButton)}
         </fieldset>
+
+        {/* The chosen movement comes alive before the camera does — the pick
+            becomes a moment. Keyed by mode so switching restarts the loop. */}
+        <div className="coach-foyer__preview-wrap motion-enter motion-delay-3">
+          <MovementPreview key={mode} mode={mode} label={selectedExercise.label} />
+        </div>
 
         <button
           type="button"

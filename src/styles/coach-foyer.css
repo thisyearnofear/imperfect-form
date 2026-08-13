@@ -602,6 +602,12 @@
   border: 0;
 }
 
+/* Living movement preview sits between the choice and START. The hero
+   button already carries its own top margin for the gap below. */
+.coach-foyer__preview-wrap {
+  margin: 1.1rem 0 0;
+}
+
 .coach-foyer__exercise-list legend {
   width: 100%;
   margin-bottom: 0.55rem;

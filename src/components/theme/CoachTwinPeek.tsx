@@ -34,6 +34,7 @@ function deriveTwinView(twin: CoachTwinState, session: boolean) {
   const {
     demo,
     progress,
+    choreographyProgress,
     execution,
     intent,
     affect,
@@ -44,34 +45,50 @@ function deriveTwinView(twin: CoachTwinState, session: boolean) {
     status,
   } = twin;
 
+  const isChoreography = demo?.choreography === true;
+  const choreoLabel = choreographyProgress?.label ?? null;
+  const choreoPct = choreographyProgress
+    ? Math.round(choreographyProgress.progress_pct * 100)
+    : null;
+
   const statusLabel =
     execution?.kind === 'succeeded'
-      ? 'Correction complete'
+      ? 'Correction complete — your turn'
       : execution?.kind === 'aborted' || execution?.kind === 'rejected'
         ? 'Correction stopped'
         : execution?.kind === 'error'
           ? 'Station error · coaching continues'
-          : demo != null
-            ? isCurlsFormRef
-              ? 'Form reference — match the target line'
-              : 'Coach is showing the target line'
-            : execution?.kind === 'executing'
+          : demo != null && isChoreography
+            ? choreoLabel
+              ? `Coach is demonstrating: ${choreoLabel}`
+              : 'Coach is performing the full movement'
+            : demo != null
               ? isCurlsFormRef
-                ? 'Demonstrating the target angle'
-                : 'Coach is moving through the correction'
-              : intent != null
-                ? 'Coach is preparing the correction'
-                : status === 'connected'
-                  ? 'Coach is watching'
-                  : status === 'connecting'
-                    ? 'Connecting Coach…'
-                    : isCurlsFormRef
-                      ? 'Watch the target — match it with your elbow'
-                      : 'Coach Bay offline · camera coaching continues';
+                ? 'Form reference — match the target line'
+                : 'Coach is showing the target line'
+              : execution?.kind === 'executing'
+                ? isChoreography
+                  ? 'Coach is demonstrating the correct form'
+                  : isCurlsFormRef
+                    ? 'Demonstrating the target angle'
+                    : 'Coach is moving through the correction'
+                : intent != null
+                  ? 'Coach is preparing the correction'
+                  : status === 'connected'
+                    ? 'Coach is watching your form'
+                    : status === 'connecting'
+                      ? 'Connecting Coach…'
+                      : isCurlsFormRef
+                        ? 'Watch the target — match it with your elbow'
+                        : 'Coach Bay offline · camera coaching continues';
 
   const isExecutionActive = execution?.kind === 'executing';
   const hasExecutionError = execution?.kind === 'error' || execution?.kind === 'aborted';
-  const progressPct = progress ? Math.round(progress.progress_pct * 100) : null;
+  const progressPct = isChoreography
+    ? choreoPct
+    : progress
+      ? Math.round(progress.progress_pct * 100)
+      : null;
   const isShowingInstrument = isTwinHeroActive(twin);
   const isWatching = session && status === 'connected' && !isShowingInstrument;
   const observedElbowDeg = progress?.measured_deg;
@@ -82,21 +99,32 @@ function deriveTwinView(twin: CoachTwinState, session: boolean) {
         ? progress.current_deg
         : intent?.from_deg;
   const targetElbowDeg = intent ? intent.to_deg : undefined;
-  const showGhostTarget = isShowingInstrument && targetElbowDeg !== undefined;
+  const showGhostTarget = isShowingInstrument && targetElbowDeg !== undefined && !isChoreography;
   const readoutLabel =
-    currentElbowDeg !== undefined ? `${Math.round(clampElbowDeg(currentElbowDeg))}°` : null;
+    isChoreography && choreoPct !== null
+      ? `${choreoPct}%`
+      : currentElbowDeg !== undefined
+        ? `${Math.round(clampElbowDeg(currentElbowDeg))}°`
+        : null;
   const affectLabel =
     affect === 'live' ? 'LIVE' : affect === 'simulation' ? 'SIM' : isDemo ? 'DEMO' : null;
   const personaClass = personality ? ` persona-${personality.toLowerCase()}` : '';
   const activePhase: 'see' | 'coach' | 'show' =
-    demo != null || progress != null || isExecutionActive || execution?.kind === 'succeeded'
+    demo != null ||
+    progress != null ||
+    choreographyProgress != null ||
+    isExecutionActive ||
+    execution?.kind === 'succeeded'
       ? 'show'
       : intent != null
         ? 'coach'
         : 'see';
   const activeIssue = issueLabel(intent?.issue ?? demo?.issue);
   const telemetrySource = observedElbowDeg !== undefined ? 'Observed' : 'Commanded';
-  const telemetryAgeLabel = formatTelemetryAge(progress?.timestamp_ms ?? null, now);
+  const telemetryAgeLabel = formatTelemetryAge(
+    progress?.timestamp_ms ?? choreographyProgress?.timestamp_ms ?? null,
+    now
+  );
 
   return {
     statusLabel,
@@ -117,6 +145,9 @@ function deriveTwinView(twin: CoachTwinState, session: boolean) {
     telemetrySource,
     telemetryAgeLabel,
     fromDeg: intent?.from_deg,
+    isChoreography,
+    choreoLabel,
+    choreoPct,
   };
 }
 
@@ -196,6 +227,9 @@ export function CoachTwinPeek({
     telemetrySource,
     telemetryAgeLabel,
     fromDeg,
+    isChoreography,
+    choreoLabel,
+    choreoPct,
   } = view;
 
   return (
@@ -286,7 +320,9 @@ export function CoachTwinPeek({
 
               {activeIssue ? (
                 <div className="coach-twin-peek__issue">
-                  <span className="coach-twin-peek__issue-label">Form issue</span>
+                  <span className="coach-twin-peek__issue-label">
+                    {isChoreography ? 'Detected' : 'Form issue'}
+                  </span>
                   <strong>{activeIssue}</strong>
                   {demo?.narration || twin.intent?.narration ? (
                     <span>{demo?.narration ?? twin.intent?.narration}</span>
@@ -294,7 +330,21 @@ export function CoachTwinPeek({
                 </div>
               ) : null}
 
-              {isShowingInstrument && targetElbowDeg !== undefined ? (
+              {isChoreography && isShowingInstrument ? (
+                <div className="coach-twin-peek__choreography" aria-label="Robot demonstration">
+                  {choreoLabel ? (
+                    <p className="coach-twin-peek__choreo-step">
+                      <span className="coach-twin-peek__choreo-step-label">Robot is doing:</span>
+                      <strong>{choreoLabel}</strong>
+                    </p>
+                  ) : null}
+                  {demo?.description ? (
+                    <p className="coach-twin-peek__choreo-desc">{demo.description}</p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {isShowingInstrument && !isChoreography && targetElbowDeg !== undefined ? (
                 <div className="coach-twin-peek__telemetry" aria-label="Correction telemetry">
                   <div>
                     <span>Target</span>
