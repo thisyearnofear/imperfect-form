@@ -446,7 +446,7 @@ For users experiencing age-related verification issues:
 Copy environment files:
 
 ```sh
-cp next/.env.example next/.env.local
+cp .env.example .env.local
 ```
 
 Required environment variables documented in `.env.example`.

@@ -96,10 +96,14 @@ Higher is better. This rewards configurations that are:
 ## Latest runs
 
 > Paste your matrix results here after running on a target device.
+>
+> **No real device runs have been recorded yet.** The examples below are
+> illustrative placeholders to show the expected format. Do not use these
+> numbers for configuration decisions.
 
-### Example: iPhone 12 / iOS 16
+### Illustrative example: iPhone 12 / iOS 16
 
-**Matrix ID:** `matrix-1694000000-abc123`
+**Matrix ID:** `matrix-example-ios`
 **Device:** ios / safari
 **Performance Level:** medium
 **Memory:** 4 GB
@@ -116,9 +120,13 @@ Higher is better. This rewards configurations that are:
 |    3 | SinglePose.Lightning | 640×480 | webgl   | fp32  | 18.2 |      0.815 |           55.3 |            26.8 |
 |  ... | ...                  | ...     | ...     | ...   |  ... |        ... |            ... |             ... |
 
-### Example: Mid-range Android / Chrome
+### Illustrative example: Mid-range Android / Chrome
 
-**Matrix ID:** `matrix-1694000100-def456`
+> **Note:** Composite scores below are illustrative and do not match the
+> ranking order — rank 2 has a higher composite than rank 1. This table is a
+> formatting template, not real measurement data.
+
+**Matrix ID:** `matrix-example-android`
 **Device:** android / chrome
 **Performance Level:** medium
 **Memory:** 3 GB
@@ -140,19 +148,9 @@ Higher is better. This rewards configurations that are:
 > **Based on matrix results, update the default mobile config here.**
 
 ```typescript
-// src/services/PoseDetectionService.ts
-static getDetectorConfig(isMobile: boolean) {
-  return {
-    modelType: 'SinglePose.Lightning',  // or winning model
-    // Input size: 192x192 (or winning size)
-    // Backend: webgl (or winning backend)
-    // Quantization: fp32 (or winning quantization)
-    enableSmoothing: false,
-    minPoseScore: isMobile ? 0.2 : 0.25,
-    multiPoseMaxDimension: isMobile ? undefined : 512,
-    enableTracking: false,
-  };
-}
+// src/modules/poseWorker.ts — update modelType and input resolution
+// src/lib/pose/poseRuntime.ts — update runtime defaults
+// See PERFORMANCE_BASELINE.md for single-run baseline measurements
 ```
 
 ## Decision Rules

@@ -2,16 +2,22 @@
 
 ## Smart Contract Addresses
 
+> Source of truth: `src/config/contract-addresses.ts` and
+> `src/config/networks.ts`. Addresses below are reconciled against code as of
+> 2026-08-13.
+
 ### Mainnet Deployments
 
-- **Base Mainnet**: `0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B`
-- **Celo Mainnet**: `0xB0cbC7325EbC744CcB14211CA74C5a764928F273`
-- **Polygon Mainnet**: `0xc783d6E12560dc251F5067A62426A5f3b45b6888`
+- **Base Mainnet**: `0x58DC4867f87473BF9874892dE8e62C48958c8d96`
+- **Celo Mainnet**: `0xB0cbC7325EbC744CcB14211CA74C5a764928F273` (standard) /
+  `0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03` (verified)
+- **Polygon Mainnet**: `0x28FE19798fe0A0276CF474f2DCC3749313f1aC0A`
+- **Monad Mainnet**: env-configured (`NEXT_PUBLIC_MONAD_CONTRACT_ADDRESS`);
+  chainId 143, RPC `https://rpc3.monad.xyz`
 
 ### Testnet Deployments
 
 - **Celo Alfajores**: `0x18082d110113B40A24A41dF10b4b249Ee461D3eb`
-- **Monad Testnet**: `0x653d41Fba630381aA44d8598a4b35Ce257924d65`
 
 ## Self Protocol Deployment
 
@@ -79,9 +85,10 @@ Each network requires:
 
 ### Smart Contracts
 
-- Multi-signature wallet integration
-- Upgrade mechanisms
-- Access control patterns
+- Standard Solidity access control (see `UnifiedVerifiedFitnessLeaderboard.sol`
+  in `artifacts/contracts/`)
+- No proxy/upgradeable pattern — redeploy + re-verify for upgrades
+- Multi-sig not implemented in contract; relies on deployer EOA
 
 ### Application
 

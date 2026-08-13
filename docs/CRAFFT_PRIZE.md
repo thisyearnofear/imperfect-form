@@ -25,17 +25,7 @@ _medium_ — and the method is a British invention.
 
 ### The lineage (this is real, not a metaphor)
 
-**Eugen Sandow** ran his "Institute of Physical Culture" in London in the
-1890s and built the first global fitness brand. His actual mechanic:
-
-1. Men across Britain photographed themselves shirtless.
-2. Mailed the photos to Sandow's London office.
-3. Sandow graded their proportions against his "ideal" measurement tables.
-4. Prescribed corrective exercises + sold the **spring-grip dumbbell**
-   (stamped _"Supplied to King Edward VII by Royal Letters Patent"_) as a
-   mechanical form-corrector.
-
-That is the imperfect-form loop, 130 years early:
+See [NORTH_STAR.md → "Heritage: the Sandow lineage"](./NORTH_STAR.md#heritage-the-sandow-lineage) for the full documented history. The short version: **Eugen Sandow** ran a postal form-grading loop in 1890s Britain — photos in, graded against ideal tables, corrective exercises + spring-grip dumbbell out. That is the imperfect-form loop, 130 years early. The SO-101 arm closes the same loop with a robot.
 
 | Sandow (1897)           | Imperfect Form (2026)                   |
 | ----------------------- | --------------------------------------- |
@@ -44,11 +34,6 @@ That is the imperfect-form loop, 130 years early:
 | Correction out (paper)  | AI coach voice + on-screen HUD          |
 | Spring-grip dumbbell    | SO-101 robot arm demonstrates the fix   |
 | Royal Mail (transport)  | WebSocket / browser (transport)         |
-
-The Royal Mail was the transport layer; the camera is now the transport
-layer. The spring-grip dumbbell was the "physical AI" of its day — a
-mechanical form-corrector with a Royal Warrant. The SO-101 arm is the same
-loop, closed with a robot.
 
 ### The aesthetic lineage (also real)
 
@@ -59,6 +44,10 @@ codebase (`ARCADE_FOYER`, Press Start 2P, gold-on-black). The Cræft
 submission leans into that: the machine looks like a Victorian seaside
 strength-tester, but inside is a real SO-101 arm running real pose
 estimation against Sandow's actual 1897 tables.
+
+This is the "mad but completely real" register the organiser wants. It's
+satire with a steel core — the surface is playful British arcade, the
+substance is a working form-coaching instrument.
 
 This is the "mad but completely real" register the organiser wants. It's
 satire with a steel core — the surface is playful British arcade, the

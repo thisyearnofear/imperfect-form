@@ -222,139 +222,30 @@ This is a product track around the existing PoseRuntime and exercise engine. It
 is not permission to introduce a second detector, a global leaderboard, or
 unsupported health predictions.
 
-### 4.1 M0 — Assessment protocol and measurement quality
+> **Single source of truth:** [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md)
+> defines the full M0–M5 vision, gates, guardrails, data model, and current
+> implementation boundary. The sections below summarize ordering and dependencies
+> only — do not duplicate M-track prose here.
 
-**Status: first local curl protocol shipped; validation across setup/device conditions remains open.**
+### M-track ordering
 
-- Select one flagship protocol and one fallback from movements the current pose
-  engine already understands.
-- Define setup calibration, valid-attempt rules, confidence thresholds, and an
-  explicit inconclusive state.
-- Record protocol version, normalized measurements, confidence, repeatability,
-  timestamp, and local provenance.
-- Run test–retest sessions across lighting, camera angle, distance, device, and
-  warm-up conditions.
-- Reuse `PoseRuntime`, the exercise engine, `SessionLogger`, `SessionSummary`,
-  `poseBaseline`, and the existing curl evidence instrument.
+| Track | Goal                                        | Status                                  |
+| ----- | ------------------------------------------- | --------------------------------------- |
+| M0    | Assessment protocol and measurement quality | Local curl baseline shipped             |
+| M1    | Local Movement Card                         | Local card shipped; delete/export open  |
+| M2    | Assessment challenge and recipient route    | Full funnel wired; distribution open    |
+| M3    | Self trajectory and next unlocks            | Local trajectory shipped; evidence open |
+| M4    | Age-band and cohort benchmarking            | Gated by M0–M3 evidence                 |
+| M5    | Historical and fictional archetypes         | Gated by M4                             |
 
-**Gate:** Comparable attempts under comparable conditions produce materially
-similar results; low-confidence attempts are not silently scored.
-
-### 4.2 M1 — Local Movement Card
-
-**Status: local curl Movement Card shipped; profile export/delete surfaces remain open.**
-
-- Add typed local `MovementAssessment` and `MovementProfile` objects using the
-  existing offline-first store patterns. Keep them in a versioned assessment
-  namespace in `OfflineDataStore`, separate from `LocalWorkout`, wallet-sync,
-  and leaderboard records; “user-owned” means local-first control and explicit
-  export/delete semantics, not automatic cloud or on-chain portability.
-- Expand the recap surface into a card with one useful insight, one next focus,
-  protocol label, and measurement confidence.
-- Keep the first result self-referential; no age percentile or global rank.
-- Add local reset/delete behavior and general-wellness copy.
-- Add unit tests for scoring, confidence, inconclusive states, and persistence.
-
-**Gate:** A first-time user understands the card without explanation and receives
-a concrete next action rather than only a number.
-
-### 4.3 M2 — Assessment challenge and recipient route
-
-**Status: full five-event funnel journey wired end-to-end with the free-tier sink key configured in Vercel; distribution experiments remain open.**
-
-The recap creates a strict `curls-baseline@1.0` aggregate-only payload, shares
-through Web Share or clipboard, and sends recipients to `/challenge` with one
-**Take the same test** CTA. The existing Ghost/form-line share remains separate.
-All five funnel events are emitted client-side at their lifecycle moments — the
-organic baseline path (start → complete → share) and the incoming-challenge
-path (open → start → complete → reply) — with `challengeId` so PostHog can
-stitch one card's journey. Events are validated at the API boundary and
-forwarded to a durable, fail-silent PostHog sink through a strict metadata
-allowlist (no raw payloads, traces, or addresses). The free-tier key is set in
-Vercel (Production/Preview/Development) and end-to-end delivery through
-`posthog-node` is verified. The current in-memory tracker remains the fallback;
-rate-limit and dashboard review are still required before using the funnel as
-production truth.
-
-- Create a versioned, share-safe payload containing protocol, headline, next
-  action, and optional approximate trace.
-- Add a focused recipient route with one CTA: **Take the same test**.
-- Reuse `GhostService`, `SessionRecap`, `ChallengeWidget`, `PlatformContext`, and
-  `challengeAnalytics`, but keep assessment challenges distinct from workout
-  races.
-- Add non-blocking events: `assessment_card_shared`,
-  `assessment_challenge_opened`, `assessment_started`,
-  `assessment_completed`, and `assessment_replied`.
-- Never place raw video, images, or unnecessary identifiers in the payload.
-
-**Gate:** A recipient can begin the same protocol without a wallet or confusing
-onboarding, and the sender's card remains useful if sharing is cancelled. The
-share sheet must preview the exact payload, default to the least revealing
-aggregate form, and require an explicit opt-in before including an approximate
-trace.
-
-**Primary metric:** accepted assessment challenges per activated user.
-
-### 4.4 M3 — Self trajectory and next unlocks
-
-**Status: local self-trajectory and next-unlock slice shipped; measurement evidence remains open.**
-
-- Compare only protocol-matched, sufficiently confident assessments. **Shipped locally** for the curl protocol.
-- Add a compact trend view and next-milestone model with early/emerging/reliable
-  confidence states. **Shipped locally** as a pure confidence-aware trajectory
-  model and recap surface.
-- Recommend one practice focus and a sensible re-test interval; do not encourage
-  daily measurement or shame-based streak pressure. **Shipped locally** with an
-  approximately-seven-day retest prompt.
-- Support restart design for missed sessions, illness, travel, and changed setup.
-- Validate repeated comparable reads before strengthening trajectory language or
-  opening later benchmark surfaces.
-
-**Gate:** The trajectory explains its confidence and remains useful when progress
-is flat or a session is inconclusive.
-
-**Primary metric:** second valid assessment within 7–14 days.
-
-### 4.5 M4 — Age-band and cohort benchmarking
-
-Only after M0–M3 evidence passes:
-
-- Define broad age bands and protocol-matched cohort rules. Benchmarking is
-  limited to the product's eligible adult population; it must not imply norms
-  for minors.
-- Aggregate only confidence-qualified observations and suppress small samples
-  below a documented minimum cohort threshold.
-- Use pseudonymous aggregation with no exact age, timestamps, device metadata,
-  or raw traces exposed to other users. Document retention, deletion, and what
-  withdrawal can and cannot remove after an aggregate has been published.
-- Show scope, sample size, and uncertainty.
-- Prefer supportive cohorts over a universal leaderboard.
-- Make participation optional with plain-language data-use copy.
-
-**Gate:** Measurement and privacy review pass; comparison cannot be mistaken for a
-medical norm, destiny, or diagnosis.
-
-### 4.6 M5 — Historical and fictional movement archetypes
-
-- Create original archetypes before using third-party fictional characters.
-- Keep measured result and confidence visible beneath the playful interpretation.
-- Map archetypes to movement patterns, never claims of physical equivalence.
-- Experiment on sharing and retention before making archetypes a major surface.
-
-**Gate:** Users can distinguish measurement, cohort comparison, and narrative
-interpretation.
-
-### 4.7 Current implementation boundary
+### Current implementation boundary
 
 The current code has shipped the M0/M1/M3 local foundation for the curl protocol,
-plus the first M2 challenge slice: versioned assessment evaluation, explicit
-inconclusive states, local-only persistence, a recap Movement Card, a
-protocol-matched self-history view, a strict aggregate-only payload, and a
-focused `/challenge` recipient route, and a local test–retest evidence harness.
-Setup calibration and real test–retest evidence, durable production funnel
-analytics, trajectory experiments, cohorts, and archetypes remain pending.
+plus the first M2 challenge slice. Setup calibration and real test–retest
+evidence, durable production funnel analytics, trajectory experiments, cohorts,
+and archetypes remain pending.
 
-### 4.8 Movement Intelligence definition of done
+### Definition of done
 
 The first public slice is complete when a new user can:
 

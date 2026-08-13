@@ -264,10 +264,10 @@ import { useChainTheme } from '@/hooks/useChainTheme';
 
 ### Multi-Chain Support
 
-- **Base Mainnet**: `0x60228F4f4F1A71e9b43ebA8C5A7ecaA7e4d4950B`
-- **Celo Mainnet**: `0xB0cbC7325EbC744CcB14211CA74C5a764928F273`
-- **Polygon Mainnet**: `0xc783d6E12560dc251F5067A62426A5f3b45b6888`
-- **Monad Testnet**: `0x653d41Fba630381aA44d8598a4b35Ce257924d65`
+- **Base Mainnet**: `0x58DC4867f87473BF9874892dE8e62C48958c8d96`
+- **Celo Mainnet**: `0xB0cbC7325EbC744CcB14211CA74C5a764928F273` (standard) / `0x41f2fA6E60A34c26BD2C467d21EcB0a2f9087B03` (verified)
+- **Polygon Mainnet**: `0x28FE19798fe0A0276CF474f2DCC3749313f1aC0A`
+- **Monad Mainnet**: env-configured (`NEXT_PUBLIC_MONAD_CONTRACT_ADDRESS`)
 
 ### Network Switching
 
@@ -286,6 +286,43 @@ must not tear it down mid-session. Product differentiation:
 [NORTH_STAR.md](./NORTH_STAR.md) (“What we are”). Contract source:
 `src/lib/pose/poseRuntime.ts`. Rules: [DEVELOPMENT.md](./DEVELOPMENT.md)
 (Pose pipeline performance).
+
+### Signal detection
+
+Pose inference is **MoveNet via TensorFlow.js**, in-browser only (no video
+leaves the device):
+
+- **Model**: `@tensorflow-models/pose-detection` → `createDetector(SupportedModels.MoveNet)`
+  (`SinglePose.Lightning` default, Thunder available; smoothing disabled for
+  the camera loop). See `src/modules/poseWorker.ts`.
+- **Runtime**: `@tensorflow/tfjs-core` + WebGL backend (`src/utils/tensorFlowInit.ts`),
+  CPU fallback for compatibility.
+- **Upstream**: `src/lib/pose/posePreprocessor.ts` normalizes each frame
+  before `estimatePoses`; detected landmarks are normalized (0–1).
+- **Downstream**: the raw keypoints feed `src/lib/exercise-engine/` and
+  `src/utils/biomechanics.ts`, which turn landmarks into reps / form metrics —
+  that second stage _is_ the coaching signal.
+- Variants / latency budgets: [EDGE_PERF_MATRIX.md](./EDGE_PERF_MATRIX.md),
+  [PERFORMANCE_BASELINE.md](./PERFORMANCE_BASELINE.md).
+
+### Device support
+
+| Platform  | Browser     | Support   | Notes                                                 |
+| --------- | ----------- | --------- | ----------------------------------------------------- |
+| Desktop   | Chrome 90+  | Full      | WebGL, Web Workers, OffscreenCanvas                   |
+| Desktop   | Firefox 88+ | Full      | WebGL, Web Workers                                    |
+| Desktop   | Safari 14+  | Full      | WebGL, Web Workers                                    |
+| Mobile    | Chrome 90+  | Optimized | createImageBitmap path; adaptive tiers                |
+| Mobile    | Safari 14+  | Optimized | OffscreenCanvas bugs handled via main-thread fallback |
+| Farcaster | Chrome      | Mini App  | Dedicated camera-permission path                      |
+
+**Known issues:** iOS Safari OffscreenCanvas is buggy (main-thread fallback).
+Android `createImageBitmap` can be slow on some devices (direct canvas fallback).
+Farcaster has restricted camera permissions (custom permission flow). Low-memory
+devices may fail model loading (auto-fallback to lite model).
+
+Adaptive camera quality tiers and runtime guardrails are in
+[PERFORMANCE_BASELINE.md](./PERFORMANCE_BASELINE.md).
 
 ### Loop
 

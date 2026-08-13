@@ -34,8 +34,8 @@ durable analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIG
 ## Features
 
 - **AI Pose Detection**: Real-time rep counting and form analysis (MoveNet/TensorFlow.js, in-browser — no video leaves your device)
-- **Physical AI Coach** _(simulation stage)_: the SO-101 can demonstrate upper-body corrections via the [coach station](./coach-station/) when the Coach link is connected; camera coaching remains usable when offline
-- **AI Coaching**: Multi-provider (Gemini / Venice / AWS Bedrock Nova 2) with coach personas 🐌 SNEL · 🐢 STEDDIE · 🐙 RASTA
+- **Physical AI Coach** _(simulation stage; live paused after servo incident)_: the SO-101 can demonstrate upper-body corrections via the [coach station](./coach-station/) when the Coach link is connected; camera coaching remains usable when offline
+- **AI Coaching**: Multi-provider (Gemini / Groq / Venice / AWS Bedrock / local heuristics) with coach personas 🐌 SNEL · 🐢 STEDDIE · 🐙 RASTA
 - **Exercises**: Push-ups, squats, curls, pull-ups, and jumps (engine-verified rep counting with per-rep form scoring)
 - **Recovery**: Optional guided breathing cooldown and per-exercise stretches
 - **Multi-Chain Support**: Base, Celo, Polygon, Monad, and Avalanche themes (leaderboards where contracts are live)

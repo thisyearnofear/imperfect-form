@@ -321,5 +321,4 @@ Rules:
 a path into physical AI that can show the correction. (See
 `src/lib/brandPositioning.ts`.)
 
-**Stack:** Python, MediaPipe (station) / MoveNet (browser), MuJoCo, Cyberwave
-SDK, Nova 2, SmolVLA, SO-101.
+**Stack:** Python, MoveNet (browser), MuJoCo, Cyberwave SDK, Nova 2, SmolVLA, SO-101.

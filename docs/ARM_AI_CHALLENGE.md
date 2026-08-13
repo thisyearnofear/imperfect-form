@@ -1,9 +1,20 @@
 # Arm Create: AI Optimization Challenge — Assessment
 
-> Status: **assessment only — conditional GO.** No challenge-specific feature
-> work is started until the hardware and Arm-compute gates below pass.
-> Decision date: August 6, 2026. Deadline: **August 14, 2026** (verify on the
-> Devpost page before planning).
+> Status: **assessment only — conditional GO (see update below).** Decision date
+> passed (August 6, 2026). Deadline: **August 14, 2026**. Verify on the Devpost
+> page before planning.
+
+## Update (2026-08-13)
+
+Hardware bring-up was attempted on 2026-08-13. The SO-101 was connected and
+initial servo communication occurred, but a **servo stall incident** occurred
+during live bring-up (see [`coach-station/LIVE.md`](../coach-station/LIVE.md)).
+The incident required immediate abort and servo replacement.
+
+Station tests: 54 collected, 45 passing, 9 failing (known regression from
+multi-joint choreography changes). The hardware gate was partially advanced but
+**not completed**. The deadline (August 14, 2026) does not allow time to
+rebuild, retest, and benchmark.
 
 ## Verdict
 
@@ -41,8 +52,8 @@ The strongest existing evidence:
 - `coach-station/coach_station/server.py` — WebSocket orchestration
 - `src/lib/exercise-engine/curlProcessor.ts` — `elbow_swing` correction signal
 - `src/services/coachStation.ts` — intent ↔ robot state ↔ command result
-- 45 station tests passing (safety, trajectories, telemetry, primitives,
-  protocol)
+- 54 station tests collected, 45 passing (safety, trajectories, telemetry,
+  primitives, protocol); 9 failing from multi-joint choreography regression
 
 ## The SO-101 path — technically feasible
 
@@ -102,12 +113,13 @@ benchmarked there.
 - **Host:** Apple Silicon MacBook (`uname -m` → arm64) — already an Arm
   compute environment
 - **Python 3.12, Node 24** — sufficient for the station + browser paths
-- **No SO-101 serial device currently visible** (`/dev/cu.*` shows only
-  Bluetooth/audio/debug ports; no Feetech / Waveshare / USB motor-bus port)
-- **No Cyberwave env vars set** in the shell
+- **SO-101 was connected** on 2026-08-13 — initial servo communication
+  worked, but a stall incident occurred during live bring-up (see
+  `coach-station/LIVE.md`)
+- **Cyberwave env vars** — were configured for the bring-up attempt
 
-The code is ready for the SO-101 path; **the local machine is not currently
-showing the SO-101 hardware**. That is the gating fact.
+The code is ready for the SO-101 path; **hardware was brought up but stalled
+during live testing**. Servo replacement is needed before retry.
 
 ## Minimum feasibility sprint
 

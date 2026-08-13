@@ -20,7 +20,7 @@ We reviewed the roadmap and technical questions with Francesco De Pascale at Cyb
 - MoveNet pose detection in-browser (no video leaves the device)
 - Exercise engine with per-rep form scoring: push-ups, squats, pull-ups,
   jumps, bicep curls
-- AI coaching (Gemini / Venice / AWS Bedrock Nova 2) with three personas
+- AI coaching (Gemini / Groq / Venice / AWS Bedrock / local heuristics) with three personas
   (SNEL / STEDDIE / RASTA)
 - Guest identity (`imf_guestId`) — PBs, XP, streaks, ghosts work with no
   sign-in; workouts merge into a wallet on connect
@@ -196,7 +196,7 @@ manual-stage → hardware → episode gates for the physical Coach.
   elbow angle plus a 50° correction target; the station normalizes both to
   the active safety workspace before generating the `elbow_flex` trajectory.
   Older clients that omit angles retain the 160° → 50° scripted fallback.
-- Station tests: `uv sync --extra dev && uv run pytest` (45 passing)
+- Station tests: `uv sync --extra dev && uv run pytest` (45 passing, 9 failing — known regression from multi-joint choreography)
 - Soft dry-run: `./scripts/cohort-dry-run.sh`
 
 ## What's next — required order
