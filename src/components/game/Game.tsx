@@ -329,6 +329,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Form scores for curls (exported to session recap)
   const [formScores, setFormScores] = useState<number[]>([]);
+  // Stable identity: CurlFormInstrument's scoring effect lists onFormScore as a
+  // dependency, so an inline arrow would recreate on every render and re-trigger
+  // the effect on every pose publish (infinite update-depth loop).
+  const handleFormScore = useCallback((score: number) => {
+    setFormScores((prev) => [...prev.slice(-9), score]);
+  }, []);
 
   // Rep counting, haptic + visual feedback via hook
   const {
@@ -1122,9 +1128,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               retryFocus={retryFocus}
               metrics={metrics}
               curlPoseData={curlPoseData}
-              onFormScore={(score) => {
-                setFormScores((prev) => [...prev.slice(-9), score]);
-              }}
+              onFormScore={handleFormScore}
               showRotateHint={showRotateHint}
               onDismissRotateHint={() => setDismissRotateHint(true)}
             />

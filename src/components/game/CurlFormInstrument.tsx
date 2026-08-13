@@ -87,6 +87,12 @@ export function CurlFormInstrument({
   const prevRepCountRef = useRef(repCount);
   const [currentGrade, setCurrentGrade] = useState<string | null>(null);
   const prevGradeRef = useRef<string | null>(null);
+  // Only report a form score upward when it actually changes. telemetry is a
+  // fresh object on every pose publish and onFormScore must not be invoked
+  // with the same value repeatedly — that would re-render the parent, which
+  // recreates the inline onFormScore, which re-fires this effect (infinite
+  // "Maximum update depth exceeded" loop).
+  const lastReportedScoreRef = useRef<number | null>(null);
   // Progressive disclosure: the instrument can collapse to a compact status
   // strip so the camera feed stays visible mid-set. Default expanded.
   const [collapsed, setCollapsed] = useState(false);
@@ -189,6 +195,7 @@ export function CurlFormInstrument({
   useEffect(() => {
     if (!tracking || !telemetry) {
       setCurrentGrade(null);
+      lastReportedScoreRef.current = null;
       return;
     }
     const angle = clampAngle(telemetry.elbowAngle);
@@ -204,7 +211,8 @@ export function CurlFormInstrument({
     );
     const { grade } = getFormGrade(score);
     setCurrentGrade(grade);
-    if (onFormScore) {
+    if (onFormScore && score !== lastReportedScoreRef.current) {
+      lastReportedScoreRef.current = score;
       onFormScore(score);
     }
   }, [tracking, telemetry, robotElbowDeg, onFormScore]);
