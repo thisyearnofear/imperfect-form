@@ -20,7 +20,7 @@ from typing import Awaitable, Callable, Optional, Protocol
 
 from .primitives import Demonstration, from_demonstration_intent
 from .schema import CommandResultV1, DemonstrationIntentV1
-from .safety import clamp_elbow_deg, load_safety_limits, resolve_affect
+from .safety import ArmSafetyError, StallError, clamp_elbow_deg, load_safety_limits, resolve_affect
 from .trajectory import iter_trajectory
 
 # Re-export for callers/tests that imported resolve_affect from arm
@@ -47,6 +47,21 @@ SO101_SCHEMA_KEYS = {
 def schema_joint(joint: str) -> str:
     """Map an SO-101 joint name to its twin schema key (passes through unknown)."""
     return SO101_SCHEMA_KEYS.get(joint, joint)
+
+
+def first_motion_verified() -> bool:
+    """Live mode refuses streamed trajectories until the operator confirms a
+    single small nudge actually moved the arm (COACH_MOTION_VERIFIED=1).
+
+    Set it only after visually confirming motion — it is the software twin of
+    the dead-man: proof that the command chain reaches the servos before the
+    station commits to a full sweep.
+    """
+    return os.environ.get("COACH_MOTION_VERIFIED", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
 
 ProgressListener = Callable[[float, float, "Optional[float]"], Awaitable[None]]
@@ -256,12 +271,64 @@ class CyberwaveArm:
             cmd = clamp_elbow_deg(deg, self._limits) if demo.joint == "elbow_flex" else deg
             self._joint_api.set(schema_joint(demo.joint), cmd, degrees=True)
 
+        stall_check = None
+        if self._affect == "live":
+            if not first_motion_verified():
+                raise ArmSafetyError(
+                    "Live motion blocked: COACH_MOTION_VERIFIED is not set. "
+                    "Confirm a single <=5° nudge actually moves the arm before "
+                    "streaming a trajectory, then restart with "
+                    "COACH_MOTION_VERIFIED=1."
+                )
+            stall_check = self._make_stall_check(demo)
+
         await _run_waypoints(
             waypoints,
             on_progress=on_progress,
             send=send_waypoint,
             observe=lambda: self.read_joint_deg(demo.joint),
+            stall_check=stall_check,
         )
+
+    def _make_stall_check(self, demo: Demonstration):
+        """Live-mode stall monitor: abort if measured stops tracking commanded.
+
+        Each waypoint tick compares the measured joint to the commanded
+        waypoint. When the deviation persists for COACH_STALL_TICKS consecutive
+        ticks the arm is presumed stalled (e.g. pressed against a hard stop) and
+        the demo aborts rather than keep pushing current through the motor.
+
+        Tunables:
+          COACH_STALL_TOLERANCE_DEG (default 6) — max |measured - commanded|.
+          COACH_STALL_TICKS (default 6) — consecutive ticks over tolerance.
+        """
+        try:
+            tolerance = float(os.environ.get("COACH_STALL_TOLERANCE_DEG", "6"))
+        except ValueError:
+            tolerance = 6.0
+        try:
+            ticks = max(int(os.environ.get("COACH_STALL_TICKS", "6")), 1)
+        except ValueError:
+            ticks = 6
+        consecutive = 0
+
+        def check(commanded: float, measured: float | None) -> None:
+            nonlocal consecutive
+            if measured is None:
+                return  # no telemetry — can't judge; progress echo still runs
+            if abs(measured - commanded) > tolerance:
+                consecutive += 1
+                if consecutive >= ticks:
+                    raise StallError(
+                        f"{demo.joint} stalled during {demo.name}: commanded "
+                        f"{commanded:.1f}° but measured {measured:.1f}° for "
+                        f"{ticks} consecutive waypoints. Aborting — check for "
+                        "obstruction before re-arming."
+                    )
+            else:
+                consecutive = 0
+
+        return check
 
     def publish_fault(self, name: str, description: str) -> None:
         """Post a twin alert so errors show up in the Cyberwave dashboard.
@@ -290,6 +357,7 @@ async def _run_waypoints(
     send: Callable[[float], Awaitable[None]] | None = None,
     observe: Observer | None = None,
     log_waypoint: Callable[[float], None] | None = None,
+    stall_check: Callable[[float, float | None], None] | None = None,
 ) -> None:
     """Execute waypoints and emit progress at no more than 10Hz.
 
@@ -297,6 +365,10 @@ async def _run_waypoints(
     see it; the emitted payload carries both commanded and measured so the UI
     can distinguish "sent" from "actually moved" — the difference matters in
     live mode, and is what makes the twin instrument honest about reality.
+
+    `stall_check(commanded, measured)` runs on every waypoint when provided
+    (live mode). Raising aborts the trajectory — the live stall watchdog uses
+    this to stop a demo whose measured joint stops tracking the command.
     """
     total = max(len(waypoints), 1)
     last_emit = 0.0
@@ -305,15 +377,20 @@ async def _run_waypoints(
             log_waypoint(deg)
         if send:
             await send(deg)
+
+        measured = None
+        if observe is not None:
+            try:
+                measured = observe()
+            except Exception as exc:
+                logger.debug("observe() failed at waypoint %d: %s", index, exc)
+
+        if stall_check is not None:
+            stall_check(deg, measured)
+
         now = time.monotonic()
         progress = index / total
         if on_progress and (now - last_emit >= 0.1 or index == total):
-            measured = None
-            if observe is not None:
-                try:
-                    measured = observe()
-                except Exception as exc:
-                    logger.debug("observe() failed at waypoint %d: %s", index, exc)
             await on_progress(deg, progress, measured)
             last_emit = now
         await asyncio.sleep(sleep_s * sleep_scale)

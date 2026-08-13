@@ -19,6 +19,14 @@ logger = logging.getLogger("coach_station.safety")
 STEP_DT_S = 0.04
 
 
+class ArmSafetyError(Exception):
+    """Raised when a commanded demonstration violates a hardware safety gate."""
+
+
+class StallError(ArmSafetyError):
+    """Raised when the measured joint stops tracking the commanded trajectory."""
+
+
 @dataclass(frozen=True)
 class SafetyLimits:
     elbow_min_deg: float
