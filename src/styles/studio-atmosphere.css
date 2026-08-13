@@ -307,27 +307,61 @@ body[data-coach-station='connected'] .studio-atmosphere__state-readout {
     filter 0.25s ease;
 }
 
-/* The loop motif — the curl plate is what the camera measures; the labeled
-   hops carry the eye to the physical coach. Same forearm-from-hub language
-   as CurlFormInstrument / CoachTwinPeek. */
-.studio-atmosphere__figure {
+/* Left rail = movement catalog. Floor = Camera → Coach → SO-101.
+   Featured object is the arm on the right — plates never compete with it. */
+.studio-atmosphere__strip {
   position: absolute;
-  left: 5%;
-  top: 20%;
-  width: min(26vw, 280px);
+  left: clamp(0.7rem, 2.8vw, 1.6rem);
+  top: 14%;
+  bottom: clamp(7.25rem, 22vh, 11rem);
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 7.25rem;
+  pointer-events: none;
+}
+
+.studio-atmosphere__plate {
   display: grid;
+  flex: 1 1 0;
+  align-content: center;
   justify-items: start;
-  gap: 0.35rem;
-  opacity: 0.88;
+  gap: 0.22rem;
+  min-height: 0;
+  width: 100%;
+  color: rgba(122, 235, 216, 0.8);
+  opacity: 0.26;
+  filter: saturate(0.65);
+  transform: translateX(0) scale(1);
+  transform-origin: left center;
+  transition:
+    opacity 0.5s ease,
+    filter 0.45s ease,
+    color 0.45s ease,
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.studio-atmosphere__plate svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 6.75rem;
+  overflow: visible;
+}
+
+.studio-atmosphere__figure-label {
+  margin-left: 0.15rem;
+  color: rgba(214, 240, 234, 0.55);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .studio-atmosphere__curl-plate {
-  display: block;
-  width: 100%;
-  overflow: visible;
   color: rgba(122, 235, 216, 0.92);
-  filter: drop-shadow(0 0 14px rgba(86, 217, 195, 0.24));
 }
 
 .studio-atmosphere__curl-ghost,
@@ -346,25 +380,48 @@ body[data-coach-station='connected'] .studio-atmosphere__state-readout {
   color: rgba(252, 177, 49, 0.75);
 }
 
-.studio-atmosphere__curl-forearm {
+.studio-atmosphere__plate-ghost {
+  color: rgba(252, 177, 49, 0.55);
+}
+
+.studio-atmosphere__plate .is-focus {
+  fill: rgba(252, 177, 49, 0.85);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+body[data-coach-mode='curls'] .studio-atmosphere__plate--curls,
+body[data-coach-mode='pushups'] .studio-atmosphere__plate--pushups,
+body[data-coach-mode='squats'] .studio-atmosphere__plate--squats {
+  opacity: 0.94;
+  filter: saturate(1) drop-shadow(0 0 12px rgba(86, 217, 195, 0.22));
+  transform: translateX(14px) scale(1.08);
+}
+
+body[data-coach-mode='curls'] .studio-atmosphere__curl-forearm {
   animation: studio-atmosphere-curl-sweep 5.5s ease-in-out infinite;
 }
 
-.studio-atmosphere__figure-label {
-  margin-left: 0.35rem;
-  color: rgba(214, 240, 234, 0.55);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.52rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+body[data-coach-mode='pushups'] .studio-atmosphere__line-hip {
+  animation: studio-atmosphere-line-breathe 7.5s ease-in-out infinite;
+}
+
+body[data-coach-mode='squats'] .studio-atmosphere__depth-knee {
+  animation: studio-atmosphere-depth-track 8s ease-in-out infinite;
+}
+
+.studio-atmosphere__floor-strip {
+  position: absolute;
+  left: 14%;
+  right: 28%;
+  bottom: clamp(4.4rem, 11vh, 6.5rem);
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .studio-atmosphere__loop {
-  position: absolute;
-  left: 28%;
-  top: 32%;
-  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -407,6 +464,26 @@ body[data-coach-station='connected'] .studio-atmosphere__state-readout {
   }
 }
 
+@keyframes studio-atmosphere-line-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(2.5px);
+  }
+}
+
+@keyframes studio-atmosphere-depth-track {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-2px, 3px);
+  }
+}
+
 /* Curls is the clearest physical-AI path: selection warms the arm stage
    without turning the robot into the landing-page hero. */
 body[data-coach-mode='curls'] .studio-atmosphere__arm-glow {
@@ -420,16 +497,6 @@ body[data-coach-mode='curls'] .studio-atmosphere__arc {
 
 body[data-coach-mode='curls'] .studio-atmosphere__plinth {
   border-color: rgba(252, 177, 49, 0.28);
-}
-
-body[data-coach-mode='pushups'] .studio-atmosphere__figure,
-body[data-coach-mode='squats'] .studio-atmosphere__figure {
-  opacity: 0.7;
-}
-
-body[data-coach-mode='pushups'] .studio-atmosphere__loop,
-body[data-coach-mode='squats'] .studio-atmosphere__loop {
-  opacity: 0.62;
 }
 
 /* Demo-moment sync — form cue / station demonstration pulse the bay */
@@ -615,17 +682,18 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
     width: min(90vw, 380px);
   }
 
-  .studio-atmosphere__figure {
-    left: 4%;
-    top: 10%;
-    width: min(42vw, 11rem);
-    opacity: 0.78;
+  .studio-atmosphere__strip {
+    display: none;
+  }
+
+  .studio-atmosphere__floor-strip {
+    left: 1rem;
+    right: 1rem;
+    bottom: 4.6rem;
+    justify-content: flex-start;
   }
 
   .studio-atmosphere__loop {
-    left: 4%;
-    top: auto;
-    bottom: 4.6rem;
     max-width: calc(100vw - 2rem);
   }
 
@@ -699,8 +767,18 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
 @media (prefers-reduced-motion: reduce) {
   .studio-atmosphere__arm-glow,
   .studio-atmosphere__curl-forearm,
-  body[data-coach-pulse='cue'] .studio-atmosphere__curl-plate {
+  body[data-coach-pulse='cue'] .studio-atmosphere__curl-plate,
+  body[data-coach-mode='pushups'] .studio-atmosphere__line-hip,
+  body[data-coach-mode='squats'] .studio-atmosphere__depth-knee {
     animation: none;
+  }
+
+  .studio-atmosphere__plate,
+  body[data-coach-mode='curls'] .studio-atmosphere__plate--curls,
+  body[data-coach-mode='pushups'] .studio-atmosphere__plate--pushups,
+  body[data-coach-mode='squats'] .studio-atmosphere__plate--squats {
+    transform: none;
+    transition: none;
   }
 
   .studio-atmosphere__stage,

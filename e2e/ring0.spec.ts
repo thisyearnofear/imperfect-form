@@ -61,8 +61,12 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.locator('.studio-atmosphere__calibration')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__floor')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__plinth')).toHaveCount(1);
-    // The collage tells the coaching loop: curl plate (camera) → labeled hops → arm.
+    // Featured arm + left catalog (Elbow / Line / Depth) + floor loop.
+    await expect(page.locator('.studio-atmosphere__strip')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__curl-plate')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__satellite--pushups')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__satellite--squats')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__floor-strip')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__loop')).toContainText(/Camera/i);
     await expect(page.locator('.studio-atmosphere__loop')).toContainText(/SO-101/i);
     await expect(page.locator('.studio-atmosphere__heritage')).toContainText(/1897/);
