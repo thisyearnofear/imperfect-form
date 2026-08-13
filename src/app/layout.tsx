@@ -15,6 +15,7 @@ import '@/styles/buttons.css';
 import '@/styles/sandow-spine.css';
 import { BRAND } from '@/lib/brandPositioning';
 import ClientOnlyProviders from '@/components/providers/ClientOnlyProviders';
+import RemoteLoggerInit from '@/components/providers/RemoteLoggerInit';
 
 const manrope = Manrope({
   weight: ['400', '500', '600', '700', '800'],
@@ -279,6 +280,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${manrope.className} antialiased`}>
+        {/* Boots console.warn/error capture + window error listeners before
+            hydration so the earliest client failures still reach /api/log. */}
+        <RemoteLoggerInit />
         <ClientOnlyProviders>{children}</ClientOnlyProviders>
       </body>
     </html>

@@ -31,22 +31,46 @@ interface LogPayload {
 // Flag to enable/disable remote logging
 let remoteLoggingEnabled = false;
 
+// Guard against double-init (dev HMR re-evaluates modules; this flag survives
+// on window so console is never wrapped twice and listeners never double-fire).
+declare global {
+  interface Window {
+    __remoteLoggerCaptureInstalled?: boolean;
+  }
+}
+
 /**
  * Initialize remote logging
+ *
+ * Call once at app boot. Production defaults to capturing console.warn/error
+ * (plus unhandled errors and promise rejections) and forwarding them to
+ * `/api/log`; pass `captureLevel: 'all'` to also forward info/debug noise.
+ * Explicit module logging via `createRemoteLogger` always forwards every level.
  */
 export function initRemoteLogger(
   options: {
     enabled?: boolean;
     captureConsole?: boolean;
+    captureLevel?: 'all' | 'warn-error';
     logEndpoint?: string;
   } = {}
 ) {
-  const { enabled = true, captureConsole = true } = options;
+  const { enabled = true, captureConsole = true, captureLevel = 'all' } = options;
 
   remoteLoggingEnabled = enabled;
 
   // Don't proceed if we're on the server or remote logging is disabled
   if (typeof window === 'undefined' || !remoteLoggingEnabled) return;
+
+  // Idempotency guard: console wrappers + listeners are installed exactly once.
+  // A repeated init (HMR, duplicate call) only flips the enabled flag above.
+  if (window.__remoteLoggerCaptureInstalled) return;
+  window.__remoteLoggerCaptureInstalled = true;
+
+  const forwardLevels: ReadonlySet<LogLevel> =
+    captureLevel === 'all'
+      ? new Set(['debug', 'info', 'warn', 'error'])
+      : new Set(['warn', 'error']);
 
   // Store original console methods if we're capturing them
   if (captureConsole) {
@@ -58,30 +82,31 @@ export function initRemoteLogger(
       debug: console.debug,
     };
 
-    // Override console methods
+    // Override console methods. Original output is always preserved; only the
+    // configured levels are additionally forwarded to the server.
     console.log = function (...args) {
       originalConsole.log.apply(console, args);
-      sendLogToServer('debug', args);
+      if (forwardLevels.has('debug')) sendLogToServer('debug', args);
     };
 
     console.info = function (...args) {
       originalConsole.info.apply(console, args);
-      sendLogToServer('info', args);
+      if (forwardLevels.has('info')) sendLogToServer('info', args);
     };
 
     console.warn = function (...args) {
       originalConsole.warn.apply(console, args);
-      sendLogToServer('warn', args);
+      if (forwardLevels.has('warn')) sendLogToServer('warn', args);
     };
 
     console.error = function (...args) {
       originalConsole.error.apply(console, args);
-      sendLogToServer('error', args);
+      if (forwardLevels.has('error')) sendLogToServer('error', args);
     };
 
     console.debug = function (...args) {
       originalConsole.debug.apply(console, args);
-      sendLogToServer('debug', args);
+      if (forwardLevels.has('debug')) sendLogToServer('debug', args);
     };
   }
 
@@ -103,6 +128,12 @@ export function initRemoteLogger(
   // Capture unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     sendLog('error', 'UNHANDLED PROMISE REJECTION', event.reason, 'unhandledrejection');
+  });
+
+  // Flush any buffered logs when the page is being torn down (keepalive in
+  // flushPendingLogs ensures the request survives unload).
+  window.addEventListener('pagehide', () => {
+    if (pendingLogs.length > 0) flushPendingLogs();
   });
 
   /**
@@ -143,8 +174,67 @@ export function initRemoteLogger(
     },
     setEnabled: (enabled: boolean) => {
       remoteLoggingEnabled = enabled;
+      // Don't strand buffered logs when logging is turned off.
+      if (!enabled) flushPendingLogs();
     },
   };
+}
+
+// ── Batching ────────────────────────────────────────────────────────────────
+// Logs are buffered client-side and flushed as one batch every few seconds, so
+// a noisy session cannot flood /api/log with one request per console call. The
+// buffer is capped; when full, the oldest non-error entries are dropped first
+// to preserve the newest signal.
+const FLUSH_INTERVAL_MS = 5000;
+const MAX_BUFFER_SIZE = 50;
+
+let pendingLogs: LogPayload[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleFlush() {
+  if (flushTimer !== null || pendingLogs.length === 0) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    flushPendingLogs();
+  }, FLUSH_INTERVAL_MS);
+}
+
+function flushPendingLogs() {
+  if (pendingLogs.length === 0) return;
+  const batch = pendingLogs;
+  pendingLogs = [];
+  // Use keepalive so the final batch survives page unload.
+  fetch('/api/log', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ logs: batch }),
+    keepalive: true,
+  }).catch(() => {
+    // Silent fail - we don't want to cause infinite logging loops
+  });
+}
+
+function pushLog(payload: LogPayload) {
+  // Cap the buffer: drop the oldest non-error entry first, falling back to the
+  // oldest entry when everything buffered is already an error.
+  if (pendingLogs.length >= MAX_BUFFER_SIZE) {
+    const oldestNonError = pendingLogs.findIndex((entry) => entry.level !== 'error');
+    if (oldestNonError >= 0) {
+      pendingLogs.splice(oldestNonError, 1);
+    } else {
+      pendingLogs.shift();
+    }
+  }
+  pendingLogs.push(payload);
+
+  // Errors flush immediately so critical signal is never delayed by the timer.
+  if (payload.level === 'error') {
+    flushPendingLogs();
+  } else {
+    scheduleFlush();
+  }
 }
 
 /**
@@ -184,18 +274,8 @@ function sendLog(level: LogLevel, message: string, details?: unknown, context?: 
     ).connection.effectiveType;
   }
 
-  // Send the log to the server
-  fetch('/api/log', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-    // Use keepalive to ensure logs are sent even if page is unloading
-    keepalive: true,
-  }).catch(() => {
-    // Silent fail - we don't want to cause infinite logging loops
-  });
+  // Buffer and send as part of a batch
+  pushLog(payload);
 }
 
 /**

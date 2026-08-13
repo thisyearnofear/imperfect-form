@@ -7,6 +7,8 @@ if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
   supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
+const MAX_BATCH_SIZE = 200;
+
 /**
  * API route for receiving logs from the client
  * This displays logs in the server console and optionally stores them for analytics
@@ -15,79 +17,102 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Format the log for the console with colors for clarity
-    const { level, message, details, context, timestamp, clientInfo } = body;
+    // Accept either a single payload (legacy) or a batch: { logs: [...] }
+    const entries = Array.isArray(body?.logs) ? body.logs : [body];
 
-    // Format the timestamp for readability
-    const formattedTime = new Date(timestamp).toLocaleTimeString();
-
-    // Create a device identifier string for easier tracking of which device sent the log
-    const deviceIdentifier = `${clientInfo.viewport?.width}x${clientInfo.viewport?.height}${clientInfo.deviceMemory ? ` (${clientInfo.deviceMemory}GB RAM)` : ''}`;
-
-    // Add color to console output based on log level
-    let logFn = console.log;
-    let logPrefix = '';
-
-    switch (level) {
-      case 'error':
-        logFn = console.error;
-        logPrefix = '\x1b[31m[ERROR]\x1b[0m'; // Red
-        break;
-      case 'warn':
-        logFn = console.warn;
-        logPrefix = '\x1b[33m[WARN]\x1b[0m'; // Yellow
-        break;
-      case 'info':
-        logPrefix = '\x1b[36m[INFO]\x1b[0m'; // Cyan
-        break;
-      case 'debug':
-      default:
-        logPrefix = '\x1b[90m[DEBUG]\x1b[0m'; // Gray
+    if (entries.length === 0) {
+      return NextResponse.json({ success: true });
+    }
+    if (entries.length > MAX_BATCH_SIZE) {
+      return NextResponse.json(
+        { error: `Batch too large (max ${MAX_BATCH_SIZE})` },
+        { status: 400 }
+      );
     }
 
-    // Log with formatted output
-    logFn(
-      `${logPrefix} ${formattedTime} [${deviceIdentifier}] ${context ? `[${context}] ` : ''}${message}`
-    );
-
-    // Log details if present (with indentation for better readability)
-    if (details) {
-      console.log('\x1b[90m  Details:\x1b[0m', details);
+    for (const entry of entries) {
+      if (!entry || typeof entry !== 'object' || typeof entry.level !== 'string') continue;
+      await processLogEntry(entry);
     }
 
-    // Log URL for context (only for errors)
-    if (level === 'error' && clientInfo.url) {
-      console.log(`\x1b[90m  URL: ${clientInfo.url}\x1b[0m`);
-    }
-
-    // Store in database if Supabase is configured
-    if (supabase) {
-      await storeLogInDatabase({
-        level,
-        message,
-        details,
-        context,
-        timestamp,
-        clientInfo,
-        serverTimestamp: new Date().toISOString(),
-      });
-    }
-
-    // Handle performance reports
-    if (details && typeof details === 'object' && 'sessionId' in details) {
-      await handlePerformanceReport(details);
-    }
-
-    // Handle critical errors
-    if (level === 'error' && context === 'PoseDetectionErrorHandler') {
-      await handleCriticalError({ level, message, details, context, clientInfo });
-    }
-
-    // Return success response
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error processing log:', error);
     return NextResponse.json({ error: 'Failed to process log' }, { status: 500 });
+  }
+}
+
+/**
+ * Handle a single log entry: print to the server console and persist to
+ * Supabase when configured.
+ */
+async function processLogEntry(entry: any): Promise<void> {
+  // Format the log for the console with colors for clarity
+  const { level, message, details, context, timestamp, clientInfo } = entry;
+
+  // Format the timestamp for readability
+  const formattedTime = new Date(timestamp).toLocaleTimeString();
+
+  // Create a device identifier string for easier tracking of which device sent the log
+  const deviceIdentifier = `${clientInfo?.viewport?.width}x${clientInfo?.viewport?.height}${clientInfo?.deviceMemory ? ` (${clientInfo.deviceMemory}GB RAM)` : ''}`;
+
+  // Add color to console output based on log level
+  let logFn = console.log;
+  let logPrefix = '';
+
+  switch (level) {
+    case 'error':
+      logFn = console.error;
+      logPrefix = '\x1b[31m[ERROR]\x1b[0m'; // Red
+      break;
+    case 'warn':
+      logFn = console.warn;
+      logPrefix = '\x1b[33m[WARN]\x1b[0m'; // Yellow
+      break;
+    case 'info':
+      logPrefix = '\x1b[36m[INFO]\x1b[0m'; // Cyan
+      break;
+    case 'debug':
+    default:
+      logPrefix = '\x1b[90m[DEBUG]\x1b[0m'; // Gray
+  }
+
+  // Log with formatted output
+  logFn(
+    `${logPrefix} ${formattedTime} [${deviceIdentifier}] ${context ? `[${context}] ` : ''}${message}`
+  );
+
+  // Log details if present (with indentation for better readability)
+  if (details) {
+    console.log('\x1b[90m  Details:\x1b[0m', details);
+  }
+
+  // Log URL for context (only for errors)
+  if (level === 'error' && clientInfo?.url) {
+    console.log(`\x1b[90m  URL: ${clientInfo.url}\x1b[0m`);
+  }
+
+  // Store in database if Supabase is configured
+  if (supabase) {
+    await storeLogInDatabase({
+      level,
+      message,
+      details,
+      context,
+      timestamp,
+      clientInfo,
+      serverTimestamp: new Date().toISOString(),
+    });
+  }
+
+  // Handle performance reports
+  if (details && typeof details === 'object' && 'sessionId' in details) {
+    await handlePerformanceReport(details);
+  }
+
+  // Handle critical errors
+  if (level === 'error' && context === 'PoseDetectionErrorHandler') {
+    await handleCriticalError({ level, message, details, context, clientInfo });
   }
 }
 
@@ -222,8 +247,27 @@ async function handlePerformanceIssue(report: any): Promise<void> {
 
 /**
  * GET endpoint for retrieving logs (admin only)
+ *
+ * Requires `LOG_ADMIN_TOKEN` to be configured server-side and sent as
+ * `Authorization: Bearer <token>` or `x-log-admin-token: <token>`.
+ * When the token is not configured the endpoint is disabled (503), so an
+ * accidental deployment can never expose stored logs.
  */
 export async function GET(request: Request) {
+  const adminToken = process.env.LOG_ADMIN_TOKEN;
+
+  if (!adminToken) {
+    return NextResponse.json({ error: 'Admin token not configured' }, { status: 503 });
+  }
+
+  const authorization = request.headers.get('authorization') ?? '';
+  const bearerToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  const headerToken = request.headers.get('x-log-admin-token') ?? '';
+
+  if (bearerToken !== adminToken && headerToken !== adminToken) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   if (!supabase) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
   }

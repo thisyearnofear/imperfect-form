@@ -450,3 +450,19 @@ cp next/.env.example next/.env.local
 ```
 
 Required environment variables documented in `.env.example`.
+
+### Remote Logging
+
+Client-side `console.warn`/`error` output (plus unhandled errors and promise
+rejections) is captured in production builds and forwarded to `POST /api/log`,
+which prints to the server runtime console and, when configured, persists to
+Supabase (`app_logs`, `performance_reports`, `critical_errors`,
+`performance_issues`). The client batches logs (5s interval, 50-entry cap,
+immediate flush on error) so a noisy session cannot flood the endpoint.
+
+| Variable                                            | Purpose                                                                                                                                                                                                              |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_REMOTE_LOGGING`                        | Optional. `1`/`true` forces remote logging on (e.g. local dev against a deployed backend); `0`/`false` disables it (e.g. cheap preview deploys). Unset = enabled in production builds, disabled elsewhere.           |
+| `NEXT_PUBLIC_REMOTE_LOGGING_VERBOSE`                | Optional. `1`/`true` captures **all** console levels (log/info/debug) instead of warn/error only — useful for targeted debugging sessions. Explicit module logs via `createRemoteLogger` always forward every level. |
+| `LOG_ADMIN_TOKEN`                                   | Server-only. Enables `GET /api/log` (query stored logs) — send it as `Authorization: Bearer <token>` or `x-log-admin-token: <token>`. When unset the endpoint is disabled (503).                                     |
+| `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_KEY` | Server-side persistence for the log pipeline. Both must be set for logs to be stored; without them the route still prints to the server console.                                                                     |
