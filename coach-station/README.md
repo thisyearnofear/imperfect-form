@@ -152,6 +152,11 @@ cohort gate still requires observing it in a real browser session.
 
 Full checklist: [`LIVE.md`](./LIVE.md).
 
+> ⚠️ **Safety incident 2026-08-13**: a full-range calibration (joint swept a
+> full turn → 0–4095) caused a hard-stop servo stall and smoke. Calibration
+> must record bounded ranges, and the driver's "full range — not physically
+> possible" warning is **fatal**. See [`LIVE.md`](./LIVE.md).
+
 ```sh
 # Refuses live without confirm — falls back to simulation
 COACH_AFFECT=live uv run python -m coach_station

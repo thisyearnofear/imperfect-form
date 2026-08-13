@@ -5,6 +5,33 @@ validated sim → live transfer. **Do not start here until Milestone 1 manual
 stage passes** (browser + station; see [README.md](./README.md) checklist and
 [ROADMAP.md](../docs/ROADMAP.md) required order).
 
+## Safety incident — 2026-08-13 (elbow_flex stall → smoke)
+
+A commanded live move stalled the **elbow_flex servo (ID 3)** at a physical
+hard stop; stall current overheated it to ~66 °C and produced smoke. The
+operator cut power immediately; the servo is presumed damaged (windings or
+board-side driver) and must be replaced before the arm is powered again.
+
+**Root cause.** `shoulder_lift` and `elbow_flex` were calibrated at _full
+encoder range_ (0–4095): they were swept a full turn during calibration, so
+the radians→raw conversion had no real mechanical bounds and a modest
+command (0.50 rad) landed the servo at a hard stop, where it kept pushing
+against the stall.
+
+**Lessons (now enforced rules):**
+
+1. The calibration warning **`Full range (0-4095 or very close) detected -
+not physically possible` is FATAL** — never proceed past it. The sufficiency
+   check passing does NOT clear it. Re-calibrate that joint with a _bounded_
+   sweep: move it slowly to each mechanical stop, never through a full turn.
+2. First commanded motion on a fresh calibration must be a **single tiny
+   nudge (≤ 5°)**, watched visually and confirmed, before any streamed
+   trajectory is allowed.
+3. **Monitor servo temperature** during the first live session. ~66 °C with
+   smoke = stall → **cut power immediately** (dead-man exists for exactly this).
+4. Torque/current limits are **not** yet commanded via the SDK; step/speed
+   caps are a software stand-in and do NOT protect against hard-stop stalls.
+
 ## Preconditions
 
 - [ ] Milestone 1 software dry-run green: `./scripts/cohort-dry-run.sh`
@@ -65,6 +92,13 @@ supply, calibrate, and perform only the prescribed safe first-motion check.
 - [ ] Power supply verified
 - [ ] Calibration complete (safe first-motion check passed)
 
+**Calibration must record BOUNDED ranges.** When sweeping each joint during
+the recording phase, move it slowly to its mechanical stops and back — do
+**not** rotate it a full turn. A recorded range of ~0–4095 (encoder wrap) is
+flagged by the driver as `Full range ... not physically possible`: treat that
+as a hard failure and re-calibrate the joint with a bounded sweep. See the
+safety incident above for why this is fatal.
+
 ### Step 3 — Pair Cyberwave
 
 `cyberwave pair` on the machine connected to the arm (see preconditions
@@ -116,6 +150,38 @@ COACH_AFFECT=live COACH_LIVE_CONFIRM=1 \
 First live session: **curl only**, slow env caps, operator on dead-man.
 Do not run `--demo all` on hardware until curl is stable.
 
+### Live bring-up — recorded path (2026-08-13)
+
+Environment details that made live motion work, in order:
+
+1. **Driver**: `so101-remoteoperate` (cyberwave-edge-so101) must be running
+   against the same twin. `cyberwave pair` / `edge install` needs Docker
+   Desktop; the direct driver path does not:
+   ```sh
+   cd ~/Dev/cyberwave-edge-so101
+   set -a; source ~/Dev/imperfect-form/.env.local; set +a
+   .venv/bin/so101-remoteoperate --follower-port /dev/cu.usbmodem… \
+     --twin-uuid <twin-uuid>
+   ```
+2. **Twin**: create it in the operator's own workspace
+   (`cyberwave twin create the-robot-studio/so101 -e <env-uuid> -y`) — API
+   tokens cannot write twins into other workspaces (403).
+3. **Station env**: the SDK resolves `the-robot-studio/so101` only inside the
+   right environment; set these before starting the station:
+   ```sh
+   export CYBERWAVE_ENVIRONMENT_ID=<env-uuid-of-the-twin>
+   export SSL_CERT_FILE=$(uv run python -c "import certifi; print(certifi.where())")
+   ```
+   `SSL_CERT_FILE` is required — Python 3.14 on macOS has no system CA bundle.
+4. **Schema keys**: the SDK rejects friendly joint names when the schema is
+   loaded; the station maps them internally (see `schema_joint` in
+   `coach_station/arm.py`). `twin.joints.get()` returns `_1`…`_6`, not
+   `elbow_flex`.
+5. First commanded motion was a **single ≤ 5° nudge**, verified visually
+   before any trajectory. (The servo responded to the first command and the
+   under-execution/stall behavior observed afterward is what this incident
+   documents.)
+
 ## Validate before compound motions
 
 - [ ] `demonstrate_strict_curl` completes without hitting stops
@@ -132,6 +198,10 @@ Do not run `--demo all` on hardware until curl is stable.
 
 ## Still open
 
-- Real torque / reach clamps via Cyberwave when API available
+- Real torque / reach clamps via Cyberwave when API available — **the gap
+  that caused the 2026-08-13 servo stall**; do not run compound live motion
+  until commanded current/torque limits exist
+- Re-calibrate `shoulder_lift` / `elbow_flex` with bounded ranges and replace
+  the burned elbow_flex servo before the next live attempt
 - Auto-disable live if websocket client disconnects mid-demo (optional)
 - Station kiosk mode (Milestone 4)

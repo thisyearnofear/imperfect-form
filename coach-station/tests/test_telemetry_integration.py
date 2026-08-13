@@ -236,8 +236,8 @@ class _StubJoints:
         self.commands.append((name, value))
 
     def get_all(self) -> dict[str, float]:
-        # SDK returns radians — pick a Pythonic pin: 90°
-        return {"elbow_flex": math.pi / 2, "shoulder_pan": 0.0}
+        # SDK returns radians keyed by the twin schema (_<motor_id>) — pin 90°.
+        return {"_3": math.pi / 2, "_1": 0.0}
 
 
 class _StubTwin:

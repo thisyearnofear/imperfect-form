@@ -31,6 +31,23 @@ logger = logging.getLogger("coach_station.arm")
 # Catalog slug from Cyberwave docs (SO-101). Override after `cyberwave pair`.
 SO101_TWIN = os.environ.get("COACH_TWIN", "the-robot-studio/so101")
 
+# the-robot-studio/so101 schema joints are _<motor_id>. The SDK's joints.set
+# rejects friendly names ("elbow_flex") when the schema list is loaded, so map
+# our SO-101 joint names to the schema keys before commanding or reading.
+SO101_SCHEMA_KEYS = {
+    "shoulder_pan": "_1",
+    "shoulder_lift": "_2",
+    "elbow_flex": "_3",
+    "wrist_flex": "_4",
+    "wrist_roll": "_5",
+    "gripper": "_6",
+}
+
+
+def schema_joint(joint: str) -> str:
+    """Map an SO-101 joint name to its twin schema key (passes through unknown)."""
+    return SO101_SCHEMA_KEYS.get(joint, joint)
+
 
 ProgressListener = Callable[[float, float, "Optional[float]"], Awaitable[None]]
 Observer = Callable[[], "Optional[float]"]
@@ -219,7 +236,7 @@ class CyberwaveArm:
         except Exception as exc:
             logger.debug("read_joint_deg: get_all failed (%s)", exc)
             return None
-        value = states.get(joint)
+        value = states.get(schema_joint(joint))
         if not isinstance(value, (int, float)):
             return None
         # joints.get_all() returns radians per SDK docs
@@ -237,7 +254,7 @@ class CyberwaveArm:
         async def send_waypoint(deg: float) -> None:
             # Defense in depth: re-clamp at the wire even if trajectory drifts.
             cmd = clamp_elbow_deg(deg, self._limits) if demo.joint == "elbow_flex" else deg
-            self._joint_api.set(demo.joint, cmd, degrees=True)
+            self._joint_api.set(schema_joint(demo.joint), cmd, degrees=True)
 
         await _run_waypoints(
             waypoints,
