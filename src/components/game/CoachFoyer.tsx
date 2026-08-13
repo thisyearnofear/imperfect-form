@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Camera,
@@ -19,6 +19,8 @@ import { useImmersive } from '@/hooks/useImmersive';
 import { coachStation, type StationStatus } from '@/services/coachStation';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import { CountUp } from '@/components/ui/CountUp';
+import { cleanupCameraStream, requestCameraPermission } from '@/utils/cameraPermissions';
+import { FoyerStatus } from './FoyerStatus';
 import '@/styles/coach-foyer.css';
 
 type CoachFoyerProps = {
@@ -26,6 +28,11 @@ type CoachFoyerProps = {
   onModeChange: (mode: ExerciseMode) => void;
   onStart: () => void;
   incomingChallenge?: boolean;
+  /** Passive status strip: wallet + Level X/5 (computed once by Game). */
+  walletConnected: boolean;
+  isConnecting: boolean;
+  level: number;
+  onConnect: () => void;
 };
 
 type ExerciseOption = {
@@ -127,11 +134,64 @@ function CoachSystemMap({
   );
 }
 
+function FramingDiagram({ mode }: { mode: ExerciseMode }) {
+  const upperBody = mode === 'curls';
+  return (
+    <div
+      className={`coach-foyer__frame-visual${upperBody ? ' is-upper-body' : ' is-full-body'}`}
+      aria-hidden="true"
+    >
+      <div className="coach-foyer__frame-visual-label">
+        <Camera size={11} strokeWidth={2} />
+        Ideal camera view
+      </div>
+      <svg viewBox="0 0 180 128" focusable="false">
+        <rect
+          className="coach-foyer__frame-outline"
+          x="13"
+          y="13"
+          width="154"
+          height="102"
+          rx="8"
+        />
+        <path
+          className="coach-foyer__frame-corner"
+          d="M25 37V25h12M143 25h12v12M25 91v12h12M143 103h12V91"
+        />
+        <circle className="coach-foyer__frame-head" cx="90" cy="42" r="11" />
+        <path
+          className="coach-foyer__frame-body"
+          d={upperBody ? 'M90 54v34M68 67h44' : 'M90 54v34M68 67h44M90 88l-18 25M90 88l18 25'}
+        />
+        <path
+          className="coach-foyer__frame-arms"
+          d={upperBody ? 'M68 67L48 78M112 67l20 11' : 'M68 67L53 81M112 67l15 14'}
+        />
+        <circle className="coach-foyer__frame-landmark" cx="68" cy="67" r="2.5" />
+        <circle className="coach-foyer__frame-landmark" cx="112" cy="67" r="2.5" />
+        {!upperBody && (
+          <>
+            <circle className="coach-foyer__frame-landmark" cx="72" cy="113" r="2.5" />
+            <circle className="coach-foyer__frame-landmark" cx="108" cy="113" r="2.5" />
+          </>
+        )}
+      </svg>
+      <span className="coach-foyer__frame-visual-caption">
+        {upperBody ? 'Head · shoulders · hips · arms' : 'Head · shoulders · hips · feet'}
+      </span>
+    </div>
+  );
+}
+
 export function CoachFoyer({
   mode,
   onModeChange,
   onStart,
   incomingChallenge = false,
+  walletConnected,
+  isConnecting,
+  level,
+  onConnect,
 }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
   const { triggerHaptic } = useHapticFeedback();
@@ -141,12 +201,88 @@ export function CoachFoyer({
   // Explainer is collapsed by default — its content also rotates inside the
   // session-boot overlay, where the user is a captive audience.
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const firstExtraRef = React.useRef<HTMLButtonElement>(null);
-  const moreToggleRef = React.useRef<HTMLButtonElement>(null);
+  const firstExtraRef = useRef<HTMLButtonElement>(null);
+  const moreToggleRef = useRef<HTMLButtonElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const previewStreamRef = useRef<MediaStream | null>(null);
+  const previewRequestRef = useRef(0);
+  const [previewStatus, setPreviewStatus] = useState<'closed' | 'starting' | 'ready' | 'error'>(
+    'closed'
+  );
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const primaryExercises = exercises.filter((e) => e.category === 'primary');
   const extraExercises = exercises.filter((e) => e.category === 'extra');
   const selectedExercise = exercises.find((exercise) => exercise.mode === mode) ?? exercises[0];
+
+  const stopCameraPreview = useCallback(() => {
+    previewRequestRef.current += 1;
+    if (previewStreamRef.current) {
+      cleanupCameraStream(previewStreamRef.current);
+      previewStreamRef.current = null;
+    }
+    if (previewVideoRef.current) {
+      previewVideoRef.current.srcObject = null;
+    }
+    setPreviewStatus('closed');
+    setPreviewError(null);
+  }, []);
+
+  const startCameraPreview = useCallback(async () => {
+    if (previewStatus === 'starting' || previewStreamRef.current) return;
+
+    const requestId = ++previewRequestRef.current;
+    setPreviewStatus('starting');
+    setPreviewError(null);
+
+    const result = await requestCameraPermission({
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        facingMode: 'user',
+      },
+      audio: false,
+    });
+
+    if (requestId !== previewRequestRef.current) {
+      if (result.stream) cleanupCameraStream(result.stream);
+      return;
+    }
+
+    if (!result.granted || !result.stream) {
+      setPreviewStatus('error');
+      setPreviewError('Camera preview was not available. You can still start and try again.');
+      return;
+    }
+
+    previewStreamRef.current = result.stream;
+    setPreviewStatus('ready');
+  }, [previewStatus]);
+
+  useEffect(() => {
+    const video = previewVideoRef.current;
+    const stream = previewStreamRef.current;
+    if (!video || !stream) return;
+
+    video.srcObject = stream;
+    void video.play().catch(() => {
+      setPreviewError('Preview opened, but the browser needs a tap on the video to play it.');
+    });
+
+    return () => {
+      if (video.srcObject === stream) video.srcObject = null;
+    };
+  }, [previewStatus]);
+
+  useEffect(() => {
+    return () => {
+      previewRequestRef.current += 1;
+      if (previewStreamRef.current) {
+        cleanupCameraStream(previewStreamRef.current);
+        previewStreamRef.current = null;
+      }
+    };
+  }, []);
 
   // Station-aware robot-demo chip on the flagship Curls card: live when the
   // Coach link is up, dormant when it isn't — the robot demo is signposted at
@@ -184,6 +320,13 @@ export function CoachFoyer({
       moreToggleRef.current.focus();
     }
   }, [showExtras]);
+
+  const handleStart = () => {
+    stopCameraPreview();
+    playStudioCue('press');
+    triggerHaptic([50, 100]);
+    onStart();
+  };
 
   const renderExerciseButton = (exercise: ExerciseOption, index: number) => {
     const selected = exercise.mode === mode;
@@ -247,6 +390,17 @@ export function CoachFoyer({
           connected.
         </p>
 
+        {/* Passive wallet + Level X/5 status — pre-emptive on-chain context,
+            never a gate (P5). */}
+        <FoyerStatus
+          isConnected={walletConnected}
+          isConnecting={isConnecting}
+          level={level}
+          onConnect={onConnect}
+          register="studio"
+          className="motion-enter"
+        />
+
         {incomingChallenge && (
           <div
             className="coach-foyer__incoming-challenge motion-enter"
@@ -281,6 +435,115 @@ export function CoachFoyer({
           </span>
         </div>
 
+        <div
+          className="coach-foyer__setup-guide motion-enter"
+          role="note"
+          aria-label="Camera setup"
+        >
+          <div className="coach-foyer__setup-guide-heading">
+            <Camera size={15} strokeWidth={2} aria-hidden="true" />
+            <strong>Set your frame before you start</strong>
+            <span
+              className={`coach-foyer__setup-guide-status${previewStatus === 'ready' ? ' is-live' : ''}`}
+            >
+              {previewStatus === 'ready' ? 'Camera preview on' : 'Camera stays off'}
+            </span>
+          </div>
+          <div className="coach-foyer__setup-layout">
+            {previewStatus === 'ready' ? (
+              <div className="coach-foyer__frame-visual coach-foyer__frame-visual--live">
+                <div className="coach-foyer__frame-visual-label">
+                  <Camera size={11} strokeWidth={2} />
+                  Live framing preview
+                </div>
+                <div className="coach-foyer__frame-live-window">
+                  <video
+                    ref={previewVideoRef}
+                    className="coach-foyer__frame-live-video"
+                    muted
+                    playsInline
+                    autoPlay
+                    onClick={(event) => {
+                      void event.currentTarget
+                        .play()
+                        .then(() => setPreviewError(null))
+                        .catch(() => undefined);
+                    }}
+                    aria-label="Live camera framing preview"
+                  />
+                  <span className="coach-foyer__frame-live-target" aria-hidden="true" />
+                  <span className="coach-foyer__frame-live-caption" aria-hidden="true">
+                    {mode === 'curls' ? 'Keep head + hips visible' : 'Keep full body visible'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <FramingDiagram mode={mode} />
+            )}
+            <div className="coach-foyer__setup-guide-grid">
+              <span>
+                <b>Distance</b>
+                Start far enough back that the required landmarks fit comfortably; most desktop
+                setups need about 1.5–2.5 m.
+              </span>
+              <span>
+                <b>In view</b>
+                {mode === 'curls'
+                  ? 'For curls, keep your head, shoulders, hips and both arms visible.'
+                  : mode === 'pushups'
+                    ? 'For push-ups, include your head, shoulders, hips, knees and feet.'
+                    : 'For this move, keep your full body and both feet visible.'}
+              </span>
+              <span>
+                <b>Light</b>
+                Face a light source and clear the space behind you. Keep the camera still.
+              </span>
+            </div>
+          </div>
+          <div className="coach-foyer__setup-guide-actions">
+            <button
+              type="button"
+              className="coach-foyer__preview-toggle"
+              onClick={previewStatus === 'ready' ? stopCameraPreview : startCameraPreview}
+              disabled={previewStatus === 'starting'}
+              aria-pressed={previewStatus === 'ready'}
+            >
+              <Camera size={14} strokeWidth={2} aria-hidden="true" />
+              {previewStatus === 'starting'
+                ? 'Opening camera…'
+                : previewStatus === 'ready'
+                  ? 'Hide camera preview'
+                  : 'Preview my framing'}
+            </button>
+            {previewError && (
+              <span className="coach-foyer__preview-error" role="status" aria-live="polite">
+                {previewError}
+              </span>
+            )}
+            {previewStatus === 'ready' && previewError && (
+              <button
+                type="button"
+                className="coach-foyer__preview-play"
+                onClick={() => {
+                  const video = previewVideoRef.current;
+                  if (!video) return;
+                  void video
+                    .play()
+                    .then(() => setPreviewError(null))
+                    .catch(() => undefined);
+                }}
+              >
+                Play preview
+              </button>
+            )}
+          </div>
+          <p className="coach-foyer__setup-guide-note">
+            {previewStatus === 'ready'
+              ? 'Preview is local and temporary. It stops when you hide it or start the session.'
+              : 'The live camera stays off until you choose “Preview my framing” or “Try one rep”.'}
+          </p>
+        </div>
+
         {/* Two defaults, pre-answered — the only decision offered before START */}
         <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">
           <legend className="coach-foyer__exercise-legend">
@@ -298,13 +561,10 @@ export function CoachFoyer({
           className="coach-foyer__start coach-foyer__start--hero feel-press motion-enter"
           style={{ animationDelay: '320ms' }}
           aria-label={`Try one rep of ${selectedExercise.label} with camera coaching`}
+          disabled={previewStatus === 'starting'}
           onPointerEnter={prefetchWebcamChunk}
           onTouchStart={prefetchWebcamChunk}
-          onClick={() => {
-            playStudioCue('press');
-            triggerHaptic([50, 100]);
-            onStart();
-          }}
+          onClick={handleStart}
         >
           <Camera size={18} strokeWidth={2} aria-hidden="true" />
           <span>{incomingChallenge ? 'Meet the ghost' : 'Try one rep'}</span>

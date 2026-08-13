@@ -3,6 +3,7 @@
 import React from 'react';
 import { BRAND, SESSION_INTENTS, getIntentDef, type SessionIntent } from '@/lib/brandPositioning';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
+import { FoyerStatus } from '@/components/game/FoyerStatus';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/prestart-foyer.css';
 
@@ -13,7 +14,15 @@ import '@/styles/prestart-foyer.css';
  * button and a movement picker appears so "PICK A MOVE · START" is honest.
  * Without props it stays the legacy display-only foyer (SplitFlap fallback).
  */
-export const PreStartFoyer: React.FC<PreStartFoyerProps> = ({ onStart, mode, onModeChange }) => {
+export const PreStartFoyer: React.FC<PreStartFoyerProps> = ({
+  onStart,
+  mode,
+  onModeChange,
+  walletConnected,
+  isConnecting,
+  level,
+  onConnect,
+}) => {
   const { intent, setIntent, register } = useSessionIntent();
   const foyer = getIntentDef(intent).foyer;
   const interactive = Boolean(onStart && mode && onModeChange);
@@ -75,6 +84,22 @@ export const PreStartFoyer: React.FC<PreStartFoyerProps> = ({ onStart, mode, onM
       >
         {foyer.hint}
       </p>
+
+      {interactive &&
+        walletConnected !== undefined &&
+        isConnecting !== undefined &&
+        level !== undefined &&
+        onConnect && (
+          <div className="prestart-foyer__reveal" style={{ animationDelay: '430ms' }}>
+            <FoyerStatus
+              isConnected={walletConnected}
+              isConnecting={isConnecting}
+              level={level}
+              onConnect={onConnect}
+              register="arcade"
+            />
+          </div>
+        )}
 
       {interactive && (
         <div
@@ -143,6 +168,12 @@ interface PreStartFoyerProps {
   mode?: ExerciseMode;
   /** Pick a movement before starting — only relevant when onStart is provided. */
   onModeChange?: (mode: ExerciseMode) => void;
+  /** Passive status strip: wallet + Level X/5 (computed once by Game). Optional
+     so the legacy display-only <PreStartFoyer /> fallback keeps compiling. */
+  walletConnected?: boolean;
+  isConnecting?: boolean;
+  level?: number;
+  onConnect?: () => void;
 }
 
 function IntentChip({

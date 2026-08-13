@@ -1,5 +1,4 @@
 import React from 'react';
-import ModeSwitch from './ModeSwitch';
 import { AgentInsightTray } from './AgentInsightTray';
 import { BiomechanicalState } from '@/types/mediapipe';
 import { getIntentDef } from '@/lib/brandPositioning';
@@ -30,8 +29,22 @@ interface GameControlsProps {
   onStop: () => void;
   onStart: () => void;
   onReset: () => void;
-  onModeChange: (mode: import('@/utils/biomechanics').ExerciseMode) => void;
+  /**
+   * Returns the user to the foyer to pick a different exercise. Mode
+   * selection lives in the foyer only — the bottom control bar never
+   * duplicates a second switcher per screen.
+   */
+  onRequestFoyer?: () => void;
 }
+
+/** Exercise labels for the compact "Change workout" affordance. */
+const MODE_LABEL: Record<string, string> = {
+  pushups: 'Push-ups',
+  squats: 'Squats',
+  curls: 'Curls',
+  pullups: 'Pull-ups',
+  jumps: 'Jumps',
+};
 
 export const GameControls: React.FC<GameControlsProps> = ({
   started,
@@ -46,7 +59,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
   onStop,
   onStart,
   onReset,
-  onModeChange,
+  onRequestFoyer,
 }) => {
   const { intent } = useSessionIntent();
   const { controls, register } = getIntentDef(intent);
@@ -97,18 +110,24 @@ export const GameControls: React.FC<GameControlsProps> = ({
         <div
           className={`controls-enter w-full flex gap-3 items-center${isMobileLandscape ? ' controls-row--landscape' : ''}`}
         >
-          <div className={`min-w-0 ${isMobile ? 'coachy-wrap' : 'flex-1'}`}>
-            <AgentInsightTray
-              metrics={metrics}
-              mode={mode}
-              voiceEnabled={voiceEnabled}
-              repCount={repCount}
-              userId={userId}
-            />
-          </div>
+          {/* Curls have their own angle + drift instrument in the camera stage,
+              so the form-cue tray hides to avoid a second, redundant readout. */}
+          {mode !== 'curls' && (
+            <div className={`min-w-0 ${isMobile ? 'coachy-wrap' : 'flex-1'}`}>
+              <AgentInsightTray
+                metrics={metrics}
+                mode={mode}
+                voiceEnabled={voiceEnabled}
+                repCount={repCount}
+                userId={userId}
+              />
+            </div>
+          )}
           <button
             id="stopButton"
-            className={`touch-manipulation font-bold touch-target stop-button-discrete ${
+            className={`touch-manipulation font-bold touch-target stop-button-discrete${
+              mode === 'curls' ? ' ml-auto' : ''
+            } ${
               isMobile
                 ? 'py-4 px-6 text-base min-h-[56px] min-w-[80px] rounded-xl shadow-lg'
                 : 'py-3 px-5 text-sm'
@@ -124,13 +143,23 @@ export const GameControls: React.FC<GameControlsProps> = ({
           className={`flex justify-between w-full h-full items-center controls-enter gap-2${isMobileLandscape ? ' controls-row--landscape' : ''}`}
         >
           {controls.showExerciseModes ? (
-            <ModeSwitch
-              value={mode}
-              disabled={busy}
-              onChange={onModeChange}
-              className={isMobile ? 'mobile-mode-switch' : ''}
-              ariaLabel={controls.modeGroupLabel}
-            />
+            <div className="min-w-0 flex-1 items-center justify-start gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-teal-200/60 whitespace-nowrap">
+                  Workout · {MODE_LABEL[mode] ?? mode}
+                </span>
+                {onRequestFoyer && (
+                  <button
+                    type="button"
+                    onClick={onRequestFoyer}
+                    className="touch-manipulation touch-target feel-press rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-teal-100 transition-all hover:bg-white/20 active:scale-[0.96]"
+                    aria-label="Change workout"
+                  >
+                    Change workout
+                  </button>
+                )}
+              </div>
+            </div>
           ) : (
             <p className="calm-session-hint">
               {calmSessionActive ? 'Session in progress' : 'No camera · just breath'}

@@ -33,6 +33,76 @@ body[data-shell='studio'] .studio-topbar {
   font-weight: 600;
   letter-spacing: 0.02em;
 }
+
+/* Passive wallet-status pill — global top bar (day-0 + earned mobile). Shows
+   connected vs "saved locally" without ever gating the core loop (P5). */
+.wallet-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.1rem;
+  padding: 0 0.7rem;
+  color: #8ca5a2;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.wallet-status-pill__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.wallet-status-pill.is-connected {
+  color: #bff8ed;
+  border-color: rgba(103, 219, 199, 0.28);
+}
+
+.wallet-status-pill.is-connected .wallet-status-pill__dot {
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.7);
+}
+
+.wallet-status-pill__connect {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-bottom: 1px dashed rgba(103, 219, 199, 0.5);
+  background: none;
+  color: #67dbc7;
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.wallet-status-pill__connect:hover:not(:disabled) {
+  color: #eafff9;
+  border-bottom-color: #eafff9;
+}
+
+.wallet-status-pill__connect:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.wallet-status-pill__connect:focus-visible {
+  outline: 2px solid #67dbc7;
+  outline-offset: 2px;
+}
 .studio-status {
   display: inline-flex;
   align-items: center;
@@ -302,7 +372,9 @@ body[data-shell='studio'] .studio-topbar {
   font-size: 0.8rem;
   font-weight: 800;
   text-transform: none;
-  transition: transform 160ms ease, box-shadow 200ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 200ms ease;
 }
 #game-container[data-register] #startButton:hover:not(:disabled) {
   transform: translateY(-1px);
@@ -324,7 +396,9 @@ body[data-shell='studio'] .studio-topbar {
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: none;
-  transition: background-color 160ms ease, border-color 160ms ease;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 #game-container[data-register] #resetButton:hover:not(:disabled) {
   background: rgba(86, 217, 195, 0.1);
@@ -436,4 +510,23 @@ body[data-shell='studio'] .studio-topbar {
 }
 .live-status--signal svg {
   color: #f5c77d;
+}
+
+/* Desktop overlay rail: the live cue owns the lower-left corner while the
+   evidence instrument owns the lower-right. This prevents the two cards from
+   occupying the same coaching lane. */
+@media (min-width: 721px) {
+  #canvasContainerDesktop .live-status {
+    left: 1rem;
+    bottom: 1rem;
+    max-width: min(31rem, calc(100% - 24rem));
+    transform: none;
+    text-align: left;
+  }
+
+  #canvasContainerDesktop .curl-instrument {
+    max-height: min(48vh, 34rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
 }

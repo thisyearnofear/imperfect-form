@@ -19,3 +19,4 @@ export {
 // Re-export unified as all previous button names for backwards compatibility
 export { default as UniversalConnectButton } from './UnifiedConnectButton';
 export { default as FarcasterAwareWalletButton } from './UnifiedConnectButton';
+export { default as WalletStatusPill } from './WalletStatusPill';

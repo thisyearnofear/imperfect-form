@@ -22,6 +22,7 @@ import {
   getGoldenGlow,
 } from '@/utils/leaderboardUtils';
 import { batchResolveFarcasterProfiles, type FarcasterProfile } from '@/utils/neynarResolver';
+import { designTokens } from '@/lib/designTokens';
 
 interface ExpandedLeaderboardModalProps {
   pushupLeaderboard: Score[];
@@ -486,7 +487,8 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
 
       {selectedUser && breakdownType && (
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[2002] transition-opacity duration-300"
+          className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center transition-opacity duration-300"
+          style={{ zIndex: designTokens.zIndex.modalNested }}
           onClick={closeBreakdown}
         >
           <div

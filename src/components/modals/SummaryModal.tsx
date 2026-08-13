@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import {
   CheckCircle2,
   Dumbbell,
-  FileText,
   Flame,
   Ghost,
   Lock,
@@ -14,7 +13,6 @@ import {
   Save,
   Sparkles,
   Trophy,
-  Wind,
   type LucideIcon,
 } from 'lucide-react';
 import { chainConfigs } from '@/utils/chainSwitching';
@@ -23,12 +21,13 @@ import { usePlatform } from '@/contexts/PlatformContext';
 import { UniversalConnectButton } from '@/components/wallet';
 import FarcasterShare from '@/components/social/FarcasterShare';
 import { SubmitScore } from '@/components/game';
-import { ONCHAIN_MODES } from '@/components/game/ModeSwitch';
+import { ONCHAIN_MODES, ONCHAIN_UNLOCK_LEVEL } from '@/constants/onchainModes';
 import { AddMiniAppButton } from '@/components/miniapp/AddMiniAppButton';
 import { VerificationIntegration } from '@/components/verification';
 import SelfVerificationModal from '@/components/verification/SelfVerificationModal';
 import { useFadeTransition } from '@/hooks';
 import { designTokens } from '@/lib/designTokens';
+import { zIndexClasses } from '@/lib/zTokens';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES } from '@/config/contract-addresses';
 import { verifiedFitnessContractABI } from '@/constants/contracts';
@@ -49,6 +48,7 @@ import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/rec
 import { playUiCue } from '@/lib/uiSound';
 import { SessionRecap } from '@/components/game/SessionRecap';
 import { sessionStory } from '@/lib/coachingStory';
+import { getFormGrade } from '@/lib/formGrade';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { MovementChallengePayload } from '@/types/movementChallenge';
 import type { LocalWorkout } from '@/types/workout';
@@ -125,8 +125,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
     'idle' | 'submitting' | 'success' | 'error'
   >('idle');
 
-  // Auto-close on success with 2.5s delay (allows showing success message + earnings)
-  const shouldAutoDismiss = submissionStatus === 'success';
   const { isVisible, className: transitionClass } = useFadeTransition(isOpen, 300);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [submittedChainId, setSubmittedChainId] = useState<number | null>(null);
@@ -145,29 +143,13 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const { intent: sessionIntent, register: sessionRegister } = useSessionIntent();
   const arcade = sessionRegister === 'arcade';
 
-  // Staged post-workout flow: analyze -> recover -> celebrate.
-  // Entry stage is coaching-first (analyze). Earned celebration is the final stage.
-  const [stage, setStage] = useState<'celebrate' | 'recover' | 'analyze'>('analyze');
-  React.useEffect(() => {
-    if (!isOpen) return;
-    if (sessionIntent === 'understand') setStage('analyze');
-    else if (sessionIntent === 'recover') setStage('recover');
-    else setStage('celebrate');
-  }, [isOpen, sessionIntent]);
-  const summaryRegister =
-    stage === 'analyze' ? 'lab' : stage === 'recover' ? 'calm' : sessionRegister;
+  // Single-page recap: every section renders inline in one scroll — no stage
+  // stepper. The on-chain submission is the first content block (primary
+  // conversion); the coaching recap and recovery flow beneath it. There is no
+  // auto-close: a submitted workout stays visible until the user chooses
+  // "Play Again" or "Done" (the confirmation is no longer cut short).
   const retryFocus = sessionStory(sessionSummary ?? null, mode, repCount).focus;
-  const showArcadeResults = arcade && stage === 'celebrate' && submissionStatus !== 'success';
-
-  // Auto-close modal 2.5 seconds after successful submission
-  React.useEffect(() => {
-    if (shouldAutoDismiss && isOpen) {
-      const autoDismissTimer = setTimeout(() => {
-        onClose();
-      }, 2500);
-      return () => clearTimeout(autoDismissTimer);
-    }
-  }, [shouldAutoDismiss, isOpen, onClose]);
+  const showArcadeResults = arcade && submissionStatus !== 'success';
 
   // Calculate streak, achievements, and progress spark when modal opens
   React.useEffect(() => {
@@ -477,6 +459,13 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   const bonusPoints = Math.floor(baseScore * 0.1);
   const verifiedScore = baseScore + bonusPoints;
 
+  // Compact form-score hero (curls only) — grade + average under the headline.
+  const avgFormScore =
+    mode === 'curls' && formScores.length > 0
+      ? Math.round(formScores.reduce((a, b) => a + b, 0) / formScores.length)
+      : null;
+  const formGrade = avgFormScore !== null ? getFormGrade(avgFormScore) : null;
+
   return (
     <>
       <AccessibleDialog
@@ -602,76 +591,33 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       >
         <div
           className={`space-y-5 ${transitionClass}`}
-          data-register={summaryRegister}
+          data-register={sessionRegister}
           data-summary-intent={sessionIntent}
         >
-          {/* Stage stepper: recap -> recover -> score */}
+          {/* ===== SUBMIT SCORE: the primary conversion, first =====
+             The block only renders for a connected wallet on an on-chain mode,
+             so a guest never sees a wall of wallet/verify/share CTAs. */}
           {submissionStatus !== 'success' && (
-            <div
-              className="flex justify-center gap-1.5 summary-stage-tabs"
-              role="tablist"
-              aria-label="Summary stages"
-            >
-              {(
-                [
-                  { key: 'analyze', label: 'Recap', icon: FileText },
-                  { key: 'recover', label: 'Recover', icon: Wind },
-                  { key: 'celebrate', label: 'Score', icon: Trophy },
-                ] as const
-              ).map((s) => {
-                const TabIcon = s.icon;
-                return (
-                  <button
-                    key={s.key}
-                    role="tab"
-                    aria-selected={stage === s.key}
-                    onClick={() => setStage(s.key)}
-                    className={`summary-stage-tab px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 ${
-                      stage === s.key ? 'is-active' : ''
-                    }`}
-                  >
-                    <TabIcon size={12} aria-hidden="true" />
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* ===== CELEBRATE: the trophy moment =====
-             Relevance-gated so a guest never sees a wall of wallet/verify/share
-             CTAs. Hero = the result; one primary CTA; earned depth below. */}
-          {stage === 'celebrate' && submissionStatus !== 'success' && (
             <>
-              {/* Progress spark — earned depth, not a gate */}
-              {repCount > 0 && progressSeries && (
-                <ProgressSpark
-                  points={progressSeries.points}
-                  register="arcade"
-                  title={
-                    arcade
-                      ? 'Score history'
-                      : sessionRegister === 'studio'
-                        ? 'Form signal'
-                        : 'Recent progress'
-                  }
-                  animate={!isPB}
-                  className="summary-progress-spark"
-                />
-              )}
-
-              {/* Single primary CTA — no duplicates */}
-              {onPlayAgain && (
-                <button
-                  onClick={() => {
-                    onPlayAgain(retryFocus);
-                    onClose();
-                  }}
-                  className="earned-cta-studio w-full px-4 py-3 text-base flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
-                >
-                  <RotateCcw size={16} aria-hidden="true" />
-                  <span>{arcade ? 'PLAY AGAIN' : 'Try another set'}</span>
-                </button>
+              {/* Compact form-score hero (curls only) — grade + average right
+                 under the headline, mirroring the single-card mock. */}
+              {mode === 'curls' && avgFormScore !== null && formGrade && (
+                <div className="studio-card studio-card__body text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                      Form score
+                    </span>
+                    <span
+                      className="text-2xl font-black tabular-nums"
+                      style={{ color: formGrade.color }}
+                    >
+                      {formGrade.grade}
+                    </span>
+                    <span className="text-sm font-semibold text-teal-100 tabular-nums">
+                      ({avgFormScore}/100)
+                    </span>
+                  </div>
+                </div>
               )}
 
               {/* On-chain: only when relevant (has wallet + on-chain mode + not yet submitted) */}
@@ -679,7 +625,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 <div className="space-y-4">
                   {/* Celo-specific: Show submission choice directly in main dialog */}
                   {chainId === 42220 && submissionStatus === 'idle' && submissionType === null && (
-                    <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between px-1 mb-2">
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                           Select Submission Type
@@ -795,7 +741,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   {/* Submit Score component - only show if level is 5+ (outer block already gates on not-success) */}
                   {ONCHAIN_MODES.includes(mode) && (
                     <div className="studio-card studio-card__body text-center">
-                      {progress.currentLevel >= 5 ? (
+                      {progress.currentLevel >= ONCHAIN_UNLOCK_LEVEL ? (
                         <>
                           {/* Use unified Wagmi-based submission for all networks */}
                           <SubmitScore
@@ -844,13 +790,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                             </span>
                           </div>
                           <p className="text-xs text-gray-400">
-                            Reach <span className="text-primary font-bold">Level 5</span> to sync
-                            your workouts to the blockchain.
+                            Reach{' '}
+                            <span className="text-primary font-bold">
+                              Level {ONCHAIN_UNLOCK_LEVEL}
+                            </span>{' '}
+                            to sync your workouts to the blockchain.
                           </p>
                           <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gray-600"
-                              style={{ width: `${(progress.currentLevel / 5) * 100}%` }}
+                              style={{
+                                width: `${(progress.currentLevel / ONCHAIN_UNLOCK_LEVEL) * 100}%`,
+                              }}
                             />
                           </div>
                         </div>
@@ -860,14 +811,78 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
+              {/* Guest in an on-chain mode: passive "saved locally · connect to
+                 sync" indicator — no wallet wall, just a quiet upgrade path. */}
+              {!effectiveAddress && ONCHAIN_MODES.includes(mode) && (
+                <div className="studio-card studio-card__body text-center space-y-2.5">
+                  <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-gray-500 font-bold">
+                    <Save size={12} aria-hidden="true" /> Saved locally
+                  </span>
+                  {!isPB && (
+                    <>
+                      <p className="text-xs text-gray-400">
+                        Connect a wallet to sync to the on-chain leaderboard
+                        {progress.currentLevel < ONCHAIN_UNLOCK_LEVEL
+                          ? ` (on-chain unlocks at Level ${ONCHAIN_UNLOCK_LEVEL})`
+                          : ''}
+                        .
+                      </p>
+                      <UniversalConnectButton size="sm" />
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Non-on-chain mode: quiet local-saved note (no wallet wall) */}
-              {stage === 'celebrate' && !ONCHAIN_MODES.includes(mode) && (
+              {!ONCHAIN_MODES.includes(mode) && (
                 <div className="studio-card studio-card__body text-center">
                   <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-gray-500 font-bold">
                     <Save size={12} aria-hidden="true" /> Saved locally — on-chain leaderboards
                     coming for this exercise
                   </span>
                 </div>
+              )}
+
+              {/* ===== COACHING RECAP ===== */}
+              <SessionRecap
+                mode={mode}
+                reps={repCount}
+                summary={sessionSummary ?? null}
+                movementAssessment={movementAssessment}
+                movementChallenge={movementChallenge}
+                workouts={localWorkouts}
+                userAddress={effectiveAddress ?? undefined}
+                formScores={formScores}
+                isRace={isRace}
+                onStartSelfGhost={onStartSelfGhost}
+              />
+              {(sessionSummary || reportStatus !== 'idle') && (
+                <LabAnalysisCard
+                  report={report}
+                  status={reportStatus}
+                  personality={personality}
+                  onGenerate={handleGenerateReport}
+                />
+              )}
+
+              {/* ===== RECOVER ===== */}
+              {repCount > 0 && <RecoveryCard mode={mode} />}
+
+              {/* Progress spark — earned depth, not a gate */}
+              {repCount > 0 && progressSeries && (
+                <ProgressSpark
+                  points={progressSeries.points}
+                  register="arcade"
+                  title={
+                    arcade
+                      ? 'Score history'
+                      : sessionRegister === 'studio'
+                        ? 'Form signal'
+                        : 'Recent progress'
+                  }
+                  animate={!isPB}
+                  className="summary-progress-spark"
+                />
               )}
 
               {/* Highlight Card — only when a best pose exists */}
@@ -955,19 +970,11 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                   />
                 </div>
               )}
-
-              {/* Forward nav to recover */}
-              <button
-                onClick={() => setStage('recover')}
-                className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 text-teal-100 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-white/10 active:scale-[0.96] inline-flex items-center justify-center gap-2"
-              >
-                <Wind size={14} aria-hidden="true" /> {arcade ? 'COOL DOWN →' : 'Cool down →'}
-              </button>
             </>
           )}
 
-          {/* Success state — replaces the celebrate flow after on-chain submit */}
-          {stage === 'celebrate' && submissionStatus === 'success' && (
+          {/* Success state — replaces the flow after on-chain submit */}
+          {submissionStatus === 'success' && (
             <div className="studio-card studio-card__body text-center animate-in fade-in zoom-in duration-300">
               <div className="flex items-center justify-center gap-2 text-teal-300 text-xl font-semibold tracking-tight">
                 <CheckCircle2 size={18} aria-hidden="true" /> Synced to leaderboard
@@ -975,80 +982,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               <div className="text-xs text-teal-300/60 uppercase font-semibold tracking-widest">
                 On-chain record stored
               </div>
-              {onPlayAgain && (
-                <button
-                  onClick={() => {
-                    onPlayAgain(retryFocus);
-                    onClose();
-                  }}
-                  className="earned-cta-studio w-full px-4 py-3 text-base flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
-                >
-                  <RotateCcw size={16} aria-hidden="true" />
-                  <span>Try another set</span>
-                </button>
-              )}
             </div>
-          )}
-
-          {/* ===== RECOVER: the night studio ===== */}
-          {stage === 'recover' && (
-            <>
-              {repCount > 0 && <RecoveryCard mode={mode} />}
-              <button
-                onClick={() => setStage('celebrate')}
-                className="earned-cta-studio w-full px-4 py-3 text-sm flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
-              >
-                <Trophy size={14} aria-hidden="true" />{' '}
-                {summaryRegister === 'arcade' ? 'SAVE SCORE →' : 'Save score →'}
-              </button>
-              <button
-                onClick={onClose}
-                className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-200 font-semibold rounded-xl text-xs uppercase tracking-widest transition-all border border-white/10 active:scale-[0.96]"
-              >
-                Done
-              </button>
-            </>
-          )}
-
-          {/* ===== ANALYZE: the lab (works for guests too) ===== */}
-          {stage === 'analyze' && (
-            <SessionRecap
-              mode={mode}
-              reps={repCount}
-              summary={sessionSummary ?? null}
-              movementAssessment={movementAssessment}
-              movementChallenge={movementChallenge}
-              workouts={localWorkouts}
-              userAddress={effectiveAddress ?? undefined}
-              formScores={formScores}
-              isRace={isRace}
-              onStartSelfGhost={onStartSelfGhost}
-              onTryAgain={
-                onPlayAgain
-                  ? (focus) => {
-                      onPlayAgain(focus);
-                      onClose();
-                    }
-                  : undefined
-              }
-            />
-          )}
-          {stage === 'analyze' && (sessionSummary || reportStatus !== 'idle') && (
-            <LabAnalysisCard
-              report={report}
-              status={reportStatus}
-              personality={personality}
-              onGenerate={handleGenerateReport}
-            />
-          )}
-
-          {stage === 'analyze' && (
-            <button
-              onClick={() => setStage('celebrate')}
-              className="earned-cta-studio w-full px-4 py-3 text-sm flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
-            >
-              <Trophy size={14} aria-hidden="true" /> Save score →
-            </button>
           )}
 
           {/* Celo-specific verification prompt - show after successful submission on Celo only */}
@@ -1077,28 +1011,38 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               >
                 View Tx →
               </a>
-              <button
-                onClick={() => {
-                  if (onViewLeaderboard) {
-                    onViewLeaderboard();
-                  } else {
-                    onClose();
-                  }
-                }}
-                className="earned-cta-studio w-full px-3 py-2 text-sm flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
-              >
-                {onViewLeaderboard ? (
-                  <>
-                    <Trophy size={13} aria-hidden="true" /> Leaderboard
-                  </>
-                ) : (
-                  <>← Back to menu</>
-                )}
-              </button>
+              {onViewLeaderboard && (
+                <button
+                  onClick={onViewLeaderboard}
+                  className="earned-cta-studio w-full px-3 py-2 text-sm flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
+                >
+                  <Trophy size={13} aria-hidden="true" /> Leaderboard
+                </button>
+              )}
             </div>
           )}
 
-          {/* Self Verification Modal - mounted regardless of stage/wallet branch */}
+          {/* ===== PERSISTENT ACTIONS: repeat or finish ===== */}
+          {onPlayAgain && (
+            <button
+              onClick={() => {
+                onPlayAgain(retryFocus);
+                onClose();
+              }}
+              className="earned-cta-studio w-full px-4 py-3 text-base flex items-center justify-center gap-2 active:scale-[0.96] transition-transform"
+            >
+              <RotateCcw size={16} aria-hidden="true" />
+              <span>{arcade ? 'PLAY AGAIN' : 'Try another set'}</span>
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 text-teal-100 font-bold rounded-xl text-xs uppercase tracking-widest transition-all border border-white/10 active:scale-[0.96]"
+          >
+            Done
+          </button>
+
+          {/* Self Verification Modal - mounted regardless of wallet/verify branch */}
           <SelfVerificationModal
             isOpen={showVerificationModal}
             onClose={() => {
@@ -1114,10 +1058,12 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
         </div>
       </AccessibleDialog>
 
-      {/* Achievement Unlocked Overlay */}
+      {/* Achievement Unlocked Overlay — sits ABOVE the modal content so the
+          unlock is visible while the recap is open (zIndexClasses.overlayAchievement;
+          previously z-[100] hid it behind the modal backdrop). */}
       {showAchievement && (
         <div
-          className={`fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-4 ${achievementClass}`}
+          className={`fixed inset-0 ${zIndexClasses.overlayAchievement} flex items-center justify-center pointer-events-none px-4 ${achievementClass}`}
         >
           <div className="flex flex-col gap-4 items-center">
             {newAchievements.map((achievement, index) => (

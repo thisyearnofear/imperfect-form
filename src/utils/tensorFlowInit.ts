@@ -102,12 +102,3 @@ export function monitorTensorFlowMemory() {
     };
   }
 }
-
-export function disposeUnusedTensors() {
-  try {
-    tf.engine().endScope();
-    tf.engine().startScope();
-  } catch (error) {
-    console.error('Tensor disposal error:', error);
-  }
-}

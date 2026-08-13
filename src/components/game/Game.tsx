@@ -45,7 +45,6 @@ import { useCameraSetup } from '../../hooks/useCameraSetup';
 import { GameCanvas } from './GameCanvas';
 import CoachFoyer from './CoachFoyer';
 import PreStartFoyer from '@/components/home/PreStartFoyer';
-import LandscapePrompt from './LandscapePrompt';
 import {
   saveLocalWorkout,
   getPersonalBestWorkout,
@@ -58,6 +57,7 @@ import { buildFormSignature } from '@/lib/progress/formSignature';
 import { ghostService } from '@/services/GhostService';
 import { getChampionTrace, isChampion } from '@/constants/championTraces';
 import { playStudioCue } from '@/lib/uiSound';
+import { zIndexClasses } from '@/lib/zTokens';
 import { trackChallengeEvent, trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
 import { evaluateMovementAssessment } from '@/lib/movementAssessment';
 import { CURL_BASELINE_PROTOCOL } from '@/types/movementAssessment';
@@ -96,7 +96,7 @@ interface GameProps {
 
 const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Get universal wallet context first
-  const { wallet, user } = usePlatform();
+  const { wallet, user, actions } = usePlatform();
   const { address } = wallet;
   const finalAddress = address || thirdwebAddress;
   const { intent: sessionIntent, register: sessionRegister, setIntent } = useSessionIntent();
@@ -221,7 +221,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     );
   }, [isClient]);
   const { isPortrait } = useOrientation();
-  const [dismissLandscapePrompt, setDismissLandscapePrompt] = useState(false);
+  const [dismissRotateHint, setDismissRotateHint] = useState(false);
 
   // Swipe gesture handling for mobile using custom hook
   const { handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeGesture(
@@ -278,15 +278,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setCurrentMode(getDefaultMode());
   }, [getDefaultMode]);
 
-  // Update mode when user login state changes
+  // Update mode when user login state changes. React to login/logout
+  // transitions only — never to arbitrary tab navigation — otherwise the
+  // foyer's "Change workout" return (setCurrentMode('instructions')) would be
+  // immediately reverted to 'profile' for logged-in users.
+  const prevAddressRef = useRef(finalAddress);
   useEffect(() => {
-    const newDefaultMode = getDefaultMode();
-    if (currentMode === 'instructions' && newDefaultMode === 'profile') {
-      setCurrentMode('profile'); // Switch to profile when user logs in
-    } else if (currentMode === 'profile' && newDefaultMode === 'instructions') {
-      setCurrentMode('instructions'); // Switch to instructions when user logs out
-    }
-  }, [finalAddress, currentMode, getDefaultMode]);
+    const prev = prevAddressRef.current;
+    prevAddressRef.current = finalAddress;
+    if (prev === finalAddress) return;
+    setCurrentMode(getDefaultMode());
+  }, [finalAddress, getDefaultMode]);
 
   // Welcome component consolidated into InitializationScreen - showWelcome removed
   // Tutorial state is managed but not displayed in current UI
@@ -579,6 +581,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       if (isFocusedRetry) setRetryFocus(options?.retryFocus ?? null);
       else setRetryFocus(null);
       setShowFirstRepCelebration(false);
+      // A fresh session re-arms the rotate hint, even if it was dismissed
+      // during the previous set.
+      setDismissRotateHint(false);
       setIsStarting(true);
 
       // Gesture-sensitive work stays synchronous with the press: fullscreen
@@ -928,8 +933,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // Rotate hint only matters once a session is running — it must never
   // gate the day-0 foyer (that made it decision #1 on portrait phones).
-  const showLandscapePrompt =
-    started && isMobile && isPortrait && mode !== 'curls' && !dismissLandscapePrompt;
+  const showRotateHint =
+    started && isMobile && isPortrait && mode !== 'curls' && !dismissRotateHint;
 
   // Pre-start foyer follows the register: Coach/Studio → CoachFoyer,
   // Train/Arcade → the arcade foyer. Breathe still opens its calm panel
@@ -991,7 +996,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         className={`${isMobile ? 'touch-manipulation' : ''}${isIOSDevice ? ' game-container--ios' : ''}${showCameraPrimer ? ' pointer-events-none' : ''}`}
       >
         {/* Top-right control buttons - orientation lock only */}
-        <div className="game-container__top-controls absolute top-2 right-2 flex gap-1 z-20">
+        <div
+          className={`game-container__top-controls absolute top-2 right-2 flex gap-1 ${zIndexClasses.gameTopControls}`}
+        >
           {/* Orientation Lock Toggle - Mobile Only */}
           {isMobile && (
             <button
@@ -1047,6 +1054,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                     }
                     mode={mode}
                     onModeChange={setMode}
+                    walletConnected={wallet.isConnected}
+                    isConnecting={wallet.isConnecting}
+                    level={xpProgress.currentLevel}
+                    onConnect={() => void actions.connect()}
                   />
                 </div>
               ) : (
@@ -1062,6 +1073,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                       })
                     }
                     incomingChallenge={hasIncomingChallenge}
+                    walletConnected={wallet.isConnected}
+                    isConnecting={wallet.isConnecting}
+                    level={xpProgress.currentLevel}
+                    onConnect={() => void actions.connect()}
                   />
                 </div>
               )
@@ -1110,6 +1125,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               onFormScore={(score) => {
                 setFormScores((prev) => [...prev.slice(-9), score]);
               }}
+              showRotateHint={showRotateHint}
+              onDismissRotateHint={() => setDismissRotateHint(true)}
             />
           )}
         </div>
@@ -1128,15 +1145,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             onStop={handleStop}
             onStart={handleStart}
             onReset={handleReset}
-            onModeChange={setMode}
+            onRequestFoyer={() => setCurrentMode('instructions')}
           />
         )}
       </div>
-      {showLandscapePrompt && <LandscapePrompt onDismiss={() => setDismissLandscapePrompt(true)} />}
-
       {showCameraPrimer && (
         <div
-          className="camera-primer-backdrop fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
+          className={`camera-primer-backdrop fixed inset-0 ${zIndexClasses.gate} bg-black/95 backdrop-blur-sm flex items-center justify-center p-4`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="camera-primer-title"

@@ -28,12 +28,9 @@
     transition: all 0.2s ease;
   }
 
-  /* Mobile orientation lock indicator - Core Principle: AGGRESSIVE CONSOLIDATION */
+  /* Mobile orientation lock indicator — the parent top-controls rail owns
+     positioning so this button cannot fight the nav/twin layout. */
   .orientation-lock-indicator {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 30;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 0.5rem;
     padding: 0.5rem;
@@ -53,17 +50,6 @@
   /* Mobile wallet connection */
   .mobile-wallet-connection {
     margin-bottom: 0.5rem;
-  }
-
-  /* Mobile mode switch */
-  .mobile-mode-switch {
-    min-height: 3rem;
-  }
-
-  .mobile-mode-switch .imf-mode-segment {
-    min-height: 3rem;
-    font-size: 0.875rem;
-    padding: 0.5rem;
   }
 
   /* Mobile banner */
@@ -505,9 +491,8 @@
     border-radius: 0.75rem;
   }
 
-  /* Secondary action (Reset/ModeSwitch) sits at the left thumb */
-  .controls-container--landscape #resetButton,
-  .controls-container--landscape .mobile-mode-switch {
+  /* Secondary action (Reset) sits at the left thumb */
+  .controls-container--landscape #resetButton {
     min-height: 56px;
     font-size: 0.875rem;
   }
@@ -545,6 +530,19 @@
 /* iPhone Safari keeps browser chrome and the home indicator in the viewport.
    Reserve those edges without changing the camera or pose pipeline. */
 @media (max-width: 768px) {
+  /* Keep the control rail below the sticky topbar and on the opposite side of
+     the right-anchored Coach Twin Peek during a session. */
+  #game-container .game-container__top-controls {
+    top: calc(4.25rem + env(safe-area-inset-top));
+    right: auto;
+    left: max(0.75rem, env(safe-area-inset-left));
+    z-index: 110;
+  }
+
+  #game-container:has(.coach-foyer) .game-container__top-controls {
+    top: calc(4.5rem + env(safe-area-inset-top));
+  }
+
   #game-container.game-container--ios {
     min-height: calc(100svh - 65px);
     padding-top: max(0.5rem, env(safe-area-inset-top));
@@ -554,12 +552,13 @@
   }
 
   #game-container.game-container--ios .game-container__top-controls {
-    top: max(0.5rem, env(safe-area-inset-top));
-    right: max(0.5rem, env(safe-area-inset-right));
+    top: calc(4.25rem + env(safe-area-inset-top));
+    right: auto;
+    left: max(0.75rem, env(safe-area-inset-left));
   }
 
   #game-container.game-container--ios:has(.coach-foyer) .game-container__top-controls {
-    top: calc(3.75rem + env(safe-area-inset-top));
+    top: calc(4.5rem + env(safe-area-inset-top));
   }
 
   #game-container.game-container--ios #controls {
@@ -605,4 +604,138 @@
     color: #ffe7b0;
     border-color: rgba(255, 217, 122, 0.45);
   }
+
+  /* Baked-in rotate hint — lives inside the camera stage (top-right corner)
+     rather than a floating fixed overlay, so it can never cover the bottom
+     controls or fight other z-indexed overlays (P6). z-index 6 is stage-local:
+     above the video (z-3), below the interactive overlays (quality status /
+     curl instrument). */
+  .session-rotate-hint {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 6;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.28rem 0.3rem 0.28rem 0.5rem;
+    color: rgba(217, 255, 246, 0.92);
+    background: rgba(5, 28, 31, 0.72);
+    border: 1px solid rgba(117, 223, 205, 0.3);
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .session-rotate-hint > svg {
+    flex: 0 0 auto;
+    color: #7aebd8;
+  }
+
+  .session-rotate-hint__dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-left: 0.1rem;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(217, 255, 246, 0.75);
+    cursor: pointer;
+  }
+
+  .session-rotate-hint__dismiss:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+  }
+}
+
+/* Compact mobile HUD — timer + reps share one pill; depth becomes a thin edge
+   glow so the camera viewport keeps every vertical pixel it can get. */
+.game-hud-container.game-hud-container--compact {
+  position: relative;
+  justify-content: center;
+  gap: 0;
+  padding: 0.5rem 0.75rem 0.65rem;
+}
+
+.game-hud-container--compact .hud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.32rem 0.75rem;
+  border: 1px solid rgba(122, 235, 216, 0.22);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.26);
+}
+
+.game-hud-container--compact .hud-pill__label {
+  margin-bottom: 0;
+  font-size: 0.56rem;
+  opacity: 0.72;
+}
+
+.game-hud-container--compact .hud-pill__time {
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-hud-container--compact .hud-pill__divider {
+  color: rgba(122, 235, 216, 0.34);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.game-hud-container--compact .hud-depth-edge {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: 0;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(122, 235, 216, 0.12);
+}
+
+.game-hud-container--compact .hud-depth-edge__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(122, 235, 216, 0.35), #56d9c3);
+  box-shadow: 0 0 6px rgba(86, 217, 195, 0.6);
+  transition: width 0.2s ease-out;
+}
+
+/* Arcade (Train) register keeps its gold "Press Start" identity in the
+   compact pill instead of collapsing to the studio teal glass. */
+.game-hud-container--compact[data-register='arcade'] .hud-pill {
+  border-color: rgba(252, 177, 49, 0.42);
+  background: linear-gradient(180deg, rgba(60, 36, 8, 0.94), rgba(24, 12, 2, 0.9));
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.32),
+    0 0 14px rgba(252, 177, 49, 0.22);
+}
+
+.game-hud-container--compact[data-register='arcade'] .hud-pill__divider {
+  color: rgba(252, 177, 49, 0.5);
+}
+
+.game-hud-container--compact[data-register='arcade'] .hud-depth-edge {
+  background: rgba(252, 177, 49, 0.14);
+}
+
+.game-hud-container--compact[data-register='arcade'] .hud-depth-edge__fill {
+  background: linear-gradient(90deg, rgba(252, 177, 49, 0.4), #fcb131);
+  box-shadow: 0 0 6px rgba(252, 177, 49, 0.6);
 }

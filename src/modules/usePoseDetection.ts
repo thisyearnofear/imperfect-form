@@ -28,11 +28,7 @@ import {
   monitorCameraStream,
   getFarcasterCameraConstraints,
 } from '../utils/cameraPermissions';
-import {
-  initializeTensorFlow,
-  monitorTensorFlowMemory,
-  disposeUnusedTensors,
-} from '../utils/tensorFlowInit';
+import { initializeTensorFlow, monitorTensorFlowMemory } from '../utils/tensorFlowInit';
 import { handleFarcasterError } from '../utils/farcasterErrors';
 import { isFarcasterMiniApp } from '../utils/farcasterMiniApp';
 import {
@@ -803,7 +799,7 @@ export function usePoseDetection(
           preferWebGL: true,
           memoryLimit: isFarcaster ? 256 : 512,
         });
-
+        if (cancelled || !isActiveRef.current) return;
         if (!tfResult.success) {
           const farcasterError = handleFarcasterError(
             new Error('TensorFlow initialization failed'),
@@ -899,6 +895,15 @@ export function usePoseDetection(
           modelType: modelType as any,
           enableSmoothing: false,
         });
+        if (cancelled || !isActiveRef.current) {
+          try {
+            (detectorRef.current as any)?.dispose?.();
+          } catch (error) {
+            console.warn('Error disposing canceled detector:', error);
+          }
+          detectorRef.current = null;
+          return;
+        }
 
         notifyStateChange({ hasPoseDetection: true, isLoading: false });
         emitProgress({
@@ -1036,8 +1041,11 @@ export function usePoseDetection(
               const memoryCheck = monitorTensorFlowMemory();
 
               if (memoryCheck.shouldDispose) {
-                console.log('Memory cleanup triggered:', memoryCheck.memoryInfo);
-                disposeUnusedTensors();
+                // TensorFlow engine scopes are owned by the detector/tidy calls;
+                // do not end a scope from the React frame loop. Surface the
+                // pressure for diagnostics and let detector disposal handle
+                // lifecycle cleanup at session end.
+                console.warn('TensorFlow memory pressure observed:', memoryCheck.memoryInfo);
               }
             }
 
@@ -1253,18 +1261,9 @@ export function usePoseDetection(
         (canvasRef.current as any)._isTransferred = false;
       }
 
-      // Clean up TensorFlow memory (especially important for Farcaster)
-      const isFarcaster = isFarcasterMiniApp();
-      if (isFarcaster || tf?.getBackend()) {
-        try {
-          // Force cleanup for mini apps
-          disposeUnusedTensors();
-          tf.disposeVariables();
-          console.log('Cleaned up TensorFlow memory on iOS');
-        } catch (e) {
-          console.warn('Error cleaning up TensorFlow memory:', e);
-        }
-      }
+      // The detector owns its model tensors and has been disposed above.
+      // Do not call tf.disposeVariables() here: it is global and can dispose
+      // variables belonging to another active TensorFlow consumer.
 
       notifyStateChange({ hasCamera: false, hasPoseDetection: false, poseDetected: false });
     };

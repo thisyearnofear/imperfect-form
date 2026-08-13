@@ -808,6 +808,17 @@ body[data-coach-pulse='demo'] .coach-bay-pulse-fallback {
   }
 }
 
+/* Desktop session rail: keep the robot proof case in the upper-right lane and
+   bound its height so it cannot grow down into the lower coaching cards. */
+@media (min-width: 721px) {
+  .coach-twin-peek.is-session {
+    position: absolute;
+    max-height: min(38vh, 24rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .coach-twin-peek.is-demo:not(.is-progress) .coach-twin-peek__forearm {
     animation: none;

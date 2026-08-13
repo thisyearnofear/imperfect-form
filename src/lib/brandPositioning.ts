@@ -139,9 +139,8 @@ export type SessionIntentDef = {
     primaryAria: string;
     secondary: string;
     secondaryAria: string;
-    /** Exercise ModeSwitch: hidden for calm (breath entry, not moves) */
+    /** Exercise selection: hidden for calm (breath entry, not moves) */
     showExerciseModes: boolean;
-    modeGroupLabel: string;
   };
 };
 
@@ -163,7 +162,6 @@ export const SESSION_INTENTS: readonly SessionIntentDef[] = [
       secondary: 'Reset',
       secondaryAria: 'Reset session',
       showExerciseModes: true,
-      modeGroupLabel: 'Exercise selection',
     },
   },
   {
@@ -178,7 +176,6 @@ export const SESSION_INTENTS: readonly SessionIntentDef[] = [
       secondary: 'RESET',
       secondaryAria: 'Reset game',
       showExerciseModes: true,
-      modeGroupLabel: 'Workout mode selection',
     },
   },
   {
@@ -193,7 +190,6 @@ export const SESSION_INTENTS: readonly SessionIntentDef[] = [
       secondary: 'Clear',
       secondaryAria: 'Clear calm session',
       showExerciseModes: false,
-      modeGroupLabel: 'Recovery options',
     },
   },
 ] as const;

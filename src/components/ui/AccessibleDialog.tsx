@@ -95,11 +95,11 @@ const variantStyles: Record<
       position: 'fixed',
       inset: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      zIndex: 2000,
+      zIndex: designTokens.zIndex.walletModalBackdrop,
       animation: 'fadeIn 300ms ease-in-out',
     },
     content:
-      'fixed left-[50%] top-[20%] sm:top-[20%] z-[2001] max-h-[90vh] sm:max-h-[85vh] w-[95vw] sm:w-[90vw] translate-x-[-50%] translate-y-[-50%] sm:translate-y-[-50%] rounded-md focus:outline-none overflow-auto text-center',
+      'fixed left-[50%] top-[20%] sm:top-[20%] max-h-[90vh] sm:max-h-[85vh] w-[95vw] sm:w-[90vw] translate-x-[-50%] translate-y-[-50%] sm:translate-y-[-50%] rounded-md focus:outline-none overflow-auto text-center',
     contentStyle: {
       backgroundColor: '#000000',
       color: '#ffffff',
@@ -109,6 +109,7 @@ const variantStyles: Record<
       padding: '1rem',
       maxHeight: '90vh',
       width: '95vw',
+      zIndex: designTokens.zIndex.walletModalContent,
       animation: 'scaleIn 300ms ease-in-out',
     } as React.CSSProperties,
     title: {

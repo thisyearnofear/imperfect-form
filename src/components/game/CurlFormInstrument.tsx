@@ -11,6 +11,7 @@ import {
   getPersonalityFeedback,
 } from '@/lib/coachPersonalities';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
+import { getFormGrade } from '@/lib/formGrade';
 
 interface CurlFormInstrumentProps {
   telemetry: CurlTelemetry | null;
@@ -59,15 +60,6 @@ function calculateFormScore(
   return Math.round(Math.max(0, Math.min(100, deltaScore - driftPenalty + rangeBonus)));
 }
 
-/** Get form grade and color from score */
-function getFormGrade(score: number): { grade: string; color: string } {
-  if (score >= 90) return { grade: 'A', color: '#4ade80' };
-  if (score >= 80) return { grade: 'B', color: '#75e6b1' };
-  if (score >= 70) return { grade: 'C', color: '#fbbf24' };
-  if (score >= 60) return { grade: 'D', color: '#f97316' };
-  return { grade: 'F', color: '#ef4444' };
-}
-
 interface ScoreEntry {
   rep: number;
   score: number;
@@ -94,8 +86,10 @@ export function CurlFormInstrument({
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([]);
   const prevRepCountRef = useRef(repCount);
   const [currentGrade, setCurrentGrade] = useState<string | null>(null);
-  const [currentFormScore, setCurrentFormScore] = useState(0);
   const prevGradeRef = useRef<string | null>(null);
+  // Progressive disclosure: the instrument can collapse to a compact status
+  // strip so the camera feed stays visible mid-set. Default expanded.
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     if (!coachStation.enabled) return;
@@ -195,7 +189,6 @@ export function CurlFormInstrument({
   useEffect(() => {
     if (!tracking || !telemetry) {
       setCurrentGrade(null);
-      setCurrentFormScore(0);
       return;
     }
     const angle = clampAngle(telemetry.elbowAngle);
@@ -211,7 +204,6 @@ export function CurlFormInstrument({
     );
     const { grade } = getFormGrade(score);
     setCurrentGrade(grade);
-    setCurrentFormScore(score);
     if (onFormScore) {
       onFormScore(score);
     }
@@ -240,16 +232,29 @@ export function CurlFormInstrument({
   }, [currentGrade, tracking, telemetry, triggerCoachHaptic, currentPersonality]);
 
   if (!tracking || !telemetry) {
+    // Progressive disclosure: before a curl is active (framing or between
+    // reps), collapse to a one-line "form score" pill so the camera stays the
+    // hero. The full dial + instrument only expands once a curl is measured.
+    const lastScore = scoreHistory.length > 0 ? scoreHistory[scoreHistory.length - 1].score : null;
+    const lastGrade = lastScore !== null ? getFormGrade(lastScore) : null;
     return (
-      <section className="curl-instrument curl-instrument--waiting" aria-live="polite">
-        <div>
+      <section
+        className="curl-instrument curl-instrument--waiting curl-instrument--pill"
+        aria-live="polite"
+      >
+        <div className="curl-instrument__pill-text">
           <p className="curl-instrument__eyebrow">Robot demo</p>
-          <strong>Show one curl</strong>
-          <span>The arm will mirror your elbow angle in real time.</span>
+          <strong>{lastScore !== null ? `Form score ${lastScore}/100` : 'Show one curl'}</strong>
         </div>
-        <div className="curl-instrument__waiting-mark" aria-hidden="true">
-          ◌
-        </div>
+        {lastGrade ? (
+          <span className="curl-instrument__pill-grade" style={{ color: lastGrade.color }}>
+            {lastGrade.grade}
+          </span>
+        ) : (
+          <div className="curl-instrument__waiting-mark" aria-hidden="true">
+            ◌
+          </div>
+        )}
       </section>
     );
   }
@@ -292,7 +297,7 @@ export function CurlFormInstrument({
 
   return (
     <section
-      className={`curl-instrument curl-instrument--${telemetry.phase}`}
+      className={`curl-instrument curl-instrument--${telemetry.phase}${collapsed ? ' is-collapsed' : ''}`}
       aria-label="Live curl form instrument"
       role="region"
     >
@@ -304,237 +309,271 @@ export function CurlFormInstrument({
           <p className="curl-instrument__eyebrow">Robot demo</p>
           <strong>{phaseLabel[telemetry.phase]}</strong>
         </div>
-        <span className="curl-instrument__rep">Match the arm</span>
-      </div>
-
-      <div className="curl-instrument__body">
-        <div
-          className={`curl-instrument__dial${showPulse ? ' curl-instrument__dial--pulse' : ''}`}
-          aria-hidden="true"
-        >
-          <div className="curl-instrument__dial-ring" />
-          {/* Animated target line — shows where the arm should be */}
-          <div
-            className="curl-instrument__target-line"
-            style={{ transform: `rotate(${180 - targetMid}deg)` }}
-          />
-          <div
-            className="curl-instrument__forearm"
-            style={{ transform: `rotate(${180 - angle}deg)` }}
+        <div className="curl-instrument__header-actions">
+          <span className="curl-instrument__rep">Match the arm</span>
+          <button
+            type="button"
+            className="curl-instrument__toggle"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-expanded={!collapsed}
+            aria-controls="curl-instrument-body"
+            aria-label={collapsed ? 'Show form instrument' : 'Hide form instrument'}
           >
-            <span />
-          </div>
-          <div className="curl-instrument__hub" />
-          <span className="curl-instrument__dial-label curl-instrument__dial-label--top">50°</span>
-          <span className="curl-instrument__dial-label curl-instrument__dial-label--bottom">
-            160°
-          </span>
-        </div>
-
-        <div className="curl-instrument__readings">
-          <div className="curl-instrument__reading curl-instrument__reading--primary">
-            <span>Elbow angle</span>
-            <strong>{Math.round(angle)}°</strong>
-            <small>
-              target {telemetry.targetMinDeg}–{telemetry.targetMaxDeg}°
-            </small>
-          </div>
-          <div className="curl-instrument__reading">
-            <span>Elbow drift</span>
-            <strong>{drift === null ? '—' : `${Math.round(drift)}°`}</strong>
-            <small>
-              {drift === null
-                ? 'keep hip + shoulder visible'
-                : driftDelta !== null && driftDelta > 0
-                  ? `${driftDelta}° over target`
-                  : 'within target'}
-            </small>
-          </div>
+            {collapsed ? 'Show' : 'Hide'}
+          </button>
         </div>
       </div>
 
-      <div
-        className="curl-instrument__range"
-        aria-label={`Elbow angle ${Math.round(angle)} degrees, target ${telemetry.targetMinDeg} to ${telemetry.targetMaxDeg} degrees`}
-      >
-        <div className="curl-instrument__range-track">
-          <span
-            className="curl-instrument__range-target"
-            style={{ left: targetStart, width: targetWidth }}
-          />
-          <span className="curl-instrument__range-marker" style={{ left: anglePosition }} />
-        </div>
-        <div className="curl-instrument__range-labels">
-          <span>Extend</span>
+      {collapsed && (
+        <div className="curl-instrument__collapsed-status" aria-hidden="true">
           <span>
-            {rangeReached
-              ? 'In curl range ✓'
-              : `${Math.max(0, Math.round(angle - targetMid))}° to target`}
+            Angle <strong>{Math.round(angle)}°</strong>
           </span>
-          <span>Curl</span>
-        </div>
-      </div>
-
-      {/* SO-101 Robot Joint Readout */}
-      {coachStation.enabled && (
-        <div className="curl-instrument__robot">
-          <div className="curl-instrument__robot-header">
-            <span className="curl-instrument__robot-badge">SO-101</span>
-            <span className="curl-instrument__robot-label">Robot elbow</span>
-          </div>
-          <div className="curl-instrument__robot-angles">
-            <div className="curl-instrument__robot-angle">
-              <span>Commanded</span>
-              <strong>{robotElbowDeg !== null ? `${Math.round(robotElbowDeg)}°` : '—'}</strong>
-            </div>
-            <div className="curl-instrument__robot-angle">
-              <span>Observed</span>
-              <strong>
-                {robotMeasuredDeg !== null ? `${Math.round(robotMeasuredDeg)}°` : '—'}
-              </strong>
-            </div>
-            {telemetry && robotElbowDeg !== null && (
-              <div className="curl-instrument__robot-angle curl-instrument__robot-angle--diff">
-                <span>Delta</span>
-                <strong>{Math.abs(Math.round(telemetry.elbowAngle - robotElbowDeg))}°</strong>
-              </div>
-            )}
-          </div>
-          <p className="curl-instrument__robot-tip">
-            Match the robot's target angle with your elbow
-          </p>
+          <span>
+            Grade <strong style={{ color: gradeColor }}>{grade}</strong>
+          </span>
+          <span>
+            Score <strong>{formScore}/100</strong>
+          </span>
         </div>
       )}
 
-      {/* Live Form Score */}
-      <div className="curl-instrument__form-score">
-        <div className="curl-instrument__form-score-header">
-          <span className="curl-instrument__form-score-label">Form Score</span>
-          <span className="curl-instrument__form-score-grade" style={{ color: gradeColor }}>
-            {grade}
-          </span>
-        </div>
-        <div className="curl-instrument__form-score-bar">
+      <div id="curl-instrument-body" className="curl-instrument__body-wrap">
+        <div className="curl-instrument__body">
           <div
-            className="curl-instrument__form-score-fill"
-            style={{
-              width: `${formScore}%`,
-              backgroundColor: gradeColor,
-            }}
-          />
-        </div>
-        <div className="curl-instrument__form-score-details">
-          <span>{formScore}/100</span>
-          <span>
-            {formScore >= 90
-              ? 'Excellent match!'
-              : formScore >= 80
-                ? 'Good form'
-                : formScore >= 70
-                  ? 'Almost there'
-                  : formScore >= 60
-                    ? 'Keep adjusting'
-                    : 'Match the target angle'}
-          </span>
-        </div>
-      </div>
-
-      {/* Score History */}
-      {scoreHistory.length > 0 && (
-        <div className="curl-instrument__history">
-          <div className="curl-instrument__history-header">
-            <span className="curl-instrument__history-label">Score History</span>
-            <span className="curl-instrument__history-trend" style={{ color: trendColor }}>
-              {trendLabel}
+            className={`curl-instrument__dial${showPulse ? ' curl-instrument__dial--pulse' : ''}`}
+            aria-hidden="true"
+          >
+            <div className="curl-instrument__dial-ring" />
+            {/* Animated target line — shows where the arm should be */}
+            <div
+              className="curl-instrument__target-line"
+              style={{ transform: `rotate(${180 - targetMid}deg)` }}
+            />
+            <div
+              className="curl-instrument__forearm"
+              style={{ transform: `rotate(${180 - angle}deg)` }}
+            >
+              <span />
+            </div>
+            <div className="curl-instrument__hub" />
+            <span className="curl-instrument__dial-label curl-instrument__dial-label--top">
+              50°
+            </span>
+            <span className="curl-instrument__dial-label curl-instrument__dial-label--bottom">
+              160°
             </span>
           </div>
-          <div className="curl-instrument__history-chart">
-            {scoreHistory.map((entry) => {
-              const height = Math.max(10, (entry.score / 100) * 40);
-              const { color } = getFormGrade(entry.score);
-              return (
-                <div
-                  key={entry.rep}
-                  className="curl-instrument__history-bar"
-                  style={{
-                    height: `${height}px`,
-                    backgroundColor: color,
-                  }}
-                  title={`Rep ${entry.rep}: ${entry.score}/100`}
-                />
-              );
-            })}
+
+          <div className="curl-instrument__readings">
+            <div className="curl-instrument__reading curl-instrument__reading--primary">
+              <span>Elbow angle</span>
+              <strong>{Math.round(angle)}°</strong>
+              <small>
+                target {telemetry.targetMinDeg}–{telemetry.targetMaxDeg}°
+              </small>
+            </div>
+            <div className="curl-instrument__reading">
+              <span>Elbow drift</span>
+              <strong>{drift === null ? '—' : `${Math.round(drift)}°`}</strong>
+              <small>
+                {drift === null
+                  ? 'keep hip + shoulder visible'
+                  : driftDelta !== null && driftDelta > 0
+                    ? `${driftDelta}° over target`
+                    : 'within target'}
+              </small>
+            </div>
           </div>
-          <div className="curl-instrument__history-stats">
-            <span>Avg: {avgScore !== null ? `${avgScore}/100` : '—'}</span>
-            <span>Best: {Math.max(...scoreHistory.map((e) => e.score))}/100</span>
-            <span>Reps: {scoreHistory.length}</span>
+        </div>
+
+        <div
+          className="curl-instrument__range"
+          aria-label={`Elbow angle ${Math.round(angle)} degrees, target ${telemetry.targetMinDeg} to ${telemetry.targetMaxDeg} degrees`}
+        >
+          <div className="curl-instrument__range-track">
+            <span
+              className="curl-instrument__range-target"
+              style={{ left: targetStart, width: targetWidth }}
+            />
+            <span className="curl-instrument__range-marker" style={{ left: anglePosition }} />
+          </div>
+          <div className="curl-instrument__range-labels">
+            <span>Extend</span>
+            <span>
+              {rangeReached
+                ? 'In curl range ✓'
+                : `${Math.max(0, Math.round(angle - targetMid))}° to target`}
+            </span>
+            <span>Curl</span>
           </div>
         </div>
-      )}
 
-      {/* Coach Comparison */}
-      <div className="curl-instrument__coach-compare">
-        <div className="curl-instrument__coach-compare-header">
-          <span className="curl-instrument__coach-compare-label">Coach Feedback</span>
-          <span className="curl-instrument__coach-compare-personality">
-            {COACH_PERSONALITIES[currentPersonality].emoji}{' '}
-            {COACH_PERSONALITIES[currentPersonality].name}
-          </span>
-        </div>
-        <p className="curl-instrument__coach-compare-feedback">
-          {getPersonalityFeedback(currentPersonality, 'form_feedback', formScore)}
-        </p>
-
-        {/* Compact Coach Switcher */}
-        <div className="curl-instrument__coach-switcher">
-          {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[]).map((personality) => {
-            const coach = COACH_PERSONALITIES[personality];
-            const selected = currentPersonality === personality;
-            return (
-              <button
-                key={personality}
-                type="button"
-                className={`curl-instrument__coach-switcher-btn${selected ? ' is-selected' : ''}`}
-                onClick={() => setPersonality(personality)}
-                aria-label={`Switch to ${coach.name} coach`}
-                aria-pressed={selected}
-              >
-                <span>{coach.emoji}</span>
-                <span>{coach.name}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="curl-instrument__coach-compare-others">
-          {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[])
-            .filter((p) => p !== currentPersonality)
-            .map((personality) => (
-              <div key={personality} className="curl-instrument__coach-compare-other">
-                <span>{COACH_PERSONALITIES[personality].emoji}</span>
-                <span className="curl-instrument__coach-compare-other-feedback">
-                  {getPersonalityFeedback(personality, 'form_feedback', formScore)}
-                </span>
+        {/* SO-101 Robot Joint Readout */}
+        {coachStation.enabled && (
+          <div className="curl-instrument__robot">
+            <div className="curl-instrument__robot-header">
+              <span className="curl-instrument__robot-badge">SO-101</span>
+              <span className="curl-instrument__robot-label">Robot elbow</span>
+            </div>
+            <div className="curl-instrument__robot-angles">
+              <div className="curl-instrument__robot-angle">
+                <span>Commanded</span>
+                <strong>{robotElbowDeg !== null ? `${Math.round(robotElbowDeg)}°` : '—'}</strong>
               </div>
-            ))}
-        </div>
-      </div>
+              <div className="curl-instrument__robot-angle">
+                <span>Observed</span>
+                <strong>
+                  {robotMeasuredDeg !== null ? `${Math.round(robotMeasuredDeg)}°` : '—'}
+                </strong>
+              </div>
+              {telemetry && robotElbowDeg !== null && (
+                <div className="curl-instrument__robot-angle curl-instrument__robot-angle--diff">
+                  <span>Delta</span>
+                  <strong>{Math.abs(Math.round(telemetry.elbowAngle - robotElbowDeg))}°</strong>
+                </div>
+              )}
+            </div>
+            <p className="curl-instrument__robot-tip">
+              Match the robot's target angle with your elbow
+            </p>
+          </div>
+        )}
 
-      {/* Reps and Form Status */}
-      {repCount > 0 && (
-        <div className="curl-instrument__score">
-          <span className="curl-instrument__score-label">Reps</span>
-          <span className="curl-instrument__score-value">{repCount}</span>
-          <span className="curl-instrument__score-divider">·</span>
-          <span className="curl-instrument__score-label">Form</span>
-          <span
-            className={`curl-instrument__score-value${rangeReached ? ' curl-instrument__score-value--good' : ''}`}
-          >
-            {rangeReached ? '✓' : '—'}
-          </span>
+        {/* Live Form Score */}
+        <div className="curl-instrument__form-score">
+          <div className="curl-instrument__form-score-header">
+            <span className="curl-instrument__form-score-label">Form Score</span>
+            <span className="curl-instrument__form-score-grade" style={{ color: gradeColor }}>
+              {grade}
+            </span>
+          </div>
+          <div className="curl-instrument__form-score-bar">
+            <div
+              className="curl-instrument__form-score-fill"
+              style={{
+                width: `${formScore}%`,
+                backgroundColor: gradeColor,
+              }}
+            />
+          </div>
+          <div className="curl-instrument__form-score-details">
+            <span>{formScore}/100</span>
+            <span>
+              {formScore >= 90
+                ? 'Excellent match!'
+                : formScore >= 80
+                  ? 'Good form'
+                  : formScore >= 70
+                    ? 'Almost there'
+                    : formScore >= 60
+                      ? 'Keep adjusting'
+                      : 'Match the target angle'}
+            </span>
+          </div>
         </div>
-      )}
+
+        {/* Score History */}
+        {scoreHistory.length > 0 && (
+          <div className="curl-instrument__history">
+            <div className="curl-instrument__history-header">
+              <span className="curl-instrument__history-label">Score History</span>
+              <span className="curl-instrument__history-trend" style={{ color: trendColor }}>
+                {trendLabel}
+              </span>
+            </div>
+            <div className="curl-instrument__history-chart">
+              {scoreHistory.map((entry) => {
+                const height = Math.max(10, (entry.score / 100) * 40);
+                const { color } = getFormGrade(entry.score);
+                return (
+                  <div
+                    key={entry.rep}
+                    className="curl-instrument__history-bar"
+                    style={{
+                      height: `${height}px`,
+                      backgroundColor: color,
+                    }}
+                    title={`Rep ${entry.rep}: ${entry.score}/100`}
+                  />
+                );
+              })}
+            </div>
+            <div className="curl-instrument__history-stats">
+              <span>Avg: {avgScore !== null ? `${avgScore}/100` : '—'}</span>
+              <span>Best: {Math.max(...scoreHistory.map((e) => e.score))}/100</span>
+              <span>Reps: {scoreHistory.length}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Coach Comparison — meaningful only after the first measured rep, so
+          it's staged in via progressive disclosure instead of crowding the
+          pre-rep surface. */}
+        {repCount > 0 && (
+          <div className="curl-instrument__coach-compare">
+            <div className="curl-instrument__coach-compare-header">
+              <span className="curl-instrument__coach-compare-label">Coach Feedback</span>
+              <span className="curl-instrument__coach-compare-personality">
+                {COACH_PERSONALITIES[currentPersonality].emoji}{' '}
+                {COACH_PERSONALITIES[currentPersonality].name}
+              </span>
+            </div>
+            <p className="curl-instrument__coach-compare-feedback">
+              {getPersonalityFeedback(currentPersonality, 'form_feedback', formScore)}
+            </p>
+
+            {/* Compact Coach Switcher */}
+            <div className="curl-instrument__coach-switcher">
+              {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[]).map((personality) => {
+                const coach = COACH_PERSONALITIES[personality];
+                const selected = currentPersonality === personality;
+                return (
+                  <button
+                    key={personality}
+                    type="button"
+                    className={`curl-instrument__coach-switcher-btn${selected ? ' is-selected' : ''}`}
+                    onClick={() => setPersonality(personality)}
+                    aria-label={`Switch to ${coach.name} coach`}
+                    aria-pressed={selected}
+                  >
+                    <span>{coach.emoji}</span>
+                    <span>{coach.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="curl-instrument__coach-compare-others">
+              {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[])
+                .filter((p) => p !== currentPersonality)
+                .map((personality) => (
+                  <div key={personality} className="curl-instrument__coach-compare-other">
+                    <span>{COACH_PERSONALITIES[personality].emoji}</span>
+                    <span className="curl-instrument__coach-compare-other-feedback">
+                      {getPersonalityFeedback(personality, 'form_feedback', formScore)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reps and Form Status */}
+        {repCount > 0 && (
+          <div className="curl-instrument__score">
+            <span className="curl-instrument__score-label">Reps</span>
+            <span className="curl-instrument__score-value">{repCount}</span>
+            <span className="curl-instrument__score-divider">·</span>
+            <span className="curl-instrument__score-label">Form</span>
+            <span
+              className={`curl-instrument__score-value${rangeReached ? ' curl-instrument__score-value--good' : ''}`}
+            >
+              {rangeReached ? '✓' : '—'}
+            </span>
+          </div>
+        )}
+      </div>
     </section>
   );
 }

@@ -248,19 +248,6 @@ div[data-backdrop],
   color: #ffffff !important;
 }
 
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .imf-mode-segment:hover:not(:disabled) {
-    background: transparent;
-    transform: none;
-  }
-
-  .imf-mode-segment:active:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(0.98);
-  }
-}
-
 /* General touch-friendly enhancements */
 .touch-manipulation {
   -webkit-tap-highlight-color: transparent;

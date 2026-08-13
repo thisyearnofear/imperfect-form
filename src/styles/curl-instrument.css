@@ -52,6 +52,72 @@
   gap: 0.75rem;
 }
 
+.curl-instrument__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Collapse/expand toggle — the instrument shell is pointer-events:none so the
+   camera stays reachable; interactive controls opt back in explicitly. */
+.curl-instrument__toggle {
+  pointer-events: auto;
+  padding: 0.22rem 0.5rem;
+  border: 1px solid rgba(122, 235, 216, 0.24);
+  border-radius: 999px;
+  background: rgba(122, 235, 216, 0.08);
+  color: rgba(197, 243, 234, 0.84);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.52rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.1s ease-out;
+}
+
+.curl-instrument__toggle:hover {
+  background: rgba(122, 235, 216, 0.16);
+  color: #f0fffb;
+}
+
+.curl-instrument__toggle:active {
+  transform: scale(0.94);
+}
+
+/* Collapsed: keep only the header + compact status strip so the camera stays
+   the hero of the stage mid-set. */
+.curl-instrument.is-collapsed .curl-instrument__body-wrap {
+  display: none;
+}
+
+.curl-instrument__collapsed-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.55rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(117, 230, 177, 0.15);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(181, 229, 221, 0.6);
+}
+
+.curl-instrument__collapsed-status strong {
+  color: #f5d58d;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+/* The coach switcher lives inside the pointer-events:none shell too — restore
+   interactivity or tapping a coach does nothing. */
+.curl-instrument__coach-switcher-btn {
+  pointer-events: auto;
+}
+
 .curl-instrument__header strong {
   display: block;
   color: #f0fffb;
@@ -703,4 +769,36 @@
 .curl-instrument__coach-switcher-btn span:last-child {
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Progressive disclosure: idle pill — a one-line "form score" strip instead
+   of the full dial, so the camera stays the hero before / between curls. */
+.curl-instrument--pill {
+  min-height: 0;
+  padding: 0.55rem 0.7rem;
+  gap: 0.7rem;
+}
+
+.curl-instrument--pill .curl-instrument__pill-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.curl-instrument--pill .curl-instrument__pill-text .curl-instrument__eyebrow {
+  margin: 0;
+}
+
+.curl-instrument--pill .curl-instrument__pill-text strong {
+  font-size: 0.72rem;
+  line-height: 1.15;
+}
+
+.curl-instrument__pill-grade {
+  flex: 0 0 auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.3rem;
+  font-weight: 750;
+  line-height: 1;
 }

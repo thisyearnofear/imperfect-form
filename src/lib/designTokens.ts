@@ -6,6 +6,8 @@
  * PRINCIPLE: DRY - Every value defined once, referenced everywhere
  */
 
+import { Z } from './zTokens';
+
 // ═══════════════════════════════════════════════════════════════════════════
 // COLOR TOKENS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -403,18 +405,37 @@ export const breakpoints = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const zIndex = {
-  // Layering hierarchy (low to high)
-  base: 0,
-  dropdown: 10,
-  sticky: 20,
-  fixed: 30,
-  modalBackdrop: 900,
-  modal: 1000,
-  popover: 1100,
-  tooltip: 1200,
-  notification: 1300,
-  debug: 9999, // Debug panels stay on top
-};
+  // Layering hierarchy (low to high). Values delegate to the central
+  // zTokens.ts scale so every overlay shares one source of truth.
+  base: Z.cameraBg,
+  dropdown: Z.dropdown,
+  sticky: Z.gameTopControls,
+  fixed: Z.raceBanner,
+
+  // ── Game session overlays (scoped to the camera stage) ──────────────────
+  /** Rep count pop / form flash during a live set */
+  overlayFeedback: Z.overlayFeedback,
+  /** Pose-detection / loading overlay during boot */
+  overlayLoader: Z.overlayLoader,
+
+  // ── Modals (portal'd to body) ────────────────────────────────────────────
+  modalBackdrop: Z.modalBackdrop,
+  modal: Z.modalContent,
+  /** Small fixed chrome that should float above modal content (fullscreen exit) */
+  modalFloating: Z.modalNested,
+  popover: Z.popover,
+  tooltip: Z.tooltip,
+  notification: Z.overlayAchievement,
+  /** Wallet selector modal — historically above thirdweb/wallet SDK overlays */
+  walletModalBackdrop: Z.walletModalBackdrop,
+  walletModalContent: Z.walletModalContent,
+  /** Popups nested inside a modal (leaderboard user breakdown) */
+  modalNested: Z.modalNested,
+
+  // ── Full-screen gates & dev tools ────────────────────────────────────────
+  gate: Z.gate, // Camera primer, onboarding modal
+  debug: Z.gate, // Debug panels stay on top (dev-only render)
+} as const;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UTILITY FUNCTION: Get responsive value

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { RotateCcw, X } from 'lucide-react';
 import { GameHUD, RepFeedbackOverlay } from './GameHUD';
 import { GameLoadingOverlay, DebugOverlay } from './GameOverlay';
 import { LiveCoachingStatus } from './LiveCoachingStatus';
@@ -35,6 +36,9 @@ interface GameCanvasProps {
   metrics?: import('@/types/mediapipe').BiomechanicalState | null;
   curlPoseData?: import('@/types/mediapipe').CurlPoseData | null;
   onFormScore?: (score: number) => void;
+  /** Subtle baked-in rotate hint for portrait sessions (P6). */
+  showRotateHint?: boolean;
+  onDismissRotateHint?: () => void;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -55,6 +59,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   metrics = null,
   curlPoseData = null,
   onFormScore,
+  showRotateHint = false,
+  onDismissRotateHint,
 }) => {
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
@@ -65,6 +71,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         : 'ready';
 
   const isLoadingVisible = !poseState.hasPoseDetection || !poseState.poseDetected;
+  // Only the loading overlay should be visible while the pose model boots —
+  // hide the HUD so it never shows "00:00 · 0" as noise during warm-up.
+  const isBooting = !poseState.hasPoseDetection;
   const qualityMessage =
     isMobile && detectionProgress?.qualityTier ? detectionProgress.message : null;
   const coachingMoment = useCoachingMoment(
@@ -91,16 +100,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   if (isMobile) {
     return (
       <div className="w-full flex flex-col items-center justify-start relative h-full">
-        <GameHUD
-          mode={mode}
-          timeLeft={timeLeft}
-          repCount={repCount}
-          formatTime={formatTime}
-          isOverlay={isFullscreen}
-          isRace={isRace}
-          depth={metrics?.depth}
-          warnings={metrics?.warnings}
-        />
+        {!isBooting && (
+          <GameHUD
+            mode={mode}
+            timeLeft={timeLeft}
+            repCount={repCount}
+            formatTime={formatTime}
+            isOverlay={isFullscreen}
+            isRace={isRace}
+            isMobile={isMobile}
+            depth={metrics?.depth}
+            warnings={metrics?.warnings}
+          />
+        )}
         <div
           id="canvasContainerMobile"
           aria-label="Game Canvas Mobile"
@@ -126,6 +138,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               {qualityMessage}
             </div>
           )}
+          {showRotateHint && (
+            <div className="session-rotate-hint">
+              <RotateCcw size={13} strokeWidth={2} aria-hidden="true" />
+              <span role="status">Rotate for full view</span>
+              {onDismissRotateHint && (
+                <button
+                  type="button"
+                  className="session-rotate-hint__dismiss"
+                  onClick={onDismissRotateHint}
+                  aria-label="Dismiss rotate hint"
+                >
+                  <X size={12} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          )}
           <LiveCoachingStatus {...coachingStatusProps} />
           {mode === 'curls' ? (
             <CurlFormInstrument
@@ -143,16 +171,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-start relative">
-      <GameHUD
-        mode={mode}
-        timeLeft={timeLeft}
-        repCount={repCount}
-        formatTime={formatTime}
-        isOverlay={false}
-        isRace={isRace}
-        depth={metrics?.depth}
-        warnings={metrics?.warnings}
-      />
+      {!isBooting && (
+        <GameHUD
+          mode={mode}
+          timeLeft={timeLeft}
+          repCount={repCount}
+          formatTime={formatTime}
+          isOverlay={false}
+          isRace={isRace}
+          depth={metrics?.depth}
+          warnings={metrics?.warnings}
+        />
+      )}
       <div
         id="canvasContainerDesktop"
         aria-label="Game Canvas Desktop"

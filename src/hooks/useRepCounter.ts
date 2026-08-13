@@ -40,7 +40,7 @@ export function useRepCounter(
       if (count > prevCount && count > 0) {
         triggerRepFeedback();
         setRepFeedback({ show: true, count });
-        setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 1000);
+        setTimeout(() => setRepFeedback((prev) => ({ ...prev, show: false })), 800);
       }
 
       if (shouldCelebrateFirstSignal(count, prevCount, Boolean(started)) && onFirstRep) {

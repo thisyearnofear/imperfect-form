@@ -1,4 +1,5 @@
 import React from 'react';
+import { designTokens } from '@/lib/designTokens';
 
 interface FullscreenExitButtonProps {
   isFullscreen: boolean;
@@ -34,7 +35,7 @@ export const FullscreenExitButton: React.FC<FullscreenExitButtonProps> = ({
       onClick={onExit}
       style={{
         position: 'fixed',
-        zIndex: 1002,
+        zIndex: designTokens.zIndex.modalFloating,
         width: 40,
         height: 40,
         borderRadius: '50%',

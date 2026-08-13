@@ -1,0 +1,161 @@
+/* Foyer status strip — passive pre-session chrome: wallet state + Level X/5
+   progress toward the on-chain unlock. Never a gate, always informational. */
+
+.foyer-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0.5rem 0.7rem;
+  margin: 0.9rem 0 0;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  color: var(--studio-muted, #7a9692);
+  background: rgba(86, 217, 195, 0.05);
+  border: 1px solid rgba(86, 217, 195, 0.16);
+  border-radius: 0.6rem;
+}
+
+.foyer-status__wallet,
+.foyer-status__level {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.foyer-status__wallet svg,
+.foyer-status__level svg {
+  flex: 0 0 auto;
+  color: var(--studio-teal-bright, #56d9c3);
+}
+
+.foyer-status__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.7);
+}
+
+.foyer-status__dot.is-on {
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.7);
+}
+
+.foyer-status__label {
+  color: var(--studio-muted, #7a9692);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.foyer-status__label--unlocked {
+  color: var(--sandow-brass-soft, #f5c77d);
+}
+
+.foyer-status__connect {
+  padding: 0;
+  color: var(--studio-teal-bright, #56d9c3);
+  background: none;
+  border: none;
+  border-bottom: 1px dashed rgba(86, 217, 195, 0.5);
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: inherit;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.foyer-status__connect:hover:not(:disabled) {
+  color: #eafff9;
+  border-bottom-color: #eafff9;
+}
+
+.foyer-status__connect:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.foyer-status__connect:focus-visible {
+  outline: 2px solid var(--studio-teal-bright, #56d9c3);
+  outline-offset: 2px;
+}
+
+.foyer-status__divider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 0.9rem;
+  background: rgba(122, 235, 216, 0.18);
+}
+
+.foyer-status__level {
+  margin-left: auto;
+}
+
+.foyer-status__level-text {
+  color: var(--studio-paper-soft, #e8f8f4);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.foyer-status__level-text strong {
+  font-weight: 900;
+  color: var(--sandow-brass, #fcb131);
+}
+
+.foyer-status__level-max {
+  color: var(--studio-muted, #7a9692);
+  font-weight: 700;
+}
+
+.foyer-status__bar {
+  width: 3.6rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.foyer-status__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #56d9c3, #fcb131);
+  transition: width 400ms ease;
+}
+
+.foyer-status__hint {
+  color: var(--studio-muted-dim, #5c7370);
+  font-size: 0.56rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Arcade register: brass-led identity, teal kept as the quiet base. */
+.foyer-status--arcade {
+  border-color: rgba(252, 177, 49, 0.22);
+  background: rgba(252, 177, 49, 0.045);
+}
+
+.foyer-status--arcade .foyer-status__level svg {
+  color: var(--sandow-brass, #fcb131);
+}
+
+@media (max-width: 520px) {
+  .foyer-status__level {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .foyer-status__divider {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .foyer-status__fill {
+    transition: none;
+  }
+}

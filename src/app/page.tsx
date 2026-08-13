@@ -32,7 +32,7 @@ import {
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { getHasTrained } from '@/lib/hasTrained';
-import { UniversalConnectButton } from '@/components/wallet';
+import { UniversalConnectButton, WalletStatusPill } from '@/components/wallet';
 import { ScreenTransition } from '@/components/ui/ScreenTransition';
 import { CountUp } from '@/components/ui/CountUp';
 
@@ -233,7 +233,10 @@ export default function Home() {
         <p className="studio-status">
           <span /> Ready when you are
         </p>
-        <p className="studio-wordmark-sub">Private camera coaching</p>
+        <div className="flex items-center gap-3">
+          <p className="studio-wordmark-sub hidden sm:block">Private camera coaching</p>
+          <WalletStatusPill />
+        </div>
       </div>
     </div>
   );
@@ -360,6 +363,9 @@ export default function Home() {
                 </button>
                 <div className="hidden sm:block">
                   <UniversalConnectButton size="sm" showProfileWhenConnected />
+                </div>
+                <div className="sm:hidden">
+                  <WalletStatusPill compact />
                 </div>
               </div>
             </div>

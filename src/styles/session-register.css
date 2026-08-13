@@ -43,54 +43,6 @@
   border-color: rgba(252, 165, 165, 0.4);
 }
 
-#game-container[data-register='studio'] .imf-mode-switch {
-  font-family: ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
-  border-radius: 0.75rem;
-  border-color: rgba(94, 234, 212, 0.4) !important;
-  background: rgba(2, 44, 34, 0.85);
-  box-shadow: none;
-}
-
-#game-container[data-register='studio'] .imf-mode-segment {
-  font-family: inherit;
-  font-size: 0.8rem;
-  text-shadow: none;
-  border-radius: 0.5rem;
-  transform: none;
-  opacity: 1;
-  background: transparent;
-  border: 1px solid transparent;
-  color: rgba(204, 251, 241, 0.7);
-  animation: none;
-}
-
-#game-container[data-register='studio'] .imf-mode-segment.selected {
-  background: rgba(45, 212, 191, 0.25);
-  color: #ecfdf5;
-  border: 1px solid rgba(94, 234, 212, 0.55);
-  box-shadow: none;
-  transform: none;
-  animation: none;
-  text-shadow: none;
-}
-
-#game-container[data-register='studio'] .imf-mode-segment.selected::after,
-#game-container[data-register='studio'] .imf-mode-segment:not(.selected):hover:not(:disabled)::before {
-  content: none;
-  display: none;
-}
-
-#game-container[data-register='studio'] .imf-mode-segment:not(.selected):hover:not(:disabled) {
-  background: rgba(45, 212, 191, 0.12);
-  border-color: rgba(94, 234, 212, 0.3);
-  box-shadow: none;
-  transform: none;
-}
-
-#game-container[data-register='studio'] .mode-icon {
-  display: none;
-}
-
 /* —— Calm (Breathe) —— */
 #game-container[data-register='calm'] {
   font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
@@ -270,27 +222,6 @@
   border-color: #9a4b51;
 }
 
-#game-container[data-register='arcade'] .imf-mode-switch {
-  border-radius: 0;
-  background: rgba(24, 16, 4, 0.85);
-  border-color: rgba(252, 177, 49, 0.5) !important;
-}
-
-#game-container[data-register='arcade'] .imf-mode-segment {
-  font-family: inherit;
-  font-size: 0.55rem;
-  color: rgba(255, 217, 122, 0.75);
-  background: transparent;
-  border-color: transparent;
-  text-shadow: none;
-}
-
-#game-container[data-register='arcade'] .imf-mode-segment.selected {
-  color: #1a1206;
-  background: #fcb131;
-  border-color: #fcb131;
-}
-
 #game-container[data-register='arcade'] .coachy-tray {
   background: rgba(24, 16, 4, 0.92);
   border-color: rgba(252, 177, 49, 0.35);
@@ -438,63 +369,6 @@
   text-transform: uppercase;
 }
 
-/* —— Summary modal stage tabs (register follows stage / intent) —— */
-.summary-stage-tabs {
-  /* Outer chips sit in a soft well — concentric with dialog rounded-xl */
-  padding: 0.2rem;
-  border-radius: 1rem;
-}
-
-.summary-stage-tab {
-  background: rgba(255, 255, 255, 0.05);
-  color: #9ca3af;
-  transition:
-    color 180ms cubic-bezier(0.2, 0, 0, 1),
-    background-color 180ms cubic-bezier(0.2, 0, 0, 1),
-    box-shadow 180ms cubic-bezier(0.2, 0, 0, 1),
-    transform 150ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-.summary-stage-tab:hover {
-  color: #e5e7eb;
-}
-
-.summary-stage-tab:active {
-  transform: scale(0.96);
-}
-
-.summary-stage-tab.is-active {
-  background: #fcb131;
-  color: #000;
-  box-shadow: 0 0 10px rgba(252, 177, 49, 0.4);
-}
-
-[data-register='lab'] .summary-stage-tab.is-active,
-[data-summary-intent='understand'] .summary-stage-tab.is-active {
-  background: #7c3aed;
-  color: #fff;
-  box-shadow: 0 0 12px rgba(124, 58, 237, 0.45);
-}
-
-[data-register='calm'] .summary-stage-tab.is-active,
-[data-summary-intent='recover'] .summary-stage-tab.is-active {
-  background: #0d9488;
-  color: #fff;
-  box-shadow: 0 0 10px rgba(13, 148, 136, 0.35);
-  font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
-  font-weight: 700;
-}
-
-[data-summary-intent='understand'] .summary-stage-tabs,
-[data-register='lab'] .summary-stage-tabs {
-  font-family: ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
-}
-
-[data-summary-intent='understand'] .summary-stage-tab {
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
 /* —— Feel-better: HUD + arcade controls —— */
 #game-container .hud-value,
 #game-container .timer {
@@ -547,8 +421,7 @@
   #game-container #startButton:active:not(:disabled),
   #game-container #resetButton:active:not(:disabled),
   #game-container .mobile-controls-button:active:not(:disabled),
-  #game-container .feel-press:active:not(:disabled),
-  .summary-stage-tab:active {
+  #game-container .feel-press:active:not(:disabled) {
     transform: none;
   }
 }

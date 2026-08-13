@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { UnifiedLoader } from '@/components/ui';
 import type { LoadingPhase } from '@/components/ui/UnifiedLoader';
+import { zIndexClasses } from '@/lib/zTokens';
 
 interface GameOverlayProps {
   phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
@@ -72,7 +73,7 @@ export const GameLoadingOverlay: React.FC<GameOverlayProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 flex items-center justify-center pointer-events-none ${isOverlay ? 'z-[90]' : 'z-20'}`}
+      className={`absolute inset-0 flex items-center justify-center pointer-events-none ${isOverlay ? zIndexClasses.overlayLoader : zIndexClasses.cameraCanvas}`}
     >
       <UnifiedLoader
         phase={effectivePhase}
@@ -95,7 +96,9 @@ export const DebugOverlay: React.FC<DebugOverlayProps> = ({ started, poseDetecte
   }
 
   return (
-    <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded z-50">
+    <div
+      className={`absolute top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-1 rounded ${zIndexClasses.debugPanel}`}
+    >
       Debug: Overlay visible
     </div>
   );
