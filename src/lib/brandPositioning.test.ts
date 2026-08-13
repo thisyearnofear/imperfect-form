@@ -26,6 +26,7 @@ describe('brand positioning foyer copy', () => {
   it('surfaces Sandow heritage and the flywheel in the main product copy', () => {
     expect(BRAND.sandowGrade).toMatch(/Sandow/);
     expect(BRAND.sandowGrade).toMatch(/1897/);
+    expect(BRAND.sandowSpan).toBe('1897 → 2026');
     expect(BRAND.flywheelLine).toMatch(/coaching episode/i);
     expect(BRAND.flywheelTrust).toMatch(/on your device/i);
   });

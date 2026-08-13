@@ -230,6 +230,8 @@ export const BRAND = {
     'Built toward physical AI that can demonstrate the correction — not just describe it.',
   /** Recap / foyer heritage — visible in the main flow, not only on /lore. */
   sandowGrade: 'Graded vs. Sandow · 1897',
+  /** Quiet backdrop span — the lineage without the warrant voice. */
+  sandowSpan: '1897 → 2026',
   /**
    * Honest flywheel beat. Sessions are captured as local coaching episodes
    * (pose stays on-device). Cyberwave / LeRobot export is the next robotics gate.

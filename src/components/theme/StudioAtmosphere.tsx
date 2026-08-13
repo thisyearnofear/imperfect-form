@@ -1,12 +1,28 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { BRAND } from '@/lib/brandPositioning';
+import { buildRangeArc, DIAL_TICKS, elbowDegToForearmRotation } from '@/lib/armSchematic';
 import '@/styles/studio-atmosphere.css';
+
+/** Target curl range — same band the live instrument uses (50–70°). */
+const TARGET_DEG = 60;
+const DRIFT_DEG = 120;
+const EXTENDED_DEG = 160;
+
+const targetRotation = elbowDegToForearmRotation(TARGET_DEG);
+const driftRotation = elbowDegToForearmRotation(DRIFT_DEG);
+const targetArc = buildRangeArc(EXTENDED_DEG, TARGET_DEG);
+const driftArc = buildRangeArc(EXTENDED_DEG, DRIFT_DEG);
 
 /**
  * Day-0 / studio shell backdrop — coaching bay with real SO-101 presence.
  * Photos: TheRobotStudio/SO-ARM100 (Apache-2.0), alpha cut-outs in public/atmosphere/.
- * CSS 3D cursor-gaze + multi-chain blooms. Demo pulses via body[data-coach-pulse].
+ * CSS 3D cursor-gaze. Demo pulses via body[data-coach-pulse].
+ *
+ * The collage tells the loop in one glance: camera reads a curl → coach
+ * understands → SO-101 shows the fix. Chain-color blooms stay in the earned
+ * shell (ChainAmbient), not on the first viewport.
  *
  * The live twin instrument (CoachTwinPeek) is an earned-shell element and is
  * NOT rendered here on day-0 — it would float over the CoachFoyer headline.
@@ -65,17 +81,23 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
       <div className="studio-atmosphere__decor" aria-hidden="true">
         <div className="studio-atmosphere__wash" />
 
-        {/* Planned live networks — soft blooms, not a theme takeover */}
-        <div className="studio-atmosphere__spectrum">
-          <span className="studio-atmosphere__bloom studio-atmosphere__bloom--celo" />
-          <span className="studio-atmosphere__bloom studio-atmosphere__bloom--base" />
-          <span className="studio-atmosphere__bloom studio-atmosphere__bloom--avalanche" />
-          <span className="studio-atmosphere__bloom studio-atmosphere__bloom--monad" />
-        </div>
-
         <div className="studio-atmosphere__bay" />
         <div className="studio-atmosphere__rails" />
-        <div className="studio-atmosphere__calibration" />
+        <div className="studio-atmosphere__calibration">
+          {/* Sparse MoveNet landmarks — what the camera measures, not a person icon. */}
+          <svg className="studio-atmosphere__landmarks" viewBox="0 0 100 72" fill="none">
+            <path d="M50 10 V22 M38 24 H62 M38 24 L28 38 L22 52 M62 24 L72 36 L80 48 M42 56 H58" />
+            <circle cx="50" cy="10" r="2.2" />
+            <circle cx="38" cy="24" r="1.7" />
+            <circle cx="62" cy="24" r="1.7" />
+            <circle cx="28" cy="38" r="1.7" />
+            <circle cx="72" cy="36" r="1.7" />
+            <circle className="is-focus" cx="22" cy="52" r="2" />
+            <circle cx="80" cy="48" r="1.7" />
+            <circle cx="42" cy="56" r="1.5" />
+            <circle cx="58" cy="56" r="1.5" />
+          </svg>
+        </div>
         <div className="studio-atmosphere__floor" />
         <div className="studio-atmosphere__plinth" />
         <div className="studio-atmosphere__grain" />
@@ -84,7 +106,7 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
           <div className="studio-atmosphere__stage">
             <div className="studio-atmosphere__arm-glow" />
             <span className="studio-atmosphere__stage-label">PHYSICAL COACH</span>
-            <span className="studio-atmosphere__state-readout" aria-hidden="true" />
+            <span className="studio-atmosphere__state-readout" />
             <img
               className="studio-atmosphere__arm-photo"
               src="/atmosphere/so101-follower-cutout.webp"
@@ -136,57 +158,105 @@ export function StudioAtmosphere({ quiet = false }: { quiet?: boolean }) {
           </div>
         </div>
 
-        {/* The human half of the loop is a motion study, not an avatar: a
-            quiet gesture trace + sparse joints suggest camera interpretation
-            without turning the backdrop into fitness clip-art. Decorative. */}
-        <div className="studio-atmosphere__figure" aria-hidden="true">
-          <svg className="studio-atmosphere__motion-study" viewBox="0 0 240 180" fill="none">
+        {/* Camera half of the loop — same forearm-from-hub dial as the live
+            curl instrument. Ghost = target. Solid = the drift the camera catches. */}
+        <div className="studio-atmosphere__figure">
+          <svg className="studio-atmosphere__curl-plate" viewBox="0 0 60 72" fill="none">
+            {DIAL_TICKS.map((tick) => (
+              <line
+                key={tick.deg}
+                x1={tick.x1.toFixed(2)}
+                y1={tick.y1.toFixed(2)}
+                x2={tick.x2.toFixed(2)}
+                y2={tick.y2.toFixed(2)}
+                stroke="currentColor"
+                strokeWidth={tick.major ? 1.2 : 0.7}
+                opacity={tick.major ? 0.45 : 0.22}
+                strokeLinecap="round"
+              />
+            ))}
+            {driftArc ? (
+              <path
+                className="studio-atmosphere__curl-drift-arc"
+                d={driftArc}
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeDasharray="2 5"
+                strokeLinecap="round"
+                opacity="0.35"
+              />
+            ) : null}
+            {targetArc ? (
+              <path
+                className="studio-atmosphere__curl-target-arc"
+                d={targetArc}
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                opacity="0.55"
+              />
+            ) : null}
             <path
-              className="studio-atmosphere__motion-trace studio-atmosphere__motion-trace--ghost"
-              transform="translate(-8 4)"
-              d="M38 146 C58 122 62 98 56 76 C51 57 58 38 75 28 C92 18 110 27 113 43 C116 58 104 70 89 78 C75 86 74 104 86 118 C98 132 116 143 140 151"
+              d="M18 48 V44"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              opacity="0.8"
             />
-            <path
-              className="studio-atmosphere__motion-trace"
-              d="M48 146 C68 121 72 96 66 74 C61 55 68 36 85 26 C102 16 120 25 123 41 C126 56 114 68 99 76 C85 84 84 102 96 116 C108 130 126 141 150 149"
-            />
-            <path
-              className="studio-atmosphere__motion-axis"
-              d="M86 26 C80 55 80 86 96 116 C108 132 128 143 150 149"
-            />
-            <path className="studio-atmosphere__motion-segment" d="M85 26 L66 74 L96 116" />
-            <circle className="studio-atmosphere__motion-joint" cx="85" cy="26" r="3" />
-            <circle
-              className="studio-atmosphere__motion-joint studio-atmosphere__motion-joint--focus"
-              cx="66"
-              cy="74"
-              r="3.5"
-            />
-            <circle className="studio-atmosphere__motion-joint" cx="96" cy="116" r="3" />
-            <circle className="studio-atmosphere__motion-joint" cx="150" cy="149" r="3" />
-            <circle className="studio-atmosphere__motion-reticle" cx="66" cy="74" r="11" />
+            <g
+              className="studio-atmosphere__curl-ghost"
+              style={{ transform: `rotate(${targetRotation}deg)` }}
+            >
+              <path
+                d="M18 44 H40"
+                stroke="currentColor"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeDasharray="2 4"
+                opacity="0.45"
+              />
+              <circle
+                cx="40"
+                cy="44"
+                r="2.6"
+                stroke="currentColor"
+                strokeWidth="1"
+                fill="none"
+                opacity="0.55"
+              />
+            </g>
+            <g
+              className="studio-atmosphere__curl-forearm"
+              style={{ transform: `rotate(${driftRotation}deg)` }}
+            >
+              <path d="M18 44 H40" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+              <circle cx="40" cy="44" r="2.8" fill="currentColor" opacity="0.9" />
+            </g>
+            <circle cx="18" cy="44" r="3.1" fill="currentColor" />
+            <circle cx="18" cy="52" r="3.8" stroke="currentColor" strokeWidth="1.4" opacity="0.4" />
           </svg>
+          <span className="studio-atmosphere__figure-label">Camera reads</span>
         </div>
 
-        <svg
-          className="studio-atmosphere__link"
-          viewBox="0 0 160 40"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path d="M8 20 H116" />
-          <path d="M108 12 l18 8 l-18 8" />
-        </svg>
+        <div className="studio-atmosphere__loop">
+          <span>Camera</span>
+          <i />
+          <span>Coach</span>
+          <i />
+          <span>SO-101</span>
+        </div>
 
         {quiet ? null : (
           <>
-            <div className="studio-atmosphere__bay-status" aria-hidden="true">
+            <div className="studio-atmosphere__bay-status">
               <span>Coach bay</span>
               <span>SO-101</span>
               <span className="is-live">When connected</span>
             </div>
 
-            <p className="studio-atmosphere__caption" aria-hidden="true">
+            <p className="studio-atmosphere__heritage">{BRAND.sandowSpan}</p>
+
+            <p className="studio-atmosphere__caption">
               <span className="studio-atmosphere__caption-default">
                 Camera sees you · coach shows the fix
               </span>

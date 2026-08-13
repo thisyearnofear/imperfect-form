@@ -52,16 +52,21 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.locator('body')).toHaveAttribute('data-shell', 'studio');
     await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'curls');
     await expect(page.locator('body')).toHaveAttribute('data-coach-state', 'selected');
-    await expect(page.locator('.studio-atmosphere__caption')).toContainText(/Path ready/i);
+    await expect(page.locator('.studio-atmosphere__caption')).toContainText(
+      /Path ready|Camera sees you/i
+    );
     await expect(page.locator('.studio-atmosphere__bay')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__stage-frame')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__rails')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__calibration')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__floor')).toHaveCount(1);
     await expect(page.locator('.studio-atmosphere__plinth')).toHaveCount(1);
-    // Human input is represented as a restrained motion study, not a literal
-    // stick figure, while the loop remains present in the first-visit collage.
-    await expect(page.locator('.studio-atmosphere__motion-study')).toHaveCount(1);
+    // The collage tells the coaching loop: curl plate (camera) → labeled hops → arm.
+    await expect(page.locator('.studio-atmosphere__curl-plate')).toHaveCount(1);
+    await expect(page.locator('.studio-atmosphere__loop')).toContainText(/Camera/i);
+    await expect(page.locator('.studio-atmosphere__loop')).toContainText(/SO-101/i);
+    await expect(page.locator('.studio-atmosphere__heritage')).toContainText(/1897/);
+    await expect(page.locator('.studio-atmosphere__spectrum')).toHaveCount(0);
     await expect(page.locator('.studio-atmosphere__skeleton')).toHaveCount(0);
     await expect(page.locator('.game-wrapper')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     // Game-loop tabs stay earned — not the foyer
@@ -74,6 +79,11 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(start).toBeEnabled();
     await expect(start).toHaveText(/Try one rep.*Curls/i);
     await expect(start).toHaveAccessibleName(/Try one rep of Curls with camera coaching/i);
+    // Day-0 is coaching, not a wallet/tutorial wall.
+    await expect(page.getByText(/Connect to sync/i)).toHaveCount(0);
+    await expect(page.getByText(/on-chain at 5/i)).toHaveCount(0);
+    await expect(page.getByText(/1\.5–2\.5/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Set your frame/i })).toBeVisible();
   });
 
   test('foyer leads with robot-native coaching; depth is earned/demoted', async ({ page }) => {
@@ -112,6 +122,9 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await page.getByRole('button', { name: /How it works/i }).click();
     await expect(page.getByText(/Pose detection runs on your device/i)).toBeVisible();
     await expect(page.getByRole('img', { name: /Camera waiting for you/i })).toBeVisible();
+
+    await page.getByRole('button', { name: /Set your frame/i }).click();
+    await expect(page.getByText(/1\.5–2\.5/)).toBeVisible();
   });
 
   test('first START asks the browser directly — denial gets the recovery card', async ({

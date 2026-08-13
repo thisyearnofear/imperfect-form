@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Camera,
@@ -18,9 +18,7 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useImmersive } from '@/hooks/useImmersive';
 import { coachStation, type StationStatus } from '@/services/coachStation';
 import type { ExerciseMode } from '@/utils/biomechanics';
-import { CountUp } from '@/components/ui/CountUp';
 import { cleanupCameraStream, requestCameraPermission } from '@/utils/cameraPermissions';
-import { FoyerStatus } from './FoyerStatus';
 import '@/styles/coach-foyer.css';
 
 type CoachFoyerProps = {
@@ -28,11 +26,6 @@ type CoachFoyerProps = {
   onModeChange: (mode: ExerciseMode) => void;
   onStart: () => void;
   incomingChallenge?: boolean;
-  /** Passive status strip: wallet + Level X/5 (computed once by Game). */
-  walletConnected: boolean;
-  isConnecting: boolean;
-  level: number;
-  onConnect: () => void;
 };
 
 type ExerciseOption = {
@@ -188,19 +181,15 @@ export function CoachFoyer({
   onModeChange,
   onStart,
   incomingChallenge = false,
-  walletConnected,
-  isConnecting,
-  level,
-  onConnect,
 }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
   const { triggerHaptic } = useHapticFeedback();
   const { immersive, setImmersive } = useImmersive();
   const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [showExtras, setShowExtras] = useState(false);
-  // Explainer is collapsed by default — its content also rotates inside the
-  // session-boot overlay, where the user is a captive audience.
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showFrameGuide, setShowFrameGuide] = useState(false);
+  const extrasTouchedRef = useRef(false);
   const firstExtraRef = useRef<HTMLButtonElement>(null);
   const moreToggleRef = useRef<HTMLButtonElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
@@ -313,7 +302,9 @@ export function CoachFoyer({
   }, []);
 
   // Move focus to the first revealed exercise, or back to the toggle (a11y).
-  React.useEffect(() => {
+  // Skip the initial mount so "More movements" never steals first focus.
+  useEffect(() => {
+    if (!extrasTouchedRef.current) return;
     if (showExtras && firstExtraRef.current) {
       firstExtraRef.current.focus();
     } else if (!showExtras && moreToggleRef.current) {
@@ -385,21 +376,6 @@ export function CoachFoyer({
           {foyer.line1}
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{foyer.line2}</p>
-        <p className="coach-foyer__promise motion-enter" style={{ animationDelay: '300ms' }}>
-          Camera coaching works on its own. The physical coach shows the fix when the station is
-          connected.
-        </p>
-
-        {/* Passive wallet + Level X/5 status — pre-emptive on-chain context,
-            never a gate (P5). */}
-        <FoyerStatus
-          isConnected={walletConnected}
-          isConnecting={isConnecting}
-          level={level}
-          onConnect={onConnect}
-          register="studio"
-          className="motion-enter"
-        />
 
         {incomingChallenge && (
           <div
@@ -435,123 +411,9 @@ export function CoachFoyer({
           </span>
         </div>
 
-        <div
-          className="coach-foyer__setup-guide motion-enter"
-          role="note"
-          aria-label="Camera setup"
-        >
-          <div className="coach-foyer__setup-guide-heading">
-            <Camera size={15} strokeWidth={2} aria-hidden="true" />
-            <strong>Set your frame before you start</strong>
-            <span
-              className={`coach-foyer__setup-guide-status${previewStatus === 'ready' ? ' is-live' : ''}`}
-            >
-              {previewStatus === 'ready' ? 'Camera preview on' : 'Camera stays off'}
-            </span>
-          </div>
-          <div className="coach-foyer__setup-layout">
-            {previewStatus === 'ready' ? (
-              <div className="coach-foyer__frame-visual coach-foyer__frame-visual--live">
-                <div className="coach-foyer__frame-visual-label">
-                  <Camera size={11} strokeWidth={2} />
-                  Live framing preview
-                </div>
-                <div className="coach-foyer__frame-live-window">
-                  <video
-                    ref={previewVideoRef}
-                    className="coach-foyer__frame-live-video"
-                    muted
-                    playsInline
-                    autoPlay
-                    onClick={(event) => {
-                      void event.currentTarget
-                        .play()
-                        .then(() => setPreviewError(null))
-                        .catch(() => undefined);
-                    }}
-                    aria-label="Live camera framing preview"
-                  />
-                  <span className="coach-foyer__frame-live-target" aria-hidden="true" />
-                  <span className="coach-foyer__frame-live-caption" aria-hidden="true">
-                    {mode === 'curls' ? 'Keep head + hips visible' : 'Keep full body visible'}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <FramingDiagram mode={mode} />
-            )}
-            <div className="coach-foyer__setup-guide-grid">
-              <span>
-                <b>Distance</b>
-                Start far enough back that the required landmarks fit comfortably; most desktop
-                setups need about 1.5–2.5 m.
-              </span>
-              <span>
-                <b>In view</b>
-                {mode === 'curls'
-                  ? 'For curls, keep your head, shoulders, hips and both arms visible.'
-                  : mode === 'pushups'
-                    ? 'For push-ups, include your head, shoulders, hips, knees and feet.'
-                    : 'For this move, keep your full body and both feet visible.'}
-              </span>
-              <span>
-                <b>Light</b>
-                Face a light source and clear the space behind you. Keep the camera still.
-              </span>
-            </div>
-          </div>
-          <div className="coach-foyer__setup-guide-actions">
-            <button
-              type="button"
-              className="coach-foyer__preview-toggle"
-              onClick={previewStatus === 'ready' ? stopCameraPreview : startCameraPreview}
-              disabled={previewStatus === 'starting'}
-              aria-pressed={previewStatus === 'ready'}
-            >
-              <Camera size={14} strokeWidth={2} aria-hidden="true" />
-              {previewStatus === 'starting'
-                ? 'Opening camera…'
-                : previewStatus === 'ready'
-                  ? 'Hide camera preview'
-                  : 'Preview my framing'}
-            </button>
-            {previewError && (
-              <span className="coach-foyer__preview-error" role="status" aria-live="polite">
-                {previewError}
-              </span>
-            )}
-            {previewStatus === 'ready' && previewError && (
-              <button
-                type="button"
-                className="coach-foyer__preview-play"
-                onClick={() => {
-                  const video = previewVideoRef.current;
-                  if (!video) return;
-                  void video
-                    .play()
-                    .then(() => setPreviewError(null))
-                    .catch(() => undefined);
-                }}
-              >
-                Play preview
-              </button>
-            )}
-          </div>
-          <p className="coach-foyer__setup-guide-note">
-            {previewStatus === 'ready'
-              ? 'Preview is local and temporary. It stops when you hide it or start the session.'
-              : 'The live camera stays off until you choose “Preview my framing” or “Try one rep”.'}
-          </p>
-        </div>
-
         {/* Two defaults, pre-answered — the only decision offered before START */}
         <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">
-          <legend className="coach-foyer__exercise-legend">
-            <span>Choose a movement to coach</span>
-            <span className="coach-foyer__exercise-count">
-              <CountUp to={exercises.length} duration={650} /> movements
-            </span>
-          </legend>
+          <legend className="sr-only">Pick a movement</legend>
           {primaryExercises.map(renderExerciseButton)}
         </fieldset>
 
@@ -600,10 +462,143 @@ export function CoachFoyer({
               <ChevronDown size={14} aria-hidden="true" />
             )}
           </button>
+          <button
+            type="button"
+            className="coach-foyer__how-it-works-toggle"
+            aria-expanded={showFrameGuide}
+            aria-controls="coach-foyer-frame"
+            onClick={() => {
+              playStudioCue('soft');
+              triggerHaptic(40);
+              setShowFrameGuide((prev) => {
+                if (prev) stopCameraPreview();
+                return !prev;
+              });
+            }}
+          >
+            {showFrameGuide ? 'Hide framing' : 'Set your frame'}
+            {showFrameGuide ? (
+              <ChevronUp size={14} aria-hidden="true" />
+            ) : (
+              <ChevronDown size={14} aria-hidden="true" />
+            )}
+          </button>
           <a href="/lore" className="coach-foyer__why-robot-link">
             Why a physical coach? <ArrowRight size={13} aria-hidden="true" />
           </a>
         </div>
+
+        {showFrameGuide && (
+          <div
+            id="coach-foyer-frame"
+            className="coach-foyer__setup-guide motion-enter"
+            role="note"
+            aria-label="Camera setup"
+          >
+            <div className="coach-foyer__setup-guide-heading">
+              <Camera size={15} strokeWidth={2} aria-hidden="true" />
+              <strong>Set your frame</strong>
+              <span
+                className={`coach-foyer__setup-guide-status${previewStatus === 'ready' ? ' is-live' : ''}`}
+              >
+                {previewStatus === 'ready' ? 'Camera preview on' : 'Camera stays off'}
+              </span>
+            </div>
+            <div className="coach-foyer__setup-layout">
+              {previewStatus === 'ready' ? (
+                <div className="coach-foyer__frame-visual coach-foyer__frame-visual--live">
+                  <div className="coach-foyer__frame-visual-label">
+                    <Camera size={11} strokeWidth={2} />
+                    Live framing preview
+                  </div>
+                  <div className="coach-foyer__frame-live-window">
+                    <video
+                      ref={previewVideoRef}
+                      className="coach-foyer__frame-live-video"
+                      muted
+                      playsInline
+                      autoPlay
+                      onClick={(event) => {
+                        void event.currentTarget
+                          .play()
+                          .then(() => setPreviewError(null))
+                          .catch(() => undefined);
+                      }}
+                      aria-label="Live camera framing preview"
+                    />
+                    <span className="coach-foyer__frame-live-target" aria-hidden="true" />
+                    <span className="coach-foyer__frame-live-caption" aria-hidden="true">
+                      {mode === 'curls' ? 'Keep head + hips visible' : 'Keep full body visible'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <FramingDiagram mode={mode} />
+              )}
+              <div className="coach-foyer__setup-guide-grid">
+                <span>
+                  <b>Distance</b>
+                  Start far enough back that the required landmarks fit comfortably; most desktop
+                  setups need about 1.5–2.5 m.
+                </span>
+                <span>
+                  <b>In view</b>
+                  {mode === 'curls'
+                    ? 'For curls, keep your head, shoulders, hips and both arms visible.'
+                    : mode === 'pushups'
+                      ? 'For push-ups, include your head, shoulders, hips, knees and feet.'
+                      : 'For this move, keep your full body and both feet visible.'}
+                </span>
+                <span>
+                  <b>Light</b>
+                  Face a light source and clear the space behind you. Keep the camera still.
+                </span>
+              </div>
+            </div>
+            <div className="coach-foyer__setup-guide-actions">
+              <button
+                type="button"
+                className="coach-foyer__preview-toggle"
+                onClick={previewStatus === 'ready' ? stopCameraPreview : startCameraPreview}
+                disabled={previewStatus === 'starting'}
+                aria-pressed={previewStatus === 'ready'}
+              >
+                <Camera size={14} strokeWidth={2} aria-hidden="true" />
+                {previewStatus === 'starting'
+                  ? 'Opening camera…'
+                  : previewStatus === 'ready'
+                    ? 'Hide camera preview'
+                    : 'Preview my framing'}
+              </button>
+              {previewError && (
+                <span className="coach-foyer__preview-error" role="status" aria-live="polite">
+                  {previewError}
+                </span>
+              )}
+              {previewStatus === 'ready' && previewError && (
+                <button
+                  type="button"
+                  className="coach-foyer__preview-play"
+                  onClick={() => {
+                    const video = previewVideoRef.current;
+                    if (!video) return;
+                    void video
+                      .play()
+                      .then(() => setPreviewError(null))
+                      .catch(() => undefined);
+                  }}
+                >
+                  Play preview
+                </button>
+              )}
+            </div>
+            <p className="coach-foyer__setup-guide-note">
+              {previewStatus === 'ready'
+                ? 'Preview is local and temporary. It stops when you hide it or start the session.'
+                : 'The live camera stays off until you preview or start a rep.'}
+            </p>
+          </div>
+        )}
 
         {showHowItWorks && (
           <div id="coach-foyer-loop" className="coach-foyer__how-it-works motion-enter">
@@ -676,6 +671,7 @@ export function CoachFoyer({
           aria-expanded={showExtras}
           aria-controls="coach-foyer-more-movements"
           onClick={() => {
+            extrasTouchedRef.current = true;
             playStudioCue('soft');
             triggerHaptic(40);
             setShowExtras((prev) => !prev);

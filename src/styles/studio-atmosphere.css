@@ -1,13 +1,9 @@
-/* Coaching bay — cut-out SO-101 + colourful multi-chain blooms */
+/* Coaching bay — cut-out SO-101. Day-0 is the coaching loop, not chain chrome. */
 
 .studio-atmosphere {
-  /* Planned live networks */
-  --chain-celo: #f0db18;
-  --chain-base: #0052ff;
-  --chain-avalanche: #e84142;
-  --chain-monad: #836ef9;
   --bay-teal: #56d9c3;
   --bay-teal-bright: #7aebd8;
+  --bay-brass: #fcb131;
   --bay-deep: #061013;
   --bay-mid: #0b2430;
 
@@ -21,7 +17,7 @@
   overflow: hidden;
   background:
     radial-gradient(ellipse 55% 45% at 82% 28%, rgba(86, 217, 195, 0.16), transparent 60%),
-    radial-gradient(ellipse 40% 35% at 8% 20%, rgba(0, 82, 255, 0.08), transparent 55%),
+    radial-gradient(ellipse 36% 32% at 12% 22%, rgba(86, 217, 195, 0.07), transparent 55%),
     linear-gradient(165deg, #12313e 0%, #0f2b38 38%, #0a1b21 72%, #061013 100%);
 }
 
@@ -43,56 +39,6 @@
     radial-gradient(ellipse 90% 48% at 50% 100%, rgba(18, 52, 60, 0.88), transparent 55%);
 }
 
-.studio-atmosphere__spectrum {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.studio-atmosphere__bloom {
-  position: absolute;
-  width: min(42vw, 380px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  filter: blur(44px);
-  opacity: 0.28;
-  mix-blend-mode: screen;
-  animation: studio-atmosphere-bloom 9s ease-in-out infinite;
-}
-
-.studio-atmosphere__bloom--celo {
-  top: 6%;
-  left: 4%;
-  background: var(--chain-celo);
-  animation-delay: 0s;
-}
-
-.studio-atmosphere__bloom--base {
-  top: 42%;
-  left: -6%;
-  background: var(--chain-base);
-  opacity: 0.24;
-  animation-delay: -2s;
-}
-
-.studio-atmosphere__bloom--avalanche {
-  bottom: 8%;
-  right: 28%;
-  width: min(36vw, 300px);
-  background: var(--chain-avalanche);
-  opacity: 0.22;
-  animation-delay: -4.5s;
-}
-
-.studio-atmosphere__bloom--monad {
-  top: 12%;
-  right: 8%;
-  background: var(--chain-monad);
-  opacity: 0.26;
-  animation-delay: -1.5s;
-  transform: translate3d(calc(var(--gaze-x) * 12px), calc(var(--gaze-y) * 8px), 0);
-}
-
 .studio-atmosphere__bay {
   position: absolute;
   inset: 6% 4% auto;
@@ -100,9 +46,7 @@
   border: 1px solid rgba(139, 227, 212, 0.1);
   border-radius: 42% 42% 0 0 / 62% 62% 0 0;
   mask-image: linear-gradient(to bottom, black 0%, transparent 88%);
-  box-shadow:
-    inset 0 -48px 90px rgba(86, 217, 195, 0.06),
-    inset 0 0 80px rgba(0, 82, 255, 0.04);
+  box-shadow: inset 0 -48px 90px rgba(86, 217, 195, 0.06);
 }
 
 /* Sparse architectural cues turn the backdrop into a room: two rails, a
@@ -151,6 +95,35 @@
   right: -1px;
   bottom: -1px;
   border-width: 0 1px 1px 0;
+}
+
+.studio-atmosphere__landmarks {
+  position: absolute;
+  left: 6%;
+  top: 8%;
+  width: 28%;
+  max-width: 11rem;
+  color: rgba(122, 235, 216, 0.55);
+  opacity: 0.7;
+}
+
+.studio-atmosphere__landmarks path {
+  stroke: currentColor;
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.45;
+}
+
+.studio-atmosphere__landmarks circle {
+  fill: rgba(122, 235, 216, 0.7);
+  stroke: rgba(214, 240, 234, 0.25);
+  stroke-width: 0.4;
+}
+
+.studio-atmosphere__landmarks .is-focus {
+  fill: rgba(252, 177, 49, 0.85);
+  filter: drop-shadow(0 0 3px rgba(252, 177, 49, 0.45));
 }
 
 .studio-atmosphere__plinth {
@@ -296,8 +269,7 @@ body[data-coach-station='connected'] .studio-atmosphere__state-readout {
   border-radius: 40%;
   background:
     radial-gradient(circle at 40% 40%, rgba(86, 217, 195, 0.35), transparent 55%),
-    radial-gradient(circle at 70% 60%, rgba(131, 110, 249, 0.18), transparent 50%),
-    radial-gradient(circle at 30% 70%, rgba(240, 219, 24, 0.18), transparent 45%);
+    radial-gradient(circle at 68% 62%, rgba(252, 177, 49, 0.14), transparent 50%);
   transform: scale(1.18);
   animation: studio-atmosphere-glow 4.5s ease-in-out infinite;
 }
@@ -319,7 +291,7 @@ body[data-coach-station='connected'] .studio-atmosphere__state-readout {
   opacity: 0.22;
   mix-blend-mode: screen;
   transform: translate3d(calc(var(--gaze-x) * -14px), calc(var(--gaze-y) * -10px), 8px) scale(1.05);
-  filter: blur(0.5px) brightness(1.15) saturate(1.15) drop-shadow(0 0 20px rgba(0, 82, 255, 0.25));
+  filter: blur(0.5px) brightness(1.15) saturate(1.15) drop-shadow(0 0 20px rgba(86, 217, 195, 0.22));
 }
 
 .studio-atmosphere__arc {
@@ -335,129 +307,103 @@ body[data-coach-station='connected'] .studio-atmosphere__state-readout {
     filter 0.25s ease;
 }
 
-/* The loop motif — a restrained motion study is the 'camera sees you' half
-   of the story. It is intentionally more like a movement-analysis plate than
-   a person icon; the dashed link carries the eye to the physical coach. */
+/* The loop motif — the curl plate is what the camera measures; the labeled
+   hops carry the eye to the physical coach. Same forearm-from-hub language
+   as CurlFormInstrument / CoachTwinPeek. */
 .studio-atmosphere__figure {
   position: absolute;
   left: 5%;
-  top: 22%;
-  width: min(28vw, 300px);
+  top: 20%;
+  width: min(26vw, 280px);
   z-index: 1;
-  opacity: 0.76;
+  display: grid;
+  justify-items: start;
+  gap: 0.35rem;
+  opacity: 0.88;
 }
 
-.studio-atmosphere__motion-study {
+.studio-atmosphere__curl-plate {
   display: block;
   width: 100%;
   overflow: visible;
-  color: rgba(122, 235, 216, 0.9);
+  color: rgba(122, 235, 216, 0.92);
   filter: drop-shadow(0 0 14px rgba(86, 217, 195, 0.24));
-  animation: studio-atmosphere-study-breathe 5.5s ease-in-out infinite;
 }
 
-.studio-atmosphere__motion-trace,
-.studio-atmosphere__motion-axis,
-.studio-atmosphere__motion-segment,
-.studio-atmosphere__motion-reticle {
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
+.studio-atmosphere__curl-ghost,
+.studio-atmosphere__curl-forearm,
+.studio-atmosphere__curl-target-arc,
+.studio-atmosphere__curl-drift-arc {
+  transform-origin: 18px 44px;
+  transform-box: view-box;
 }
 
-.studio-atmosphere__motion-trace {
-  stroke-width: 1.7;
-  opacity: 0.56;
+.studio-atmosphere__curl-ghost {
+  color: rgba(252, 177, 49, 0.9);
 }
 
-.studio-atmosphere__motion-trace--ghost {
-  stroke: rgba(122, 235, 216, 0.42);
-  stroke-dasharray: 2 8;
-  opacity: 0.5;
+.studio-atmosphere__curl-target-arc {
+  color: rgba(252, 177, 49, 0.75);
 }
 
-.studio-atmosphere__motion-axis {
-  stroke-width: 1;
-  stroke-dasharray: 1 7;
-  opacity: 0.34;
+.studio-atmosphere__curl-forearm {
+  animation: studio-atmosphere-curl-sweep 5.5s ease-in-out infinite;
 }
 
-.studio-atmosphere__motion-segment {
-  stroke-width: 1.15;
-  stroke-dasharray: 4 5;
-  opacity: 0.42;
+.studio-atmosphere__figure-label {
+  margin-left: 0.35rem;
+  color: rgba(214, 240, 234, 0.55);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
-.studio-atmosphere__motion-joint {
-  fill: rgba(122, 235, 216, 0.78);
-  stroke: rgba(214, 240, 234, 0.38);
-  stroke-width: 1;
-}
-
-.studio-atmosphere__motion-joint--focus {
-  fill: rgba(255, 217, 122, 0.88);
-  stroke: rgba(255, 217, 122, 0.4);
-  transform-box: fill-box;
-  transform-origin: center;
-  filter: drop-shadow(0 0 5px rgba(255, 217, 122, 0.45));
-}
-
-.studio-atmosphere__motion-reticle {
-  stroke: rgba(255, 217, 122, 0.58);
-  stroke-width: 0.8;
-  stroke-dasharray: 2 4;
-  opacity: 0.52;
-  animation: studio-atmosphere-reticle-drift 6s ease-in-out infinite;
-}
-
-.studio-atmosphere__link {
+.studio-atmosphere__loop {
   position: absolute;
-  left: 30%;
-  top: 30%;
-  width: 20vw;
-  min-width: 7rem;
-  color: rgba(122, 235, 216, 0.45);
-  opacity: 0.5;
-  transform: rotate(-6deg);
+  left: 28%;
+  top: 32%;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.28rem 0.5rem;
+  color: rgba(214, 240, 234, 0.58);
+  background: rgba(6, 16, 19, 0.28);
+  border: 1px solid rgba(139, 227, 212, 0.14);
+  border-radius: 999px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+  opacity: 0.78;
 }
 
-.studio-atmosphere__link path {
-  stroke: currentColor;
-  stroke-width: 1.4;
-  stroke-dasharray: 5 7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
+.studio-atmosphere__loop i {
+  display: block;
+  width: 1.1rem;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(122, 235, 216, 0.7), rgba(252, 177, 49, 0.7));
 }
 
-/* The chevron arrowhead must stay solid — only the connector is dashed. */
-.studio-atmosphere__link path:last-child {
-  stroke-dasharray: none;
+.studio-atmosphere__loop span:last-child {
+  color: rgba(252, 177, 49, 0.85);
 }
 
-@keyframes studio-atmosphere-study-breathe {
+@keyframes studio-atmosphere-curl-sweep {
   0%,
+  14% {
+    transform: rotate(20deg);
+  }
+  50%,
+  64% {
+    transform: rotate(130deg);
+  }
   100% {
-    opacity: 0.68;
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    opacity: 0.88;
-    transform: translate3d(0, -2px, 0);
-  }
-}
-
-@keyframes studio-atmosphere-reticle-drift {
-  0%,
-  100% {
-    transform: scale(0.94);
-    opacity: 0.38;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 0.7;
+    transform: rotate(20deg);
   }
 }
 
@@ -478,12 +424,12 @@ body[data-coach-mode='curls'] .studio-atmosphere__plinth {
 
 body[data-coach-mode='pushups'] .studio-atmosphere__figure,
 body[data-coach-mode='squats'] .studio-atmosphere__figure {
-  opacity: 0.58;
+  opacity: 0.7;
 }
 
-body[data-coach-mode='pushups'] .studio-atmosphere__link,
-body[data-coach-mode='squats'] .studio-atmosphere__link {
-  color: rgba(122, 235, 216, 0.62);
+body[data-coach-mode='pushups'] .studio-atmosphere__loop,
+body[data-coach-mode='squats'] .studio-atmosphere__loop {
+  opacity: 0.62;
 }
 
 /* Demo-moment sync — form cue / station demonstration pulse the bay */
@@ -504,12 +450,13 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-glow {
   animation: studio-atmosphere-demo-glow 1.2s ease-out;
 }
 
-body[data-coach-pulse='cue'] .studio-atmosphere__motion-study {
+body[data-coach-pulse='cue'] .studio-atmosphere__curl-plate {
   animation: studio-atmosphere-cue-study 1.2s ease-out;
 }
 
-body[data-coach-pulse='cue'] .studio-atmosphere__motion-joint--focus {
-  animation: studio-atmosphere-focus-joint 1.2s ease-out;
+body[data-coach-pulse='cue'] .studio-atmosphere__curl-forearm {
+  color: rgba(252, 177, 49, 0.95);
+  filter: drop-shadow(0 0 8px rgba(252, 177, 49, 0.45));
 }
 
 body[data-coach-pulse='cue'] .studio-atmosphere__state-readout {
@@ -577,61 +524,17 @@ body[data-coach-pulse='demo'] .studio-atmosphere__arm-photo {
   }
 }
 
-@keyframes studio-atmosphere-focus-joint {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.78;
-  }
-  42% {
-    transform: scale(1.55);
-    opacity: 1;
-  }
-}
-
-.studio-atmosphere__network-row {
+.studio-atmosphere__heritage {
   position: absolute;
   left: clamp(1rem, 3vw, 2rem);
   bottom: clamp(2.6rem, 6vh, 3.5rem);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 0.7rem;
-  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  margin: 0;
+  color: rgba(252, 177, 49, 0.55);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-}
-
-.studio-atmosphere__network-row span {
-  padding: 0.28rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.studio-atmosphere__network-row .is-celo {
-  color: #f7e86a;
-  border-color: rgba(240, 219, 24, 0.35);
-  background: rgba(240, 219, 24, 0.1);
-}
-
-.studio-atmosphere__network-row .is-base {
-  color: #8eb6ff;
-  border-color: rgba(0, 82, 255, 0.4);
-  background: rgba(0, 82, 255, 0.12);
-}
-
-.studio-atmosphere__network-row .is-avalanche {
-  color: #ff8f90;
-  border-color: rgba(232, 65, 66, 0.4);
-  background: rgba(232, 65, 66, 0.12);
-}
-
-.studio-atmosphere__network-row .is-monad {
-  color: #c4b5fd;
-  border-color: rgba(131, 110, 249, 0.45);
-  background: rgba(131, 110, 249, 0.14);
 }
 
 .studio-atmosphere__bay-status {
@@ -702,18 +605,6 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
   }
 }
 
-@keyframes studio-atmosphere-bloom {
-  0%,
-  100% {
-    transform: scale(1) translate(0, 0);
-    opacity: 0.28;
-  }
-  50% {
-    transform: scale(1.12) translate(2%, -3%);
-    opacity: 0.48;
-  }
-}
-
 @media (max-width: 720px) {
   /* Position the frame, not its inset child: the frame owns the aspect-ratio
      and keeps the arm's footprint predictable on narrow phones. */
@@ -725,18 +616,17 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
   }
 
   .studio-atmosphere__figure {
-    left: -10%;
+    left: 4%;
     top: 10%;
-    width: 48vw;
-    opacity: 0.58;
+    width: min(42vw, 11rem);
+    opacity: 0.78;
   }
 
-  .studio-atmosphere__motion-study {
-    opacity: 0.82;
-  }
-
-  .studio-atmosphere__link {
-    display: none;
+  .studio-atmosphere__loop {
+    left: 4%;
+    top: auto;
+    bottom: 4.6rem;
+    max-width: calc(100vw - 2rem);
   }
 
   .studio-atmosphere__arm-photo {
@@ -753,13 +643,9 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
     font-size: 0.56rem;
   }
 
-  .studio-atmosphere__network-row {
-    left: 50%;
-    right: auto;
-    bottom: 3.4rem;
-    transform: translateX(-50%);
-    justify-content: center;
-    max-width: 92vw;
+  .studio-atmosphere__heritage {
+    left: 1rem;
+    bottom: 3.2rem;
   }
 
   .studio-atmosphere__caption {
@@ -804,26 +690,22 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
     opacity: 0.4;
   }
 
-  .studio-atmosphere__bloom {
-    opacity: 0.16;
-    filter: blur(36px);
+  .studio-atmosphere__landmarks {
+    width: 42%;
+    opacity: 0.5;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .studio-atmosphere__arm-glow,
-  .studio-atmosphere__bloom,
-  .studio-atmosphere__motion-study,
-  .studio-atmosphere__motion-reticle,
-  body[data-coach-pulse='cue'] .studio-atmosphere__motion-study,
-  body[data-coach-pulse='cue'] .studio-atmosphere__motion-joint--focus {
+  .studio-atmosphere__curl-forearm,
+  body[data-coach-pulse='cue'] .studio-atmosphere__curl-plate {
     animation: none;
   }
 
   .studio-atmosphere__stage,
   .studio-atmosphere__arm-photo--ghost,
-  .studio-atmosphere__arc,
-  .studio-atmosphere__bloom--monad {
+  .studio-atmosphere__arc {
     transform: none;
   }
 

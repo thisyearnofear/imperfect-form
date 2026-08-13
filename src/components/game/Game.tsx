@@ -1079,10 +1079,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                       })
                     }
                     incomingChallenge={hasIncomingChallenge}
-                    walletConnected={wallet.isConnected}
-                    isConnecting={wallet.isConnecting}
-                    level={xpProgress.currentLevel}
-                    onConnect={() => void actions.connect()}
                   />
                 </div>
               )

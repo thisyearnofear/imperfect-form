@@ -990,6 +990,7 @@
 /* Story rail — one optional explanation, with the physical-AI reason beside it. */
 .coach-foyer__story-links {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
