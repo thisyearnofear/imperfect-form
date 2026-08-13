@@ -658,13 +658,13 @@ export function CoachFoyer({
           </div>
         )}
 
-        {/* Sandow lineage stamp — opt-in (immersive mode). Default experience
-            is quiet; the heritage is discoverable via /lore, not relentless. */}
-        {immersive && (
-          <p className="sandow-lineage motion-enter" style={{ animationDelay: '420ms' }}>
-            Graded vs. Sandow · 1897
-          </p>
-        )}
+        {/* Sandow lineage stamp — always in the main flow. Immersive mode
+            still unlocks denser heritage copy; the grade line itself is not opt-in. */}
+        <p className="sandow-lineage motion-enter" style={{ animationDelay: '420ms' }}>
+          <a href="/lore" className="sandow-lineage__link">
+            {BRAND.sandowGrade}
+          </a>
+        </p>
 
         {/* The robot-native proof case is signposted on the Curls card itself;
             the credibility line stays secondary to the user's coaching need. */}

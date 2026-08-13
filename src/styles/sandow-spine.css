@@ -162,6 +162,22 @@
   background: var(--sandow-rule-quiet);
 }
 
+.sandow-lineage__link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--sandow-rule-quiet);
+}
+
+.sandow-lineage__link:hover {
+  color: var(--sandow-brass);
+  border-bottom-color: var(--sandow-rule);
+}
+
+.sandow-lineage__link:focus-visible {
+  outline: 2px solid var(--sandow-brass);
+  outline-offset: 3px;
+}
+
 /* —— Earned-shell surfaces (studio chassis + brass XP punctuation) —— */
 .earned-surface {
   color: var(--studio-paper-soft);

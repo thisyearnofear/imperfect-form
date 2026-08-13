@@ -48,6 +48,7 @@ import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/rec
 import { playUiCue } from '@/lib/uiSound';
 import { SessionRecap } from '@/components/game/SessionRecap';
 import { sessionStory } from '@/lib/coachingStory';
+import { BRAND } from '@/lib/brandPositioning';
 import { getFormGrade } from '@/lib/formGrade';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { MovementChallengePayload } from '@/types/movementChallenge';
@@ -602,21 +603,18 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               {/* Compact form-score hero (curls only) — grade + average right
                  under the headline, mirroring the single-card mock. */}
               {mode === 'curls' && avgFormScore !== null && formGrade && (
-                <div className="studio-card studio-card__body text-center">
+                <div className="studio-card studio-card__body text-center space-y-2">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                      Form score
-                    </span>
-                    <span
-                      className="text-2xl font-black tabular-nums"
-                      style={{ color: formGrade.color }}
-                    >
-                      {formGrade.grade}
+                    <span className="sandow-grade" style={{ color: formGrade.color }}>
+                      Grade {formGrade.grade}
                     </span>
                     <span className="text-sm font-semibold text-teal-100 tabular-nums">
-                      ({avgFormScore}/100)
+                      {avgFormScore}/100
                     </span>
                   </div>
+                  <p className="sandow-lineage" style={{ margin: 0 }}>
+                    {BRAND.sandowGrade}
+                  </p>
                 </div>
               )}
 

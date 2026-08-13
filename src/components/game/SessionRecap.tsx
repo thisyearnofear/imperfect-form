@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
+import { CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import type { SessionSummary } from '@/services/sessionLogger';
 import FormLine from './FormLine';
 import FormSignatureHistory from './FormSignatureHistory';
 import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
 import { BRAND } from '@/lib/brandPositioning';
+import { averageFormScore, getFormGrade } from '@/lib/formGrade';
 import { ghostService } from '@/services/GhostService';
 import {
   movementShareMetadata,
@@ -366,44 +367,52 @@ export function SessionRecap({
 }: SessionRecapProps) {
   const takeaway = coachingTakeaway(summary, mode);
   const story = sessionStory(summary, mode, reps);
+  const avgScore = averageFormScore(formScores);
+  const sandowGrade = avgScore !== null ? getFormGrade(avgScore) : null;
+  const hasCorrection = Boolean(summary?.anomalies[0]?.metrics.warnings[0]);
+
   return (
     <section
       className="session-recap studio-card studio-card__body motion-enter"
       aria-labelledby="session-recap-title"
     >
-      <div className="session-recap__headline">
-        <div>
-          <p>Coaching recap</p>
-          <h2 id="session-recap-title">
+      <div className="session-recap__one-fix motion-enter">
+        <p className="session-recap__one-fix-eyebrow">{BRAND.loopLabel}</p>
+        <h2 id="session-recap-title">{hasCorrection ? 'The one fix' : 'Keep this line'}</h2>
+        <strong>{story.focus}</strong>
+        <div className="session-recap__one-fix-meta">
+          <span>
             {reps} {mode}
-          </h2>
+            {summary ? ` · ${Math.round(summary.duration)}s` : ''}
+          </span>
+          {sandowGrade ? (
+            <span className="sandow-grade" style={{ color: sandowGrade.color }}>
+              Grade {sandowGrade.grade}
+            </span>
+          ) : (
+            <span className="sandow-stamp">{BRAND.sandowGrade}</span>
+          )}
         </div>
-        <span>{summary ? `${Math.round(summary.duration)}s` : 'Saved'}</span>
+        {sandowGrade ? <p className="sandow-lineage">{BRAND.sandowGrade}</p> : null}
       </div>
 
-      {/* Form Scores Summary (curls only) */}
+      <p className="session-recap__flywheel" role="status">
+        <span className="session-recap__flywheel-mark" aria-hidden="true" />
+        <span>
+          <strong>{BRAND.flywheelLine}</strong>
+          {BRAND.flywheelTrust}
+        </span>
+      </p>
+
       {mode === 'curls' && formScores.length > 0 && (
         <div className="session-recap__form-scores motion-enter motion-delay-1">
           <div className="session-recap__form-scores-header">
             <p>Form Scores</p>
-            <span>
-              Average: {Math.round(formScores.reduce((a, b) => a + b, 0) / formScores.length)}/100
-            </span>
+            <span>Average: {avgScore}/100</span>
           </div>
           <div className="session-recap__form-scores-chart">
             {formScores.map((score, i) => {
-              const grade =
-                score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
-              const color =
-                score >= 90
-                  ? '#4ade80'
-                  : score >= 80
-                    ? '#75e6b1'
-                    : score >= 70
-                      ? '#fbbf24'
-                      : score >= 60
-                        ? '#f97316'
-                        : '#ef4444';
+              const { grade, color } = getFormGrade(score);
               return (
                 <div
                   key={i}
@@ -438,13 +447,6 @@ export function SessionRecap({
           <strong>{takeaway.strength}</strong>
         </div>
       </div>
-      <div className="session-recap__item studio-card__item motion-enter motion-delay-2">
-        <ArrowRight size={17} />
-        <div>
-          <p>Next focus</p>
-          <strong>{story.focus}</strong>
-        </div>
-      </div>
       {summary?.trace && summary.trace.length > 0 && (
         <FormLine trace={summary.trace} avgDepth={summary.avgDepth} />
       )}
@@ -457,8 +459,6 @@ export function SessionRecap({
           />
         </>
       )}
-      {/* The response action follows the correction immediately; history is
-          earned context beneath it, not a prerequisite for sharing. */}
       <FormReceipt
         mode={mode}
         reps={reps}

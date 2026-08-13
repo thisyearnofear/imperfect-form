@@ -22,4 +22,11 @@ describe('brand positioning foyer copy', () => {
     const studio = SESSION_INTENTS.find((intent) => intent.id === 'understand');
     expect(studio?.foyer.loopLabel).toBe(BRAND.loopLabel);
   });
+
+  it('surfaces Sandow heritage and the flywheel in the main product copy', () => {
+    expect(BRAND.sandowGrade).toMatch(/Sandow/);
+    expect(BRAND.sandowGrade).toMatch(/1897/);
+    expect(BRAND.flywheelLine).toMatch(/coaching episode/i);
+    expect(BRAND.flywheelTrust).toMatch(/on your device/i);
+  });
 });

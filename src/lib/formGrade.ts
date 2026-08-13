@@ -6,3 +6,9 @@ export function getFormGrade(score: number): { grade: string; color: string } {
   if (score >= 60) return { grade: 'D', color: '#f97316' };
   return { grade: 'F', color: '#ef4444' };
 }
+
+/** Average a session's per-rep form scores, or null when none were captured. */
+export function averageFormScore(scores: number[] | undefined | null): number | null {
+  if (!scores || scores.length === 0) return null;
+  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+}

@@ -85,12 +85,15 @@ export function LiveCoachingStatus({
     return (
       <div
         key="curl-instrument"
-        className="live-status live-status--ready motion-cue"
+        className="live-status live-status--adjust motion-cue"
         role="status"
         aria-live="polite"
       >
-        <CheckCircle2 size={16} />
-        <span>Watch the arm — match the target angle.</span>
+        <AlertCircle size={16} />
+        <span>
+          {arcade ? 'Fix: ' : 'One fix: '}
+          pin your elbows — watch the arm sweep, then match it.
+        </span>
       </div>
     );
   }
@@ -107,7 +110,9 @@ export function LiveCoachingStatus({
         <span>
           {arcade ? 'Your turn — ' : 'Your turn. '}
           {mode === 'curls'
-            ? 'Watch the arm — match the target angle.'
+            ? arcade
+              ? 'watch the arm — close the gap.'
+              : 'Watch the arm — close the gap. That is the one fix.'
             : focusWarning
               ? arcade
                 ? `watch: ${readableFormWarning(focusWarning).toLowerCase()}.`

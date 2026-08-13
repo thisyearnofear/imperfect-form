@@ -9,7 +9,9 @@ import { FirstRepCelebration } from './FirstRepCelebration';
 import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
 import { PoseState, DetectionProgress } from '@/hooks/usePoseDetection';
 import { useCoachingMoment } from '@/hooks/useCoachingMoment';
+import { isTwinHeroActive, useCoachTwin } from '@/hooks/useCoachTwin';
 import CurlFormInstrument from './CurlFormInstrument';
+import { SeeShowMoment } from './SeeShowMoment';
 import { deriveCurlTelemetry } from '@/lib/curlTelemetry';
 
 interface RepFeedback {
@@ -84,6 +86,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const curlTelemetry =
     mode === 'curls' ? deriveCurlTelemetry(curlPoseData ?? undefined, metrics) : null;
+  const twin = useCoachTwin({ session: true, mode });
+  const heroActive = isTwinHeroActive(twin) && twin.enabled && !showFirstRepCelebration;
+  const showSeeShow = !showFirstRepCelebration && (curlTelemetry?.elbowAngle != null || heroActive);
 
   const coachingStatusProps = {
     mode,
@@ -163,8 +168,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               onFormScore={onFormScore}
             />
           ) : null}
+          <SeeShowMoment
+            twin={twin}
+            userElbowDeg={curlTelemetry?.elbowAngle}
+            yieldToFirstSignal={showFirstRepCelebration}
+          />
         </div>
-        <CoachTwinPeek session mode={mode} />
+        <CoachTwinPeek session mode={mode} twin={twin} suppressed={showSeeShow} />
       </div>
     );
   }
@@ -204,10 +214,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             telemetry={curlTelemetry}
             tracking={poseState.poseDetected}
             repCount={repCount}
+            onFormScore={onFormScore}
           />
         ) : null}
+        <SeeShowMoment
+          twin={twin}
+          userElbowDeg={curlTelemetry?.elbowAngle}
+          yieldToFirstSignal={showFirstRepCelebration}
+        />
       </div>
-      <CoachTwinPeek session mode={mode} />
+      <CoachTwinPeek session mode={mode} twin={twin} suppressed={showSeeShow} />
     </div>
   );
 };

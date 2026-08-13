@@ -39,6 +39,8 @@ export const Z = {
   // ── Workout overlays (inside the camera canvas) ─────────────────────────
   /** Rep count pop / form flash */
   overlayFeedback: 85,
+  /** See→show juxtaposition (user arm vs coach arm) during a demonstration */
+  overlaySeeShow: 88,
   /** Loading overlay during pose-detection warm-up */
   overlayLoader: 90,
 
@@ -80,6 +82,7 @@ export const zIndexClasses: Record<keyof typeof Z, string> = {
   debugPanel: 'z-50',
   dropdown: 'z-10',
   overlayFeedback: 'z-[85]',
+  overlaySeeShow: 'z-[88]',
   overlayLoader: 'z-[90]',
   modalBackdrop: 'z-[900]',
   modalContent: 'z-[1000]',

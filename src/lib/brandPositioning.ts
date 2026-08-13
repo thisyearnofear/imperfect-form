@@ -228,6 +228,14 @@ export const BRAND = {
   trustLine: 'Pose runs on your device. Nothing leaves the browser until you choose.',
   roboticsHint:
     'Built toward physical AI that can demonstrate the correction — not just describe it.',
+  /** Recap / foyer heritage — visible in the main flow, not only on /lore. */
+  sandowGrade: 'Graded vs. Sandow · 1897',
+  /**
+   * Honest flywheel beat. Sessions are captured as local coaching episodes
+   * (pose stays on-device). Cyberwave / LeRobot export is the next robotics gate.
+   */
+  flywheelLine: 'This session is now a coaching episode for the arm.',
+  flywheelTrust: 'Pose stayed on your device. The movement trace teaches the coach what to show.',
   /** Positioning spine — keep copy aligned with docs/NORTH_STAR.md */
   differentiation:
     'The robot exists to teach the human: camera coaching first, physical demonstration second, learned policies from real sessions third.',

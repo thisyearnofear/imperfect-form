@@ -415,6 +415,8 @@ export const zIndex = {
   // ── Game session overlays (scoped to the camera stage) ──────────────────
   /** Rep count pop / form flash during a live set */
   overlayFeedback: Z.overlayFeedback,
+  /** User-vs-coach arm juxtaposition during a demonstration */
+  overlaySeeShow: Z.overlaySeeShow,
   /** Pose-detection / loading overlay during boot */
   overlayLoader: Z.overlayLoader,
 

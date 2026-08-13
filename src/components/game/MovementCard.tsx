@@ -66,6 +66,12 @@ export function MovementCard({ assessment }: MovementCardProps) {
     { label: 'Trace stability', value: measurements.traceStability, icon: Activity },
     { label: 'Symmetry', value: measurements.symmetry, icon: Scale },
   ];
+  const insight = dimensions
+    .filter((dimension) => dimension.value !== null && dimension.value !== undefined)
+    .sort((a, b) => (a.value ?? 1) - (b.value ?? 1))[0];
+  const insightCopy = insight
+    ? `${insight.label} is the signal to watch this set — ${percent(insight.value)}.`
+    : 'A private baseline from this five-rep curl protocol.';
 
   return (
     <section className="movement-card" aria-labelledby="movement-card-title">
@@ -80,8 +86,8 @@ export function MovementCard({ assessment }: MovementCardProps) {
         <span className="movement-card__confidence">{confidenceLabel(assessment.confidence)}</span>
       </div>
       <p className="movement-card__copy">
-        A private baseline from this five-rep curl protocol. Curls show what the robot can mirror —
-        control and consistency, not mobility. This is a movement signal, not a medical assessment.
+        <strong className="movement-card__insight">{insightCopy}</strong> Curls show what the robot
+        can mirror — a movement signal, not a medical assessment.
       </p>
       <div className="movement-card__dimensions">
         {dimensions.map(({ label, value, icon: Icon }) => (
