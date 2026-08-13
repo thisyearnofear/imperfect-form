@@ -312,9 +312,9 @@ const Webcam: React.FC<WebcamProps> = ({
               minHeight: '300px',
             }
           : {
-              // Desktop: Use fixed dimensions to match screen container
+              // Desktop: fill the camera viewport (session bay or legacy 4:3 stage)
               width: '100%',
-              height: '480px',
+              height: '100%',
             }),
         overflow: 'hidden',
       }}

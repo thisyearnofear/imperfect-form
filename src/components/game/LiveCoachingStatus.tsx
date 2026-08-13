@@ -18,6 +18,102 @@ interface LiveCoachingStatusProps {
   focusWarning?: string | null;
   firstSignal?: boolean;
   retryFocus?: string | null;
+  /** Replay the enter animation (mobile overlays). Desktop rails stay still. */
+  animate?: boolean;
+}
+
+type StatusTone = 'ready' | 'adjust' | 'signal' | 'framing';
+
+function resolveLiveStatus({
+  arcade,
+  mode,
+  tracking,
+  repCount,
+  phase,
+  warning,
+  focusWarning,
+  firstSignal,
+  retryFocus,
+  cameraGuidance,
+}: {
+  arcade: boolean;
+  mode: ExerciseMode;
+  tracking: boolean;
+  repCount: number;
+  phase: CoachingMomentPhase;
+  warning: string | null;
+  focusWarning: string | null;
+  firstSignal: boolean;
+  retryFocus: string | null;
+  cameraGuidance: string;
+}): { tone: StatusTone; text: string } {
+  if (firstSignal && repCount === 1) {
+    return {
+      tone: 'signal',
+      text: arcade
+        ? 'Signal locked — keep your form.'
+        : 'First signal captured. Coach is watching your form. Now try the one fix.',
+    };
+  }
+
+  if (phase === 'correction' && mode === 'curls') {
+    return {
+      tone: 'adjust',
+      text: arcade
+        ? 'Fix: pin your elbows — watch the arm sweep, then match it.'
+        : 'One fix: pin your elbows — watch the arm sweep, then match it.',
+    };
+  }
+
+  if (phase === 'correction' && warning) {
+    return {
+      tone: 'adjust',
+      text: `${arcade ? 'Fix: ' : 'One fix: '}${readableFormWarning(warning).toLowerCase()}.`,
+    };
+  }
+
+  if (phase === 'your_turn') {
+    const curlLine = arcade
+      ? 'Your turn — watch the arm — close the gap.'
+      : 'Your turn. Watch the arm — close the gap. That is the one fix.';
+    const focused = focusWarning
+      ? arcade
+        ? `Your turn — watch: ${readableFormWarning(focusWarning).toLowerCase()}.`
+        : `Your turn. Keep this in mind: ${readableFormWarning(focusWarning).toLowerCase()}.`
+      : retryFocus
+        ? arcade
+          ? `Your turn — focus: ${retryFocus.toLowerCase()}`
+          : `Your turn. Retry focus: ${retryFocus.toLowerCase()}`
+        : arcade
+          ? 'Your turn — match the line.'
+          : 'Your turn. Match the line.';
+    return { tone: 'ready', text: mode === 'curls' ? curlLine : focused };
+  }
+
+  if (phase === 'observed') {
+    const curlLine = arcade
+      ? 'Sync locked — Show one curl — the arm will show you the target.'
+      : 'I see your movement. Show one curl — the arm will show you the target.';
+    const next = retryFocus
+      ? arcade
+        ? `Sync locked — next set: ${retryFocus.toLowerCase()}.`
+        : `I see your movement. Next set focus: ${retryFocus.toLowerCase()}.`
+      : arcade
+        ? 'Sync locked — Show me one rep.'
+        : 'I see your movement. Show me one rep.';
+    return { tone: 'ready', text: mode === 'curls' ? curlLine : next };
+  }
+
+  if (!tracking && repCount > 0) {
+    return {
+      tone: 'framing',
+      text: arcade
+        ? 'Re-frame — step back into view.'
+        : 'Step back into frame — I lost your landmarks.',
+    };
+  }
+
+  return { tone: 'framing', text: cameraGuidance };
 }
 
 export function LiveCoachingStatus({
@@ -30,135 +126,36 @@ export function LiveCoachingStatus({
   focusWarning: suppliedFocusWarning,
   firstSignal = false,
   retryFocus = null,
+  animate = true,
 }: LiveCoachingStatusProps) {
   const { register } = useSessionIntent();
-  // The full arcade cabinet: an explicit Train session keeps every coachy line
-  // in the same gold Press Start voice (uppercased + styled via the arcade
-  // register in session-register.css). Studio keeps the spoken coach tone.
-  // Copy stays short enough to be pixel-legible.
   const arcade = register === 'arcade';
-
   const guidance = guidanceFor(mode);
   const phase = suppliedPhase ?? (tracking ? (repCount > 0 ? 'your_turn' : 'observed') : 'framing');
   const warning = suppliedWarning ?? warnings[0] ?? null;
   const focusWarning = suppliedFocusWarning ?? null;
-
-  if (firstSignal && repCount === 1) {
-    return (
-      <div
-        key="first-signal"
-        className="live-status live-status--signal motion-cue"
-        role="status"
-        aria-live="polite"
-      >
-        <CheckCircle2 size={16} />
-        <span>
-          {arcade
-            ? 'Signal locked — keep your form.'
-            : 'First signal captured. Coach is watching your form. Now try the one fix.'}
-        </span>
-      </div>
-    );
-  }
-
-  if (phase === 'correction' && warning && mode !== 'curls') {
-    return (
-      <div
-        key={`warning-${warning}`}
-        className="live-status live-status--adjust motion-cue"
-        role="status"
-        aria-live="polite"
-      >
-        <AlertCircle size={16} />
-        {/* The first named correction is the One Fix payoff — the promise the
-            foyer makes (ONE REP / ONE FIX), delivered live. The arcade cabinet
-            reads it as a brass FIX banner; the studio coach as a spoken cue. */}
-        <span>
-          {arcade ? 'Fix: ' : 'One fix: '}
-          {readableFormWarning(warning).toLowerCase()}.
-        </span>
-      </div>
-    );
-  }
-
-  if (phase === 'correction' && mode === 'curls') {
-    return (
-      <div
-        key="curl-instrument"
-        className="live-status live-status--adjust motion-cue"
-        role="status"
-        aria-live="polite"
-      >
-        <AlertCircle size={16} />
-        <span>
-          {arcade ? 'Fix: ' : 'One fix: '}
-          pin your elbows — watch the arm sweep, then match it.
-        </span>
-      </div>
-    );
-  }
-
-  if (phase === 'your_turn') {
-    return (
-      <div
-        key="your-turn"
-        className="live-status live-status--ready motion-cue"
-        role="status"
-        aria-live="polite"
-      >
-        <CheckCircle2 size={16} />
-        <span>
-          {arcade ? 'Your turn — ' : 'Your turn. '}
-          {mode === 'curls'
-            ? arcade
-              ? 'watch the arm — close the gap.'
-              : 'Watch the arm — close the gap. That is the one fix.'
-            : focusWarning
-              ? arcade
-                ? `watch: ${readableFormWarning(focusWarning).toLowerCase()}.`
-                : `Keep this in mind: ${readableFormWarning(focusWarning).toLowerCase()}.`
-              : retryFocus
-                ? arcade
-                  ? `focus: ${retryFocus.toLowerCase()}`
-                  : `Retry focus: ${retryFocus.toLowerCase()}`
-                : 'match the line.'}
-        </span>
-      </div>
-    );
-  }
-
-  if (phase === 'observed') {
-    return (
-      <div
-        key="observed"
-        className="live-status live-status--ready motion-cue"
-        role="status"
-        aria-live="polite"
-      >
-        <CheckCircle2 size={16} />
-        <span>
-          {arcade ? 'Sync locked — ' : 'I see your movement. '}
-          {mode === 'curls'
-            ? 'Show one curl — the arm will show you the target.'
-            : retryFocus
-              ? arcade
-                ? `next set: ${retryFocus.toLowerCase()}.`
-                : `Next set focus: ${retryFocus.toLowerCase()}.`
-              : 'Show me one rep.'}
-        </span>
-      </div>
-    );
-  }
+  const { tone, text } = resolveLiveStatus({
+    arcade,
+    mode,
+    tracking,
+    repCount,
+    phase,
+    warning,
+    focusWarning,
+    firstSignal,
+    retryFocus,
+    cameraGuidance: guidance.camera,
+  });
+  const Icon = tone === 'adjust' ? AlertCircle : tone === 'framing' ? ScanLine : CheckCircle2;
 
   return (
     <div
-      key={`framing-${mode}`}
-      className="live-status motion-cue"
+      className={`live-status live-status--${tone}${animate ? ' motion-cue' : ''}`}
       role="status"
       aria-live="polite"
     >
-      <ScanLine size={16} />
-      <span>{guidance.camera}</span>
+      <Icon size={16} />
+      <span>{text}</span>
     </div>
   );
 }

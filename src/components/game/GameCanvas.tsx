@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { RotateCcw, X } from 'lucide-react';
 import { GameHUD, RepFeedbackOverlay } from './GameHUD';
 import { GameLoadingOverlay, DebugOverlay } from './GameOverlay';
@@ -13,6 +13,7 @@ import { isTwinHeroActive, useCoachTwin } from '@/hooks/useCoachTwin';
 import CurlFormInstrument from './CurlFormInstrument';
 import { SeeShowMoment } from './SeeShowMoment';
 import { deriveCurlTelemetry } from '@/lib/curlTelemetry';
+import '@/styles/session-bay.css';
 
 interface RepFeedback {
   show: boolean;
@@ -64,15 +65,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   showRotateHint = false,
   onDismissRotateHint,
 }) => {
+  const [hasLockedPose, setHasLockedPose] = useState(false);
+  useEffect(() => {
+    if (poseState.poseDetected) setHasLockedPose(true);
+  }, [poseState.poseDetected]);
+
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
     : !poseState.hasPoseDetection
       ? 'ai'
-      : !poseState.poseDetected
+      : !hasLockedPose && !poseState.poseDetected
         ? 'positioning'
         : 'ready';
 
-  const isLoadingVisible = !poseState.hasPoseDetection || !poseState.poseDetected;
+  // After the first lock, tracking loss is a cue — not a return of the boot overlay.
+  const isLoadingVisible =
+    !poseState.hasPoseDetection || (!hasLockedPose && !poseState.poseDetected);
   // Only the loading overlay should be visible while the pose model boots —
   // hide the HUD so it never shows "00:00 · 0" as noise during warm-up.
   const isBooting = !poseState.hasPoseDetection;
@@ -121,7 +129,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         <div
           id="canvasContainerMobile"
           aria-label="Game Canvas Mobile"
-          className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 session-camera-stage session-camera-stage--mobile ${isIOS ? 'session-camera-stage--ios' : ''} ${isFullscreen ? 'video-container-fs' : ''} ${poseState.poseDetected ? 'is-tracking' : ''}`}
+          className={`w-full relative flex-grow rounded-xl overflow-hidden shadow-lg border border-white/10 session-camera-stage session-camera-stage--mobile ${isIOS ? 'session-camera-stage--ios' : ''} ${isFullscreen ? 'video-container-fs' : ''} ${hasLockedPose ? 'is-tracking' : ''}`}
           style={{ width: '100%' }}
         >
           {webcam}
@@ -180,7 +188,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-start relative">
+    <div className="session-bay">
       {!isBooting && (
         <GameHUD
           mode={mode}
@@ -193,37 +201,49 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           warnings={metrics?.warnings}
         />
       )}
-      <div
-        id="canvasContainerDesktop"
-        aria-label="Game Canvas Desktop"
-        className={`w-full relative flex-grow rounded-lg overflow-hidden border border-white/10 session-camera-stage ${poseState.poseDetected ? 'is-tracking' : ''}`}
-      >
-        {webcam}
-        <GameLoadingOverlay
-          phase={loadingPhase}
-          progress={detectionProgress?.percentage}
-          isVisible={isLoadingVisible}
-          isOverlay={true}
-        />
-        <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
-        <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
-        <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
-        <LiveCoachingStatus {...coachingStatusProps} />
-        {mode === 'curls' ? (
-          <CurlFormInstrument
-            telemetry={curlTelemetry}
-            tracking={poseState.poseDetected}
-            repCount={repCount}
-            onFormScore={onFormScore}
+      <div className="session-bay__stage">
+        <aside className="session-bay__rail session-bay__rail--lead">
+          {mode === 'curls' ? (
+            <SeeShowMoment
+              placement="rail"
+              twin={twin}
+              userElbowDeg={curlTelemetry?.elbowAngle}
+              yieldToFirstSignal={showFirstRepCelebration}
+            />
+          ) : null}
+        </aside>
+        <div
+          id="canvasContainerDesktop"
+          aria-label="Game Canvas Desktop"
+          className={`session-bay__camera relative overflow-hidden rounded-lg border border-white/10 session-camera-stage ${hasLockedPose ? 'is-tracking' : ''}`}
+        >
+          {webcam}
+          <GameLoadingOverlay
+            phase={loadingPhase}
+            progress={detectionProgress?.percentage}
+            isVisible={isLoadingVisible}
+            isOverlay={true}
           />
-        ) : null}
-        <SeeShowMoment
-          twin={twin}
-          userElbowDeg={curlTelemetry?.elbowAngle}
-          yieldToFirstSignal={showFirstRepCelebration}
-        />
+          <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
+          <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
+          <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
+        </div>
+        <aside className="session-bay__rail session-bay__rail--trail">
+          {mode === 'curls' ? (
+            <CurlFormInstrument
+              layout="rail"
+              telemetry={curlTelemetry}
+              tracking={poseState.poseDetected}
+              repCount={repCount}
+              onFormScore={onFormScore}
+            />
+          ) : null}
+        </aside>
       </div>
-      <CoachTwinPeek session mode={mode} twin={twin} suppressed={showSeeShow} />
+      <div className="session-bay__cue">
+        <LiveCoachingStatus {...coachingStatusProps} animate={false} />
+      </div>
+      <CoachTwinPeek session mode={mode} twin={twin} suppressed={mode === 'curls' || showSeeShow} />
     </div>
   );
 };

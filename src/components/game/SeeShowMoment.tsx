@@ -14,24 +14,27 @@ type SeeShowMomentProps = {
   userElbowDeg?: number | null;
   /** First-signal celebration owns the stage for 2.2s — yield to it. */
   yieldToFirstSignal?: boolean;
+  /** Desktop bay rail stays mounted; overlay is the mobile camera card. */
+  placement?: 'overlay' | 'rail';
 };
 
 /**
  * The pitch visual: user's arm and the coach's arm on the same instrument,
  * with the gap between them as the thing to close.
  *
- * Dock (always, when we have a user angle): compact YOU | GAP | COACH.
- * Hero (while the arm is sweeping): enlarged overlay with narration — the
- * demonstration as a moment, not a corner widget.
+ * Overlay: dock in a corner, hero as a centered overlay while the arm sweeps.
+ * Rail: always mounted beside the camera — hero is a highlight, not a cover.
  */
 export function SeeShowMoment({
   twin,
   userElbowDeg,
   yieldToFirstSignal = false,
+  placement = 'overlay',
 }: SeeShowMomentProps) {
+  const rail = placement === 'rail';
   const hasUser = userElbowDeg != null && Number.isFinite(userElbowDeg);
-  if (!hasUser && !twin.enabled) return null;
-  if (yieldToFirstSignal) return null;
+  if (!rail && !hasUser && !twin.enabled) return null;
+  if (!rail && yieldToFirstSignal) return null;
 
   const observed = twin.progress?.measured_deg;
   const coachCurrent =
@@ -52,11 +55,11 @@ export function SeeShowMoment({
   const userLabel = userDeg != null ? `${Math.round(userDeg)}°` : '—';
   const coachLabel = `${Math.round(clampElbowDeg(coachDeg))}°`;
 
-  if (!hero && !hasUser) return null;
+  if (!rail && !hero && !hasUser) return null;
 
   return (
     <div
-      className={`see-show-moment${hero ? ' is-hero' : ' is-dock'}`}
+      className={`see-show-moment${hero ? ' is-hero' : ' is-dock'}${rail && yieldToFirstSignal ? ' is-yield' : ''}${rail && !hasUser ? ' is-waiting' : ''}`}
       role="group"
       aria-label={
         gap != null

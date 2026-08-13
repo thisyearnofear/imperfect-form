@@ -1,0 +1,153 @@
+/* Desktop live session: camera is a viewport, instruments are furniture in the bay.
+   Mobile keeps overlays on the camera stage — do not reuse these rules there. */
+
+.session-bay {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+}
+
+.session-bay__stage {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+.session-bay__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+  width: 17.5rem;
+}
+
+.session-bay__rail:empty {
+  display: none;
+}
+
+.session-bay__camera {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: min(68vh, 36rem);
+}
+
+.session-bay__camera .webcam-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.session-bay__cue {
+  width: 100%;
+}
+
+/* Rails own the instruments — strip overlay positioning. */
+.session-bay .see-show-moment,
+.session-bay .see-show-moment.is-dock,
+.session-bay .see-show-moment.is-hero {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  z-index: 1;
+  pointer-events: auto;
+  animation: none;
+}
+
+.session-bay .see-show-moment.is-hero {
+  border-color: rgba(252, 177, 49, 0.55);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.28),
+    0 0 24px rgba(252, 177, 49, 0.12);
+}
+
+.session-bay .see-show-moment.is-yield {
+  opacity: 0.55;
+}
+
+.session-bay .see-show-moment.is-waiting {
+  opacity: 0.78;
+}
+
+.session-bay .curl-instrument {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  max-height: min(68vh, 36rem);
+  overflow-y: auto;
+  pointer-events: auto;
+  scrollbar-width: thin;
+}
+
+.session-bay .curl-instrument.is-stale,
+.session-bay .curl-instrument.curl-instrument--waiting {
+  opacity: 0.78;
+}
+
+.session-bay .live-status {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  max-width: none;
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  z-index: 1;
+}
+
+#screen:has(.session-bay) {
+  max-width: min(1180px, 96vw);
+  aspect-ratio: auto;
+  height: auto;
+  overflow: visible;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+#game-container:has(.session-bay) {
+  background: transparent;
+}
+
+@media (max-width: 980px) {
+  .session-bay__stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .session-bay__rail {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .session-bay__rail .see-show-moment,
+  .session-bay__rail .curl-instrument {
+    flex: 1 1 16rem;
+    max-height: none;
+  }
+
+  .session-bay__camera {
+    order: -1;
+    max-height: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-bay .see-show-moment,
+  .session-bay .curl-instrument,
+  .session-bay .live-status {
+    transition: none;
+  }
+}

@@ -243,7 +243,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const { formattedStats, isLoading: statsLoading } = useUserStats(finalAddress);
 
   // Get user level for feature unlocking
-  const { progress: xpProgress } = useXpProgress();
+  const { progress: xpProgress, workouts: xpWorkouts } = useXpProgress();
 
   // Handle profile search
 
@@ -399,6 +399,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     return () => document.body.removeAttribute('data-coach-mode');
   }, [mode]);
 
+  const poseLockedRef = useRef(false);
+  if (started && poseState.poseDetected) poseLockedRef.current = true;
+  if (!started) poseLockedRef.current = false;
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const state = !started
@@ -409,7 +413,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         ? 'camera'
         : !poseState.hasPoseDetection
           ? 'ai'
-          : !poseState.poseDetected
+          : !poseLockedRef.current && !poseState.poseDetected
             ? 'positioning'
             : 'tracking';
     document.body.setAttribute('data-coach-state', state);
@@ -1093,6 +1097,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                 isFullscreenAvailable={isFullscreenAvailable}
                 formattedStats={formattedStats}
                 isLoadingStats={statsLoading}
+                onTryOneRep={() =>
+                  handleStart({
+                    isRace: hasIncomingChallenge,
+                    trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
+                    challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
+                  })
+                }
               />
             ))}
 
@@ -1131,7 +1142,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           )}
         </div>
 
-        {(started || currentMode !== 'instructions' || calmSessionActive) && (
+        {(started ||
+          calmSessionActive ||
+          (currentMode !== 'instructions' &&
+            !(currentMode === 'profile' && xpWorkouts.length === 0))) && (
           <GameControls
             started={started}
             isMobile={isMobile}

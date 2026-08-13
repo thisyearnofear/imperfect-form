@@ -504,6 +504,9 @@ body[data-shell='studio'] .studio-topbar {
   }
 }
 
+.live-status--framing {
+  border-color: rgba(157, 203, 195, 0.22);
+}
 .live-status--signal {
   border-color: rgba(238, 186, 105, 0.55);
   background: rgba(39, 29, 15, 0.92);

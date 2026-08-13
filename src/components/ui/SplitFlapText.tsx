@@ -11,7 +11,9 @@ import { LocalWorkout } from '@/types/workout';
 import { getNetworkByChainId } from '@/config/networks';
 import toast from 'react-hot-toast';
 import { useXpProgress } from '@/hooks/useXpProgress';
+import { xpService } from '@/services/XPService';
 import { PreStartFoyer } from '@/components/home/PreStartFoyer';
+import { ProfileEmpty } from '@/components/game/ProfileEmpty';
 import {
   nextTtsPreference,
   ttsPreferenceLabel,
@@ -90,6 +92,7 @@ interface SplitFlapInstructionsProps {
     summary: string;
   } | null;
   isLoadingStats?: boolean;
+  onTryOneRep?: () => void;
 }
 
 export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
@@ -102,12 +105,13 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   isFullscreenAvailable = true,
   formattedStats,
   isLoadingStats,
+  onTryOneRep,
 }) => {
   const [animationStep, setAnimationStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [ttsPref, setTtsPref] = useState<TtsProviderPreference>('auto');
   const [uiSoundOn, setUiSoundOn] = useState(true);
-  const { progress } = useXpProgress();
+  const { progress, pbs, workouts, loading: xpLoading } = useXpProgress();
   const { wallet, platform, farcasterProvider } = usePlatform();
 
   const [unsyncedWorkouts, setUnsyncedWorkouts] = useState<LocalWorkout[]>([]);
@@ -200,6 +204,19 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
   };
 
   const currentInstructions = useMemo(() => {
+    const streakInfo = xpService.getStreakInfo(workouts);
+    const bestEntry = (
+      [
+        { label: 'curls', n: pbs.curls },
+        { label: 'push-ups', n: pbs.pushups },
+        { label: 'squats', n: pbs.squats },
+        { label: 'pull-ups', n: pbs.pullups },
+        { label: 'jumps', n: pbs.jumps },
+      ] as const
+    ).reduce((a, b) => (b.n > a.n ? b : a));
+    const localBest = bestEntry.n > 0 ? `${bestEntry.n} ${bestEntry.label}` : '—';
+    const localStreak = streakInfo.currentStreak > 0 ? `${streakInfo.currentStreak}-day` : '—';
+
     const instructionConfigs: Record<InstructionMode, InstructionItem[]> = {
       // Legacy path: PreStartFoyer. Day-0 mass-market door is CoachFoyer in Game.tsx.
       instructions: [],
@@ -224,19 +241,25 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
         {
           key: 'a',
           text: 'WORKOUTS',
-          desc: isLoadingStats ? 'Loading...' : formattedStats?.workouts || 'No data yet',
+          desc: isLoadingStats
+            ? 'Loading...'
+            : (formattedStats?.workouts ?? String(workouts.length)),
           hideKey: true,
         },
         {
           key: 'b',
           text: 'BEST SCORE',
-          desc: isLoadingStats ? 'Loading...' : formattedStats?.bestScore || 'No workouts',
+          desc: isLoadingStats
+            ? 'Loading...'
+            : formattedStats?.bestScore && formattedStats.bestScore !== '-'
+              ? formattedStats.bestScore
+              : localBest,
           hideKey: true,
         },
         {
           key: 'c',
           text: 'STREAK',
-          desc: isLoadingStats ? 'Loading...' : formattedStats?.streak || 'Start today!',
+          desc: isLoadingStats ? 'Loading...' : (formattedStats?.streak ?? localStreak),
           hideKey: true,
         },
         ...(unsyncedWorkouts.length > 0
@@ -264,6 +287,8 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
     voiceEnabled,
     ttsPref,
     uiSoundOn,
+    workouts,
+    pbs,
   ]);
 
   useEffect(() => {
@@ -321,6 +346,26 @@ export const SplitFlapInstructions: React.FC<SplitFlapInstructionsProps> = ({
 
   if (mode === 'instructions') {
     return <PreStartFoyer />;
+  }
+
+  if (mode === 'profile' && (xpLoading || workouts.length === 0)) {
+    if (xpLoading) {
+      return (
+        <section className="coach-foyer" aria-busy="true" aria-label="Loading record">
+          <div className="coach-foyer__atmosphere" aria-hidden="true">
+            <div className="coach-foyer__glow" />
+          </div>
+        </section>
+      );
+    }
+    return (
+      <ProfileEmpty
+        onTryOneRep={() => {
+          onModeChange('instructions');
+          onTryOneRep?.();
+        }}
+      />
+    );
   }
 
   return (

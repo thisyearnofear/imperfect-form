@@ -18,6 +18,8 @@ interface CurlFormInstrumentProps {
   tracking: boolean;
   repCount?: number;
   onFormScore?: (score: number) => void;
+  /** Overlay collapses off-camera; rail stays mounted beside the viewport. */
+  layout?: 'overlay' | 'rail';
 }
 
 const phaseLabel: Record<NonNullable<CurlTelemetry>['phase'], string> = {
@@ -71,6 +73,7 @@ export function CurlFormInstrument({
   tracking,
   repCount = 0,
   onFormScore,
+  layout = 'overlay',
 }: CurlFormInstrumentProps) {
   // Haptic feedback
   const { triggerCoachHaptic } = useHapticFeedback();
@@ -93,6 +96,9 @@ export function CurlFormInstrument({
   // recreates the inline onFormScore, which re-fires this effect (infinite
   // "Maximum update depth exceeded" loop).
   const lastReportedScoreRef = useRef<number | null>(null);
+  const lastTelemetryRef = useRef<CurlTelemetry | null>(telemetry);
+  if (telemetry) lastTelemetryRef.current = telemetry;
+  const displayTelemetry = telemetry ?? (layout === 'rail' ? lastTelemetryRef.current : null);
   // Progressive disclosure: the instrument can collapse to a compact status
   // strip so the camera feed stays visible mid-set. Default expanded.
   const [collapsed, setCollapsed] = useState(false);
@@ -239,7 +245,7 @@ export function CurlFormInstrument({
     prevGradeRef.current = currentGrade;
   }, [currentGrade, tracking, telemetry, triggerCoachHaptic, currentPersonality]);
 
-  if (!tracking || !telemetry) {
+  if (layout !== 'rail' && (!tracking || !telemetry)) {
     // Progressive disclosure: before a curl is active (framing or between
     // reps), collapse to a one-line "form score" pill so the camera stays the
     // hero. The full dial + instrument only expands once a curl is measured.
@@ -267,14 +273,44 @@ export function CurlFormInstrument({
     );
   }
 
-  const angle = clampAngle(telemetry.elbowAngle);
-  const targetMid = (telemetry.targetMinDeg + telemetry.targetMaxDeg) / 2;
+  if (!displayTelemetry) {
+    return (
+      <section className="curl-instrument curl-instrument--waiting" aria-live="polite">
+        <div className="curl-instrument__header">
+          <div>
+            <p className="curl-instrument__eyebrow">Robot demo</p>
+            <strong>Show one curl</strong>
+          </div>
+        </div>
+        <div className="curl-instrument__body">
+          <div className="curl-instrument__dial" aria-hidden="true">
+            <div className="curl-instrument__dial-ring" />
+            <div className="curl-instrument__hub" />
+          </div>
+          <div className="curl-instrument__readings">
+            <div className="curl-instrument__reading curl-instrument__reading--primary">
+              <span>Elbow</span>
+              <strong>—</strong>
+            </div>
+            <div className="curl-instrument__reading">
+              <span>Target</span>
+              <strong>50–70°</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const angle = clampAngle(displayTelemetry.elbowAngle);
+  const targetMid = (displayTelemetry.targetMinDeg + displayTelemetry.targetMaxDeg) / 2;
   const anglePosition = `${(angle / 180) * 100}%`;
-  const targetStart = `${(telemetry.targetMinDeg / 180) * 100}%`;
-  const targetWidth = `${((telemetry.targetMaxDeg - telemetry.targetMinDeg) / 180) * 100}%`;
-  const drift = telemetry.elbowDriftDeg;
-  const driftDelta = drift === null ? null : Math.round(drift - telemetry.elbowDriftTargetDeg);
-  const rangeReached = angle <= telemetry.targetMaxDeg;
+  const targetStart = `${(displayTelemetry.targetMinDeg / 180) * 100}%`;
+  const targetWidth = `${((displayTelemetry.targetMaxDeg - displayTelemetry.targetMinDeg) / 180) * 100}%`;
+  const drift = displayTelemetry.elbowDriftDeg;
+  const driftDelta =
+    drift === null ? null : Math.round(drift - displayTelemetry.elbowDriftTargetDeg);
+  const rangeReached = angle <= displayTelemetry.targetMaxDeg;
 
   // Calculate live form score
   const targetAngle = robotElbowDeg ?? targetMid;
@@ -282,7 +318,7 @@ export function CurlFormInstrument({
     angle,
     targetAngle,
     drift,
-    telemetry.elbowDriftTargetDeg,
+    displayTelemetry.elbowDriftTargetDeg,
     rangeReached
   );
   const { grade, color: gradeColor } = getFormGrade(formScore);
@@ -305,7 +341,7 @@ export function CurlFormInstrument({
 
   return (
     <section
-      className={`curl-instrument curl-instrument--${telemetry.phase}${collapsed ? ' is-collapsed' : ''}`}
+      className={`curl-instrument curl-instrument--${displayTelemetry.phase}${collapsed ? ' is-collapsed' : ''}${layout === 'rail' && !tracking ? ' is-stale' : ''}`}
       aria-label="Live curl form instrument"
       role="region"
     >
@@ -315,7 +351,7 @@ export function CurlFormInstrument({
       <div className="curl-instrument__header">
         <div>
           <p className="curl-instrument__eyebrow">Robot demo</p>
-          <strong>{phaseLabel[telemetry.phase]}</strong>
+          <strong>{phaseLabel[displayTelemetry.phase]}</strong>
         </div>
         <div className="curl-instrument__header-actions">
           <span className="curl-instrument__rep">Match the arm</span>
@@ -378,7 +414,7 @@ export function CurlFormInstrument({
               <span>Elbow angle</span>
               <strong>{Math.round(angle)}°</strong>
               <small>
-                target {telemetry.targetMinDeg}–{telemetry.targetMaxDeg}°
+                target {displayTelemetry.targetMinDeg}–{displayTelemetry.targetMaxDeg}°
               </small>
             </div>
             <div className="curl-instrument__reading">
@@ -397,7 +433,7 @@ export function CurlFormInstrument({
 
         <div
           className="curl-instrument__range"
-          aria-label={`Elbow angle ${Math.round(angle)} degrees, target ${telemetry.targetMinDeg} to ${telemetry.targetMaxDeg} degrees`}
+          aria-label={`Elbow angle ${Math.round(angle)} degrees, target ${displayTelemetry.targetMinDeg} to ${displayTelemetry.targetMaxDeg} degrees`}
         >
           <div className="curl-instrument__range-track">
             <span
@@ -435,10 +471,12 @@ export function CurlFormInstrument({
                   {robotMeasuredDeg !== null ? `${Math.round(robotMeasuredDeg)}°` : '—'}
                 </strong>
               </div>
-              {telemetry && robotElbowDeg !== null && (
+              {displayTelemetry && robotElbowDeg !== null && (
                 <div className="curl-instrument__robot-angle curl-instrument__robot-angle--diff">
                   <span>Delta</span>
-                  <strong>{Math.abs(Math.round(telemetry.elbowAngle - robotElbowDeg))}°</strong>
+                  <strong>
+                    {Math.abs(Math.round(displayTelemetry.elbowAngle - robotElbowDeg))}°
+                  </strong>
                 </div>
               )}
             </div>
