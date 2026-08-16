@@ -121,7 +121,7 @@ function CoachSystemMap({
       </span>
       <div className={`coach-foyer__system-node is-robot is-${status}`}>
         <Sparkles size={16} strokeWidth={2} aria-hidden="true" />
-        <span className="coach-foyer__system-node-name">SO-101 Coach</span>
+        <span className="coach-foyer__system-node-name">Coach arm (SO-101)</span>
         <small>{stationLabel}</small>
       </div>
     </div>
@@ -624,7 +624,7 @@ export function CoachFoyer({
             })}
             <div className="coach-foyer__credibility-row coach-foyer__credibility-row--disclosed">
               <p className="coach-foyer__credibility">
-                SO-101 physical coach · Cyberwave bridge · when connected
+                Physical coach arm (SO-101) · shows the fix when connected
               </p>
               <a href="/collaborate" className="coach-foyer__collaborate-link">
                 Help make the coach <ArrowRight size={11} aria-hidden="true" />

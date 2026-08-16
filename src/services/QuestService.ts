@@ -7,7 +7,7 @@ export interface Quest {
   title: string;
   description: string;
   target: number;
-  type: 'pushups' | 'squats' | 'total';
+  type: 'pushups' | 'squats' | 'curls' | 'total';
   xpReward: number;
 }
 
@@ -32,6 +32,13 @@ const QUESTS: Omit<Quest, 'id'>[] = [
     xpReward: 100,
   },
   {
+    title: 'Curl Cadence',
+    description: 'Complete 15 curls total today.',
+    target: 15,
+    type: 'curls',
+    xpReward: 150,
+  },
+  {
     title: 'Leg Day Starter',
     description: 'Complete 20 squats total today.',
     target: 20,
@@ -50,6 +57,13 @@ const QUESTS: Omit<Quest, 'id'>[] = [
     description: 'Complete 30 pushups total today.',
     target: 30,
     type: 'pushups',
+    xpReward: 250,
+  },
+  {
+    title: 'Perfect Line',
+    description: 'Complete 25 graded curls total today.',
+    target: 25,
+    type: 'curls',
     xpReward: 250,
   },
   {
@@ -142,16 +156,12 @@ class QuestServiceImpl {
       if (!quest) return status;
 
       let progress = 0;
-      if (quest.type === 'pushups') {
-        progress = todaysWorkouts
-          .filter((w) => w.type === 'pushups')
-          .reduce((sum, w) => sum + w.reps, 0);
-      } else if (quest.type === 'squats') {
-        progress = todaysWorkouts
-          .filter((w) => w.type === 'squats')
-          .reduce((sum, w) => sum + w.reps, 0);
-      } else if (quest.type === 'total') {
+      if (quest.type === 'total') {
         progress = todaysWorkouts.reduce((sum, w) => sum + w.reps, 0);
+      } else {
+        progress = todaysWorkouts
+          .filter((w) => w.type === quest.type)
+          .reduce((sum, w) => sum + w.reps, 0);
       }
 
       const completed = progress >= quest.target;

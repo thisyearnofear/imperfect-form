@@ -41,7 +41,6 @@ import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
 import VerifiedLeaderboard from '@/components/leaderboard/VerifiedLeaderboard';
 import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
 import { usePlatform } from '@/contexts/PlatformContext';
-import { isChampion } from '@/constants/championTraces';
 
 interface LeaderboardProps {
   limit?: number;
@@ -763,7 +762,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                 const medalStyle = getMedalStyle(i);
                 const networkStyle = getNetworkStyling(entry.network);
                 const isCurrentUser = wallet.address?.toLowerCase() === entry.user.toLowerCase();
-                const canRace = isChampion(entry.user) || isCurrentUser;
+                const canRace = isCurrentUser;
 
                 return (
                   <tr
@@ -838,7 +837,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({
                 const medalStyle = getMedalStyle(i);
                 const networkStyle = getNetworkStyling(entry.network);
                 const isCurrentUser = wallet.address?.toLowerCase() === entry.user.toLowerCase();
-                const canRace = isChampion(entry.user) || isCurrentUser;
+                const canRace = isCurrentUser;
 
                 return (
                   <tr

@@ -90,6 +90,25 @@ class TrajectoryProgressV1(BaseModel):
     measured_deg: Optional[float] = Field(default=None, ge=0.0, le=180.0)
 
 
+class DemoSkippedV1(BaseModel):
+    """A form event arrived that mapped to a demonstration, but the station
+    dropped it (cooldown or an in-flight demo) instead of queueing it.
+
+    Emitting this keeps the drop *visible*: the UI can acknowledge the cue
+    ("Coach showed this recently — your turn") so silence is never mistaken
+    for latency or a dead bridge.
+    """
+
+    type: Literal["demo_skipped"] = "demo_skipped"
+    version: ProtocolVersion = "1.0"
+    reason: Literal["cooldown", "busy"]
+    name: str  # demonstration that would have run
+    issue: str
+    mode: str
+    retry_in_s: float  # earliest moment the same demo can fire again
+    timestamp_ms: int
+
+
 class RobotStateV1(BaseModel):
     """Small, transport-safe state snapshot for UI and future observability."""
 

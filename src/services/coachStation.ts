@@ -104,6 +104,23 @@ export interface StationRobotStateEvent {
   updated_at_ms: number;
 }
 
+/**
+ * Station → browser when a form cue mapped to a demonstration that was
+ * dropped (cooldown or an in-flight demo) instead of queued. Surfaces as an
+ * acknowledgment ("Coach showed this recently — your turn") so a deliberate
+ * drop is never misread as latency or a dead bridge.
+ */
+export interface StationDemoSkippedEvent {
+  type: 'demo_skipped';
+  version: '1.0';
+  reason: 'cooldown' | 'busy';
+  name: string;
+  issue: string;
+  mode: string;
+  retry_in_s: number;
+  timestamp_ms: number;
+}
+
 export interface StationTrajectoryProgressEvent {
   type: 'trajectory_progress';
   version: '1.0';
@@ -123,6 +140,7 @@ export type CommandResultListener = (event: StationCommandResultEvent) => void;
 export type RobotStateListener = (event: StationRobotStateEvent) => void;
 export type TrajectoryProgressListener = (event: StationTrajectoryProgressEvent) => void;
 export type ChoreographyProgressListener = (event: StationChoreographyProgressEvent) => void;
+export type DemoSkippedListener = (event: StationDemoSkippedEvent) => void;
 /** Fired when a form cue is bridged to the station (bay pulse / twin peek). */
 export type FormCueListener = (event: StationFormEvent) => void;
 export type StationStatus = 'offline' | 'connecting' | 'connected';
@@ -312,6 +330,34 @@ function parseTrajectoryProgress(raw: unknown): StationTrajectoryProgressEvent |
   };
 }
 
+function parseDemoSkipped(raw: unknown): StationDemoSkippedEvent | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  if (
+    o.type !== 'demo_skipped' ||
+    o.version !== '1.0' ||
+    (o.reason !== 'cooldown' && o.reason !== 'busy') ||
+    typeof o.name !== 'string' ||
+    typeof o.issue !== 'string' ||
+    typeof o.mode !== 'string' ||
+    !isFiniteNumber(o.retry_in_s) ||
+    o.retry_in_s < 0 ||
+    !isFiniteNumber(o.timestamp_ms)
+  ) {
+    return null;
+  }
+  return {
+    type: 'demo_skipped',
+    version: '1.0',
+    reason: o.reason,
+    name: o.name,
+    issue: o.issue,
+    mode: o.mode,
+    retry_in_s: o.retry_in_s,
+    timestamp_ms: o.timestamp_ms,
+  };
+}
+
 function parseRobotState(raw: unknown): StationRobotStateEvent | null {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
@@ -346,6 +392,7 @@ class CoachStationClient {
   private robotStateListeners = new Set<RobotStateListener>();
   private trajectoryProgressListeners = new Set<TrajectoryProgressListener>();
   private choreographyProgressListeners = new Set<ChoreographyProgressListener>();
+  private demoSkippedListeners = new Set<DemoSkippedListener>();
   private formCueListeners = new Set<FormCueListener>();
   private statusListeners = new Set<StationStatusListener>();
   private connectionStatus: StationStatus = 'offline';
@@ -388,6 +435,12 @@ class CoachStationClient {
   onChoreographyProgress(listener: ChoreographyProgressListener): () => void {
     this.choreographyProgressListeners.add(listener);
     return () => this.choreographyProgressListeners.delete(listener);
+  }
+
+  /** Subscribe to deliberate demo drops (cooldown / busy). */
+  onDemoSkipped(listener: DemoSkippedListener): () => void {
+    this.demoSkippedListeners.add(listener);
+    return () => this.demoSkippedListeners.delete(listener);
   }
 
   /** Subscribe to outbound form cues for bay pulse and twin presence. */
@@ -487,6 +540,16 @@ class CoachStationClient {
     }
   }
 
+  private emitDemoSkipped(event: StationDemoSkippedEvent): void {
+    for (const listener of this.demoSkippedListeners) {
+      try {
+        listener(event);
+      } catch {
+        // fail-silent
+      }
+    }
+  }
+
   private emitFormCue(event: StationFormEvent): void {
     for (const listener of this.formCueListeners) {
       try {
@@ -535,6 +598,11 @@ class CoachStationClient {
           const choreoProgress = parseChoreographyProgress(data);
           if (choreoProgress) {
             this.emitChoreographyProgress(choreoProgress);
+            return;
+          }
+          const skipped = parseDemoSkipped(data);
+          if (skipped) {
+            this.emitDemoSkipped(skipped);
             return;
           }
           const state = parseRobotState(data);

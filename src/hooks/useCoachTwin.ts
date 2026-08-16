@@ -7,6 +7,7 @@ import {
   type StationCommandResultEvent,
   type StationDemonstrationEvent,
   type StationDemonstrationIntentV1,
+  type StationDemoSkippedEvent,
   type StationRobotStateEvent,
   type StationTrajectoryProgressEvent,
   type StationStatus,
@@ -14,6 +15,8 @@ import {
 import type { CoachPersonality } from '@/lib/coachPersonalities';
 
 const TRAIL_LENGTH = 5;
+/** How long a deliberate demo drop stays visible as an acknowledgment. */
+const SKIPPED_TTL_MS = 4000;
 
 export type TwinExecution =
   | { kind: 'executing'; detail?: string | null }
@@ -30,6 +33,7 @@ type DemoBus = {
   onChoreographyProgress: (fn: (e: StationChoreographyProgressEvent) => void) => () => void;
   onRobotState: (fn: (e: StationRobotStateEvent) => void) => () => void;
   onCommandResult: (fn: (e: StationCommandResultEvent) => void) => () => void;
+  onDemoSkipped: (fn: (e: StationDemoSkippedEvent) => void) => () => void;
 };
 
 /**
@@ -188,6 +192,8 @@ function makeDemoBus(): DemoBus {
     onChoreographyProgress: add('choreography_progress'),
     onRobotState: add('robot_state'),
     onCommandResult: add('command_result'),
+    // The scripted demo never drops a cue — no skip beat to acknowledge.
+    onDemoSkipped: () => () => {},
   };
 }
 
@@ -233,6 +239,8 @@ export type CoachTwinState = {
   trail: number[];
   booted: boolean;
   now: number;
+  /** Deliberate demo drop (cooldown/busy) shown briefly as an acknowledgment. */
+  skipped: StationDemoSkippedEvent | null;
 };
 
 const IDLE_TWIN: CoachTwinState = {
@@ -250,6 +258,7 @@ const IDLE_TWIN: CoachTwinState = {
   trail: [],
   booted: false,
   now: 0,
+  skipped: null,
 };
 
 /**
@@ -281,6 +290,7 @@ export function useCoachTwin({
   const [personality, setPersonality] = useState<CoachPersonality | null>(null);
   const [trail, setTrail] = useState<number[]>([]);
   const [booted, setBooted] = useState(false);
+  const [skipped, setSkipped] = useState<StationDemoSkippedEvent | null>(null);
   const [now, setNow] = useState(() => (typeof Date !== 'undefined' ? Date.now() : 0));
   const activeCommandIdRef = useRef<string | null>(null);
 
@@ -292,6 +302,7 @@ export function useCoachTwin({
     let demoTimeout = 0;
     let executionTimeout = 0;
     let progressTimeout = 0;
+    let skippedTimeout = 0;
     const bootTimeout = window.setTimeout(() => setBooted(true), 900);
     const ageTicker = session ? window.setInterval(() => setNow(Date.now()), 5000) : 0;
 
@@ -374,6 +385,13 @@ export function useCoachTwin({
       window.clearTimeout(progressTimeout);
       progressTimeout = window.setTimeout(() => setProgress(null), 2800);
     });
+    const unsubSkipped = source.onDemoSkipped((event) => {
+      // A dropped cue is a beat too — acknowledge it briefly so the user
+      // knows the station saw the form issue and chose not to parrot.
+      setSkipped(event);
+      window.clearTimeout(skippedTimeout);
+      skippedTimeout = window.setTimeout(() => setSkipped(null), SKIPPED_TTL_MS);
+    });
 
     return () => {
       unsubStatus();
@@ -383,9 +401,11 @@ export function useCoachTwin({
       unsubChoreoProgress();
       unsubState();
       unsubResult();
+      unsubSkipped();
       window.clearTimeout(demoTimeout);
       window.clearTimeout(executionTimeout);
       window.clearTimeout(progressTimeout);
+      window.clearTimeout(skippedTimeout);
       window.clearTimeout(bootTimeout);
       if (ageTicker) window.clearInterval(ageTicker);
       activeCommandIdRef.current = null;
@@ -410,6 +430,7 @@ export function useCoachTwin({
     trail,
     booted,
     now,
+    skipped,
   };
 }
 

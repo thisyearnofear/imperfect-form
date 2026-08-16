@@ -59,7 +59,7 @@
 
 /* —— Arcade (Train) — Press Start + gold —— */
 .prestart-foyer--arcade {
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   color: #fff;
 }
 
@@ -107,7 +107,7 @@
 }
 
 .prestart-foyer--arcade .prestart-foyer__intent {
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: clamp(0.32rem, 1.1vw, 0.4rem);
   padding: 0.45rem 0.55rem;
   color: rgba(255, 255, 255, 0.7);
@@ -426,7 +426,7 @@
 }
 
 .prestart-foyer--arcade .prestart-foyer__move {
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: clamp(0.3rem, 1vw, 0.38rem);
   padding: 0.45rem 0.55rem;
   color: rgba(255, 255, 255, 0.7);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Spinner } from '@/components/ui';
 import { usePlatform } from '@/contexts/PlatformContext';
@@ -12,6 +12,7 @@ import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
 import { BRAND } from '@/lib/brandPositioning';
 import { useCoachBayPulse } from '@/hooks/useCoachBayPulse';
 import { useImmersive } from '@/hooks/useImmersive';
+import { requestSelfRace } from '@/services/ghostRaceBus';
 import { callFarcasterReady } from '@/utils/farcasterMiniApp';
 import {
   HeroSection,
@@ -132,6 +133,13 @@ export default function Home() {
   // during the dynamic-import gap. Lifted above the loading slot so it's
   // always present, not dependent on the chunk's loading fallback timing.
   const [gameReady, setGameReady] = useState(false);
+
+  // Challenges tab → race your own PB ghost: park the intent, switch to the
+  // workout tab, and Game consumes it on mount (see services/ghostRaceBus).
+  const handleStartGhostRace = useCallback((mode: 'pushups' | 'squats') => {
+    requestSelfRace(mode);
+    setActiveTab('workout');
+  }, []);
   useEffect(() => {
     if (progress.totalXp > 0) setHasTrained(true);
   }, [progress.totalXp]);
@@ -422,7 +430,7 @@ export default function Home() {
               <div className="flex-1 px-4 py-6 overflow-y-auto pb-24">
                 <div className="max-w-2xl mx-auto">
                   <div className="motion-enter">
-                    <ChallengeWidget />
+                    <ChallengeWidget onStartGhostRace={handleStartGhostRace} />
                   </div>
                 </div>
               </div>

@@ -46,7 +46,7 @@
 }
 
 .crafft-exhibit__mark {
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: 0.62rem;
   letter-spacing: 0.08em;
   color: var(--ce-gold);
@@ -185,7 +185,7 @@
 }
 
 .crafft-exhibit__year {
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   color: var(--ce-gold);
@@ -315,7 +315,7 @@
 .crafft-exhibit__criterion {
   display: block;
   margin-bottom: 0.4rem;
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: 0.58rem;
   letter-spacing: 0.06em;
   color: var(--ce-gold);
@@ -335,7 +335,7 @@
   gap: 0.5rem;
   margin-top: 1.5rem;
   padding: 0.85rem 1.5rem;
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: 0.62rem;
   letter-spacing: 0.06em;
   color: var(--ce-ink);

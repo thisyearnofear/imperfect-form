@@ -241,3 +241,31 @@ def test_progress_capable_adapter_emits_versioned_trajectory_progress():
     assert progress[0]["progress_pct"] == 0.25
     assert progress[1]["progress_pct"] == 1.0
     assert progress[0]["command_id"] == progress[1]["command_id"]
+
+
+def test_cooldown_drop_emits_versioned_demo_skipped():
+    """A second identical form event inside the cooldown window must not run a
+    demo — but it must be *visible*: the station emits a versioned
+    `demo_skipped` event so the UI can acknowledge the cue instead of reading
+    silence as latency."""
+    arm = FakeArm()
+    station = CoachStation(arm=arm)
+    websocket = FakeWebSocket()
+
+    async def scenario() -> None:
+        # First event: routes to choreography for curls/elbow_swing; FakeArm
+        # lacks run_choreography so it aborts — fine, the cooldown ledger is
+        # set the moment the demo starts regardless of outcome.
+        await station.handle_event(websocket, _form_event().model_dump_json())
+        websocket.messages.clear()
+        await station.handle_event(websocket, _form_event().model_dump_json())
+
+    asyncio.run(scenario())
+
+    skipped = [m for m in websocket.messages if m.get("type") == "demo_skipped"]
+    assert len(skipped) == 1
+    assert skipped[0]["version"] == "1.0"
+    assert skipped[0]["reason"] in {"cooldown", "busy"}
+    assert skipped[0]["issue"] == "elbow_swing"
+    assert skipped[0]["mode"] == "curls"
+    assert skipped[0]["retry_in_s"] >= 0

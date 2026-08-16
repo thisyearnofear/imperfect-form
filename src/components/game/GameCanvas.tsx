@@ -108,6 +108,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     focusWarning: coachingMoment.focusWarning,
     retryFocus,
     firstSignal: showFirstRepCelebration,
+    // The live line may only promise the arm when the arm (or its twin) can
+    // actually demonstrate — otherwise it points at the on-screen instrument.
+    armAvailable: twin.enabled && twin.status === 'connected',
   };
 
   if (isMobile) {

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope } from 'next/font/google';
+import { Manrope, Press_Start_2P } from 'next/font/google';
 import './globals.css';
 import '@/styles/studio-shell.css';
 import '@/styles/curl-instrument.css';
@@ -23,6 +23,17 @@ const manrope = Manrope({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-manrope',
+});
+
+// Arcade register font: self-hosted via next/font, not preloaded — an
+// opt-in register font must never block first paint of the studio chassis.
+// Consumers pick it up via `var(--font-press-start)`.
+const pressStart = Press_Start_2P({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-press-start',
 });
 
 const STUDIO_BG = '#061013';
@@ -177,15 +188,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={manrope.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${manrope.variable} ${pressStart.variable}`}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Press Start kept for earned Arcade register only — not the default shell */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-          rel="stylesheet"
-        />
+        {/* Press Start 2P is self-hosted via next/font (see pressStart above) —
+            no Google Fonts stylesheet on the critical path. */}
         {/* viewport, theme-color, apple-web-app, format-detection, icons, manifest
             and canonical are emitted by the `metadata` + `viewport` exports above. */}
 

@@ -32,6 +32,12 @@ export const XP_CONSTANTS = {
   XP_PER_QUEST: 100, // Default reward if not specified
   STREAK_3_MULTIPLIER: 1.2,
   STREAK_7_MULTIPLIER: 1.5,
+  // Form-quality multiplier clamps (0.5×–1.5×). The score loop must pull
+  // the same direction as the coaching loop: sloppy volume can no longer
+  // out-earn clean reps. Workouts without a form grade (modes without
+  // per-rep scoring yet) stay at 1.0×.
+  FORM_MULTIPLIER_FLOOR: 0.5,
+  FORM_MULTIPLIER_CEIL: 1.5,
 };
 
 export interface StreakInfo {
@@ -42,11 +48,28 @@ export interface StreakInfo {
 
 class XPServiceImpl {
   /**
+   * Form-quality multiplier for a workout's rep XP: 0.5×–1.5× from the
+   * average per-rep form score (0–100). Ungraded workouts return 1 — the
+   * multiplier never punishes a mode the engine can't score yet.
+   */
+  private formMultiplierFor(workout: LocalWorkout): number {
+    const avg = workout.formScoreAvg;
+    if (typeof avg !== 'number' || !Number.isFinite(avg) || avg <= 0) return 1;
+    const scaled =
+      XP_CONSTANTS.FORM_MULTIPLIER_FLOOR +
+      (Math.min(Math.max(avg, 0), 100) / 100) *
+        (XP_CONSTANTS.FORM_MULTIPLIER_CEIL - XP_CONSTANTS.FORM_MULTIPLIER_FLOOR);
+    return scaled;
+  }
+
+  /**
    * Calculate XP for a set of workouts
    */
   calculateTotalXp(workouts: LocalWorkout[], questXp: number = 0): number {
     let totalXp = questXp;
-    const pbs = { pushups: 0, squats: 0 };
+    // PB detection covers every exercise the app tracks — curl and pull-up
+    // personal bests pay the same bonus push-ups always did.
+    const pbs: PersonalBests = { pushups: 0, squats: 0, pullups: 0, jumps: 0, curls: 0 };
 
     // Sort workouts by timestamp to detect PBs and streaks in order
     const sortedWorkouts = [...workouts].sort((a, b) => a.timestamp - b.timestamp);
@@ -62,22 +85,20 @@ class XPServiceImpl {
       // Calculate streak multiplier for THIS workout
       const multiplier = this.getMultiplierForDate(workout.timestamp, sortedWorkouts.slice(0, i));
 
-      // Base XP from reps
-      let workoutXp = workout.reps * XP_CONSTANTS.XP_PER_REP;
-
-      // Completion bonus
-      workoutXp += XP_CONSTANTS.XP_PER_WORKOUT;
+      // Rep XP is graded by form quality; the completion bonus stays flat —
+      // showing up is rewarded, sloppiness just stops out-earning control.
+      const workoutXp =
+        Math.round(workout.reps * XP_CONSTANTS.XP_PER_REP * this.formMultiplierFor(workout)) +
+        XP_CONSTANTS.XP_PER_WORKOUT;
 
       // Apply multiplier
       totalXp += Math.floor(workoutXp * multiplier);
 
       // PB bonus (PBs are not multiplied)
-      if (workout.type === 'pushups' && workout.reps > pbs.pushups) {
-        if (pbs.pushups > 0) totalXp += XP_CONSTANTS.XP_PER_PB;
-        pbs.pushups = workout.reps;
-      } else if (workout.type === 'squats' && workout.reps > pbs.squats) {
-        if (pbs.squats > 0) totalXp += XP_CONSTANTS.XP_PER_PB;
-        pbs.squats = workout.reps;
+      const type = workout.type as keyof PersonalBests;
+      if (type in pbs && workout.reps > pbs[type]) {
+        if (pbs[type] > 0) totalXp += XP_CONSTANTS.XP_PER_PB;
+        pbs[type] = workout.reps;
       }
     }
 

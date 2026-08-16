@@ -26,9 +26,11 @@ const STEP_UI = [
   },
   {
     icon: Sparkles,
-    accent: 'text-violet-300',
-    bg: 'bg-violet-400/10',
-    border: 'border-violet-400/20',
+    // Studio brass, not violet — the design lock names yellow/violet Tailwind
+    // accents as the "second app" anti-pattern (design.md).
+    accent: 'text-amber-200',
+    bg: 'bg-amber-300/10',
+    border: 'border-amber-300/20',
   },
 ] as const;
 

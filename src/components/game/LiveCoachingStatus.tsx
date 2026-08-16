@@ -20,6 +20,10 @@ interface LiveCoachingStatusProps {
   retryFocus?: string | null;
   /** Replay the enter animation (mobile overlays). Desktop rails stay still. */
   animate?: boolean;
+  /** True when the Coach arm (or its twin) can actually demonstrate. Without
+   *  it the copy must never promise "watch the arm" — the climax line stays
+   *  honest by pointing at the on-screen instrument instead. */
+  armAvailable?: boolean;
 }
 
 type StatusTone = 'ready' | 'adjust' | 'signal' | 'framing';
@@ -35,6 +39,7 @@ function resolveLiveStatus({
   firstSignal,
   retryFocus,
   cameraGuidance,
+  armAvailable,
 }: {
   arcade: boolean;
   mode: ExerciseMode;
@@ -46,6 +51,7 @@ function resolveLiveStatus({
   firstSignal: boolean;
   retryFocus: string | null;
   cameraGuidance: string;
+  armAvailable: boolean;
 }): { tone: StatusTone; text: string } {
   if (firstSignal && repCount === 1) {
     return {
@@ -59,9 +65,13 @@ function resolveLiveStatus({
   if (phase === 'correction' && mode === 'curls') {
     return {
       tone: 'adjust',
-      text: arcade
-        ? 'Fix: pin your elbows — watch the arm sweep, then match it.'
-        : 'One fix: pin your elbows — watch the arm sweep, then match it.',
+      text: armAvailable
+        ? arcade
+          ? 'Fix: pin your elbows — watch the arm sweep, then match it.'
+          : 'One fix: pin your elbows — watch the arm sweep, then match it.'
+        : arcade
+          ? 'Fix: pin your elbows — match the target line.'
+          : 'One fix: pin your elbows — match the target line.',
     };
   }
 
@@ -73,9 +83,13 @@ function resolveLiveStatus({
   }
 
   if (phase === 'your_turn') {
-    const curlLine = arcade
-      ? 'Your turn — watch the arm — close the gap.'
-      : 'Your turn. Watch the arm — close the gap. That is the one fix.';
+    const curlLine = armAvailable
+      ? arcade
+        ? 'Your turn — watch the arm — close the gap.'
+        : 'Your turn. Watch the arm — close the gap. That is the one fix.'
+      : arcade
+        ? 'Your turn — close the gap to the target line.'
+        : 'Your turn. Close the gap to the target line — that is the one fix.';
     const focused = focusWarning
       ? arcade
         ? `Your turn — watch: ${readableFormWarning(focusWarning).toLowerCase()}.`
@@ -91,9 +105,13 @@ function resolveLiveStatus({
   }
 
   if (phase === 'observed') {
-    const curlLine = arcade
-      ? 'Sync locked — Show one curl — the arm will show you the target.'
-      : 'I see your movement. Show one curl — the arm will show you the target.';
+    const curlLine = armAvailable
+      ? arcade
+        ? 'Sync locked — Show one curl — the arm will show you the target.'
+        : 'I see your movement. Show one curl — the arm will show you the target.'
+      : arcade
+        ? 'Sync locked — show one curl — the instrument will show the target.'
+        : 'I see your movement. Show one curl — the instrument will show the target.';
     const next = retryFocus
       ? arcade
         ? `Sync locked — next set: ${retryFocus.toLowerCase()}.`
@@ -127,6 +145,7 @@ export function LiveCoachingStatus({
   firstSignal = false,
   retryFocus = null,
   animate = true,
+  armAvailable = false,
 }: LiveCoachingStatusProps) {
   const { register } = useSessionIntent();
   const arcade = register === 'arcade';
@@ -145,6 +164,7 @@ export function LiveCoachingStatus({
     firstSignal,
     retryFocus,
     cameraGuidance: guidance.camera,
+    armAvailable,
   });
   const Icon = tone === 'adjust' ? AlertCircle : tone === 'framing' ? ScanLine : CheckCircle2;
 

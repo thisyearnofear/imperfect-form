@@ -21,10 +21,11 @@ import websockets
 from pydantic import ValidationError
 
 from .arm import ArmAdapter, create_arm
-from .choreography import CHOREOGRAPHIES, Choreography
+from .choreography import CHOREOGRAPHIES, Choreography, choreography_duration_s
 from .primitives import resolve_demonstration, to_demonstration_intent
 from .schema import (
     CommandResultV1,
+    DemoSkippedV1,
     FormEvent,
     RobotStateV1,
     SessionEvent,
@@ -77,10 +78,26 @@ class CoachStation:
 
         loop = asyncio.get_running_loop()
         last = self._last_demo.get(demo.name, 0.0)
-        if loop.time() - last < DEMO_COOLDOWN_S:
+        since_last = loop.time() - last
+        if since_last < DEMO_COOLDOWN_S or self._busy.locked():
+            # Dropping is deliberate (one demo at a time; never queue stale
+            # corrections) — but a silent drop reads as latency or a dead
+            # bridge. Tell the browser so the UI can acknowledge the cue.
+            reason = "busy" if self._busy.locked() else "cooldown"
+            retry_in = 0.0 if reason == "busy" else round(DEMO_COOLDOWN_S - since_last, 1)
+            logger.debug(
+                "Skipping %s (%s) for %s — retry in %.1fs",
+                demo.name, reason, event.issue, retry_in,
+            )
+            await self._send_json(websocket, DemoSkippedV1(
+                reason=reason,
+                name=demo.name,
+                issue=event.issue,
+                mode=event.mode,
+                retry_in_s=retry_in,
+                timestamp_ms=int(time.time() * 1000),
+            ).model_dump())
             return
-        if self._busy.locked():
-            return  # one demonstration at a time; drop rather than queue stale corrections
 
         # Route: choreography (multi-joint) or single-joint primitive?
         choreo = self._resolve_choreography(event)
@@ -150,7 +167,7 @@ class CoachStation:
                     "name": choreo.name,
                     "narration": demo.narration,
                     "personality": event.personality,
-                    "duration_s": 13.0,  # approximate choreography duration
+                    "duration_s": choreography_duration_s(choreo),
                     "issue": event.issue,
                     "mode": event.mode,
                     "command_id": command_id,

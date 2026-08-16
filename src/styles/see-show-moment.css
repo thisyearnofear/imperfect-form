@@ -71,7 +71,7 @@
 }
 
 .see-show-moment.is-hero .see-show-moment__eyebrow {
-  font-family: 'Press Start 2P', ui-monospace, monospace;
+  font-family: var(--font-press-start), ui-monospace, monospace;
   font-size: 0.48rem;
   letter-spacing: 0.12em;
   color: var(--sandow-brass, #fcb131);
@@ -174,7 +174,7 @@
 }
 
 .see-show-moment.is-hero .see-show-moment__gap strong {
-  font-family: 'Press Start 2P', ui-monospace, monospace;
+  font-family: var(--font-press-start), ui-monospace, monospace;
   font-size: 1.15rem;
   animation: see-show-gap-pulse 1.4s ease-in-out infinite;
 }

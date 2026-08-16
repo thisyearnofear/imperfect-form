@@ -437,14 +437,32 @@ async def _run_waypoints(
     `stall_check(commanded, measured)` runs on every waypoint when provided
     (live mode). Raising aborts the trajectory — the live stall watchdog uses
     this to stop a demo whose measured joint stops tracking the command.
+
+    Pacing is adaptive: the sleep subtracts however long the publish itself
+    took, so a slow transport stretches the trajectory by exactly its own
+    latency instead of latency + tick. A publish slower than the tick is the
+    transport's ceiling — logged once, never spammed.
     """
     total = max(len(waypoints), 1)
     last_emit = 0.0
+    warned_slow_publish = False
     for index, (deg, sleep_s) in enumerate(waypoints, start=1):
         if log_waypoint:
             log_waypoint(deg)
+        elapsed_send = 0.0
         if send:
+            started = time.monotonic()
             await send(deg)
+            elapsed_send = time.monotonic() - started
+        if elapsed_send > sleep_s * sleep_scale and not warned_slow_publish:
+            warned_slow_publish = True
+            logger.warning(
+                "Waypoint publish took %.1fms (tick budget %.1fms) — the "
+                "transport cannot keep up. Set COACH_WAYPOINT_DT_S higher "
+                "(e.g. 0.1) for cloud-sim twins or move the broker closer.",
+                elapsed_send * 1000,
+                sleep_s * sleep_scale * 1000,
+            )
 
         measured = None
         if observe is not None:
@@ -461,7 +479,7 @@ async def _run_waypoints(
         if on_progress and (now - last_emit >= 0.1 or index == total):
             await on_progress(deg, progress, measured)
             last_emit = now
-        await asyncio.sleep(sleep_s * sleep_scale)
+        await asyncio.sleep(max(sleep_s * sleep_scale - elapsed_send, 0.0))
 
 
 

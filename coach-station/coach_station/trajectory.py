@@ -7,10 +7,28 @@ both ConsoleArm and CyberwaveArm can execute.
 
 from __future__ import annotations
 
+import os
 from typing import Iterator
 
 from .primitives import Demonstration
 from .safety import STEP_DT_S, SafetyLimits, capped_speed_deg_s, clamp_elbow_deg, load_safety_limits
+
+
+def _waypoint_dt_s() -> float:
+    """Interpolation step for single-joint sweeps.
+
+    Default 40ms (25Hz) suits a local twin. Each waypoint is one MQTT publish
+    through the Cyberwave broker; against a *cloud* sim twin the WAN may not
+    sustain 25Hz — set COACH_WAYPOINT_DT_S=0.1 (10Hz) so publishes stop
+    queueing behind the network. Safety caps (speed, max step per publish)
+    are unchanged; a coarser tick that would exceed max_step just stretches
+    the sweep in time, never in space.
+    """
+    try:
+        return min(max(float(os.environ.get("COACH_WAYPOINT_DT_S", str(STEP_DT_S))), 0.01), 0.5)
+    except ValueError:
+        return STEP_DT_S
+
 
 # Re-export for tests / callers that imported STEP_DT_S from trajectory
 __all__ = [
@@ -75,7 +93,7 @@ def _sweep(
         return
 
     duration = sweep / speed_deg_s
-    n_steps = max(1, int(duration / STEP_DT_S))
+    n_steps = max(1, int(duration / _waypoint_dt_s()))
     dt = duration / n_steps
     prev = from_deg
     for i in range(1, n_steps + 1):

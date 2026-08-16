@@ -80,7 +80,7 @@ export function MovementCard({ assessment }: MovementCardProps) {
           <Move size={16} />
         </div>
         <div>
-          <p className="movement-card__eyebrow">MOVEMENT BASELINE · {assessment.protocolId}</p>
+          <p className="movement-card__eyebrow">MOVEMENT BASELINE</p>
           <h3 id="movement-card-title">Your first movement card</h3>
         </div>
         <span className="movement-card__confidence">{confidenceLabel(assessment.confidence)}</span>

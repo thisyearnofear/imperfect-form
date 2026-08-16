@@ -181,7 +181,7 @@
 
 #game-container[data-register='arcade'] .hud-label {
   color: var(--sandow-brass, #fcb131);
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: 0.5rem;
   letter-spacing: 0.05em;
   /* Cabinet voice: mode renders as CURLS, not curls — same all-caps register
@@ -198,7 +198,7 @@
 }
 
 #game-container[data-register='arcade'] #controls button {
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: 0.55rem;
   letter-spacing: 0.04em;
   border-radius: 0;
@@ -228,7 +228,7 @@
 }
 
 #game-container[data-register='arcade'] .pose-status-indicator {
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: 0.5rem;
   letter-spacing: 0.05em;
   color: #ffd97a;
@@ -239,7 +239,7 @@
    signal banner, and the insight tray in the controls. Copy stays the coach's
    content (uppercased here); the register only changes the delivery. —— */
 #game-container[data-register='arcade'] .live-status {
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: 0.5rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -280,7 +280,7 @@
 }
 
 #game-container[data-register='arcade'] .coach-cue {
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   color: #ffd97a;
   background: rgba(24, 16, 4, 0.94);
   border: 1px solid rgba(252, 177, 49, 0.4);
@@ -331,7 +331,7 @@
   border: 2px solid rgba(252, 177, 49, 0.72);
   border-radius: 0;
   box-shadow: 0 0 22px rgba(252, 177, 49, 0.2), inset 0 0 18px rgba(252, 177, 49, 0.06);
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   text-transform: uppercase;
 }
 
@@ -362,7 +362,7 @@
   border: 1px solid #ffe29a;
   border-radius: 0;
   box-shadow: 0 0 14px rgba(252, 177, 49, 0.35);
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: 0.55rem;
   letter-spacing: 0.08em;
   line-height: 1.5;

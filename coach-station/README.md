@@ -69,6 +69,36 @@ Elbow workspace + motion clamps (env-overridable; live defaults tighter):
 - `COACH_MAX_SPEED_DEG_S` — persona speed ceiling
 - `COACH_MAX_STEP_DEG` — max |Δθ| per command tick (jerk/torque proxy)
 
+### Cloud-sim latency and pacing
+
+Every waypoint/frame is one MQTT publish through the Cyberwave broker; against
+a **cloud** sim twin the WAN sits in that path, and a tick budget tuned for a
+local twin (50Hz choreography, 25Hz single-joint) can queue behind the
+network — the arm arrives late and steppy. Two knobs and two behaviors keep
+the loop honest:
+
+- `COACH_CHOREO_TICK_HZ` (default 50, min 1) — choreography publish rate.
+  Set `10` for cloud-sim demos.
+- `COACH_WAYPOINT_DT_S` (default 0.04) — single-joint interpolation step.
+  Set `0.1` for cloud-sim demos. Safety caps are unaffected: a coarser tick
+  that would exceed `COACH_MAX_STEP_DEG` stretches the sweep in time, never
+  in space.
+- **Adaptive pacing** — both execution loops subtract the publish's own
+  duration from the sleep, so a slow broker stretches the timeline by exactly
+  its own latency. A publish slower than its tick logs a one-time warning
+  naming the knob to turn.
+- **Visible drops** — a form cue dropped by the cooldown or the one-demo lock
+  emits a versioned `demo_skipped` event to the browser (reason + retry
+  hint) instead of silence, so the UI can acknowledge the cue rather than
+  look laggy or dead.
+
+**Operator view vs. user view:** the Cyberwave dashboard is the _operator_
+surface (twin health, alerts, recordings). The user watches the arm in the
+web app — `SeeShowMoment`/`CoachTwinPeek` render the same trajectory from
+`trajectory_progress`/`choreography_progress` over the local WebSocket, which
+beats the dashboard's render by the broker+view round-trip. Don't stage a
+demo with the user's eyes on two screens.
+
 See [`LIVE.md`](./LIVE.md) for Milestone 2 hardware bring-up.
 
 ## Twin integration surface (Cyberwave)

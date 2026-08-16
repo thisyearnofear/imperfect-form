@@ -1,8 +1,10 @@
 /**
  * Coach Personalities
  *
- * Ported from imperfectcoach. Three animal coach personas that drive
- * both canned local feedback and the tone of AI-generated coaching.
+ * Three instructors from the Sandow seaside-arcade world — the same three
+ * registers the physical coach uses when the SO-101 arm demonstrates:
+ * persona choice is a *tempo* choice (slow-deliberate / smooth-centered /
+ * fast-energetic; see coach-station primitives). Voice and arm move together.
  */
 
 export type CoachPersonality = 'SNEL' | 'STEDDIE' | 'RASTA';
@@ -23,8 +25,9 @@ export const COACH_PERSONALITIES: Record<CoachPersonality, CoachInfo> = {
     name: 'SNEL',
     emoji: '🐌',
     theme: 'supportive',
-    description: 'Your patient, encouraging guide',
-    supportivePhrase: "Take your time, you're building strength beautifully.",
+    description:
+      'The patient instructor — grades kindly, never rushes you. Arm demonstrates slow and deliberate.',
+    supportivePhrase: 'Take your time — one clean rep is worth ten rushed.',
     motivationalPhrase: 'Steady progress is the best progress. Keep going!',
   },
   STEDDIE: {
@@ -32,8 +35,8 @@ export const COACH_PERSONALITIES: Record<CoachPersonality, CoachInfo> = {
     name: 'STEDDIE',
     emoji: '🐢',
     theme: 'zen',
-    description: 'Your mindful, centered coach',
-    supportivePhrase: 'Breathe with the movement, stay centered.',
+    description: 'The steady — breath first, control always. Arm demonstrates smooth and centered.',
+    supportivePhrase: 'Breathe with the movement; the bar will wait for you.',
     motivationalPhrase: 'Feel your form, find your balance. Perfect.',
   },
   RASTA: {
@@ -41,9 +44,10 @@ export const COACH_PERSONALITIES: Record<CoachPersonality, CoachInfo> = {
     name: 'RASTA',
     emoji: '🐙',
     theme: 'competitive',
-    description: 'Your energetic, dynamic motivator',
-    supportivePhrase: 'Come on now, show me that power!',
-    motivationalPhrase: "Push those limits! You've got more in you!",
+    description:
+      'The pier barker — calls the crowd, wants the big finish. Arm demonstrates fast and energetic.',
+    supportivePhrase: 'Step up! Show the boardwalk what you have today.',
+    motivationalPhrase: 'One more, and make it a clean one!',
   },
 };
 
@@ -58,11 +62,11 @@ export const getCoachInfo = (personality: CoachPersonality): CoachInfo => {
 export const getPersonalityPromptStyle = (personality: CoachPersonality): string => {
   switch (personality) {
     case 'SNEL':
-      return 'patient and encouraging; celebrate small wins; never rush the athlete';
+      return 'patient and encouraging like a Victorian correspondence instructor; celebrate small wins; never rush the athlete';
     case 'STEDDIE':
-      return 'calm and mindful; emphasize breath, balance, and control';
+      return 'calm and mindful like a boardwalk strongman; emphasize breath, balance, and control';
     case 'RASTA':
-      return 'high-energy and competitive; push for more while keeping it fun';
+      return 'high-energy seaside-arcade barker; push for more while keeping it fun';
   }
 };
 
@@ -75,38 +79,39 @@ export const getPersonalityFeedback = (
 
   switch (context) {
     case 'session_start':
-      if (personality === 'SNEL') return 'Ready when you are! Take your time to get positioned.';
+      if (personality === 'SNEL') return 'Ready when you are. Take your time getting set.';
       if (personality === 'STEDDIE') return 'Center yourself, breathe deeply. Begin when ready.';
-      if (personality === 'RASTA') return "Let's go! Show me what you've got today!";
+      if (personality === 'RASTA') return "Step right up — today's the day!";
       break;
 
     case 'encouragement':
-      if (personality === 'SNEL') return "You're doing great! Keep that steady rhythm.";
-      if (personality === 'STEDDIE') return 'Stay focused, breathe with each movement.';
-      if (personality === 'RASTA') return 'Yes! Keep that energy flowing!';
+      if (personality === 'SNEL') return 'Good. Keep that steady rhythm — no need to hurry.';
+      if (personality === 'STEDDIE') return 'Stay with your breath, one movement at a time.';
+      if (personality === 'RASTA') return 'Yes! The crowd is watching — keep it flowing!';
       break;
 
     case 'form_feedback':
       if (!formScore) return coach.supportivePhrase;
 
       if (formScore >= 85) {
-        if (personality === 'SNEL') return 'Beautiful control! Your form is excellent.';
-        if (personality === 'STEDDIE') return 'Perfect balance and control. Well done.';
-        if (personality === 'RASTA') return "Wicked form! You're crushing it!";
+        if (personality === 'SNEL') return 'Beautiful control. That is a rep Sandow would stamp.';
+        if (personality === 'STEDDIE')
+          return 'Balanced and quiet — that is what control looks like.';
+        if (personality === 'RASTA') return 'Wicked form! The pier is cheering!';
       } else if (formScore >= 70) {
-        if (personality === 'SNEL') return 'Good work! Focus on controlled movements.';
-        if (personality === 'STEDDIE') return 'Steady your form, feel the movement.';
-        if (personality === 'RASTA') return 'Almost there! Push for cleaner form!';
+        if (personality === 'SNEL') return 'Good work. Slow the hard part down and it will come.';
+        if (personality === 'STEDDIE') return 'Steady. Breathe out on the effort, feel the line.';
+        if (personality === 'RASTA') return 'Almost there! One cleaner and the bell rings!';
       } else {
-        if (personality === 'SNEL') return 'Take it slow, focus on quality over speed.';
-        if (personality === 'STEDDIE') return 'Breathe, center yourself, focus on form.';
-        if (personality === 'RASTA') return "Reset and go again! You've got this!";
+        if (personality === 'SNEL') return 'No matter — slow right down, one honest rep at a time.';
+        if (personality === 'STEDDIE') return 'Reset your stance, breathe, begin again gently.';
+        if (personality === 'RASTA') return 'Reset and go again — the strikers never quit!';
       }
       break;
 
     case 'rep_complete':
-      if (personality === 'SNEL') return 'Nice! One more step forward.';
-      if (personality === 'STEDDIE') return 'Good. Maintain that rhythm.';
+      if (personality === 'SNEL') return 'Nicely done. One more step forward.';
+      if (personality === 'STEDDIE') return 'Good. Hold that rhythm.';
       if (personality === 'RASTA') return 'Yes! Keep the momentum going!';
       break;
   }
@@ -114,4 +119,8 @@ export const getPersonalityFeedback = (
   return coach.supportivePhrase;
 };
 
-export const getDefaultPersonality = (): CoachPersonality => 'RASTA';
+/**
+ * The default coach is the patient one — day-0 is a trust-building register,
+ * and the competitive barker is an explicit choice, not a first impression.
+ */
+export const getDefaultPersonality = (): CoachPersonality => 'SNEL';

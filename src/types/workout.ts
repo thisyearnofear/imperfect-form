@@ -31,4 +31,7 @@ export interface LocalWorkout {
   trace?: SessionSnapshot[];
   hasTrace?: boolean;
   formSignature?: FormSignature;
+  /** Average per-rep form score (0–100) for graded modes (curls). Drives the
+   *  XP form-quality multiplier — the score loop rewards control, not volume. */
+  formScoreAvg?: number;
 }

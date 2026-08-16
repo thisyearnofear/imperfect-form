@@ -169,21 +169,37 @@ const createConnectors = async () => {
       : []),
   ];
 
-  // Add Farcaster mini app connector if available (client-side only)
-  try {
-    const { farcasterMiniApp } = await import('@farcaster/miniapp-wagmi-connector');
-    if (farcasterMiniApp && typeof farcasterMiniApp === 'function') {
-      const connector = farcasterMiniApp() as any; // Type assertion for compatibility
-      connectors.unshift(connector);
+  // Add Farcaster mini app connector if available (client-side only).
+  // Miniapps always run inside an iframe, so only pay the connector chunk
+  // download when that context is even possible — the wallet stack must
+  // never sit on the boot critical path of a camera-first app.
+  const maybeMiniApp = (() => {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true; // cross-origin iframe: assume possible
     }
-  } catch (err) {
-    console.warn('@farcaster/miniapp-wagmi-connector not available:', err);
+  })();
+  if (maybeMiniApp) {
+    try {
+      const { farcasterMiniApp } = await import('@farcaster/miniapp-wagmi-connector');
+      if (farcasterMiniApp && typeof farcasterMiniApp === 'function') {
+        const connector = farcasterMiniApp() as any; // Type assertion for compatibility
+        connectors.unshift(connector);
+      }
+    } catch (err) {
+      console.warn('@farcaster/miniapp-wagmi-connector not available:', err);
+    }
   }
 
   return connectors;
 };
 
-// Create Wagmi config with client-side initialization
+// Create Wagmi config with client-side initialization.
+// Cached so React StrictMode's double-mount never builds two configs —
+// the wallet stack initializes once, off the first paint.
+let wagmiConfigPromise: Promise<Awaited<ReturnType<typeof createWagmiConfig>>> | null = null;
+
 const createWagmiConfig = async () => {
   const connectors = await createConnectors();
   return createConfig({
@@ -311,7 +327,8 @@ export default function SimplifiedAppProviders({ children }: AppProvidersProps) 
       }
     }
 
-    createWagmiConfig().then((config) => {
+    wagmiConfigPromise ??= createWagmiConfig();
+    wagmiConfigPromise.then((config) => {
       setWagmiConfig(config);
     });
   }, []);

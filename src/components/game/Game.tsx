@@ -29,7 +29,9 @@ import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { speakCoachLine } from '@/lib/tts';
-import { coachStation } from '@/services/coachStation';
+import { coachStation, type StationDemonstrationEvent } from '@/services/coachStation';
+import { consumePendingSelfRace } from '@/services/ghostRaceBus';
+import { normalizeExerciseMode } from '@/utils/biomechanics';
 // session-register.css loaded from root layout
 
 import { useFullscreen } from '../../hooks/useFullscreen';
@@ -55,7 +57,6 @@ import {
 import { getEffectiveUserId } from '@/services/guestIdentity';
 import { buildFormSignature } from '@/lib/progress/formSignature';
 import { ghostService } from '@/services/GhostService';
-import { getChampionTrace, isChampion } from '@/constants/championTraces';
 import { playStudioCue } from '@/lib/uiSound';
 import { zIndexClasses } from '@/lib/zTokens';
 import { trackChallengeEvent, trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
@@ -118,6 +119,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     import('@/services/sessionLogger').SessionSummary | null
   >(null);
   const [movementAssessment, setMovementAssessment] = useState<MovementAssessment | null>(null);
+
+  // Form scores for curls (exported to session recap + persisted with the
+  // workout so XP recomputation can reward control over volume).
+  const [formScores, setFormScores] = useState<number[]>([]);
+  // Stable identity: CurlFormInstrument's scoring effect lists onFormScore as a
+  // dependency, so an inline arrow would recreate on every render and re-trigger
+  // the effect on every pose publish (infinite update-depth loop).
+  const handleFormScore = useCallback((score: number) => {
+    setFormScores((prev) => [...prev.slice(-9), score]);
+  }, []);
+
+  // One-rep trial ("Try one rep" means one rep): the session ends shortly
+  // after the first detected rep + first-signal beat, and the recap takes
+  // over with the one fix. Full 120s sets are an explicit second step.
+  const oneRepTrialRef = useRef(false);
 
   const [pbTrace, setPbTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(null);
   const [raceTrace, setRaceTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(
@@ -195,6 +211,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             type: exerciseMode,
             userAddress: effectiveUserId,
             formSignature: buildFormSignature(summary),
+            // Persist the form grade with the workout so XP recomputation
+            // (which replays the whole history) can reward control over volume.
+            formScoreAvg:
+              formScores.length > 0
+                ? Math.round(formScores.reduce((a, b) => a + b, 0) / formScores.length)
+                : undefined,
           });
           console.log('✅ Workout auto-saved locally:', workoutId);
 
@@ -205,7 +227,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         })().catch((err) => console.error('❌ Failed to auto-save workout:', err));
       }
     },
-    [finalAddress, isRace, movementChallenge, user?.fid]
+    [finalAddress, isRace, movementChallenge, user?.fid, formScores]
   );
 
   // Swipe gesture handling for mobile
@@ -257,11 +279,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     }
   }, []);
 
-  // Voice sync: station `demonstration` events → TTS while the arm moves
+  // Voice sync: speak the demonstration narration when the arm has *actually
+  // started moving* — the first trajectory/choreography progress for that
+  // command — not on the pre-flight announcement. Narration that outruns the
+  // arm by a broker round-trip reads as desync. A fallback timer keeps the
+  // cue alive if progress events never arrive (station dropped mid-demo).
   useEffect(() => {
     if (!coachStation.enabled) return;
-    return coachStation.onDemonstration((event) => {
-      if (!voiceEnabled) return;
+    let pending: StationDemonstrationEvent | null = null;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    const NARRATION_FALLBACK_MS = 1800;
+
+    const speakPending = () => {
+      const event = pending;
+      pending = null;
+      if (!event || !voiceEnabled) return;
       // Station demonstrations are time-sensitive: use the local voice path
       // so a cloud provider can never delay or duplicate a correction while the
       // simulated/physical Coach is moving.
@@ -270,7 +302,27 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         personality: event.personality,
         preferredProvider: 'browser',
       });
+    };
+
+    const unsubDemo = coachStation.onDemonstration((event) => {
+      pending = event;
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      fallbackTimer = setTimeout(speakPending, NARRATION_FALLBACK_MS);
     });
+    const speakOnMotion = () => {
+      if (!pending) return;
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      speakPending();
+    };
+    const unsubProgress = coachStation.onTrajectoryProgress(speakOnMotion);
+    const unsubChoreo = coachStation.onChoreographyProgress(speakOnMotion);
+
+    return () => {
+      unsubDemo();
+      unsubProgress();
+      unsubChoreo();
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
   }, [voiceEnabled]);
 
   // Initialize mode based on user state
@@ -327,15 +379,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
   const [personality] = useCoachPersonality();
 
-  // Form scores for curls (exported to session recap)
-  const [formScores, setFormScores] = useState<number[]>([]);
-  // Stable identity: CurlFormInstrument's scoring effect lists onFormScore as a
-  // dependency, so an inline arrow would recreate on every render and re-trigger
-  // the effect on every pose publish (infinite update-depth loop).
-  const handleFormScore = useCallback((score: number) => {
-    setFormScores((prev) => [...prev.slice(-9), score]);
-  }, []);
-
   // Rep counting, haptic + visual feedback via hook
   const {
     repCount,
@@ -350,6 +393,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       firstSignalTimerRef.current = setTimeout(() => {
         setShowFirstRepCelebration(false);
         firstSignalTimerRef.current = null;
+        // One-rep trial: land the first-signal beat, then close the set —
+        // the label promised one rep, not a 120-second clock.
+        if (oneRepTrialRef.current) {
+          oneRepTrialRef.current = false;
+          handleStopRef.current?.();
+        }
       }, 2200);
       playStudioCue('chime');
     },
@@ -565,7 +614,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       isRace?: boolean;
       retryFocus?: string;
       challengeSource?: 'incoming' | 'self' | 'external';
+      oneRepTrial?: boolean;
     }) => {
+      oneRepTrialRef.current = Boolean(options?.oneRepTrial);
       if (
         !showCameraPrimer &&
         typeof document !== 'undefined' &&
@@ -767,24 +818,23 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // --- Ghost Mode & Race Integration ---
 
-  // Handle raceGhost custom event from Leaderboard
+  // Handle raceGhost custom event from Leaderboard (live while mounted) and
+  // any one-shot self-race parked by another tab before Game mounted.
   useEffect(() => {
-    const handleRaceGhost = async (event: any) => {
-      const { address: targetAddress, mode: targetMode } = event.detail;
+    const handleRaceGhost = async (targetAddress: string, targetModeRaw: string) => {
+      const targetMode = normalizeExerciseMode(targetModeRaw);
       console.log(`👻 Game received raceGhost event for ${targetAddress} in ${targetMode}`);
 
       let traceToLoad = null;
 
-      // 1. Check if it's a champion trace
-      if (isChampion(targetAddress)) {
-        console.log('🏆 Loading Champion trace...');
-        const compressedTrace = getChampionTrace(targetAddress);
-        if (compressedTrace) {
-          traceToLoad = ghostService.decompress(compressedTrace);
-        }
-      }
-      // 2. Check if it's the current user and fetch local PB trace
-      else if (finalAddress && targetAddress.toLowerCase() === finalAddress.toLowerCase()) {
+      // Race-able ghosts are real recorded traces only: the current user's
+      // own PB (pre-baked "champion" placeholders were removed — a fake
+      // ghost contradicts the honest-records promise). 'self' is the
+      // challenges tab's shorthand for the connected user.
+      const isSelf =
+        targetAddress === 'self' ||
+        (finalAddress && targetAddress.toLowerCase() === finalAddress.toLowerCase());
+      if (finalAddress && isSelf) {
         console.log('👤 Loading Personal Best trace...');
         try {
           const pb = await getPersonalBestWorkout(getEffectiveUserId(finalAddress), targetMode);
@@ -812,8 +862,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       }
     };
 
-    window.addEventListener('raceGhost', handleRaceGhost);
-    return () => window.removeEventListener('raceGhost', handleRaceGhost);
+    const onRaceGhostEvent = (event: any) => {
+      const { address, mode } = event.detail;
+      void handleRaceGhost(address, mode);
+    };
+    window.addEventListener('raceGhost', onRaceGhostEvent);
+
+    // Consume a self-race request parked before this mount (challenges tab).
+    const pendingMode = consumePendingSelfRace();
+    if (pendingMode) void handleRaceGhost('self', pendingMode);
+
+    return () => window.removeEventListener('raceGhost', onRaceGhostEvent);
   }, [finalAddress, handleStart]);
 
   // Extract race trace + intent from URL on mount
@@ -1080,6 +1139,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                         isRace: hasIncomingChallenge,
                         trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
                         challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
+                        // "Try one rep" means one rep: the day-0 hero CTA ends
+                        // after the first rep + first-signal beat. Incoming
+                        // challenges ("Meet the ghost") run the full set.
+                        oneRepTrial: !hasIncomingChallenge,
                       })
                     }
                     incomingChallenge={hasIncomingChallenge}
@@ -1102,6 +1165,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                     isRace: hasIncomingChallenge,
                     trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
                     challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
+                    oneRepTrial: !hasIncomingChallenge,
                   })
                 }
               />

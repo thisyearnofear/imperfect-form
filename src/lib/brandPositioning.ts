@@ -260,6 +260,6 @@ export const ONBOARDING_STEPS = [
     id: 'progress',
     title: 'Progress you will want to keep',
     description:
-      'After you feel a session, game-quality feedback kicks in: XP, quests, ghosts, and optional on-chain records — earned depth, never a gate.',
+      'After you feel a session, game-quality feedback kicks in: XP, quests, and ghosts to race. Deeper records exist, but nothing gates your coaching.',
   },
 ] as const;

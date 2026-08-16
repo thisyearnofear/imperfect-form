@@ -280,8 +280,8 @@ const Webcam: React.FC<WebcamProps> = ({
   // Style the canvas directly to ensure it's properly visible and sized
   useEffect(() => {
     if (canvasRef.current) {
-      // Force canvas to be visible with a thin green border - based on the working blue border style
-      canvasRef.current.style.border = '2px solid rgba(0, 255, 0, 0.5)';
+      // Skeleton overlay fills the camera stage; no border — the old debug
+      // green frame shipped in production and read as a bug, not a feature.
       canvasRef.current.style.position = 'absolute';
       canvasRef.current.style.top = '0';
       canvasRef.current.style.left = '0';

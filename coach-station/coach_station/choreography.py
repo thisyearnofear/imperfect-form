@@ -21,16 +21,33 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+import os
 import time
 from dataclasses import dataclass, field
 from typing import Awaitable, Callable, Literal, Optional
 
 logger = logging.getLogger("coach_station.choreography")
 
+
+def _env_tick_hz() -> float:
+    """Command rate for choreography frames.
+
+    50Hz (default) gives smooth motion against a local twin. Every frame is
+    one MQTT publish through the Cyberwave broker — against a *cloud* sim twin
+    the WAN can't sustain 50Hz, the publishes queue, and the arm arrives late
+    and steppy. Set COACH_CHOREO_TICK_HZ=10 for cloud-sim demos; the easing
+    curves are unaffected (they interpolate by duration, not by tick count).
+    """
+    try:
+        return min(max(float(os.environ.get("COACH_CHOREO_TICK_HZ", "50")), 1.0), 50.0)
+    except ValueError:
+        return 50.0
+
+
 # ─── Command rate ──────────────────────────────────────────────────────────
 # 50Hz gives smooth, responsive motion. The Cyberwave MQTT broker and the
 # SO-101 servos both handle this fine. 20ms between commands.
-TICK_HZ = 50
+TICK_HZ = _env_tick_hz()
 TICK_DT = 1.0 / TICK_HZ
 
 
@@ -303,6 +320,18 @@ CHOREOGRAPHIES: dict[str, Choreography] = {
 }
 
 
+def choreography_duration_s(choreography: Choreography, speed_scale: float = 1.0) -> float:
+    """Planned wall-clock duration: every keyframe sweep + hold, per repeat.
+
+    The browser uses this to size narration windows and the demo-hero beat —
+    a hardcoded guess here desyncs voice from arm when keyframes change.
+    """
+    if not choreography.keyframes:
+        return 0.0
+    per_rep = sum((kf.duration_s + kf.hold_s) for kf in choreography.keyframes)
+    return round(per_rep * max(choreography.repeats, 1) * speed_scale, 2)
+
+
 # ─── Interpolation engine ─────────────────────────────────────────────────
 
 def _lerp(a: float, b: float, t: float) -> float:
@@ -362,8 +391,37 @@ async def execute_choreography(
     """Execute a choreography at TICK_HZ with per-joint easing.
 
     speed_scale < 1 = faster, > 1 = slower.
+
+    Pacing is adaptive: each sleep subtracts the time the publish itself took,
+    so a slow broker stretches the timeline by exactly its own latency instead
+    of latency + tick. If the publish alone exceeds the tick, that's the
+    transport's ceiling — log it once rather than spam per frame.
     """
     dt = TICK_DT * speed_scale
+    warned_slow_publish = False
+
+    async def _paced_send(tick_s: float, joints: dict[str, float]) -> None:
+        """Publish one frame, then sleep only for the *remaining* tick budget.
+
+        A slow broker then stretches the timeline by exactly its own latency
+        instead of latency + tick. If the publish alone exceeds the tick, the
+        transport has hit its ceiling — log once rather than spam per frame.
+        """
+        nonlocal warned_slow_publish
+        started = time.monotonic()
+        await send_joints(joints)
+        elapsed = time.monotonic() - started
+        if elapsed > tick_s and not warned_slow_publish:
+            warned_slow_publish = True
+            logger.warning(
+                "Joint publish took %.1fms (tick budget %.1fms) — the transport "
+                "cannot keep up at %sHz. Lower COACH_CHOREO_TICK_HZ or move the "
+                "twin/broker closer (cloud sim adds WAN RTT to every frame).",
+                elapsed * 1000,
+                tick_s * 1000,
+                TICK_HZ,
+            )
+        await asyncio.sleep(max(tick_s - elapsed, 0.0))
 
     for rep in range(choreography.repeats):
         # Initialize current pose from first keyframe
@@ -383,8 +441,7 @@ async def execute_choreography(
                     joint_easing=kf.joint_easing if kf.joint_easing else None,
                 )
                 for frame in frames:
-                    await send_joints(frame)
-                    await asyncio.sleep(dt)
+                    await _paced_send(dt, frame)
             else:
                 # Instant snap (duration ~0)
                 await send_joints(kf.joints)
@@ -393,10 +450,10 @@ async def execute_choreography(
             if kf.hold_s > 0:
                 # Keep sending the hold pose at a lower rate to maintain
                 # position (some controllers droop without commands)
-                hold_ticks = max(1, int((kf.hold_s * speed_scale) / (TICK_DT * 4)))
+                hold_dt = TICK_DT * 4 * speed_scale
+                hold_ticks = max(1, int((kf.hold_s * speed_scale) / hold_dt))
                 for _ in range(hold_ticks):
-                    await send_joints(kf.joints)
-                    await asyncio.sleep(TICK_DT * 4 * speed_scale)
+                    await _paced_send(hold_dt, kf.joints)
 
             current_pose = dict(kf.joints)
 

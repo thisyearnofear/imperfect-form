@@ -260,11 +260,11 @@ function ImmersiveLore() {
       </section>
 
       <section className="crafft-exhibit__section crafft-exhibit__cyberwave">
-        <h2 className="crafft-exhibit__section-title">Built with Cyberwave</h2>
+        <h2 className="crafft-exhibit__section-title">The machinery under the cabinet</h2>
         <p className="crafft-exhibit__section-intro">
-          Imperfect Form is a proud member of the Cyberwave Builders program. The SO-101 robot arm
-          is the physical extension of our coaching intelligence — it doesn&apos;t just show you the
-          correction, it <em>demonstrates</em> it in your space.
+          Every seaside machine hid real engineering behind the paint. Ours: an open-hardware SO-101
+          arm, driven through the Cyberwave platform — it doesn&apos;t just show you the correction,
+          it <em>demonstrates</em> it in your space.
         </p>
         <div className="crafft-exhibit__machine-grid">
           <div className="crafft-exhibit__machine-card">
@@ -316,7 +316,8 @@ function ImmersiveLore() {
 
       <section className="crafft-exhibit__section crafft-exhibit__coda">
         <p className="crafft-exhibit__coda-line">
-          The spring-grip dumbbell corrected grip. The Sandow Machine demonstrates the whole arm.
+          The spring-grip dumbbell corrected grip. The Sandow Machine demonstrates the whole
+          movement.
         </p>
         <p className="crafft-exhibit__coda-sub">
           The same loop Sandow ran in 1897 — closed with a robot.

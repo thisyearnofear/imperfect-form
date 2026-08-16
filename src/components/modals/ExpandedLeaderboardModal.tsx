@@ -12,7 +12,6 @@ import { useBatchVerificationStatus } from '@/hooks/useBatchVerificationStatus';
 import { useFadeTransition } from '@/hooks';
 import { ProfileDisplay } from '@/components/leaderboard/ProfileDisplay';
 import { usePlatform } from '@/contexts/PlatformContext';
-import { isChampion } from '@/constants/championTraces';
 import {
   getNetworkStyling,
   getMedalStyle,
@@ -230,8 +229,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                       <div className="score-display">{entry.totalScore}</div>
                     </td>
                     <td className="ghost-cell px-2">
-                      {(isChampion(entry.user) ||
-                        wallet.address?.toLowerCase() === entry.user.toLowerCase()) && (
+                      {wallet.address?.toLowerCase() === entry.user.toLowerCase() && (
                         <button
                           onClick={() => handleRaceClick(entry.user, 'pushups')}
                           className="p-1 hover:bg-white/10 rounded-full transition-colors group relative"
@@ -309,8 +307,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                     <div className={`score-display ${medalStyle.textColor}`}>
                       {entry.totalScore}
                     </div>
-                    {(isChampion(entry.user) ||
-                      wallet.address?.toLowerCase() === entry.user.toLowerCase()) && (
+                    {wallet.address?.toLowerCase() === entry.user.toLowerCase() && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -382,8 +379,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                       </div>
                     </td>
                     <td className="px-2 py-1 text-center">
-                      {(isChampion(entry.user) ||
-                        wallet.address?.toLowerCase() === entry.user.toLowerCase()) && (
+                      {wallet.address?.toLowerCase() === entry.user.toLowerCase() && (
                         <button
                           onClick={() => handleRaceClick(entry.user, 'squats')}
                           className="p-1 hover:bg-white/10 rounded-full transition-colors group"
@@ -465,8 +461,7 @@ const ExpandedLeaderboardModal: React.FC<ExpandedLeaderboardModalProps> = ({
                     <div className={`score-display ${medalStyle.textColor}`}>
                       {entry.totalScore}
                     </div>
-                    {(isChampion(entry.user) ||
-                      wallet.address?.toLowerCase() === entry.user.toLowerCase()) && (
+                    {wallet.address?.toLowerCase() === entry.user.toLowerCase() && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

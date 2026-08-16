@@ -38,7 +38,7 @@
 }
 
 .collaborate-page__brand {
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: 0.6rem;
   letter-spacing: 0.06em;
 }
@@ -204,7 +204,7 @@
 .collaborate-page__loop span {
   grid-row: span 2;
   color: var(--co-gold);
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: 0.55rem;
   padding-top: 0.15rem;
 }

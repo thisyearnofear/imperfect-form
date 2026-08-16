@@ -127,7 +127,9 @@ describe('coachStation fail-silent', () => {
     expect(payload.rep_count).toBe(3);
     expect(payload.current).toBe(132);
     expect(payload.target).toBe(50);
-    expect(payload.personality).toBe('RASTA');
+    // Default coach is the patient one — day-0 is a trust-building register
+    // (the competitive barker is an explicit choice).
+    expect(payload.personality).toBe('SNEL');
   });
 
   it('notifies form-cue subscribers when a form event is sent', async () => {

@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Snail, Turtle, Music, type LucideIcon } from 'lucide-react';
+import { Snail, Turtle, Megaphone, type LucideIcon } from 'lucide-react';
 import type { CoachPersonality } from '@/lib/coachPersonalities';
 
+// RASTA is the pier barker — lucide has no octopus, so the mark is the
+// barker's megaphone, not a silently-changed species.
 const PERSONA_ICONS: Record<CoachPersonality, LucideIcon> = {
   SNEL: Snail,
   STEDDIE: Turtle,
-  RASTA: Music,
+  RASTA: Megaphone,
 };
 
 interface PersonaIconProps {

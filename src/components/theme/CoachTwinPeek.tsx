@@ -43,6 +43,7 @@ function deriveTwinView(twin: CoachTwinState, session: boolean) {
     isDemo,
     isCurlsFormRef,
     status,
+    skipped,
   } = twin;
 
   const isChoreography = demo?.choreography === true;
@@ -52,35 +53,37 @@ function deriveTwinView(twin: CoachTwinState, session: boolean) {
     : null;
 
   const statusLabel =
-    execution?.kind === 'succeeded'
-      ? 'Correction complete — your turn'
-      : execution?.kind === 'aborted' || execution?.kind === 'rejected'
-        ? 'Correction stopped'
-        : execution?.kind === 'error'
-          ? 'Station error · coaching continues'
-          : demo != null && isChoreography
-            ? choreoLabel
-              ? `Coach is demonstrating: ${choreoLabel}`
-              : 'Coach is performing the full movement'
-            : demo != null
-              ? isCurlsFormRef
-                ? 'Form reference — match the target line'
-                : 'Coach is showing the target line'
-              : execution?.kind === 'executing'
-                ? isChoreography
-                  ? 'Coach is demonstrating the correct form'
-                  : isCurlsFormRef
-                    ? 'Demonstrating the target angle'
-                    : 'Coach is moving through the correction'
-                : intent != null
-                  ? 'Coach is preparing the correction'
-                  : status === 'connected'
-                    ? 'Coach is watching your form'
-                    : status === 'connecting'
-                      ? 'Connecting Coach…'
-                      : isCurlsFormRef
-                        ? 'Watch the target — match it with your elbow'
-                        : 'Coach Bay offline · camera coaching continues';
+    skipped != null
+      ? 'Coach showed this recently — your turn'
+      : execution?.kind === 'succeeded'
+        ? 'Correction complete — your turn'
+        : execution?.kind === 'aborted' || execution?.kind === 'rejected'
+          ? 'Correction stopped'
+          : execution?.kind === 'error'
+            ? 'Station error · coaching continues'
+            : demo != null && isChoreography
+              ? choreoLabel
+                ? `Coach is demonstrating: ${choreoLabel}`
+                : 'Coach is performing the full movement'
+              : demo != null
+                ? isCurlsFormRef
+                  ? 'Form reference — match the target line'
+                  : 'Coach is showing the target line'
+                : execution?.kind === 'executing'
+                  ? isChoreography
+                    ? 'Coach is demonstrating the correct form'
+                    : isCurlsFormRef
+                      ? 'Demonstrating the target angle'
+                      : 'Coach is moving through the correction'
+                  : intent != null
+                    ? 'Coach is preparing the correction'
+                    : status === 'connected'
+                      ? 'Coach is watching your form'
+                      : status === 'connecting'
+                        ? 'Connecting Coach…'
+                        : isCurlsFormRef
+                          ? 'Watch the target — match it with your elbow'
+                          : 'Coach Bay offline · camera coaching continues';
 
   const isExecutionActive = execution?.kind === 'executing';
   const hasExecutionError = execution?.kind === 'error' || execution?.kind === 'aborted';

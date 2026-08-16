@@ -89,7 +89,7 @@
 
 .progress-spark--arcade .progress-spark__title {
   color: #fcb131;
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: 0.45rem;
   letter-spacing: 0.06em;
 }
@@ -98,7 +98,7 @@
 .progress-spark--arcade .progress-spark__hint,
 .progress-spark--arcade .progress-spark__footer {
   color: rgba(255, 255, 255, 0.65);
-  font-family: 'Press Start 2P', cursive;
+  font-family: var(--font-press-start), cursive;
   font-size: 0.38rem;
 }
 

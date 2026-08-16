@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Ghost, Trophy, ChevronRight, Share2, Play } from 'lucide-react';
+import { Ghost, Trophy, ChevronRight, Play } from 'lucide-react';
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { useSearchParams } from 'next/navigation';
 
@@ -22,7 +22,6 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
   }, [searchParams]);
 
   const canUseGhostMode = progress.currentLevel >= 3;
-  const canUseOnChain = progress.currentLevel >= 5;
 
   const handleStartChallenge = (mode: 'pushups' | 'squats') => {
     if (onStartGhostRace) {
@@ -161,27 +160,6 @@ export const ChallengeWidget: React.FC<ChallengeWidgetProps> = ({ onStartGhostRa
           </p>
         </div>
       </div>
-
-      {canUseOnChain && (
-        <div
-          className="mt-4 p-3 rounded-lg"
-          style={{
-            background: 'rgba(86, 217, 195, 0.08)',
-            border: '1px solid var(--studio-border)',
-          }}
-        >
-          <div
-            className="flex items-center gap-2 text-xs font-bold"
-            style={{ color: 'var(--studio-teal-bright)' }}
-          >
-            <Share2 size={14} />
-            <span>On-chain challenges active</span>
-          </div>
-          <p className="text-xs mt-1" style={{ color: 'var(--studio-muted)' }}>
-            Your challenges are now recorded on-chain for verified competition
-          </p>
-        </div>
-      )}
     </div>
   );
 };

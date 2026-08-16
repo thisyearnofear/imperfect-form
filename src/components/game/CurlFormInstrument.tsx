@@ -461,7 +461,7 @@ export function CurlFormInstrument({
         {coachStation.enabled && (
           <div className="curl-instrument__robot">
             <div className="curl-instrument__robot-header">
-              <span className="curl-instrument__robot-badge">SO-101</span>
+              <span className="curl-instrument__robot-badge">COACH ARM</span>
               <span className="curl-instrument__robot-label">Robot elbow</span>
             </div>
             <div className="curl-instrument__robot-angles">
@@ -573,7 +573,8 @@ export function CurlFormInstrument({
               {getPersonalityFeedback(currentPersonality, 'form_feedback', formScore)}
             </p>
 
-            {/* Compact Coach Switcher */}
+            {/* Compact Coach Switcher — the description travels with the
+                name: a persona is a tempo choice, and the picker says so. */}
             <div className="curl-instrument__coach-switcher">
               {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[]).map((personality) => {
                 const coach = COACH_PERSONALITIES[personality];
@@ -584,8 +585,9 @@ export function CurlFormInstrument({
                     type="button"
                     className={`curl-instrument__coach-switcher-btn${selected ? ' is-selected' : ''}`}
                     onClick={() => setPersonality(personality)}
-                    aria-label={`Switch to ${coach.name} coach`}
+                    aria-label={`Switch to ${coach.name} coach — ${coach.description}`}
                     aria-pressed={selected}
+                    title={coach.description}
                   >
                     <span>{coach.emoji}</span>
                     <span>{coach.name}</span>
@@ -593,6 +595,9 @@ export function CurlFormInstrument({
                 );
               })}
             </div>
+            <p className="curl-instrument__coach-compare-feedback">
+              {COACH_PERSONALITIES[currentPersonality].description}
+            </p>
 
             <div className="curl-instrument__coach-compare-others">
               {(Object.keys(COACH_PERSONALITIES) as CoachPersonality[])

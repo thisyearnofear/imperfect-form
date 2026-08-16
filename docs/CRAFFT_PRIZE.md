@@ -49,10 +49,6 @@ This is the "mad but completely real" register the organiser wants. It's
 satire with a steel core — the surface is playful British arcade, the
 substance is a working form-coaching instrument.
 
-This is the "mad but completely real" register the organiser wants. It's
-satire with a steel core — the surface is playful British arcade, the
-substance is a working form-coaching instrument.
-
 ## The submission
 
 **Product name:** "The Sandow Machine" (working title)
