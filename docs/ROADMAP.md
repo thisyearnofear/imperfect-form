@@ -96,6 +96,23 @@ but age-band comparisons, cohort rankings, and trajectory claims remain gated by
 
 **Defer until #1–#3:** own Spline scene, Avalanche leaderboard contract, marketing landing, SmolVLA / episode flywheel (Milestone 3).
 
+### Recap modal follow-ups (post progressive-disclosure ship)
+
+Progressive disclosure in the coaching recap modal shipped 2026-08-17
+(single commit: grade hero + CTAs first, Cool Down / Session details /
+Advanced analysis behind `<details>`). Open polish items, none are a gate:
+
+- [ ] **FormReceipt simplification** — first render shows only "Copy receipt"
+      and "Share form line"; the full receipt text with share-status states hides
+      behind a "View full receipt" tap.
+- [ ] **Register-specific on-chain gating** — Studio sessions never render
+      on-chain controls (current restructure keeps existing visibility rules);
+      Arcade sessions surface them as the primary conversion path.
+- [ ] **Recap metrics instrumentation** — time-to-first-signal (grade/fix
+      visible), dismiss-without-scroll rate, "Session details" expansion rate,
+      Done-vs-Try-another-set ratio, so the disclosure choice is measured, not
+      assumed.
+
 ### Arm Create: AI Optimization Challenge — conditional GO (assessment only)
 
 We assessed the Devpost **Arm Create: AI Optimization Challenge** against this
