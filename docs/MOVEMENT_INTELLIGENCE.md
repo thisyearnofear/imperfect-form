@@ -214,8 +214,10 @@ aggregate metadata set (`source`, `mode`, `protocolId`, `challengeType`,
 `challengeId`, `replyToChallengeId`, `status`, `confidence`) so PostHog can
 stitch one shared card's open → start → complete → reply journey; raw
 payloads, traces, addresses, and free text never leave the boundary. The
-in-memory tracker remains the fallback store; funnel metrics become production
-truth only once the sink is configured and reviewed for rate limits.
+operator dashboard (`/analytics`) reads these funnel metrics back from the
+sink via the PostHog Query API (HogQL) — see ARCHITECTURE.md — so once the
+sink is configured the funnel is production truth, not a serverless-local
+echo.
 
 **Goal:** Engineer distribution into the result itself.
 
@@ -241,7 +243,7 @@ Primary metric:
 
 ### M3 — Self trajectory and next unlocks
 
-**Status: local self-trajectory and next-unlock slice shipped; measurement evidence remains open and the durable funnel sink is wired but needs a configured key.**
+**Status: local self-trajectory and next-unlock slice shipped; measurement evidence remains open. The durable funnel sink is wired end to end (write allowlist + HogQL read path on `/analytics`) and needs a configured key in the deployment.**
 
 The recap loads user-scoped local assessment history, orders valid protocol-matched
 reads newest-first, shows recent baseline rows, and compares the latest valid read

@@ -479,6 +479,105 @@ physical/simulation timing contract used for synchronization.
 See [NORTH_STAR.md](./NORTH_STAR.md) and
 [coach-station/README.md](../coach-station/README.md).
 
+## Mobile in-session layout (occlusion contract)
+
+**Status**: shipped. The mobile session renders one bottom stack instead of
+three independently-positioned layers that could overlap.
+
+The coaching sentence is the product; the instrument is evidence. Nothing may
+occlude the sentence, and nothing may strobe at the pose publish rate.
+
+### Stack (mobile branch of `GameCanvas`)
+
+```
+.session-bottom-stack (z-76, pointer-events: none)
+  ├── CurlFormInstrument   (docked above, static in-stack)
+  └── live coaching line   (owns the bottom edge, centered)
+```
+
+- The stack is the only bottom-positioned element on mobile; safe-area inset
+  padding is applied once on the stack, not per widget.
+- **No full-screen rep flash on mobile.** The rep beat is a HUD pill pulse
+  (`hud-pill__rep--flash`); every 5th rep adds a brief milestone chip under
+  the pill. The camera view, instrument, and coaching line stay legible
+  through every rep.
+- Desktop keeps the original absolutely-positioned layout.
+
+### Anti-strobe: `useStableTracking`
+
+Raw `poseDetected` flips at up to ~20 Hz and strobes in marginal framing.
+Anything keyed on it (coaching line copy, phase machine) goes through a
+hysteresis latch (`src/hooks/useStableTracking.ts`): loss is reported only
+after ~700 ms of continuous absence; recovery is immediate. The latch is a
+pure class (`TrackingLatch`) with its own unit test — no DOM required.
+
+### Ownership rules (do not regress)
+
+1. The coaching sentence is never occluded by the instrument or any rep beat.
+2. Rep feedback on mobile never paints over the camera view.
+3. Tracking-state copy changes only through the latch, never raw per-frame.
+4. The rotate-hint dismiss keeps a 44 px touch floor (visual stays 18 px via
+   a pseudo-element hit area).
+
+### Key files
+
+| Piece             | Path                                  |
+| ----------------- | ------------------------------------- |
+| Mobile branch     | `src/components/game/GameCanvas.tsx`  |
+| Pill pulse + chip | `src/components/game/GameHUD.tsx`     |
+| Hysteresis latch  | `src/hooks/useStableTracking.ts`      |
+| Stack CSS         | `src/styles/session-bay.css`          |
+| Mobile beats CSS  | `src/styles/mobile-optimizations.css` |
+
+## Operator analytics (`/analytics`)
+
+**Status**: shipped. The dashboard reads real aggregates from the durable
+PostHog sink; the old serverless-local in-memory Map (zeros by construction
+in any real deployment) is gone from the read path.
+
+### Write path
+
+`POST /api/analytics/engagement` → `EngagementTracker` (local echo) **and**
+`posthogSink.ts`. `durableEventProperties` is the privacy allowlist boundary:
+aggregate metadata only — no durations, chain names, free text, camera
+frames, or wallet data. `challengeId`/`status` pass through so PostHog can
+stitch one card's open → start → complete → reply journey.
+
+### Read path
+
+`GET /api/analytics/engagement` → `queryEngagementAnalytics()`
+(`src/lib/analyticsQuery.ts`) runs HogQL through the PostHog **Query API**
+(`POST /api/projects/:id/query`, `kind: 'HogQLQuery'` — the legacy
+`/hogql` endpoint was removed from PostHog Cloud). The project id is resolved
+once and cached (`POSTHOG_PROJECT_ID` skips the lookup).
+
+Honest states, by design:
+
+- `source: 'posthog'` — real aggregates.
+- `source: 'local-echo'` — development only, visibly labelled.
+- `503` — sink configured but query failed, or not configured at all.
+- Fields the allowlist never captures (durations, chains) return zero/empty —
+  "not captured", never invented.
+
+### Auth
+
+`src/lib/analyticsAuth.ts`: one secret, `ANALYTICS_API_KEY`. The dashboard
+posts the code to `/api/analytics/auth` and receives an httpOnly cookie
+(hash of the key, scoped to `/api/analytics`); API routes accept the cookie
+or `Authorization: Bearer <key>`. Comparisons are timing-safe. Production
+without a configured key is closed (default-deny); development stays open.
+
+### Key files
+
+| Piece           | Path                                               |
+| --------------- | -------------------------------------------------- |
+| Page + gate     | `src/app/analytics/page.tsx`                       |
+| Dashboard       | `src/components/analytics/EngagementDashboard.tsx` |
+| Read path       | `src/lib/analyticsQuery.ts`                        |
+| Auth            | `src/lib/analyticsAuth.ts`                         |
+| Write allowlist | `src/lib/posthogSink.ts`                           |
+| Routes          | `src/app/api/analytics/`                           |
+
 ## Social Integration
 
 ### Farcaster Integration

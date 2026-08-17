@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import EngagementTracker from '@/lib/engagementTracker';
+import { isAnalyticsAuthorized } from '@/lib/analyticsAuth';
+import { isAnalyticsQueryConfigured, queryEngagementAnalytics } from '@/lib/analyticsQuery';
 import { durableEventProperties, flushDurableEvents, trackDurableEvent } from '@/lib/posthogSink';
 
 const VALID_EVENT_TYPES = new Set([
@@ -31,40 +33,56 @@ const VALID_EVENT_TYPES = new Set([
   'transaction_failed',
 ]);
 
-// Simple authentication check (replace with proper auth in production)
-function isAuthorized(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-  const apiKey = process.env.ANALYTICS_API_KEY;
-
-  if (!apiKey) {
-    console.warn('ANALYTICS_API_KEY not set - allowing access for development');
-    return true; // Allow in development
-  }
-
-  return authHeader === `Bearer ${apiKey}`;
-}
+const isAuthorized = isAnalyticsAuthorized;
 
 /**
  * GET /api/analytics/engagement
  * Returns comprehensive engagement analytics
  */
 export async function GET(request: NextRequest) {
-  try {
-    if (!isAuthorized(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Real read path: aggregates from the durable PostHog sink. The old source
+  // was a serverless-local in-memory Map — zeros by construction in any real
+  // deployment, which made the dashboard theater.
+  if (isAnalyticsQueryConfigured()) {
+    const analytics = await queryEngagementAnalytics();
+    if (analytics) {
+      return NextResponse.json({
+        success: true,
+        source: 'posthog',
+        data: analytics,
+        timestamp: new Date().toISOString(),
+      });
     }
+    return NextResponse.json(
+      {
+        success: false,
+        source: 'posthog',
+        error: 'Durable sink is configured but the query failed',
+      },
+      { status: 503 }
+    );
+  }
 
+  // Fallback: development without a sink reads this instance's local echo —
+  // labelled as such so it is never mistaken for production data.
+  if (process.env.NODE_ENV === 'development') {
     const analytics = await EngagementTracker.getAnalytics();
-
     return NextResponse.json({
       success: true,
+      source: 'local-echo',
       data: analytics,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
-    console.error('📊 Analytics API error:', error);
-    return NextResponse.json({ error: 'Failed to get analytics' }, { status: 500 });
   }
+
+  return NextResponse.json(
+    { success: false, source: 'none', error: 'Analytics sink not configured' },
+    { status: 503 }
+  );
 }
 
 /**

@@ -99,7 +99,8 @@ export function AgentInsightTray({ metrics, mode, voiceEnabled, repCount }: Agen
     <section
       key={cue.message}
       className={`coach-cue coach-cue--${cue.state} motion-cue`}
-      aria-hidden="true"
+      role="status"
+      aria-live="polite"
     >
       <Icon size={17} aria-hidden="true" />
       <div>

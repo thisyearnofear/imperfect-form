@@ -48,9 +48,13 @@ Full details: [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md).
 **Shipped (Movement Intelligence — first distribution slice):** aggregate-only
 challenges, `/challenge` recipient route, Web Share + clipboard, five-event funnel.
 
+**Shipped (durable operator analytics):** the `/analytics` dashboard reads real
+aggregates from the PostHog sink via the Query API (HogQL) instead of a
+serverless-local in-memory Map, and is gated by a real access-code exchange
+(httpOnly cookie, timing-safe, default-deny in production). See ARCHITECTURE.md.
+
 **Planned (Movement Intelligence — after measurement gates):** setup calibration,
-cross-device test–retest, durable funnel analytics, age-band/cohort benchmarks,
-archetypes.
+cross-device test–retest, age-band/cohort benchmarks, archetypes.
 
 The full sequence, guardrails, data boundaries, and success metrics live in
 [`MOVEMENT_INTELLIGENCE.md`](./MOVEMENT_INTELLIGENCE.md). This is a product
@@ -60,6 +64,12 @@ manual-stage → hardware → episode gates for the physical Coach.
 **Shipped (mobile performance guardrail):** adaptive camera quality tiers
 (640×480 → 480×360 → 320×240) with hysteresis and Safari fail-silent.
 See [PERFORMANCE_BASELINE.md](./PERFORMANCE_BASELINE.md).
+
+**Shipped (mobile in-session layout):** one bottom stack — instrument docks
+above, the live coaching sentence owns the bottom edge and is never occluded;
+the full-screen rep flash is replaced by a pill pulse + milestone chip, and
+tracking-state copy is hysteresis-latched so it stops strobing. See
+ARCHITECTURE.md.
 
 **Shipped (curl evidence surface):** live `CurlFormInstrument` shows elbow angle,
 target range, curl phase, drift. Active-arm selection prevents alternating-curl

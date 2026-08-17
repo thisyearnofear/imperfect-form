@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAnalyticsAuthorized } from '@/lib/analyticsAuth';
+import { exportEngagementCsv, isAnalyticsQueryConfigured } from '@/lib/analyticsQuery';
 import EngagementTracker from '@/lib/engagementTracker';
 
-// Simple authentication check (replace with proper auth in production)
-function isAuthorized(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-  const apiKey = process.env.ANALYTICS_API_KEY;
-
-  if (!apiKey) {
-    console.warn('ANALYTICS_API_KEY not set - allowing access for development');
-    return true; // Allow in development
-  }
-
-  return authHeader === `Bearer ${apiKey}`;
-}
+const isAuthorized = isAnalyticsAuthorized;
 
 /**
  * GET /api/analytics/export
@@ -24,7 +15,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const csvData = await EngagementTracker.exportData();
+    // Prefer the durable sink; the in-memory tracker is a dev-only echo.
+    const csvData =
+      (isAnalyticsQueryConfigured() ? await exportEngagementCsv() : null) ??
+      (process.env.NODE_ENV === 'development' ? await EngagementTracker.exportData() : null);
+    if (csvData == null) {
+      return NextResponse.json({ error: 'Analytics sink not configured' }, { status: 503 });
+    }
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = `engagement-data-${timestamp}.csv`;
 

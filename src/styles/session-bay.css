@@ -152,6 +152,44 @@
   z-index: 1;
 }
 
+/* ── Mobile bottom band: one stack, no overlap ─────────────────────────────
+   Rendered only by the GameCanvas mobile branch. The instrument docks above
+   and the coaching sentence owns the bottom edge — the sentence is the
+   product, so it is never occluded by the instrument (z-76 over z-70) nor by
+   a rep flash (mobile has no full-screen flash; the HUD pill pulses). */
+.session-bottom-stack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 76;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.session-bottom-stack .curl-instrument {
+  position: static;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  max-width: none;
+}
+
+.session-bottom-stack .live-status {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  max-width: 100%;
+  width: 100%;
+  justify-content: center;
+  font-size: 0.8rem;
+  border-radius: 0.5rem;
+}
+
 #screen:has(.session-bay) {
   max-width: min(1180px, 96vw);
   aspect-ratio: auto;

@@ -9,6 +9,7 @@ interface EngagementDashboardProps {
 
 export default function EngagementDashboard({ apiKey }: EngagementDashboardProps) {
   const [analytics, setAnalytics] = useState<EngagementAnalytics | null>(null);
+  const [source, setSource] = useState<'posthog' | 'local-echo' | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -34,6 +35,7 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
 
       const data = await response.json();
       setAnalytics(data.data);
+      setSource(data.source ?? null);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -111,11 +113,40 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
     );
   }
 
+  // Honest empty state: a configured sink with zero events means exactly that
+  // — nothing has been captured yet, not a broken query.
+  if (source === 'posthog' && analytics.totalUsers === 0) {
+    return (
+      <div className="p-6 bg-gray-900 rounded-lg border border-gray-700 space-y-3">
+        <h3 className="text-white font-bold">No events captured yet</h3>
+        <p className="text-gray-400 text-sm">
+          The durable sink is configured and responding — no engagement events have arrived. Events
+          flow in as real sessions happen (launch, workout, challenge, share), through the privacy
+          allowlist described in <code className="text-gray-300">posthogSink.ts</code>.
+        </p>
+        <button onClick={fetchAnalytics} disabled={refreshing} className="btn-secondary-cta">
+          {refreshing ? 'Checking…' : 'Check again'}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">📊 Engagement Analytics</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-white">📊 Engagement Analytics</h2>
+          <p className="text-xs mt-1">
+            {source === 'posthog' ? (
+              <span className="text-green-400">Live from the durable PostHog sink</span>
+            ) : source === 'local-echo' ? (
+              <span className="text-yellow-400">
+                Local echo (this server instance only) — configure the durable sink for real data
+              </span>
+            ) : null}
+          </p>
+        </div>
         <div className="flex space-x-2">
           <button
             onClick={fetchAnalytics}
@@ -254,7 +285,8 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
         </div>
       </div>
 
-      {/* Top Chains */}
+      {/* Top Chains — chain names are dropped by the privacy allowlist at the
+          write boundary, so this list stays empty by design. */}
       {analytics.topChains.length > 0 && (
         <div className="bg-gray-800 p-6 rounded-lg">
           <h3 className="text-lg font-bold text-white mb-4">⛓️ Top Chains</h3>

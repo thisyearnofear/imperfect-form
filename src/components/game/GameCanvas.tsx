@@ -9,6 +9,7 @@ import { FirstRepCelebration } from './FirstRepCelebration';
 import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
 import { PoseState, DetectionProgress } from '@/hooks/usePoseDetection';
 import { useCoachingMoment } from '@/hooks/useCoachingMoment';
+import { useStableTracking } from '@/hooks/useStableTracking';
 import { isTwinHeroActive, useCoachTwin } from '@/hooks/useCoachTwin';
 import CurlFormInstrument from './CurlFormInstrument';
 import { SeeShowMoment } from './SeeShowMoment';
@@ -86,11 +87,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const isBooting = !poseState.hasPoseDetection;
   const qualityMessage =
     isMobile && detectionProgress?.qualityTier ? detectionProgress.message : null;
-  const coachingMoment = useCoachingMoment(
-    poseState.poseDetected,
-    repCount,
-    metrics?.warnings ?? []
-  );
+  // Raw poseDetected strobes at the publish rate under marginal framing; the
+  // coaching phase machine and the live line key on this smoothed value so
+  // the sentence doesn't rewrite itself every other frame.
+  const trackingStable = useStableTracking(poseState.poseDetected);
+  const coachingMoment = useCoachingMoment(trackingStable, repCount, metrics?.warnings ?? []);
 
   const curlTelemetry =
     mode === 'curls' ? deriveCurlTelemetry(curlPoseData ?? undefined, metrics) : null;
@@ -100,7 +101,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const coachingStatusProps = {
     mode,
-    tracking: poseState.poseDetected,
+    tracking: trackingStable,
     repCount,
     warnings: metrics?.warnings,
     phase: coachingMoment.phase,
@@ -114,6 +115,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   };
 
   if (isMobile) {
+    // Mobile rep beat: no full-screen flash — the HUD pill count pulses and a
+    // milestone chip appears for a beat. The coaching line and the instrument
+    // stay legible through every rep (see session-bay.css bottom stack).
     return (
       <div className="w-full flex flex-col items-center justify-start relative h-full">
         {!isBooting && (
@@ -127,6 +131,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             isMobile={isMobile}
             depth={metrics?.depth}
             warnings={metrics?.warnings}
+            repPulse={repFeedback.show}
           />
         )}
         <div
@@ -141,7 +146,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             progress={detectionProgress?.percentage}
             isVisible={isLoadingVisible}
           />
-          <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           {qualityMessage && (
@@ -170,20 +174,24 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               )}
             </div>
           )}
-          <LiveCoachingStatus {...coachingStatusProps} />
-          {mode === 'curls' ? (
-            <CurlFormInstrument
-              telemetry={curlTelemetry}
-              tracking={poseState.poseDetected}
-              repCount={repCount}
-              onFormScore={onFormScore}
-            />
-          ) : null}
           <SeeShowMoment
             twin={twin}
             userElbowDeg={curlTelemetry?.elbowAngle}
             yieldToFirstSignal={showFirstRepCelebration}
           />
+          {/* Bottom band = one stack, no overlap: instrument above, the
+              coaching sentence owns the bottom edge (closest to the eye). */}
+          <div className="session-bottom-stack">
+            {mode === 'curls' ? (
+              <CurlFormInstrument
+                telemetry={curlTelemetry}
+                tracking={poseState.poseDetected}
+                repCount={repCount}
+                onFormScore={onFormScore}
+              />
+            ) : null}
+            <LiveCoachingStatus {...coachingStatusProps} />
+          </div>
         </div>
         <CoachTwinPeek session mode={mode} twin={twin} suppressed={showSeeShow} />
       </div>

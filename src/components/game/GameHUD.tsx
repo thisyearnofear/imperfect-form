@@ -15,6 +15,9 @@ interface GameHUDProps {
   depth?: number;
   /** Form warnings — surfaced as a subtle cue, not a red box. */
   warnings?: string[];
+  /** True during the ~800ms rep-feedback window: on mobile this drives the
+   *  pill-count pulse + milestone chip instead of a full-screen flash. */
+  repPulse?: boolean;
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -27,6 +30,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   isMobile = false,
   depth,
   warnings,
+  repPulse = false,
 }) => {
   const { register } = useSessionIntent();
   // The live HUD follows the session register: an explicit Train session keeps
@@ -89,7 +93,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
   // Mobile: one compact pill (mode · time · reps) with a thin depth edge glow,
   // instead of three stacked blocks competing for the camera viewport.
+  // Rep beats pulse the count in place; every 5th rep gets a brief milestone
+  // chip — the full-screen flash is desktop-only, so the coaching line and
+  // instrument are never occluded mid-set on a phone.
   if (isMobile) {
+    const milestone = repPulse && repCount > 0 && repCount % 5 === 0;
     return (
       <div
         className={`game-hud-container game-hud-container--compact ${isOverlay ? 'hud-overlay-fs' : ''}`}
@@ -108,7 +116,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           </span>
           <span
             key={repCount}
-            className={`hud-value motion-rep ${studio ? 'text-teal-200' : 'text-yellow-500'}`}
+            className={`hud-value motion-rep hud-pill__rep ${studio ? 'text-teal-200' : 'text-yellow-500'}${repPulse ? ' hud-pill__rep--flash' : ''}`}
           >
             {repCount}
           </span>
@@ -116,6 +124,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             {studio ? (immersive ? 'Graded' : 'Reps') : 'Score'}
           </span>
         </div>
+        {milestone && (
+          <div className="hud-milestone" role="status" aria-live="polite">
+            {repMilestoneMessage(repCount, studio)}
+          </div>
+        )}
         {typeof depth === 'number' && depth > 0 && (
           <div
             className="hud-depth-edge"
@@ -199,22 +212,24 @@ interface RepFeedbackProps {
   count: number;
 }
 
+/** Shared rep-beat copy — the desktop full-screen flash and the mobile
+ *  milestone chip say the same thing at the same reps. */
+export function repMilestoneMessage(count: number, studio: boolean): string {
+  if (studio) {
+    if (count % 10 === 0) return 'Strong set';
+    if (count % 5 === 0) return 'Solid form';
+    return 'Good';
+  }
+  if (count % 10 === 0) return 'UNSTOPPABLE!';
+  if (count % 5 === 0) return 'GREAT FORM!';
+  return 'NICE!';
+}
+
 export const RepFeedbackOverlay: React.FC<RepFeedbackProps> = ({ show, count }) => {
   const { register } = useSessionIntent();
   const studio = register !== 'arcade';
 
   if (!show) return null;
-
-  const getFeedbackMessage = (c: number) => {
-    if (studio) {
-      if (c % 10 === 0) return 'Strong set';
-      if (c % 5 === 0) return 'Solid form';
-      return 'Good';
-    }
-    if (c % 10 === 0) return 'UNSTOPPABLE!';
-    if (c % 5 === 0) return 'GREAT FORM!';
-    return 'NICE!';
-  };
 
   return (
     <div
@@ -245,7 +260,7 @@ export const RepFeedbackOverlay: React.FC<RepFeedbackProps> = ({ show, count }) 
               : 'text-xl font-black text-[#fcb131] tracking-widest uppercase drop-shadow-md'
           }
         >
-          {getFeedbackMessage(count)}
+          {repMilestoneMessage(count, studio)}
         </span>
       </div>
     </div>

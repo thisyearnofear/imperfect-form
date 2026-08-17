@@ -54,14 +54,22 @@ Required for production:
 
 Durable analytics (optional, free tier):
 
-- `POSTHOG_API_KEY` — PostHog project key for the aggregate assessment funnel.
-  Unset means the durable sink stays disabled and the in-memory tracker remains
-  the only store.
+- `POSTHOG_API_KEY` — PostHog project key for the **write path** (event
+  capture through the privacy allowlist in `src/lib/posthogSink.ts`). Unset
+  means the durable sink stays disabled.
+- `POSTHOG_PERSONAL_API_KEY` — PostHog personal key (`phx_...`) for the
+  **read path**: the `/analytics` dashboard queries real aggregates via the
+  PostHog Query API (HogQL). Unset means the dashboard reports "sink not
+  configured" instead of serving aggregates.
+- `ANALYTICS_API_KEY` — access code for the `/analytics` dashboard and the
+  analytics API (also accepted as `Authorization: Bearer <key>`). Production
+  without this value keeps analytics closed (default-deny); development stays
+  open and labels its data as a local echo.
 - `POSTHOG_HOST` — optional PostHog host override (defaults to the US cloud).
+- `POSTHOG_PROJECT_ID` — optional; skips the one-time project lookup on the
+  first query.
 - `POSTHOG_DISABLED` — set `true` to force-disable the sink without removing
   the key.
-- `POSTHOG_PERSONAL_API_KEY` — optional PostHog personal key (`phx_...`) used
-  only for read/verification API queries; the app itself never needs it.
 
 ## Network Configuration
 

@@ -636,6 +636,7 @@
   }
 
   .session-rotate-hint__dismiss {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -650,6 +651,14 @@
     background: rgba(255, 255, 255, 0.08);
     color: rgba(217, 255, 246, 0.75);
     cursor: pointer;
+  }
+
+  /* 44px touch floor without inflating the hint bar: the visual stays 18px,
+     the hit area extends past the button box (project rule in this file). */
+  .session-rotate-hint__dismiss::after {
+    content: '';
+    position: absolute;
+    inset: -0.9rem;
   }
 
   .session-rotate-hint__dismiss:hover {
@@ -681,13 +690,42 @@
 
 .game-hud-container--compact .hud-pill__label {
   margin-bottom: 0;
-  font-size: 0.56rem;
-  opacity: 0.72;
+  font-size: 0.7rem;
+  opacity: 0.78;
 }
 
 .game-hud-container--compact .hud-pill__time {
   font-size: 1.02rem;
   font-variant-numeric: tabular-nums;
+}
+
+/* Rep beat on mobile: the pill count pulses in place (no full-screen flash —
+   the coaching line and instrument must stay legible through every rep). */
+.game-hud-container--compact .hud-pill__rep {
+  transition:
+    transform 140ms ease-out,
+    filter 140ms ease-out;
+}
+
+.game-hud-container--compact .hud-pill__rep--flash {
+  transform: scale(1.28);
+  filter: drop-shadow(0 0 6px rgba(122, 235, 216, 0.55));
+}
+
+/* Milestone chip (every 5th rep) — a brief beat under the pill, sized to
+   never reach the bottom band. */
+.hud-milestone {
+  margin-top: 0.3rem;
+  padding: 0.28rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #eaffb8;
+  background: rgba(45, 29, 12, 0.85);
+  border: 1px solid rgba(252, 177, 49, 0.5);
+  animation: studio-cue var(--motion-duration-micro) var(--motion-ease-out) both;
 }
 
 .game-hud-container--compact .hud-pill__divider {
