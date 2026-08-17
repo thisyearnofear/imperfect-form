@@ -618,30 +618,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
-              {/* ===== COACHING RECAP: the one fix owns this screen =====
-                  Everything else — on-chain, sharing, recovery — is quiet,
-                  collapsed, or below the primary actions. */}
-              <SessionRecap
-                mode={mode}
-                reps={repCount}
-                summary={sessionSummary ?? null}
-                movementAssessment={movementAssessment}
-                movementChallenge={movementChallenge}
-                workouts={localWorkouts}
-                userAddress={effectiveAddress ?? undefined}
-                formScores={formScores}
-                isRace={isRace}
-                onStartSelfGhost={onStartSelfGhost}
-              />
-              {(sessionSummary || reportStatus !== 'idle') && (
-                <LabAnalysisCard
-                  report={report}
-                  status={reportStatus}
-                  personality={personality}
-                  onGenerate={handleGenerateReport}
-                />
-              )}
-
               {/* ===== PERSISTENT ACTIONS: repeat or finish — before the
                   secondary chrome, so the next step never scrolls away ===== */}
               {onPlayAgain && (
@@ -662,6 +638,71 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
               >
                 Done
               </button>
+
+              {/* Non-on-chain mode: quiet local-saved note (no wallet wall) */}
+              {!ONCHAIN_MODES.includes(mode) && (
+                <div className="studio-card studio-card__body text-center">
+                  <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-gray-500 font-bold">
+                    <Save size={12} aria-hidden="true" /> Saved locally — on-chain leaderboards
+                    coming for this exercise
+                  </span>
+                </div>
+              )}
+
+              {/* Cool Down — collapsible */}
+              <details className="recap-details">
+                <summary className="recap-details__summary cursor-pointer list-none px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-teal-100/90 transition-colors [&::-webkit-details-marker]:hidden">
+                  <span>Cool Down</span>
+                  <span className="recap-details__chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </summary>
+                <div className="px-0 pb-2 space-y-4">
+                  {repCount > 0 && <RecoveryCard mode={mode} />}
+                </div>
+              </details>
+
+              {/* Session details — collapsible */}
+              <details className="recap-details">
+                <summary className="recap-details__summary cursor-pointer list-none px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-teal-100/90 transition-colors [&::-webkit-details-marker]:hidden">
+                  <span>Session details</span>
+                  <span className="recap-details__chevron" aria-hidden="true">
+                    ›
+                  </span>
+                </summary>
+                <div className="px-0 pb-2 space-y-4">
+                  {/* Coaching recap — one fix, flywheel, form line, receipt, history. */}
+                  <SessionRecap
+                    mode={mode}
+                    reps={repCount}
+                    summary={sessionSummary ?? null}
+                    movementAssessment={movementAssessment}
+                    movementChallenge={movementChallenge}
+                    workouts={localWorkouts}
+                    userAddress={effectiveAddress ?? undefined}
+                    formScores={formScores}
+                    isRace={isRace}
+                    onStartSelfGhost={onStartSelfGhost}
+                  />
+
+                  {/* Progress spark — earned depth, not a gate */}
+                  {repCount > 0 && progressSeries && (
+                    <ProgressSpark
+                      points={progressSeries.points}
+                      register="arcade"
+                      title={
+                        arcade
+                          ? 'Score history'
+                          : sessionRegister === 'studio'
+                            ? 'Form signal'
+                            : 'Recent progress'
+                      }
+                      animate={!isPB}
+                      className="summary-progress-spark"
+                    />
+                  )}
+                </div>
+              </details>
 
               {/* On-chain: an earned upgrade behind a quiet disclosure — never
                   the recap's opening act (has wallet + on-chain mode + not yet
@@ -891,35 +932,25 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
-              {/* Non-on-chain mode: quiet local-saved note (no wallet wall) */}
-              {!ONCHAIN_MODES.includes(mode) && (
-                <div className="studio-card studio-card__body text-center">
-                  <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-gray-500 font-bold">
-                    <Save size={12} aria-hidden="true" /> Saved locally — on-chain leaderboards
-                    coming for this exercise
+              {/* Advanced analysis — collapsible */}
+              <details className="recap-details">
+                <summary className="recap-details__summary cursor-pointer list-none px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-teal-100/90 transition-colors [&::-webkit-details-marker]:hidden">
+                  <span>Advanced analysis</span>
+                  <span className="recap-details__chevron" aria-hidden="true">
+                    ›
                   </span>
+                </summary>
+                <div className="px-0 pb-2 space-y-4">
+                  {(sessionSummary || reportStatus !== 'idle') && (
+                    <LabAnalysisCard
+                      report={report}
+                      status={reportStatus}
+                      personality={personality}
+                      onGenerate={handleGenerateReport}
+                    />
+                  )}
                 </div>
-              )}
-
-              {/* ===== RECOVER ===== */}
-              {repCount > 0 && <RecoveryCard mode={mode} />}
-
-              {/* Progress spark — earned depth, not a gate */}
-              {repCount > 0 && progressSeries && (
-                <ProgressSpark
-                  points={progressSeries.points}
-                  register="arcade"
-                  title={
-                    arcade
-                      ? 'Score history'
-                      : sessionRegister === 'studio'
-                        ? 'Form signal'
-                        : 'Recent progress'
-                  }
-                  animate={!isPB}
-                  className="summary-progress-spark"
-                />
-              )}
+              </details>
 
               {/* ===== SHARE: one quiet disclosure, not six competing CTAs =====
                   Farcaster/X/highlight all live behind a single collapsed
