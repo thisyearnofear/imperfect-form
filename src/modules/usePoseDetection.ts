@@ -940,6 +940,25 @@ export function usePoseDetection(
         let coalescedFrames = 0;
         let lastCompletedDetectionAt = 0;
         let rafScheduled = false;
+
+        // Cache the 2D context for the session — getContext() returns the same
+        // object, so re-querying it every frame is pure overhead. The effect
+        // re-runs (and re-caches) on canvasEpoch remount.
+        const drawCtx = canvasRef.current?.getContext('2d') ?? null;
+
+        // Ghost trace lookup. The trace is sorted ascending by timestamp and
+        // session elapsed time only increases, so a forward-only cursor turns
+        // the per-frame O(n) `.find()` into amortized O(1). Returns the first
+        // snapshot at/after `elapsed`, matching the previous `.find()` result.
+        let ghostCursor = 0;
+        const ghostSnapshotAt = (elapsed: number) => {
+          if (!pbTrace || pbTrace.length === 0) return undefined;
+          while (ghostCursor < pbTrace.length && pbTrace[ghostCursor].timestamp < elapsed) {
+            ghostCursor += 1;
+          }
+          return pbTrace[ghostCursor];
+        };
+
         const scheduleDetect = () => {
           if (cancelled || !isActiveRef.current || !detectorRef.current || rafScheduled) return;
           rafScheduled = true;
@@ -1033,10 +1052,11 @@ export function usePoseDetection(
               pipelineLatencyMs: Math.max(0, performance.now() - frameCaptureTimeMs),
             });
 
-            // Memory management: periodic cleanup for mini apps and mobile
-            const isFarcaster = isFarcasterMiniApp();
-
-            if ((isFarcaster || isIOS) && Math.random() < 0.01) {
+            // Memory management: periodic cleanup for mini apps and mobile.
+            // Reuse the session-start flag — isFarcasterMiniApp() does five
+            // DOM checks and pushes a remote-log entry, so it must never run
+            // inside the per-frame loop.
+            if ((isFarcasterSession || isIOS) && Math.random() < 0.01) {
               // 1% chance per frame to check memory
               const memoryCheck = monitorTensorFlowMemory();
 
@@ -1096,43 +1116,36 @@ export function usePoseDetection(
               sessionLoggerRef.current?.logFrame(metrics, keypoints);
 
               // Draw on canvas
-              if (canvasRef.current) {
-                const ctx = canvasRef.current.getContext('2d');
-                if (ctx) {
-                  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+              if (drawCtx) {
+                drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
-                  // 👻 Render Ghost Mode trace if available
-                  if (pbTrace && pbTrace.length > 0) {
-                    const elapsed = Date.now() - sessionStartTimeRef.current;
-                    // Find the snapshot closest to current elapsed time
-                    // We look for the first snapshot that is >= current elapsed time
-                    const ghostSnapshot = pbTrace.find((s) => s.timestamp >= elapsed);
-                    if (ghostSnapshot) {
-                      drawSkeleton(ctx as any, ghostSnapshot.keypoints, activeMode, true);
-                    }
+                // 👻 Render Ghost Mode trace if available
+                if (pbTrace && pbTrace.length > 0) {
+                  const elapsed = Date.now() - sessionStartTimeRef.current;
+                  // First snapshot at/after elapsed (monotonic cursor, O(1)).
+                  const ghostSnapshot = ghostSnapshotAt(elapsed);
+                  if (ghostSnapshot) {
+                    drawSkeleton(drawCtx as any, ghostSnapshot.keypoints, activeMode, true);
                   }
-
-                  drawSkeleton(ctx as any, keypoints, activeMode);
-                  // Canvas feedback (GO UP! / depth bar / warnings) moved to the DOM HUD —
-                  // see GameHUD depth indicator + LiveCoachingStatus. Canvas renders only
-                  // the skeleton + ghost now, keeping the studio aesthetic clean.
                 }
+
+                drawSkeleton(drawCtx as any, keypoints, activeMode);
+                // Canvas feedback (GO UP! / depth bar / warnings) moved to the DOM HUD —
+                // see GameHUD depth indicator + LiveCoachingStatus. Canvas renders only
+                // the skeleton + ghost now, keeping the studio aesthetic clean.
               }
             } else {
               onCurlPoseDataRef.current?.(undefined);
               // Clear canvas if no pose, but still render ghost if available
-              if (canvasRef.current) {
-                const ctx = canvasRef.current.getContext('2d');
-                if (ctx) {
-                  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+              if (drawCtx) {
+                drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
-                  // 👻 Render Ghost Mode trace even if user is not detected
-                  if (pbTrace && pbTrace.length > 0) {
-                    const elapsed = Date.now() - sessionStartTimeRef.current;
-                    const ghostSnapshot = pbTrace.find((s) => s.timestamp >= elapsed);
-                    if (ghostSnapshot) {
-                      drawSkeleton(ctx as any, ghostSnapshot.keypoints, modeRef.current, true);
-                    }
+                // 👻 Render Ghost Mode trace even if user is not detected
+                if (pbTrace && pbTrace.length > 0) {
+                  const elapsed = Date.now() - sessionStartTimeRef.current;
+                  const ghostSnapshot = ghostSnapshotAt(elapsed);
+                  if (ghostSnapshot) {
+                    drawSkeleton(drawCtx as any, ghostSnapshot.keypoints, modeRef.current, true);
                   }
                 }
               }

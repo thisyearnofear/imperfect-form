@@ -33,6 +33,9 @@ const poseSmoother = new PoseSmoother();
 let workerMode: ExerciseMode = 'pushups';
 let workerPbTrace: import('../types/workout').SessionSnapshot[] | undefined;
 let workerStartTime = 0;
+// Forward-only cursor into the sorted ghost trace — elapsed time only
+// increases, so per-frame lookup is amortized O(1) instead of O(n).
+let workerGhostCursor = 0;
 let preprocessorSettings: PosePreprocessorSettings = getDefaultPreprocessorSettings();
 let preprocessCanvas: OffscreenCanvas | null = null;
 const _MIN_TIME_BETWEEN_REPS = 800; // ms
@@ -105,6 +108,7 @@ self.addEventListener('message', async (event) => {
       workerMode = (data.mode ?? 'pushups') as ExerciseMode;
       workerPbTrace = data.pbTrace;
       workerStartTime = Date.now();
+      workerGhostCursor = 0;
       preprocessorSettings = data.preprocessor ?? preprocessorSettings;
 
       offscreen.width = data.width;
@@ -210,7 +214,13 @@ self.addEventListener('message', async (event) => {
         // 👻 Render Ghost Mode trace if available
         if (workerPbTrace && workerPbTrace.length > 0) {
           const elapsed = Date.now() - workerStartTime;
-          const ghostSnapshot = workerPbTrace.find((s) => s.timestamp >= elapsed);
+          while (
+            workerGhostCursor < workerPbTrace.length &&
+            workerPbTrace[workerGhostCursor].timestamp < elapsed
+          ) {
+            workerGhostCursor += 1;
+          }
+          const ghostSnapshot = workerPbTrace[workerGhostCursor];
           if (ghostSnapshot) {
             drawSkeleton(ctx, ghostSnapshot.keypoints as any, workerMode, true);
           }

@@ -31,14 +31,15 @@ test.describe('PoseRuntime - worker path + curls', () => {
 
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: /AI watches your exercise form/i })).toBeVisible(
-      {
-        timeout: 20000,
-      }
-    );
+    // Day-0 foyer heading (current copy; the old "AI watches your exercise
+    // form" line moved to the Farcaster manifest and is not a foyer heading).
+    await expect(page.getByRole('heading', { name: /Make one rep better/i })).toBeVisible({
+      timeout: 20000,
+    });
 
     // Curls lead the foyer because they are the clearest robot-demo path.
-    await page.getByRole('button', { name: /Curls/i }).click();
+    // `.first()` — the start button's aria-label also mentions Curls.
+    await page.getByRole('button', { name: /Curls/i }).first().click();
     await expect(page.getByRole('button', { name: /Curls/i }).first()).toHaveAttribute(
       'aria-pressed',
       'true'

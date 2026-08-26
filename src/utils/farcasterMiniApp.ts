@@ -86,10 +86,18 @@ export async function callFarcasterReadyWithOptions(
 
 /**
  * Check if we're in a Farcaster Mini App context
- * This is a simple check that doesn't require SDK initialization
+ * This is a simple check that doesn't require SDK initialization.
+ *
+ * Memoized: the detection inputs (iframe, referrer, UA, URL) are fixed for
+ * the page's lifetime, and this is called from hot paths (the pose loop,
+ * camera permissions, render). Caching avoids repeating five DOM checks and
+ * a remote-log push on every call.
  */
+let cachedIsFarcasterMiniApp: boolean | null = null;
+
 export function isFarcasterMiniApp(): boolean {
   if (typeof window === 'undefined') return false;
+  if (cachedIsFarcasterMiniApp !== null) return cachedIsFarcasterMiniApp;
 
   const checks = {
     iframe: window.parent !== window,
@@ -102,6 +110,7 @@ export function isFarcasterMiniApp(): boolean {
   };
 
   const result = Object.values(checks).some((check) => check);
+  cachedIsFarcasterMiniApp = result;
 
   logger.info('🎯 Simple Farcaster detection', {
     result,
