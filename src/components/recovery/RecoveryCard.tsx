@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import '@/styles/recovery.css';
 import { Check, Wind, X, PersonStanding } from 'lucide-react';
 import BreathingCooldown from './BreathingCooldown';
 import StretchSequence from './StretchSequence';

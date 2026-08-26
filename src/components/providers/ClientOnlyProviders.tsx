@@ -1,9 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import InitializationScreen from '@/components/ui/InitializationScreen';
-import SimplifiedAppProviders from './SimplifiedAppProviders';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
+
+// The wallet stack (wagmi → viem, farcaster, radix, tanstack) is ~400 KB raw.
+// Ring 0 is wallet-free by design and the day-0 foyer needs none of it, so the
+// whole provider tree defers behind the boot splash instead of riding the
+// first-load chunks. The loading fallback is the same branded splash already
+// showing during hydration, so the swap is invisible.
+const SimplifiedAppProviders = dynamic(() => import('./SimplifiedAppProviders'), {
+  ssr: false,
+  loading: () => <InitializationScreen />,
+});
 
 interface ClientOnlyProvidersProps {
   children: React.ReactNode;

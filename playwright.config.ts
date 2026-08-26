@@ -55,7 +55,9 @@ export default defineConfig({
   // server, so stale `next dev` locks cannot make the suite wait indefinitely.
   webServer: managesServer
     ? {
-        command: `pnpm build && pnpm start -- -p ${e2ePort}`,
+        // `pnpm exec` forwards flags directly; `pnpm start -- -p` would pass
+        // the literal `--` through and Next 16 reads `-p` as the project dir.
+        command: `pnpm build && pnpm exec next start -p ${e2ePort}`,
         url: baseURL,
         reuseExistingServer: false,
         // A cold production build currently takes several minutes in this

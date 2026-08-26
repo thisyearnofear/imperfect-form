@@ -9,16 +9,19 @@ import React, {
   useMemo,
   ReactNode,
 } from 'react';
-import {
-  useAccount,
-  useChainId,
-  useConnect,
-  useDisconnect,
-  useSwitchChain,
-  type Connector,
-} from 'wagmi';
+import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 import { createRemoteLogger } from '@/utils/remoteLogger';
+import type { WagmiBridgeApi, WagmiConnectorRef } from './WagmiBridge';
+
+// The wagmi runtime (hooks → viem) is ~200 KB. PlatformContext must stay
+// wagmi-free so the wallet stack defers off the first load; the hooks live in
+// WagmiBridge, dynamically imported and mounted inside WagmiProvider below.
+// `import type` is erased at build time, so it adds no runtime weight.
+const WagmiBridge = dynamic(() => import('./WagmiBridge'), {
+  ssr: false,
+  loading: () => null,
+});
 
 const logger = createRemoteLogger('PlatformContext');
 
@@ -209,12 +212,18 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     chainId: number | null;
   }>({ address: null, chainId: null });
 
-  // Wagmi hooks
-  const { connect: wagmiConnect, connectors, isPending: isWagmiConnecting } = useConnect();
-  const { disconnect: wagmiDisconnect } = useDisconnect();
-  const { address: wagmiAddress, isConnected: isWagmiConnected } = useAccount();
-  const wagmiChainId = useChainId();
-  const { switchChain: wagmiSwitchChain } = useSwitchChain();
+  // Wagmi primitives arrive from WagmiBridge (mounted inside WagmiProvider).
+  // Until the bridge reports, everything reads as "not connected" — the
+  // wallet-free day-0 path never needs more than that.
+  const [wagmi, setWagmi] = useState<WagmiBridgeApi | null>(null);
+  const wagmiConnect = wagmi?.connect;
+  const connectors: readonly WagmiConnectorRef[] = wagmi?.connectors ?? [];
+  const isWagmiConnecting = wagmi?.isConnecting ?? false;
+  const wagmiDisconnect = wagmi?.disconnect ?? (() => {});
+  const wagmiAddress = wagmi?.address;
+  const isWagmiConnected = wagmi?.isConnected ?? false;
+  const wagmiChainId = wagmi?.chainId ?? null;
+  const wagmiSwitchChain = wagmi?.switchChain;
 
   // Platform configuration
   const config = PLATFORM_CONFIGS[platform];
@@ -364,7 +373,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
       }
 
       try {
-        let targetConnectors: Connector[] = [];
+        let targetConnectors: WagmiConnectorRef[] = [];
 
         // If a specific connector is requested, use it
         if (connectorId) {
@@ -433,6 +442,10 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
               }
             }
 
+            if (!wagmiConnect) {
+              logger.warn('Wallet bridge not ready; connection deferred.');
+              continue;
+            }
             await wagmiConnect({ connector });
 
             // Wait for state to update
@@ -612,6 +625,10 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
         }
 
         // Fallback to Wagmi
+        if (!wagmiSwitchChain) {
+          logger.warn('Wallet bridge not ready; chain switch deferred.');
+          return false;
+        }
         await wagmiSwitchChain({ chainId: targetChainId });
         toast.success('Chain switched successfully!');
         return true;
@@ -744,7 +761,15 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     setWalletSelectorOpen,
   };
 
-  return <PlatformContext.Provider value={contextValue}>{children}</PlatformContext.Provider>;
+  return (
+    <PlatformContext.Provider value={contextValue}>
+      {/* Owns the wagmi runtime hooks; reports primitives back via setWagmi.
+          Mounted here (inside WagmiProvider) so the wallet stack loads with
+          the deferred provider tree, not the first-load chunks. */}
+      <WagmiBridge onReady={setWagmi} />
+      {children}
+    </PlatformContext.Provider>
+  );
 }
 
 // Hook to use platform context

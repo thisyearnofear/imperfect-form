@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import '@/styles/lab-analysis-card.css';
 import { CoachPersonality, getCoachInfo } from '@/lib/coachPersonalities';
 import { PersonaIcon } from './PersonaIcon';
 

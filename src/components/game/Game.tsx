@@ -32,7 +32,8 @@ import { speakCoachLine } from '@/lib/tts';
 import { coachStation, type StationDemonstrationEvent } from '@/services/coachStation';
 import { consumePendingSelfRace } from '@/services/ghostRaceBus';
 import { normalizeExerciseMode } from '@/utils/biomechanics';
-// session-register.css loaded from root layout
+// session-register.css defers with this lazy GameWrapper chunk (was global).
+import '@/styles/session-register.css';
 
 import { useFullscreen } from '../../hooks/useFullscreen';
 import { useOrientation } from '../../hooks/useOrientation';

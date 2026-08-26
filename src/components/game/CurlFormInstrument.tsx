@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
+import '@/styles/curl-instrument.css';
 import type { CurlTelemetry } from '@/types/mediapipe';
 import { playStudioCue } from '@/lib/uiSound';
 import { coachStation, type StationTrajectoryProgressEvent } from '@/services/coachStation';

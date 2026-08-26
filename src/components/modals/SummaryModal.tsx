@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import '@/styles/studio-card.css';
 import {
   CheckCircle2,
   Dumbbell,

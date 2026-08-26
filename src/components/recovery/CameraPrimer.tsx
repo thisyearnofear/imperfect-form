@@ -60,7 +60,7 @@ const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, isIOS = false, onEnab
   }, [onCancel]);
 
   return (
-    <div className="camera-primer motion-enter">
+    <div className="camera-primer motion-enter" data-testid="recovery-card">
       <div className="camera-primer__icon">
         <Camera size={23} />
       </div>

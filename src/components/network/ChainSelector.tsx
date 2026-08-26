@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { avalanche, polygon, base, celo } from 'wagmi/chains';
 import { AccessibleDialog } from '@/components/ui';
 import Image from 'next/image';
 import { useEnhancedChainTheme } from '@/contexts/ChainThemeContext';
 import { usePlatform } from '@/contexts/PlatformContext';
+import { SUPPORTED_NETWORKS } from '@/config/networks';
 import type { ChainId } from '@/types/theme';
 
 // Custom Monad Mainnet chain object
@@ -47,12 +47,14 @@ export default function ChainSelector({ onClose }: ChainSelectorProps) {
       setTheme(selectedNetwork);
 
       // Switch chain using platform context which handles Farcaster and other environments properly
+      // Chain IDs come from the shared network config — importing wagmi/chains
+      // here would drag the whole viem chain registry into the first load.
       const chainIdByNetwork: Record<ChainId, number> = {
-        polygon: polygon.id,
-        base: base.id,
-        celo: celo.id,
+        polygon: SUPPORTED_NETWORKS.polygon.chainId,
+        base: SUPPORTED_NETWORKS.base.chainId,
+        celo: SUPPORTED_NETWORKS.celo.chainId,
         monad: monad.id,
-        avalanche: avalanche.id,
+        avalanche: SUPPORTED_NETWORKS.avalanche.chainId,
       };
 
       const targetChainId = chainIdByNetwork[selectedNetwork];

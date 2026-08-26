@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import '@/styles/session-recap.css';
 import { CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import type { SessionSummary } from '@/services/sessionLogger';

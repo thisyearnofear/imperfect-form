@@ -2,16 +2,12 @@ import type { Metadata, Viewport } from 'next';
 import { Manrope, Press_Start_2P } from 'next/font/google';
 import './globals.css';
 import '@/styles/studio-shell.css';
-import '@/styles/curl-instrument.css';
-import '@/styles/session-bay.css';
-import '@/styles/studio-card.css';
-import '@/styles/session-recap.css';
-import '@/styles/lab-analysis-card.css';
-import '@/styles/studio-motion.css';
+// Component-scoped stylesheets are imported by their (lazy-loaded) consumers
+// so they defer with the GameWrapper chunk instead of riding the first load:
+//   curl-instrument, session-bay, studio-card, session-recap,
+//   lab-analysis-card, recovery, session-register, studio-motion.
 import '@/styles/studio-boot.css';
-import '@/styles/recovery.css';
 import '@/styles/animations.css';
-import '@/styles/session-register.css';
 import '@/styles/buttons.css';
 import '@/styles/sandow-spine.css';
 import { BRAND } from '@/lib/brandPositioning';
