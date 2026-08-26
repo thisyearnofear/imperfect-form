@@ -29,6 +29,9 @@ import RecoveryCard from '@/components/recovery/RecoveryCard';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { speakCoachLine } from '@/lib/tts';
+import { trackEngagementEvent } from '@/lib/analyticsDispatch';
+import { usePersonaSuggestion } from '@/hooks/usePersonaSuggestion';
+import PersonaSuggestionNudge from './PersonaSuggestionNudge';
 import { coachStation, type StationDemonstrationEvent } from '@/services/coachStation';
 import { consumePendingSelfRace } from '@/services/ghostRaceBus';
 import { normalizeExerciseMode } from '@/utils/biomechanics';
@@ -121,6 +124,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   >(null);
   const [movementAssessment, setMovementAssessment] = useState<MovementAssessment | null>(null);
 
+  // Rep timestamps for tempo-based persona suggestion (see usePersonaSuggestion).
+  // Captured per-rep, consumed + cleared at session end.
+  const repTimestampsRef = useRef<number[]>([]);
+  const {
+    suggestion: personaSuggestion,
+    recordSession: recordPersonaTempo,
+    dismissSuggestion: dismissPersonaSuggestion,
+  } = usePersonaSuggestion();
+
   // Form scores for curls (exported to session recap + persisted with the
   // workout so XP recomputation can reward control over volume).
   const [formScores, setFormScores] = useState<number[]>([]);
@@ -151,6 +163,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     (summary: import('@/services/sessionLogger').SessionSummary) => {
       console.log('📊 Session ended with summary:', summary);
       setSessionSummary(summary);
+      // Feed this session's rep tempo into the persona-suggestion model, then
+      // clear the buffer for the next set.
+      recordPersonaTempo(repTimestampsRef.current);
+      repTimestampsRef.current = [];
       const assessment =
         summary.mode === CURL_BASELINE_PROTOCOL.mode
           ? evaluateMovementAssessment(summary, CURL_BASELINE_PROTOCOL)
@@ -228,7 +244,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         })().catch((err) => console.error('❌ Failed to auto-save workout:', err));
       }
     },
-    [finalAddress, isRace, movementChallenge, user?.fid, formScores]
+    [finalAddress, isRace, movementChallenge, user?.fid, formScores, recordPersonaTempo]
   );
 
   // Swipe gesture handling for mobile
@@ -378,7 +394,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const [showSummary, setShowSummary] = useState(false);
   const [retryFocus, setRetryFocus] = useState<string | null>(null);
   const [showExpandedLeaderboard, setShowExpandedLeaderboard] = useState(false);
-  const [personality] = useCoachPersonality();
+  const [personality, setPersonality] = useCoachPersonality();
 
   // Rep counting, haptic + visual feedback via hook
   const {
@@ -404,16 +420,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       playStudioCue('chime');
     },
     (count, exerciseMode) => {
+      // Record rep timestamp for tempo-based persona suggestion.
+      repTimestampsRef.current.push(Date.now());
       if (user?.fid) {
-        fetch('/api/analytics/engagement', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fid: user.fid,
-            eventType: 'workout_completed',
-            metadata: { reps: count, exerciseMode, duration: 120 - timeLeftRef.current },
-          }),
-        }).catch((err) => console.warn('Failed to track workout:', err));
+        void trackEngagementEvent({
+          fid: user.fid,
+          eventType: 'workout_completed',
+          metadata: { reps: count, exerciseMode, duration: 120 - timeLeftRef.current },
+        });
       }
     },
     started,
@@ -434,10 +448,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     detectionProgress,
     metrics,
     curlPoseData,
+    readiness,
     handlePoseStateChange,
     handleDetectionProgress,
     handleMetrics,
     handleCurlPoseData,
+    handleReadiness,
   } = usePoseDetection();
 
   // The atmosphere is a low-cost visual readout of the same session state as
@@ -1036,6 +1052,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         onCurlPoseData={handleCurlPoseData}
         onSessionEnd={handleSessionEnd}
         pbTrace={activeTrace || undefined}
+        onReadiness={handleReadiness}
       />
     ),
     [
@@ -1048,6 +1065,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       handleCurlPoseData,
       handleSessionEnd,
       activeTrace,
+      handleReadiness,
     ]
   );
 
@@ -1195,6 +1213,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               isIOS={isIOSDevice}
               poseState={poseState}
               detectionProgress={detectionProgress}
+              readiness={readiness}
               webcam={memoizedWebcam}
               showFirstRepCelebration={showFirstRepCelebration}
               retryFocus={retryFocus}
@@ -1263,6 +1282,18 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             />
           </div>
         </div>
+      )}
+      {/* One-time tempo-fit persona nudge — foyer only, never mid-session. */}
+      {!started && personaSuggestion && (
+        <PersonaSuggestionNudge
+          suggestion={personaSuggestion}
+          current={personality}
+          onAccept={(persona) => {
+            setPersonality(persona);
+            dismissPersonaSuggestion();
+          }}
+          onDismiss={dismissPersonaSuggestion}
+        />
       )}
       <SummaryModal
         isOpen={showSummary}

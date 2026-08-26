@@ -1,5 +1,5 @@
 import { calculateAngle } from './poseMath';
-import type { EngineExercise, EngineKeypoint } from './types';
+import type { EngineKeypoint, ReadinessExercise } from './types';
 
 /**
  * Progressive pose-readiness system. Ported from imperfectcoach.
@@ -28,10 +28,59 @@ export interface ReadinessIssue {
 }
 
 export interface ReadinessConfig {
-  exercise: EngineExercise;
+  exercise: ReadinessExercise;
   adaptiveThresholds: boolean; // Learn from user over time
   strictMode: boolean; // For competitions vs casual use
   stabilityFrames: number; // How many frames to require stability
+}
+
+/**
+ * Durable calibration storage for the adaptive readiness system.
+ *
+ * The system "learns" per-user calibration (e.g. preferred standing knee angle)
+ * while `adaptiveThresholds` is on. By default that lived in an in-memory Map
+ * and was lost at the end of every session, so the learning never actually
+ * compounded. This interface lets calibration persist across sessions; it is
+ * injectable so unit tests stay hermetic (no localStorage).
+ */
+export interface CalibrationStore {
+  load(): Record<string, number>;
+  save(data: Record<string, number>): void;
+}
+
+const CALIBRATION_STORAGE_KEY = 'imf_poseReadinessCalibration';
+
+/** localStorage-backed calibration store. Fail-silent if storage is blocked. */
+export class LocalCalibrationStore implements CalibrationStore {
+  constructor(private readonly key: string = CALIBRATION_STORAGE_KEY) {}
+
+  load(): Record<string, number> {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = window.localStorage.getItem(this.key);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const out: Record<string, number> = {};
+        for (const [k, v] of Object.entries(parsed)) {
+          if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
+        }
+        return out;
+      }
+      return {};
+    } catch {
+      return {};
+    }
+  }
+
+  save(data: Record<string, number>): void {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(this.key, JSON.stringify(data));
+    } catch {
+      // storage blocked — calibration simply won't persist; non-fatal
+    }
+  }
 }
 
 interface SubScore {
@@ -44,8 +93,31 @@ export class PoseReadinessSystem {
   private stabilityHistory: number[] = [];
   private userCalibrationData = new Map<string, number>();
   private readonly maxHistoryFrames = 30;
+  private readonly calibrationStore: CalibrationStore | null;
 
-  constructor(private config: ReadinessConfig) {}
+  constructor(
+    private config: ReadinessConfig,
+    calibrationStore?: CalibrationStore
+  ) {
+    // Only persist calibration when adaptive learning is on. A store is only
+    // attached when adaptiveThresholds is enabled, keeping the non-adaptive
+    // path (and the unit tests) free of any storage side effects.
+    this.calibrationStore = config.adaptiveThresholds
+      ? (calibrationStore ?? new LocalCalibrationStore())
+      : null;
+    if (this.calibrationStore) {
+      const persisted = this.calibrationStore.load();
+      for (const [key, value] of Object.entries(persisted)) {
+        this.userCalibrationData.set(key, value);
+      }
+    }
+  }
+
+  /** Persist the current calibration (called whenever learning updates it). */
+  private persistCalibration(): void {
+    if (!this.calibrationStore) return;
+    this.calibrationStore.save(Object.fromEntries(this.userCalibrationData));
+  }
 
   public analyzePoseReadiness(
     keypoints: EngineKeypoint[],
@@ -257,10 +329,107 @@ export class PoseReadinessSystem {
   private analyzeExercisePosture(keypoints: EngineKeypoint[]): SubScore {
     const issues: ReadinessIssue[] = [];
 
-    if (this.config.exercise === 'jumps') {
-      return this.analyzeJumpPosture(keypoints, issues);
+    switch (this.config.exercise) {
+      case 'jumps':
+      case 'squats':
+        // Standing knee-angle framing applies to both vertical movements.
+        return this.analyzeJumpPosture(keypoints, issues);
+      case 'pushups':
+        return this.analyzePushupPosture(keypoints, issues);
+      case 'curls':
+        return this.analyzeCurlPosture(keypoints, issues);
+      case 'pullups':
+      default:
+        return this.analyzePullupPosture(keypoints, issues);
     }
-    return this.analyzePullupPosture(keypoints, issues);
+  }
+
+  /**
+   * Push-up framing: the camera needs shoulders, elbows, wrists, and hips
+   * visible side-on to judge depth and body alignment.
+   */
+  private analyzePushupPosture(keypoints: EngineKeypoint[], issues: ReadinessIssue[]): SubScore {
+    const keypointsMap = new Map(keypoints.map((k) => [k.name ?? '', k]));
+    const minConfidence = 0.4;
+
+    const required = [
+      'left_shoulder',
+      'right_shoulder',
+      'left_elbow',
+      'right_elbow',
+      'left_wrist',
+      'right_wrist',
+      'left_hip',
+      'right_hip',
+    ];
+    const visible = required.filter(
+      (name) => (keypointsMap.get(name)?.score ?? 0) > minConfidence
+    ).length;
+
+    let postureScore = 100;
+    if (visible < 4) {
+      postureScore -= 30;
+      issues.push({
+        type: 'VISIBILITY',
+        severity: 'HIGH',
+        message: 'Upper body and hips not fully visible',
+        suggestion: 'Set the camera low and side-on so shoulders, hips, and ankles stay in view',
+        fixable: true,
+      });
+    } else if (visible < 7) {
+      postureScore -= 12;
+      issues.push({
+        type: 'VISIBILITY',
+        severity: 'MEDIUM',
+        message: 'Some push-up landmarks obscured',
+        suggestion: 'Adjust the camera so your elbows and hips are clearly visible',
+        fixable: true,
+      });
+    }
+
+    return { score: Math.max(0, postureScore), issues };
+  }
+
+  /**
+   * Curl framing: the camera needs shoulders, elbows, and wrists visible from
+   * the front to judge range and elbow control.
+   */
+  private analyzeCurlPosture(keypoints: EngineKeypoint[], issues: ReadinessIssue[]): SubScore {
+    const keypointsMap = new Map(keypoints.map((k) => [k.name ?? '', k]));
+    const minConfidence = 0.4;
+
+    const leftShoulder = keypointsMap.get('left_shoulder');
+    const rightShoulder = keypointsMap.get('right_shoulder');
+    const leftElbow = keypointsMap.get('left_elbow');
+    const rightElbow = keypointsMap.get('right_elbow');
+    const leftWrist = keypointsMap.get('left_wrist');
+    const rightWrist = keypointsMap.get('right_wrist');
+
+    const armPoints = [leftShoulder, rightShoulder, leftElbow, rightElbow, leftWrist, rightWrist];
+    const visible = armPoints.filter((p) => (p?.score ?? 0) > minConfidence).length;
+
+    let postureScore = 100;
+    if (visible < 3) {
+      postureScore -= 30;
+      issues.push({
+        type: 'VISIBILITY',
+        severity: 'HIGH',
+        message: 'Arms not clearly visible',
+        suggestion: 'Frame your shoulders, elbows, and hands from the front',
+        fixable: true,
+      });
+    } else if (visible < 5) {
+      postureScore -= 12;
+      issues.push({
+        type: 'VISIBILITY',
+        severity: 'MEDIUM',
+        message: 'One arm partially out of frame',
+        suggestion: 'Stand an arm’s length from the camera so both arms fit in frame',
+        fixable: true,
+      });
+    }
+
+    return { score: Math.max(0, postureScore), issues };
   }
 
   private analyzeJumpPosture(keypoints: EngineKeypoint[], issues: ReadinessIssue[]): SubScore {
@@ -310,6 +479,8 @@ export class PoseReadinessSystem {
     // Learn the user's preferred posture over time
     if (this.config.adaptiveThresholds && avgKneeAngle > 120) {
       this.userCalibrationData.set('preferred_knee_angle', avgKneeAngle);
+      // Persist so the learning survives across sessions.
+      this.persistCalibration();
     }
 
     return {
@@ -465,26 +636,45 @@ export class PoseReadinessSystem {
   }
 
   private getRequiredKeypoints(): string[] {
-    if (this.config.exercise === 'jumps') {
-      return [
-        'left_hip',
-        'right_hip',
-        'left_knee',
-        'right_knee',
-        'left_ankle',
-        'right_ankle',
-        'left_shoulder',
-        'right_shoulder',
-      ];
+    switch (this.config.exercise) {
+      case 'jumps':
+      case 'squats':
+        // Full-body framing: hips, knees, ankles, shoulders all in view.
+        return [
+          'left_hip',
+          'right_hip',
+          'left_knee',
+          'right_knee',
+          'left_ankle',
+          'right_ankle',
+          'left_shoulder',
+          'right_shoulder',
+        ];
+      case 'pushups':
+        // Side-on plank framing: shoulders, elbows, wrists, hips.
+        return [
+          'left_shoulder',
+          'right_shoulder',
+          'left_elbow',
+          'right_elbow',
+          'left_wrist',
+          'right_wrist',
+          'left_hip',
+          'right_hip',
+        ];
+      case 'pullups':
+      case 'curls':
+      default:
+        // Upper-body framing: wrists, elbows, shoulders.
+        return [
+          'left_wrist',
+          'right_wrist',
+          'left_elbow',
+          'right_elbow',
+          'left_shoulder',
+          'right_shoulder',
+        ];
     }
-    return [
-      'left_wrist',
-      'right_wrist',
-      'left_elbow',
-      'right_elbow',
-      'left_shoulder',
-      'right_shoulder',
-    ];
   }
 
   private getVisibilitySuggestion(keypointName: string, confidence: number): string {

@@ -23,6 +23,8 @@ interface LazyWebcamProps {
   onCurlPoseData?: (poseData: import('@/types/mediapipe').CurlPoseData | undefined) => void;
   onSessionEnd?: (summary: import('@/services/sessionLogger').SessionSummary) => void;
   pbTrace?: import('@/types/workout').SessionSnapshot[];
+  /** Progressive framing-readiness score during the pre-workout settling window. */
+  onReadiness?: (score: import('@/lib/exercise-engine').ReadinessScore) => void;
 }
 
 /**
@@ -103,6 +105,7 @@ export default function LazyWebcam(props: LazyWebcamProps) {
         onCurlPoseData={props.onCurlPoseData}
         onSessionEnd={props.onSessionEnd}
         pbTrace={props.pbTrace}
+        onReadiness={props.onReadiness}
       />
     );
   }

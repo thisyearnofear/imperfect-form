@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { BiomechanicalState, CurlPoseData } from '@/types/mediapipe';
 import type { MobileQualityTier } from '@/lib/pose/mobileQuality';
+import type { ReadinessScore } from '@/lib/exercise-engine';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -31,11 +32,14 @@ interface UsePoseDetectionReturn {
   detectionProgress: DetectionProgress | null;
   metrics: BiomechanicalState | null;
   curlPoseData: CurlPoseData | null;
+  /** Latest framing-readiness score during the pre-workout settling window. */
+  readiness: ReadinessScore | null;
   showLoadingOverlay: boolean;
   handlePoseStateChange: (state: PoseState) => void;
   handleDetectionProgress: (progress: DetectionProgress) => void;
   handleMetrics: (state: BiomechanicalState) => void;
   handleCurlPoseData: (poseData: CurlPoseData | undefined) => void;
+  handleReadiness: (score: ReadinessScore) => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -53,6 +57,7 @@ export function usePoseDetection(): UsePoseDetectionReturn {
   const [detectionProgress, setDetectionProgress] = useState<DetectionProgress | null>(null);
   const [metrics, setMetrics] = useState<BiomechanicalState | null>(null);
   const [curlPoseData, setCurlPoseData] = useState<CurlPoseData | null>(null);
+  const [readiness, setReadiness] = useState<ReadinessScore | null>(null);
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
   const latestMetricsRef = useRef<BiomechanicalState | null>(null);
   const latestCurlPoseDataRef = useRef<CurlPoseData | null>(null);
@@ -132,16 +137,24 @@ export function usePoseDetection(): UsePoseDetectionReturn {
     [scheduleLiveUiState]
   );
 
+  // Readiness is already throttled (~2Hz) and change-detected upstream in the
+  // detection loop, so a direct state set is safe here.
+  const handleReadiness = useCallback((score: ReadinessScore) => {
+    setReadiness(score);
+  }, []);
+
   return {
     poseState,
     detectionProgress,
     metrics,
     curlPoseData,
+    readiness,
     showLoadingOverlay,
     handlePoseStateChange,
     handleDetectionProgress,
     handleMetrics,
     handleCurlPoseData,
+    handleReadiness,
   };
 }
 

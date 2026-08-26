@@ -51,6 +51,12 @@ import {
 import { getDeviceInfo } from '../utils/deviceDetection';
 import { emitCoachCue } from '../lib/appEvents';
 import {
+  PoseReadinessSystem,
+  LocalCalibrationStore,
+  type ReadinessScore,
+} from '../lib/exercise-engine';
+import type { EngineKeypoint } from '../lib/exercise-engine';
+import {
   AdaptiveMobileQualityController,
   getMobileQualityConstraints,
   hasMaterialCameraQualityChange,
@@ -103,7 +109,14 @@ export function usePoseDetection(
   pbTrace?: import('../types/workout').SessionSnapshot[],
   /** Bumps when Webcam replaces a poisoned OffscreenCanvas host */
   canvasEpoch: number = 0,
-  onCanvasPoisoned?: () => void
+  onCanvasPoisoned?: () => void,
+  /**
+   * Progressive framing-readiness score, emitted during the pre-workout
+   * settling window (before the first rep). Runs inside the detection loop so
+   * raw keypoints never cross into the React render path. Optional — the
+   * pipeline behaves exactly as before when omitted.
+   */
+  onReadiness?: (score: ReadinessScore) => void
 ) {
   // Platform detection variables - defined once at function level
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -152,6 +165,15 @@ export function usePoseDetection(
   const onMetricsRef = useRef(onMetrics);
   const onCurlPoseDataRef = useRef(onCurlPoseData);
   const onSessionEndRef = useRef(onSessionEnd);
+  const onReadinessRef = useRef(onReadiness);
+
+  // Progressive framing-readiness. Lives in refs so the detection loop can
+  // consult it without re-triggering the main effect. The system is created
+  // lazily per session and only runs during the pre-workout settling window.
+  const readinessSystemRef = useRef<PoseReadinessSystem | null>(null);
+  const readinessLastEmitRef = useRef<number>(0);
+  const readinessLastScoreRef = useRef<number>(-1);
+  const readinessDoneRef = useRef<boolean>(false);
 
   modeRef.current = safeMode;
   isActiveRef.current = isActive;
@@ -178,6 +200,72 @@ export function usePoseDetection(
     [scheduleCallback]
   );
 
+  /**
+   * Run progressive framing-readiness on a detected pose. Called from the
+   * detection loop (both worker and main-thread paths) so it sees raw
+   * keypoints without exposing them to React.
+   *
+   * Guardrails keep it off the hot path:
+   *  - No-op unless a consumer subscribed via onReadiness.
+   *  - Only runs during the pre-workout settling window (before the first rep
+   *    and before pose has locked), then self-terminates.
+   *  - Throttled to ~2Hz and only emits when the score moves materially, so it
+   *    never drives a per-frame re-render storm.
+   */
+  const maybeAnalyzeReadiness = useCallback(
+    (keypoints: EngineKeypoint[]) => {
+      if (!onReadinessRef.current) return;
+      if (readinessDoneRef.current) return;
+      // Readiness only runs while keypoints exist (caller guarantees a detected
+      // pose) and before the first rep. Once the user starts moving it is a
+      // framing aid that has served its purpose — stop, don't gate the workout.
+      if (lastRepCountRef.current > 0) {
+        readinessDoneRef.current = true;
+        return;
+      }
+
+      const now = performance.now();
+      if (now - readinessLastEmitRef.current < 500) return; // ~2Hz
+
+      if (!readinessSystemRef.current) {
+        readinessSystemRef.current = new PoseReadinessSystem(
+          {
+            exercise: modeRef.current,
+            adaptiveThresholds: true,
+            strictMode: false,
+            stabilityFrames: 5,
+          },
+          new LocalCalibrationStore()
+        );
+      }
+
+      const video = videoRef.current;
+      const width = video?.videoWidth || 640;
+      const height = video?.videoHeight || 480;
+
+      let score: ReadinessScore;
+      try {
+        score = readinessSystemRef.current.analyzePoseReadiness(keypoints, { width, height });
+      } catch {
+        // Readiness must never break the pose loop.
+        return;
+      }
+
+      readinessLastEmitRef.current = now;
+      // Only publish when the score moves enough to matter — avoids re-render
+      // churn while the user is still settling.
+      if (Math.abs(score.score - readinessLastScoreRef.current) < 5 && !score.canProceed) return;
+      readinessLastScoreRef.current = score.score;
+
+      if (score.canProceed) {
+        readinessDoneRef.current = true;
+      }
+      const publish = score;
+      scheduleCallback(() => onReadinessRef.current?.(publish));
+    },
+    [scheduleCallback]
+  );
+
   useEffect(() => {
     onRepCountRef.current = onRepCount;
     onPoseStateChangeRef.current = onPoseStateChange;
@@ -185,7 +273,16 @@ export function usePoseDetection(
     onMetricsRef.current = onMetrics;
     onCurlPoseDataRef.current = onCurlPoseData;
     onSessionEndRef.current = onSessionEnd;
-  }, [onRepCount, onPoseStateChange, onDetectionProgress, onMetrics, onCurlPoseData, onSessionEnd]);
+    onReadinessRef.current = onReadiness;
+  }, [
+    onRepCount,
+    onPoseStateChange,
+    onDetectionProgress,
+    onMetrics,
+    onCurlPoseData,
+    onSessionEnd,
+    onReadiness,
+  ]);
 
   const notifyStateChange = useCallback(
     (newState: Partial<typeof _poseState>) => {
@@ -269,6 +366,13 @@ export function usePoseDetection(
     repCounter = createInitialRepCounterState();
     engineDetector = isEngineMode(startMode) ? createEngineRepDetectorState(startMode) : null;
     poseSmootherRef.current = new PoseSmoother();
+
+    // Fresh framing-readiness window for each session. The system itself is
+    // rebuilt lazily on first use so it picks up the current exercise mode.
+    readinessSystemRef.current = null;
+    readinessLastEmitRef.current = 0;
+    readinessLastScoreRef.current = -1;
+    readinessDoneRef.current = false;
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
@@ -647,6 +751,12 @@ export function usePoseDetection(
             const detected = data.keypoints && data.keypoints.length > 0;
             notifyStateChange({ poseDetected: detected });
             onCurlPoseDataRef.current?.(modeRef.current === 'curls' ? data.poseData : undefined);
+            // Progressive framing-readiness during the pre-workout settling
+            // window. Runs on the main thread against the worker's keypoints;
+            // self-terminates once the first rep lands.
+            if (detected && data.keypoints) {
+              maybeAnalyzeReadiness(data.keypoints as EngineKeypoint[]);
+            }
             if (data.state) {
               onMetricsRef.current?.(data.state);
               sessionLoggerRef.current?.logFrame(data.state, data.keypoints || []);
@@ -1073,6 +1183,10 @@ export function usePoseDetection(
               const keypoints =
                 poseSmootherRef.current?.update(firstPose.keypoints as Keypoint[]) ??
                 (firstPose.keypoints as Keypoint[]);
+              // Progressive framing-readiness during the pre-workout settling
+              // window (main-thread detection path). Self-terminates once the
+              // first rep lands.
+              maybeAnalyzeReadiness(keypoints as EngineKeypoint[]);
               // Biomechanical Analysis
               const metrics = analyzeBiomechanics(keypoints, activeMode);
 

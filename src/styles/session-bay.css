@@ -232,3 +232,70 @@
     transition: none;
   }
 }
+
+/* ── Framing-readiness hint ────────────────────────────────────────────────
+   A calm, studio-register nudge shown during the pre-workout settling window
+   (pose locked, no reps yet). It surfaces the single most actionable framing
+   suggestion from the PoseReadinessSystem. It is never a gate — the workout
+   is not blocked on it — so it stays pointer-events: none and yields the
+   moment the first rep lands. */
+.readiness-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(32rem, 86vw);
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
+  color: var(--studio-paper-soft);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  animation: readiness-hint-in 240ms ease-out;
+}
+
+.readiness-hint__dot {
+  flex: 0 0 auto;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--studio-teal);
+  box-shadow: 0 0 8px var(--studio-glow);
+  animation: readiness-hint-pulse 1.6s ease-in-out infinite;
+}
+
+.readiness-hint__text {
+  min-width: 0;
+}
+
+@keyframes readiness-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes readiness-hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .readiness-hint,
+  .readiness-hint__dot {
+    animation: none;
+  }
+}

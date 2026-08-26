@@ -13,6 +13,7 @@ import { useStableTracking } from '@/hooks/useStableTracking';
 import { isTwinHeroActive, useCoachTwin } from '@/hooks/useCoachTwin';
 import CurlFormInstrument from './CurlFormInstrument';
 import { SeeShowMoment } from './SeeShowMoment';
+import { ReadinessHint } from './ReadinessHint';
 import { deriveCurlTelemetry } from '@/lib/curlTelemetry';
 import '@/styles/session-bay.css';
 
@@ -33,6 +34,8 @@ interface GameCanvasProps {
   isIOS?: boolean;
   poseState: PoseState;
   detectionProgress: DetectionProgress | null;
+  /** Progressive framing-readiness score during the pre-workout settling window. */
+  readiness?: import('@/lib/exercise-engine').ReadinessScore | null;
   webcam: React.ReactNode;
   showFirstRepCelebration?: boolean;
   /** A user-facing focus carried from the recap retry CTA; never drives robot commands. */
@@ -57,6 +60,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   isIOS = false,
   poseState,
   detectionProgress,
+  readiness = null,
   webcam,
   showFirstRepCelebration = false,
   retryFocus = null,
@@ -179,6 +183,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             userElbowDeg={curlTelemetry?.elbowAngle}
             yieldToFirstSignal={showFirstRepCelebration}
           />
+          <ReadinessHint
+            readiness={readiness}
+            repCount={repCount}
+            hasLockedPose={hasLockedPose}
+            elevated
+          />
           {/* Bottom band = one stack, no overlap: instrument above, the
               coaching sentence owns the bottom edge (closest to the eye). */}
           <div className="session-bottom-stack">
@@ -239,6 +249,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
+          <ReadinessHint readiness={readiness} repCount={repCount} hasLockedPose={hasLockedPose} />
         </div>
         <aside className="session-bay__rail session-bay__rail--trail">
           {mode === 'curls' ? (

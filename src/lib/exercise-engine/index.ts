@@ -31,6 +31,8 @@ export {
 } from './curlProcessor';
 export {
   PoseReadinessSystem,
+  LocalCalibrationStore,
+  type CalibrationStore,
   type ReadinessLevel,
   type ReadinessScore,
   type ReadinessIssue,

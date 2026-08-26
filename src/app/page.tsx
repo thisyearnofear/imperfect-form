@@ -33,6 +33,7 @@ import {
 import { useXpProgress } from '@/hooks/useXpProgress';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { getHasTrained } from '@/lib/hasTrained';
+import { trackEngagementEvent } from '@/lib/analyticsDispatch';
 import { UniversalConnectButton, WalletStatusPill } from '@/components/wallet';
 import { ScreenTransition } from '@/components/ui/ScreenTransition';
 import { CountUp } from '@/components/ui/CountUp';
@@ -203,19 +204,15 @@ export default function Home() {
       console.log('🎯 Mini App initialization');
 
       if (user?.fid) {
-        fetch('/api/analytics/engagement', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fid: user.fid,
-            eventType: 'app_launched',
-            metadata: {
-              platform,
-              isInMiniApp,
-              userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown',
-            },
-          }),
-        }).catch((err) => console.warn('Failed to track app launch:', err));
+        void trackEngagementEvent({
+          fid: user.fid,
+          eventType: 'app_launched',
+          metadata: {
+            platform,
+            isInMiniApp,
+            userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown',
+          },
+        });
       }
 
       callFarcasterReady().catch(() => {

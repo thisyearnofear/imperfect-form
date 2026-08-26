@@ -7,6 +7,11 @@ import { speakCoachLine } from '@/lib/tts';
 import { coachStation } from '@/services/coachStation';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
+import {
+  createCueHabituationState,
+  decideCueDelivery,
+  type CueHabituationState,
+} from '@/lib/cueHabituation';
 import type { BiomechanicalState } from '@/types/mediapipe';
 import type { ExerciseMode } from '@/utils/biomechanics';
 
@@ -32,6 +37,9 @@ export function AgentInsightTray({ metrics, mode, voiceEnabled, repCount }: Agen
   const [cue, setCue] = useState({ state: 'ready' as CueState, message: DEFAULT_CUES[mode] });
   const lastHash = useRef('');
   const lastVoice = useRef(0);
+  // Session-scoped habituation: a repeated issue is voiced once in full, once
+  // shortened, then display-only until the form clears and it recurs fresh.
+  const habituationRef = useRef<CueHabituationState>(createCueHabituationState());
   const [personality] = useCoachPersonality();
 
   const metricsHash = useMemo(() => {
@@ -69,10 +77,23 @@ export function AgentInsightTray({ metrics, mode, voiceEnabled, repCount }: Agen
         personality,
         repCount,
       });
-      if (voiceEnabled && issue.severity === 'critical' && Date.now() - lastVoice.current > 3000) {
+      // Habituation: full voice once, shortened once, then display-only while
+      // the same issue persists. The tray keeps showing the cue either way.
+      const delivery = decideCueDelivery(issue.type, issue.cue, habituationRef.current);
+      habituationRef.current = delivery.state;
+      if (
+        delivery.voice &&
+        voiceEnabled &&
+        issue.severity === 'critical' &&
+        Date.now() - lastVoice.current > 3000
+      ) {
         lastVoice.current = Date.now();
-        void speakCoachLine(issue.cue, { voiceEnabled, personality });
+        void speakCoachLine(delivery.phrase, { voiceEnabled, personality });
       }
+    } else if (Object.keys(habituationRef.current).length > 0) {
+      // Form cleared — reset habituation so a genuine recurrence later gets a
+      // fresh first-voice cue instead of staying silent.
+      habituationRef.current = createCueHabituationState();
     }
   }, [metrics, metricsHash, mode, personality, repCount, voiceEnabled]);
 

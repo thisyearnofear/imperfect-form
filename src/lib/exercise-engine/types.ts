@@ -16,6 +16,13 @@ export interface EngineKeypoint {
 
 export type EngineExercise = 'pullups' | 'jumps';
 
+/**
+ * Exercises the pose-readiness system can score framing for. Wider than
+ * EngineExercise (the rep engine) because readiness applies to every flagship
+ * movement, not just the two with dedicated rep processors.
+ */
+export type ReadinessExercise = 'pullups' | 'jumps' | 'pushups' | 'squats' | 'curls';
+
 export type RepState = 'DOWN' | 'UP' | 'GROUNDED' | 'AIRBORNE';
 
 export interface PullupRepDetails {

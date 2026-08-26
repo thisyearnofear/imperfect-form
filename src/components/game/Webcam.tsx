@@ -36,6 +36,8 @@ interface WebcamProps {
   onCurlPoseData?: (poseData: import('@/types/mediapipe').CurlPoseData | undefined) => void;
   onSessionEnd?: (summary: import('@/services/sessionLogger').SessionSummary) => void;
   pbTrace?: import('@/types/workout').SessionSnapshot[];
+  /** Progressive framing-readiness score during the pre-workout settling window. */
+  onReadiness?: (score: import('@/lib/exercise-engine').ReadinessScore) => void;
 }
 
 // Initialize logger for the Webcam component
@@ -52,6 +54,7 @@ const Webcam: React.FC<WebcamProps> = ({
   onCurlPoseData,
   onSessionEnd,
   pbTrace,
+  onReadiness,
 }) => {
   // Must pass curls/pullups/jumps through so the exercise engine runs.
   const safeMode = normalizeExerciseMode(mode);
@@ -76,7 +79,8 @@ const Webcam: React.FC<WebcamProps> = ({
     onSessionEnd,
     pbTrace,
     canvasEpoch,
-    onCanvasPoisoned
+    onCanvasPoisoned,
+    onReadiness
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
 

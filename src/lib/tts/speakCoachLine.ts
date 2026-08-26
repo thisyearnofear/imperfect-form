@@ -12,6 +12,7 @@ import {
   type TtsProviderId,
   type TtsProviderPreference,
 } from '@/config/ttsProviders';
+import { getNetworkCapabilities } from '@/lib/networkQuality';
 
 let currentAudio: HTMLAudioElement | null = null;
 const CLIENT_TTS_TIMEOUT_MS = 2500;
@@ -63,7 +64,11 @@ export async function speakCoachLine(
 
   const preference = opts?.preferredProvider ?? getStoredTtsPreference();
 
-  if (preference === 'browser') {
+  // Constrained networks (save-data / 2g): skip the cloud round-trip and use
+  // the local voice immediately. Coaching must never wait on a slow link.
+  const { allowCloudTts } = getNetworkCapabilities();
+
+  if (preference === 'browser' || !allowCloudTts) {
     speakBrowser(trimmed, opts?.personality);
     return { provider: 'browser' };
   }
