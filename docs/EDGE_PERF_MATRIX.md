@@ -30,6 +30,38 @@ Not all combinations are feasible. The matrix automatically filters invalid ones
 
 ## How to Run the Matrix
 
+> **Tooling status:** the console API is registered by a dev-only dynamic
+> import in `ClientOnlyProviders` (`process.env.NODE_ENV === 'development'`),
+> so run against `pnpm dev` — it is intentionally absent from production
+> builds.
+
+### Current limitations
+
+**Config hot-swap is not implemented yet.** The pose pipeline hard-codes
+`SinglePose.Lightning` (`poseWorker.ts`, `usePoseDetection.ts`,
+`PoseDetectionService.ts`) and the matrix runner only _labels_ each baseline
+run with config metadata via `startPoseBaseline` — it does not change the
+detector model, input size, backend, or quantization between rows. Until
+config application is wired into the detector, every row measures the same
+live configuration and the composite-score ranking is **not** a real A/B
+result. `start()` prints a console warning to this effect.
+
+What the tooling is good for today:
+
+- **Single-config stability baselines** on real devices (FPS, confidence,
+  detection time, memory growth under the current default).
+- **Rehearsing the runbook** (start → workout → skip/stop → export) so the
+  real A/B pass is mechanical once hot-swap lands.
+
+Remaining work before Gate C can close:
+
+1. Apply `EdgePerfConfig` to the detector (model variant + input resolution at
+   `createDetector`, backend selection at TF init) and restart the pipeline
+   between rows.
+2. Record real-device runs (below) and paste them into [Latest runs](#latest-runs).
+3. Pick the validated default per the [Decision Rules](#decision-rules) with no
+   Ring 0 e2e regression.
+
 ### Quick Start
 
 1. Open the app on your target device
@@ -92,6 +124,51 @@ Higher is better. This rewards configurations that are:
 - **Fast** (high FPS)
 - **Accurate** (high confidence)
 - **Responsive** (low detection time)
+
+## Real-device runbook (Gate C)
+
+Gate C needs measurements from physical devices — headless CI cannot produce
+them (WebGL pose boot is unreliable headless, which is also why
+`pose-runtime.spec.ts` is treated as environmental there). One operator with a
+phone and a laptop is enough.
+
+**Target devices (minimum):** one mid-range Android (Chrome) and one older
+iPhone (Safari). Record the exact model + OS in the matrix metadata.
+
+1. **Serve a dev build the phone can reach.** On the laptop:
+   `pnpm dev`, then open `http://<laptop-lan-ip>:3000` on the phone (same
+   Wi-Fi). Dev mode is required so `window.__IMF_EDGE_MATRIX__` registers.
+2. **Fix the conditions.** Same room, same lighting, same camera distance and
+   angle for every row. Note them — lighting changes move keypoint confidence
+   more than most config knobs.
+3. **Start the matrix** in the phone's devtools console (Safari: Develop menu →
+   the phone; Chrome: `chrome://inspect`):
+
+   ```javascript
+   window.__IMF_EDGE_MATRIX__.start({
+     exercise: 'curls',
+     durationPerConfig: 30,
+     target: 'Pixel 7a / Android 15',
+     camera: 'front camera, propped 1.5m away',
+     lighting: 'indoor, overhead LED',
+   });
+   ```
+
+4. **Do the exercise** while each config runs; use `skip()` if a config is
+   unusable (e.g. backend unsupported). Watch `getProgress()`.
+5. **Export and save both formats:**
+
+   ```javascript
+   const m = window.__IMF_EDGE_MATRIX__.stop();
+   copy(window.__IMF_EDGE_MATRIX__.exportJson(m)); // save to evidence/edge-matrix/<device>-<date>.json
+   copy(window.__IMF_EDGE_MATRIX__.exportMarkdown(m)); // paste into Latest runs
+   ```
+
+6. **Analyze:** `window.__IMF_EDGE_MATRIX__.analyzeMatrix(m)` ranks rows by the
+   composite score. Remember the [Current limitations](#current-limitations) —
+   until hot-swap lands, this ranks one config's stability, not variants.
+7. Raw JSON reports live under `evidence/edge-matrix/` (gitignored-friendly:
+   keep them small or link instead of committing multi-MB frames).
 
 ## Latest runs
 

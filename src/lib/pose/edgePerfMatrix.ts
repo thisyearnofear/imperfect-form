@@ -203,6 +203,18 @@ class EdgePerfMatrixRunner {
     this.isRunning = true;
     console.log(`[edgePerfMatrix] Started matrix ${this.matrix.matrixId}`);
     console.log(`[edgePerfMatrix] ${this.configs.length} configurations to test`);
+    // KNOWN LIMITATION: the pose pipeline currently hard-codes
+    // SinglePose.Lightning (see poseWorker.ts / usePoseDetection.ts) and this
+    // runner only *labels* each baseline run with config metadata — it does not
+    // hot-swap the detector model, input size, backend, or quantization. Until
+    // config application is wired into the detector, every row measures the same
+    // live configuration and the composite-score ranking is NOT a real A/B
+    // result. Treat runs as a single-config stability baseline, not a matrix.
+    console.warn(
+      '[edgePerfMatrix] Config hot-swap is not implemented yet — all rows will ' +
+        'measure the live SinglePose.Lightning config under different labels. ' +
+        'See docs/EDGE_PERF_MATRIX.md → "Current limitations".'
+    );
 
     // Start the first configuration
     this.startNextConfig();

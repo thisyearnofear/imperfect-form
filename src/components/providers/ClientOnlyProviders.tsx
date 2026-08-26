@@ -39,6 +39,16 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
       // storage blocked — non-fatal
     }
 
+    // Gate C tooling: register the edge performance A/B matrix console API
+    // (window.__IMF_EDGE_MATRIX__). The module self-registers on import and is
+    // dev-only there, so a dynamic import keeps it out of the production
+    // bundle entirely. See docs/EDGE_PERF_MATRIX.md.
+    if (process.env.NODE_ENV === 'development') {
+      import('@/lib/pose/edgePerfMatrix').catch(() => {
+        // Matrix tooling is optional dev instrumentation — never block boot.
+      });
+    }
+
     // Register service worker for caching TF model assets. Keep this off the
     // critical path; it should never compete with the first-visit doorway.
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
