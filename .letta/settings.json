@@ -1,5 +1,0 @@
-{
-  "permissions": {
-    "allow": ["Bash(git show:*)", "Edit(src/components/game/**)", "Edit(src/modules/**)"]
-  }
-}
