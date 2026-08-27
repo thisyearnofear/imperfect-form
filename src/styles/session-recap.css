@@ -1478,6 +1478,63 @@
   margin-top: 0.4rem;
 }
 
+/* Grade arc — the long-term story: one chip per graded session, oldest →
+   newest. Same quiet register as the per-session form scores. */
+.session-recap__grade-arc {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(181, 229, 221, 0.1);
+}
+
+.session-recap__grade-arc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.session-recap__grade-arc-header p {
+  color: rgba(181, 229, 221, 0.7);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.session-recap__grade-arc-header span {
+  color: rgba(181, 229, 221, 0.6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6rem;
+}
+
+.session-recap__grade-arc-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.session-recap__grade-arc-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 0.2rem 0.3rem;
+  border: 1px solid;
+  border-radius: 4px;
+  background: rgba(6, 16, 19, 0.4);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.session-recap__grade-arc-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+  color: rgba(181, 229, 221, 0.6);
+  font-size: 0.6rem;
+}
+
 .session-recap__form-scores-stats span {
   color: rgba(181, 229, 221, 0.5);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

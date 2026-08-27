@@ -12,6 +12,8 @@ import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
 import { countedLabel } from '@/lib/exerciseGuidance';
 import { BRAND } from '@/lib/brandPositioning';
 import { averageFormScore, getFormGrade } from '@/lib/formGrade';
+import { buildGradeSeries } from '@/lib/progress/gradeHistory';
+import GradeArc from './GradeArc';
 import { ghostService } from '@/services/GhostService';
 import {
   movementShareMetadata,
@@ -404,9 +406,7 @@ export function SessionRecap({
         {hasCorrection && (
           <p className="session-recap__arm-door">
             <ArrowUpRight size={13} aria-hidden="true" />
-            <Link href="/build">
-              The SO-101 arm shows this correction — see the build
-            </Link>
+            <Link href="/build">The SO-101 arm shows this correction — see the build</Link>
           </p>
         )}
       </div>
@@ -443,6 +443,13 @@ export function SessionRecap({
             <span>Reps: {formScores.length}</span>
           </div>
         </div>
+      )}
+
+      {/* Grade arc — the long-term story: your control across graded sessions,
+          not just this set. Draws only when ≥2 graded sessions exist, so it
+          never fabricates a trend from a single data point. */}
+      {mode === 'curls' && (
+        <GradeArc series={buildGradeSeries(workouts ?? [], mode)} modeLabel={mode} />
       )}
 
       <div className="session-recap__story motion-enter motion-delay-1">
