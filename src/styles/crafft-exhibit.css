@@ -373,15 +373,6 @@
   color: var(--ce-paper-dim);
 }
 
-.crafft-exhibit__loop-step-no {
-  font-family: var(--font-press-start), monospace;
-  font-size: 0.42rem;
-  letter-spacing: 0.08em;
-  color: var(--ce-brass);
-  opacity: 0.6;
-  margin-right: 0.4rem;
-}
-
 .crafft-exhibit__loop-caption {
   margin: 1.25rem 0 0;
   text-align: center;
