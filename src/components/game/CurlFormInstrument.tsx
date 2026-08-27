@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import '@/styles/curl-instrument.css';
 import type { CurlTelemetry } from '@/types/mediapipe';
 import { playStudioCue } from '@/lib/uiSound';
-import { coachStation, type StationTrajectoryProgressEvent } from '@/services/coachStation';
+import { coachStation, type StationTrajectoryProgressEvent, type StationStatus } from '@/services/coachStation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import {
   COACH_PERSONALITIES,
@@ -91,27 +91,34 @@ export function CurlFormInstrument({
   const prevRepCountRef = useRef(repCount);
   const [currentGrade, setCurrentGrade] = useState<string | null>(null);
   const prevGradeRef = useRef<string | null>(null);
-  // Only report a form score upward when it actually changes. telemetry is a
-  // fresh object on every pose publish and onFormScore must not be invoked
-  // with the same value repeatedly — that would re-render the parent, which
-  // recreates the inline onFormScore, which re-fires this effect (infinite
-  // "Maximum update depth exceeded" loop).
-  const lastReportedScoreRef = useRef<number | null>(null);
   const lastTelemetryRef = useRef<CurlTelemetry | null>(telemetry);
   if (telemetry) lastTelemetryRef.current = telemetry;
   const displayTelemetry = telemetry ?? (layout === 'rail' ? lastTelemetryRef.current : null);
   // Progressive disclosure: the instrument can collapse to a compact status
   // strip so the camera feed stays visible mid-set. Default expanded.
   const [collapsed, setCollapsed] = useState(false);
+  // SO-101 station connection status — drives the honest instrument eyebrow
+  // ("SO-101 live · mirroring you" vs "SO-101 playbook · arm offline").
+  const [stationStatus, setStationStatus] = useState<StationStatus>(coachStation.status);
 
   useEffect(() => {
     if (!coachStation.enabled) return;
+    setStationStatus(coachStation.status);
     const unsub = coachStation.onTrajectoryProgress((event: StationTrajectoryProgressEvent) => {
       setRobotElbowDeg(event.current_deg);
       setRobotMeasuredDeg(event.measured_deg ?? null);
     });
-    return () => unsub();
+    const unsubStatus = coachStation.onStatus(setStationStatus);
+    return () => {
+      unsub();
+      unsubStatus();
+    };
   }, []);
+
+  // Honest arm posture: live only when the station is enabled AND connected.
+  const armLive = coachStation.enabled && stationStatus === 'connected';
+  // Quiet, honest eyebrow label for the instrument heading.
+  const armEyebrow = armLive ? 'SO-101 live · mirroring you' : 'SO-101 playbook · arm offline';
 
   const liveAngleBucket = telemetry ? Math.round(telemetry.elbowAngle / 10) * 10 : null;
   const telemetryPhase = telemetry?.phase;
@@ -192,17 +199,25 @@ export function CurlFormInstrument({
         ...prev.slice(-9), // Keep last 10 reps
         { rep: repCount, score, timestamp: Date.now() },
       ]);
+      // Report the *rep's* final score upward (not per-frame instantaneous
+      // scores). The recap grades reps — the score at moment of completion —
+      // not the space between reps, which averaged ~60°-of-delta near zero.
+      // Guard against the same rep re-firing: this effect runs on repCount
+      // change, and the `repCount > prevRepCountRef.current` gate above
+      // ensures one report per completed rep.
+      if (onFormScore) onFormScore(score);
       // Coach-specific haptic feedback for rep completion
       triggerCoachHaptic(currentPersonality, 'rep');
     }
     prevRepCountRef.current = repCount;
-  }, [repCount, telemetry, robotElbowDeg, triggerCoachHaptic, currentPersonality]);
+  }, [repCount, telemetry, robotElbowDeg, onFormScore, triggerCoachHaptic, currentPersonality]);
 
-  // Calculate grade and form score from telemetry (must be before early return)
+  // Calculate grade from telemetry (must be before early return).
+  // Live per-frame grade drives haptic feedback only — the form score a rep
+  // earns is reported upward once, at rep completion, in the effect above.
   useEffect(() => {
     if (!tracking || !telemetry) {
       setCurrentGrade(null);
-      lastReportedScoreRef.current = null;
       return;
     }
     const angle = clampAngle(telemetry.elbowAngle);
@@ -218,11 +233,7 @@ export function CurlFormInstrument({
     );
     const { grade } = getFormGrade(score);
     setCurrentGrade(grade);
-    if (onFormScore && score !== lastReportedScoreRef.current) {
-      lastReportedScoreRef.current = score;
-      onFormScore(score);
-    }
-  }, [tracking, telemetry, robotElbowDeg, onFormScore]);
+  }, [tracking, telemetry, robotElbowDeg]);
 
   // Haptic feedback on grade change (must be before early return)
   useEffect(() => {
@@ -258,7 +269,7 @@ export function CurlFormInstrument({
         aria-live="polite"
       >
         <div className="curl-instrument__pill-text">
-          <p className="curl-instrument__eyebrow">Robot demo</p>
+          <p className="curl-instrument__eyebrow">{armEyebrow}</p>
           <strong>{lastScore !== null ? `Form score ${lastScore}/100` : 'Show one curl'}</strong>
         </div>
         {lastGrade ? (
@@ -279,7 +290,7 @@ export function CurlFormInstrument({
       <section className="curl-instrument curl-instrument--waiting" aria-live="polite">
         <div className="curl-instrument__header">
           <div>
-            <p className="curl-instrument__eyebrow">Robot demo</p>
+            <p className="curl-instrument__eyebrow">{armEyebrow}</p>
             <strong>Show one curl</strong>
           </div>
         </div>
@@ -351,7 +362,7 @@ export function CurlFormInstrument({
       </span>
       <div className="curl-instrument__header">
         <div>
-          <p className="curl-instrument__eyebrow">{layout === 'rail' ? 'Elbow' : 'Robot demo'}</p>
+          <p className="curl-instrument__eyebrow">{layout === 'rail' ? 'Elbow' : armEyebrow}</p>
           <strong>{phaseLabel[displayTelemetry.phase]}</strong>
         </div>
         {layout === 'rail' ? null : (

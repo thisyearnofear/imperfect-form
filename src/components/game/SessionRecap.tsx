@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import '@/styles/session-recap.css';
-import { CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import type { SessionSummary } from '@/services/sessionLogger';
 import FormLine from './FormLine';
 import FormSignatureHistory from './FormSignatureHistory';
 import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
+import { countedLabel } from '@/lib/exerciseGuidance';
 import { BRAND } from '@/lib/brandPositioning';
 import { averageFormScore, getFormGrade } from '@/lib/formGrade';
 import { ghostService } from '@/services/GhostService';
@@ -383,7 +385,7 @@ export function SessionRecap({
         <strong>{story.focus}</strong>
         <div className="session-recap__one-fix-meta">
           <span>
-            {reps} {mode}
+            {reps} {countedLabel(mode, reps)}
             {summary ? ` · ${Math.round(summary.duration)}s` : ''}
           </span>
           {sandowGrade ? (
@@ -395,6 +397,18 @@ export function SessionRecap({
           )}
         </div>
         {sandowGrade ? <p className="sandow-lineage">{BRAND.sandowGrade}</p> : null}
+
+        {/* The arm that closes the loop — a quiet door into the build, kept in
+            the studio chassis (calm, no arcade flash). Threads the prize
+            journey (loop → build → collaborate) into the product loop itself. */}
+        {hasCorrection && (
+          <p className="session-recap__arm-door">
+            <ArrowUpRight size={13} aria-hidden="true" />
+            <Link href="/build">
+              The SO-101 arm shows this correction — see the build
+            </Link>
+          </p>
+        )}
       </div>
 
       <p className="session-recap__flywheel" role="status">
