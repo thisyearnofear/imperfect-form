@@ -11,7 +11,6 @@ import '@/styles/animations.css';
 import '@/styles/buttons.css';
 import '@/styles/sandow-spine.css';
 import { BRAND } from '@/lib/brandPositioning';
-import ClientOnlyProviders from '@/components/providers/ClientOnlyProviders';
 import RemoteLoggerInit from '@/components/providers/RemoteLoggerInit';
 
 const manrope = Manrope({
@@ -287,7 +286,7 @@ export default function RootLayout({
         {/* Boots console.warn/error capture + window error listeners before
             hydration so the earliest client failures still reach /api/log. */}
         <RemoteLoggerInit />
-        <ClientOnlyProviders>{children}</ClientOnlyProviders>
+        {children}
       </body>
     </html>
   );
