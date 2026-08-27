@@ -49,6 +49,7 @@ import { getRecentProgressSeries, type ProgressSeries } from '@/lib/progress/rec
 import { playUiCue } from '@/lib/uiSound';
 import { SessionRecap } from '@/components/game/SessionRecap';
 import { sessionStory } from '@/lib/coachingStory';
+import { countedLabel } from '@/lib/exerciseGuidance';
 import { BRAND } from '@/lib/brandPositioning';
 import { getFormGrade } from '@/lib/formGrade';
 import type { MovementAssessment } from '@/types/movementAssessment';
@@ -522,7 +523,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 <span>
                   {submissionStatus === 'success'
                     ? 'Rank updated on-chain'
-                    : `${repCount} ${mode} • ${120 - timeLeft}s`}
+                    : `${repCount} ${countedLabel(mode ?? 'pushups', repCount)} • ${120 - timeLeft}s`}
                 </span>
               </div>
             )}
@@ -979,7 +980,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         </div>
                         <button
                           onClick={() => {
-                            const text = `Check out my ${repCount} ${mode} on Imperfect Form!`;
+                            const text = `Check out my ${repCount} ${countedLabel(mode ?? 'pushups', repCount)} on Imperfect Form!`;
                             if (isInMiniApp) {
                               window.open(
                                 `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(window.location.origin + highlightCardUrl)}`,
@@ -1012,7 +1013,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                         className="w-full text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-200/55 hover:text-teal-100/90 transition-colors"
                         aria-label="Share on X (Twitter)"
                         onClick={() => {
-                          const text = `${repCount} ${mode} on Imperfect Form`;
+                          const text = `${repCount} ${countedLabel(mode ?? 'pushups', repCount)} on Imperfect Form`;
                           const url = `https://imperfectform.fun`;
                           window.open(
                             `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
