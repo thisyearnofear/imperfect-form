@@ -178,32 +178,104 @@
     0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
-/* The grading readout — a brass gauge plate. */
+/* The grading readout — a brass gauge plate, refined into a measurement
+   instrument. Idle = empty graduated scale awaiting a subject; graded =
+   readout fills against the scale + an engraved certificate caption.
+   The value uses the heritage serif so the graded readout reads like an
+   engraved certificate, not a pixel scoreboard. */
 .crafft-gauge {
+  position: relative;
   border: 1px solid var(--crafft-rule);
   border-radius: 4px;
-  padding: 0.75rem 1rem;
-  background: rgba(252, 177, 49, 0.04);
-  font-family: var(--font-press-start), monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.04em;
-  color: var(--crafft-gold);
+  padding: 0.85rem 1rem 0.7rem;
+  background:
+    linear-gradient(180deg, rgba(252, 177, 49, 0.05), rgba(252, 177, 49, 0.02)),
+    rgba(252, 177, 49, 0.02);
+  box-shadow: inset 0 1px 0 rgba(252, 177, 49, 0.08);
   text-align: center;
+  width: 100%;
+  max-width: 20rem;
 }
 
 .crafft-gauge__label {
   display: block;
+  font-family: var(--font-press-start), monospace;
   font-size: 0.5rem;
   letter-spacing: 0.12em;
-  opacity: 0.7;
-  margin-bottom: 0.3rem;
+  color: var(--crafft-gold);
+  opacity: 0.75;
+  margin-bottom: 0.5rem;
 }
 
 .crafft-gauge__value {
   display: block;
-  font-size: 1.1rem;
+  font-family: var(--font-heritage, Georgia, 'Times New Roman', serif);
+  font-size: clamp(2rem, 8vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1;
   color: var(--crafft-paper);
-  text-shadow: 0 0 6px rgba(252, 177, 49, 0.3);
+  text-shadow: 0 0 6px rgba(252, 177, 49, 0.25);
+  font-variant-numeric: tabular-nums;
+  font-optical-sizing: auto;
+}
+
+.crafft-gauge__unit {
+  display: block;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--crafft-brass);
+  opacity: 0.8;
+  margin-top: 0.15rem;
+}
+
+/* Graduated tick scale — the instrument feel. A repeating brass tick rule
+   sits under the readout; the fill sweeps across it when graded. */
+.crafft-gauge__scale {
+  position: relative;
+  height: 0.55rem;
+  margin: 0.75rem 0 0.5rem;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.crafft-gauge__ticks {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 9px,
+      rgba(252, 177, 49, 0.22) 9px,
+      rgba(252, 177, 49, 0.22) 10px
+    ),
+    rgba(252, 177, 49, 0.04);
+}
+
+.crafft-gauge__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--crafft-gold-dim), var(--crafft-gold));
+  box-shadow: 0 0 10px rgba(252, 177, 49, 0.4);
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.crafft-gauge__caption {
+  display: block;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--crafft-brass);
+  opacity: 0.7;
 }
 
 /* Royal-warrant stamp — the "Supplied to King Edward VII" lineage. */
@@ -247,7 +319,7 @@
   font-weight: 700;
 }
 
-/* Reduced motion — no glow pulses. */
+/* Reduced motion — no glow pulses or sweep animations. */
 @media (prefers-reduced-motion: reduce) {
   .crafft-nameplate__brand {
     text-shadow: none;
@@ -257,5 +329,9 @@
   }
   .crafft-cabinet__arm-dot {
     animation: none;
+  }
+  .crafft-gauge__fill {
+    transition: none;
+    box-shadow: none;
   }
 }

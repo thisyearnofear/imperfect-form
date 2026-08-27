@@ -5,7 +5,7 @@ node_modules/
 
 # Build outputs
 dist/
-build/
+/build/
 .next/
 out/
 
@@ -27,6 +27,9 @@ out/
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local pnpm content-addressable store (installer cache) — never commit
+.pnpm-store/
 
 # macOS system files
 .DS_Store

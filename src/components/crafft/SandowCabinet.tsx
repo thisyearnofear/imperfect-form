@@ -53,12 +53,31 @@ export function SandowCabinet({
           {foyer.line2}
         </h2>
 
-        {/* The grading gauge — idle or graded */}
-        <div className="crafft-gauge motion-enter motion-delay-2">
+        {/* The grading gauge — a brass measurement instrument.
+            Idle: an empty graduated scale awaiting a subject.
+            Graded: the readout fills against the scale + an engraved certificate. */}
+        <div
+          className="crafft-gauge motion-enter motion-delay-2"
+          data-graded={graded || undefined}
+          aria-label={graded ? `Graded ${reps} reps in ${mode}` : 'Gauge awaiting subject'}
+        >
           <span className="crafft-gauge__label">
             {graded ? `GRADED · ${mode.toUpperCase()}` : 'AWAITING SUBJECT'}
           </span>
-          <span className="crafft-gauge__value">{graded ? `${reps} reps` : '— —'}</span>
+          <span className="crafft-gauge__value">{graded ? `${reps}` : '—'}</span>
+          <span className="crafft-gauge__unit">{graded ? 'reps' : '— —'}</span>
+          {/* Graduated tick scale — the instrument feel. The fill only renders
+              once graded, so an idle cabinet reads as an empty instrument. */}
+          <div className="crafft-gauge__scale" aria-hidden="true">
+            <span className="crafft-gauge__ticks" />
+            <span
+              className="crafft-gauge__fill"
+              style={graded ? { width: `${Math.min(100, Math.max(8, (Number(reps) || 0) * 8))}%` } : undefined}
+            />
+          </div>
+          <span className="crafft-gauge__caption">
+            {graded ? 'Graded vs. Sandow · 1897' : 'Step up · be graded'}
+          </span>
         </div>
 
         {/* Royal warrant stamp — the lineage */}

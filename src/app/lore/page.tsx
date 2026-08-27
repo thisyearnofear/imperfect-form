@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Bot, Camera, Cpu, Hammer, LockKeyhole, Mail, Wrench } from 'lucide-react';
-import { SandowCabinet } from '@/components/crafft';
+import { SandowCabinet, LoopPlate } from '@/components/crafft';
 import { useImmersive } from '@/hooks/useImmersive';
 import { Handshake } from 'lucide-react';
 import '@/styles/crafft-exhibit.css';
@@ -28,6 +28,9 @@ export default function LorePage() {
       <header className="crafft-exhibit__bar">
         <span className="crafft-exhibit__mark">IMPERFECT FORM</span>
         <span className="crafft-exhibit__bar-sub">Lore · Provenance</span>
+        <Link href="/build" className="crafft-exhibit__bar-link">
+          The Build <ArrowRight size={13} />
+        </Link>
         <Link href="/" className="crafft-exhibit__bar-link">
           Try the machine <ArrowRight size={13} />
         </Link>
@@ -81,6 +84,14 @@ function MinimalLore() {
             <SandowCabinet mode="curls" armLinked />
           </div>
         </div>
+      </section>
+
+      <section className="crafft-exhibit__section crafft-exhibit__loop" aria-label="The loop, 130 years apart">
+        <p className="crafft-exhibit__loop-caption" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
+          The loop, 130 years apart
+        </p>
+        <LoopPlate />
+        <p className="crafft-exhibit__loop-caption">Same loop · new transport layer</p>
       </section>
 
       <section className="crafft-exhibit__section crafft-exhibit__coda">
@@ -178,6 +189,16 @@ function ImmersiveLore() {
             </span>
           </li>
         </ol>
+      </section>
+
+      <section className="crafft-exhibit__section crafft-exhibit__loop">
+        <h2 className="crafft-exhibit__section-title">The loop, 130 years apart</h2>
+        <p className="crafft-exhibit__section-intro">
+          One feedback loop. Two transport layers. The post in 1897, the browser in 2026 —
+          but the shape never changed: see the body, judge it against an ideal, send back the fix.
+        </p>
+        <LoopPlate />
+        <p className="crafft-exhibit__loop-caption">Same loop · new transport layer</p>
       </section>
 
       <section className="crafft-exhibit__section crafft-exhibit__machine">
