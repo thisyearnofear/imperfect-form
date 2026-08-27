@@ -59,6 +59,44 @@
   opacity: 0.85;
 }
 
+/* The arm-door — quiet explainer + link into /build. Studio chassis: calm
+   hairline, teal link, brass only as the small arrow. Never arcade-loud. */
+.session-recap__arm-door {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 0.6rem 0 0;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(139, 227, 212, 0.18);
+  font-size: 0.68rem;
+  color: #a9c7c2;
+}
+
+.session-recap__arm-door svg {
+  flex: 0 0 auto;
+  color: var(--sandow-brass-soft);
+  opacity: 0.85;
+}
+
+.session-recap__arm-door a {
+  color: var(--studio-teal-bright);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(117, 223, 205, 0.25);
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.session-recap__arm-door a:hover {
+  color: var(--studio-teal-bright);
+  border-bottom-color: rgba(117, 223, 205, 0.6);
+}
+
+.session-recap__arm-door a:focus-visible {
+  outline: 2px solid var(--sandow-brass);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .session-recap__flywheel {
   display: grid;
   grid-template-columns: auto 1fr;
