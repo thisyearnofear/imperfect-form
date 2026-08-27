@@ -123,7 +123,7 @@ export function SeeShowMoment({
           </div>
 
           <div className="see-show-moment__side see-show-moment__side--coach">
-            <span className="see-show-moment__who">Coach</span>
+            <span className="see-show-moment__who">{twin.isDemo ? 'Coach · sim' : 'Coach'}</span>
             <div className="see-show-moment__arm" aria-hidden="true">
               <ArmSchematic
                 schematic
