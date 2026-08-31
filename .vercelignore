@@ -12,7 +12,8 @@ node_modules
 .next/standalone
 .next/static
 dist
-build
+# Root-only: a bare 'build' pattern also excluded src/app/build/ from uploads
+/build
 
 # Logs
 npm-debug.log*
