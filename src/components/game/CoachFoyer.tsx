@@ -378,6 +378,8 @@ export function CoachFoyer({
         </h2>
         <p className="coach-foyer__lede motion-enter motion-delay-2">{foyer.line2}</p>
 
+        <p className="sandow-provenance motion-enter motion-delay-3">{foyer.provenance}</p>
+
         {incomingChallenge && (
           <div
             className="coach-foyer__incoming-challenge motion-enter"

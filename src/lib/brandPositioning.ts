@@ -67,6 +67,8 @@ export type FoyerCopy = {
   brand: string;
   line1: string;
   line2: string;
+  /** The lineage sentence, shown un-gated on every register's foyer. */
+  provenance: string;
   loopLabel: string;
   invitation: string;
   trust: string;
@@ -78,6 +80,7 @@ const ARCADE_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM',
   line1: 'CAMERA READS FORM',
   line2: 'COACH SHOWS THE FIX',
+  provenance: 'BRITAIN INVENTED THE FORM-CHECK · 1897',
   loopLabel: 'ONE REP / ONE FIX',
   invitation: 'PICK a movement. Make one rep better.',
   trust: 'ON-DEVICE · PRIVATE',
@@ -89,6 +92,7 @@ const STUDIO_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM.FUN',
   line1: 'Make one rep better.',
   line2: 'Camera catches one thing. Coach shows you the fix.',
+  provenance: 'Britain invented the form-check in 1897. We finished it.',
   loopLabel: 'ONE REP / ONE FIX',
   invitation: 'Start imperfect. Get one useful cue.',
   trust: 'Private camera coaching · no wallet · no video upload',
@@ -100,6 +104,7 @@ const CALM_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM',
   line1: 'Settle the system',
   line2: 'Breath and recovery after the work',
+  provenance: 'The form-check — a British invention, 1897.',
   loopLabel: 'BREATHE / RESET / RETURN',
   invitation: 'No perfect session required.',
   trust: 'Private · gentle · no scoreboard energy',
@@ -118,6 +123,7 @@ const CRAFFT_FOYER: FoyerCopy = {
   brand: 'THE SANDOW MACHINE',
   line1: 'STEP UP · BE GRADED',
   line2: 'Britain invented the form-check in 1897. We finished it with a robot.',
+  provenance: 'Britain invented the form-check in 1897. We finished it.',
   loopLabel: 'PHOTO IN / FIX OUT',
   invitation: 'One rep in. One correction out.',
   trust: 'ON-DEVICE · GRADED vs. SANDOW 1897',

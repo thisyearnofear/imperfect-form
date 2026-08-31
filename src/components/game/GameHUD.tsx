@@ -1,4 +1,5 @@
 import React from 'react';
+import { BRAND } from '@/lib/brandPositioning';
 import { useImmersive } from '@/hooks/useImmersive';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { zIndexClasses } from '@/lib/zTokens';
@@ -183,6 +184,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         >
           {repCount}
         </span>
+        <span className="sandow-stamp hud-sandow-stamp">{BRAND.sandowGrade}</span>
       </div>
 
       {/* Quiet depth indicator — replaces the loud on-canvas depth gauge bar.

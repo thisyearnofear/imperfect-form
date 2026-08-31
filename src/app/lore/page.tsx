@@ -74,8 +74,17 @@ function MinimalLore() {
       <section className="crafft-exhibit__hero">
         <div className="crafft-exhibit__hero-inner">
           <p className="crafft-exhibit__kicker">1897 — 2026</p>
+          <figure className="crafft-exhibit__plate">
+            <img
+              src="/assets/sandow-pose-viii.jpg"
+              alt="Eugen Sandow, posed studio photograph, 1897"
+            />
+            <figcaption>
+              Eugen Sandow · London · 1897 · Wellcome Collection, public domain
+            </figcaption>
+          </figure>
           <h1 className="crafft-exhibit__headline">
-            The form-check, <em>finished</em>.
+            Britain invented the form-check. We <em>finished</em> it.
           </h1>
           <p className="crafft-exhibit__lede">
             Sandow graded photographs by post. We grade with a camera, and a robot shows the fix.
@@ -86,8 +95,14 @@ function MinimalLore() {
         </div>
       </section>
 
-      <section className="crafft-exhibit__section crafft-exhibit__loop" aria-label="The loop, 130 years apart">
-        <p className="crafft-exhibit__loop-caption" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
+      <section
+        className="crafft-exhibit__section crafft-exhibit__loop"
+        aria-label="The loop, 130 years apart"
+      >
+        <p
+          className="crafft-exhibit__loop-caption"
+          style={{ marginTop: 0, marginBottom: '1.25rem' }}
+        >
           The loop, 130 years apart
         </p>
         <LoopPlate />
@@ -194,8 +209,8 @@ function ImmersiveLore() {
       <section className="crafft-exhibit__section crafft-exhibit__loop">
         <h2 className="crafft-exhibit__section-title">The loop, 130 years apart</h2>
         <p className="crafft-exhibit__section-intro">
-          One feedback loop. Two transport layers. The post in 1897, the browser in 2026 —
-          but the shape never changed: see the body, judge it against an ideal, send back the fix.
+          One feedback loop. Two transport layers. The post in 1897, the browser in 2026 — but the
+          shape never changed: see the body, judge it against an ideal, send back the fix.
         </p>
         <LoopPlate />
         <p className="crafft-exhibit__loop-caption">Same loop · new transport layer</p>

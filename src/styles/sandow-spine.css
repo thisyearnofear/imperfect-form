@@ -69,6 +69,10 @@
   line-height: 1;
 }
 
+.hud-sandow-stamp {
+  margin-top: 0.4rem;
+}
+
 /* —— Brass gauge — the "graded against the ideal" readout. ——
    Used in the HUD (rep count) and the recap. A brass hairline instrument,
    not a full cabinet reskin. */
@@ -134,6 +138,16 @@
 }
 
 /* —— Lineage line — the quiet heritage thread under trust copy. —— */
+.sandow-provenance {
+  margin: 0.9rem 0 0;
+  font-family: var(--font-heritage, Georgia, 'Times New Roman', serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: var(--studio-muted);
+  opacity: 0.8;
+}
+
 .sandow-lineage {
   display: flex;
   align-items: center;
