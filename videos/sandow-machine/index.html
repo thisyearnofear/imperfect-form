@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Manrope:wght@400;600;800&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0a0f14; }
+      body { font-family: Manrope, sans-serif; color: #f2e8d5; }
+      .clip { position: absolute; inset: 0; overflow: hidden; background: #0a0f14; }
+      .fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .contain { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+      .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(10,15,20,0) 45%, rgba(10,15,20,0.85) 100%); }
+      .ps2p { font-family: "Press Start 2P", monospace; }
+      .serif { font-family: "Cormorant Garamond", serif; }
+      .caption {
+        position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%);
+        font-family: "Press Start 2P", monospace; font-size: 26px; letter-spacing: 2px;
+        color: #fcb131; background: rgba(10, 15, 20, 0.82); border: 2px solid rgba(252, 177, 49, 0.45);
+        padding: 22px 34px; white-space: nowrap;
+      }
+      .sub {
+        position: absolute; left: 50%; bottom: 170px; transform: translateX(-50%);
+        font-family: Manrope, sans-serif; font-weight: 600; font-size: 34px; line-height: 1.45;
+        color: #f2e8d5; background: rgba(10, 15, 20, 0.72); border-radius: 4px;
+        padding: 14px 28px; max-width: 1400px; text-align: center; opacity: 0; z-index: 4;
+      }
+      .card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; text-align: center; }
+      .credit { position: absolute; right: 40px; bottom: 28px; font-size: 20px; color: rgba(242, 232, 213, 0.55); }
+      .simlabel {
+        position: absolute; top: 60px; right: 60px; font-family: "Press Start 2P", monospace;
+        font-size: 22px; color: #8be3d4; border: 2px solid #8be3d4; padding: 14px 20px; letter-spacing: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="124" data-width="1920" data-height="1080">
+
+      <!-- ACT 1 / 1897 -->
+      <div id="a1-photo" class="clip" data-start="0" data-duration="8" data-track-index="1">
+        <img class="fill" src="assets/archive/sandow-pose-viii.jpg" alt="" />
+        <div class="vignette"></div>
+        <div class="credit serif">Eugen Sandow, “A New Sandow Pose (VIII)” — Wellcome Collection, public domain</div>
+        <div class="sub" id="s01">In 1897, London ran the world’s first form-check.</div>
+      </div>
+
+      <div id="a1-envelope" class="clip" data-start="8" data-duration="10" data-track-index="1">
+        <div id="env" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:900px; height:560px; background:#f2e8d5; border:3px solid #b08a3e;">
+          <div id="env-photo" style="position:absolute; left:70px; top:60px; width:300px; height:400px;"><img src="assets/archive/sandow-loc-portrait.jpg" style="width:100%; height:100%; object-fit:cover;" alt="" /></div>
+          <div id="postmark" style="position:absolute; right:70px; top:70px; width:240px; height:240px; border-radius:50%; border:4px double #3a3a3a; display:flex; align-items:center; justify-content:center; color:#3a3a3a; font-family:'Press Start 2P', monospace; font-size:18px; text-align:center; line-height:1.8; opacity:0;">EUGEN SANDOW<br/>LONDON<br/>1897</div>
+          <div id="wax" style="position:absolute; right:150px; bottom:110px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #b32020, #6e0f0f); box-shadow:0 6px 18px rgba(0,0,0,0.5); opacity:0;"></div>
+        </div>
+        <div class="vignette"></div>
+        <div class="sub" id="s02">Men across Britain posted their photographs to Sandow, and got them graded against his ideal tables.</div>
+      </div>
+
+      <div id="a1-dumbbell" class="clip" data-start="18" data-duration="10.5" data-track-index="1">
+        <img class="contain" src="assets/archive/spring-grip-dumbbell-illustration.png" alt="" />
+        <div class="vignette"></div>
+        <div id="warrant" class="serif" style="position:absolute; left:50%; bottom:140px; transform:translateX(-50%); font-size:44px; font-style:italic; color:#fcb131; opacity:0;">“Supplied to King Edward VII by Royal Letters Patent”</div>
+        <div class="sub" id="s03">Back came the correction, and a spring-grip dumbbell under Royal Warrant. Photo in. Grade out. By post.</div>
+      </div>
+
+      <div id="a1-dates" class="clip" data-start="28.5" data-duration="5.5" data-track-index="1">
+        <div class="card">
+          <div id="y1897" class="ps2p" style="font-size:120px; color:#fcb131;">1897</div>
+          <div id="y2026" class="ps2p" style="font-size:120px; color:#8be3d4; opacity:0;">2026</div>
+        </div>
+        <div class="sub" id="s04">Britain invented the form-check. We finished the loop.</div>
+      </div>
+
+      <!-- ACT 2 / THE MACHINE -->
+      <div id="a2-app" class="clip" data-start="34" data-duration="10" data-track-index="1">
+        <img class="fill" src="assets/captures/stills/foyer-full.png" alt="" style="object-fit:contain; background:#0a0f14;" />
+        <div class="vignette"></div>
+        <div class="caption">MOVENET · TENSORFLOW.JS · ON-DEVICE</div>
+        <div class="sub" id="s05">Step up. A camera in your browser reads your form. On-device. No video leaves the device.</div>
+      </div>
+
+      <div id="a2-arm" class="clip" data-start="44" data-duration="9.5" data-track-index="1">
+        <div class="simlabel" id="simlabel" style="z-index:3;">SIMULATION · SCRIPTED PRIMITIVE</div>
+        <svg id="armsvg" width="1300" height="820" viewBox="0 0 1300 820" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:2;">
+          <defs>
+            <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#fcb131"/><stop offset="0.5" stop-color="#b07f1e"/><stop offset="1" stop-color="#fcb131"/>
+            </linearGradient>
+          </defs>
+          <line x1="650" y1="120" x2="650" y2="520" stroke="#2a3540" stroke-width="26" stroke-linecap="round"/>
+          <circle cx="650" cy="520" r="34" fill="#0a0f14" stroke="#fcb131" stroke-width="10"/>
+          <line id="forearm" x1="650" y1="520" x2="650" y2="200" stroke="#fcb131" stroke-width="26" stroke-linecap="round" style="transform-origin:650px 520px;"/>
+          <circle cx="650" cy="520" r="14" fill="#fcb131"/>
+          <text id="angledeg" x="650" y="600" text-anchor="middle" fill="#8be3d4" font-family="Manrope" font-size="30">elbow_flex · 160°</text>
+          <text x="650" y="650" text-anchor="middle" fill="rgba(242,232,213,0.6)" font-size="26" font-family="Manrope">“Elbow pinned — from 160° to 50°. Like this.” — live coach transcript</text>
+        </svg>
+        <div class="vignette"></div>
+        <div class="sub" id="s06">When your form breaks, the arm doesn’t tell you the fix. It shows you, in three dimensions.</div>
+      </div>
+
+      <div id="a2-cabinet" class="clip" data-start="53.5" data-duration="12" data-track-index="1">
+        <img class="contain" src="assets/archive/cabinet-concept.png" alt="" />
+        <div class="vignette"></div>
+        <div class="simlabel" id="conceptlabel">FINALIST-PHASE CONCEPT</div>
+        <div class="sub" id="s07">It looks like a Victorian seaside arcade. Underneath, it’s a working instrument. Satire with a steel core.</div>
+      </div>
+
+      <!-- ACT 3 / THE CRAFT -->
+      <div id="a3-build1" class="clip" data-start="65.5" data-duration="10" data-track-index="1">
+        <img class="fill" src="assets/captures/stills/build-top.png" alt="" style="object-fit:contain; background:#0a0f14;" />
+        <div class="vignette"></div>
+        <div class="caption">OPEN HARDWARE · ASSEMBLED IN THE UK</div>
+        <div class="sub" id="s08">Open hardware, assembled by hand. Joint angles calibrated against Sandow’s 1897 tables.</div>
+      </div>
+      <div id="a3-build2" class="clip" data-start="75.5" data-duration="4.5" data-track-index="1">
+        <img class="fill" src="assets/captures/stills/build-mid.png" alt="" style="object-fit:contain; background:#0a0f14;" />
+        <div class="vignette"></div>
+      </div>
+      <div id="a3-build3" class="clip" data-start="80" data-duration="5.5" data-track-index="1">
+        <img class="fill" src="assets/captures/stills/build-bottom.png" alt="" style="object-fit:contain; background:#0a0f14;" />
+        <div class="vignette"></div>
+        <div class="sub" id="s09">The arm teaches the human. It never replaces them.</div>
+      </div>
+
+      <!-- ACT 4 / HONEST SCOPE + CLOSE -->
+      <div id="a4-honest" class="clip" data-start="85.5" data-duration="17" data-track-index="1">
+        <div class="card">
+          <div class="ps2p" style="font-size:56px; color:#fcb131;">HONEST SCOPE</div>
+          <div style="font-size:36px; line-height:1.7; max-width:1200px; color:#f2e8d5;">
+            Upper-body corrections only. Lower-body demonstrations are out of scope.<br/>
+            Learned policies come after scripted demonstration is proven.
+          </div>
+          <div class="serif" style="font-size:30px; font-style:italic; color:rgba(242,232,213,0.7);">— like Sandow’s spring-grip, which corrected only grip</div>
+        </div>
+        <div class="sub" id="s10">Honest about its scope: upper-body only, like Sandow’s spring-grip, which corrected only grip.</div>
+        <div class="sub" id="s13">Learned policies come later, from real coaching sessions. Not from generative slop.</div>
+      </div>
+
+      <div id="a4-montage" class="clip" data-start="102.5" data-duration="10.5" data-track-index="1">
+        <img class="fill" src="assets/captures/stills/lore-top.png" alt="" style="object-fit:contain; background:#0a0f14;" />
+        <div class="vignette"></div>
+        <div class="caption">IMPERFECTFORM.FUN — LIVE NOW</div>
+        <div class="sub" id="s11">The app is live now. The cabinet is the exhibit. A 130-year-old British loop, closed with a robot.</div>
+      </div>
+
+      <div id="a4-final" class="clip" data-start="113" data-duration="11" data-track-index="1">
+        <div class="card">
+          <div id="final-line" class="ps2p" style="font-size:64px; line-height:1.6; color:#fcb131; max-width:1500px;">BRITAIN INVENTED THE FORM-CHECK. WE FINISHED IT.</div>
+          <div id="final-sub" class="serif" style="font-size:40px; font-style:italic; color:#8be3d4; opacity:0;">Imperfect Form · The Sandow Machine</div>
+          <div id="final-url" class="ps2p" style="font-size:30px; color:#f2e8d5; opacity:0;">IMPERFECTFORM.FUN · CRÆFT PRIZE 2026</div>
+        </div>
+        <div class="sub" id="s12">Britain invented the form-check. We finished it.</div>
+      </div>
+
+      <audio id="vo-l01" src="assets/audio/v2/l01.wav" data-start="1.2" data-duration="3.67" data-volume="1"></audio>
+      <audio id="vo-l02" src="assets/audio/v2/l02.wav" data-start="8.8" data-duration="6.36" data-volume="1"></audio>
+      <audio id="vo-l03" src="assets/audio/v2/l03.wav" data-start="18.8" data-duration="7.29" data-volume="1"></audio>
+      <audio id="vo-l04" src="assets/audio/v2/l04.wav" data-start="29.3" data-duration="3.2" data-volume="1"></audio>
+      <audio id="vo-l05" src="assets/audio/v2/l05.wav" data-start="34.8" data-duration="6.32" data-volume="1"></audio>
+      <audio id="vo-l06" src="assets/audio/v2/l06.wav" data-start="44.8" data-duration="5.29" data-volume="1"></audio>
+      <audio id="vo-l07" src="assets/audio/v2/l07.wav" data-start="54.3" data-duration="7.2" data-volume="1"></audio>
+      <audio id="vo-l08" src="assets/audio/v2/l08.wav" data-start="66.3" data-duration="6.5" data-volume="1"></audio>
+      <audio id="vo-l09" src="assets/audio/v2/l09.wav" data-start="80.8" data-duration="3.25" data-volume="1"></audio>
+      <audio id="vo-l10" src="assets/audio/v2/l10.wav" data-start="86.3" data-duration="6.46" data-volume="1"></audio>
+      <audio id="vo-l13" src="assets/audio/v2/l13.wav" data-start="93.5" data-duration="5.43" data-volume="1"></audio>
+      <audio id="vo-l11" src="assets/audio/v2/l11.wav" data-start="103.3" data-duration="6.32" data-volume="1"></audio>
+      <audio id="vo-l12" src="assets/audio/v2/l12.wav" data-start="114" data-duration="3.02" data-volume="1"></audio>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      const F = (sel, at, dur) => tl.from(sel, { opacity: 0, duration: dur || 0.8 }, at);
+      const SUB = (sel, at, dur) => {
+        tl.to(sel, { opacity: 1, duration: 0.18 }, at);
+        tl.to(sel, { opacity: 0, duration: 0.22 }, at + dur - 0.22);
+      };
+
+      // ACT 1
+      F("#a1-photo", 0.3, 1.6);
+      SUB("#s01", 1.2, 4.1);
+      F("#env", 8.3, 1.2);
+      tl.from("#env-photo", { x: -160, opacity: 0, duration: 1.2 }, 9.6);
+      SUB("#s02", 8.8, 6.8);
+      tl.fromTo("#postmark", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.4 }, 13);
+      tl.to("#wax", { opacity: 1, duration: 0.4 }, 15);
+      F("#a1-dumbbell", 18.3, 1.2);
+      SUB("#s03", 18.8, 7.7);
+      tl.to("#warrant", { opacity: 1, duration: 0.8 }, 22);
+      F("#y1897", 28.8, 0.8);
+      SUB("#s04", 29.3, 3.6);
+      tl.to("#y2026", { opacity: 1, duration: 0.8 }, 31.5);
+
+      // ACT 2
+      F("#a2-app", 34.3, 1.0);
+      SUB("#s05", 34.8, 6.7);
+      F("#a2-arm", 44.3, 1.0);
+      SUB("#s06", 44.8, 5.7);
+      tl.to("#simlabel", { opacity: 1, duration: 0.5 }, 45.5);
+
+      // Arm sweep driven by the REAL coach-station trajectory (elbow_flex 160 deg -> 50 deg, 2 repeats in slot)
+      const TRAJ = [[0.04,156.76],[0.324,134.12],[0.607,111.47],[0.89,88.82],[1.173,66.18],[1.915,53.24],[2.199,75.88],[2.482,98.53],[2.765,121.18],[3.048,143.82],[3.54,156.76],[3.824,134.12],[4.107,111.47],[4.39,88.82],[4.673,66.18],[5.415,53.24],[5.699,75.88],[5.982,98.53],[6.265,121.18],[6.548,143.82],[7.0,156.76]];
+      TRAJ.forEach(function (pt) {
+        var at = 45.8 + pt[0];
+        tl.to("#forearm", { rotation: (160 - pt[1]), svgOrigin: "650 520", duration: 0.01, ease: "none" }, at);
+        tl.set("#angledeg", { textContent: "elbow_flex · " + Math.round(pt[1]) + "°" }, at);
+      });
+
+      F("#a2-cabinet", 53.8, 1.2);
+      SUB("#s07", 54.3, 7.6);
+      tl.to("#conceptlabel", { opacity: 1, duration: 0.5 }, 55.5);
+
+      // ACT 3
+      F("#a3-build1", 65.8, 0.9);
+      SUB("#s08", 66.3, 6.9);
+      F("#a3-build2", 75.8, 0.9);
+      F("#a3-build3", 80.3, 0.9);
+      SUB("#s09", 80.8, 3.7);
+
+      // ACT 4
+      F("#a4-honest", 85.8, 0.9);
+      SUB("#s10", 86.3, 6.9);
+      SUB("#s13", 93.5, 5.8);
+      F("#a4-montage", 102.8, 0.9);
+      SUB("#s11", 103.3, 6.7);
+      F("#a4-final", 113.3, 1.0);
+      SUB("#s12", 114, 3.4);
+      tl.to("#final-sub", { opacity: 1, duration: 0.8 }, 116.5);
+      tl.to("#final-url", { opacity: 1, duration: 0.8 }, 118.5);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

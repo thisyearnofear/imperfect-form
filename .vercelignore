@@ -38,3 +38,6 @@ coverage
 # Misc
 *.tgz
 *.tar.gz
+
+# Film source (HyperFrames composition + assets) — not part of the site build
+videos

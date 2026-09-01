@@ -155,6 +155,9 @@ venv/
 *.egg-info/
 uv.lock
 
+# HyperFrames render outputs (large, reproducible locally)
+videos/*/renders/
+
 # Agent tooling local state (Junie, Letta, Qoder, Claude, Blackbox, etc.)
 .agent/
 .junie/
