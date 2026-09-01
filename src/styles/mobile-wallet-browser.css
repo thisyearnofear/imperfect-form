@@ -298,7 +298,7 @@
   /* Enhanced network badges */
   .text-pink-500,
   .text-blue-500,
-  .text-yellow-500,
+  .text-brass,
   .text-green-500 {
     font-weight: bold !important;
     text-shadow: 0 0 4px currentColor !important;
@@ -343,9 +343,9 @@
   }
 
   /* Enhanced text contrast */
-  .text-yellow-400 {
-    color: #fbbf24 !important;
-    text-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+  .text-brass {
+    color: var(--sandow-brass, #fcb131) !important;
+    text-shadow: 0 0 6px rgba(252, 177, 49, 0.5);
   }
 
   .text-gray-400 {

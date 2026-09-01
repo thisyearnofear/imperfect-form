@@ -13,6 +13,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { BRAND, getIntentDef } from '@/lib/brandPositioning';
+import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
 import { playStudioCue } from '@/lib/uiSound';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useImmersive } from '@/hooks/useImmersive';
@@ -665,9 +666,7 @@ export function CoachFoyer({
         {/* Sandow lineage stamp — always in the main flow. Immersive mode
             still unlocks denser heritage copy; the grade line itself is not opt-in. */}
         <p className="sandow-lineage motion-enter" style={{ animationDelay: '420ms' }}>
-          <a href="/lore" className="sandow-lineage__link">
-            {BRAND.sandowGrade}
-          </a>
+          <SandowGradeMark variant="link" />
         </p>
 
         {/* The robot-native proof case is signposted on the Curls card itself;

@@ -64,7 +64,7 @@ export default function LazyWebcam(props: LazyWebcamProps) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <Spinner />
-        <p className="text-yellow-400 mt-4 text-sm">Loading camera...</p>
+        <p className="text-studio-muted mt-4 text-sm">Loading camera...</p>
       </div>
     );
   }
@@ -80,7 +80,7 @@ export default function LazyWebcam(props: LazyWebcamProps) {
             setIsLoading(false);
             setWebcamComponent(null);
           }}
-          className="mt-2 px-4 py-2 bg-yellow-600 text-black rounded text-xs"
+          className="mt-2 px-4 py-2 bg-brass text-black rounded text-xs"
         >
           Retry
         </button>

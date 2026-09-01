@@ -55,14 +55,14 @@ const LoadingDemo: React.FC = () => {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
       {!isVisible ? (
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-yellow-400">Enhanced Loading Experience Demo</h1>
+          <h1 className="text-2xl font-bold text-brass">Enhanced Loading Experience Demo</h1>
           <p className="text-gray-300 max-w-md">
             This demo shows the improved loading experience that fills the gap between exercise
             start and skeleton detection.
           </p>
           <button
             onClick={simulateLoadingPhases}
-            className="bg-yellow-400 text-black px-6 py-3 rounded-lg font-bold hover:bg-yellow-300 transition-colors"
+            className="bg-brass text-black px-6 py-3 rounded-lg font-bold hover:bg-brass-soft transition-colors"
           >
             Start Demo (13 seconds)
           </button>

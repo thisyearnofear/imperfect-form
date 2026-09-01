@@ -95,7 +95,7 @@ const STUDIO_FOYER: FoyerCopy = {
   provenance: 'Britain invented the form-check in 1897. We finished it.',
   loopLabel: 'ONE REP / ONE FIX',
   invitation: 'Start imperfect. Get one useful cue.',
-  trust: 'Private camera coaching · no wallet · no video upload',
+  trust: 'Private camera coaching · wallet optional · no video upload',
   hint: 'Camera → understand → show',
   cta: 'Start camera coaching',
 };

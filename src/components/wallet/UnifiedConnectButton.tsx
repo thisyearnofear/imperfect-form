@@ -219,7 +219,7 @@ export default function UnifiedConnectButton({
                         : chainId === chainConfigs[SupportedChain.BASE].id
                           ? 'bg-blue-400'
                           : chainId === chainConfigs[SupportedChain.MONAD].id
-                            ? 'bg-yellow-400'
+                            ? 'bg-brass'
                             : chainId === chainConfigs[SupportedChain.AVALANCHE].id
                               ? 'bg-red-500'
                               : 'bg-gray-400'
@@ -283,7 +283,7 @@ export default function UnifiedConnectButton({
                       : chainId === chainConfigs[SupportedChain.BASE].id
                         ? 'bg-blue-400'
                         : chainId === chainConfigs[SupportedChain.MONAD].id
-                          ? 'bg-yellow-400'
+                          ? 'bg-brass'
                           : chainId === chainConfigs[SupportedChain.AVALANCHE].id
                             ? 'bg-red-500'
                             : 'bg-gray-400'

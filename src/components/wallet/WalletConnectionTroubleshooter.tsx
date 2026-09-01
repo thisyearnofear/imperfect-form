@@ -225,7 +225,7 @@ export default function WalletConnectionTroubleshooter({
             <button
               onClick={() => attemptConnection('reconnect')}
               disabled={isAttempting !== null}
-              className="w-full px-3 py-2 bg-purple-600 text-white rounded text-xs font-semibold hover:bg-purple-700 transition-colors"
+              className="w-full px-3 py-2 bg-studio-teal-cta text-black rounded text-xs font-semibold hover:bg-studio-teal-bright transition-colors"
             >
               {isAttempting === 'reconnect' && <Spinner className="w-3 h-3" />}
               Retry Farcaster Connection

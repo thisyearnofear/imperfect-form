@@ -20,11 +20,12 @@
   --studio-card-accent-line-alpha: 0.85;
 }
 
-/* Base card shell */
+/* Base card shell — shares the same tokens as .earned-surface (sandow-spine.css)
+   so there is one source of truth for the studio glass surface. */
 .studio-card {
-  color: #e9fffa;
-  background: rgba(5, 17, 20, 0.72);
-  border: 1px solid rgba(117, 223, 205, 0.18);
+  color: var(--studio-paper-soft);
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
   border-radius: 8px;
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
   backdrop-filter: blur(12px);
@@ -38,7 +39,7 @@
 
 .studio-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(117, 223, 205, 0.3);
+  border-color: var(--studio-border-strong);
   box-shadow:
     0 10px 30px rgba(0, 0, 0, 0.32),
     0 0 0 1px rgba(117, 223, 205, 0.05);
@@ -73,7 +74,7 @@
   justify-content: space-between;
   padding: 0.5rem 1rem;
   background: rgba(9, 52, 48, 0.7);
-  border-bottom: 1px solid rgba(117, 223, 205, 0.14);
+  border-bottom: 1px solid var(--studio-border);
 }
 
 /* Inner card item (takeaways, metrics, etc.) */
@@ -81,8 +82,8 @@
   display: flex;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: rgba(9, 33, 34, 0.5);
-  border: 1px solid rgba(117, 223, 205, 0.12);
+  background: var(--studio-surface-item);
+  border: 1px solid var(--studio-border);
   border-radius: 6px;
 }
 
@@ -116,8 +117,8 @@
 .studio-card__button {
   width: 100%;
   padding: 0.65rem 0.75rem;
-  color: #06201d;
-  background: #75dfcd;
+  color: var(--studio-ink);
+  background: var(--studio-teal-cta);
   border: 0;
   border-radius: 6px;
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
@@ -130,7 +131,7 @@
 }
 
 .studio-card__button:hover {
-  background: #98eddb;
+  background: var(--studio-teal-bright);
 }
 
 .studio-card__button:active {
@@ -140,9 +141,9 @@
 /* Small pill badge */
 .studio-card__badge {
   padding: 0.15rem 0.6rem;
-  color: #e9fffa;
+  color: var(--studio-paper-soft);
   background: rgba(117, 223, 205, 0.14);
-  border: 1px solid rgba(117, 223, 205, 0.22);
+  border: 1px solid var(--studio-border);
   border-radius: 9999px;
   font-size: 0.65rem;
   font-weight: 700;
@@ -152,7 +153,7 @@
 /* Section title / label */
 .studio-card__section-title {
   margin: 0;
-  color: #a2c2bc;
+  color: var(--studio-muted);
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.07em;

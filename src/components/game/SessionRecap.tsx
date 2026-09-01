@@ -11,6 +11,7 @@ import FormSignatureHistory from './FormSignatureHistory';
 import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
 import { countedLabel } from '@/lib/exerciseGuidance';
 import { BRAND } from '@/lib/brandPositioning';
+import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
 import { averageFormScore, getFormGrade } from '@/lib/formGrade';
 import { buildGradeSeries } from '@/lib/progress/gradeHistory';
 import GradeArc from './GradeArc';
@@ -395,10 +396,10 @@ export function SessionRecap({
               Grade {sandowGrade.grade}
             </span>
           ) : (
-            <span className="sandow-stamp">{BRAND.sandowGrade}</span>
+            <SandowGradeMark />
           )}
         </div>
-        {sandowGrade ? <p className="sandow-lineage">{BRAND.sandowGrade}</p> : null}
+        {sandowGrade ? <SandowGradeMark variant="lineage" style={{ margin: 0 }} /> : null}
 
         {/* The arm that closes the loop — a quiet door into the build, kept in
             the studio chassis (calm, no arcade flash). Threads the prize

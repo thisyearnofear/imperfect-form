@@ -126,7 +126,7 @@ const SelfVerificationModal: React.FC<SelfVerificationModalProps> = ({
               <div className="space-y-4">
                 <button
                   onClick={openSelfApp}
-                  className="w-full relative p-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-blue-900/30 border border-blue-500/30 transition-all active:scale-[0.98] group overflow-hidden"
+                  className="w-full relative p-4 rounded-xl bg-brass hover:bg-brass-soft text-black shadow-lg shadow-brass/30 border border-brass/30 transition-all active:scale-[0.98] group overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="flex items-center justify-between relative z-10">

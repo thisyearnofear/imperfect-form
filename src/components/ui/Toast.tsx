@@ -39,10 +39,10 @@ export const Toast: React.FC<ToastProps> = ({ t, variant = 'info', message, icon
       case 'warning':
         return {
           bg: 'bg-yellow-900/90',
-          border: 'border-yellow-500',
+          border: 'border-warning',
           icon: icon || '⚠',
           text: 'text-yellow-100',
-          iconColor: 'text-yellow-400',
+          iconColor: 'text-warning',
         };
       case 'loading':
         return {

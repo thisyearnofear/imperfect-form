@@ -141,7 +141,7 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
             {source === 'posthog' ? (
               <span className="text-green-400">Live from the durable PostHog sink</span>
             ) : source === 'local-echo' ? (
-              <span className="text-yellow-400">
+              <span className="text-warning">
                 Local echo (this server instance only) — configure the durable sink for real data
               </span>
             ) : null}
@@ -247,7 +247,7 @@ export default function EngagementDashboard({ apiKey }: EngagementDashboardProps
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Day 7:</span>
-              <span className="text-yellow-400 font-medium">
+              <span className="text-brass font-medium">
                 {(analytics.retention.day7 * 100).toFixed(1)}%
               </span>
             </div>

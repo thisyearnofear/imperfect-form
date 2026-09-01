@@ -33,6 +33,33 @@ export default {
         'network-polygon': designTokens.colors.network.polygon,
         'network-monad': designTokens.colors.network.monad,
         'network-celo': designTokens.colors.network.celo,
+        // Sandow spine — reference the CSS custom properties from
+        // sandow-spine.css so there is ONE source of truth. These let
+        // components use text-brass / bg-brass / text-studio-teal instead
+        // of raw Tailwind yellow-500 / violet-600 (the named anti-pattern).
+        brass: {
+          DEFAULT: 'var(--sandow-brass)',
+          dim: 'var(--sandow-brass-dim)',
+          soft: 'var(--sandow-brass-soft)',
+        },
+        sandow: {
+          ink: 'var(--sandow-ink)',
+          paper: 'var(--sandow-paper)',
+          rule: 'var(--sandow-rule)',
+        },
+        studio: {
+          teal: 'var(--studio-teal)',
+          'teal-bright': 'var(--studio-teal-bright)',
+          'teal-cta': 'var(--studio-teal-cta)',
+          'teal-deep': 'var(--studio-teal-deep)',
+          paper: 'var(--studio-paper)',
+          'paper-soft': 'var(--studio-paper-soft)',
+          muted: 'var(--studio-muted)',
+          'muted-dim': 'var(--studio-muted-dim)',
+          border: 'var(--studio-border)',
+          'border-strong': 'var(--studio-border-strong)',
+          surface: 'var(--studio-surface)',
+        },
         // Neutrals
         neutral: designTokens.colors.neutral,
         // Semantic surface colors

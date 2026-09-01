@@ -119,7 +119,7 @@ Earning $MEM tokens for sharing my fitness data with the community. Join the mov
 
       {/* Workout summary */}
       <div className="text-center text-sm text-gray-400">
-        <div className="font-bold text-yellow-400">
+        <div className="font-bold text-brass">
           {reps} {exerciseMode} in {timeSpent}
         </div>
         <div className="text-xs mt-1">Share your achievement with the Farcaster community!</div>

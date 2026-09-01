@@ -69,7 +69,7 @@ export class WalletErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
           <div className="text-center space-y-6 max-w-md">
             <div className="text-red-500 text-6xl">⚠️</div>
-            <h1 className="text-yellow-400 text-xl font-bold">Wallet Connection Error</h1>
+            <h1 className="text-brass text-xl font-bold">Wallet Connection Error</h1>
             <div className="text-gray-300 text-sm space-y-2">
               <p>There was an issue connecting to your wallet.</p>
               <p>This is usually caused by:</p>
@@ -90,7 +90,7 @@ export class WalletErrorBoundary extends Component<Props, State> {
             <div className="space-y-3">
               <button
                 onClick={this.handleRetry}
-                className="bg-yellow-400 text-black px-6 py-2 rounded font-bold hover:bg-yellow-300 transition-colors"
+                className="bg-brass text-black px-6 py-2 rounded font-bold hover:bg-brass-soft transition-colors"
               >
                 Retry Connection
               </button>

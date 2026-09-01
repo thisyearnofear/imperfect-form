@@ -27,7 +27,7 @@ const CoachPersonalitySelector: React.FC = () => {
               onClick={() => setPersonality(key)}
               className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 transition-all ${
                 selected
-                  ? 'border-yellow-500 bg-yellow-500/10 shadow-[0_0_10px_rgba(252,177,49,0.5)]'
+                  ? 'border-brass bg-brass/10 shadow-[0_0_10px_rgba(252,177,49,0.5)]'
                   : 'border-white/10 bg-white/5 hover:border-white/25'
               }`}
             >
@@ -36,7 +36,7 @@ const CoachPersonalitySelector: React.FC = () => {
               </span>
               <span
                 className={`text-xs font-black tracking-wider ${
-                  selected ? 'text-yellow-400' : 'text-gray-300'
+                  selected ? 'text-brass' : 'text-gray-300'
                 }`}
               >
                 {coach.name}

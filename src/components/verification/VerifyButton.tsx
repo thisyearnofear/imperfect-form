@@ -36,10 +36,9 @@ const VerifyButton: React.FC<VerifyButtonProps> = ({
       onClick={handleClick}
       disabled={isVerifying}
       className={`
-        bg-gradient-to-r from-blue-500 to-purple-600 
-        hover:from-blue-600 hover:to-purple-700 
-        disabled:from-gray-500 disabled:to-gray-600
-        text-white font-bold py-2 px-4 rounded-lg 
+        bg-brass hover:bg-brass-soft
+        disabled:bg-gray-500 disabled:text-gray-300
+        text-black font-bold py-2 px-4 rounded-lg
         transition-all duration-200 transform hover:scale-105
         disabled:transform-none disabled:cursor-not-allowed
         ${className}

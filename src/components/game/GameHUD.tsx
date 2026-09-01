@@ -1,5 +1,5 @@
 import React from 'react';
-import { BRAND } from '@/lib/brandPositioning';
+import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
 import { useImmersive } from '@/hooks/useImmersive';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { zIndexClasses } from '@/lib/zTokens';
@@ -107,9 +107,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         {raceBannerEl}
         <div className="hud-pill">
           <span className="hud-label hud-pill__label">{mode}</span>
-          <span
-            className={`hud-value hud-pill__time ${studio ? 'text-teal-300' : 'text-yellow-500'}`}
-          >
+          <span className={`hud-value hud-pill__time ${studio ? 'text-teal-300' : 'text-brass'}`}>
             {formatTime(timeLeft)}
           </span>
           <span className="hud-pill__divider" aria-hidden="true">
@@ -117,7 +115,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           </span>
           <span
             key={repCount}
-            className={`hud-value motion-rep hud-pill__rep ${studio ? 'text-teal-200' : 'text-yellow-500'}${repPulse ? ' hud-pill__rep--flash' : ''}`}
+            className={`hud-value motion-rep hud-pill__rep ${studio ? 'text-teal-200' : 'text-brass'}${repPulse ? ' hud-pill__rep--flash' : ''}`}
           >
             {repCount}
           </span>
@@ -164,7 +162,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         }}
       >
         <span className="hud-label">{mode}</span>
-        <span className={`hud-value ${studio ? 'text-teal-300' : 'text-yellow-500'}`}>
+        <span className={`hud-value ${studio ? 'text-teal-300' : 'text-brass'}`}>
           {formatTime(timeLeft)}
         </span>
       </div>
@@ -180,11 +178,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </span>
         <span
           key={repCount}
-          className={`hud-value motion-rep sandow-gauge__value ${studio ? 'text-teal-200' : 'text-yellow-500'}`}
+          className={`hud-value motion-rep sandow-gauge__value ${studio ? 'text-teal-200' : 'text-brass'}`}
         >
           {repCount}
         </span>
-        <span className="sandow-stamp hud-sandow-stamp">{BRAND.sandowGrade}</span>
+        <SandowGradeMark className="hud-sandow-stamp" />
       </div>
 
       {/* Quiet depth indicator — replaces the loud on-canvas depth gauge bar.

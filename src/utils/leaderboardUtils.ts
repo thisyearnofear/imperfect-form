@@ -22,11 +22,11 @@ export const NETWORK_COLORS = {
     name: 'Base',
   },
   monad: {
-    bg: 'bg-yellow-500',
-    text: 'text-yellow-500',
-    border: 'border-yellow-500',
-    bgOpacity: 'bg-yellow-500/20',
-    borderLeft: 'border-l-3 border-yellow-500',
+    bg: 'bg-brass',
+    text: 'text-brass',
+    border: 'border-brass',
+    bgOpacity: 'bg-brass/20',
+    borderLeft: 'border-l-3 border-brass',
     name: 'Monad',
   },
   celo: {

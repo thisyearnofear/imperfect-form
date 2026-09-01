@@ -50,7 +50,7 @@ import { playUiCue } from '@/lib/uiSound';
 import { SessionRecap } from '@/components/game/SessionRecap';
 import { sessionStory } from '@/lib/coachingStory';
 import { countedLabel } from '@/lib/exerciseGuidance';
-import { BRAND } from '@/lib/brandPositioning';
+import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
 import { getFormGrade } from '@/lib/formGrade';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { MovementChallengePayload } from '@/types/movementChallenge';
@@ -73,7 +73,7 @@ initializeWindowProperties();
 
 // Status color tokens
 const STATUS_STYLES = {
-  submitting: { color: designTokens.colors.warning, className: 'text-yellow-400' },
+  submitting: { color: designTokens.colors.warning, className: 'text-warning' },
   error: { color: designTokens.colors.error, className: 'text-red-400' },
   success: { color: designTokens.colors.success, className: 'text-green-400' },
 } as const;
@@ -614,9 +614,7 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                       {avgFormScore}/100
                     </span>
                   </div>
-                  <p className="sandow-lineage" style={{ margin: 0 }}>
-                    {BRAND.sandowGrade}
-                  </p>
+                  <SandowGradeMark variant="lineage" style={{ margin: 0 }} />
                 </div>
               )}
 

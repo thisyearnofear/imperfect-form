@@ -49,21 +49,21 @@ export default function WalletBrowserIndicator({
   return (
     <div className={`wallet-browser-indicator ${className}`}>
       {showDetails ? (
-        <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 border border-purple-500 rounded-lg p-3 mb-4">
+        <div className="bg-studio-surface border border-studio-border-strong rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <Wallet size={18} className="text-purple-200" aria-hidden="true" />
-            <span className="text-sm font-bold text-purple-200">
+            <Wallet size={18} className="text-studio-teal-bright" aria-hidden="true" />
+            <span className="text-sm font-bold text-studio-paper">
               {getWalletDisplayName(walletBrowserType)} Detected
             </span>
           </div>
-          <div className="text-xs text-purple-300 space-y-1">
+          <div className="text-xs text-studio-muted space-y-1">
             <p>✅ Mobile-optimized interface active</p>
             <p>✅ Seamless transaction handling</p>
             <p>✅ Enhanced wallet integration</p>
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-2 text-xs text-purple-300 bg-purple-900/30 px-2 py-1 rounded border border-purple-500/50">
+        <div className="flex items-center gap-2 text-xs text-studio-muted bg-studio-surface px-2 py-1 rounded border border-studio-border">
           <Wallet size={14} aria-hidden="true" />
           <span>{getWalletDisplayName(walletBrowserType)}</span>
           {isMobile && <Smartphone size={14} className="text-green-400" aria-hidden="true" />}

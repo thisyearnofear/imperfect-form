@@ -118,13 +118,13 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
           <div className="flex items-center space-x-1">
             <button
               onClick={() => setShowDetails(true)}
-              className="text-xs px-2 py-0.5 rounded text-yellow-300 hover:bg-yellow-500/20 transition-colors"
+              className="text-xs px-2 py-0.5 rounded text-brass hover:bg-brass/20 transition-colors"
             >
               Learn more
             </button>
             <button
               onClick={onClose}
-              className="text-2xl text-yellow-300 hover:text-white transition-colors p-1 hover:bg-yellow-500/20 rounded"
+              className="text-2xl text-brass hover:text-white transition-colors p-1 hover:bg-brass/20 rounded"
               aria-label="Dismiss verification prompt"
               title="Dismiss"
             >
@@ -136,10 +136,10 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
         // EXPANDED VIEW - Details for curious users
         <div className={`studio-card studio-card__body ${className}`}>
           <div className="flex justify-between items-start mb-2">
-            <h4 className="font-bold text-yellow-200">Get Verified Human Badge</h4>
+            <h4 className="font-bold text-sandow-paper">Get Verified Human Badge</h4>
             <button
               onClick={onClose}
-              className="text-2xl text-yellow-300 hover:text-white transition-colors p-1 hover:bg-yellow-500/20 rounded"
+              className="text-2xl text-brass hover:text-white transition-colors p-1 hover:bg-brass/20 rounded"
               aria-label="Dismiss verification details"
               title="Collapse"
             >
@@ -147,21 +147,21 @@ const VerificationIntegration: React.FC<VerificationIntegrationProps> = ({
             </button>
           </div>
 
-          <p className="text-xs text-yellow-200/80 mb-3">
+          <p className="text-xs text-sandow-paper/80 mb-3">
             Verify your identity with Self Protocol on Celo blockchain. One-time setup, no personal
             data stored.
           </p>
 
           <button
             onClick={promptForVerification}
-            className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm"
+            className="w-full bg-brass hover:bg-brass-soft text-black font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm"
           >
             {chainId && chainSupportsSelfProtocol(chainId) ? '🚀 Verify Now' : '🔄 Switch to Celo'}
           </button>
 
           <button
             onClick={() => setShowDetails(false)}
-            className="w-full mt-2 text-xs px-2 py-1 rounded text-yellow-300 hover:bg-yellow-500/20 transition-colors"
+            className="w-full mt-2 text-xs px-2 py-1 rounded text-brass hover:bg-brass/20 transition-colors"
           >
             Collapse
           </button>

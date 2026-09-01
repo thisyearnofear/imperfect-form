@@ -30,7 +30,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ phase, className 
             <div
               className={`
                 flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-bold transition-all duration-300
-                ${isActive ? 'bg-yellow-400 text-black animate-pulse' : ''}
+                ${isActive ? 'bg-brass text-black animate-pulse' : ''}
                 ${isCompleted ? 'bg-green-500 text-white' : ''}
                 ${isPending ? 'bg-gray-600 text-gray-400' : ''}
               `}

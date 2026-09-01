@@ -111,7 +111,7 @@ export function ThemeIndicator({
         {showLabel && compact && <span className="text-xs font-semibold">{currentTheme.id}</span>}
 
         {/* Loading indicator */}
-        {isLoading && <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />}
+        {isLoading && <div className="w-2 h-2 bg-brass rounded-full animate-pulse" />}
 
         {/* Error indicator */}
         {error && <div className="w-2 h-2 bg-red-400 rounded-full" title={error} />}
