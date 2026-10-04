@@ -533,7 +533,48 @@
   margin-top: 0.4rem;
   font-style: italic;
 }
-/* Live Form Score */
+/* Dominant grade readout — the one number the product exists to produce.
+   Sits at the top of the rail, above the dial, range track, robot readout and
+   angle readout, so it no longer competes with seven other readouts for the
+   same glance. */
+.curl-instrument__grade-lead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(117, 230, 177, 0.15);
+}
+
+.curl-instrument__grade-lead-letter {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.curl-instrument__grade-lead-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.curl-instrument__grade-lead-meta strong {
+  color: rgba(233, 255, 250, 0.92);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.curl-instrument__grade-lead-meta small {
+  color: rgba(181, 229, 221, 0.72);
+  font-size: 0.66rem;
+  line-height: 1.25;
+}
+
+/* Legacy score block: the grade, /100 and verdict word now live in
+   .curl-instrument__grade-lead. Only the bar remains here. */
 .curl-instrument__form-score {
   border-top: 1px solid rgba(117, 230, 177, 0.15);
   padding-top: 0.6rem;

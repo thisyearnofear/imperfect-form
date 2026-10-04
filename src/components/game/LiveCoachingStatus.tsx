@@ -7,6 +7,9 @@ import { readableFormWarning } from '@/lib/coachingStory';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import type { CoachingMomentPhase } from '@/lib/coachingMoment';
 import type { ExerciseMode } from '@/utils/biomechanics';
+import { type CoachPersonality } from '@/lib/coachPersonalities';
+import { getStoredPersonality } from '@/services/coachStation';
+import { deliverCoachingLine } from '@/lib/personaDelivery';
 
 interface LiveCoachingStatusProps {
   mode: ExerciseMode;
@@ -24,6 +27,8 @@ interface LiveCoachingStatusProps {
    *  it the copy must never promise "watch the arm" — the climax line stays
    *  honest by pointing at the on-screen instrument instead. */
   armAvailable?: boolean;
+  /** Overrides the stored persona; mainly for tests and previews. */
+  personality?: CoachPersonality;
 }
 
 type StatusTone = 'ready' | 'adjust' | 'signal' | 'framing';
@@ -146,6 +151,7 @@ export function LiveCoachingStatus({
   retryFocus = null,
   animate = true,
   armAvailable = false,
+  personality: suppliedPersonality,
 }: LiveCoachingStatusProps) {
   const { register } = useSessionIntent();
   const arcade = register === 'arcade';
@@ -153,7 +159,7 @@ export function LiveCoachingStatus({
   const phase = suppliedPhase ?? (tracking ? (repCount > 0 ? 'your_turn' : 'observed') : 'framing');
   const warning = suppliedWarning ?? warnings[0] ?? null;
   const focusWarning = suppliedFocusWarning ?? null;
-  const { tone, text } = resolveLiveStatus({
+  const { tone, text: instruction } = resolveLiveStatus({
     arcade,
     mode,
     tracking,
@@ -166,6 +172,23 @@ export function LiveCoachingStatus({
     cameraGuidance: guidance.camera,
     armAvailable,
   });
+
+  // Persona delivery is applied last, so the instruction stays identical across
+  // personas and only the voice around it changes. Read once per render from
+  // storage; the value is stable for a session.
+  const persona = React.useMemo(
+    () => suppliedPersonality ?? getStoredPersonality(),
+    [suppliedPersonality]
+  );
+  const text = deliverCoachingLine({
+    instruction,
+    phase,
+    personality: persona,
+    arcade,
+    firstSignal,
+    hasWarning: !!warning,
+  });
+
   const Icon = tone === 'adjust' ? AlertCircle : tone === 'framing' ? ScanLine : CheckCircle2;
 
   return (

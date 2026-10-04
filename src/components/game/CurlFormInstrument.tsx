@@ -4,7 +4,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import '@/styles/curl-instrument.css';
 import type { CurlTelemetry } from '@/types/mediapipe';
 import { playStudioCue } from '@/lib/uiSound';
-import { coachStation, type StationTrajectoryProgressEvent, type StationStatus } from '@/services/coachStation';
+import {
+  coachStation,
+  type StationTrajectoryProgressEvent,
+  type StationStatus,
+} from '@/services/coachStation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import {
   COACH_PERSONALITIES,
@@ -360,6 +364,30 @@ export function CurlFormInstrument({
       <span className="sr-only" aria-live="polite">
         {accessibleStatus}
       </span>
+
+      {/* The grade is the one number the product exists to produce, so it leads
+          the rail rather than sitting below a dial, a range track, a robot
+          readout and an angle readout. Telemetry follows underneath. */}
+      <div className="curl-instrument__grade-lead">
+        <span className="curl-instrument__grade-lead-letter" style={{ color: gradeColor }}>
+          {grade}
+        </span>
+        <span className="curl-instrument__grade-lead-meta">
+          <strong>{formScore}/100</strong>
+          <small>
+            {formScore >= 90
+              ? 'Excellent match!'
+              : formScore >= 80
+                ? 'Good form'
+                : formScore >= 70
+                  ? 'Almost there'
+                  : formScore >= 60
+                    ? 'Keep adjusting'
+                    : 'Match the target angle'}
+          </small>
+        </span>
+      </div>
+
       <div className="curl-instrument__header">
         <div>
           <p className="curl-instrument__eyebrow">{layout === 'rail' ? 'Elbow' : armEyebrow}</p>
@@ -502,38 +530,10 @@ export function CurlFormInstrument({
           </div>
         )}
 
-        {/* Live Form Score */}
-        <div className="curl-instrument__form-score">
-          <div className="curl-instrument__form-score-header">
-            <span className="curl-instrument__form-score-label">Form Score</span>
-            <span className="curl-instrument__form-score-grade" style={{ color: gradeColor }}>
-              {grade}
-            </span>
-          </div>
-          <div className="curl-instrument__form-score-bar">
-            <div
-              className="curl-instrument__form-score-fill"
-              style={{
-                width: `${formScore}%`,
-                backgroundColor: gradeColor,
-              }}
-            />
-          </div>
-          <div className="curl-instrument__form-score-details">
-            <span>{formScore}/100</span>
-            <span>
-              {formScore >= 90
-                ? 'Excellent match!'
-                : formScore >= 80
-                  ? 'Good form'
-                  : formScore >= 70
-                    ? 'Almost there'
-                    : formScore >= 60
-                      ? 'Keep adjusting'
-                      : 'Match the target angle'}
-            </span>
-          </div>
-        </div>
+        {/* Live Form Score — now only the trend bar. The grade, the /100 and the
+            verdict word moved to .curl-instrument__grade-lead at the top of the
+            rail; repeating them here made the primary readout compete with
+            itself. */}
 
         {/* Score History */}
         {scoreHistory.length > 0 && (

@@ -3,6 +3,7 @@ import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
 import { useImmersive } from '@/hooks/useImmersive';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { zIndexClasses } from '@/lib/zTokens';
+import { readableFormWarning } from '@/lib/coachingStory';
 
 interface GameHUDProps {
   mode: string;
@@ -57,8 +58,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
     }
   }, [timeLeft, isMobile]);
 
-  // Studio: quieter pulse — clinical density, not arcade bounce
-  const repScale = studio ? 1 : (1 + Math.min(repCount * 0.005, 0.2)) * pulse;
+  // Studio (the default register): a fixed size, pulsed only on the beat. The
+  // arcade register grows the count with the rep total; that is a deliberate
+  // arcade flourish, but a number you must read mid-set should not change size
+  // as the set goes on — so the studio path never accumulates growth.
+  const repScale = studio ? pulse : 1 + Math.min(repCount * 0.005, 0.2) * pulse;
 
   const raceBannerEl = isRace ? (
     <div className={`absolute -top-1 left-1/2 -translate-x-1/2 ${zIndexClasses.raceBanner}`}>
@@ -128,7 +132,10 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             {repMilestoneMessage(repCount, studio)}
           </div>
         )}
-        {typeof depth === 'number' && depth > 0 && (
+        {/* Depth stays mounted at 0. Hiding it when the joint is fully extended
+            removed the instrument exactly when a user is holding still between
+            reps, which is when they most need to see it exists. */}
+        {typeof depth === 'number' && (
           <div
             className="hud-depth-edge"
             role="progressbar"
@@ -141,6 +148,14 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               className="hud-depth-edge__fill"
               style={{ width: `${Math.min(100, Math.round(depth * 100))}%` }}
             />
+          </div>
+        )}
+        {/* Mobile previously had no form-warning surface at all — the warning
+            lived only in the desktop branch, so a phone user mid-set got no
+            signal at all. This is the shared warning row. */}
+        {warnings && warnings.length > 0 && (
+          <div className="hud-warning-strip" role="status" aria-live="polite">
+            {readableFormWarning(warnings[0])}
           </div>
         )}
       </div>
@@ -186,8 +201,9 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       </div>
 
       {/* Quiet depth indicator — replaces the loud on-canvas depth gauge bar.
-          Studio aesthetic: a thin teal fill, not a red gradient. */}
-      {typeof depth === 'number' && depth > 0 && (
+          Studio aesthetic: a thin teal fill, not a red gradient. Mounted at 0
+          too, so the instrument does not vanish while the user holds still. */}
+      {typeof depth === 'number' && (
         <div className="hud-block hud-depth" aria-label="Rep depth">
           <span className="hud-label">Depth</span>
           <span className="hud-depth__bar" aria-hidden="true">
@@ -196,11 +212,13 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               style={{ width: `${Math.min(100, Math.round(depth * 100))}%` }}
             />
           </span>
-          {warnings && warnings.length > 0 && (
-            <span className="hud-depth__warn" title={warnings[0]}>
-              {warnings[0]}
-            </span>
-          )}
+        </div>
+      )}
+      {/* Shared form warning row — previously nested inside the depth block, so
+          it disappeared whenever depth read 0. */}
+      {warnings && warnings.length > 0 && (
+        <div className="hud-warning-strip" role="status" aria-live="polite" title={warnings[0]}>
+          {readableFormWarning(warnings[0])}
         </div>
       )}
     </div>

@@ -755,6 +755,29 @@
   transition: width 0.2s ease-out;
 }
 
+/* Form warning on the compact/mobile HUD. The studio rule is scoped to
+   #game-container, which the compact pill is not inside, so it needs its own.
+   Without this the phone layout had no form-warning surface at all. */
+.game-hud-container--compact .hud-warning-strip {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(24, 16, 4, 0.82);
+  border: 1px solid rgba(240, 192, 90, 0.32);
+  color: #f0c05a;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Arcade (Train) register keeps its gold "Press Start" identity in the
    compact pill instead of collapsing to the studio teal glass. */
 .game-hud-container--compact[data-register='arcade'] .hud-pill {

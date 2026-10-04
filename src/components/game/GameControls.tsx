@@ -10,7 +10,6 @@ import {
   savePreprocessorSettings,
   PosePreprocessorSettings,
   getCpuFilterMaxPixels,
-  PHASE2_CV_FILTERS_ENABLED,
 } from '@/lib/pose/posePreprocessor';
 import { getDeviceInfo } from '@/utils/deviceDetection';
 
@@ -83,12 +82,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
     savePreprocessorSettings(next);
   };
 
-  const activeFeatureCount = [
-    preprocessor.autoExposure,
-    ...(PHASE2_CV_FILTERS_ENABLED
-      ? [preprocessor.cameraCalibration, preprocessor.generativeCleanup]
-      : []),
-  ].filter(Boolean).length;
+  // Only auto-exposure ships (Phase 1). The Phase 2 filters are behind a false
+  // flag, so they are not counted here or rendered below — see the preprocessor
+  // module for what exists and what does not.
+  const activeFeatureCount = [preprocessor.autoExposure].filter(Boolean).length;
 
   const handleStart = () => {
     playUiCue('press', { register });
@@ -212,20 +209,6 @@ export const GameControls: React.FC<GameControlsProps> = ({
                 onChange={(autoExposure) => updatePreprocessor({ autoExposure })}
                 label="Auto-exposure / white balance (classical)"
               />
-              {PHASE2_CV_FILTERS_ENABLED && (
-                <>
-                  <ToggleSwitch
-                    checked={preprocessor.cameraCalibration}
-                    onChange={(cameraCalibration) => updatePreprocessor({ cameraCalibration })}
-                    label="Lens distortion fix (classical)"
-                  />
-                  <ToggleSwitch
-                    checked={preprocessor.generativeCleanup}
-                    onChange={(generativeCleanup) => updatePreprocessor({ generativeCleanup })}
-                    label="Generative low-light cleanup (spike)"
-                  />
-                </>
-              )}
             </div>
           )}
         </div>
