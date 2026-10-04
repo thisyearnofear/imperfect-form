@@ -115,6 +115,38 @@ when it measures _without scrolling first_ on a phone viewport — which now
 reports `CTA at 726-774 in a 664px viewport, and the page cannot scroll`
 when the bug is reintroduced.
 
+### The bay now reacts to the athlete
+
+The flatness was diagnosable, not a matter of taste: **the product's personality
+was all ambient and none of it causal.** `useCoachBayPulse` already bridged
+coach-station cues onto `body[data-coach-pulse]`, so the arm glowed when the
+_coach_ spoke — but nothing responded to the _athlete_. Your rep did not change
+the room. Your form grade did not change anything. The coaching was text in a
+box.
+
+`useCoachAtmosphereBridge` adds the missing link, writing three body attributes
+the atmosphere already knows how to read:
+
+| attribute            | drives                                                                                    |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| `data-coach-rep`     | the arm acknowledges each completed rep (glow + plinth)                                   |
+| `data-coach-quality` | `good` warms the bay; `poor` cools it and drops the ghost arm further behind the real one |
+| `data-coach-depth`   | the arc reads as live rather than decorative                                              |
+
+Bands match the coaching engine's own grade table (80 good, 60 keep-adjusting),
+and an **unknown score yields no attribute at all** rather than defaulting to
+`good` — a bay that congratulated an athlete who was never measured is exactly
+the dishonesty this repo has been removing elsewhere.
+
+Verified in a real browser: `good` shifts the photo filter, `poor` takes the
+ghost from 0.22 to 0.11 opacity with a desaturating filter, `data-coach-rep`
+fires `arm-acknowledge`, `data-coach-depth` lifts the arc to 0.9.
+
+The scrim added for legibility is what made restoring the atmosphere possible —
+the stage keeps its full presence instead of being dimmed to 28%, because energy
+and legibility were never actually in conflict. Only the copy being centred over
+the art made them look like it.
+
 ### Craft
 
 - `#fcb131` and `#56d9c3` were declared nine times across six stylesheets under
@@ -165,13 +197,15 @@ when the bug is reintroduced.
 
 ## Open
 
-| Item                                      | Why it is open                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Hand-rolled dialog markup**             | `Game.tsx`'s camera primer and the (now deleted) onboarding modal both used raw `role="dialog"` rather than the Radix `AccessibleDialog` that eight other modals use. The primer is left alone deliberately: it is e2e-covered and carries bespoke denial-recovery semantics (re-ask the browser, restore focus on cancel) that `AccessibleDialog` does not model. Converting it is a behaviour change, not a refactor. |
-| **Loader primitives still split**         | Spinner logic exists in `Spinner`, `LoadingIcons`, and inline in `Button`. `MemoryButton` is gone, which removed the fourth. Worth consolidating onto one, but it is cosmetic and no surface is currently broken by it.                                                                                                                                                                                                 |
-| **Model weights not pre-warmed**          | The pose _chunk_ is prefetched on idle and on CTA hover, but MediaPipe weights are not, so a cold first visit can stall on the "Coach AI" phase. `FIRST_VISIT_AND_MANUAL_STAGE.md` measures comprehension, not latency.                                                                                                                                                                                                 |
-| **`SandowCabinet` footer**                | Still reads "we closed the loop with a robot arm". Arguably lineage rhetoric in a heritage exhibit, but it sits adjacent to the claims that were just corrected, so it deserves a deliberate decision rather than a default.                                                                                                                                                                                            |
-| **`zTokens.ts` vs `designTokens.zIndex`** | These do **not** conflict — the latter delegates to `Z`. Left alone deliberately.                                                                                                                                                                                                                                                                                                                                       |
+| Item                                                   | Why it is open                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hand-rolled dialog markup**                          | `Game.tsx`'s camera primer and the (now deleted) onboarding modal both used raw `role="dialog"` rather than the Radix `AccessibleDialog` that eight other modals use. The primer is left alone deliberately: it is e2e-covered and carries bespoke denial-recovery semantics (re-ask the browser, restore focus on cancel) that `AccessibleDialog` does not model. Converting it is a behaviour change, not a refactor. |
+| **Loader primitives still split**                      | Spinner logic exists in `Spinner`, `LoadingIcons`, and inline in `Button`. `MemoryButton` is gone, which removed the fourth. Worth consolidating onto one, but it is cosmetic and no surface is currently broken by it.                                                                                                                                                                                                 |
+| **Model weights not pre-warmed**                       | The pose _chunk_ is prefetched on idle and on CTA hover, but MediaPipe weights are not, so a cold first visit can stall on the "Coach AI" phase. `FIRST_VISIT_AND_MANUAL_STAGE.md` measures comprehension, not latency.                                                                                                                                                                                                 |
+| **`SandowCabinet` footer**                             | Still reads "we closed the loop with a robot arm". Arguably lineage rhetoric in a heritage exhibit, but it sits adjacent to the claims that were just corrected, so it deserves a deliberate decision rather than a default.                                                                                                                                                                                            |
+| **`zTokens.ts` vs `designTokens.zIndex`**              | These do **not** conflict — the latter delegates to `Z`. Left alone deliberately.                                                                                                                                                                                                                                                                                                                                       |
+| **The arm does not follow the elbow, only the cursor** | The gaze parallax reacts to `pointermove`. Closing that loop — move your elbow, the arm follows — is the whole thesis in one interaction, and the camera already exists. It is a larger change than this pass: the arm would need to track a live joint rather than a cursor.                                                                                                                                           |
+| **Personas do not tint the room**                      | SNEL/STEDDIE/RASTA now reach the coaching line but present identically everywhere else. Persona could drive idle tempo, palette temperature, and how the arm moves.                                                                                                                                                                                                                                                     |
 
 ### Closed after review
 

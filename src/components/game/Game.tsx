@@ -31,6 +31,7 @@ import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { speakCoachLine } from '@/lib/tts';
 import { trackEngagementEvent } from '@/lib/analyticsDispatch';
 import { usePersonaSuggestion } from '@/hooks/usePersonaSuggestion';
+import { useCoachAtmosphereBridge } from '@/hooks/useCoachAtmosphereBridge';
 import PersonaSuggestionNudge from './PersonaSuggestionNudge';
 import { coachStation, type StationDemonstrationEvent } from '@/services/coachStation';
 import { consumePendingSelfRace } from '@/services/ghostRaceBus';
@@ -464,6 +465,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     document.body.setAttribute('data-coach-mode', mode);
     return () => document.body.removeAttribute('data-coach-mode');
   }, [mode]);
+
+  // Let the day-0 atmosphere react to the athlete, not only to coach cues.
+  // `useCoachBayPulse` already bridges coach-station cues onto the backdrop;
+  // this adds the athlete's own input, which is what was missing — the bay
+  // looked alive when the coach spoke and inert when the athlete moved.
+  // The most recent per-rep score stands in for current quality.
+  const latestFormScore = formScores.length > 0 ? formScores[formScores.length - 1] : null;
+  useCoachAtmosphereBridge({
+    repCount,
+    formScore: latestFormScore,
+    depth: metrics?.depth ?? null,
+    active: started && mode === 'curls',
+  });
 
   const poseLockedRef = useRef(false);
   if (started && poseState.poseDetected) poseLockedRef.current = true;
