@@ -73,6 +73,48 @@ Both were verified to fail when the defect is reintroduced.
   range stacks up against others." Saying the gate is more persuasive to a judge
   than hiding it.
 
+### Landing page correctness
+
+Found by measuring the built page rather than reading the code. On a 390x664
+viewport the day-0 foyer was **unusable**:
+
+- **The primary CTA was unreachable.** `mobile-wallet-browser.css` applies
+  `max-height: 45vh !important` to `#screen` in portrait — written for a live
+  session, where camera, controls and leaderboard compete for height. It also
+  applied to the pre-session foyer, clipping "Try one rep" to y=698 in a 664px
+  viewport. Worse, `body, html { height: 100% }` pinned the page to exactly one
+  viewport, so it could not scroll to reach it. **A phone visitor could not
+  start a set at all.**
+- **The robot photo painted over the content.** `.studio-atmosphere` is a
+  `position: fixed; z-index: 0` sibling of the content and the foyer column is
+  centred on top of it. On a phone the stage landed at y=334 — exactly where the
+  exercise picker sits — covering it outright. On desktop it washed across the
+  lede and trust line.
+- **The coach-status pill overlapped the provenance line.** A `-0.65rem` top
+  margin tightened the desktop stack but rode the pill up over the text at every
+  width (pill 346 vs provenance 336–357 on desktop; 270 vs 240–281 on mobile).
+- **A stray orientation-lock button** rendered over the lede before a session
+  existed — a session control with no session to control.
+
+Fixed by scoping each rule to what it was written for: the 45vh cap now applies
+only when a live session is present, `body` uses `min-height`, the stage became a
+dimmed backdrop behind a scrim rather than a layer over the copy, the pill
+returns to normal vertical rhythm, and the top-controls cluster is gated on
+`started`.
+
+Verified by measurement at 1440x900, 1280x800, 768x1024 and 390x664: no
+overlap, and the CTA is either above the fold or reachable by scroll.
+
+`e2e/landing.spec.ts` guards all four. Writing them was humbling: the first
+three versions **passed against the broken page**. `scrollIntoViewIfNeeded` is
+a no-op for a clipped element (Playwright counts a non-empty box as visible),
+an explicit `scrollIntoView` then masked the real failure because it succeeds
+whenever the page is scrollable at all, and reverting each fix separately
+did nothing because the two CSS fixes mask each other. The guard only bites
+when it measures _without scrolling first_ on a phone viewport — which now
+reports `CTA at 726-774 in a 664px viewport, and the page cannot scroll`
+when the bug is reintroduced.
+
 ### Craft
 
 - `#fcb131` and `#56d9c3` were declared nine times across six stylesheets under

@@ -1083,48 +1083,56 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         aria-hidden={showCameraPrimer}
         className={`${isMobile ? 'touch-manipulation' : ''}${isIOSDevice ? ' game-container--ios' : ''}${showCameraPrimer ? ' pointer-events-none' : ''}`}
       >
-        {/* Top-right control buttons - orientation lock only */}
-        <div
-          className={`game-container__top-controls absolute top-2 right-2 flex gap-1 ${zIndexClasses.gameTopControls}`}
-        >
-          {/* Orientation Lock Toggle - Mobile Only */}
-          {isMobile && (
-            <button
-              onClick={() => {
-                if (isLandscapeLocked) {
-                  unlock();
-                  setIsLandscapeLocked(false);
-                } else {
-                  lockLandscape();
-                  setIsLandscapeLocked(true);
-                }
-              }}
-              className="bg-white/10 backdrop-blur-sm rounded-lg p-2 hover:bg-white/20 transition-colors touch-manipulation orientation-lock-indicator touch-target"
-              aria-label={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
-              title={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
-            >
-              {isLandscapeLocked ? (
-                <Lock size={18} className="text-white" aria-hidden="true" />
-              ) : (
-                <Unlock size={18} className="text-white" aria-hidden="true" />
-              )}
-            </button>
-          )}
+        {/* Top-right control buttons - orientation lock only.
+            These are session controls. Before a set starts they render as a
+            stray lock glyph on top of the foyer copy (measured at top 166 on a
+            390px viewport, directly over the lede), because the container is
+            absolutely positioned and the foyer is centred underneath it. Gate
+            the whole cluster on `started` — there is nothing to unlock or
+            lock before there is a session. */}
+        {started && (
+          <div
+            className={`game-container__top-controls absolute top-2 right-2 flex gap-1 ${zIndexClasses.gameTopControls}`}
+          >
+            {/* Orientation Lock Toggle - Mobile Only */}
+            {isMobile && (
+              <button
+                onClick={() => {
+                  if (isLandscapeLocked) {
+                    unlock();
+                    setIsLandscapeLocked(false);
+                  } else {
+                    lockLandscape();
+                    setIsLandscapeLocked(true);
+                  }
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-2 hover:bg-white/20 transition-colors touch-manipulation orientation-lock-indicator touch-target"
+                aria-label={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
+                title={isLandscapeLocked ? 'Unlock orientation' : 'Lock landscape orientation'}
+              >
+                {isLandscapeLocked ? (
+                  <Lock size={18} className="text-white" aria-hidden="true" />
+                ) : (
+                  <Unlock size={18} className="text-white" aria-hidden="true" />
+                )}
+              </button>
+            )}
 
-          {/* Fullscreen Exit Button (only shown when in fullscreen) */}
-          {isFullscreen && (
-            <FullscreenExitButton
-              isFullscreen={isFullscreen}
-              onExit={() => {
-                exitFullscreen();
-                setAutoFs(false);
-                if (typeof window !== 'undefined') {
-                  window.localStorage.setItem('prefAutoFullscreen', 'false');
-                }
-              }}
-            />
-          )}
-        </div>
+            {/* Fullscreen Exit Button (only shown when in fullscreen) */}
+            {isFullscreen && (
+              <FullscreenExitButton
+                isFullscreen={isFullscreen}
+                onExit={() => {
+                  exitFullscreen();
+                  setAutoFs(false);
+                  if (typeof window !== 'undefined') {
+                    window.localStorage.setItem('prefAutoFullscreen', 'false');
+                  }
+                }}
+              />
+            )}
+          </div>
+        )}
 
         <div id="screen" data-register={foyerRegister}>
           {!started &&

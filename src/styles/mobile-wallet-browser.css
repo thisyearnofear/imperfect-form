@@ -3,12 +3,35 @@
 /* Portrait mode optimizations for wallet browsers */
 @media (orientation: portrait) and (max-width: 768px) {
 
-  /* Optimize layout for portrait mode - common in wallet browsers */
+  /* Optimize layout for portrait mode - common in wallet browsers.
+     The 45vh cap is for a *live session* (camera + controls + leaderboard all
+     competing for height). It must not apply to the pre-session foyer: the cap
+     silently clipped the "Try one rep" CTA off the bottom of a 390x664
+     viewport, and the page could not scroll to reach it, so a phone visitor
+     could not start a set at all. The foyer is a scrolling document. */
   #screen {
-    /* Reduce height to leave room for controls and leaderboard */
     max-height: 45vh !important;
     min-height: 280px !important;
     margin-bottom: 12px !important;
+  }
+
+  /* The day-0 foyer is content, not a fixed-height game viewport. Let it grow
+     and scroll instead of clipping its own primary action. */
+  #screen:has(.coach-foyer),
+  #screen:has(.prestart-foyer) {
+    max-height: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    overflow-y: auto !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Once the foyer gives way to a live session, the container goes back to
+     filling the viewport so the camera stage can size against it. */
+  #game-container:has(.session-bay) {
+    min-height: 100% !important;
+    height: auto !important;
   }
 
   /* Stack layout vertically for portrait */

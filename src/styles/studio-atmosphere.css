@@ -179,6 +179,58 @@
   z-index: 2;
 }
 
+/* The stage is a decorative backdrop, never a content layer. It is a fixed
+   z-0 sibling of the page content, and the foyer column is centred on top of
+   it — so wherever the two coincide, the photograph wins and the copy becomes
+   unreadable. Measured on a 1440x900 desktop: the photo washed across the lede
+   and the trust line; on a 390px phone it covered the exercise picker outright.
+   A scrim plus reduced opacity keeps the machine present as atmosphere while
+   guaranteeing the copy owns the pixels it is set on. */
+@media (max-width: 1024px) {
+  .studio-atmosphere__stage-frame {
+    right: -12%;
+    top: 6%;
+    width: 78vw;
+    max-width: none;
+    opacity: 0.28;
+    z-index: 0;
+    filter: saturate(0.7);
+  }
+}
+
+@media (min-width: 1025px) {
+  .studio-atmosphere__stage-frame {
+    opacity: 0.5;
+    filter: saturate(0.85);
+  }
+}
+
+.studio-atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(6, 16, 19, 0.55) 0%,
+    rgba(6, 16, 19, 0.78) 38%,
+    rgba(6, 16, 19, 0.62) 100%
+  );
+}
+
+@media (max-width: 768px) {
+  /* Portrait: the scrim runs vertically since the column stacks. */
+  .studio-atmosphere::after {
+    background: linear-gradient(
+      180deg,
+      rgba(6, 16, 19, 0.72) 0%,
+      rgba(6, 16, 19, 0.88) 42%,
+      rgba(6, 16, 19, 0.95) 100%
+    );
+  }
+}
+
 .studio-atmosphere__stage {
   position: absolute;
   inset: 0;

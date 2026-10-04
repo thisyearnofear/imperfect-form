@@ -518,7 +518,12 @@
 
 .coach-foyer__coach-status {
   width: 100%;
-  margin: -0.65rem 0 1rem;
+  /* Normal rhythm. This previously carried a -0.65rem top margin to tighten
+     the desktop stack, but the provenance line sits directly above it and the
+     pill rode up over the text at every width (measured: pill 346 against
+     provenance 336-357 on desktop, 270 against 240-281 on a phone). The 1rem
+     gap is the honest spacing. */
+  margin: 0.85rem 0 1rem;
   padding: 0.55rem 0.7rem;
   display: flex;
   align-items: center;
