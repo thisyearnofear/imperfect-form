@@ -29,6 +29,37 @@ export interface PoseDetector {
   ) => Promise<PoseDetectionResult[]>;
 }
 
+/** Which pose architecture to run. */
+export type PoseTrackerId = 'movenet-lightning' | 'movenet-thunder' | 'blazepose';
+
+/** Which tfjs backend to run inference on. */
+export type PoseBackendId = 'webgpu' | 'webgl' | 'wasm' | 'cpu';
+
+/**
+ * Detector configuration.
+ *
+ * Previously hard-coded in three places (poseWorker, usePoseDetection,
+ * PoseDetectionService) with divergent values in tfUtils. Every detector is now
+ * built from this one resolution path so a benchmark cannot silently label a
+ * run with a config it never applied. See src/lib/pose/trackerRegistry.ts.
+ */
+export interface PoseDetectorConfig {
+  tracker: PoseTrackerId;
+  backend: PoseBackendId;
+  /** Upper bound on the inference input's long edge, in pixels. */
+  inputSize: number;
+  /**
+   * MoveNet's smoothing tracker can dereference a missing bounding box on
+   * transient frames (`null.yMin`), so the raw detector is used instead.
+   */
+  enableSmoothing: boolean;
+  /** Minimum detection score for a pose to be reported. */
+  minPoseScore: number;
+  /** Max dimension for multi-pose backends; undefined uses the library default. */
+  multiPoseMaxDimension?: number;
+  enableTracking: boolean;
+}
+
 // Video frame callback metadata
 export interface VideoFrameCallbackMetadata {
   presentationTime: DOMHighResTimeStamp;
@@ -54,6 +85,8 @@ export type WorkerMessage =
       isMobile?: boolean;
       pbTrace?: SessionSnapshot[];
       preprocessor?: PosePreprocessorSettings;
+      /** Detector configuration. Omitted means the shipped live default. */
+      config?: PoseDetectorConfig;
     }
   | {
       type: 'frame';
@@ -64,6 +97,15 @@ export type WorkerMessage =
       coalescedFrames?: number;
     }
   | { type: 'setMode'; mode: string }
+  | {
+      /**
+       * Swap the detector mid-session. Used by the edge perf matrix so a
+       * benchmark measures a real config change rather than re-labelling the
+       * same live detector.
+       */
+      type: 'configure';
+      config: PoseDetectorConfig;
+    }
   | { type: 'stop' };
 
 export interface BiomechanicalState {

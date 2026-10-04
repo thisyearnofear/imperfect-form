@@ -1,8 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+/**
+ * Render the Imperfect Form icon as SVG.
+ *
+ * Only SVG is supported. A `format=png` request is refused explicitly rather
+ * than answered with an SVG body, because a caller that asked for PNG and
+ * received `image/svg+xml` would store a mislabelled asset instead of an error.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const size = parseInt(searchParams.get('size') || '1024');
+
+  const format = (searchParams.get('format') || 'svg').toLowerCase();
+  if (format !== 'svg') {
+    return NextResponse.json(
+      {
+        error: `Unsupported format: ${format}`,
+        supported: ['svg'],
+        detail:
+          'PNG rasterization is not implemented. Request format=svg, or rasterize the SVG response yourself.',
+      },
+      { status: 501 }
+    );
+  }
+
+  if (!Number.isFinite(size) || size < 1 || size > 4096) {
+    return NextResponse.json(
+      { error: 'size must be an integer between 1 and 4096' },
+      { status: 400 }
+    );
+  }
 
   // Create a simple SVG icon for Imperfect Form
   const svg = `
@@ -36,8 +63,6 @@ export async function GET(request: NextRequest) {
     </svg>
   `;
 
-  // Convert SVG to PNG would require a library like sharp or canvas
-  // For now, return the SVG directly
   return new NextResponse(svg, {
     headers: {
       'Content-Type': 'image/svg+xml',

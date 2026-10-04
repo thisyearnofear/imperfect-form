@@ -11,6 +11,51 @@
  */
 
 import { BiomechanicalState } from '@/types/mediapipe';
+import type { ExerciseMode } from '@/utils/biomechanics';
+import { buildVerdict, gateFail, gatePass, type GateResult, type GateVerdict } from '@/lib/gates';
+
+/**
+ * Every threshold the form checks judge against, in one reviewable table.
+ *
+ * These numbers are asserted by src/lib/coachingEngine.test.ts and restated in
+ * docs/COACH_GATES.md; change one and you must change all three.
+ */
+export const FORM_CHECK_THRESHOLDS = {
+  /** Normalized range-of-motion 0-1. Skipped for curls, which have their own instrument. */
+  depth: { critical: 0.3, warning: 0.6, target: 0.85, good: 0.9 },
+  /** Degrees of forward trunk lean. Squats tolerate more. */
+  trunkLean: { warning: 15, squatsWarning: 30, critical: 45 },
+  /** Degrees of inward knee collapse. */
+  kneeValgus: { warning: 30, critical: 50, target: 20 },
+  /** Ankle angle in degrees. Squats only. */
+  ankleFlexion: { info: 60, target: 80 },
+  /** Left/right balance, 1 = even. */
+  symmetry: { warning: 0.7, target: 0.9 },
+} as const;
+
+/** Confidence per issue, reflecting how much the signal is trusted. */
+export const FORM_CHECK_CONFIDENCE = {
+  stability: 0.95,
+  depthCritical: 0.9,
+  depthWarning: 0.85,
+  depthGood: 0.92,
+  trunkLeanCritical: 0.88,
+  trunkLeanWarning: 0.83,
+  kneeValgusCritical: 0.86,
+  kneeValgusWarning: 0.81,
+  ankleFlexion: 0.75,
+  symmetry: 0.79,
+} as const;
+
+/** Priority 1 is addressed first; 99 is positive feedback that never leads. */
+export const FORM_CHECK_PRIORITY = {
+  critical: 2,
+  warning: 3,
+  kneeValgusWarning: 4,
+  symmetryWarning: 4,
+  ankleFlexion: 5,
+  positive: 99,
+} as const;
 
 /**
  * Individual form issue identified by the coaching engine
@@ -49,10 +94,7 @@ export interface CoachingAnalysis {
 /**
  * Analyze stability (isStable, warnings)
  */
-function analyzeStability(
-  metrics: BiomechanicalState,
-  _mode: import('@/utils/biomechanics').ExerciseMode
-): CoachingIssue | null {
+function analyzeStability(metrics: BiomechanicalState, _mode: ExerciseMode): CoachingIssue | null {
   if (!metrics.isStable) {
     return {
       type: 'stability',
@@ -61,7 +103,7 @@ function analyzeStability(
       target: 1,
       cue: 'Stabilize your form!',
       priority: 1,
-      confidence: 0.95,
+      confidence: FORM_CHECK_CONFIDENCE.stability,
     };
   }
   return null;
@@ -70,19 +112,16 @@ function analyzeStability(
 /**
  * Analyze depth (range of motion)
  */
-function analyzeDepth(
-  metrics: BiomechanicalState,
-  mode: import('@/utils/biomechanics').ExerciseMode
-): CoachingIssue | null {
+function analyzeDepth(metrics: BiomechanicalState, mode: ExerciseMode): CoachingIssue | null {
   // Curls have a dedicated angle/range instrument in the live session. Do not
   // compete with it using the generic depth copy ("Lower down more").
   if (mode === 'curls') return null;
 
   const { depth } = metrics;
-  const target = 0.85;
+  const { critical, warning, target, good } = FORM_CHECK_THRESHOLDS.depth;
 
   // Critical: Too shallow
-  if (depth < 0.3) {
+  if (depth < critical) {
     const cue = mode === 'squats' ? 'Go deeper!' : 'Lower down more!';
     return {
       type: 'depth',
@@ -90,13 +129,13 @@ function analyzeDepth(
       current: depth,
       target,
       cue,
-      priority: 2,
-      confidence: 0.9,
+      priority: FORM_CHECK_PRIORITY.critical,
+      confidence: FORM_CHECK_CONFIDENCE.depthCritical,
     };
   }
 
   // Warning: Slightly shallow
-  if (depth < 0.6) {
+  if (depth < warning) {
     const cue = mode === 'squats' ? 'Add more depth' : 'Extend further';
     return {
       type: 'depth',
@@ -104,21 +143,21 @@ function analyzeDepth(
       current: depth,
       target,
       cue,
-      priority: 3,
-      confidence: 0.85,
+      priority: FORM_CHECK_PRIORITY.warning,
+      confidence: FORM_CHECK_CONFIDENCE.depthWarning,
     };
   }
 
   // Info: Good depth
-  if (depth > 0.9) {
+  if (depth > good) {
     return {
       type: 'depth',
       severity: 'info',
       current: depth,
       target,
       cue: 'Perfect depth!',
-      priority: 99, // Low priority (positive feedback)
-      confidence: 0.92,
+      priority: FORM_CHECK_PRIORITY.positive,
+      confidence: FORM_CHECK_CONFIDENCE.depthGood,
     };
   }
 
@@ -128,27 +167,23 @@ function analyzeDepth(
 /**
  * Analyze trunk lean (forward bend)
  */
-function analyzeTrunkLean(
-  metrics: BiomechanicalState,
-  mode: import('@/utils/biomechanics').ExerciseMode
-): CoachingIssue | null {
+function analyzeTrunkLean(metrics: BiomechanicalState, mode: ExerciseMode): CoachingIssue | null {
   const { trunkLean } = metrics;
-  let target = 15; // Most exercise should be <15°
+  const { warning, squatsWarning, critical } = FORM_CHECK_THRESHOLDS.trunkLean;
 
-  if (mode === 'squats') {
-    target = 30; // Squats allow more lean
-  }
+  // Squats allow more lean than the default.
+  const target = mode === 'squats' ? squatsWarning : warning;
 
   // Critical: Extreme lean
-  if (trunkLean > 45) {
+  if (trunkLean > critical) {
     return {
       type: 'trunk_lean',
       severity: 'critical',
       current: trunkLean,
       target,
       cue: 'Stay upright!',
-      priority: 2,
-      confidence: 0.88,
+      priority: FORM_CHECK_PRIORITY.critical,
+      confidence: FORM_CHECK_CONFIDENCE.trunkLeanCritical,
     };
   }
 
@@ -160,8 +195,8 @@ function analyzeTrunkLean(
       current: trunkLean,
       target,
       cue: 'Reduce forward lean',
-      priority: 3,
-      confidence: 0.83,
+      priority: FORM_CHECK_PRIORITY.warning,
+      confidence: FORM_CHECK_CONFIDENCE.trunkLeanWarning,
     };
   }
 
@@ -171,36 +206,33 @@ function analyzeTrunkLean(
 /**
  * Analyze knee alignment (valgus = inward collapse)
  */
-function analyzeKneeValgus(
-  metrics: BiomechanicalState,
-  _mode: import('@/utils/biomechanics').ExerciseMode
-): CoachingIssue | null {
+function analyzeKneeValgus(metrics: BiomechanicalState, _mode: ExerciseMode): CoachingIssue | null {
   const { kneeValgus } = metrics;
-  const target = 20;
+  const { warning, critical, target } = FORM_CHECK_THRESHOLDS.kneeValgus;
 
   // Critical: Severe inward collapse
-  if (kneeValgus > 50) {
+  if (kneeValgus > critical) {
     return {
       type: 'knee_valgus',
       severity: 'critical',
       current: kneeValgus,
       target,
       cue: 'Push knees outward!',
-      priority: 2,
-      confidence: 0.86,
+      priority: FORM_CHECK_PRIORITY.critical,
+      confidence: FORM_CHECK_CONFIDENCE.kneeValgusCritical,
     };
   }
 
   // Warning: Noticeable collapse
-  if (kneeValgus > 30) {
+  if (kneeValgus > warning) {
     return {
       type: 'knee_valgus',
       severity: 'warning',
       current: kneeValgus,
       target,
       cue: 'Keep knees aligned',
-      priority: 4,
-      confidence: 0.81,
+      priority: FORM_CHECK_PRIORITY.kneeValgusWarning,
+      confidence: FORM_CHECK_CONFIDENCE.kneeValgusWarning,
     };
   }
 
@@ -212,22 +244,22 @@ function analyzeKneeValgus(
  */
 function analyzeAnkleFlexion(
   metrics: BiomechanicalState,
-  mode: import('@/utils/biomechanics').ExerciseMode
+  mode: ExerciseMode
 ): CoachingIssue | null {
   if (mode !== 'squats') return null; // Only relevant for squats
 
   const { ankleFlexion } = metrics;
-  const target = 80; // Ideal: ~80°
+  const { info, target } = FORM_CHECK_THRESHOLDS.ankleFlexion;
 
-  if (ankleFlexion < 60) {
+  if (ankleFlexion < info) {
     return {
       type: 'ankle_flexion',
       severity: 'info',
       current: ankleFlexion,
       target,
       cue: 'Improve ankle mobility',
-      priority: 5,
-      confidence: 0.75,
+      priority: FORM_CHECK_PRIORITY.ankleFlexion,
+      confidence: FORM_CHECK_CONFIDENCE.ankleFlexion,
     };
   }
 
@@ -237,22 +269,19 @@ function analyzeAnkleFlexion(
 /**
  * Analyze symmetry (left/right balance)
  */
-function analyzeSymmetry(
-  metrics: BiomechanicalState,
-  _mode: import('@/utils/biomechanics').ExerciseMode
-): CoachingIssue | null {
+function analyzeSymmetry(metrics: BiomechanicalState, _mode: ExerciseMode): CoachingIssue | null {
   const { symmetry } = metrics;
-  const target = 0.9; // >0.9 = balanced
+  const { warning, target } = FORM_CHECK_THRESHOLDS.symmetry;
 
-  if (symmetry < 0.7) {
+  if (symmetry < warning) {
     return {
       type: 'symmetry',
       severity: 'warning',
       current: symmetry,
       target,
       cue: 'Balance weight evenly',
-      priority: 4,
-      confidence: 0.79,
+      priority: FORM_CHECK_PRIORITY.symmetryWarning,
+      confidence: FORM_CHECK_CONFIDENCE.symmetry,
     };
   }
 
@@ -285,6 +314,117 @@ function generateSummary(issues: CoachingIssue[]): string {
   return 'Perfect form!';
 }
 
+/** Every analyzer, in the order issues are collected before the priority sort. */
+const ANALYZERS = [
+  analyzeStability,
+  analyzeDepth,
+  analyzeTrunkLean,
+  analyzeKneeValgus,
+  analyzeAnkleFlexion,
+  analyzeSymmetry,
+] as const;
+
+/**
+ * Run every analyzer and return the issues sorted by ascending priority.
+ * Single source of truth for both analyzeForm and evaluateFormGates.
+ */
+function collectIssues(metrics: BiomechanicalState, mode: ExerciseMode): CoachingIssue[] {
+  const issues = ANALYZERS.map((analyze) => analyze(metrics, mode)).filter(
+    (issue): issue is CoachingIssue => issue !== null
+  );
+
+  // Sort by priority (lower = more critical)
+  issues.sort((a, b) => a.priority - b.priority);
+  return issues;
+}
+
+/**
+ * Gate form metrics, reporting each check with its measured value and limit.
+ *
+ * Unlike analyzeForm — which returns whichever issues fired — this returns every
+ * gate including the passing ones, so a clean rep is auditable rather than an
+ * empty array. Severity maps onto gate status: critical/warning are failures,
+ * info is a pass, and a check that does not apply to this mode is `no-data`.
+ *
+ * A clean form therefore yields `passes`; a form issue yields `reviewable`; a
+ * metric the engine cannot see for this mode yields `insufficient-data`.
+ */
+export function evaluateFormGates(metrics: BiomechanicalState, mode: ExerciseMode): GateVerdict {
+  const issues = collectIssues(metrics, mode);
+  const byType = new Map(issues.map((issue) => [issue.type, issue]));
+  const T = FORM_CHECK_THRESHOLDS;
+  const leanLimit = mode === 'squats' ? T.trunkLean.squatsWarning : T.trunkLean.warning;
+
+  // Built in issue-priority order so the first non-passing gate is also the
+  // highest-priority problem, not merely whichever check was listed first.
+  const gates: GateResult[] = [
+    metrics.isStable
+      ? gatePass('stability', 'stable rep', 1, 'isStable = true')
+      : gateFail('stability', 'stable rep', 0, 'isStable = true', 'The rep is not stable yet.'),
+    gateForIssue(byType.get('depth'), metrics.depth, {
+      id: 'depth',
+      name: 'range of motion',
+      limit: `${T.depth.critical}-${T.depth.good}`,
+      failure: `Depth is outside ${T.depth.critical}-${T.depth.good}.`,
+    }),
+    gateForIssue(byType.get('trunk_lean'), metrics.trunkLean, {
+      id: 'trunk_lean',
+      name: 'trunk lean',
+      limit: `<= ${leanLimit} deg`,
+      failure: `Trunk lean exceeds ${leanLimit} degrees.`,
+    }),
+    gateForIssue(byType.get('knee_valgus'), metrics.kneeValgus, {
+      id: 'knee_valgus',
+      name: 'knee valgus',
+      limit: `<= ${T.kneeValgus.warning} deg`,
+      failure: `Knees collapse inward past ${T.kneeValgus.warning} degrees.`,
+    }),
+    gateForIssue(byType.get('ankle_flexion'), metrics.ankleFlexion, {
+      id: 'ankle_flexion',
+      name: 'ankle mobility',
+      limit: `>= ${T.ankleFlexion.info} deg`,
+      failure: `Ankle flexion below ${T.ankleFlexion.info} degrees.`,
+    }),
+    gateForIssue(byType.get('symmetry'), metrics.symmetry, {
+      id: 'symmetry',
+      name: 'left/right balance',
+      limit: `>= ${T.symmetry.warning}`,
+      failure: `Left/right balance below ${T.symmetry.warning}.`,
+    }),
+  ];
+
+  // Depth is not graded for curls, which have a dedicated elbow-angle
+  // instrument in the live session, and ankle mobility is only observable in a
+  // squat. Drop the checks this exercise cannot answer rather than report a
+  // pass for something that was never measured.
+  return buildVerdict(
+    gates.filter((gate) => {
+      if (gate.id === 'depth') return mode !== 'curls';
+      if (gate.id === 'ankle_flexion') return mode === 'squats';
+      return true;
+    })
+  );
+}
+
+/**
+ * Map a fired issue onto a gate. When no issue fired, the check passed, and the
+ * gate records the value that was actually measured — a pass that reports 0
+ * would be indistinguishable from a real zero reading.
+ */
+function gateForIssue(
+  issue: CoachingIssue | undefined,
+  measured: number,
+  spec: { id: string; name: string; limit: string; failure: string }
+): GateResult {
+  if (!issue) {
+    return gatePass(spec.id, spec.name, measured, spec.limit);
+  }
+  if (issue.severity === 'info') {
+    return gatePass(spec.id, spec.name, issue.current, spec.limit);
+  }
+  return gateFail(spec.id, spec.name, issue.current, spec.limit, `${issue.cue} ${spec.failure}`);
+}
+
 /**
  * Main analysis function - unified single source of truth
  *
@@ -295,20 +435,10 @@ function generateSummary(issues: CoachingIssue[]): string {
  */
 export function analyzeForm(
   metrics: BiomechanicalState,
-  mode: import('@/utils/biomechanics').ExerciseMode,
+  mode: ExerciseMode,
   sessionTrend?: 'improving' | 'degrading' | 'stable'
 ): CoachingAnalysis {
-  const allIssues: CoachingIssue[] = [
-    analyzeStability(metrics, mode),
-    analyzeDepth(metrics, mode),
-    analyzeTrunkLean(metrics, mode),
-    analyzeKneeValgus(metrics, mode),
-    analyzeAnkleFlexion(metrics, mode),
-    analyzeSymmetry(metrics, mode),
-  ].filter((issue): issue is CoachingIssue => issue !== null);
-
-  // Sort by priority (lower = more critical)
-  allIssues.sort((a, b) => a.priority - b.priority);
+  const allIssues = collectIssues(metrics, mode);
 
   // Calculate overall confidence
   const confidence =
@@ -351,19 +481,4 @@ export function convertToLegacyFormat(analysis: CoachingAnalysis): {
     shouldSpeak:
       analysis.primaryIssue.severity === 'critical' || analysis.primaryIssue.severity === 'warning',
   };
-}
-
-/**
- * Filter issues for UI display (limit to top 3)
- */
-export function getDisplayIssues(analysis: CoachingAnalysis, limit: number = 3): CoachingIssue[] {
-  return analysis.issues.slice(0, limit);
-}
-
-/**
- * Check if form is critically degraded (multiple critical issues)
- */
-export function isCriticalForm(analysis: CoachingAnalysis): boolean {
-  const criticalCount = analysis.issues.filter((i) => i.severity === 'critical').length;
-  return criticalCount >= 2;
 }

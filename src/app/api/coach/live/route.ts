@@ -33,35 +33,6 @@ import {
  * - Cost tracking and optimization
  */
 
-/**
- * Generate feedback using unified coaching engine
- * Single source of truth for ALL feedback logic
- * Used when:
- * - API providers are unavailable
- * - Metrics haven't changed significantly
- * - Session budget exhausted
- */
-function _generateCoachingFeedback(
-  metrics: any,
-  mode: string
-): { feedback: string; severity: string; shouldSpeak: boolean } {
-  const analysis = analyzeForm(
-    {
-      ...metrics,
-      trunkLean: metrics.trunkLean || 0,
-      kneeValgus: metrics.kneeValgus || 0,
-      ankleFlexion: metrics.ankleFlexion || 0,
-      depth: metrics.depth || 0,
-      symmetry: metrics.symmetry || 1,
-      isStable: metrics.isStable ?? true,
-      warnings: metrics.warnings || [],
-    },
-    mode as 'pushups' | 'squats'
-  );
-
-  return convertToLegacyFormat(analysis);
-}
-
 // callAIProvider moved to lib/aiCoachProviders (shared)
 
 export async function POST(request: NextRequest) {

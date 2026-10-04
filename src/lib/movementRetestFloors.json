@@ -1,0 +1,9 @@
+{
+  "$comment": "Screening floors for the movement test-retest protocol. Single source of truth: src/lib/movementRetest.ts re-exports these, scripts/evaluate-movement-retest.mjs reads them directly (it is plain .mjs and cannot import TypeScript), and src/lib/movementRetestDocSync.test.ts asserts docs/MOVEMENT_RETEST_PROTOCOL.md restates them. Change a value here and the doc-sync test fails until the doc is updated.",
+  "confidenceFloor": 0.65,
+  "similarityFloor": 0.7,
+  "repeatablePairRateFloor": 0.7,
+  "minimumPairs": 2,
+  "maxInconclusiveRate": 0.25,
+  "maxLowConfidenceRate": 0.25
+}

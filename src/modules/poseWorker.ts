@@ -1,12 +1,19 @@
 /// <reference lib="webworker" />
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
-import { createDetector, SupportedModels, PoseDetector } from '@tensorflow-models/pose-detection';
-import { Keypoint, WorkerMessage, PosePreprocessorSettings } from '../types/mediapipe';
+import { PoseDetector } from '@tensorflow-models/pose-detection';
+import {
+  Keypoint,
+  WorkerMessage,
+  PosePreprocessorSettings,
+  PoseDetectorConfig,
+  PoseBackendId,
+} from '../types/mediapipe';
 import {
   getDefaultPreprocessorSettings,
   preprocessImageBitmap,
 } from '../lib/pose/posePreprocessor';
+import { createPoseDetector, resolvePoseConfig } from '../lib/pose/trackerRegistry';
 import {
   ExerciseMode,
   RepCounterState,
@@ -37,6 +44,8 @@ let workerStartTime = 0;
 // increases, so per-frame lookup is amortized O(1) instead of O(n).
 let workerGhostCursor = 0;
 let preprocessorSettings: PosePreprocessorSettings = getDefaultPreprocessorSettings();
+/** The config the current detector was actually built from. */
+let activeConfig: PoseDetectorConfig = resolvePoseConfig(undefined);
 let preprocessCanvas: OffscreenCanvas | null = null;
 const _MIN_TIME_BETWEEN_REPS = 800; // ms
 
@@ -44,25 +53,36 @@ const _MIN_TIME_BETWEEN_REPS = 800; // ms
 
 // Point interface removed - consolidated into src/utils/biomechanics.ts
 
-// Initialize TF backend with WebGPU first then WebGL fallback
-async function initTfBackend(): Promise<'webgpu' | 'webgl'> {
-  try {
-    if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
-      // Check if WebGPU is actually supported/available in this context
-      const adapter = await (navigator as any).gpu?.requestAdapter();
-      if (adapter) {
+// Initialize the TF backend, honouring a requested backend and falling back
+// down the cascade rather than hard-coding webgpu -> webgl.
+const BACKEND_FALLBACKS: PoseBackendId[] = ['webgpu', 'webgl', 'cpu'];
+
+async function initTfBackend(requested?: PoseBackendId): Promise<PoseBackendId> {
+  const cascade = requested ? [requested, ...BACKEND_FALLBACKS] : BACKEND_FALLBACKS;
+
+  for (const backend of cascade) {
+    try {
+      if (backend === 'webgpu') {
+        if (typeof navigator === 'undefined' || !('gpu' in navigator)) continue;
+        const adapter = await (navigator as any).gpu?.requestAdapter();
+        if (!adapter) continue;
         await import('@tensorflow/tfjs-backend-webgpu');
-        await tf.setBackend('webgpu');
-        await tf.ready();
-        return 'webgpu';
+      } else if (backend === 'cpu') {
+        await import('@tensorflow/tfjs-backend-cpu');
       }
+
+      if (await tf.setBackend(backend)) {
+        await tf.ready();
+        return backend;
+      }
+    } catch (e) {
+      console.warn(`TF backend ${backend} unavailable, trying next:`, e);
     }
-  } catch (e) {
-    console.warn('WebGPU init failed, falling back:', e);
   }
-  await tf.setBackend('webgl');
+
+  // Last resort: let tf.js pick whatever it has already registered.
   await tf.ready();
-  return 'webgl';
+  return (tf.getBackend() as PoseBackendId) ?? 'webgl';
 }
 
 // calculateAngle removed - consolidated into src/utils/biomechanics.ts
@@ -110,27 +130,17 @@ self.addEventListener('message', async (event) => {
       workerStartTime = Date.now();
       workerGhostCursor = 0;
       preprocessorSettings = data.preprocessor ?? preprocessorSettings;
+      activeConfig = resolvePoseConfig(data.config, data.isMobile ?? false);
 
       offscreen.width = data.width;
       offscreen.height = data.height;
       ctx = offscreen.getContext('2d', { alpha: true }) as OffscreenCanvasRenderingContext2D;
 
-      const backend = await initTfBackend();
+      const backend = await initTfBackend(activeConfig.backend);
       self.postMessage({ type: 'backend', backend });
 
-      // Lightning keeps live coaching responsive; the 17-keypoint output is
-      // sufficient for the current single-person exercise engine.
-      const modelType = 'SinglePose.Lightning';
-
       await disposeDetector();
-
-      // MoveNet's smoothing tracker can dereference a missing bounding box
-      // on transient frames (`null.yMin`). The raw detector is more robust for
-      // this camera loop; the session logger still provides temporal context.
-      detector = await createDetector(SupportedModels.MoveNet, {
-        modelType,
-        enableSmoothing: false,
-      });
+      detector = await createPoseDetector(activeConfig);
 
       // Warm up the detector
       await warmupDetector(detector, data.width, data.height);
@@ -139,6 +149,17 @@ self.addEventListener('message', async (event) => {
       engineDetector = isEngineMode(workerMode) ? createEngineRepDetectorState(workerMode) : null;
       poseSmoother.reset();
 
+      self.postMessage({ type: 'ready' });
+    } else if (data.type === 'configure') {
+      // Swap the detector mid-session so a benchmark measures the config it
+      // labels, rather than re-measuring the live one under a new name.
+      activeConfig = resolvePoseConfig(data.config);
+      const backend = await initTfBackend(activeConfig.backend);
+      self.postMessage({ type: 'backend', backend });
+      await disposeDetector();
+      detector = await createPoseDetector(activeConfig);
+      await warmupDetector(detector, ctx?.canvas?.width ?? 640, ctx?.canvas?.height ?? 480);
+      poseSmoother.reset();
       self.postMessage({ type: 'ready' });
     } else if (data.type === 'setMode') {
       workerMode = (data.mode ?? 'pushups') as ExerciseMode;

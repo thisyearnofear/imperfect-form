@@ -1,5 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
+import { getDefaultPoseConfig } from '../lib/pose/trackerRegistry';
+import type { PoseDetectorConfig } from '../types/mediapipe';
 
 // Flag to track if TensorFlow has been initialized
 let tfInitialized = false;
@@ -139,33 +141,26 @@ export function isTensorFlowInitialized(): boolean {
 
 /**
  * Utility functions for mobile-specific TensorFlow operations
+ *
+ * These delegate to src/lib/pose/trackerRegistry.ts. They previously carried
+ * their own copy of the detector settings, which had drifted (mobile
+ * minPoseScore 0.15 vs 0.2, multiPoseMaxDimension 256 vs unset) from the values
+ * the worker actually used.
  */
 export const mobileTFUtils = {
   /**
-   * Gets the optimal model type for the current device
+   * Gets the optimal tracker for the current device
    * @param isMobile Whether the app is running on a mobile device
-   * @returns The appropriate model type to use
    */
-  getOptimalModelType: (_isMobile: boolean): string => {
-    // Lightning keeps live feedback responsive on both paths. Thunder is
-    // reserved for an explicit accuracy benchmark rather than the default.
-    return 'SinglePose.Lightning';
+  getOptimalModelType: (isMobile: boolean): string => {
+    return getDefaultPoseConfig(isMobile).tracker;
   },
 
   /**
-   * Gets optimized detector configuration based on device type
+   * Gets the resolved detector configuration based on device type
    * @param isMobile Whether the app is running on a mobile device
-   * @returns Configuration object for the pose detector
    */
-  getDetectorConfig: (isMobile: boolean): Record<string, unknown> => {
-    return {
-      modelType: 'SinglePose.Lightning',
-      // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
-      enableSmoothing: false,
-      minPoseScore: isMobile ? 0.15 : 0.25,
-      multiPoseMaxDimension: isMobile ? 256 : 512,
-      // Keep the legacy bounding-box tracker off for transient null boxes.
-      enableTracking: false,
-    };
+  getDetectorConfig: (isMobile: boolean): PoseDetectorConfig => {
+    return getDefaultPoseConfig(isMobile);
   },
 };

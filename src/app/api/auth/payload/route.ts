@@ -7,17 +7,23 @@ export async function POST(req: NextRequest) {
   try {
     console.log('Auth payload request received');
 
-    let address;
-
+    let body: unknown;
     try {
-      const body = await req.json();
-      console.log('Auth payload body:', JSON.stringify(body, null, 2));
-      address = body.address;
-    } catch {
-      // Error is intentionally not caught or used
-      console.log('Failed to parse request body, using empty address');
-      // If we can't parse the body, just use a placeholder
-      address = '';
+      body = await req.json();
+    } catch (error) {
+      // Fail closed: a payload minted from an unparsed body would be signed by
+      // the wallet with an empty address and then authenticate nobody.
+      console.warn('Auth payload body could not be parsed:', error);
+      return NextResponse.json({ error: 'Request body must be valid JSON' }, { status: 400 });
+    }
+
+    const address = (body as { address?: unknown })?.address;
+    if (typeof address !== 'string' || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      console.warn('Auth payload rejected: missing or malformed address');
+      return NextResponse.json(
+        { error: 'A valid EVM `address` (0x followed by 40 hex characters) is required' },
+        { status: 400 }
+      );
     }
 
     // Generate a random nonce
@@ -25,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     // Create a payload with the address and nonce
     const payload = {
-      address: address || '',
+      address,
       nonce,
       // Add any other data you want to include in the payload
       // This will be signed by the user's wallet

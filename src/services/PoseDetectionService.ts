@@ -7,6 +7,7 @@
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
+import { createPoseDetector, getDefaultPoseConfig } from '@/lib/pose/trackerRegistry';
 
 export interface PoseDetectionProgress {
   phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
@@ -49,25 +50,17 @@ export class PoseDetectionService {
   /**
    * Get the optimal model type for device
    */
-  static getOptimalModelType(_isMobile: boolean): string {
-    // Lightning keeps the live feedback loop responsive on both paths. Keep
-    // Thunder available for an explicit accuracy benchmark, not the default.
-    return 'SinglePose.Lightning';
+  static getOptimalModelType(isMobile: boolean): string {
+    // Delegates to the shared registry so this cannot drift from the detector
+    // the worker and main-thread fallback actually build.
+    return getDefaultPoseConfig(isMobile).tracker;
   }
 
   /**
    * Get detector config based on device type
    */
   static getDetectorConfig(isMobile: boolean) {
-    return {
-      modelType: 'SinglePose.Lightning',
-      // Avoid MoveNet's transient null bounding-box (`null.yMin`) path.
-      enableSmoothing: false,
-      minPoseScore: isMobile ? 0.2 : 0.25,
-      multiPoseMaxDimension: isMobile ? undefined : 512,
-      // Keep the legacy bounding-box tracker off for the same null-box reason.
-      enableTracking: false,
-    };
+    return getDefaultPoseConfig(isMobile);
   }
 
   /**
@@ -163,7 +156,6 @@ export class PoseDetectionService {
         percentage: 0,
       });
 
-      const poseDetection = await import('@tensorflow-models/pose-detection');
       const config = PoseDetectionService.getDetectorConfig(isMobile);
 
       // Start progress animation from 0% to 70% during model loading
@@ -182,10 +174,7 @@ export class PoseDetectionService {
         });
       }, 200); // Update every 200ms
 
-      const detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.MoveNet,
-        config
-      );
+      const detector = await createPoseDetector(config);
 
       clearInterval(progressInterval);
 

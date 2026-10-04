@@ -21,7 +21,7 @@ import { coachStation } from '../services/coachStation';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
-import { createDetector, SupportedModels } from '@tensorflow-models/pose-detection';
+import { createPoseDetector, resolvePoseConfig } from '../lib/pose/trackerRegistry';
 import {
   requestCameraPermission,
   cleanupCameraStream,
@@ -995,16 +995,11 @@ export function usePoseDetection(
         });
 
         // STEP 3: Create the latency-friendly detector only after the user
-        // has started coaching. The 17-keypoint output is sufficient for the
-        // current single-person exercise engine.
-        const modelType = 'SinglePose.Lightning';
-        // Keep the main-thread fallback aligned with the worker. MoveNet's
-        // smoothing tracker can dereference a missing bounding box on transient
-        // frames (`null.yMin`). Temporal context comes from the session trace.
-        detectorRef.current = await createDetector(SupportedModels.MoveNet, {
-          modelType: modelType as any,
-          enableSmoothing: false,
-        });
+        // has started coaching. Built through the same registry the worker
+        // uses, so the main-thread fallback can never drift from it.
+        detectorRef.current = await createPoseDetector(
+          resolvePoseConfig(undefined, isMobileDevice)
+        );
         if (cancelled || !isActiveRef.current) {
           try {
             (detectorRef.current as any)?.dispose?.();

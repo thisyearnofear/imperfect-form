@@ -2,13 +2,23 @@
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { basename, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const CONFIDENCE_FLOOR = 0.65;
-const SIMILARITY_FLOOR = 0.7;
-const REPEATABLE_PAIR_RATE_FLOOR = 0.7;
-const MINIMUM_PAIRS = 2;
-const MAX_INCONCLUSIVE_RATE = 0.25;
-const MAX_LOW_CONFIDENCE_RATE = 0.25;
+// Single source of truth, shared with src/lib/movementRetest.ts. This script is
+// plain .mjs and cannot import TypeScript, so the floors live in JSON.
+// docs/MOVEMENT_RETEST_PROTOCOL.md restates them and
+// src/lib/movementRetestDocSync.test.ts asserts all three agree.
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const floors = JSON.parse(
+  await readFile(resolve(REPO_ROOT, 'src/lib/movementRetestFloors.json'), 'utf8')
+);
+
+const CONFIDENCE_FLOOR = floors.confidenceFloor;
+const SIMILARITY_FLOOR = floors.similarityFloor;
+const REPEATABLE_PAIR_RATE_FLOOR = floors.repeatablePairRateFloor;
+const MINIMUM_PAIRS = floors.minimumPairs;
+const MAX_INCONCLUSIVE_RATE = floors.maxInconclusiveRate;
+const MAX_LOW_CONFIDENCE_RATE = floors.maxLowConfidenceRate;
 
 function usage() {
   console.error(`Usage:

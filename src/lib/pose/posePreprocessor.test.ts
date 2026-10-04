@@ -88,7 +88,6 @@ describe('posePreprocessor', () => {
         cameraCalibration: false,
         distortionFactor: -0.1,
         generativeCleanup: false,
-        generativeModelUrl: null,
         cpuFilterMaxPixels: 640 * 480,
       });
       expect(imageData.data[0]).toBe(100);
@@ -107,7 +106,6 @@ describe('posePreprocessor', () => {
         cameraCalibration: false,
         distortionFactor: -0.1,
         generativeCleanup: false,
-        generativeModelUrl: null,
         cpuFilterMaxPixels: 640 * 480,
       });
       // A dark gray pixel should be lifted toward the target mean.
@@ -127,7 +125,6 @@ describe('posePreprocessor', () => {
         cameraCalibration: false,
         distortionFactor: -0.1,
         generativeCleanup: false,
-        generativeModelUrl: null,
         cpuFilterMaxPixels: 640 * 480,
       });
       expect(imageData.data[3]).toBe(255);
@@ -155,7 +152,6 @@ describe('posePreprocessor', () => {
         cameraCalibration: false,
         distortionFactor: -0.1,
         generativeCleanup: false,
-        generativeModelUrl: null,
         cpuFilterMaxPixels: 640 * 480,
       };
       savePreprocessorSettings(settings);
@@ -187,7 +183,6 @@ describe('posePreprocessor', () => {
         cameraCalibration: true,
         distortionFactor: -0.2,
         generativeCleanup: false,
-        generativeModelUrl: null,
         cpuFilterMaxPixels: 640 * 480,
         ...partial,
       };
@@ -271,7 +266,6 @@ describe('posePreprocessor', () => {
         cameraCalibration: false,
         distortionFactor: -0.1,
         generativeCleanup: true,
-        generativeModelUrl: null,
         cpuFilterMaxPixels: 640 * 480,
         ...partial,
       };

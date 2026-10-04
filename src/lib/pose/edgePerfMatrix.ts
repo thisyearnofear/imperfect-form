@@ -1,40 +1,52 @@
 'use client';
 
 /**
- * Edge Performance A/B Matrix
+ * Edge Performance Matrix
  *
- * Systematic testing of pose detection configurations across:
- * - Input size: 192×192, 256×256, 640×480 (current)
- * - Model variant: MoveNet Lightning, Thunder, BlazePose lite
- * - Backend: WebGL, WASM, CPU
- * - Quantization: FP32 (baseline), INT8 (if supported)
+ * A/B benchmark of pose detection configurations across tracker, input size and
+ * backend. Unlike the previous version, every ranked row here is a config that
+ * was actually applied to the detector: the runner posts a `configure` message
+ * to the pose worker and the row records the config the worker confirmed.
  *
  * Usage:
- *   window.__IMF_EDGE_MATRIX__.start({ exercise: 'curls' });
+ *   const worker = getPoseWorkerHandle();
+ *   window.__IMF_EDGE_MATRIX__.start({ exercise: 'curls' }, worker);
  *   // ... run workout ...
- *   window.__IMF_EDGE_MATRIX__.stop();
- *   window.__IMF_EDGE_MATRIX__.exportMatrix();
+ *   const matrix = window.__IMF_EDGE_MATRIX__.stop();
+ *   window.__IMF_EDGE_MATRIX__.exportMarkdown(matrix);
+ *
+ * A row that could not be applied is marked `applied: false` and excluded from
+ * the ranking — reporting a composite score for a config the detector never ran
+ * would be a fabricated A/B result.
  */
 
 import { getDeviceInfo, type DeviceInfo } from '@/utils/deviceDetection';
 import { startPoseBaseline, stopPoseBaseline, type PoseBaselineReport } from './poseBaseline';
+import {
+  DEFAULT_POSE_CONFIG,
+  TRACKERS,
+  isConfigSupported,
+  resolvePoseConfig,
+} from './trackerRegistry';
+import type { PoseBackendId, PoseDetectorConfig, PoseTrackerId } from '@/types/mediapipe';
 
 // ─── Configuration Types ───────────────────────────────────────────────────────
 
-export type InputSize = '192x192' | '256x256' | '640x480';
-export type ModelVariant = 'SinglePose.Lightning' | 'SinglePose.Thunder' | 'BlazePose-lite';
-export type Backend = 'webgl' | 'wasm' | 'cpu' | 'webgpu';
-export type Quantization = 'fp32' | 'int8';
-
 export interface EdgePerfConfig {
-  inputSize: InputSize;
-  model: ModelVariant;
-  backend: Backend;
-  quantization: Quantization;
+  tracker: PoseTrackerId;
+  inputSize: number;
+  backend: PoseBackendId;
 }
 
 export interface EdgePerfRun {
   config: EdgePerfConfig;
+  /**
+   * Whether the detector was actually rebuilt with this config. False means the
+   * numbers below describe a different config and must not be ranked.
+   */
+  applied: boolean;
+  /** The config the worker confirmed, when it reported back. */
+  appliedConfig?: PoseDetectorConfig;
   report: PoseBaselineReport;
   timestamp: number;
   durationMs: number;
@@ -53,8 +65,6 @@ export interface MatrixOptions {
   exercise?: string;
   /** Duration per configuration in seconds (default: 30) */
   durationPerConfig?: number;
-  /** Number of repetitions per configuration (default: 3) */
-  repetitions?: number;
   /** Target device description for metadata */
   target?: string;
   /** Camera setup description */
@@ -65,35 +75,36 @@ export interface MatrixOptions {
 
 // ─── Configuration Presets ──────────────────────────────────────────────────────
 
-const INPUT_SIZES: InputSize[] = ['192x192', '256x256', '640x480'];
-const MODEL_VARIANTS: ModelVariant[] = [
-  'SinglePose.Lightning',
-  'SinglePose.Thunder',
-  'BlazePose-lite',
-];
-const BACKENDS: Backend[] = ['webgl', 'wasm', 'cpu'];
-const QUANTIZATIONS: Quantization[] = ['fp32', 'int8'];
+const TRACKER_IDS: PoseTrackerId[] = ['movenet-lightning', 'movenet-thunder', 'blazepose'];
+const INPUT_SIZES = [192, 256, 640];
+const BACKENDS: PoseBackendId[] = ['webgl', 'wasm', 'cpu', 'webgpu'];
+
+/** Full detector config for a matrix cell. */
+export function toDetectorConfig(config: EdgePerfConfig): PoseDetectorConfig {
+  return resolvePoseConfig({
+    ...DEFAULT_POSE_CONFIG,
+    tracker: config.tracker,
+    inputSize: config.inputSize,
+    backend: config.backend,
+  });
+}
 
 /**
- * Get all valid configurations for the matrix.
- * Filters out invalid combinations (e.g., BlazePose on WASM).
+ * Configs worth testing on this device. Filters out pairs the registry knows
+ * cannot be constructed, so the matrix does not waste runs on impossible rows.
  */
 export function getMatrixConfigurations(
   device: DeviceInfo,
-  options: MatrixOptions = {}
+  _options: MatrixOptions = {}
 ): EdgePerfConfig[] {
   const configs: EdgePerfConfig[] = [];
 
-  for (const inputSize of INPUT_SIZES) {
-    for (const model of MODEL_VARIANTS) {
+  for (const tracker of TRACKER_IDS) {
+    for (const inputSize of INPUT_SIZES) {
       for (const backend of BACKENDS) {
-        for (const quantization of QUANTIZATIONS) {
-          // Skip invalid combinations
-          if (!isValidCombination(model, backend, quantization, device)) {
-            continue;
-          }
-          configs.push({ inputSize, model, backend, quantization });
-        }
+        const config = { tracker, inputSize, backend };
+        if (!isConfigSupported(toDetectorConfig(config), device)) continue;
+        configs.push(config);
       }
     }
   }
@@ -101,73 +112,16 @@ export function getMatrixConfigurations(
   return configs;
 }
 
-/**
- * Validate that a configuration combination is feasible on the device.
- */
-function isValidCombination(
-  model: ModelVariant,
-  backend: Backend,
-  quantization: Quantization,
-  device: DeviceInfo
-): boolean {
-  // INT8 quantization requires WebGL2 or WebGPU
-  if (quantization === 'int8') {
-    if (!device.webgl2Support && !device.webGPUSupport) {
-      return false;
-    }
-  }
-
-  // BlazePose-lite doesn't support WASM backend well
-  if (model === 'BlazePose-lite' && backend === 'wasm') {
-    return false;
-  }
-
-  // CPU backend is always valid but slow
-  // WebGL requires WebGL support
-  if (backend === 'webgl' && !device.webglSupport) {
-    return false;
-  }
-
-  // WebGPU requires WebGPU support
-  if (backend === 'webgpu' && !device.webGPUSupport) {
-    return false;
-  }
-
-  // INT8 on WebGL requires WebGL2
-  if (quantization === 'int8' && backend === 'webgl' && !device.webgl2Support) {
-    return false;
-  }
-
-  // WASM requires WASM support (generally available in modern browsers)
-  // We'll skip explicit validation here
-
-  return true;
-}
-
-/**
- * Get a human-readable label for a configuration.
- */
 export function getConfigLabel(config: EdgePerfConfig): string {
-  return `${config.model} / ${config.inputSize} / ${config.backend} / ${config.quantization}`;
-}
-
-/**
- * Get a short key for a configuration (for matrix headers).
- */
-export function getConfigKey(config: EdgePerfConfig): string {
-  const modelShort =
-    config.model === 'SinglePose.Lightning'
-      ? 'Ltn'
-      : config.model === 'SinglePose.Thunder'
-        ? 'Thn'
-        : 'BP';
-  const inputShort = config.inputSize.replace('x', '×');
-  const backendShort = config.backend.toUpperCase();
-  const quantShort = config.quantization.toUpperCase();
-  return `${modelShort} / ${inputShort} / ${backendShort} / ${quantShort}`;
+  return `${TRACKERS[config.tracker].label} / ${config.inputSize}px / ${config.backend}`;
 }
 
 // ─── Matrix Runner ──────────────────────────────────────────────────────────────
+
+/** Handle to the live pose worker, so the runner can hot-swap the detector. */
+export interface PoseWorkerHandle {
+  post(message: unknown): void;
+}
 
 class EdgePerfMatrixRunner {
   private matrix: EdgePerfMatrix | null = null;
@@ -177,15 +131,29 @@ class EdgePerfMatrixRunner {
   private isRunning = false;
   private runStartTime = 0;
   private autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
+  private worker: PoseWorkerHandle | null = null;
+  /** Config the worker confirmed for the row currently being measured. */
+  private confirmedConfig: PoseDetectorConfig | null = null;
 
   /**
-   * Start a matrix run with the given configurations.
+   * Start a matrix run.
+   *
+   * @param worker the live pose worker. Required — without it no config can be
+   *   applied and the whole matrix degrades to a labelled stability baseline.
    */
-  start(options: MatrixOptions = {}): void {
+  start(options: MatrixOptions = {}, worker?: PoseWorkerHandle | null): void {
     if (this.isRunning) {
       console.warn('[edgePerfMatrix] Matrix run already in progress');
       return;
     }
+
+    if (!worker) {
+      console.warn(
+        '[edgePerfMatrix] No pose worker supplied — configs cannot be applied. ' +
+          'Runs will be recorded as unapplied and excluded from the ranking.'
+      );
+    }
+    this.worker = worker ?? null;
 
     const device = getDeviceInfo();
     this.configs = getMatrixConfigurations(device, options);
@@ -203,108 +171,103 @@ class EdgePerfMatrixRunner {
     this.isRunning = true;
     console.log(`[edgePerfMatrix] Started matrix ${this.matrix.matrixId}`);
     console.log(`[edgePerfMatrix] ${this.configs.length} configurations to test`);
-    // KNOWN LIMITATION: the pose pipeline currently hard-codes
-    // SinglePose.Lightning (see poseWorker.ts / usePoseDetection.ts) and this
-    // runner only *labels* each baseline run with config metadata — it does not
-    // hot-swap the detector model, input size, backend, or quantization. Until
-    // config application is wired into the detector, every row measures the same
-    // live configuration and the composite-score ranking is NOT a real A/B
-    // result. Treat runs as a single-config stability baseline, not a matrix.
-    console.warn(
-      '[edgePerfMatrix] Config hot-swap is not implemented yet — all rows will ' +
-        'measure the live SinglePose.Lightning config under different labels. ' +
-        'See docs/EDGE_PERF_MATRIX.md → "Current limitations".'
-    );
-
-    // Start the first configuration
     this.startNextConfig();
   }
 
-  /**
-   * Stop the current matrix run and return results.
-   */
+  /** Report the config the worker actually applied, called from the worker hook. */
+  confirmApplied(appliedConfig: PoseDetectorConfig): void {
+    this.confirmedConfig = appliedConfig;
+  }
+
+  /** Stop the current matrix run and return results. */
   stop(): EdgePerfMatrix | null {
     if (!this.isRunning || !this.matrix) {
       console.warn('[edgePerfMatrix] No matrix run in progress');
       return null;
     }
 
-    // Clear auto-advance timer
-    if (this.autoAdvanceTimer) {
-      clearTimeout(this.autoAdvanceTimer);
-      this.autoAdvanceTimer = null;
-    }
-
-    // Stop the current baseline
-    const currentReport = stopPoseBaseline();
-    if (currentReport && this.configs[this.currentRunIndex]) {
-      this.matrix.runs.push({
-        config: this.configs[this.currentRunIndex],
-        report: currentReport,
-        timestamp: Date.now(),
-        durationMs: Date.now() - this.runStartTime,
-      });
-    } else if (!currentReport) {
-      console.warn('[edgePerfMatrix] No baseline report to record for final config');
-    }
+    this.recordCurrentRun();
 
     this.isRunning = false;
     this.matrix.completedAt = Date.now();
-
     console.log(`[edgePerfMatrix] Completed matrix with ${this.matrix.runs.length} runs`);
 
     return this.matrix;
   }
 
-  /**
-   * Skip to the next configuration.
-   */
+  /** Skip to the next configuration. */
   skip(): void {
     if (!this.isRunning) return;
-
-    // Stop current baseline
-    const currentReport = stopPoseBaseline();
-    if (currentReport && this.configs[this.currentRunIndex]) {
-      this.matrix?.runs.push({
-        config: this.configs[this.currentRunIndex],
-        report: currentReport,
-        timestamp: Date.now(),
-        durationMs: Date.now() - this.runStartTime,
-      });
-    } else if (!currentReport) {
-      console.warn('[edgePerfMatrix] No baseline report to record for current config');
-    }
-
+    this.recordCurrentRun();
     this.currentRunIndex++;
     this.startNextConfig();
   }
 
-  /**
-   * Start the next configuration in the matrix.
-   */
+  private recordCurrentRun(): void {
+    if (this.autoAdvanceTimer) {
+      clearTimeout(this.autoAdvanceTimer);
+      this.autoAdvanceTimer = null;
+    }
+
+    const config = this.configs[this.currentRunIndex];
+    if (!config || !this.matrix) return;
+
+    const currentReport = stopPoseBaseline();
+    if (!currentReport) {
+      console.warn('[edgePerfMatrix] No baseline report to record');
+      return;
+    }
+
+    const expected = toDetectorConfig(config);
+    const confirmed = this.confirmedConfig;
+    const applied =
+      !!this.worker &&
+      !!confirmed &&
+      confirmed.tracker === expected.tracker &&
+      confirmed.backend === expected.backend &&
+      confirmed.inputSize === expected.inputSize;
+
+    this.matrix.runs.push({
+      config,
+      applied,
+      appliedConfig: confirmed ?? undefined,
+      report: currentReport,
+      timestamp: Date.now(),
+      durationMs: Date.now() - this.runStartTime,
+    });
+
+    this.confirmedConfig = null;
+  }
+
   private startNextConfig(): void {
-    if (!this.matrix || this.currentRunIndex >= this.configs.length) {
+    if (!this.matrix) return;
+
+    if (this.currentRunIndex >= this.configs.length) {
       console.log('[edgePerfMatrix] All configurations completed');
       this.isRunning = false;
-      this.matrix!.completedAt = Date.now();
+      this.matrix.completedAt = Date.now();
       return;
     }
 
     const config = this.configs[this.currentRunIndex];
     this.runStartTime = Date.now();
+    this.confirmedConfig = null;
 
     console.log(
       `[edgePerfMatrix] Starting config ${this.currentRunIndex + 1}/${this.configs.length}: ${getConfigLabel(config)}`
     );
 
-    // Start baseline with config metadata
+    // Actually apply the config before measuring.
+    if (this.worker) {
+      this.worker.post({ type: 'configure', config: toDetectorConfig(config) });
+    }
+
     startPoseBaseline({
-      matrixId: this.matrix!.matrixId,
+      matrixId: this.matrix.matrixId,
       configIndex: this.currentRunIndex,
-      inputSize: config.inputSize,
-      model: config.model,
+      tracker: config.tracker,
+      inputSize: String(config.inputSize),
       backend: config.backend,
-      quantization: config.quantization,
       exercise: this.options.exercise ?? 'curls',
       target: this.options.target ?? 'unknown',
       camera: this.options.camera ?? 'unknown',
@@ -312,11 +275,8 @@ class EdgePerfMatrixRunner {
       isMatrixRun: true,
     });
 
-    // Auto-advance after duration
     const durationMs = (this.options.durationPerConfig ?? 30) * 1000;
-    if (this.autoAdvanceTimer) {
-      clearTimeout(this.autoAdvanceTimer);
-    }
+    if (this.autoAdvanceTimer) clearTimeout(this.autoAdvanceTimer);
     this.autoAdvanceTimer = setTimeout(() => {
       if (this.isRunning && this.currentRunIndex < this.configs.length) {
         this.currentRunIndex++;
@@ -325,9 +285,6 @@ class EdgePerfMatrixRunner {
     }, durationMs);
   }
 
-  /**
-   * Get current progress.
-   */
   getProgress(): { current: number; total: number; currentConfig: EdgePerfConfig | null } {
     return {
       current: this.currentRunIndex + 1,
@@ -336,9 +293,6 @@ class EdgePerfMatrixRunner {
     };
   }
 
-  /**
-   * Get the current matrix state.
-   */
   getMatrix(): EdgePerfMatrix | null {
     return this.matrix;
   }
@@ -346,33 +300,73 @@ class EdgePerfMatrixRunner {
 
 // ─── Matrix Analysis ────────────────────────────────────────────────────────────
 
+export interface MatrixRanking {
+  config: EdgePerfConfig;
+  compositeScore: number;
+  fps: number;
+  confidence: number;
+  detectionTimeMs: number;
+  memoryGrowth: number;
+  poseDetectionRate: number;
+}
+
+export interface MatrixAnalysis {
+  error?: string;
+  bestConfig: EdgePerfConfig | null;
+  rankings: MatrixRanking[];
+  /** Rows dropped from the ranking because the config was never applied. */
+  unapplied: number;
+  summary?: {
+    totalRuns: number;
+    validRuns: number;
+    avgFps: number;
+    avgConfidence: number;
+  };
+}
+
 /**
- * Analyze a completed matrix to find the best configuration.
+ * Analyze a completed matrix.
+ *
+ * Only runs whose config was confirmed applied are ranked. If nothing was
+ * applied, the result is an explicit error rather than a ranking of labels.
  */
 export function analyzeMatrix(matrix: EdgePerfMatrix): MatrixAnalysis {
   const runs = matrix.runs;
-
   if (runs.length === 0) {
-    return { error: 'No runs completed', bestConfig: null, rankings: [] };
+    return { error: 'No runs completed', bestConfig: null, rankings: [], unapplied: 0 };
   }
 
-  // Calculate a composite score for each run
-  const scoredRuns = runs
-    .filter((run) => run.report.summary.frames > 10) // Need minimum frames
+  const applied = runs.filter((run) => run.applied);
+  const unapplied = runs.length - applied.length;
+
+  if (unapplied > 0) {
+    console.warn(
+      `[edgePerfMatrix] ${unapplied}/${runs.length} rows were not applied to the detector ` +
+        'and are excluded from the ranking.'
+    );
+  }
+
+  if (applied.length === 0) {
+    return {
+      error:
+        'No run had its config applied to the detector — this is a stability baseline, not an A/B result.',
+      bestConfig: null,
+      rankings: [],
+      unapplied,
+    };
+  }
+
+  const scoredRuns: MatrixRanking[] = applied
+    .filter((run) => run.report.summary.frames > 10)
     .map((run) => {
       const { summary } = run.report;
-
-      // Composite score: FPS × confidence / detection_time
-      // Higher is better
       const fpsScore = summary.medianFps;
       const confidenceScore = (summary.avgKeypointConfidence ?? 0) * 100;
       const latencyPenalty = Math.max(1, summary.medianDetectionTimeMs);
 
-      const compositeScore = (fpsScore * confidenceScore) / latencyPenalty;
-
       return {
         config: run.config,
-        compositeScore,
+        compositeScore: (fpsScore * confidenceScore) / latencyPenalty,
         fps: summary.medianFps,
         confidence: summary.avgKeypointConfidence ?? 0,
         detectionTimeMs: summary.medianDetectionTimeMs,
@@ -385,6 +379,7 @@ export function analyzeMatrix(matrix: EdgePerfMatrix): MatrixAnalysis {
   return {
     bestConfig: scoredRuns[0]?.config ?? null,
     rankings: scoredRuns,
+    unapplied,
     summary: {
       totalRuns: runs.length,
       validRuns: scoredRuns.length,
@@ -395,31 +390,8 @@ export function analyzeMatrix(matrix: EdgePerfMatrix): MatrixAnalysis {
   };
 }
 
-export interface MatrixAnalysis {
-  error?: string;
-  bestConfig: EdgePerfConfig | null;
-  rankings: Array<{
-    config: EdgePerfConfig;
-    compositeScore: number;
-    fps: number;
-    confidence: number;
-    detectionTimeMs: number;
-    memoryGrowth: number;
-    poseDetectionRate: number;
-  }>;
-  summary?: {
-    totalRuns: number;
-    validRuns: number;
-    avgFps: number;
-    avgConfidence: number;
-  };
-}
-
 // ─── Export Utilities ───────────────────────────────────────────────────────────
 
-/**
- * Export matrix results as markdown table.
- */
 export function exportMatrixMarkdown(matrix: EdgePerfMatrix): string {
   const analysis = analyzeMatrix(matrix);
   const { device } = matrix;
@@ -430,85 +402,89 @@ export function exportMatrixMarkdown(matrix: EdgePerfMatrix): string {
     `- **Matrix ID:** \`${matrix.matrixId}\``,
     `- **Device:** ${device.platform} / ${device.browser}`,
     `- **Performance Level:** ${device.performanceLevel}`,
-    `- **Memory:** ${device.deviceMemory ?? 'unknown'} GB`,
-    `- **Cores:** ${device.hardwareConcurrency}`,
-    `- **WebGL:** ${device.webglSupport ? 'yes' : 'no'} (WebGL2: ${device.webgl2Support ? 'yes' : 'no'})`,
-    `- **WebGPU:** ${device.webGPUSupport ? 'yes' : 'no'}`,
     `- **Duration:** ${((matrix.completedAt - matrix.startedAt) / 1000).toFixed(1)}s`,
     `- **Runs:** ${matrix.runs.length}`,
+    `- **Applied configs:** ${matrix.runs.length - analysis.unapplied}`,
+    `- **Unapplied (excluded):** ${analysis.unapplied}`,
     '',
+  ];
+
+  if (analysis.error) {
+    lines.push(`> **${analysis.error}**`, '');
+  }
+
+  lines.push(
     '## Results',
     '',
-    '| Rank | Model | Input | Backend | Quant | FPS | Confidence | Detection (ms) | Composite Score |',
-    '| ---: | --- | --- | --- | --- | ---: | ---: | ---: | ---: |',
-  ];
+    '| Rank | Tracker | Input | Backend | FPS | Confidence | Detection (ms) | Score |',
+    '| ---: | --- | ---: | --- | ---: | ---: | ---: | ---: |'
+  );
 
   analysis.rankings.forEach((rank, i) => {
     lines.push(
-      `| ${i + 1} | ${rank.config.model} | ${rank.config.inputSize} | ${rank.config.backend} | ${rank.config.quantization} | ${rank.fps.toFixed(1)} | ${(rank.confidence * 100).toFixed(1)}% | ${rank.detectionTimeMs.toFixed(1)} | ${rank.compositeScore.toFixed(2)} |`
+      `| ${i + 1} | ${TRACKERS[rank.config.tracker].label} | ${rank.config.inputSize} | ${rank.config.backend} | ${rank.fps.toFixed(1)} | ${(rank.confidence * 100).toFixed(1)}% | ${rank.detectionTimeMs.toFixed(1)} | ${rank.compositeScore.toFixed(2)} |`
     );
   });
 
   lines.push('');
 
-  if (analysis.bestConfig) {
-    lines.push('## Recommendation');
-    lines.push('');
-    lines.push(`**Best configuration:** ${getConfigLabel(analysis.bestConfig)}`);
-    lines.push('');
-    lines.push('### Implementation');
-    lines.push('');
-    lines.push('```typescript');
-    lines.push('// src/services/PoseDetectionService.ts');
-    lines.push('static getDetectorConfig(isMobile: boolean) {');
-    lines.push(`  return {`);
-    lines.push(`    modelType: '${analysis.bestConfig.model}',`);
-    lines.push(`    // Input size: ${analysis.bestConfig.inputSize}`);
-    lines.push(`    // Backend: ${analysis.bestConfig.backend}`);
-    lines.push(`    // Quantization: ${analysis.bestConfig.quantization}`);
-    lines.push('    enableSmoothing: false,');
-    lines.push('    minPoseScore: isMobile ? 0.2 : 0.25,');
-    lines.push('    multiPoseMaxDimension: isMobile ? undefined : 512,');
-    lines.push('    enableTracking: false,');
-    lines.push('  };');
-    lines.push('}');
-    lines.push('```');
+  // List every unapplied row so it is visible rather than silently dropped.
+  const unappliedRuns = matrix.runs.filter((run) => !run.applied);
+  if (unappliedRuns.length > 0) {
+    lines.push('## Excluded rows', '', 'These configs were not applied to the detector:', '');
+    for (const run of unappliedRuns) {
+      lines.push(`- ${getConfigLabel(run.config)}`);
+    }
     lines.push('');
   }
+
+  if (analysis.bestConfig) {
+    lines.push(
+      '## Recommendation',
+      '',
+      `**Best configuration:** ${getConfigLabel(analysis.bestConfig)}`,
+      '',
+      'This is measured, not generated. To adopt it, change `DEFAULT_POSE_CONFIG` in',
+      '`src/lib/pose/trackerRegistry.ts`.',
+      ''
+    );
+  }
+
+  lines.push(
+    '## Caveats',
+    '',
+    "- BlazePose reports 33 landmarks against MoveNet's 17, so keypoint confidence is",
+    '  not directly comparable between tracker families. The composite score weights',
+    '  confidence heavily; compare within a family before comparing across.',
+    '- Jitter and absence-detection behaviour have not been measured across these',
+    '  trackers. Do not carry a keypoint-confidence threshold from one family to',
+    '  another without measuring it.',
+    ''
+  );
 
   return lines.join('\n');
 }
 
-/**
- * Export matrix results as JSON.
- */
 export function exportMatrixJson(matrix: EdgePerfMatrix): string {
-  const analysis = analyzeMatrix(matrix);
-  return JSON.stringify({ matrix, analysis }, null, 2);
+  return JSON.stringify({ matrix, analysis: analyzeMatrix(matrix) }, null, 2);
 }
 
 // ─── Global API ─────────────────────────────────────────────────────────────────
 
 const runner = new EdgePerfMatrixRunner();
 
-export interface EdgePerfWindowApi {
-  start: typeof runner.start;
-  stop: typeof runner.stop;
-  skip: typeof runner.skip;
-  getProgress: typeof runner.getProgress;
-  getMatrix: typeof runner.getMatrix;
-  exportMarkdown: (matrix: EdgePerfMatrix) => string;
-  exportJson: (matrix: EdgePerfMatrix) => string;
-  analyzeMatrix: typeof analyzeMatrix;
-  getConfigurations: typeof getMatrixConfigurations;
-}
-
 /**
- * Expose to window for console use (development only).
+ * Expose to window for console use. Available in development, or in a build when
+ * NEXT_PUBLIC_POSE_BENCH=1, so a matrix can be captured from a built app.
  */
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (
+  typeof window !== 'undefined' &&
+  (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_POSE_BENCH === '1')
+) {
   (window as any).__IMF_EDGE_MATRIX__ = {
-    start: (options?: MatrixOptions) => runner.start(options),
+    start: (options?: MatrixOptions, worker?: PoseWorkerHandle | null) =>
+      runner.start(options, worker),
+    confirmApplied: (config: PoseDetectorConfig) => runner.confirmApplied(config),
     stop: () => runner.stop(),
     skip: () => runner.skip(),
     getProgress: () => runner.getProgress(),
@@ -517,5 +493,5 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     exportJson: (matrix: EdgePerfMatrix) => exportMatrixJson(matrix),
     analyzeMatrix,
     getConfigurations: getMatrixConfigurations,
-  } as EdgePerfWindowApi;
+  };
 }

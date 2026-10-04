@@ -115,6 +115,15 @@ export function usePoseWorker(
     const worker = new Worker(new URL('./poseWorker.ts', import.meta.url), { type: 'module' });
     workerRef.current = worker;
 
+    // Expose the live worker so the edge perf matrix can hot-swap the detector
+    // and record which config was actually applied. Dev/bench builds only.
+    if (
+      typeof window !== 'undefined' &&
+      (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_POSE_BENCH === '1')
+    ) {
+      (window as any).__IMF_POSE_WORKER__ = worker;
+    }
+
     // Keep at most one in-flight bitmap and one newest pending bitmap.
     let isProcessing = false;
     let workerReady = false;

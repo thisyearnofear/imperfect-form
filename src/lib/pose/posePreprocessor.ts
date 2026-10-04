@@ -26,6 +26,15 @@ export const CPU_FILTER_MAX_PIXELS = 640 * 480;
  */
 export const PHASE2_CV_FILTERS_ENABLED = false;
 
+/**
+ * What `generativeCleanup` actually runs.
+ *
+ * It is a classical tone curve, not a generative model. Callers and the UI label
+ * it honestly; the earlier "generative low-light cleanup" label plus a model-URL
+ * setting implied a network model was in play, and nothing consumed that URL.
+ */
+export const GENERATIVE_CLEANUP_MODE = 'tone-curve' as const;
+
 /** Map a device performance level to the maximum pixel count we will subject
  *  to expensive CPU filters. Lower thresholds on low-end devices keep the
  *  frame rate healthy. */
@@ -56,12 +65,11 @@ export interface PosePreprocessorSettings {
   cameraCalibration: boolean;
   /** Phase 2: radial distortion coefficient. Negative corrects barrel distortion. */
   distortionFactor: number;
-  /** Phase 2: enable lightweight generative low-light cleanup. */
+  /** Phase 2: enable lightweight low-light cleanup. Applies a classical tone
+   *  curve only — there is no generative model wired up, so nothing accepts a
+   *  model URL. A request for generative cleanup must not silently resolve to
+   *  something weaker than was asked for; see GENERATIVE_CLEANUP_MODE. */
   generativeCleanup: boolean;
-  /** Phase 2: optional URL/path to a TensorFlow.js GraphModel for generative cleanup.
-   *  TODO: currently a placeholder; the tone-curve fallback above runs while we
-   *  evaluate whether a real tiny generative model is worth the battery/latency cost. */
-  generativeModelUrl: string | null;
   /** Runtime guard: maximum number of pixels allowed for expensive CPU filters.
    *  Set based on device performance level; falls back to CPU_FILTER_MAX_PIXELS. */
   cpuFilterMaxPixels: number;
@@ -76,7 +84,6 @@ const DEFAULT_SETTINGS: PosePreprocessorSettings = {
   cameraCalibration: false,
   distortionFactor: -0.1,
   generativeCleanup: false,
-  generativeModelUrl: null,
   cpuFilterMaxPixels: CPU_FILTER_MAX_PIXELS,
 };
 
@@ -110,7 +117,6 @@ export function normalizePreprocessorSettings(
     generativeCleanup: PHASE2_CV_FILTERS_ENABLED
       ? (partial.generativeCleanup ?? DEFAULT_SETTINGS.generativeCleanup)
       : false,
-    generativeModelUrl: partial.generativeModelUrl ?? DEFAULT_SETTINGS.generativeModelUrl,
     cpuFilterMaxPixels: partial.cpuFilterMaxPixels ?? DEFAULT_SETTINGS.cpuFilterMaxPixels,
   };
 }

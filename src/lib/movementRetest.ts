@@ -1,13 +1,16 @@
 import { compareMovementAssessments } from '@/lib/movementAssessment';
 import { isMovementAssessment } from '@/lib/movementAssessmentHistory';
 import type { StoredMovementAssessment } from '@/services/integrations/MovementAssessmentDataAdapter';
+import floors from '@/lib/movementRetestFloors.json';
 
-export const RETEST_CONFIDENCE_FLOOR = 0.65;
-export const RETEST_SIMILARITY_FLOOR = 0.7;
-export const RETEST_REPEATABLE_PAIR_RATE_FLOOR = 0.7;
-export const RETEST_MINIMUM_PAIRS = 2;
-export const RETEST_MAX_INCONCLUSIVE_RATE = 0.25;
-export const RETEST_MAX_LOW_CONFIDENCE_RATE = 0.25;
+// Single source of truth is movementRetestFloors.json, so the plain-JS eval
+// script can read the same numbers. See movementRetestDocSync.test.ts.
+export const RETEST_CONFIDENCE_FLOOR = floors.confidenceFloor;
+export const RETEST_SIMILARITY_FLOOR = floors.similarityFloor;
+export const RETEST_REPEATABLE_PAIR_RATE_FLOOR = floors.repeatablePairRateFloor;
+export const RETEST_MINIMUM_PAIRS = floors.minimumPairs;
+export const RETEST_MAX_INCONCLUSIVE_RATE = floors.maxInconclusiveRate;
+export const RETEST_MAX_LOW_CONFIDENCE_RATE = floors.maxLowConfidenceRate;
 
 export type RetestEvidenceStatus = 'insufficient-data' | 'reviewable' | 'passes-screen';
 
