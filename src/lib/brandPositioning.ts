@@ -96,7 +96,10 @@ const STUDIO_FOYER: FoyerCopy = {
   loopLabel: 'ONE REP / ONE FIX',
   invitation: 'Start imperfect. Get one useful cue.',
   trust: 'Private camera coaching · wallet optional · no video upload',
-  hint: 'Camera → understand → show',
+  // The product's real promise is longitudinal — see and understand what is
+  // changing — so the doorway says so. Scoped to what exists today: your own
+  // history, not a population benchmark.
+  hint: 'One rep now · your trend over time',
   cta: 'Start camera coaching',
 };
 

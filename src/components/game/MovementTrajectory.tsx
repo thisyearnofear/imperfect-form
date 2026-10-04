@@ -151,8 +151,8 @@ export function MovementTrajectory({
           <span>
             {trajectory.nextUnlock.targetValue === null
               ? trajectory.qualifyingReads < 2
-                ? 'Build the comparison first'
-                : 'Keep building the local line'
+                ? 'One more comparable test starts the comparison'
+                : 'Keep testing to firm this up'
               : `Next signal target · ${percent(trajectory.nextUnlock.targetValue)}`}
           </span>
           <span>
@@ -162,9 +162,13 @@ export function MovementTrajectory({
         </div>
       </div>
 
+      {/* Says the quiet part out loud. The gates in MOVEMENT_INTELLIGENCE.md
+          hold population comparison back until there is real cohort data, and an
+          unexplained gate reads as a withheld feature. Stating the method is
+          more persuasive than hiding it. */}
       <p className="movement-trajectory__note">
-        Self-comparison only · no population norm or prediction. Confidence rises with clear,
-        repeatable reads.
+        This compares you to you. We are still collecting enough people to show how your range
+        stacks up against others, so until then every number here is your own history.
       </p>
     </section>
   );

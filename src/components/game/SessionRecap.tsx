@@ -446,13 +446,6 @@ export function SessionRecap({
         </div>
       )}
 
-      {/* Grade arc — the long-term story: your control across graded sessions,
-          not just this set. Draws only when ≥2 graded sessions exist, so it
-          never fabricates a trend from a single data point. */}
-      {mode === 'curls' && (
-        <GradeArc series={buildGradeSeries(workouts ?? [], mode)} modeLabel={mode} />
-      )}
-
       <div className="session-recap__story motion-enter motion-delay-1">
         <div className="session-recap__story-mark" aria-hidden="true">
           <CheckCircle2 size={17} />
@@ -473,32 +466,7 @@ export function SessionRecap({
       {summary?.trace && summary.trace.length > 0 && (
         <FormLine trace={summary.trace} avgDepth={summary.avgDepth} />
       )}
-      {mode === 'curls' && (
-        <>
-          <MovementCard assessment={movementAssessment} />
-          <MovementAssessmentHistory
-            userAddress={userAddress}
-            currentAssessment={movementAssessment}
-          />
-        </>
-      )}
-      <FormReceipt
-        mode={mode}
-        reps={reps}
-        summary={summary}
-        movementAssessment={movementAssessment}
-        movementChallenge={movementChallenge}
-        isRace={isRace}
-      />
-      <FormSignatureHistory
-        mode={mode}
-        reps={reps}
-        summary={summary}
-        workouts={workouts}
-        userAddress={userAddress}
-        onStartSelfGhost={onStartSelfGhost}
-        compact={mode === 'curls'}
-      />
+
       {onTryAgain && (
         <button
           type="button"
@@ -510,6 +478,46 @@ export function SessionRecap({
           <span>Try this correction now</span>
         </button>
       )}
+
+      {/* Everything below is instrumentation, not story. It stays reachable but
+          behind one disclosure: the recap used to render roughly a dozen panels
+          at once, which buried the one sentence the session actually produced.
+          ROADMAP asked for exactly this ("first render shows only Copy receipt
+          and Share form line"). */}
+      <details className="session-recap__more">
+        <summary>Session detail and history</summary>
+
+        {mode === 'curls' && (
+          <>
+            {/* Grade arc — your control across graded sessions, not just this
+                set. Draws only when >=2 graded sessions exist, so it never
+                fabricates a trend from a single data point. */}
+            <GradeArc series={buildGradeSeries(workouts ?? [], mode)} modeLabel={mode} />
+            <MovementCard assessment={movementAssessment} />
+            <MovementAssessmentHistory
+              userAddress={userAddress}
+              currentAssessment={movementAssessment}
+            />
+          </>
+        )}
+        <FormReceipt
+          mode={mode}
+          reps={reps}
+          summary={summary}
+          movementAssessment={movementAssessment}
+          movementChallenge={movementChallenge}
+          isRace={isRace}
+        />
+        <FormSignatureHistory
+          mode={mode}
+          reps={reps}
+          summary={summary}
+          workouts={workouts}
+          userAddress={userAddress}
+          onStartSelfGhost={onStartSelfGhost}
+          compact={mode === 'curls'}
+        />
+      </details>
     </section>
   );
 }

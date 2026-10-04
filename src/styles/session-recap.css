@@ -196,6 +196,43 @@
   font-weight: 550;
   line-height: 1.45;
 }
+/* Session detail disclosure.
+   The recap used to render roughly a dozen panels at once, which buried the
+   one sentence the set produced. The instrumentation (grade arc, movement
+   card, history, receipt, signature history) now lives behind this. */
+.session-recap__more {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(117, 230, 177, 0.14);
+  padding-top: 0.6rem;
+}
+.session-recap__more > summary {
+  cursor: pointer;
+  list-style: none;
+  color: #9bb5b1;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.35rem 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.session-recap__more > summary::-webkit-details-marker {
+  display: none;
+}
+.session-recap__more > summary::after {
+  content: ' +';
+  color: #56d9c3;
+}
+.session-recap__more[open] > summary::after {
+  content: ' −';
+}
+.session-recap__more > summary:hover {
+  color: #dff7f1;
+}
+.session-recap__more > *:not(summary) {
+  margin-top: 0.85rem;
+}
 .session-recap__item {
   margin-top: 0;
 }

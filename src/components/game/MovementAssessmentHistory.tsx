@@ -311,8 +311,8 @@ export function MovementAssessmentHistory({
           <div className="movement-history__setup-reminder">
             <Clock3 size={13} aria-hidden="true" />
             <span>
-              For a meaningful self-comparison, keep camera height, distance, angle, lighting, and
-              warm-up similar. The local line does not yet correct for changed setup conditions.
+              For a fair comparison with yourself, keep camera height, distance, angle, lighting,
+              and warm-up similar. If the setup changes, the two readings are not really comparable.
             </span>
           </div>
 
