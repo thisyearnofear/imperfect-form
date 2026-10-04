@@ -34,10 +34,10 @@ export default function BuildPage() {
             Not a software demo. <em>A workshop.</em>
           </h1>
           <p className="crafft-exhibit__lede">
-            Sandow’s Institute of Physical Culture had apprentices, schools, and a Royal
-            Warrant. The machine that finishes his loop is being built the same way —
-            documented in the open, assembled from an open-hardware kit, fabricated in a British
-            workshop, and tuned on real human movement.
+            Sandow’s Institute of Physical Culture had apprentices, schools, and a Royal Warrant.
+            The machine that finishes his loop is being built in the open — documented in the
+            repository, assembled from an open-hardware kit, and tuned against real human movement.
+            Where a piece is not built yet, this page says so.
           </p>
           <div className="crafft-exhibit__cta-row" style={{ marginTop: '1.5rem' }}>
             <a
@@ -46,10 +46,11 @@ export default function BuildPage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Hammer size={16} aria-hidden="true" /> See the build <ArrowRight size={16} aria-hidden="true" />
+              <Hammer size={16} aria-hidden="true" /> See the build{' '}
+              <ArrowRight size={16} aria-hidden="true" />
             </a>
             <Link href="/" className="crafft-exhibit__cta crafft-exhibit__cta--ghost">
-              Try the live machine <ArrowRight size={16} aria-hidden="true" />
+              Try the camera coach <ArrowRight size={16} aria-hidden="true" />
             </Link>
           </div>
         </div>
@@ -58,17 +59,19 @@ export default function BuildPage() {
       <section className="crafft-exhibit__section crafft-exhibit__craft">
         <h2 className="crafft-exhibit__section-title">Four levels of making</h2>
         <p className="crafft-exhibit__section-intro">
-          The craft is the process, not only the object. Each level extends a heritage practice
-          with a contemporary tool.
+          The craft is the process, not only the object. Each level extends a heritage practice with
+          a contemporary tool.
         </p>
         <div className="crafft-exhibit__craft-list">
           <div className="crafft-exhibit__craft-item">
             <Wrench size={18} aria-hidden="true" />
             <div>
-              <h4>Calibration against Sandow’s tables</h4>
+              <h4>Calibration against a real safety envelope</h4>
               <p>
-                The arm’s joint angles are mapped to Sandow’s 1897 proportional ideals — the same
-                “ideal” tables he graded photographs against. The lineage is in the tolerances.
+                Arm motion is capped against a software interlock — workspace, sweep speed, and
+                per-command step — before a joint is ever commanded. Trajectories that exceed it are
+                stretched at execution rather than clamped at the wire, so the planned motion is the
+                motion performed.
               </p>
             </div>
           </div>
@@ -77,28 +80,30 @@ export default function BuildPage() {
             <div>
               <h4>Open-hardware arm, assembled not mass-produced</h4>
               <p>
-                The SO-101 is an open kit — sourced, assembled, and serviced in the workshop, not
-                a sealed appliance. Repairability is a craft value.
+                The SO-101 is an open kit — sourced, assembled, and serviced in the workshop, not a
+                sealed appliance. Repairability is a craft value.
               </p>
             </div>
           </div>
           <div className="crafft-exhibit__craft-item">
             <Camera size={18} aria-hidden="true" />
             <div>
-              <h4>Cabinet fabricated in a British workshop</h4>
+              <h4>Cabinet fabrication — planned, not yet built</h4>
               <p>
-                The housing is a Victorian seaside strength-tester built by hand — timber, brass
-                plate, engraved gauge. The £5,000 finalist grant funds this fabrication.
+                The intended housing is a Victorian seaside strength-tester: timber, brass plate,
+                engraved gauge. This is a finalist-phase intention, not a shipped object — the grant
+                that would fund it has not been awarded yet.
               </p>
             </div>
           </div>
           <div className="crafft-exhibit__craft-item">
             <Cpu size={18} aria-hidden="true" />
             <div>
-              <h4>Pose model tuned on real human movement</h4>
+              <h4>Movement data from real coaching sessions</h4>
               <p>
-                Not synthetic data — real coaching sessions, real joint angles, real corrections.
-                Sessions become episodes that teach the arm what to show.
+                Form is graded on-device from real joint angles, and each qualifying session becomes
+                a comparable read for your next test. Turning those reads into robot training
+                episodes is the next stage, not a shipped one.
               </p>
             </div>
           </div>
@@ -123,25 +128,26 @@ export default function BuildPage() {
             <FlaskConical size={22} aria-hidden="true" />
             <h3>Simulation · the manual stage</h3>
             <p>
-              The arm is developed in simulation first (MuJoCo via Cyberwave), then on a manual
-              stage, before any hardware autonomy. The gate is honest: understand before show.
+              Arm motion is developed and gated in simulation first, then on a manual stage, before
+              any hardware autonomy. Live hardware is currently paused while the elbow servo is
+              replaced; the simulation path is what runs today.
             </p>
           </div>
           <div className="crafft-exhibit__machine-card">
             <Hammer size={22} aria-hidden="true" />
             <h3>Hardware · upper-body only</h3>
             <p>
-              A desk arm cannot credibly show squat depth. Flagship demonstrations stay
-              upper-body — curls, push-ups, pull-ups — exactly as Sandow’s spring-grip corrected
-              only grip. Honest scope over overclaim.
+              A desk arm cannot credibly show squat depth. Flagship demonstrations stay upper-body —
+              curls, push-ups, pull-ups — exactly as Sandow’s spring-grip corrected only grip.
+              Honest scope over overclaim.
             </p>
           </div>
           <div className="crafft-exhibit__machine-card">
             <LockKeyhole size={22} aria-hidden="true" />
             <h3>Learned policies · after proof</h3>
             <p>
-              SmolVLA fine-tuning starts only once scripted demonstration is proven on hardware
-              and coached sessions can become LeRobot episodes. No generative slop in the loop.
+              SmolVLA fine-tuning starts only once scripted demonstration is proven on hardware and
+              coached sessions can become LeRobot episodes. No generative slop in the loop.
             </p>
           </div>
         </div>
@@ -154,7 +160,8 @@ export default function BuildPage() {
         <p className="crafft-exhibit__coda-sub">Help make the coach</p>
         <div className="crafft-exhibit__cta-row">
           <Link href="/collaborate" className="crafft-exhibit__cta">
-            <Hammer size={16} aria-hidden="true" /> Join the build <ArrowRight size={16} aria-hidden="true" />
+            <Hammer size={16} aria-hidden="true" /> Join the build{' '}
+            <ArrowRight size={16} aria-hidden="true" />
           </Link>
           <Link href="/lore" className="crafft-exhibit__cta crafft-exhibit__cta--ghost">
             The lineage <ArrowRight size={16} aria-hidden="true" />
@@ -164,4 +171,3 @@ export default function BuildPage() {
     </main>
   );
 }
-

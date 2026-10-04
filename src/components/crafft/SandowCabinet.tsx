@@ -72,7 +72,11 @@ export function SandowCabinet({
             <span className="crafft-gauge__ticks" />
             <span
               className="crafft-gauge__fill"
-              style={graded ? { width: `${Math.min(100, Math.max(8, (Number(reps) || 0) * 8))}%` } : undefined}
+              style={
+                graded
+                  ? { width: `${Math.min(100, Math.max(8, (Number(reps) || 0) * 8))}%` }
+                  : undefined
+              }
             />
           </div>
           <span className="crafft-gauge__caption">
@@ -103,13 +107,15 @@ export function SandowCabinet({
           {foyer.trust}
         </p>
 
-        {/* Arm status — fail-silent, like the real station */}
-        {armLinked && (
-          <p className="crafft-cabinet__arm-status motion-enter motion-delay-4">
-            <span className="crafft-cabinet__arm-dot" aria-hidden="true" /> SO-101 linked · ready to
-            demonstrate
-          </p>
-        )}
+        {/* Arm status — mirrors the coaching surface's real connection check. Defaults
+            to the honest offline state, so the exhibit can never claim a live
+            arm it does not have. */}
+        <p className="crafft-cabinet__arm-status motion-enter motion-delay-4">
+          <span className="crafft-cabinet__arm-dot" aria-hidden="true" />{' '}
+          {armLinked
+            ? 'SO-101 linked · ready to demonstrate'
+            : 'SO-101 playbook · arm offline — the camera coach runs today'}
+        </p>
 
         {/* Sandow lineage footer — the historical anchor */}
         <p className="crafft-lineage motion-enter motion-delay-4">

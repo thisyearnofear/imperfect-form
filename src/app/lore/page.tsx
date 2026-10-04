@@ -90,7 +90,7 @@ function MinimalLore() {
             Sandow graded photographs by post. We grade with a camera, and a robot shows the fix.
           </p>
           <div className="crafft-exhibit__hero-cabinet">
-            <SandowCabinet mode="curls" armLinked />
+            <SandowCabinet mode="curls" />
           </div>
         </div>
       </section>
@@ -147,7 +147,7 @@ function ImmersiveLore() {
             on-device pose, why a robot, and why the lineage matters.
           </p>
           <div className="crafft-exhibit__hero-cabinet">
-            <SandowCabinet mode="curls" armLinked />
+            <SandowCabinet mode="curls" />
           </div>
         </div>
       </section>
@@ -244,13 +244,14 @@ function ImmersiveLore() {
             <LockKeyhole size={22} />
             <h3>Artisanal intelligence</h3>
             <p>
-              The arm learns from real coaching sessions, not from a generative model producing
-              infinite variations. The same loop Sandow ran, just faster and with a robot.
+              The arm will learn from real coaching sessions rather than a generative model
+              producing infinite variations — the same loop Sandow ran, with a robot. That stage is
+              built but not yet trained; today the arm performs authored demonstrations.
             </p>
           </div>
         </div>
         <Link href="/" className="crafft-exhibit__cta">
-          <Camera size={16} /> Try the live machine <ArrowRight size={16} />
+          <Camera size={16} /> Try the camera coach <ArrowRight size={16} />
         </Link>
       </section>
 
@@ -263,9 +264,11 @@ function ImmersiveLore() {
           <div className="crafft-exhibit__craft-item">
             <Hammer size={18} />
             <div>
-              <h4>Calibration against Sandow&apos;s tables</h4>
+              <h4>Calibration against a real safety envelope</h4>
               <p>
-                The arm&apos;s joint angles are mapped to Sandow&apos;s 1897 proportional ideals.
+                Arm motion is capped against a software interlock — workspace, sweep speed, and
+                per-command step — so a demonstration never asks the joint for more than it can
+                give.
               </p>
             </div>
           </div>
@@ -273,15 +276,16 @@ function ImmersiveLore() {
             <Wrench size={18} />
             <div>
               <h4>Open-hardware arm, assembled not mass-produced</h4>
-              <p>SO-101 is an open kit. The cabinet is fabricated in a British workshop.</p>
+              <p>SO-101 is an open kit, assembled and serviced rather than sealed.</p>
             </div>
           </div>
           <div className="crafft-exhibit__craft-item">
             <Cpu size={18} />
             <div>
-              <h4>Pose model tuned on real human movement</h4>
+              <h4>Form graded on real human movement</h4>
               <p>
-                Not synthetic data — real coaching sessions, real joint angles, real corrections.
+                Not synthetic data — real joint angles, read on-device, graded against a safety
+                envelope you can inspect.
               </p>
             </div>
           </div>
@@ -307,26 +311,27 @@ function ImmersiveLore() {
             <Bot size={22} />
             <h3>SO-101 Arm</h3>
             <p>
-              Open-hardware robot arm via Cyberwave. Seven degrees of freedom, real-time joint
-              control, and safety clamps that prevent injury. The arm mirrors your elbow angle and
-              shows the target correction.
+              Open-hardware robot arm driven through the Cyberwave platform. Five degrees of
+              freedom, a software interlock that clamps workspace, speed and per-command step, and a
+              stall check that aborts if the joint stops tracking the command.
             </p>
           </div>
           <div className="crafft-exhibit__machine-card">
             <Cpu size={22} />
             <h3>Cyberwave SDK</h3>
             <p>
-              WebSocket-based control for real-time teleoperation. The coach station sends
-              demonstration intents, and the arm executes precise trajectories with sub-degree
-              accuracy.
+              WebSocket control from the browser to the coach station. The station resolves a form
+              cue into a demonstration intent and drives the arm through it — the browser never
+              touches the hardware directly.
             </p>
           </div>
           <div className="crafft-exhibit__machine-card">
             <Hammer size={22} />
             <h3>Builder Story</h3>
             <p>
-              Sessions feed into LeRobot episodes. Episodes fine-tune SmolVLA. The arm learns from
-              real coaching sessions — not synthetic data. The loop is closed.
+              Qualifying sessions are stored on-device as comparable movement reads, and a gated
+              export turns them into LeRobot episodes for policy training. That export runs offline
+              in the coach station today; fine-tuning is the next stage.
             </p>
           </div>
         </div>

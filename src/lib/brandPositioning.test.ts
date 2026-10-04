@@ -23,11 +23,23 @@ describe('brand positioning foyer copy', () => {
     expect(studio?.foyer.loopLabel).toBe(BRAND.loopLabel);
   });
 
-  it('surfaces Sandow heritage and the flywheel in the main product copy', () => {
+  it('surfaces Sandow heritage and an honest recap beat in the main product copy', () => {
     expect(BRAND.sandowGrade).toMatch(/Sandow/);
     expect(BRAND.sandowGrade).toMatch(/1897/);
     expect(BRAND.sandowSpan).toBe('1897 → 2026');
-    expect(BRAND.flywheelLine).toMatch(/coaching episode/i);
-    expect(BRAND.flywheelTrust).toMatch(/on your device/i);
+    expect(BRAND.flywheelLine).toMatch(/stored on your device/i);
+    expect(BRAND.flywheelTrust).toMatch(/nothing was uploaded/i);
+  });
+
+  it('never claims the session trains the robot', () => {
+    // Nothing exports a browser session into a policy, so copy asserting the
+    // loop is closed is a false claim shown to every user who finishes a set.
+    // See docs/ROADMAP.md Milestone 3, which is unchecked.
+    for (const [key, value] of Object.entries(BRAND)) {
+      if (typeof value !== 'string') continue;
+      expect(value, `BRAND.${key} claims the session trains the robot`).not.toMatch(
+        /coaching episode for the arm/i
+      );
+    }
   });
 });

@@ -239,11 +239,17 @@ export const BRAND = {
   /** Quiet backdrop span — the lineage without the warrant voice. */
   sandowSpan: '1897 → 2026',
   /**
-   * Honest flywheel beat. Sessions are captured as local coaching episodes
-   * (pose stays on-device). Cyberwave / LeRobot export is the next robotics gate.
+   * Honest recap beat. A session is stored on-device as a movement read that
+   * the next test compares against — that is what actually happens.
+   *
+   * It used to say the session "is now a coaching episode for the arm", which
+   * was false: nothing exports the session and no policy learns from it. The
+   * LeRobot export is real but lives in coach-station and runs offline, not
+   * from the browser. Claiming the loop was closed here overstated the product
+   * to every user who finished a set.
    */
-  flywheelLine: 'This session is now a coaching episode for the arm.',
-  flywheelTrust: 'Pose stayed on your device. The movement trace teaches the coach what to show.',
+  flywheelLine: 'This set is stored on your device as a movement read.',
+  flywheelTrust: 'Nothing was uploaded. Take the same test in a week or so and we compare the two.',
   /** Positioning spine — keep copy aligned with docs/NORTH_STAR.md */
   differentiation:
     'The robot exists to teach the human: camera coaching first, physical demonstration second, learned policies from real sessions third.',
