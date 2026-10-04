@@ -11,9 +11,15 @@ Joint mapping (SO-101 schema keys):
   _3 = elbow_flex     (the star — bicep curl joint)
   _4 = wrist_flex     (wrist up/down)
   _5 = wrist_roll     (wrist rotation)
-  _6 = gripper        (0=open, 0.8=closed)
+  _6 = gripper        (0=open, 100=closed, percent of travel)
 
 All angles in degrees for readability; converted to radians at the wire.
+
+Gripper units: 0-100 percent of travel, NOT 0-1. The module docstring
+previously claimed "0=open, 0.8=closed", which contradicted every pose in this
+file (they command 45.0 to grip). poses use the 0-100 percent convention, which
+is also what LeRobot's so101_follower `action` expects, so the docstring was the
+wrong one. Normalise with coach_station.dataset.GRIPPER_MAX.
 """
 
 from __future__ import annotations
@@ -25,6 +31,8 @@ import os
 import time
 from dataclasses import dataclass, field
 from typing import Awaitable, Callable, Literal, Optional
+
+from .safety import STEP_DT_S, load_safety_limits
 
 logger = logging.getLogger("coach_station.choreography")
 
@@ -110,6 +118,88 @@ EasingName = Literal[
     "linear", "snap", "ease_in", "ease_out", "ease_in_out",
     "ease_in_quad", "ease_out_quad", "concentric", "eccentric",
 ]
+
+
+# ─── Safety capping ────────────────────────────────────────────────────────
+#
+# Keyframe durations alone do not bound joint speed: an easing curve's *peak
+# slope* is what matters. Every cubic curve here peaks at 3x its mean rate, so a
+# sweep can be perfectly legal on average and still demand a speed the arm must
+# not be asked for.
+#
+# trajectory.py already guards the single-joint path via capped_speed_deg_s;
+# the choreography path had no equivalent, so a keyframe duration could plan a
+# sweep the single-joint path would have refused. cap_segment_duration uses the
+# measured peak slopes below to stretch any segment that would exceed the
+# interlock's limit.
+
+#: Peak d(t)/dt of each easing curve relative to the mean rate, MEASURED from
+#: the functions above rather than assumed. These are cubic curves, not the
+#: quadratic/C1-smoothstep shapes the names suggest, so several peak at 3.0x,
+#: not 1.5x — assuming 1.5x let the curls exceed the ceiling by ~50%.
+#:
+#: Guarded by tests/test_safety.py::test_easing_peak_slopes_match_the_curves,
+#: which differentiates every curve and fails if this table drifts.
+EASING_PEAK_SLOPE: dict[str, float] = {
+    "linear": 1.0,
+    "snap": 10.0,          # step function: jumps to full travel at t=0.1
+    "ease_in": 3.0,        # t^3
+    "ease_out": 3.0,       # 1-(1-t)^3
+    "ease_in_out": 3.0,    # 4t^3 / mirrored cubic
+    "ease_in_quad": 2.0,   # t^2
+    "ease_out_quad": 2.0,  # 1-(1-t)^2
+    "concentric": 2.0,     # alias of ease_out_quad
+    "eccentric": 3.0,      # alias of ease_in_cubic
+}
+
+#: Fallback for an unknown easing name: assume the steepest curve we ship, so a
+#: typo makes a motion slower rather than faster.
+_UNKNOWN_PEAK_SLOPE = 10.0
+
+
+def peak_slope(easing: str) -> float:
+    """Peak slope factor of an easing curve, 1.0 meaning constant rate."""
+    return EASING_PEAK_SLOPE.get(easing, _UNKNOWN_PEAK_SLOPE)
+
+
+def cap_segment_duration(
+    start: dict[str, float],
+    end: dict[str, float],
+    duration_s: float,
+    *,
+    joint_easing: dict[str, str] | None = None,
+    default_easing: str = "ease_in_out",
+    limits=None,
+) -> float:
+    """Return a duration long enough to keep every joint inside the limits.
+
+    Two ceilings apply and the stricter wins:
+      * per-tick step:  max_step_deg / STEP_DT_S
+      * joint speed:    max_speed_deg_s, divided by the easing curve's peak slope
+
+    The result is never shorter than `duration_s` — this only ever slows a
+    segment down, never speeds it up.
+    """
+    if duration_s <= 0:
+        return duration_s
+
+    limits = limits or load_safety_limits()
+    joint_easing = joint_easing or {}
+    rate_ceiling = max(
+        min(limits.max_speed_deg_s, limits.max_step_deg / max(STEP_DT_S, 1e-3)),
+        1e-6,
+    )
+    required = duration_s
+
+    for joint, target in end.items():
+        source = start.get(joint, target)
+        travel = abs(float(target) - float(source))
+        if travel <= 0:
+            continue
+        easing = joint_easing.get(joint, default_easing)
+        required = max(required, travel * peak_slope(easing) / rate_ceiling)
+
+    return required
 
 
 # ─── Data model ────────────────────────────────────────────────────────────
@@ -399,6 +489,9 @@ async def execute_choreography(
     """
     dt = TICK_DT * speed_scale
     warned_slow_publish = False
+    # Resolved once per run so every segment is capped against the same
+    # envelope (and so a mid-run env change cannot split the limits).
+    limits = load_safety_limits()
 
     async def _paced_send(tick_s: float, joints: dict[str, float]) -> None:
         """Publish one frame, then sleep only for the *remaining* tick budget.
@@ -430,8 +523,32 @@ async def execute_choreography(
             current_pose = dict(choreography.keyframes[0].joints)
 
         for idx, kf in enumerate(choreography.keyframes):
-            # Interpolate from current to target
-            duration = kf.duration_s * speed_scale
+            # Interpolate from current to target, stretching the segment if its
+            # easing curve would peak above the interlock's speed or step limit.
+            # Without this a keyframe duration alone could plan a sweep faster
+            # than the arm is allowed to be driven — the single-joint path has
+            # always guarded this via capped_speed_deg_s.
+            planned = kf.duration_s * speed_scale
+            duration = cap_segment_duration(
+                current_pose,
+                kf.joints,
+                planned,
+                joint_easing=kf.joint_easing or None,
+                default_easing=kf.easing,
+                limits=limits,
+            )
+            if duration > planned * 1.001:
+                logger.info(
+                    "[CHOREO] %s kf=%d: stretched %.3fs -> %.3fs to respect "
+                    "%.0f deg/s / %.1f deg per %.2fs",
+                    choreography.name,
+                    idx + 1,
+                    planned,
+                    duration,
+                    limits.max_speed_deg_s,
+                    limits.max_step_deg,
+                    STEP_DT_S,
+                )
             if duration > 0.001:
                 frames = interpolate_keyframes(
                     current_pose,

@@ -160,11 +160,18 @@ class FakeWS:
 
 
 def _form_payload() -> str:
+    """The single-joint boundary fixture.
+
+    issue="depth" keeps this on the ArmAdapter.execute path: elbow_swing on curls
+    is routed to a multi-joint choreography, which would exercise
+    run_choreography rather than the publish_fault boundary under test here.
+    See coach_station/server.py::_resolve_choreography.
+    """
     return json.dumps(
         {
             "type": "form_event",
             "mode": "curls",
-            "issue": "elbow_swing",
+            "issue": "depth",
             "severity": "warning",
             "cue": "Pin your elbows",
             "personality": "RASTA",
@@ -183,7 +190,8 @@ def test_publish_fault_fires_on_adapter_failure():
 
     assert len(arm.faults) == 1
     name, description = arm.faults[0]
-    assert "demonstrate_strict_curl" in name
+    # issue="depth" resolves to the full-curl demonstration.
+    assert "demonstrate_full_curl" in name
     assert "boom" in description
     # Error robot_state still went out on the wire
     assert ws.messages[-1]["status"] == "error"

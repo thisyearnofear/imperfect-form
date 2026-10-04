@@ -95,10 +95,19 @@ class ProgressArm:
 
 
 def _form_event() -> FormEvent:
+    """The single-joint boundary fixture.
+
+    issue="depth" is deliberate: `_resolve_choreography` routes elbow_swing and
+    momentum on curls to multi-joint choreographies, so an elbow_swing fixture
+    would never reach `ArmAdapter.execute` and these boundary tests would be
+    testing the choreography path instead of the adapter contract they are
+    written for. Choreography routing has its own coverage in
+    test_choreography_routing.py.
+    """
     return FormEvent(
         type="form_event",
         mode="curls",
-        issue="elbow_swing",
+        issue="depth",
         severity="warning",
         cue="Pin your elbows",
         personality="RASTA",
@@ -124,12 +133,14 @@ def test_intent_is_versioned_and_contains_adapter_parameters():
     assert intent.version == "1.0"
     assert intent.type == "demonstration_intent"
     assert intent.command_id == "cmd-test"
-    assert intent.name == "demonstrate_strict_curl"
+    # issue="depth" resolves to the full-curl demonstration, not the strict curl.
+    assert intent.name == "demonstrate_full_curl"
     assert intent.joint == "elbow_flex"
     assert intent.repeats == 2
 
 
 def test_station_intent_uses_observed_curl_angles():
+    """The commanded sweep starts where the arm actually is, not at a default."""
     station = CoachStation(arm=FakeArm())
     websocket = FakeWebSocket()
     event = _form_event()
@@ -139,8 +150,10 @@ def test_station_intent_uses_observed_curl_angles():
     asyncio.run(station.handle_event(websocket, event.model_dump_json()))
 
     intent = next(message for message in websocket.messages if message["type"] == "demonstration_intent")
+    # from_deg follows the observed angle; to_deg is the demonstration's own
+    # target, which for a full curl is a fixed 50 degrees.
     assert intent["from_deg"] == 132.0
-    assert intent["to_deg"] == 55.0
+    assert intent["to_deg"] == 50.0
 
 
 def test_command_result_rejects_unknown_protocol_version():
@@ -175,7 +188,9 @@ def test_station_emits_demo_state_result_and_idle_feedback():
     assert websocket.messages[0]["status"] == "executing"
     assert websocket.messages[0]["command_id"] == command_id
     assert websocket.messages[1]["type"] == "demonstration_intent"
-    assert websocket.messages[1]["from_deg"] == 160.0
+    # No observed angle on this event, so the demonstration's own defaults are
+    # used: 90 down to 50 for a full curl.
+    assert websocket.messages[1]["from_deg"] == 90.0
     assert websocket.messages[1]["to_deg"] == 50.0
     assert websocket.messages[1]["command_id"] == command_id
     assert websocket.messages[3]["status"] == "succeeded"
@@ -266,6 +281,7 @@ def test_cooldown_drop_emits_versioned_demo_skipped():
     assert len(skipped) == 1
     assert skipped[0]["version"] == "1.0"
     assert skipped[0]["reason"] in {"cooldown", "busy"}
-    assert skipped[0]["issue"] == "elbow_swing"
+    # The acknowledgement echoes the event that was dropped.
+    assert skipped[0]["issue"] == "depth"
     assert skipped[0]["mode"] == "curls"
     assert skipped[0]["retry_in_s"] >= 0
