@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import InitializationScreen from '@/components/ui/InitializationScreen';
-import { OnboardingProvider } from '@/contexts/OnboardingContext';
 
 // The wallet stack (wagmi → viem, farcaster, radix, tanstack) is ~400 KB raw.
 // Ring 0 is wallet-free by design and the day-0 foyer needs none of it, so the
@@ -70,9 +69,5 @@ export default function ClientOnlyProviders({ children }: ClientOnlyProvidersPro
     return <InitializationScreen />;
   }
 
-  return (
-    <OnboardingProvider>
-      <SimplifiedAppProviders>{children}</SimplifiedAppProviders>
-    </OnboardingProvider>
-  );
+  return <SimplifiedAppProviders>{children}</SimplifiedAppProviders>;
 }

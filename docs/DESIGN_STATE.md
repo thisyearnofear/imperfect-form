@@ -86,6 +86,27 @@ Both were verified to fail when the defect is reintroduced.
   `(shell)` group and were reachable in production. Now gated by a server
   layout.
 
+### Dead surface removed
+
+- `OnboardingModal` and `OnboardingContext` deleted. The modal never mounted —
+  `e2e/onboarding.spec.ts` skipped it in every run and `ring0.spec.ts` seeded
+  `imf_seenOnboarding_v1` to bypass a modal that never appeared — while holding
+  the best-written expectation-setting copy in the repo. The foyer's inline copy
+  is better, so mounting it would have been a downgrade. **The copy survives** as
+  `ONBOARDING_STEPS` in `brandPositioning.ts`; only the unreachable component
+  and its context are gone.
+- `src/components/profile/` deleted whole. `ProfileDisplay`, `XpProgressBar`,
+  `ThemeSwitcher` and `StatCell` were referenced only by each other and by their
+  own barrel — a four-file subtree nothing imported. The _other_
+  `ProfileDisplay` (`leaderboard/`, 111 lines) is live and untouched; the two
+  files sharing a name were unrelated.
+- `MemoryButton` deleted. `Button.tsx` documents itself as replacing it, and
+  the only reference anywhere was that comment. It still wore Press Start 2P on
+  its primary button — the "second app" the design lock forbids.
+- `PioneerBadge`, `ThemeDemo`, `LoadingDemo` and `ThemeIndicator` deleted as
+  unreferenced. `.motion-demo` and its `studio-demo` keyframes went with them: a
+  1.4s infinite border-colour loop that nothing used.
+
 ## Deliberately not done
 
 - **No cohort benchmarks, age bands or archetypes in copy.** Gated on real pilot
@@ -102,15 +123,24 @@ Both were verified to fail when the defect is reintroduced.
 
 ## Open
 
-| Item                                      | Why it is open                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Duplicate primitives**                  | Loader/spinner logic exists in four places (`Spinner`, `LoadingIcons`, and inline in both `Button` and `MemoryButton`), and hand-rolled `role="dialog"` markup in `Game.tsx` and `OnboardingModal.tsx` alongside the Radix `AccessibleDialog`. Two files are both named `ProfileDisplay.tsx` (`profile/` and `leaderboard/`). `MemoryButton` is self-declared as replaced yet still exported, and still wears Press Start 2P on its primary. Mount or delete — a tax on every future change. |
-| **`OnboardingModal` never mounts**        | It holds the best-written expectation-setting in the repo, including the precise "The path leads to physical AI that can demonstrate the correction". The foyer's inline copy is better, so mounting it would be a downgrade. Needs a product decision, not a cleanup.                                                                                                                                                                                                                       |
-| **Per-second desktop HUD re-render**      | `GameHUD` pulses via a `setTimeout` every second. Mobile is correctly exempt.                                                                                                                                                                                                                                                                                                                                                                                                                |
-| **`motion-demo` infinite loop**           | A 1.4s infinite border-color loop with no reduced-motion exit beyond the global override.                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **Model weights not pre-warmed**          | The pose _chunk_ is prefetched, but MediaPipe weights are not, so a cold first visit can stall on the "Coach AI" phase. `FIRST_VISIT_AND_MANUAL_STAGE.md` measures comprehension, not latency.                                                                                                                                                                                                                                                                                               |
-| **`SandowCabinet` footer**                | Still reads "we closed the loop with a robot arm". Arguably lineage rhetoric, but it sits adjacent to the claims that were just corrected.                                                                                                                                                                                                                                                                                                                                                   |
-| **`zTokens.ts` vs `designTokens.zIndex`** | These do **not** conflict — the latter delegates to `Z`. Left alone deliberately.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Item                                      | Why it is open                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hand-rolled dialog markup**             | `Game.tsx`'s camera primer and the (now deleted) onboarding modal both used raw `role="dialog"` rather than the Radix `AccessibleDialog` that eight other modals use. The primer is left alone deliberately: it is e2e-covered and carries bespoke denial-recovery semantics (re-ask the browser, restore focus on cancel) that `AccessibleDialog` does not model. Converting it is a behaviour change, not a refactor. |
+| **Loader primitives still split**         | Spinner logic exists in `Spinner`, `LoadingIcons`, and inline in `Button`. `MemoryButton` is gone, which removed the fourth. Worth consolidating onto one, but it is cosmetic and no surface is currently broken by it.                                                                                                                                                                                                 |
+| **Model weights not pre-warmed**          | The pose _chunk_ is prefetched on idle and on CTA hover, but MediaPipe weights are not, so a cold first visit can stall on the "Coach AI" phase. `FIRST_VISIT_AND_MANUAL_STAGE.md` measures comprehension, not latency.                                                                                                                                                                                                 |
+| **`SandowCabinet` footer**                | Still reads "we closed the loop with a robot arm". Arguably lineage rhetoric in a heritage exhibit, but it sits adjacent to the claims that were just corrected, so it deserves a deliberate decision rather than a default.                                                                                                                                                                                            |
+| **`zTokens.ts` vs `designTokens.zIndex`** | These do **not** conflict — the latter delegates to `Z`. Left alone deliberately.                                                                                                                                                                                                                                                                                                                                       |
+
+### Closed after review
+
+Two items were investigated and intentionally _not_ changed:
+
+- **The per-second desktop HUD pulse.** `GameHUD` re-renders on a one-second
+  timer to scale the rep counter. It looked wasteful, but it is bounded to the
+  final two minutes, desktop-only, and the mobile branch is already exempt with
+  a comment explaining the frame-budget reason. It is a deliberate flourish on a
+  bounded window, not an oversight.
+- **The camera primer's bespoke dialog.** See the first row above.
 
 ## A platform quirk worth knowing
 
