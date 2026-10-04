@@ -88,6 +88,33 @@ test.describe('landing — CTA is reachable', () => {
       await context.close();
     }
   });
+
+  /**
+   * The fold itself, not just reachability. The page was scrollable, but the
+   * CTA still started below the fold on a 664px phone — correct for a brochure,
+   * wrong for a page whose entire job is to start a set.
+   */
+  test('the CTA is above the fold on a phone, not merely reachable', async ({ browser }) => {
+    const context = await browser.newContext(PHONE);
+    const page = await context.newPage();
+    try {
+      await page.goto('/');
+      await expect(page.locator(CTA)).toBeAttached({ timeout: 20000 });
+      await page.waitForTimeout(1200);
+
+      const geo = await page.evaluate(() => {
+        const r = document.querySelector('#startButton')!.getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, viewportH: window.innerHeight };
+      });
+
+      expect(
+        geo.bottom,
+        `CTA bottom ${Math.round(geo.bottom)} exceeds the ${geo.viewportH}px fold`
+      ).toBeLessThanOrEqual(geo.viewportH);
+    } finally {
+      await context.close();
+    }
+  });
 });
 
 test.describe('landing — copy is not painted over', () => {

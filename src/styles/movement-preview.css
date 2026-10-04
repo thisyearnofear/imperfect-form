@@ -45,6 +45,26 @@
   color: #b4d8d0;
 }
 
+/* Narrow viewports: the preview is decorative and the CTA is functional. On a
+   664px phone the foyer column ran 1060px tall, putting "Try one rep" 65px
+   below the fold — reachable only by scrolling, on a page whose one job is to
+   start a set. Shaving the figure and the caption reclaims the height without
+   touching anything above the CTA. */
+@media (max-width: 768px) {
+  .movement-preview {
+    padding: 0.35rem 0.6rem 0.35rem;
+  }
+
+  .movement-preview__figure {
+    max-width: 7rem;
+    margin-top: 0.1rem;
+  }
+
+  .movement-preview__caption {
+    margin-top: 0.1rem;
+  }
+}
+
 /* ── shared figure styling ─────────────────────────────────────────────── */
 
 .movement-preview__bone {

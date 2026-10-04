@@ -97,6 +97,23 @@
   justify-content: center;
 }
 
+/* Wide screens: the column was a fixed 520px centred, which left 460px of
+   empty space either side at 1440 and 700px at 1920 — while the bay photograph
+   sat behind the right-hand gap doing nothing but occupying space. Widening to
+   620px gives the type room to breathe and pushes the empty margin to the left,
+   where there is no art, instead of splitting it down the middle.
+
+   Deliberately not wider than 620px: past that the lines get long enough to
+   hurt reading, and the scrim stops being able to carry the copy's contrast
+   where it overlaps the photo. */
+@media (min-width: 1100px) {
+  .coach-foyer__inner {
+    width: min(100%, 620px);
+    /* Sit left of centre so the right margin becomes the photo's stage. */
+    margin: 0 auto 0 clamp(3rem, 8vw, 9rem);
+  }
+}
+
 .coach-foyer__brand {
   margin: 0 0 0.85rem;
   color: var(--cf-teal-bright);
@@ -611,6 +628,29 @@
    button already carries its own top margin for the gap below. */
 .coach-foyer__preview-wrap {
   margin: 1.1rem 0 0;
+}
+
+/* Narrow viewports: the foyer column is 1060px tall on a 664px phone, which
+   pushes "Try one rep" below the fold. These gaps sit *above* the CTA, so
+   tightening them buys fold height without changing anything the athlete reads
+   or the order they read it in. Measured budget: 113px to reclaim. */
+@media (max-width: 768px) {
+  .coach-foyer__preview-wrap {
+    margin: 0.55rem 0 0;
+  }
+
+  .sandow-provenance {
+    margin-top: 0.6rem;
+  }
+
+  .coach-foyer__coach-status {
+    margin: 0.5rem 0 0.55rem;
+    padding: 0.45rem 0.6rem;
+  }
+
+  .coach-foyer__lede {
+    margin-top: 0.6rem;
+  }
 }
 
 .coach-foyer__exercise-list legend {

@@ -169,6 +169,34 @@ none of the geometry risks above apply.
   quietest thing on it, beneath three lines of sans-serif. Now 1rem at 0.88 in
   paper-soft. It is the origin story and is allowed to read as one.
 
+### Fold and composition
+
+Two layout items, both measured before and after rather than eyeballed.
+
+**The mobile CTA was reachable but still below the fold.** Fixing the clipping
+made the page scrollable, which is necessary but not sufficient — on a 664px
+phone "Try one rep" sat at y=729 and the page had to be scrolled to start a
+set. On a page whose one job is starting a set, that is still wrong.
+
+Reclaimed 113px from gaps that sit _above_ the CTA, so nothing the athlete
+reads changed order: tightened vertical rhythm on the lede, provenance and
+status pill, and shrank the decorative movement preview (13rem → 7rem figure,
+thinner padding). The preview was the right target precisely because it is
+decorative — trading set dressing for the primary action is the correct order
+on the smallest screen.
+
+CTA bottom moved 777 → 659 in a 664px viewport: visible without scrolling.
+
+**The desktop band was dead space.** The copy column was a fixed 520px centred,
+leaving 460px of empty margin either side at 1440 and 700px at 1920, while the
+bay photograph sat behind the right-hand gap. The column now widens to 620px on
+screens above 1100px and sits left of centre, pushing the empty margin to the
+left where there is no art and giving the photo the right third as its stage.
+
+Capped at 620px deliberately: past that the measure gets long enough to hurt
+reading and the scrim stops being able to carry contrast where the copy overlaps
+the photo.
+
 ### Craft
 
 - `#fcb131` and `#56d9c3` were declared nine times across six stylesheets under
