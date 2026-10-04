@@ -91,14 +91,17 @@ const ARCADE_FOYER: FoyerCopy = {
 const STUDIO_FOYER: FoyerCopy = {
   brand: 'IMPERFECT FORM.FUN',
   line1: 'Make one rep better.',
-  line2: 'Camera catches one thing. Coach shows you the fix.',
+  line2: 'Camera catches one thing. Coach shows you the fix. Next rep, you see the difference.',
   provenance: 'Britain invented the form-check in 1897. We finished it.',
   loopLabel: 'ONE REP / ONE FIX',
   invitation: 'Start imperfect. Get one useful cue.',
   trust: 'Private camera coaching · wallet optional · no video upload',
   // The product's real promise is longitudinal — see and understand what is
   // changing — so the doorway says so. Scoped to what exists today: your own
-  // history, not a population benchmark.
+  // history, not a population benchmark. This string was written but never
+  // rendered until the landing pass; CoachFoyer now outputs it below the trust
+  // line. See docs/COACH_GATES.md for the confidence wording it must not
+  // overstate.
   hint: 'One rep now · your trend over time',
   cta: 'Start camera coaching',
 };

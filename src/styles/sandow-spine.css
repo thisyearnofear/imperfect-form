@@ -145,10 +145,15 @@
   margin: 0.9rem 0 0;
   font-family: var(--font-heritage, Georgia, 'Times New Roman', serif);
   font-style: italic;
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
-  color: var(--studio-muted);
-  opacity: 0.8;
+  /* Was 0.85rem at 0.8 opacity — the best line on the page rendered as the
+     quietest thing on it, competing with three lines of sans-serif above it.
+     It is the origin story, and it is allowed to read as one. */
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  color: var(--studio-paper-soft);
+  opacity: 0.88;
+  text-wrap: balance;
+  text-align: center;
 }
 
 .sandow-lineage {

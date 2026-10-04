@@ -453,6 +453,16 @@ export function CoachFoyer({
           <LockKeyhole size={14} strokeWidth={2} aria-hidden="true" />
           {BRAND.trustLine}
         </p>
+
+        {/* The longitudinal promise. Previously written into BRAND.studio.hint
+            and never rendered anywhere — the day-0 surface did not state the
+            thing the product actually does, which is compare you to you over
+            time. Deliberately a quiet line under the CTA, not a second button:
+            this is context, not an action. */}
+        <p className="coach-foyer__promise motion-enter" style={{ animationDelay: '400ms' }}>
+          {foyer.hint}
+        </p>
+
         <div className="coach-foyer__story-links coach-foyer__story-links--secondary motion-enter">
           <button
             type="button"
@@ -493,10 +503,19 @@ export function CoachFoyer({
               <ChevronDown size={14} aria-hidden="true" />
             )}
           </button>
-          <a href="/lore" className="coach-foyer__why-robot-link">
-            Why a physical coach? <ArrowRight size={13} aria-hidden="true" />
-          </a>
         </div>
+
+        {/* "Why a physical coach?" was a third brass button sitting beside the
+            two disclosures, so the primary action had two rivals. It is the most
+            interesting question the page can ask, so it keeps its place — but as
+            a quiet line of copy that hands off to /lore, not a call to action
+            competing with "Try one rep". */}
+        <p className="coach-foyer__why-robot motion-enter" style={{ animationDelay: '440ms' }}>
+          <span>Why a physical coach?</span>
+          <a href="/lore" className="coach-foyer__why-robot-link">
+            The build <ArrowRight size={13} aria-hidden="true" />
+          </a>
+        </p>
 
         {showFrameGuide && (
           <div

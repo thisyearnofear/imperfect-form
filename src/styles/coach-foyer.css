@@ -1019,33 +1019,59 @@
   transform: scale(0.96);
 }
 
+/* "Why a physical coach?" — a quiet line, not a third call to action.
+   It previously rendered as a brass button inside the disclosure row, so
+   "Try one rep" had two rivals sitting beside it. The question is the most
+   interesting one the page asks, so it keeps its place with a real link —
+   just without the button chrome that made it compete. */
+.coach-foyer__why-robot {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+  color: var(--cf-soft);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .coach-foyer__why-robot-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.28rem;
-  min-height: 2.25rem;
-  padding: 0.45rem 0.75rem;
+  gap: 0.22rem;
   color: var(--cf-gold-bright);
-  border: 1px solid rgba(252, 177, 49, 0.28);
-  border-radius: var(--cf-radius);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-decoration: none;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 217, 122, 0.4);
   transition:
     color 160ms ease,
-    border-color 160ms ease,
-    background-color 160ms ease;
+    text-decoration-color 160ms ease;
 }
 
 .coach-foyer__why-robot-link:hover {
   color: #fff0bd;
-  background: rgba(252, 177, 49, 0.08);
-  border-color: rgba(252, 177, 49, 0.55);
+  text-decoration-color: rgba(255, 240, 189, 0.8);
 }
 
 .coach-foyer__why-robot-link:focus-visible {
   outline: 2px solid var(--cf-gold-bright);
-  outline-offset: 2px;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* The longitudinal promise — what the product actually does over time.
+   Quiet by design: it is context beneath the CTA, not a competing action.
+   Set at a readable size rather than the 0.58rem-0.6rem used by the older
+   labels, because this is a sentence meant to be read. */
+.coach-foyer__promise {
+  margin: 0.5rem 0 0;
+  color: rgba(181, 229, 221, 0.82);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  text-align: center;
+  text-wrap: balance;
 }
 
 /* Progressive disclosure toggle */

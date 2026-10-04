@@ -147,6 +147,28 @@ the stage keeps its full presence instead of being dimmed to 28%, because energy
 and legibility were never actually in conflict. Only the copy being centred over
 the art made them look like it.
 
+### Hierarchy: the promise, the third button, the quiet origin story
+
+Three fixes to the day-0 surface — copy and hierarchy only, no layout change, so
+none of the geometry risks above apply.
+
+- **The longitudinal promise was written but never rendered.** Two commits
+  earlier `BRAND.studio.hint` was set to "One rep now · your trend over time"
+  and I described the MI spine as applied. It was not: `CoachFoyer` never
+  output `foyer.hint` anywhere. The product's actual differentiating promise was
+  missing from the page. It now renders as a quiet line under the CTA, and the
+  lede carries "Next rep, you see the difference." Recorded because editing a
+  string is not the same as shipping it.
+- **"Why a physical coach?" was a third brass button** beside the two
+  disclosures, so the primary action had two rivals. It is the most interesting
+  question the page can ask, so it keeps its place — as a quiet line with a real
+  `/lore` link, without the button chrome. Measured brass competitors near the
+  CTA: 2 → 1.
+- **"Britain invented the form-check in 1897. We finished it."** was 0.85rem
+  italic at 0.8 opacity in muted grey — the best line on the page rendered as the
+  quietest thing on it, beneath three lines of sans-serif. Now 1rem at 0.88 in
+  paper-soft. It is the origin story and is allowed to read as one.
+
 ### Craft
 
 - `#fcb131` and `#56d9c3` were declared nine times across six stylesheets under
