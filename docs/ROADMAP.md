@@ -98,9 +98,14 @@ but age-band comparisons, cohort rankings, and trajectory claims remain gated by
 
 ### Recap modal follow-ups (post progressive-disclosure ship)
 
-Progressive disclosure in the coaching recap modal shipped 2026-08-17
-(single commit: grade hero + CTAs first, Cool Down / Session details /
-Advanced analysis behind `<details>`). Open polish items, none are a gate:
+Progressive disclosure in the coaching recap shipped 2026-10-04 (single
+`<details>`: the one fix, grade, form-score chart, what the coach learned, what
+went well, form line and the retry action stay above the fold; grade arc,
+movement card, movement history, receipt and signature history sit behind
+"Session detail and history"). The recap had been rendering roughly a dozen
+panels at once, which buried the one sentence a set produces.
+
+Open polish items, none are a gate:
 
 - [ ] **FormReceipt simplification** — first render shows only "Copy receipt"
       and "Share form line"; the full receipt text with share-status states hides
@@ -164,8 +169,26 @@ replacement + bounded re-calibration.
 **Start only after hardware curl proof.** Episodes from coached human sessions,
 not teleop-only datasets.
 
-- [ ] LeRobot-format episode recording from coached sessions
+- [x] LeRobot-format writer + strict gates — `coach-station/coach_station/dataset.py`
+      emits v3.0 (`so101_follower`, 30 fps) from the choreographer's frame
+      stream, with provenance in `coach_episodes.json`. Gated on shape,
+      workspace, rate, finiteness and monotonic time; spec in
+      `docs/COACH_DATA_SPEC.md`, kept in sync by `tests/test_gates.py`.
+- [ ] Recording from a **coached human session** end to end. The writer exists
+      and both shipped choreographies pass its gates, but nothing yet streams a
+      browser session into it — the arm's trajectories are authored, not
+      observed. This is the actual remaining gap.
+- [ ] Encoder ground truth in `observation.state`. Every episode written today
+      is plan-only (`has_measured_encoders: false`). `arm.py` already threads
+      `measured_deg` through as the only real signal; wiring it into the writer
+      would make the observation an observation rather than a copy of the action.
+- [ ] Camera frames. The dataset is joint-state only — there is no
+      `observation.images.*` feature, so it cannot train a VLA policy directly.
 - [ ] Face anonymization, episode slicing, SmolVLA experiment #1
+
+Both curls are currently gated at the simulation envelope (they pass at
+119.81 deg/s against a 120 deg/s ceiling) but are **rejected** under live limits
+— too long, and below the live elbow minimum. Live motion stays paused.
 
 ### Milestone 4 — Coach station wedge
 

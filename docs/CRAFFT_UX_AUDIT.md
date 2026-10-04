@@ -14,13 +14,13 @@ to make the heritage + the working instrument **feel** like one crafted object.
 
 ## 1. Where you stand (per criterion, UX lens)
 
-| Criterion | Read today | Lever |
-|---|---|---|
-| **Ingenuity** | Strong concept (closing a 130-yr loop with a robot) but it's argued in prose, not shown. | The **Loop plate** (now on `/lore`): the same loop, two columns, 1897 vs 2026. The visual *is* the argument. |
-| **Cræft depth** | Real lineage (Sandow, arcade cabinet, open-hardware arm) but the exhibit leaned on pixel-arcade type — reads "techy game," not "craft." | Heritage **display serif** on the exhibit only; Manrope body; Press Start 2P kept as punctuation. Material/place/process alignment now visible in type. |
-| **Beauty** | Disciplined tokens (teal/black studio + brass spine) — good, but the *exhibit* surface needs to feel like an artefact, not a marketing page. | Exhibit refined toward an **engraved instrument plate** register. |
-| **Usefulness & scale** | Live app, multi-exercise engine, on-device pose — genuinely proven. | Surface this *on* `/lore` (the live "Try the machine" CTA already does). Keep the working-instrument proof one click away. |
-| **Integrity** | On-device (no slop), open hardware, honest upper-body scope — excellent and on-message. | Already threaded through recap grade stamps, foyer trust line, and the exhibit's "artisanal intelligence" copy. Don't add claims; tighten. |
+| Criterion              | Read today                                                                                                                                   | Lever                                                                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ingenuity**          | Strong concept (closing a 130-yr loop with a robot) but it's argued in prose, not shown.                                                     | The **Loop plate** (now on `/lore`): the same loop, two columns, 1897 vs 2026. The visual _is_ the argument.                                            |
+| **Cræft depth**        | Real lineage (Sandow, arcade cabinet, open-hardware arm) but the exhibit leaned on pixel-arcade type — reads "techy game," not "craft."      | Heritage **display serif** on the exhibit only; Manrope body; Press Start 2P kept as punctuation. Material/place/process alignment now visible in type. |
+| **Beauty**             | Disciplined tokens (teal/black studio + brass spine) — good, but the _exhibit_ surface needs to feel like an artefact, not a marketing page. | Exhibit refined toward an **engraved instrument plate** register.                                                                                       |
+| **Usefulness & scale** | Live app, multi-exercise engine, on-device pose — genuinely proven.                                                                          | Surface this _on_ `/lore` (the live "Try the machine" CTA already does). Keep the working-instrument proof one click away.                              |
+| **Integrity**          | On-device (no slop), open hardware, honest upper-body scope — excellent and on-message.                                                      | Already threaded through recap grade stamps, foyer trust line, and the exhibit's "artisanal intelligence" copy. Don't add claims; tighten.              |
 
 ## 2. What I shipped this pass
 
@@ -43,6 +43,7 @@ Build + typecheck pass; `/lore` prerenders static.
 ## 3. Prioritized recommendations to exceed expectations
 
 ### P0 — do before submission
+
 - **Film the 2–3 min video** to the script in `CRAFFT_SUBMISSION_DRAFT.md`.
   The video is the asset that makes "satire with a steel core" land: Sandow
   photo → Royal Mail loop → cut to the working machine → arm demonstrates. No
@@ -50,16 +51,17 @@ Build + typecheck pass; `/lore` prerenders static.
 - ✅ **Produce a `/lore` OG / share image** carrying the Sandow lineage — DONE
   (see P1; moved up and implemented as a dynamic next/og route).
 - **Cabinet fabrication evidence.** The prize requires UK manufacture and
-  rewards *build-as-craft*. Even pre-finalist, a short build diary / workbench
+  rewards _build-as-craft_. Even pre-finalist, a short build diary / workbench
   photo set on `/lore` (or linked from it) converts "is this craft?" doubt into
   "this is a workshop, not a software demo."
 
 ### P1 — raises the bar on "beauty that endures"
+
 - ✅ **Refine the SandowCabinet gauge** into a real measurement instrument — DONE.
   Graduated brass tick scale under the readout, the value set in the heritage
   serif so a graded readout reads like an engraved certificate (not a pixel
   scoreboard), an `is-graded` fill sweep, and a "Graded vs. Sandow · 1897"
-  caption. Idle cabinet now reads as an *empty instrument awaiting a subject*.
+  caption. Idle cabinet now reads as an _empty instrument awaiting a subject_.
 - ✅ **A `/lore` OG / share image carrying the Sandow lineage** — DONE (moved
   up from P0). `src/app/lore/opengraph-image.tsx` (next/og, edge) renders the
   1897-vs-2026 loop plate at 1200×630; auto-wired into both `og:image` and
@@ -78,24 +80,33 @@ Build + typecheck pass; `/lore` prerenders static.
   splash, then hydrates) — confirmed via SSR check. Build + 219/219 tests pass.
 
 ### P2 — ecosystem / future-heritage depth
-- ✅ **A "build diary" surface** — DONE. New `/build` route (server-rendered,
-  heritage-exhibit register) makes the *making* legible: four levels of craft
-  (calibration vs. Sandow's tables, open-hardware assembly, British cabinet
-  fabrication, real-movement pose tuning) + an honest status section (live
-  pose → sim/manual stage → upper-body hardware → SmolVLA after proof). Linked
-  from `/lore` ("The Build"); added to `sitemap.ts`. This is the antidote to
-  "is this craft?" — a workshop, not a software demo.
+
+- ✅ **A "build diary" surface** — DONE. `/build` route (server-rendered,
+  heritage-exhibit register) makes the _making_ legible: four levels of craft
+  - an honest status section (live pose → sim/manual stage → upper-body
+    hardware → SmolVLA after proof). Linked from `/lore` ("The Build"), from the
+    session recap, and listed in `sitemap.ts`. This is the antidote to
+    "is this craft?" — a workshop, not a software demo.
+    _Corrected 2026-10-04:_ the four craft levels previously read "calibration vs.
+    Sandow's tables", "British cabinet fabrication", and "real-movement pose
+    tuning" as shipped facts. None were: no Sandow-table joint mapping exists in
+    the codebase, the cabinet fabrication is marked TBD pending an unawarded
+    grant, and sessions do not yet train anything. They now describe the software
+    safety interlock, the open-hardware assembly, and on-device movement
+    grading — with fabrication and fine-tuning stated as plans. The honest
+    version is the better exhibit, because a judge can check it.
 - **Map the lineage into the in-session recap** more deliberately — the
   "Graded vs. Sandow · 1897" stamp is already there; consider a one-line
   provenance tooltip so the heritage is felt during use, not only on `/lore`.
 
 ## 4. Risks to manage (honest)
+
 - **"Is this craft?"** — mitigate with build evidence (P0), not more copy.
 - **Upper-body only** — keep honest; the Sandow parallel (spring-grip
   corrected only grip) is the elegant defence. Don't soften the scope language.
 - **The "AI" word** — keep "artisanal intelligence": on-device, the arm
-  *teaches*, learns from real sessions. Never describe it as generative slop.
+  _teaches_, learns from real sessions. Never describe it as generative slop.
 - **Font fetch at build** — Fraunces loads via `next/font/google` at build
   time (same pipeline as the existing Manrope/Press Start). Confirmed working
   in this environment; on CI, ensure font fetch isn't blocked.
-| **Future heritage** | "Britain's next material culture of movement" — compelling. | The **Loop plate** + lineage timeline make "future heritage" legible: a *method* (photo→grade→correct) carried forward, not just a *material*. |
+  | **Future heritage** | "Britain's next material culture of movement" — compelling. | The **Loop plate** + lineage timeline make "future heritage" legible: a _method_ (photo→grade→correct) carried forward, not just a _material_. |

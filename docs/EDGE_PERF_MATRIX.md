@@ -30,52 +30,72 @@ Not all combinations are feasible. The matrix automatically filters invalid ones
 
 ## How to Run the Matrix
 
-> **Tooling status:** the console API is registered by a dev-only dynamic
-> import in `ClientOnlyProviders` (`process.env.NODE_ENV === 'development'`),
-> so run against `pnpm dev` — it is intentionally absent from production
+> **Tooling status:** the console API is registered when
+> `NODE_ENV === 'development'` **or** `NEXT_PUBLIC_POSE_BENCH=1`, so a built
+> app can capture a matrix for evidence. It is absent from ordinary production
 > builds.
 
 ### Current limitations
 
-**Config hot-swap is not implemented yet.** The pose pipeline hard-codes
-`SinglePose.Lightning` (`poseWorker.ts`, `usePoseDetection.ts`,
-`PoseDetectionService.ts`) and the matrix runner only _labels_ each baseline
-run with config metadata via `startPoseBaseline` — it does not change the
-detector model, input size, backend, or quantization between rows. Until
-config application is wired into the detector, every row measures the same
-live configuration and the composite-score ranking is **not** a real A/B
-result. `start()` prints a console warning to this effect.
+**Config hot-swap now works.** The pose pipeline previously hard-coded
+`SinglePose.Lightning` in three places (`poseWorker.ts`, `usePoseDetection.ts`,
+`PoseDetectionService.ts`) and the matrix runner only _labelled_ each baseline
+run — it never changed the detector, so every row measured the same live config
+and the composite ranking was **not** an A/B result.
+
+That is fixed:
+
+- `src/lib/pose/trackerRegistry.ts` is the single resolution path for building
+  a detector. All three construction sites now go through it, which also
+  removed a live config drift (`tfUtils` had `minPoseScore` 0.15 on mobile
+  against 0.2 elsewhere).
+- The worker accepts a `configure` message and rebuilds the detector
+  mid-session, so the matrix applies each row's config before measuring.
+- `analyzeMatrix` ranks only rows whose config was confirmed applied. Rows that
+  could not be applied are marked `applied: false`, listed under "Excluded rows"
+  in the export, and excluded from the composite score. If nothing was applied
+  the result is an explicit error rather than a ranking of labels.
 
 What the tooling is good for today:
 
-- **Single-config stability baselines** on real devices (FPS, confidence,
-  detection time, memory growth under the current default).
-- **Rehearsing the runbook** (start → workout → skip/stop → export) so the
-  real A/B pass is mechanical once hot-swap lands.
+- **Real A/B runs** across tracker, input size and backend, with unapplied rows
+  excluded rather than silently ranked.
+- **Single-config stability baselines** when the worker handle is not passed —
+  the report says so explicitly instead of implying a comparison.
 
 Remaining work before Gate C can close:
 
-1. Apply `EdgePerfConfig` to the detector (model variant + input resolution at
-   `createDetector`, backend selection at TF init) and restart the pipeline
-   between rows.
-2. Record real-device runs (below) and paste them into [Latest runs](#latest-runs).
-3. Pick the validated default per the [Decision Rules](#decision-rules) with no
+1. Record real-device runs (below) and paste them into [Latest runs](#latest-runs).
+2. Pick the validated default per the [Decision Rules](#decision-rules) with no
    Ring 0 e2e regression.
+
+### Caveats when comparing rows
+
+- **BlazePose reports 33 landmarks against MoveNet's 17**, so keypoint
+  confidence is not directly comparable across tracker families. The composite
+  score weights confidence heavily; compare within a family first.
+- Jitter and absence-detection behaviour have **not** been measured across
+  these trackers. Do not carry a keypoint-confidence threshold from one family
+  to another without measuring it.
 
 ### Quick Start
 
 1. Open the app on your target device
 2. Open the browser console
-3. Start the matrix:
+3. Start the matrix, **passing the live pose worker** so each row's config is
+   actually applied:
 
 ```javascript
-window.__IMF_EDGE_MATRIX__.start({
-  exercise: 'curls',
-  durationPerConfig: 30, // seconds per configuration
-  target: 'iPhone 12 / iOS 16',
-  camera: 'iPhone 12 rear camera',
-  lighting: 'indoor, overhead fluorescent',
-});
+window.__IMF_EDGE_MATRIX__.start(
+  {
+    exercise: 'curls',
+    durationPerConfig: 30, // seconds per configuration
+    target: 'iPhone 12 / iOS 16',
+    camera: 'iPhone 12 rear camera',
+    lighting: 'indoor, overhead fluorescent',
+  },
+  window.__IMF_POSE_WORKER__ // omitting this yields a stability baseline only
+);
 ```
 
 4. Wait for all configurations to complete (or use `skip()` to skip one)
@@ -164,9 +184,11 @@ iPhone (Safari). Record the exact model + OS in the matrix metadata.
    copy(window.__IMF_EDGE_MATRIX__.exportMarkdown(m)); // paste into Latest runs
    ```
 
-6. **Analyze:** `window.__IMF_EDGE_MATRIX__.analyzeMatrix(m)` ranks rows by the
-   composite score. Remember the [Current limitations](#current-limitations) —
-   until hot-swap lands, this ranks one config's stability, not variants.
+6. **Analyze:** `window.__IMF_EDGE_MATRIX__.analyzeMatrix(m)` ranks only the rows
+   whose config was actually applied. Check `analysis.unapplied` — anything
+   counted there did **not** run under its label and is excluded from the score.
+   If `unapplied` equals the run count, the worker handle was not passed and you
+   have a stability baseline, not an A/B result.
 7. Raw JSON reports live under `evidence/edge-matrix/` (gitignored-friendly:
    keep them small or link instead of committing multi-MB frames).
 
