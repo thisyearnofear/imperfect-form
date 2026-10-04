@@ -11,7 +11,7 @@
  */
 
 .crafft-exhibit {
-  --ce-gold: #fcb131;
+  --ce-gold: var(--sandow-brass);
   --ce-gold-dim: #c98c1a;
   --ce-brass: #e6a72c;
   --ce-ink: #0a0a0a;

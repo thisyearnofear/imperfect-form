@@ -8,7 +8,7 @@ import { VerificationTester } from '@/components/debug';
 
 /**
  * Debug page to test mobile and wallet browser detection
- * Access via /debug-mobile
+ * Access via /debug-mobile — development only (see src/lib/debugPages.ts)
  */
 export default function DebugMobilePage() {
   const { isMobile, isWalletBrowser, walletBrowserType, isClient } = useDeviceDetect();

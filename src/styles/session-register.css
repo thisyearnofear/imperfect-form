@@ -2,6 +2,12 @@
  * Session-register shell chrome for #game-container[data-register].
  * One surface, one register — controls / banner / mode switch follow foyer.
  * Arcade keeps globals.css defaults; studio + calm override here.
+ *
+ * This file is lazily chunked (see Game.tsx), so its palette divergence from
+ * the shell was invisible in review: it used to re-declare the studio teal as
+ * #5eead4 while --studio-teal is #56d9c3 — two different greens, one for the
+ * coaching surface and one for the frame around it. Tokens are used directly
+ * now so the two cannot drift again.
  */
 
 /* —— Studio (Coach) —— */
@@ -9,7 +15,7 @@
 #game-container[data-register='studio'] .mobile-banner h1 {
   font-family: ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
   letter-spacing: -0.02em;
-  color: #5eead4;
+  color: var(--studio-teal);
   text-shadow: none;
 }
 
@@ -18,7 +24,7 @@
   text-transform: none;
   letter-spacing: 0.02em;
   border-radius: 0.5rem;
-  border: 1px solid rgba(94, 234, 212, 0.35);
+  border: 1px solid rgba(86, 217, 195, 0.35);
   box-shadow: none;
 }
 
@@ -29,13 +35,13 @@
 
 #game-container[data-register='studio'] #startButton {
   background: #0f766e;
-  color: #ecfdf5;
-  border-color: rgba(94, 234, 212, 0.5);
+  color: var(--studio-paper);
+  border-color: rgba(86, 217, 195, 0.5);
 }
 
 #game-container[data-register='studio'] #resetButton {
   background: rgba(15, 118, 110, 0.35);
-  color: #ccfbf1;
+  color: var(--studio-paper-soft);
 }
 
 #game-container[data-register='studio'] #stopButton {

@@ -291,9 +291,12 @@ body[data-shell='studio'] .studio-topbar {
 #game-container[data-register] .hud-label {
   color: #92aaa6;
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.65rem;
+  /* Was 0.65rem (10.4px). The HUD label is read mid-set, often at arm's
+     length on a phone; 0.75rem keeps the tracked uppercase legible without
+     crowding the value beside it. */
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
 }
 #game-container[data-register] .hud-value {
   color: #b9f8eb;

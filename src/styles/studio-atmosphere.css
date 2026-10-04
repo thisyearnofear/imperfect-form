@@ -1,9 +1,9 @@
 /* Coaching bay — cut-out SO-101. Day-0 is the coaching loop, not chain chrome. */
 
 .studio-atmosphere {
-  --bay-teal: #56d9c3;
+  --bay-teal: var(--studio-teal);
   --bay-teal-bright: #7aebd8;
-  --bay-brass: #fcb131;
+  --bay-brass: var(--sandow-brass);
   --bay-deep: #061013;
   --bay-mid: #0b2430;
 

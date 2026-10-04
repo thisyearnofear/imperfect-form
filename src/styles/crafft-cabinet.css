@@ -16,7 +16,7 @@
    .crafft-cabinet wrapper. */
 [data-register='crafft'],
 .crafft-cabinet {
-  --crafft-gold: #fcb131;
+  --crafft-gold: var(--sandow-brass);
   --crafft-gold-dim: #c98c1a;
   --crafft-brass: #e6a72c;
   --crafft-ink: #0a0a0a;

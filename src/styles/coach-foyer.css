@@ -4,11 +4,11 @@
   --cf-ink: #effcf9;
   --cf-muted: #9bb5b1;
   --cf-soft: #7a9692;
-  --cf-teal: #56d9c3;
+  --cf-teal: var(--studio-teal);
   --cf-teal-bright: #7aebd8;
   --cf-teal-deep: #0b2a2c;
   /* Warm energy accent — the physical moment. Teal understands, gold shows. */
-  --cf-gold: #fcb131;
+  --cf-gold: var(--sandow-brass);
   --cf-gold-bright: #ffd97a;
   --cf-surface: rgba(255, 255, 255, 0.035);
   --cf-border: rgba(181, 229, 221, 0.16);

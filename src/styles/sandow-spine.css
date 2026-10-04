@@ -84,7 +84,10 @@
 
 .sandow-gauge__label {
   color: var(--sandow-brass-soft);
-  font-size: 0.6rem;
+  /* Was 0.6rem (9.6px). Below ~11px, uppercase + 0.08em tracking fails to
+     resolve on a phone at arm's length; this is the HUD's rep label, read
+     mid-set, so legibility beats the denser look. */
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
