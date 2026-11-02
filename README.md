@@ -51,7 +51,7 @@ durable analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIG
 - **Recovery**: Optional guided breathing cooldown and per-exercise stretches
 - **Multi-Chain Support**: Base, Celo, Polygon, Monad, and Avalanche themes (leaderboards where contracts are live)
 - **Human Verification**: Self Protocol integration for verified leaderboards
-- **Social Integration**: Farcaster mini-app, ghost replays, quests and XP
+- **Social Integration**: ghost replays, quests and XP (Farcaster mini-app paused — see NAMING.md)
 - **Movement Intelligence** _(local assessment + evidence slice shipped)_: repeatable curl assessment, private Movement Cards, self-versus-self history, local trajectory/next-unlock guidance, a wallet-free **Take the same test** route, and a test–retest evidence harness; population benchmarking remains gated
 - **Mobile-First**: Responsive design optimized for mobile fitness tracking
 

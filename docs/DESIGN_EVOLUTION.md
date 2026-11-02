@@ -144,6 +144,40 @@ identity, og assets.
    done in `brandPositioning.ts` + `layout.tsx`; package name, `imf_*` keys,
    Farcaster manifest re-sign, Self app identity still open.
 
+## F — The two-surface model: logbook + laboratory
+
+Niggles happen in life, not in the app. The product splits accordingly:
+
+- **Phone = the logbook** — quick ambient capture the moment a niggle
+  happens ("right knee, 4/10, on stairs"), the weekly check-your-niggle
+  nudge channel, challenge links, replies to the meter. Shape TBD: a bot
+  channel (Telegram-style) trades the nothing-leaves-device purity for
+  presence — opt-in, subjective entries only, no camera data — while a PWA
+  quick-journal keeps the promise intact. Decide knowingly, per channel.
+- **Desktop/web = the laboratory** — the reading itself, trajectory,
+  Movement Cards, coached practice, the arm demo, next-unlock guidance.
+
+**The honest pairing** — the log is _subjective_ ("how it felt"), the
+reading is _objective_ ("what the meter saw"), always labelled as which is
+which. Three states nobody else can produce: feels-better + meter-agrees
+(confidence); feels-the-same + numbers-moved (the insight that retains);
+numbers-same + hurts-more (the honest "see a professional" flag — a real
+safety feature). A log entry is **context, never a measurement** — if the
+UI blurs them, the honesty moat leaks.
+
+**Data:** `MovementProfile` gains `NiggleEntry {joint, context, severity?,
+note?, timestamp}` — local-first, same semantics as assessments; the intake
+(joint → context) is already the entry schema.
+
+### Long-term vision (keep on record)
+
+Register niggles in **novel ways** and get corrections — including
+**wearables and while-you-work capture** (desk-worker niggles logged
+passively during the day; posture cues at the desk, not only in front of a
+camera). The phone logbook is step one of ambient capture; wearables are
+step two. Every ambient signal stays _context_, not measurement — the
+camera reading remains the honest instrument record.
+
 ## Decisions (2026-11-02)
 
 1. **Intake shape: joint then context.** Pick where it nags, then what it

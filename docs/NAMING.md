@@ -165,8 +165,9 @@ _"Measure it. Watch it mend."_ · _"An honest meter for a nagging body."_
 - `src/lib/brandPositioning.ts` — `BRAND.name`, all `FoyerCopy` sets
 - `package.json` name/description; `imf_*` localStorage keys (decide whether
   to migrate or accept the legacy prefix)
-- `public/.well-known/farcaster.json` — new domain → **accountAssociation
-  must be re-signed in Warpcast**; Self Protocol app identity likewise
+- `public/.well-known/farcaster.json` — ~~new domain → accountAssociation
+  re-sign~~ **deprioritized: the Farcaster mini-app is paused** (2026-11-02);
+  Self Protocol app identity likewise pending
 - README + docs sweep (imperfect-form loop → the form-check loop phrasing)
 - og-image.svg, sitemap, robots, `next.config.mjs` hostname, env templates
 - Cræft submission draft: product-name references only; the Sandow story is
