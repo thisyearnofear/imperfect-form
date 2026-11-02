@@ -67,7 +67,7 @@ The strongest existing evidence:
 ### The control route we already implement
 
 ```text
-Imperfect Form (browser)
+Niggleometer (browser)
 → WebSocket (ws:8765)
 → Coach Station (Python)
 → Cyberwave SDK

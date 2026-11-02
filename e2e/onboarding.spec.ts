@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 // bypass a modal that never appeared.
 //
 // Onboarding now lives inline in the foyer, which is the better surface: the
-// camera prompt fires directly from the START press and the "Try one rep"
+// camera prompt fires directly from the START press and the "Take a reading"
 // contract is honoured literally. The copy itself survives as ONBOARDING_STEPS
 // in src/lib/brandPositioning.ts.
 //

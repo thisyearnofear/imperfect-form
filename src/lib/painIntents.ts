@@ -1,7 +1,7 @@
 import type { ExerciseMode } from '@/utils/biomechanics';
 import { FORM_CHECK_THRESHOLDS } from '@/lib/coachingEngine';
 
-export type PainIntentId = 'unsure' | 'alone' | 'squat' | 'stuck';
+export type PainIntentId = 'unsure' | 'alone' | 'squat' | 'stuck' | (string & {});
 
 export const PAIN_INTENT_KEY = 'imf_painIntent_v1';
 

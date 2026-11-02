@@ -27,6 +27,7 @@ import {
   Ghost,
   Map as MapIcon,
   Gamepad2,
+  Gauge,
   Wind,
   type LucideIcon,
 } from 'lucide-react';
@@ -89,9 +90,17 @@ const ExpandedLeaderboardModal = dynamic(
   }
 );
 
+const MovementAssessmentHistory = dynamic(
+  () => import('@/components/game/MovementAssessmentHistory'),
+  {
+    ssr: false,
+    loading: () => <Spinner />,
+  }
+);
+
 import { Score } from '@/types';
 
-type ActiveTab = 'workout' | 'dashboard' | 'roadmap' | 'challenges';
+type ActiveTab = 'workout' | 'readings' | 'dashboard' | 'roadmap' | 'challenges';
 
 /** Day-0 topbar wallet affordance — a quiet text link, not a pill. It opens
  *  the same connect flow as WalletStatusPill and never gates the loop. */
@@ -143,6 +152,7 @@ export default function Home() {
   }[] = (
     [
       { id: 'workout', label: 'Workout', minLevel: 0, icon: Dumbbell },
+      { id: 'readings', label: 'Readings', minLevel: 0, icon: Gauge },
       { id: 'dashboard', label: 'Stats', minLevel: 0, icon: BarChart3 },
       { id: 'roadmap', label: 'Roadmap', minLevel: 0, icon: MapIcon },
       { id: 'challenges', label: 'Ghost', minLevel: 3, icon: Ghost },
@@ -297,7 +307,7 @@ export default function Home() {
           className="studio-boot"
           role="status"
           aria-live="polite"
-          aria-label="Loading Imperfect Form"
+          aria-label="Loading Niggleometer"
           style={{ zIndex: 10000 }}
         >
           <div className="studio-boot__atmosphere" aria-hidden="true">
@@ -422,6 +432,41 @@ export default function Home() {
 
               {/* Retention widgets live in the Stats tab only — the bay stays
                   the coaching loop, not a widget stack (see design.md anti-pattern). */}
+            </ScreenTransition>
+          )}
+
+          {/* Readings tab — the instrument's history surface. Movement
+              history + trajectory live here as a first-class tab (history IS
+              the product for the niggle ICP; see docs/DESIGN_EVOLUTION.md). */}
+          {hasTrained && activeTab === 'readings' && (
+            <ScreenTransition key="readings" mode="slide-up" className="flex-1 flex flex-col">
+              <div className="flex-1 px-4 py-6 space-y-6 overflow-y-auto pb-24">
+                <div className="max-w-2xl mx-auto space-y-6">
+                  <div className="motion-enter motion-delay-1 flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="earned-surface__title">Your readings</h2>
+                      <p className="text-sm" style={{ color: 'var(--studio-muted)' }}>
+                        On-device movement history. Check your niggle week over week.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('workout')}
+                      className="shrink-0 px-4 py-2 rounded-lg text-sm font-bold border"
+                      style={{
+                        color: 'var(--studio-teal, #7aebd8)',
+                        borderColor: 'rgba(122, 235, 216, 0.35)',
+                        background: 'rgba(122, 235, 216, 0.08)',
+                      }}
+                    >
+                      Take a reading
+                    </button>
+                  </div>
+                  <div className="motion-enter motion-delay-2">
+                    <MovementAssessmentHistory />
+                  </div>
+                </div>
+              </div>
             </ScreenTransition>
           )}
 

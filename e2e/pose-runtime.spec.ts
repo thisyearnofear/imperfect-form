@@ -33,7 +33,7 @@ test.describe('PoseRuntime - worker path + curls', () => {
 
     // Day-0 foyer heading (current copy; the old "AI watches your exercise
     // form" line moved to the Farcaster manifest and is not a foyer heading).
-    await expect(page.getByRole('heading', { name: /Make one rep better/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /Your niggle/i })).toBeVisible({
       timeout: 20000,
     });
 

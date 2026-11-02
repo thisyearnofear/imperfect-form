@@ -4,7 +4,7 @@ Notes from a Q&A with Francesco De Pascale, founding engineer at Cyberwave worki
 
 ## Context
 
-Imperfect Form is moving from on-screen form feedback to a physical AI loop: an SO-101 robot arm (“Coach”) demonstrates the correction after the browser pose pipeline understands the user’s form. We asked Francesco three focused questions about real-world computer-vision robustness, the robotics roadmap, and edge performance for the pose model.
+Niggleometer is moving from on-screen form feedback to a physical AI loop: an SO-101 robot arm (“Coach”) demonstrates the correction after the browser pose pipeline understands the user’s form. We asked Francesco three focused questions about real-world computer-vision robustness, the robotics roadmap, and edge performance for the pose model.
 
 ## 1. Pose robustness in non-controlled environments
 

@@ -431,3 +431,33 @@
     transform: none;
   }
 }
+
+/* ── Instrument cluster — meter face + gentle pain exit (PHASE_B_PLAN) ── */
+.hud-instrument {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 20;
+}
+.hud-pain-exit {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(181, 229, 221, 0.25);
+  background: rgba(6, 16, 19, 0.72);
+  color: #9bb5b1;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: border-color 200ms, color 200ms;
+}
+.hud-pain-exit:hover,
+.hud-pain-exit:focus-visible {
+  border-color: var(--sandow-brass-soft, #e6a72c);
+  color: #e9fffa;
+  outline: none;
+}

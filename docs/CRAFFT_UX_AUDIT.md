@@ -1,6 +1,6 @@
 # Cræft Prize — Product Design & UX Audit
 
-> How "Imperfect Form / The Sandow Machine" reads to a Cræft Prize judge from a
+> How "Niggleometer / The Sandow Machine" reads to a Cræft Prize judge from a
 > product-design and UI/UX lens, and the prioritized moves to exceed expectations.
 > Paired with the written submission draft in `CRAFFT_SUBMISSION_DRAFT.md`.
 
@@ -9,7 +9,7 @@ utility, and the **Wedgwood** principle of technology extending craft at scale.
 It is pro-technology, anti-slop, and judges on six criteria: **Ingenuity,
 Cræft depth, Beauty, Usefulness & scalability, Integrity, Future heritage.**
 It wants "serious, developed inventions," not early sketches. Our strongest
-asset is that the app **already works** at imperfectform.fun — the design job is
+asset is that the app **already works** at imperfectform.vercel.app — the design job is
 to make the heritage + the working instrument **feel** like one crafted object.
 
 ## 1. Where you stand (per criterion, UX lens)

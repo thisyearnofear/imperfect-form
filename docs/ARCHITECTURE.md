@@ -443,7 +443,7 @@ coachStation.ts  ──ws://localhost:8765──►  coach_station/server.py
 2. Persona motion profiles keep demonstration in character with on-screen coach.
 3. Safety clamps live on the station; the browser never drives joints directly.
 4. UI presence (twin peek, bay pulse, and accessible progress) makes the twin
-   felt in imperfectform.fun without embedding MuJoCo in the browser. The fixed
+   felt in the Niggleometer app without embedding MuJoCo in the browser. The fixed
    `StudioAtmosphere` also mirrors the real local session state: selected mode,
    starting/camera/AI/positioning/tracking phases, and station availability.
    Local cues can pulse the bay camera-only; stronger demo emphasis is reserved

@@ -2,15 +2,19 @@
 
 > **See how you move today. Understand what is changing. Find the next movement you can unlock.**
 
-Movement Intelligence is the product layer that grows Imperfect Form from a form-correction tool into a persistent, privacy-first understanding of movement. It does not replace the physical-AI Coach. It gives the camera → understand → show loop a durable user outcome: a person can see their movement profile, compare themselves with an appropriate reference group, and follow a credible trajectory over time.
+Movement Intelligence is the Niggleometer's product layer — a persistent, privacy-first understanding of movement grown from the camera-coaching loop. It does not replace the physical-AI Coach. It gives the camera → understand → show loop a durable user outcome: a person can see their movement profile, compare themselves with an appropriate reference group, and follow a credible trajectory over time.
 
 The product should feel like a discovery, not a diagnosis:
 
 > **The app revealed something surprising about how I move — and gave me a clear next unlock.**
 
+**Vocabulary** (see [NAMING.md](./NAMING.md)): an assessment result is a
+**reading**; the shareable artifact is the **Movement Card**; the retest
+ritual is **check your niggle**. A meter promises a reading — nothing more.
+
 ## Product thesis
 
-Imperfect Form should become a **private movement intelligence layer**:
+Niggleometer is a **private movement intelligence layer**:
 
 1. The camera observes a small, repeatable movement protocol on the user's device.
 2. The app turns observations into understandable dimensions such as range, control, symmetry, tempo, and consistency.
@@ -382,7 +386,7 @@ Still gated:
 
 ## Definition of done for the first public slice
 
-A user who has never seen Imperfect Form can:
+A user who has never seen the Niggleometer can:
 
 1. Start the flagship assessment without a wallet or account.
 2. Understand the setup and receive either a valid card or a clear inconclusive result.

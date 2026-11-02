@@ -1,6 +1,6 @@
 # Coach Station
 
-The physical half of Imperfect Form's [north star](../docs/NORTH_STAR.md):
+The physical half of the Niggleometer [north star](../docs/NORTH_STAR.md):
 a Python service that receives live form events from the web app and drives
 the SO-101 arm ("Coach") to **physically demonstrate corrections** — so the
 robot can teach the human after the camera has understood their form.

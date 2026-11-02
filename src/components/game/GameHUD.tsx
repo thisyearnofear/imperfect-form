@@ -4,6 +4,8 @@ import { useImmersive } from '@/hooks/useImmersive';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { zIndexClasses } from '@/lib/zTokens';
 import { readableFormWarning } from '@/lib/coachingStory';
+import ReadGauge from '@/components/readings/ReadGauge';
+import type { ReadLevel } from '@/lib/readQuality';
 
 interface GameHUDProps {
   mode: string;
@@ -20,6 +22,11 @@ interface GameHUDProps {
   /** True during the ~800ms rep-feedback window: on mobile this drives the
    *  pill-count pulse + milestone chip instead of a full-screen flash. */
   repPulse?: boolean;
+  /** Instrument read — needle 0..1 + level. Renders the meter face when the
+   *  session feeds it live signals (docs/PHASE_B_PLAN §B1). */
+  read?: { needle: number; level: ReadLevel };
+  /** Gentle persistent exit for the pain-ICP — "It hurts — stop". */
+  onPainExit?: () => void;
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -33,6 +40,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   depth,
   warnings,
   repPulse = false,
+  read,
+  onPainExit,
 }) => {
   const { register } = useSessionIntent();
   // The live HUD follows the session register: an explicit Train session keeps
@@ -219,6 +228,19 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       {warnings && warnings.length > 0 && (
         <div className="hud-warning-strip" role="status" aria-live="polite" title={warnings[0]}>
           {readableFormWarning(warnings[0])}
+        </div>
+      )}
+      {/* Instrument cluster — studio register only. The meter face mounts when
+          the session feeds live signals; the pain exit is always gentle,
+          never an error. */}
+      {studio && (read || onPainExit) && (
+        <div className="hud-instrument">
+          {read && <ReadGauge needle={read.needle} level={read.level} />}
+          {onPainExit && (
+            <button type="button" className="hud-pain-exit" onClick={onPainExit}>
+              It hurts — stop
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -1,8 +1,19 @@
-# Imperfect Form - Physical AI Fitness Coaching
+# Niggleometer — an honest meter for a nagging body
 
-AI watches you exercise, understands your form, and a robot arm physically
-demonstrates the correction. Many apps do pose detection — almost none close
-the feedback loop with physical AI.
+_(Formerly Imperfect Form — see [NAMING.md](./docs/NAMING.md). Product:
+**Niggleometer** · company/story layer: **Sandow** · exhibit: **The Sandow
+Machine**, a cabinet-scale niggleometer.)_
+
+Your niggle, measured. The camera reads how a nagging joint moves today —
+on-device, private, every read labelled Clear / Usable / Early — and week
+over week you watch whether it's actually changing. When the coach bay is
+connected, an SO-101 robot arm physically demonstrates the fix. Many apps do
+pose detection — almost none close the feedback loop with physical AI.
+
+**Who it's for:** the person whose wrist / knee / trapezius nags — a problem,
+not a doctor — or someone mid-rehabilitation who needs nudges and milestones
+to finish the journey well. A chatbot can talk about your niggle; a
+niggleometer measures it.
 
 **Heritage:** Britain invented the AI form-check in 1897 — Eugen Sandow graded
 photographs by post and sold a spring-grip dumbbell (Royal Warrant, King Edward
@@ -46,7 +57,7 @@ durable analytics. See the [Movement Intelligence plan](./docs/MOVEMENT_INTELLIG
 
 ## Live Demo
 
-🌐 **[imperfectform.fun](https://imperfectform.fun)** - Private camera coaching with a path into physical AI
+🌐 **[imperfectform.vercel.app](https://imperfectform.vercel.app)** - Private camera coaching with a path into physical AI _(home is moving to `niggleometer.*` — see [NAMING.md](./docs/NAMING.md))_
 
 ## Quick Start
 
@@ -61,6 +72,7 @@ Visit `http://localhost:3000` to see the app running.
 
 Project source is MIT where applicable; bundled third-party assets retain their own licenses (see [`public/atmosphere/NOTICE.md`](./public/atmosphere/NOTICE.md)).
 
+- [Naming](./docs/NAMING.md) - Niggleometer decision, ICP shift, brand architecture
 - [North Star](./docs/NORTH_STAR.md) - Differentiation, three rings, data flywheel, Sandow heritage
 - [The Cræft Prize](./docs/CRAFFT_PRIZE.md) - Submission strategy: Sandow lineage + arcade cabinet exhibit
 - [Roadmap](./docs/ROADMAP.md) - **Required next order** (manual stage → telemetry → hardware)

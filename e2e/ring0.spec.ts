@@ -26,7 +26,7 @@ test.describe('Ring 0 - wallet-free core loop', () => {
 
   test('no interactive boot gate stands in front of the foyer', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /Make one rep better/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /Your niggle/i })).toBeVisible({
       timeout: 20000,
     });
     // The old ceremony ("Enter the bay" / "Enter quietly") must never come back.
@@ -37,7 +37,7 @@ test.describe('Ring 0 - wallet-free core loop', () => {
   test('day-0 foyer is studio coaching doorway, not XP chrome', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.coach-foyer__brand')).toHaveText('Imperfect Form');
-    await expect(page.getByRole('heading', { name: /Make one rep better/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /Your niggle/i })).toBeVisible({
       timeout: 20000,
     });
     await expect(page.getByText(/Your camera catches one form error/i)).toBeVisible();
@@ -81,8 +81,8 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.getByText(/^🔧 Debug$/)).toHaveCount(0);
     const start = page.locator('#startButton');
     await expect(start).toBeEnabled();
-    await expect(start).toHaveText(/Try one rep/i);
-    await expect(start).toHaveAccessibleName(/Try one rep of Curls with camera coaching/i);
+    await expect(start).toHaveText(/Take a reading/i);
+    await expect(start).toHaveAccessibleName(/Take a Curls reading/i);
     // Day-0 is coaching, not a wallet/tutorial wall.
     await expect(page.getByText(/Connect to sync/i)).toHaveCount(0);
     await expect(page.getByText(/on-chain at 5/i)).toHaveCount(0);
@@ -106,10 +106,8 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'pushups');
     await expect(curls).toHaveAttribute('aria-pressed', 'false');
     await expect(pushups).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#startButton')).toHaveText(/Try one rep/i);
-    await expect(page.locator('#startButton')).toHaveAccessibleName(
-      /Try one rep of Push-ups with camera coaching/i
-    );
+    await expect(page.locator('#startButton')).toHaveText(/Take a reading/i);
+    await expect(page.locator('#startButton')).toHaveAccessibleName(/Take a Push-ups reading/i);
     // The robot-native proof case is signposted at the point of choice:
     // exactly one chip, on the Curls card, never on the camera-only card.
     await expect(page.locator('.coach-foyer__robot-chip')).toHaveCount(1);

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Your Builder Code (`bc_ozh43mmg`) has been integrated into Imperfect Form. All onchain transactions will now be attributed to you for rewards, analytics, and visibility on base.dev.
+Your Builder Code (`bc_ozh43mmg`) has been integrated into Niggleometer. All onchain transactions will now be attributed to you for rewards, analytics, and visibility on base.dev.
 
 ## What Was Integrated
 

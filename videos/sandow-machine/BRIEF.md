@@ -2,7 +2,7 @@
 workflow: general-video
 flow: automation
 storyboard: no
-message: 'Britain invented the form-check in 1897 — Imperfect Form finishes that loop with a robot arm'
+message: 'Britain invented the form-check in 1897 — Niggleometer finishes that loop with a robot arm'
 destination: craeft-prize-submission
 aspect: 1920x1080
 language: en
@@ -16,7 +16,7 @@ angle: heritage-lineage-narrative
 A 2:30–2:45 submission film for The British Cræft Prize (window closes
 31 Aug 2026). The pitch: Eugen Sandow ran the world's first AI form-check by
 Royal Mail in 1897 — photo in, graded against ideal tables, correction out,
-spring-grip dumbbell under Royal Warrant. Imperfect Form closes that same loop
+spring-grip dumbbell under Royal Warrant. Niggleometer closes that same loop
 with on-device pose estimation and an SO-101 robot arm that physically
 demonstrates the correction. Tone: satire with a steel core — Victorian
 seaside arcade register on the surface, a working instrument underneath.
@@ -29,7 +29,7 @@ Shot-by-shot source of truth: `../../docs/CRAFFT_SUBMISSION_DRAFT.md` § 3
 ## Assets
 
 - assets/ — to be staged during production:
-  - screen recordings of imperfectform.fun (foyer, coached curl with
+  - screen recordings of imperfectform.vercel.app (foyer, coached curl with
     skeleton+HUD, /lore page, Movement Card) — Act 2 + Act 4 footage
   - public-domain Sandow-era archive photograph + spring-grip dumbbell
     imagery — Act 1 heritage beats
@@ -47,4 +47,4 @@ Shot-by-shot source of truth: `../../docs/CRAFFT_SUBMISSION_DRAFT.md` § 3
   mandatory (upper-body only; learned policies after scripted demonstration).
 - Grade: teal-gold-on-night; sepia + film grain for Act 1 archive register.
 - End card: "Britain invented the form-check. We finished it." +
-  imperfectform.fun.
+  imperfectform.vercel.app.

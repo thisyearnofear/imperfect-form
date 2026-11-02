@@ -1,4 +1,4 @@
-# Imperfect Form — design lock
+# Niggleometer — design lock
 
 **Studio is the chassis. Arcade is punctuation. Calm/Lab are phase modes.**
 

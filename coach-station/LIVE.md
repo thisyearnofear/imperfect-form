@@ -89,7 +89,7 @@ torque, publishes a twin alert, and stops** — no auto-recovery, a human must
 intervene. The existing per-motor `create_temperature_alert` (warning 42 °C /
 critical 50 °C) provides early visibility before the stop threshold.
 
-**Layer 2 — station gates (imperfect-form).** In `CyberwaveArm.demonstrate`:
+**Layer 2 — station gates (niggleometer).** In `CyberwaveArm.demonstrate`:
 
 - **First-motion gate**: live mode refuses streamed trajectories until
   `COACH_MOTION_VERIFIED=1` — set only after a visually confirmed single

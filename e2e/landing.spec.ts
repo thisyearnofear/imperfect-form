@@ -178,7 +178,7 @@ test('landing — mobile: the primary CTA is operable on a phone', async ({ brow
 
 test.describe('landing — pain intent chips', () => {
   const SUBHEAD_DEFAULT =
-    'Your camera catches one form error. The coach arm shows the fix. No video leaves your device.';
+    'The camera reads how the joint moves today. Come back in a week and see what changed.';
 
   test('no chip selected: default subhead, curls preselected', async ({ page }) => {
     await page.goto('/');
@@ -197,28 +197,34 @@ test.describe('landing — pain intent chips', () => {
   }) => {
     const cases: { chip: string; move: string; subhead: RegExp; familiar: RegExp }[] = [
       {
-        chip: 'I train alone',
-        move: 'Push-ups',
-        subhead: /No spotter, no trainer/,
-        familiar: /hips are sagging/,
+        chip: 'My neck & shoulders',
+        move: 'Curls',
+        subhead: /cannot photograph tension/,
+        familiar: /most-searched ache/,
       },
       {
-        chip: 'My back or knees',
+        chip: 'My lower back',
         move: 'Squats',
-        subhead: /Squats hide a lot/,
-        familiar: /If anything hurts, stop/,
+        subhead: /chair-shaped ache/,
+        familiar: /Hours in a chair/,
       },
       {
-        chip: "I'm not sure my form",
+        chip: 'My knee',
+        move: 'Squats',
+        subhead: /Stairs ask for controlled depth/,
+        familiar: /Stair pain usually travels/,
+      },
+      {
+        chip: 'My arm or elbow',
         move: 'Curls',
-        subhead: /you are not guessing/,
+        subhead: /Grip is downstream/,
+        familiar: /Weak-feeling grip/,
+      },
+      {
+        chip: 'Not sure',
+        move: 'Curls',
+        subhead: /camera sees the rep/,
         familiar: /cannot see it/,
-      },
-      {
-        chip: "I'm not improving|I keep training",
-        move: 'Curls',
-        subhead: /Reps alone do not show/,
-        familiar: /not something you can compare/,
       },
     ];
     for (const c of cases) {
@@ -236,21 +242,23 @@ test.describe('landing — pain intent chips', () => {
       await expect(page.locator('.coach-foyer__lede')).toHaveText(SUBHEAD_DEFAULT);
     }
 
-    // Persistence across reload.
-    await page.getByRole('button', { name: /I train alone/ }).click();
-    expect(await page.evaluate(() => localStorage.getItem('imf_painIntent_v1'))).toBe('alone');
+    // Persistence across reload — joint + its resolved context both stay lit.
+    await page.getByRole('button', { name: /My neck & shoulders/ }).click();
+    expect(await page.evaluate(() => localStorage.getItem('imf_niggle_v1'))).toBe(
+      '{"joint":"neck-shoulders","context":"desk"}'
+    );
     await page.reload();
-    await expect(page.locator('.coach-foyer__lede')).toHaveText(/No spotter, no trainer/);
-    await expect(page.locator('.coach-foyer__pain-chip.is-selected')).toHaveCount(1);
+    await expect(page.locator('.coach-foyer__lede')).toHaveText(/cannot photograph tension/);
+    await expect(page.locator('.coach-foyer__pain-chip.is-selected')).toHaveCount(2);
   });
 
   test('chips are keyboard operable with visible focus', async ({ page }) => {
     await page.goto('/');
-    const chip = page.getByRole('button', { name: /My back or knees/ });
+    const chip = page.getByRole('button', { name: /My knee/ });
     await expect(chip).toBeVisible({ timeout: 20000 });
     await chip.focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('.coach-foyer__lede')).toHaveText(/Squats hide a lot/);
+    await expect(page.locator('.coach-foyer__lede')).toHaveText(/Stairs ask for controlled depth/);
     await expect(chip).toBeFocused();
     const outline = await chip.evaluate((el) => getComputedStyle(el).outlineWidth);
     expect(parseFloat(outline)).toBeGreaterThan(0);

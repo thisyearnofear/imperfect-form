@@ -1,8 +1,11 @@
 # North Star: Physical AI Coaching
 
 > **AI watches you exercise, understands your form, and a robot arm physically
-> demonstrates the correction. Imperfect Form closes the feedback loop that a
+> demonstrates the correction. Niggleometer closes the feedback loop that a
 > screen can't.**
+
+**Naming:** product **Niggleometer** · company/story **Sandow** · exhibit
+**The Sandow Machine** — see [NAMING.md](./NAMING.md).
 
 Many apps do pose detection. Almost none do physical AI. We are building toward
 that category with the **Cyberwave** platform and an **SO-101 arm ("Coach")** —
@@ -20,7 +23,7 @@ version of pose-estimation feedback. He also sold a **spring-grip dumbbell**,
 stamped _"Supplied to King Edward VII by Royal Letters Patent,"_ as a mechanical
 device to correct grip and form.
 
-That is the imperfect-form loop, 130 years early: photo in → graded against an
+That is the form-check loop, 130 years early: photo in → graded against an
 ideal → correction out. The Royal Mail was the transport layer; the camera is
 now the transport layer. The spring-grip dumbbell was the "physical AI" of its
 day — a mechanical form-corrector with a Royal Warrant. The SO-101 arm is the
@@ -51,7 +54,7 @@ into a gym-station wedge and a session → episode → policy flywheel.
 | **Understand before show**        | PoseRuntime + form events unlock demonstration; demos never gate coaching.   |
 | **Show beats describe**           | Scripted joint-space primitives first; learned policies after real sessions. |
 | **Honest robot scope**            | Upper-body corrections the SO-101 can literally sweep (curls, extension…).   |
-| **Product before platform flash** | Cyberwave twin / Edge power the loop; imperfectform.fun owns the story.      |
+| **Product before platform flash** | Cyberwave twin / Edge power the loop; Niggleometer owns the story.           |
 
 ## The loop
 
@@ -127,7 +130,7 @@ Hard lesson from past projects: gating actions on-chain kills adoption. On-chain
 
 ## Movement Intelligence: the durable product outcome
 
-The physical-AI loop gives Imperfect Form its moat; **Movement Intelligence** gives
+The physical-AI loop gives Niggleometer its moat; **Movement Intelligence** gives
 that loop a reason to compound. A privacy-first **Movement Passport** records
 range, control, symmetry, tempo, consistency, and measurement confidence — without
 becoming a medical record or universal fitness score. The first distribution
@@ -151,19 +154,20 @@ passes.
 
 ## Pitch (cohort)
 
-**Team:** Imperfect Form · **Robot:** SO-101 ("Coach")
+**Team:** Niggleometer · **Robot:** SO-101 ("Coach")
 
 AI watches you exercise through a camera, estimates your pose in real time,
 and when your form is off, the arm physically demonstrates the correct joint
 angle. It's a 3D reference that a screen can't provide. Most AI fitness
-coaches only give on-screen feedback — Imperfect Form turns AI corrections
+coaches only give on-screen feedback — Niggleometer turns AI corrections
 into physical demonstration, closing the feedback loop.
 
-**Company posture (imperfectform.fun):** Approachable physical AI for
-movement. Better form for millions through crafted game design and UI —
-not gym-bro slogans, not a sterile robotics brochure. Screens coach first;
-robots prove the category and become the gym-station wedge. Game-loop
-chrome (XP, ghosts, chain) is earned after the first coached feel.
+**Company posture (Sandow):** Approachable physical AI for movement — an
+honest meter for the joints that nag. Better movement for millions through
+crafted game design and UI — not gym-bro slogans, not a sterile robotics
+brochure. Screens coach first; robots prove the category and become the
+gym-station wedge. Game-loop chrome (XP, ghosts, chain) is earned after the
+first coached feel.
 
 **Loop principle:** Trust opens the door. Play keeps them. Physical AI makes
 them tell someone.

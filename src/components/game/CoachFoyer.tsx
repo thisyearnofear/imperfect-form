@@ -9,8 +9,10 @@ import { coachStation, type StationStatus } from '@/services/coachStation';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import { LandingSections } from '@/components/home/LandingSections';
 import { DemoPlate } from '@/components/home/DemoPlate';
-import { PAIN_INTENTS, resolveRestoredPainIntentMode } from '@/lib/painIntents';
-import { usePainIntent } from '@/hooks/usePainIntent';
+import { resolveRestoredPainIntentMode } from '@/lib/painIntents';
+import { getNiggleJoint, NIGGLE_JOINTS } from '@/lib/niggleIntents';
+import { useNiggle } from '@/hooks/useNiggle';
+import BodyPlate from '@/components/body/BodyPlate';
 import '@/styles/coach-foyer.css';
 
 type CoachFoyerProps = {
@@ -69,7 +71,7 @@ export function CoachFoyer({
   const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [showExtras, setShowExtras] = useState(false);
   const [ctaOutOfView, setCtaOutOfView] = useState(false);
-  const { painIntent, setPainIntent, hydrated } = usePainIntent();
+  const { joint, context, niggleIntent, setJoint, setContext, hydrated } = useNiggle();
   const extrasTouchedRef = useRef(false);
   const firstExtraRef = useRef<HTMLButtonElement>(null);
   const moreToggleRef = useRef<HTMLButtonElement>(null);
@@ -136,9 +138,9 @@ export function CoachFoyer({
   useEffect(() => {
     if (!hydrated || restoredChipAppliedRef.current) return;
     restoredChipAppliedRef.current = true;
-    if (!painIntent) return;
+    if (!niggleIntent) return;
     const restoredMode = resolveRestoredPainIntentMode(
-      painIntent,
+      niggleIntent,
       mode,
       Boolean(incomingChallenge)
     );
@@ -252,68 +254,111 @@ export function CoachFoyer({
             {/* Serif display, words staggered; "better." is the italic brass beat. */}
             <h2 id="coach-foyer-title" className="coach-foyer__title">
               <span className="coach-foyer__title-word lf-rise" style={{ animationDelay: '70ms' }}>
-                Make
+                Your
               </span>{' '}
-              <span className="coach-foyer__title-word lf-rise" style={{ animationDelay: '120ms' }}>
-                one
-              </span>{' '}
-              <span className="coach-foyer__title-word lf-rise" style={{ animationDelay: '170ms' }}>
-                rep
+              <span className="coach-foyer__title-word lf-rise" style={{ animationDelay: '140ms' }}>
+                niggle,
               </span>{' '}
               <em
                 className="coach-foyer__title-word coach-foyer__title-brass lf-rise"
                 style={{ animationDelay: '220ms' }}
               >
-                better.
+                measured.
               </em>
             </h2>
             <p
-              key={painIntent?.id ?? 'default'}
+              key={niggleIntent?.id ?? 'default'}
               className="coach-foyer__lede lf-swap"
               style={{ animationDelay: '280ms' }}
             >
-              {painIntent?.subhead ?? foyer.line2}
+              {niggleIntent?.subhead ?? foyer.line2}
             </p>
 
-            {/* Pain-intent chips — picking one adapts the subhead, the move
-                cards and the "Sound familiar" section. None selected = the
-                default page. */}
+            {/* Niggle intake — joint chips first, then what it does. Picking a
+                joint resolves to its first context (one tap = a full read);
+                the context row refines the copy, the mode stays the joint's. */}
             <div
               className="coach-foyer__pain lf-rise"
               style={{ animationDelay: '320ms' }}
               role="group"
-              aria-label="What brings you here?"
+              aria-label="Where does it nag?"
             >
-              <span className="coach-foyer__pain-label">What brings you here?</span>
-              <div className="coach-foyer__pain-chips">
-                {PAIN_INTENTS.map((chip) => {
-                  const selected = painIntent?.id === chip.id;
-                  return (
-                    <button
-                      key={chip.id}
-                      type="button"
-                      className={`coach-foyer__pain-chip${selected ? ' is-selected' : ''}`}
-                      aria-pressed={selected}
-                      onClick={(e) => {
-                        playStudioCue('soft');
-                        triggerHaptic(30);
-                        const next = selected ? null : chip.id;
-                        setPainIntent(next);
-                        if (next) {
-                          onModeChange(chip.mode);
-                          // Keep the active chip visible in the scroll row.
-                          e.currentTarget.scrollIntoView({
-                            inline: 'center',
-                            block: 'nearest',
-                            behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-                          });
-                        }
-                      }}
-                    >
-                      {chip.label}
-                    </button>
-                  );
-                })}
+              <span className="coach-foyer__pain-label">Where does it nag?</span>
+              <div className="coach-foyer__plate">
+                <BodyPlate
+                  selected={joint?.id ?? null}
+                  annotateAll
+                  onSelect={(id) => {
+                    playStudioCue('soft');
+                    triggerHaptic(30);
+                    if (joint?.id === id) {
+                      setJoint(null);
+                      return;
+                    }
+                    const j = getNiggleJoint(id);
+                    if (!j) return;
+                    setJoint(j.id);
+                    onModeChange(j.mode);
+                  }}
+                />
+                <div>
+                  <div className="coach-foyer__pain-chips">
+                    {NIGGLE_JOINTS.map((j) => {
+                      const selected = joint?.id === j.id;
+                      return (
+                        <button
+                          key={j.id}
+                          type="button"
+                          className={`coach-foyer__pain-chip${selected ? ' is-selected' : ''}`}
+                          aria-pressed={selected}
+                          onClick={(e) => {
+                            playStudioCue('soft');
+                            triggerHaptic(30);
+                            if (selected) {
+                              setJoint(null);
+                              return;
+                            }
+                            setJoint(j.id);
+                            onModeChange(j.mode);
+                            // Keep the active chip visible in the scroll row.
+                            e.currentTarget.scrollIntoView({
+                              inline: 'center',
+                              block: 'nearest',
+                              behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+                            });
+                          }}
+                        >
+                          {j.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {joint && joint.contexts.length > 1 && (
+                    <>
+                      <span className="coach-foyer__pain-label">What does it do?</span>
+                      <div className="coach-foyer__pain-chips">
+                        {joint.contexts.map((c) => {
+                          const selected = context?.id === c.id;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              className={`coach-foyer__pain-chip${selected ? ' is-selected' : ''}`}
+                              aria-pressed={selected}
+                              onClick={() => {
+                                playStudioCue('soft');
+                                triggerHaptic(30);
+                                setContext(c.id);
+                              }}
+                            >
+                              {c.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -379,13 +424,13 @@ export function CoachFoyer({
               ref={startButtonRef}
               className="coach-foyer__start coach-foyer__start--hero feel-press lf-rise"
               style={{ animationDelay: '340ms' }}
-              aria-label={`Try one rep of ${selectedExercise.label} with camera coaching`}
+              aria-label={`Take a ${selectedExercise.label} reading — camera reads, nothing uploads`}
               onPointerEnter={prefetchWebcamChunk}
               onTouchStart={prefetchWebcamChunk}
               onClick={handleStart}
             >
               <Camera size={18} strokeWidth={2} aria-hidden="true" />
-              <span>{incomingChallenge ? 'Meet the ghost' : 'Try one rep'}</span>
+              <span>{incomingChallenge ? 'Meet the ghost' : 'Take a reading'}</span>
               <ArrowRight
                 size={18}
                 strokeWidth={2}
@@ -407,6 +452,12 @@ export function CoachFoyer({
             <p className="coach-foyer__assist lf-rise" style={{ animationDelay: '400ms' }}>
               Stand 1.5 to 2.5 m back so your head and hips are in frame.
             </p>
+            <p
+              className="coach-foyer__assist coach-foyer__assist--meter lf-rise"
+              style={{ animationDelay: '410ms' }}
+            >
+              A meter, not a diagnosis. If it hurts, stop.
+            </p>
 
             {/* Plate I peeks under the CTA on narrow layouts; the --aside
                 plate owns the right column on wide ones. */}
@@ -417,7 +468,7 @@ export function CoachFoyer({
               <DemoPlate
                 mode={mode}
                 selectedExerciseLabel={selectedExercise.label}
-                callout={painIntent?.plateCallout}
+                callout={niggleIntent?.plateCallout}
               />
             </div>
           </div>
@@ -429,7 +480,7 @@ export function CoachFoyer({
             <DemoPlate
               mode={mode}
               selectedExerciseLabel={selectedExercise.label}
-              callout={painIntent?.plateCallout}
+              callout={niggleIntent?.plateCallout}
             />
           </div>
         </div>
@@ -438,7 +489,7 @@ export function CoachFoyer({
           mode={mode}
           selectedExerciseLabel={selectedExercise.label}
           onStart={handleStart}
-          painIntent={painIntent}
+          painIntent={niggleIntent}
         />
       </div>
 
@@ -450,11 +501,11 @@ export function CoachFoyer({
         <button
           type="button"
           className="coach-foyer__start"
-          aria-label={`Try one rep of ${selectedExercise.label} with camera coaching`}
+          aria-label={`Take a ${selectedExercise.label} reading — camera reads, nothing uploads`}
           onClick={handleStart}
         >
           <Camera size={16} strokeWidth={2} aria-hidden="true" />
-          <span>Try one rep</span>
+          <span>Take a reading</span>
           <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>

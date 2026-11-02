@@ -162,7 +162,8 @@ Landers see, in order:
    station pulses remain fail-silent. `?twin=1` provides a deterministic DEMO
    rehearsal for UI composition only; it never drives hardware or closes the
    manual-stage gate.
-3. **Home shell** — studio topbar (`IMPERFECT FORM`) even before `hasMounted`.
+3. **Home shell** — studio topbar (`IMPERFECT FORM`; becomes `NIGGLEOMETER` on
+   the rename pass — see [NAMING.md](./NAMING.md)) even before `hasMounted`.
 4. **`CoachFoyer`** — glass panel over the bay; two pre-answered moves, CTA-first
    (extras + explainer demoted below START). The bay responds to the selected
    movement and mirrors the real session handoff: starting, camera, AI,

@@ -1185,3 +1185,101 @@
     animation: none;
   }
 }
+
+/* Instrument honesty line — quiet brass hairline, the meter's own voice. */
+.coach-foyer__assist--meter {
+  color: var(--cf-gold);
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+}
+
+/* ── BodyPlate — the anatomical instrument figure (PHASE_B_PLAN §B4) ── */
+.body-plate {
+  display: block;
+  width: 120px;
+  max-width: 34vw;
+  height: auto;
+}
+.body-plate__hairlines line {
+  stroke: var(--cf-border);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 4;
+}
+.body-plate__silhouette {
+  fill: rgba(122, 235, 216, 0.08);
+  stroke: var(--cf-teal-bright);
+  stroke-width: 1.2;
+  transition: fill 300ms var(--cf-curve);
+}
+.body-plate__figure[data-lit='true'] .body-plate__silhouette {
+  fill: rgba(252, 177, 49, 0.14);
+  stroke: var(--cf-gold);
+}
+.body-plate__spine {
+  stroke: var(--cf-border);
+  stroke-width: 0.6;
+  stroke-dasharray: 3 3;
+}
+.body-plate__joint-dot {
+  fill: var(--cf-teal-bright);
+  opacity: 0.7;
+}
+.body-plate__zone-glow {
+  fill: rgba(252, 177, 49, 0.16);
+  stroke: var(--cf-gold);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.body-plate__zone-tick {
+  stroke: var(--cf-gold);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+}
+.body-plate__hitarea {
+  fill: transparent;
+  cursor: pointer;
+}
+.body-plate__hitarea:focus-visible {
+  outline: 2px solid var(--cf-teal-bright);
+  outline-offset: 2px;
+}
+.body-plate__hitarea--all {
+  /* whole-figure area sits beneath zone hitareas in DOM order */
+  pointer-events: all;
+}
+.coach-foyer__plate {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+@media (max-width: 560px) {
+  .body-plate { width: 88px; }
+}
+
+/* ── ReadGauge — the meter face (PHASE_B_PLAN §B1) ── */
+.read-gauge__zone {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.read-gauge__zone--early { stroke: var(--cf-soft); }
+.read-gauge__zone--usable { stroke: var(--cf-gold-bright); opacity: 0.6; }
+.read-gauge__zone--clear { stroke: var(--cf-teal-bright); }
+.read-gauge__tick { stroke: var(--cf-muted); stroke-width: 1; }
+.read-gauge__needle {
+  stroke: var(--cf-gold);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: x2 300ms var(--cf-curve), y2 300ms var(--cf-curve);
+}
+.read-gauge__pivot { fill: var(--cf-gold); }
+.read-gauge__label {
+  fill: var(--cf-soft);
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+@media (prefers-reduced-motion: reduce) {
+  .read-gauge__needle { transition: none; }
+}

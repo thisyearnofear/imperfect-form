@@ -1,5 +1,5 @@
 /**
- * Brand / positioning spine for the app shell (imperfectform.fun).
+ * Brand / positioning spine for the app shell (Niggleometer).
  *
  * Category: approachable physical AI for movement.
  * Promise: watch → understand → show → progress.
@@ -77,38 +77,37 @@ export type FoyerCopy = {
 };
 
 const ARCADE_FOYER: FoyerCopy = {
-  brand: 'IMPERFECT FORM',
-  line1: 'CAMERA READS FORM',
-  line2: 'COACH SHOWS THE FIX',
+  brand: 'THE NIGGLEOMETER',
+  line1: 'STEP UP · BE READ',
+  line2: 'THE CAMERA READS YOUR NIGGLE',
   provenance: 'BRITAIN INVENTED THE FORM-CHECK · 1897',
-  loopLabel: 'ONE REP / ONE FIX',
-  invitation: 'PICK a movement. Make one rep better.',
+  loopLabel: 'PHOTO IN / READING OUT',
+  invitation: 'One rep in. One reading out.',
   trust: 'ON-DEVICE · PRIVATE',
-  hint: 'PATH → PHYSICAL AI',
-  cta: 'PICK A MOVE · START',
+  hint: 'CHECK YOUR NIGGLE WEEKLY',
+  cta: 'TAKE A READING',
 };
 
 const STUDIO_FOYER: FoyerCopy = {
-  brand: 'Imperfect Form',
-  line1: 'Make one rep better.',
-  line2:
-    'Your camera catches one form error. The coach arm shows the fix. No video leaves your device.',
+  brand: 'Niggleometer',
+  line1: 'Your niggle, measured.',
+  line2: 'The camera reads how the joint moves today. Come back in a week and see what changed.',
   provenance: 'Britain invented the form-check in 1897. We finished it.',
-  loopLabel: 'ONE REP / ONE FIX',
-  invitation: 'Start imperfect. Get one useful cue.',
-  trust: 'Private camera coaching · wallet optional · no video upload',
+  loopLabel: 'READING → RETEST',
+  invitation: 'Name the niggle. Take the first reading.',
+  trust: 'On-device · private · honest reads — Clear / Usable / Early',
   // The product's real promise is longitudinal — see and understand what is
   // changing — so the doorway says so. Scoped to what exists today: your own
   // history, not a population benchmark. This string was written but never
   // rendered until the landing pass; CoachFoyer now outputs it below the trust
   // line. See docs/COACH_GATES.md for the confidence wording it must not
   // overstate.
-  hint: 'One rep now · your trend over time',
-  cta: 'Start camera coaching',
+  hint: 'A reading now · your trend over time',
+  cta: 'Take a reading',
 };
 
 const CALM_FOYER: FoyerCopy = {
-  brand: 'IMPERFECT FORM',
+  brand: 'NIGGLEOMETER',
   line1: 'Settle the system',
   line2: 'Breath and recovery after the work',
   provenance: 'The form-check — a British invention, 1897.',
@@ -129,7 +128,7 @@ const CALM_FOYER: FoyerCopy = {
 const CRAFFT_FOYER: FoyerCopy = {
   brand: 'THE SANDOW MACHINE',
   line1: 'STEP UP · BE GRADED',
-  line2: 'Britain invented the form-check in 1897. We finished it with a robot.',
+  line2: 'A NIGGLEOMETER — 1897 SPEC, REBUILT WITH A ROBOT.',
   provenance: 'Britain invented the form-check in 1897. We finished it.',
   loopLabel: 'PHOTO IN / FIX OUT',
   invitation: 'One rep in. One correction out.',
@@ -221,10 +220,10 @@ export function parseSessionIntent(raw: string | null | undefined): SessionInten
 }
 
 export const BRAND = {
-  name: 'Imperfect Form',
+  name: 'Niggleometer',
   /** Short category line for metadata / shares */
   tagline:
-    'Make one rep better. Private camera coaching with a physical coach that can show the fix.',
+    'Your niggle, measured. Private camera readings on your device — with a physical coach that can show the fix.',
   /**
    * Arcade foyer lines — short so Press Start 2P stays legible inside #screen.
    * Alias of Train intent; prefer getIntentDef('train').foyer in new code.
@@ -236,7 +235,7 @@ export const BRAND = {
   crafft: CRAFFT_FOYER,
   /** Prose equivalents for studio surfaces / SEO */
   visionLine:
-    'Camera coaching for imperfect humans — with a physical coach that can show the fix when connected.',
+    'An honest meter for a nagging body — with a physical coach that can show the fix when connected.',
   loopLabel: 'ONE REP / ONE FIX',
   trustLine: 'Pose runs on your device. No video leaves the browser.',
   roboticsHint:

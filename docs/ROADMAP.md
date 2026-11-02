@@ -248,7 +248,8 @@ plus a second valid assessment within 7–14 days.
 
 ---
 
-**Live app:** https://imperfectform.fun
+**Live app:** https://imperfectform.vercel.app (product renamed **Niggleometer**,
+moving to `niggleometer.*` — see [NAMING.md](./NAMING.md))
 **North star:** [NORTH_STAR.md](./NORTH_STAR.md)
 **First-visit + manual-stage protocol:** [`FIRST_VISIT_AND_MANUAL_STAGE.md`](./FIRST_VISIT_AND_MANUAL_STAGE.md)
 **Station:** [`coach-station/`](../coach-station/) — see README for sim CLI,

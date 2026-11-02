@@ -25,9 +25,9 @@ _medium_ — and the method is a British invention.
 
 ### The lineage (this is real, not a metaphor)
 
-See [NORTH_STAR.md → "Heritage: the Sandow lineage"](./NORTH_STAR.md#heritage-the-sandow-lineage) for the full documented history. The short version: **Eugen Sandow** ran a postal form-grading loop in 1890s Britain — photos in, graded against ideal tables, corrective exercises + spring-grip dumbbell out. That is the imperfect-form loop, 130 years early. The SO-101 arm closes the same loop with a robot.
+See [NORTH_STAR.md → "Heritage: the Sandow lineage"](./NORTH_STAR.md#heritage-the-sandow-lineage) for the full documented history. The short version: **Eugen Sandow** ran a postal form-grading loop in 1890s Britain — photos in, graded against ideal tables, corrective exercises + spring-grip dumbbell out. That is the form-check loop, 130 years early. The SO-101 arm closes the same loop with a robot.
 
-| Sandow (1897)           | Imperfect Form (2026)                   |
+| Sandow (1897)           | Niggleometer (2026)                     |
 | ----------------------- | --------------------------------------- |
 | Photo in (by post)      | Camera in (in-browser, on-device)       |
 | Graded against an ideal | Pose estimation vs. joint-angle targets |
@@ -54,9 +54,10 @@ substance is a working form-coaching instrument.
 **Product name:** "The Sandow Machine" (working title)
 
 **What it is:** A Victorian-seaside-arcade cabinet housing an SO-101 robot
-arm. You step up, the camera reads your form, the arm grades you against
-Sandow's 1897 proportional tables, and physically demonstrates the
-correction. Same loop Sandow ran by post — closed with a robot.
+arm — a cabinet-scale Niggleometer. You step up, the camera reads your form,
+the arm grades you against Sandow's 1897 proportional tables, and physically
+demonstrates the correction. Same loop Sandow ran by post — closed with a
+robot.
 
 **The craft heritage:**
 
@@ -93,7 +94,7 @@ The _process_ is the craft, not just the object. Document:
 | Ingenuity          | Closing a 130-year-old loop (photo→grade→correct) with a robot arm.       |
 | Cræft depth        | Sandow lineage + arcade cabinet fabrication + open-hardware arm assembly. |
 | Beauty             | Victorian seaside cabinet aesthetic; teal-gold-night studio UI.           |
-| Usefulness & scale | The app already works at imperfectform.fun; the cabinet is the exhibit.   |
+| Usefulness & scale | The Niggleometer app already works; the cabinet is the exhibit.           |
 | Integrity          | On-device pose (no slop); open hardware; honest upper-body scope.         |
 | Future heritage    | Britain's next material culture of movement — AI form-coaching as craft.  |
 
