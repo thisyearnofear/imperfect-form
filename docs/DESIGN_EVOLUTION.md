@@ -134,8 +134,11 @@ identity, og assets.
    copy pass, Readings tab promoted.
 2. **B — session** (framing + furniture): protocol language, confidence
    states, pain exit, inconclusive-as-answer. **In progress** — ReadGauge +
-   readQuality shipped and mounted in GameHUD (optional props); live signal
-   plumbing, pain-exit surface, and inconclusive treatment remain.
+   readQuality shipped and wired live in the session chrome; the designed
+   `PainExit` surface ("It hurts — stop" → right-call copy + joint mark into
+   the logbook) and the recap's inconclusive lead branch (`inconclusiveReads`
+   shared copy, cause + fix per reason) shipped next. Remaining: protocol-
+   language copy pass (§B2) and the optional shader finish (§B5).
 3. **C — ritual** (surfaces): readings tab ✅ (shipped with A), weekly check
    cadence, niggle-cleared card.
 4. **D — catalog** (the real build): joint-screen protocols, validated like

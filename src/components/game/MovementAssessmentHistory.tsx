@@ -26,17 +26,9 @@ import {
   formatSignedPercent,
   measurementDelta,
 } from '@/lib/movementAssessmentHistory';
+import { inconclusiveRead } from '@/lib/inconclusiveReads';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import MovementTrajectoryView from './MovementTrajectory';
-
-const INCONCLUSIVE_COPY: Record<string, string> = {
-  invalid_protocol: 'This capture belongs to a different baseline protocol.',
-  insufficient_reps: 'The exact five-rep baseline was not completed.',
-  insufficient_trace: 'The trace was too short to compare.',
-  low_visibility: 'The camera read was too incomplete to compare.',
-  unstable_tracking: 'The camera read was not steady enough to compare.',
-  high_noise: 'The movement signal was too noisy to compare.',
-};
 
 type MovementAssessmentHistoryProps = {
   userAddress?: string;
@@ -276,7 +268,7 @@ export function MovementAssessmentHistory({
           {currentIsInconclusive ? (
             <div className="movement-history__notice movement-history__notice--quiet">
               <Activity size={14} aria-hidden="true" />
-              <span>{INCONCLUSIVE_COPY[latest?.inconclusiveReason ?? 'insufficient_trace']}</span>
+              <span>{inconclusiveRead(latest?.inconclusiveReason).cause}</span>
             </div>
           ) : comparison?.comparable ? (
             <div

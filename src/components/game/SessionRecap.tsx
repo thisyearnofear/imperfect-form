@@ -10,6 +10,7 @@ import FormLine from './FormLine';
 import FormSignatureHistory from './FormSignatureHistory';
 import { nextFocusFor, sessionStory } from '@/lib/coachingStory';
 import { countedLabel } from '@/lib/exerciseGuidance';
+import { inconclusiveRead } from '@/lib/inconclusiveReads';
 import { BRAND } from '@/lib/brandPositioning';
 import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
 import { averageFormScore, getFormGrade } from '@/lib/formGrade';
@@ -378,6 +379,13 @@ export function SessionRecap({
   const avgScore = averageFormScore(formScores);
   const sandowGrade = avgScore !== null ? getFormGrade(avgScore) : null;
   const hasCorrection = Boolean(summary?.anomalies[0]?.metrics.warnings[0]);
+  // Inconclusive is an honest answer (PHASE_B_PLAN §B3): when the meter
+  // could not read, the recap leads with that truth + the one fixable cause —
+  // brass register, never an error state.
+  const inconclusive =
+    movementAssessment?.status === 'inconclusive'
+      ? inconclusiveRead(movementAssessment.inconclusiveReason)
+      : null;
 
   return (
     <section
@@ -385,8 +393,16 @@ export function SessionRecap({
       aria-labelledby="session-recap-title"
     >
       <div className="session-recap__one-fix motion-enter">
-        <p className="session-recap__one-fix-eyebrow">{BRAND.loopLabel}</p>
-        <h2 id="session-recap-title">{hasCorrection ? 'The one fix' : 'Keep this line'}</h2>
+        <p className="session-recap__one-fix-eyebrow">
+          {inconclusive ? 'Honest answer' : BRAND.loopLabel}
+        </p>
+        <h2 id="session-recap-title">
+          {inconclusive
+            ? 'The meter couldn’t get a clean read'
+            : hasCorrection
+              ? 'The one fix'
+              : 'Keep this line'}
+        </h2>
         {painIntent?.mode === mode && (
           <p className="session-recap__personal">
             {painIntent.recapLine}
@@ -394,7 +410,7 @@ export function SessionRecap({
               ' Your movement history is under Session detail and history below.'}
           </p>
         )}
-        <strong>{story.focus}</strong>
+        <strong>{inconclusive ? inconclusive.fix : story.focus}</strong>
         <div className="session-recap__one-fix-meta">
           <span>
             {reps} {countedLabel(mode, reps)}
@@ -461,15 +477,19 @@ export function SessionRecap({
         </div>
         <div>
           <p className="session-recap__story-eyebrow">What the coach learned</p>
-          <h3>{story.title}</h3>
-          <strong>{story.body}</strong>
+          <h3>{inconclusive ? 'Why it stayed quiet' : story.title}</h3>
+          <strong>{inconclusive ? inconclusive.cause : story.body}</strong>
         </div>
       </div>
       <div className="session-recap__item studio-card__item session-recap__item--good motion-enter motion-delay-1">
         <CheckCircle2 size={17} />
         <div>
-          <p>What went well</p>
-          <strong>{takeaway.strength}</strong>
+          <p>{inconclusive ? 'What it means for your line' : 'What went well'}</p>
+          <strong>
+            {inconclusive
+              ? 'An unclear read never moves your baseline — repeat the same setup and the next one counts.'
+              : takeaway.strength}
+          </strong>
         </div>
       </div>
       {summary?.trace && summary.trace.length > 0 && (
@@ -480,11 +500,15 @@ export function SessionRecap({
         <button
           type="button"
           className="studio-card__button min-h-11"
-          onClick={() => onTryAgain(story.focus)}
-          aria-label={`Try another ${mode} set with focus on ${story.focus}`}
+          onClick={() => onTryAgain(inconclusive ? inconclusive.fix : story.focus)}
+          aria-label={
+            inconclusive
+              ? `Take the ${mode} reading again: ${inconclusive.fix}`
+              : `Try another ${mode} set with focus on ${story.focus}`
+          }
         >
           <RotateCcw size={16} aria-hidden="true" />
-          <span>Try this correction now</span>
+          <span>{inconclusive ? 'Take the reading again' : 'Try this correction now'}</span>
         </button>
       )}
 

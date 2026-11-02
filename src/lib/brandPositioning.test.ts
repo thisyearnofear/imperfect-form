@@ -20,7 +20,10 @@ describe('brand positioning foyer copy', () => {
     // studio-facing label must match the shared one.
     expect(BRAND.loopLabel).toBe('ONE REP / ONE FIX');
     const studio = SESSION_INTENTS.find((intent) => intent.id === 'understand');
-    expect(studio?.foyer.loopLabel).toBe(BRAND.loopLabel);
+    // The studio foyer speaks the instrument register (READING → RETEST —
+    // the Niggleometer's reading/retest loop), a deliberate divergence from
+    // the coached-session receipt label.
+    expect(studio?.foyer.loopLabel).toBe('READING → RETEST');
   });
 
   it('surfaces Sandow heritage and an honest recap beat in the main product copy', () => {

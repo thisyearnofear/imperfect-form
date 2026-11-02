@@ -26,6 +26,7 @@ import CameraPrimer, {
   requestCameraAccess,
 } from '@/components/recovery/CameraPrimer';
 import RecoveryCard from '@/components/recovery/RecoveryCard';
+import PainExit from '@/components/readings/PainExit';
 import { useCoachPersonality } from '@/hooks/useCoachPersonality';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { speakCoachLine } from '@/lib/tts';
@@ -124,6 +125,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     import('@/services/sessionLogger').SessionSummary | null
   >(null);
   const [movementAssessment, setMovementAssessment] = useState<MovementAssessment | null>(null);
+  // The designed stop-for-pain surface (PHASE_B_PLAN §B2): the session ends
+  // the same way Stop ends it — the landing surface is what changes.
+  const [painExit, setPainExit] = useState(false);
 
   // Rep timestamps for tempo-based persona suggestion (see usePersonaSuggestion).
   // Captured per-rep, consumed + cleared at session end.
@@ -519,7 +523,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, []);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const handleStopRef = useRef<() => void>(() => {}); // Initialize with empty function
+  const handleStopRef = useRef<(destination?: 'recap' | 'pain') => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
 
   // Check if fullscreen is available in current context (not restricted by iframe)
@@ -595,41 +599,51 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleStop = useCallback(() => {
-    exitFullscreen();
-    unlock();
-    setIsLandscapeLocked(false);
-    if (timerRef.current) clearInterval(timerRef.current);
+  const handleStop = useCallback(
+    (destination: 'recap' | 'pain' = 'recap') => {
+      exitFullscreen();
+      unlock();
+      setIsLandscapeLocked(false);
+      if (timerRef.current) clearInterval(timerRef.current);
 
-    // Stagger the transitions: first hide the game, then show summary
-    setStarted(false);
-    setShowTutorial(false);
+      // Stagger the transitions: first hide the game, then show summary
+      setStarted(false);
+      setShowTutorial(false);
 
-    // A stopped session releases the started guard so the next session re-fires
-    // assessment_started (each set is its own funnel entry). The completed
-    // guard stays keyed per-session and is reset by the next curl start.
-    assessmentStartedRef.current = false;
+      // A stopped session releases the started guard so the next session re-fires
+      // assessment_started (each set is its own funnel entry). The completed
+      // guard stays keyed per-session and is reset by the next curl start.
+      assessmentStartedRef.current = false;
 
-    // Physical AI: end-of-session signal (no-op unless station URL configured)
-    coachStation.sendSessionEvent('session_end', mode, personality);
+      // Physical AI: end-of-session signal (no-op unless station URL configured)
+      coachStation.sendSessionEvent('session_end', mode, personality);
 
-    // Always show summary; SummaryModal will prompt for wallet connection if needed
+      // Always show summary; SummaryModal will prompt for wallet connection if needed
 
-    // Defer summary display by 100ms to allow game fade-out first
-    const summaryTimer = setTimeout(() => {
-      setShowSummary(true);
-    }, 100);
+      // Defer summary display by 100ms to allow game fade-out first. A pain
+      // exit lands on its own designed surface instead of the recap — the
+      // session record is still produced and saved either way.
+      const summaryTimer = setTimeout(() => {
+        if (destination === 'pain') setPainExit(true);
+        else setShowSummary(true);
+      }, 100);
 
-    // Force camera to stop by accessing the video tracks and stopping them
-    stopAllCameras();
+      // Force camera to stop by accessing the video tracks and stopping them
+      stopAllCameras();
 
-    return () => clearTimeout(summaryTimer);
-  }, [stopAllCameras, exitFullscreen, unlock, mode, personality]);
+      return () => clearTimeout(summaryTimer);
+    },
+    [stopAllCameras, exitFullscreen, unlock, mode, personality]
+  );
 
   // Update the ref whenever handleStop changes
   useEffect(() => {
     handleStopRef.current = handleStop;
   }, [handleStop]);
+
+  // "It hurts — stop" — the gentle session exit. Same teardown as Stop; the
+  // landing is the designed PainExit surface, not the coaching recap.
+  const handlePainExit = useCallback(() => handleStop('pain'), [handleStop]);
 
   const handleStart = useCallback(
     async (options?: {
@@ -998,6 +1012,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     // Welcome component consolidated into InitializationScreen - no need to reset welcome state
     setShowTutorial(true);
     setShowSummary(false);
+    setPainExit(false);
     setRetryFocus(null);
     setMovementAssessment(null);
 
@@ -1143,6 +1158,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         <div id="screen" data-register={foyerRegister}>
           {!started &&
             !calmSessionActive &&
+            !painExit &&
             (currentMode === 'instructions' ? (
               showingArcadeFoyer ? (
                 <div className={isStarting ? 'coach-foyer--starting' : ''}>
@@ -1204,7 +1220,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               />
             ))}
 
-          {calmSessionActive && !started && (
+          {calmSessionActive && !started && !painExit && (
             <div id="instructions" className="!bg-transparent">
               <RecoveryCard
                 mode={mode}
@@ -1236,7 +1252,14 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               onFormScore={handleFormScore}
               showRotateHint={showRotateHint}
               onDismissRotateHint={() => setDismissRotateHint(true)}
+              onPainExit={handlePainExit}
             />
+          )}
+
+          {painExit && (
+            <div id="instructions" className="!bg-transparent">
+              <PainExit onDone={handleReset} />
+            </div>
           )}
         </div>
 

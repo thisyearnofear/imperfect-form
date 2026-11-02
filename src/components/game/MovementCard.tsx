@@ -2,19 +2,11 @@
 
 import React from 'react';
 import { Activity, AlertTriangle, Gauge, Move, Scale } from 'lucide-react';
+import { inconclusiveRead } from '@/lib/inconclusiveReads';
 import type { MovementAssessment } from '@/types/movementAssessment';
 
 type MovementCardProps = {
   assessment?: MovementAssessment | null;
-};
-
-const INCONCLUSIVE_COPY: Record<string, string> = {
-  invalid_protocol: 'This capture did not match the selected baseline protocol.',
-  insufficient_reps: 'Complete the exact five-rep baseline to create a movement card.',
-  insufficient_trace: 'The coach needs a little more movement data before creating a card.',
-  low_visibility: 'Keep both arms in frame with steady lighting, then try the baseline again.',
-  unstable_tracking: 'The camera lost a steady read. Try again with a clearer, calmer setup.',
-  high_noise: 'The movement signal was too noisy to summarize this time.',
 };
 
 function percent(value: number | null | undefined): string {
@@ -46,7 +38,7 @@ export function MovementCard({ assessment }: MovementCardProps) {
           </div>
         </div>
         <p className="movement-card__copy">
-          {INCONCLUSIVE_COPY[assessment.inconclusiveReason ?? 'insufficient_trace']}
+          {inconclusiveRead(assessment.inconclusiveReason).cause}
         </p>
         <div className="movement-card__quality">
           <span>{assessment.quality.repCount}/5 reps</span>

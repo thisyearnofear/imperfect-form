@@ -9,6 +9,7 @@ import { FirstRepCelebration } from './FirstRepCelebration';
 import CoachTwinPeek from '@/components/theme/CoachTwinPeek';
 import { PoseState, DetectionProgress } from '@/hooks/usePoseDetection';
 import { useCoachingMoment } from '@/hooks/useCoachingMoment';
+import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { useStableTracking } from '@/hooks/useStableTracking';
 import { isTwinHeroActive, useCoachTwin } from '@/hooks/useCoachTwin';
 import CurlFormInstrument from './CurlFormInstrument';
@@ -47,6 +48,9 @@ interface GameCanvasProps {
   /** Subtle baked-in rotate hint for portrait sessions (P6). */
   showRotateHint?: boolean;
   onDismissRotateHint?: () => void;
+  /** Gentle persistent exit for the pain-ICP — routes to the designed
+   *  PainExit surface, never an error (docs/PHASE_B_PLAN §B2). */
+  onPainExit?: () => void;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -70,6 +74,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   onFormScore,
   showRotateHint = false,
   onDismissRotateHint,
+  onPainExit,
 }) => {
   const [hasLockedPose, setHasLockedPose] = useState(false);
   useEffect(() => {
@@ -96,6 +101,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   // coaching phase machine and the live line key on this smoothed value so
   // the sentence doesn't rewrite itself every other frame.
   const trackingStable = useStableTracking(poseState.poseDetected);
+  // The pain exit is studio-register chrome — the instrument's gentle stop.
+  // An explicit Train session keeps the normal Stop control instead.
+  const { register } = useSessionIntent();
+  const studioSession = register !== 'arcade';
   const coachingMoment = useCoachingMoment(trackingStable, repCount, metrics?.warnings ?? []);
   // The meter face: raw detection + tracking stability → Clear/Usable/Early
   // needle with hysteresis (docs/PHASE_B_PLAN §B1). Coarse-but-honest feed —
@@ -207,6 +216,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           {/* Bottom band = one stack, no overlap: instrument above, the
               coaching sentence owns the bottom edge (closest to the eye). */}
           <div className="session-bottom-stack">
+            {/* The gentle pain exit docks right, above the coaching line —
+                always reachable mid-set, never covering the sentence. */}
+            {studioSession && onPainExit && (
+              <button
+                type="button"
+                className="hud-pain-exit session-pain-exit"
+                onClick={onPainExit}
+              >
+                It hurts — stop
+              </button>
+            )}
             {mode === 'curls' ? (
               <CurlFormInstrument
                 telemetry={curlTelemetry}
@@ -236,6 +256,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           depth={metrics?.depth}
           warnings={metrics?.warnings}
           read={read}
+          onPainExit={onPainExit}
         />
       )}
       <div className="session-bay__stage">
