@@ -15,6 +15,7 @@ import CurlFormInstrument from './CurlFormInstrument';
 import { SeeShowMoment } from './SeeShowMoment';
 import { ReadinessHint } from './ReadinessHint';
 import { deriveCurlTelemetry } from '@/lib/curlTelemetry';
+import { readQuality, type ReadLevel } from '@/lib/readQuality';
 import '@/styles/session-bay.css';
 
 interface RepFeedback {
@@ -96,6 +97,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   // the sentence doesn't rewrite itself every other frame.
   const trackingStable = useStableTracking(poseState.poseDetected);
   const coachingMoment = useCoachingMoment(trackingStable, repCount, metrics?.warnings ?? []);
+  // The meter face: raw detection + tracking stability → Clear/Usable/Early
+  // needle with hysteresis (docs/PHASE_B_PLAN §B1). Coarse-but-honest feed —
+  // the booleans are what the pipeline already publishes.
+  const readPrevRef = React.useRef<ReadLevel | undefined>(undefined);
+  const read = React.useMemo(() => {
+    const q = readQuality(
+      poseState.poseDetected ? 0.8 : 0.15,
+      trackingStable ? 0.9 : 0.35,
+      readPrevRef.current
+    );
+    readPrevRef.current = q.level;
+    return q;
+  }, [poseState.poseDetected, trackingStable]);
 
   const curlTelemetry =
     mode === 'curls' ? deriveCurlTelemetry(curlPoseData ?? undefined, metrics) : null;
@@ -136,6 +150,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             depth={metrics?.depth}
             warnings={metrics?.warnings}
             repPulse={repFeedback.show}
+            read={read}
           />
         )}
         <div
@@ -220,6 +235,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           isRace={isRace}
           depth={metrics?.depth}
           warnings={metrics?.warnings}
+          read={read}
         />
       )}
       <div className="session-bay__stage">
