@@ -26,7 +26,7 @@ export interface LocalWorkout {
   synced: boolean;
   txHash?: string;
   network?: NetworkType;
-  type: 'pushups' | 'squats' | 'pullups' | 'jumps' | 'curls';
+  type: 'pushups' | 'squats' | 'pullups' | 'jumps' | 'curls' | 'reach';
   userAddress?: string; // Optional: associate with a specific wallet if connected
   trace?: SessionSnapshot[];
   hasTrace?: boolean;

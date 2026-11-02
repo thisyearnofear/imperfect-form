@@ -30,6 +30,14 @@ export {
   type CurlProcessorResult,
 } from './curlProcessor';
 export {
+  processReach,
+  createReachState,
+  resetReachState,
+  type ReachState,
+  type ReachProcessorParams,
+  type ReachProcessorResult,
+} from './reachProcessor';
+export {
   PoseReadinessSystem,
   LocalCalibrationStore,
   type CalibrationStore,

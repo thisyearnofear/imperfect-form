@@ -22,6 +22,7 @@ export interface PersonalBests {
   pullups: number;
   jumps: number;
   curls: number;
+  reach: number;
 }
 
 export const XP_CONSTANTS = {
@@ -69,7 +70,7 @@ class XPServiceImpl {
     let totalXp = questXp;
     // PB detection covers every exercise the app tracks — curl and pull-up
     // personal bests pay the same bonus push-ups always did.
-    const pbs: PersonalBests = { pushups: 0, squats: 0, pullups: 0, jumps: 0, curls: 0 };
+    const pbs: PersonalBests = { pushups: 0, squats: 0, pullups: 0, jumps: 0, curls: 0, reach: 0 };
 
     // Sort workouts by timestamp to detect PBs and streaks in order
     const sortedWorkouts = [...workouts].sort((a, b) => a.timestamp - b.timestamp);
@@ -245,7 +246,7 @@ class XPServiceImpl {
    * Detect Personal Bests from workouts
    */
   getPersonalBests(workouts: LocalWorkout[]): PersonalBests {
-    const pbs: PersonalBests = { pushups: 0, squats: 0, pullups: 0, jumps: 0, curls: 0 };
+    const pbs: PersonalBests = { pushups: 0, squats: 0, pullups: 0, jumps: 0, curls: 0, reach: 0 };
 
     for (const workout of workouts) {
       const type = workout.type as keyof PersonalBests;

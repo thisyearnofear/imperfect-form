@@ -14,6 +14,7 @@ const SHORT_LINES: Record<ExerciseMode, string> = {
   pushups: 'Straight line · chest to floor',
   squats: 'Hips back · knees track',
   pullups: 'Full extension · chin over bar',
+  reach: 'Slow raise · no lean-back',
   jumps: 'Soft landing · knees bend',
 };
 

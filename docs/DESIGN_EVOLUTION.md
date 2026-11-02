@@ -142,7 +142,11 @@ identity, og assets.
 3. **C — ritual** (surfaces): readings tab ✅ (shipped with A), weekly check
    cadence, niggle-cleared card.
 4. **D — catalog** (the real build): joint-screen protocols, validated like
-   curls-baseline was — one at a time, publish the protocol.
+   curls-baseline was — one at a time, publish the protocol. **In progress** —
+   `reach` (overhead reach, the neck/shoulder screen) shipped: arm-elevation
+   `reachProcessor` with trunk-sway cheat detection, `reach-baseline`
+   protocol on the shared assessment rails, intake re-pointed. Hip hinge
+   (back) and knee bend remain.
 5. **E — rename** lands inside A–C as copy surfaces are touched. Brand copy
    done in `brandPositioning.ts` + `layout.tsx`; package name, `imf_*` keys,
    Farcaster manifest re-sign, Self app identity still open.

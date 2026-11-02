@@ -50,8 +50,8 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
   {
     id: 'neck-shoulders',
     label: 'My neck & shoulders',
-    mode: 'curls',
-    readLabel: 'Arm + shoulder movement read',
+    mode: 'reach',
+    readLabel: 'Overhead reach read',
     contexts: [
       {
         id: 'desk',

@@ -45,6 +45,13 @@ export const EXERCISE_GUIDANCE: Record<ExerciseMode, ExerciseGuidance> = {
     setup: 'Keep clear space around you and land in the same spot.',
     focus: 'We will watch loading and knee alignment.',
   },
+  reach: {
+    label: 'Overhead reaches',
+    singular: 'Overhead reach',
+    camera: 'Stand far enough back that your hands stay in frame at full reach.',
+    setup: 'Feet planted, arms relaxed at your sides to start.',
+    focus: 'We will watch arm elevation, control, and trunk sway.',
+  },
 };
 
 export function guidanceFor(mode: ExerciseMode): ExerciseGuidance {

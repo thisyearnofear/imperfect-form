@@ -3,12 +3,15 @@ import {
   createCurlState,
   createJumpState,
   createPullupState,
+  createReachState,
   processCurls,
   processJumps,
   processPullups,
+  processReach,
   type CurlState,
   type JumpState,
   type PullupState,
+  type ReachState,
   type RepState as EngineRepState,
 } from '../lib/exercise-engine';
 
@@ -20,7 +23,7 @@ export interface Point {
   name?: string;
 }
 
-export type ExerciseMode = 'pushups' | 'squats' | 'pullups' | 'jumps' | 'curls';
+export type ExerciseMode = 'pushups' | 'squats' | 'pullups' | 'jumps' | 'curls' | 'reach';
 
 const ALL_EXERCISE_MODES: readonly ExerciseMode[] = [
   'pushups',
@@ -28,6 +31,7 @@ const ALL_EXERCISE_MODES: readonly ExerciseMode[] = [
   'pullups',
   'jumps',
   'curls',
+  'reach',
 ];
 
 /** Coerce null/unknown mode values to a valid ExerciseMode (defaults to pushups). */
@@ -36,10 +40,10 @@ export function normalizeExerciseMode(mode: unknown): ExerciseMode {
 }
 
 /** Modes counted by the ported exercise engine rather than the local detectors. */
-export type EngineMode = 'pullups' | 'jumps' | 'curls';
+export type EngineMode = 'pullups' | 'jumps' | 'curls' | 'reach';
 
 export function isEngineMode(mode: ExerciseMode): mode is EngineMode {
-  return mode === 'pullups' || mode === 'jumps' || mode === 'curls';
+  return mode === 'pullups' || mode === 'jumps' || mode === 'curls' || mode === 'reach';
 }
 
 export function getPoint(keypoints: Keypoint[], name: string): Point | null {
@@ -157,6 +161,7 @@ export interface EngineRepDetectorState {
   pullupState: PullupState;
   jumpState: JumpState;
   curlState: CurlState;
+  reachState: ReachState;
   lastFeedback?: string;
   lastRepScore?: number;
   /** Latest engine form-check cue; consumed by the coach-station bridge. */
@@ -181,6 +186,7 @@ export function createEngineRepDetectorState(mode: EngineMode): EngineRepDetecto
     pullupState: createPullupState(),
     jumpState: createJumpState(),
     curlState: createCurlState(),
+    reachState: createReachState(),
   };
 }
 
@@ -201,7 +207,9 @@ export function detectEngineRep(
       ? processPullups({ ...params, pullupState: state.pullupState })
       : mode === 'jumps'
         ? processJumps({ ...params, jumpState: state.jumpState })
-        : processCurls({ ...params, curlState: state.curlState });
+        : mode === 'reach'
+          ? processReach({ ...params, reachState: state.reachState })
+          : processCurls({ ...params, curlState: state.curlState });
 
   if (!result) return false;
   if (result.newRepState) state.engineRepState = result.newRepState;
@@ -318,6 +326,30 @@ export function analyzeBiomechanics(keypoints: Keypoint[], mode: ExerciseMode): 
       }
       if (rightAngle !== null) {
         metrics.symmetry = Math.max(0, 1 - Math.abs(leftAngle - rightAngle) / 90);
+      }
+    }
+  }
+
+  if (mode === 'reach' && ls) {
+    const le = getPoint(keypoints, 'left_elbow');
+    const rs = getPoint(keypoints, 'right_shoulder');
+    const re = getPoint(keypoints, 'right_elbow');
+    if (le) {
+      // Arm elevation from straight-down (same geometry as reachProcessor):
+      // hanging ~0°, horizontal ~90°, overhead ~180°.
+      const elevation = (shoulder: Point, elbow: Point) =>
+        Math.atan2(Math.abs(elbow.x - shoulder.x), elbow.y - shoulder.y) * (180 / Math.PI);
+      const leftElev = elevation(ls, le);
+      const rightElev = rs && re ? elevation(rs, re) : null;
+      const activeElev = rightElev !== null ? Math.max(leftElev, rightElev) : leftElev;
+      metrics.depth = Math.max(0, Math.min(1, activeElev / 160));
+      // Trunk sway = the back doing the reach's work; only judged once the
+      // arm is actually rising so a bent setup doesn't false-flag.
+      if (lh && metrics.trunkLean > 30 && activeElev > 60) {
+        metrics.warnings.push('TRUNK SWAY');
+      }
+      if (rightElev !== null) {
+        metrics.symmetry = Math.max(0, 1 - Math.abs(leftElev - rightElev) / 90);
       }
     }
   }

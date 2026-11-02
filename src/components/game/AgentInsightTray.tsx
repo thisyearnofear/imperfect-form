@@ -31,6 +31,7 @@ const DEFAULT_CUES: Record<ExerciseMode, string> = {
   curls: 'Keep your elbows close to your sides.',
   pullups: 'Start from a controlled hang.',
   jumps: 'Land softly with knees tracking forward.',
+  reach: 'Raise slowly — let the arm do the work.',
 };
 
 export function AgentInsightTray({ metrics, mode, voiceEnabled, repCount }: AgentInsightTrayProps) {

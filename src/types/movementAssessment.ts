@@ -88,3 +88,21 @@ export const CURL_BASELINE_PROTOCOL: MovementAssessmentProtocol = {
   minBilateralFrameRatio: 0.5,
   minStableFrameRatio: 0.5,
 };
+
+/**
+ * Overhead reach (Phase D — the neck/shoulder screen): five controlled arm
+ * raises. Same capture discipline as the curl baseline — fixed rep count,
+ * bilateral arm chain, steady tracking — because the comparison model and
+ * inconclusive vocabulary already prove out on it.
+ */
+export const OVERHEAD_REACH_PROTOCOL: MovementAssessmentProtocol = {
+  id: 'reach-baseline',
+  version: '1.0',
+  mode: 'reach',
+  targetReps: 5,
+  minTraceFrames: 10,
+  minPoseConfidence: 0.55,
+  minObservedFrameRatio: 0.6,
+  minBilateralFrameRatio: 0.5,
+  minStableFrameRatio: 0.5,
+};

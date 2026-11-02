@@ -102,6 +102,15 @@ export function resolveRestoredPainIntentMode(
  * squats-only, and squats tolerate more forward lean.
  */
 export function describeChecks(mode: ExerciseMode): string[] {
+  // The overhead-reach screen measures arm elevation and trunk sway — the
+  // depth/lean/knee gates below describe the fitness moves, not this screen.
+  if (mode === 'reach') {
+    return [
+      'Elevation: a rep counts when the arm rises past 135° from hanging — your own pace.',
+      'Trunk sway: flagged when the shoulder-hip line leans past 30 degrees while the arm is up.',
+      'Left/right balance: a two-arm read keeps both sides inside 90 degrees of each other.',
+    ];
+  }
   const T = FORM_CHECK_THRESHOLDS;
   const leanWarning = mode === 'squats' ? T.trunkLean.squatsWarning : T.trunkLean.warning;
 

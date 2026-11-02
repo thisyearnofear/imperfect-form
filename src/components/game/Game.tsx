@@ -66,7 +66,7 @@ import { ghostService } from '@/services/GhostService';
 import { playStudioCue } from '@/lib/uiSound';
 import { zIndexClasses } from '@/lib/zTokens';
 import { trackChallengeEvent, trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
-import { evaluateMovementAssessment } from '@/lib/movementAssessment';
+import { assessmentProtocolFor, evaluateMovementAssessment } from '@/lib/movementAssessment';
 import { CURL_BASELINE_PROTOCOL } from '@/types/movementAssessment';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { MovementChallengePayload } from '@/types/movementChallenge';
@@ -172,10 +172,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       // clear the buffer for the next set.
       recordPersonaTempo(repTimestampsRef.current);
       repTimestampsRef.current = [];
-      const assessment =
-        summary.mode === CURL_BASELINE_PROTOCOL.mode
-          ? evaluateMovementAssessment(summary, CURL_BASELINE_PROTOCOL)
-          : null;
+      const protocol = assessmentProtocolFor(summary.mode);
+      const assessment = protocol ? evaluateMovementAssessment(summary, protocol) : null;
       setMovementAssessment(assessment);
       if (isRace) {
         trackChallengeEvent('challenge_completed', user?.fid, {
@@ -190,7 +188,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         assessmentCompletedRef.current = movementChallenge?.challengeId ?? 'baseline';
         trackMovementChallengeEvent('assessment_completed', user?.fid, {
           mode: summary.mode,
-          protocolId: movementChallenge?.protocolId ?? CURL_BASELINE_PROTOCOL.id,
+          protocolId: movementChallenge?.protocolId ?? protocol?.id ?? CURL_BASELINE_PROTOCOL.id,
           source: movementChallenge ? 'incoming-challenge' : 'baseline',
           ...(movementChallenge ? { challengeId: movementChallenge.challengeId } : {}),
           status: assessment.status,
@@ -719,16 +717,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         markCameraIntroHandled();
       }
 
-      // Every curl baseline session starts the assessment funnel — the organic
+      // Every protocol session starts the assessment funnel — the organic
       // path (start → complete → share) and the incoming-challenge path
       // (open → start → complete → reply) both count. `source` separates the
       // journeys and `challengeId` lets PostHog stitch a reply to its opener.
-      if (mode === CURL_BASELINE_PROTOCOL.mode && !assessmentStartedRef.current) {
+      const sessionProtocol = assessmentProtocolFor(mode);
+      if (sessionProtocol && !assessmentStartedRef.current) {
         assessmentStartedRef.current = true;
         assessmentCompletedRef.current = null;
         trackMovementChallengeEvent('assessment_started', user?.fid, {
           mode,
-          protocolId: movementChallenge?.protocolId ?? CURL_BASELINE_PROTOCOL.id,
+          protocolId: movementChallenge?.protocolId ?? sessionProtocol.id,
           source: movementChallenge ? 'incoming-challenge' : 'baseline',
           ...(movementChallenge ? { challengeId: movementChallenge.challengeId } : {}),
         });
@@ -830,6 +829,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         else if (e.key === '3') setMode('curls');
         else if (e.key === '4') setMode('pullups');
         else if (e.key === '5') setMode('jumps');
+        else if (e.key === '6') setMode('reach');
       }
     };
     window.addEventListener('keydown', onKey);

@@ -6,9 +6,10 @@ import type {
   MovementAssessmentProtocol,
   MovementAssessmentQuality,
 } from '@/types/movementAssessment';
-import { CURL_BASELINE_PROTOCOL } from '@/types/movementAssessment';
+import { CURL_BASELINE_PROTOCOL, OVERHEAD_REACH_PROTOCOL } from '@/types/movementAssessment';
+import type { ExerciseMode } from '@/utils/biomechanics';
 
-const CURL_REQUIRED_KEYPOINTS = [
+const ARM_CHAIN_KEYPOINTS = [
   'left_shoulder',
   'right_shoulder',
   'left_elbow',
@@ -16,6 +17,22 @@ const CURL_REQUIRED_KEYPOINTS = [
   'left_wrist',
   'right_wrist',
 ] as const;
+
+/** Protocols keyed by session mode — the assessment gate consults this map
+ *  instead of naming one flagship protocol. */
+const PROTOCOLS_BY_MODE: Partial<Record<ExerciseMode, MovementAssessmentProtocol>> = {
+  curls: CURL_BASELINE_PROTOCOL,
+  reach: OVERHEAD_REACH_PROTOCOL,
+};
+
+/** The protocol a session mode can honestly be assessed against, if one exists. */
+export function assessmentProtocolFor(mode: string): MovementAssessmentProtocol | null {
+  return PROTOCOLS_BY_MODE[mode as ExerciseMode] ?? null;
+}
+
+function isArmChainMode(mode: ExerciseMode): boolean {
+  return mode === 'curls' || mode === 'reach';
+}
 
 const clamp = (value: number, min = 0, max = 1): number =>
   Math.min(max, Math.max(min, Number.isFinite(value) ? value : min));
@@ -46,8 +63,8 @@ function isObservedFrame(
   protocol: MovementAssessmentProtocol
 ): boolean {
   const visible = visibleKeypoints(frame);
-  if (protocol.mode === 'curls') {
-    return CURL_REQUIRED_KEYPOINTS.filter((name) => visible.includes(name)).length >= 4;
+  if (isArmChainMode(protocol.mode)) {
+    return ARM_CHAIN_KEYPOINTS.filter((name) => visible.includes(name)).length >= 4;
   }
   return visible.length > 0;
 }
@@ -56,7 +73,7 @@ function isBilateralFrame(
   frame: SessionSummary['trace'][number],
   protocol: MovementAssessmentProtocol
 ): boolean {
-  if (protocol.mode !== 'curls') return true;
+  if (!isArmChainMode(protocol.mode)) return true;
   const visible = visibleKeypoints(frame);
   const leftVisible = ['left_shoulder', 'left_elbow', 'left_wrist'].every((name) =>
     visible.includes(name)
@@ -80,7 +97,7 @@ function bilateralFrameRatio(
   protocol: MovementAssessmentProtocol
 ): number {
   if (summary.trace.length === 0) return 0;
-  if (protocol.mode !== 'curls') return 1;
+  if (!isArmChainMode(protocol.mode)) return 1;
 
   const bilateralFrames = summary.trace.filter((frame) => isBilateralFrame(frame, protocol));
 

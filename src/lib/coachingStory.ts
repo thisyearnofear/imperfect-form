@@ -7,6 +7,7 @@ const NEXT_FOCUS: Record<ExerciseMode, string> = {
   curls: 'Pin your elbows to your sides and avoid swinging.',
   pullups: 'Finish each rep with a controlled extension at the bottom.',
   jumps: 'Land softly and keep your knees tracking forward.',
+  reach: 'Raise slowly and let the arm do the work — no lean-back.',
 };
 
 /** Return the next exercise-specific focus used across live and recap surfaces. */
@@ -24,6 +25,9 @@ export function readableFormWarning(warning: string): string {
   if (normalized === 'leaning_too_far') return 'Keep your chest more upright';
   if (normalized === 'pull_evenly' || normalized === 'asymmetry') {
     return 'Pull evenly through both sides';
+  }
+  if (normalized === 'trunk_sway' || normalized === 'trunk_lean') {
+    return 'Reach with the arm, not the back';
   }
   return warning.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

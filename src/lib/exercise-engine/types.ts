@@ -21,7 +21,7 @@ export type EngineExercise = 'pullups' | 'jumps';
  * EngineExercise (the rep engine) because readiness applies to every flagship
  * movement, not just the two with dedicated rep processors.
  */
-export type ReadinessExercise = 'pullups' | 'jumps' | 'pushups' | 'squats' | 'curls';
+export type ReadinessExercise = 'pullups' | 'jumps' | 'pushups' | 'squats' | 'curls' | 'reach';
 
 export type RepState = 'DOWN' | 'UP' | 'GROUNDED' | 'AIRBORNE';
 

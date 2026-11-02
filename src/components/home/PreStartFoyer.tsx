@@ -156,6 +156,7 @@ export const PreStartFoyer: React.FC<PreStartFoyerProps> = ({
 const ARCADE_MOVES: { mode: ExerciseMode; label: string }[] = [
   { mode: 'curls', label: 'CURLS' },
   { mode: 'pushups', label: 'PUSH-UPS' },
+  { mode: 'reach', label: 'OVERHEAD REACH' },
   { mode: 'squats', label: 'SQUATS' },
   { mode: 'pullups', label: 'PULL-UPS' },
   { mode: 'jumps', label: 'JUMPS' },

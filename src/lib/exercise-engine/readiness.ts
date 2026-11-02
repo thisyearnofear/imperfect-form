@@ -337,6 +337,9 @@ export class PoseReadinessSystem {
       case 'pushups':
         return this.analyzePushupPosture(keypoints, issues);
       case 'curls':
+      case 'reach':
+        // Overhead reach shares the curl's standing upper-body framing —
+        // shoulders, elbows, wrists square to the camera.
         return this.analyzeCurlPosture(keypoints, issues);
       case 'pullups':
       default:
@@ -659,6 +662,19 @@ export class PoseReadinessSystem {
           'right_elbow',
           'left_wrist',
           'right_wrist',
+          'left_hip',
+          'right_hip',
+        ];
+      case 'reach':
+        // Arm elevation reads hip-free, but the trunk-sway check needs the
+        // hips — ask for the full standing torso when the frame allows it.
+        return [
+          'left_wrist',
+          'right_wrist',
+          'left_elbow',
+          'right_elbow',
+          'left_shoulder',
+          'right_shoulder',
           'left_hip',
           'right_hip',
         ];

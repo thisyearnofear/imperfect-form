@@ -38,6 +38,12 @@ const exercises: ExerciseOption[] = [
   },
   { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line', category: 'primary' },
   {
+    mode: 'reach',
+    label: 'Overhead reach',
+    detail: 'Shoulder range · trunk sway',
+    category: 'extra',
+  },
+  {
     mode: 'squats',
     label: 'Squats',
     detail: 'Mobility · depth · knees',
