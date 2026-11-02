@@ -99,6 +99,76 @@ const MovementAssessmentHistory = dynamic(
 );
 
 import { Score } from '@/types';
+import { NIGGLE_JOINTS } from '@/lib/niggleIntents';
+import { addNiggleEntry, listNiggleEntries, type NiggleEntry } from '@/lib/niggleEntries';
+
+/** The logbook — quick subjective entries between readings. Context, never
+ *  a measurement (docs/DESIGN_EVOLUTION.md §F). */
+function NiggleLog() {
+  const [joint, setJoint] = useState(NIGGLE_JOINTS[0].id);
+  const [severity, setSeverity] = useState(3);
+  const [entries, setEntries] = useState<NiggleEntry[]>([]);
+  useEffect(() => setEntries(listNiggleEntries()), []);
+
+  return (
+    <div className="motion-enter motion-delay-1 earned-surface p-4">
+      <h3 className="earned-surface__title mb-2">Log a niggle</h3>
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={joint}
+          onChange={(e) => setJoint(e.target.value as typeof joint)}
+          aria-label="Joint"
+          className="px-2 py-1.5 rounded-md text-sm"
+          style={{ background: 'rgba(255,255,255,0.06)', color: 'inherit' }}
+        >
+          {NIGGLE_JOINTS.map((j) => (
+            <option key={j.id} value={j.id}>
+              {j.label}
+            </option>
+          ))}
+        </select>
+        <label className="flex items-center gap-1.5 text-sm">
+          <span style={{ color: 'var(--studio-muted)' }}>Severity</span>
+          <input
+            type="range"
+            min={1}
+            max={5}
+            value={severity}
+            onChange={(e) => setSeverity(Number(e.target.value))}
+            aria-label="Severity"
+          />
+          <strong>{severity}</strong>
+        </label>
+        <button
+          type="button"
+          className="px-3 py-1.5 rounded-md text-sm font-bold border"
+          style={{
+            color: 'var(--studio-teal, #7aebd8)',
+            borderColor: 'rgba(122, 235, 216, 0.35)',
+            background: 'rgba(122, 235, 216, 0.08)',
+          }}
+          onClick={() => setEntries([addNiggleEntry({ joint, severity }), ...entries])}
+        >
+          Log it
+        </button>
+      </div>
+      {entries.length > 0 && (
+        <ul className="mt-3 space-y-1 text-sm" style={{ color: 'var(--studio-muted)' }}>
+          {entries.slice(0, 3).map((e, i) => (
+            <li key={e.timestamp + i}>
+              {new Date(e.timestamp).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })}{' '}
+              — {NIGGLE_JOINTS.find((j) => j.id === e.joint)?.label}
+              {e.severity ? ` · ${e.severity}/5` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 type ActiveTab = 'workout' | 'readings' | 'dashboard' | 'roadmap' | 'challenges';
 
@@ -462,6 +532,7 @@ export default function Home() {
                       Take a reading
                     </button>
                   </div>
+                  <NiggleLog />
                   <div className="motion-enter motion-delay-2">
                     <MovementAssessmentHistory />
                   </div>
