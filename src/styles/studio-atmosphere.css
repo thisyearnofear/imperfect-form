@@ -920,3 +920,37 @@ body[data-coach-state='tracking'] .studio-atmosphere__caption-state.caption-stat
     transform: none;
   }
 }
+
+/* ── Day-0 rest state (body[data-coach-state='selected']) ──────────────────
+   While the landing foyer is at rest the bay goes quiet: the instrument
+   labels, provenance stamp, bay-status pill and caption all hide, and the
+   stage photograph steps out entirely — the hero renders its own inline arm
+   cutout in the right column (and between subhead and picker on mobile), so
+   the fixed photo can no longer paint over the copy. The DOM nodes stay in
+   place: when the session starts (state != 'selected') the stage, labels and
+   caption return with every reaction (coach pulse, quality, rep) intact. */
+body[data-coach-state='selected'] .studio-atmosphere__stage-frame {
+  visibility: hidden;
+}
+
+body[data-coach-state='selected'] .studio-atmosphere__figure-label,
+body[data-coach-state='selected'] .studio-atmosphere__heritage,
+body[data-coach-state='selected'] .studio-atmosphere__bay-status,
+body[data-coach-state='selected'] .studio-atmosphere__caption {
+  visibility: hidden;
+}
+
+/* Ambient layer stays ambient — dialed down so the hero's primary layer
+   (headline + CTA) owns attention at rest. */
+body[data-coach-state='selected'] .studio-atmosphere__wash {
+  opacity: 0.6;
+}
+
+body[data-coach-state='selected'] .studio-atmosphere__calibration,
+body[data-coach-state='selected'] .studio-atmosphere__landmarks {
+  opacity: 0.35;
+}
+
+body[data-coach-state='selected'] .studio-atmosphere__floor-strip {
+  opacity: 0.55;
+}

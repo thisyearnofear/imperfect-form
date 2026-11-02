@@ -118,42 +118,28 @@ test.describe('landing — CTA is reachable', () => {
 });
 
 test.describe('landing — copy is not painted over', () => {
-  const OVERLAPS: Array<{ label: string; a: string; b: string }> = [
-    {
-      label: 'coach-status pill over the provenance line',
-      a: '.coach-foyer__coach-status',
-      b: '.sandow-provenance',
-    },
-    {
-      label: 'coach-status pill over the exercise picker',
-      a: '.coach-foyer__coach-status',
-      b: '.coach-foyer__exercise-list',
-    },
-  ];
+  test('the hero arm cutout never overlaps the copy column', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#startButton')).toBeVisible({ timeout: 20000 });
+    await page.waitForTimeout(1000);
 
-  for (const { label, a, b } of OVERLAPS) {
-    test(`no overlap: ${label}`, async ({ page }) => {
-      await page.goto('/');
-      await expect(page.locator(a)).toBeVisible({ timeout: 20000 });
-      await expect(page.locator(b)).toBeVisible();
-
-      const boxes = await page.evaluate(
-        ([selA, selB]) => {
-          const ra = document.querySelector(selA)!.getBoundingClientRect();
-          const rb = document.querySelector(selB)!.getBoundingClientRect();
-          return { ra: { t: ra.top, b: ra.bottom }, rb: { t: rb.top, b: rb.bottom } };
-        },
-        [a, b]
-      );
-
-      const overlaps = boxes.ra.t < boxes.rb.b && boxes.rb.t < boxes.ra.b;
-      expect(
-        overlaps,
-        `${a} (${Math.round(boxes.ra.t)}-${Math.round(boxes.ra.b)}) overlaps ` +
-          `${b} (${Math.round(boxes.rb.t)}-${Math.round(boxes.rb.b)})`
-      ).toBe(false);
+    const overlap = await page.evaluate(() => {
+      const arm =
+        document.querySelector('.coach-foyer__arm--aside .demo-plate') ||
+        document.querySelector('.coach-foyer__arm--inline .demo-plate');
+      const copy = document.querySelector('.coach-foyer__hero-copy');
+      if (!arm || !copy) return { found: false, overlap: false };
+      const ra = arm.getBoundingClientRect();
+      const rb = copy.getBoundingClientRect();
+      return {
+        found: true,
+        overlap:
+          ra.left < rb.right && rb.left < ra.right && ra.top < rb.bottom && rb.top < ra.bottom,
+      };
     });
-  }
+    expect(overlap.found, 'hero arm image not found').toBe(true);
+    expect(overlap.overlap, 'arm image overlaps the copy column').toBe(false);
+  });
 
   test('no session controls render before a set starts', async ({ page }) => {
     await page.goto('/');
@@ -185,6 +171,199 @@ test('landing — mobile: the primary CTA is operable on a phone', async ({ brow
     await expect(cta).toBeEnabled();
     // Clicking must not throw; camera denial is handled by the recovery card.
     await cta.click({ timeout: 5000 }).catch(() => undefined);
+  } finally {
+    await context.close();
+  }
+});
+
+test.describe('landing — pain intent chips', () => {
+  const SUBHEAD_DEFAULT =
+    'Your camera catches one form error. The coach arm shows the fix. No video leaves your device.';
+
+  test('no chip selected: default subhead, curls preselected', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('.coach-foyer__lede')).toHaveText(SUBHEAD_DEFAULT, {
+      timeout: 20000,
+    });
+    await expect(page.locator('.coach-foyer__pain-chip.is-selected')).toHaveCount(0);
+    await expect(
+      page.locator('.coach-foyer__exercise.is-selected', { hasText: 'Curls' })
+    ).toHaveCount(1);
+    await expect(page.locator('.ls-familiar__hint')).toBeVisible();
+  });
+
+  test('each chip changes subhead, move, familiar beats; persists across reload', async ({
+    page,
+  }) => {
+    const cases: { chip: string; move: string; subhead: RegExp; familiar: RegExp }[] = [
+      {
+        chip: 'I train alone',
+        move: 'Push-ups',
+        subhead: /No spotter, no trainer/,
+        familiar: /hips are sagging/,
+      },
+      {
+        chip: 'My back or knees',
+        move: 'Squats',
+        subhead: /Squats hide a lot/,
+        familiar: /If anything hurts, stop/,
+      },
+      {
+        chip: "I'm not sure my form",
+        move: 'Curls',
+        subhead: /you are not guessing/,
+        familiar: /cannot see it/,
+      },
+      {
+        chip: "I'm not improving|I keep training",
+        move: 'Curls',
+        subhead: /Reps alone do not show/,
+        familiar: /not something you can compare/,
+      },
+    ];
+    for (const c of cases) {
+      await page.goto('/');
+      const chip = page.getByRole('button', { name: new RegExp(c.chip) });
+      await expect(chip).toBeVisible({ timeout: 20000 });
+      await chip.click();
+      await expect(page.locator('.coach-foyer__lede')).toHaveText(c.subhead);
+      await expect(
+        page.locator('.coach-foyer__exercise.is-selected', { hasText: c.move })
+      ).toHaveCount(1);
+      await expect(page.locator('.ls-familiar__body')).toContainText(c.familiar);
+      // Second click clears.
+      await chip.click();
+      await expect(page.locator('.coach-foyer__lede')).toHaveText(SUBHEAD_DEFAULT);
+    }
+
+    // Persistence across reload.
+    await page.getByRole('button', { name: /I train alone/ }).click();
+    expect(await page.evaluate(() => localStorage.getItem('imf_painIntent_v1'))).toBe('alone');
+    await page.reload();
+    await expect(page.locator('.coach-foyer__lede')).toHaveText(/No spotter, no trainer/);
+    await expect(page.locator('.coach-foyer__pain-chip.is-selected')).toHaveCount(1);
+  });
+
+  test('chips are keyboard operable with visible focus', async ({ page }) => {
+    await page.goto('/');
+    const chip = page.getByRole('button', { name: /My back or knees/ });
+    await expect(chip).toBeVisible({ timeout: 20000 });
+    await chip.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.coach-foyer__lede')).toHaveText(/Squats hide a lot/);
+    await expect(chip).toBeFocused();
+    const outline = await chip.evaluate((el) => getComputedStyle(el).outlineWidth);
+    expect(parseFloat(outline)).toBeGreaterThan(0);
+  });
+
+  test('trust section table shows the real gate numbers', async ({ page }) => {
+    await page.goto('/');
+    const details = page.locator('.ls-trust__details');
+    await expect(details).toBeAttached({ timeout: 20000 });
+    await details.locator('summary').click();
+    const table = details.locator('table');
+    await expect(table).toContainText('critical < 0.3');
+    await expect(table).toContainText('critical > 45 deg');
+    await expect(table).toContainText('flag > 30 deg');
+    await expect(table).toContainText('squats only');
+  });
+
+  test('CTA stays above the fold with a chip selected', async ({ browser }) => {
+    for (const viewport of [
+      { width: 1280, height: 720 },
+      { width: 390, height: 844 },
+    ]) {
+      const context = await browser.newContext({
+        viewport,
+        isMobile: viewport.width < 500,
+        hasTouch: viewport.width < 500,
+      });
+      const page = await context.newPage();
+      try {
+        await page.goto('/');
+        const chip = page.getByRole('button', { name: /My back or knees/ });
+        await expect(chip).toBeVisible({ timeout: 20000 });
+        await chip.click();
+        const bottom = await page
+          .locator('#startButton')
+          .evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+        expect(bottom, `CTA below fold at ${viewport.width}x${viewport.height}`).toBeLessThan(
+          viewport.height
+        );
+      } finally {
+        await context.close();
+      }
+    }
+  });
+
+  test('reduced motion swaps chip content instantly', async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await context.newPage();
+    try {
+      await page.goto('/');
+      const chip = page.getByRole('button', { name: /I train alone/ });
+      await expect(chip).toBeVisible({ timeout: 20000 });
+      await chip.click();
+      // lf-swap is animation:none under reduced motion; the text is simply there.
+      await expect(page.locator('.coach-foyer__lede')).toHaveText(/No spotter, no trainer/);
+      const anim = await page
+        .locator('.coach-foyer__lede')
+        .evaluate((el) => getComputedStyle(el).animationName);
+      expect(anim).toBe('none');
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+test('landing — mobile: squat chip selects and reveals the Squats card', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto('/');
+    const chip = page.getByRole('button', { name: /My back or knees/ });
+    await expect(chip).toBeVisible({ timeout: 20000 });
+    await chip.click();
+    await page.waitForTimeout(1000);
+
+    await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'squats');
+
+    const squatsCard = page.locator('.coach-foyer__exercise', { hasText: 'Squats' });
+    await expect(squatsCard).toHaveAttribute('aria-pressed', 'true');
+    const cardRect = await squatsCard.boundingBox();
+    expect(cardRect && cardRect.y >= 0 && cardRect.y + cardRect.height <= 844).toBeTruthy();
+
+    // The selected chip is fully visible inside its horizontal scroll row.
+    const chipFullyVisible = await chip.evaluate((el) => {
+      const chipRect = el.getBoundingClientRect();
+      const row = el.parentElement!.getBoundingClientRect();
+      return chipRect.left >= row.left - 1 && chipRect.right <= row.right + 1;
+    });
+    expect(chipFullyVisible, 'selected chip clipped by the scroll row').toBe(true);
+  } finally {
+    await context.close();
+  }
+});
+
+test('landing — mobile: a chip restored from storage applies its mode', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  try {
+    await page.addInitScript(() => localStorage.setItem('imf_painIntent_v1', 'squat'));
+    await page.goto('/');
+    const squatsCard = page.locator('.coach-foyer__exercise', { hasText: 'Squats' });
+    await expect(squatsCard).toHaveAttribute('aria-pressed', 'true', { timeout: 20000 });
+    await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'squats');
   } finally {
     await context.close();
   }

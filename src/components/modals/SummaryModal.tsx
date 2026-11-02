@@ -306,35 +306,6 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
   // Use the address from props if provided, otherwise fall back to wallet address from context
   const effectiveAddress = address || walletAddress;
 
-  // Debug logging for mobile wallet issues
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('SummaryModal Debug Info:', {
-        network: networkType,
-        addressFromProps: address,
-        walletAddress,
-        effectiveAddress,
-        isOpen,
-        platform,
-        walletProvider: wallet.provider,
-        walletIsConnected: wallet.isConnected,
-        walletChainId: wallet.chainId,
-        isInMiniApp,
-      });
-    }
-  }, [
-    networkType,
-    address,
-    walletAddress,
-    effectiveAddress,
-    isOpen,
-    platform,
-    wallet.provider,
-    wallet.isConnected,
-    wallet.chainId,
-    isInMiniApp,
-  ]);
-
   // Removed handleThirdwebSubmission - now using unified Wagmi submission
 
   // Network switching is no longer supported in the summary modal

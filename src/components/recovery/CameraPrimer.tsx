@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Camera, LockKeyhole, MonitorUp, ShieldCheck } from 'lucide-react';
 import { guidanceFor } from '@/lib/exerciseGuidance';
+import { usePainIntent } from '@/hooks/usePainIntent';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import '@/styles/camera-primer.css';
 
@@ -22,6 +23,7 @@ interface CameraPrimerProps {
  */
 const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, isIOS = false, onEnable, onCancel }) => {
   const guidance = guidanceFor(mode);
+  const { painIntent } = usePainIntent();
   const retryButtonRef = useRef<HTMLButtonElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const permissionRecovery = isIOS
@@ -81,13 +83,16 @@ const CameraPrimer: React.FC<CameraPrimerProps> = ({ mode, isIOS = false, onEnab
         </li>
         <li>
           <LockKeyhole size={17} />
-          <span>Video stays on your device. Nothing is recorded or uploaded.</span>
+          <span>No video is recorded or uploaded.</span>
         </li>
       </ul>
       {/* Edge-state coach voice: permission is the only gate, and it is not a
           rush — the coach stays patient until the camera is allowed. */}
       <p className="camera-primer__focus">
         <strong>{isIOS ? 'Safari setup' : 'Camera setup'}</strong>
+        {painIntent && (
+          <span>You said: &ldquo;{painIntent.label}&rdquo;. The camera is how we check that.</span>
+        )}
         <span>The coach is patient. {guidance.focus}</span>
       </p>
       <div className="camera-primer__actions">

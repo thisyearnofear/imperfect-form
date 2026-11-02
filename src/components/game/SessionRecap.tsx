@@ -28,6 +28,7 @@ import {
 import { usePlatform } from '@/contexts/PlatformContext';
 import MovementCard from './MovementCard';
 import MovementAssessmentHistory from './MovementAssessmentHistory';
+import { usePainIntent } from '@/hooks/usePainIntent';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { LocalWorkout } from '@/types/workout';
 import type { MovementChallengePayload } from '@/types/movementChallenge';
@@ -371,6 +372,7 @@ export function SessionRecap({
   onStartSelfGhost,
   isRace = false,
 }: SessionRecapProps) {
+  const { painIntent } = usePainIntent();
   const takeaway = coachingTakeaway(summary, mode);
   const story = sessionStory(summary, mode, reps);
   const avgScore = averageFormScore(formScores);
@@ -385,6 +387,13 @@ export function SessionRecap({
       <div className="session-recap__one-fix motion-enter">
         <p className="session-recap__one-fix-eyebrow">{BRAND.loopLabel}</p>
         <h2 id="session-recap-title">{hasCorrection ? 'The one fix' : 'Keep this line'}</h2>
+        {painIntent?.mode === mode && (
+          <p className="session-recap__personal">
+            {painIntent.recapLine}
+            {painIntent.id === 'stuck' &&
+              ' Your movement history is under Session detail and history below.'}
+          </p>
+        )}
         <strong>{story.focus}</strong>
         <div className="session-recap__one-fix-meta">
           <span>

@@ -1867,3 +1867,12 @@
     opacity: 1;
   }
 }
+
+.session-recap__personal {
+  margin: 8px 0 0;
+  color: var(--sandow-brass-soft, #e6a72c);
+  font-size: 0.875rem;
+  font-style: italic;
+  line-height: 1.5;
+  max-width: 56ch;
+}

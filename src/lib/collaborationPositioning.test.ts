@@ -10,7 +10,7 @@ describe('collaboration positioning', () => {
 
   it('keeps the physical coach as honest, subordinate proof', () => {
     expect(BRAND.studio.line2).toBe(
-      'Camera catches one thing. Coach shows you the fix. Next rep, you see the difference.'
+      'Your camera catches one form error. The coach arm shows the fix. No video leaves your device.'
     );
     expect(BRAND.studio.line2).not.toContain('SO-101');
     expect(BRAND.differentiation).toContain('robot exists to teach the human');

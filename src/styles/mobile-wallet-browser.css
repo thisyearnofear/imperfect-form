@@ -96,7 +96,7 @@
     margin-bottom: 6px !important;
   }
 
-  h2 {
+  h2:not(.coach-foyer__title):not(.ls-h2) {
     font-size: 14px !important;
   }
 
@@ -133,7 +133,9 @@
     margin-bottom: 10px;
   }
 
-  h2 {
+  /* The day-0 landing headings are h2 elements with their own type scale —
+     exempt them or they collapse to 16px on phones. */
+  h2:not(.coach-foyer__title):not(.ls-h2) {
     font-size: 16px !important;
     line-height: 1.4;
   }

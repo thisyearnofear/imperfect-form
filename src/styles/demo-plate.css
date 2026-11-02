@@ -1,0 +1,586 @@
+/* Plate I — "The curl". Engraved-plate chrome + one deterministic 8s loop:
+   Phase A your rep (0–3s), Phase B the fix (3–5.5s), Phase C next rep (5.5–8s).
+   transform / opacity / stroke-dashoffset only. */
+
+.demo-plate {
+  --dp-brass: var(--sandow-brass, #fcb131);
+  --dp-brass-dim: var(--sandow-brass-dim, #c98c1a);
+  --dp-teal: #7aebd8;
+  --dp-paper: var(--sandow-paper, #f4ecd8);
+  --dp-curve: cubic-bezier(0.22, 1, 0.36, 1);
+  --dp-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  position: relative;
+  margin: 0;
+  width: 100%;
+  color: var(--dp-paper);
+  background: rgba(6, 16, 19, 0.55);
+  border: 1px solid var(--sandow-rule, rgba(252, 177, 49, 0.4));
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 18px 48px rgba(0, 0, 0, 0.4),
+    0 0 60px rgba(252, 177, 49, 0.07);
+  overflow: hidden;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Corner crop-ticks */
+.demo-plate::before,
+.demo-plate::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: var(--dp-brass);
+  border-style: solid;
+  z-index: 3;
+}
+
+.demo-plate::before {
+  top: 6px;
+  left: 6px;
+  border-width: 1px 0 0 1px;
+}
+
+.demo-plate::after {
+  right: 6px;
+  bottom: 6px;
+  border-width: 0 1px 1px 0;
+}
+
+.demo-plate__caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px 0;
+  color: var(--dp-brass);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.demo-plate__caption-num {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.demo-plate__caption-sep {
+  opacity: 0.6;
+}
+
+.demo-plate__stage {
+  position: relative;
+  padding: 8px 12px;
+}
+
+.demo-plate__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: rgba(252, 177, 49, 0.06);
+}
+
+.demo-plate__preview {
+  padding: 8px;
+}
+
+.demo-plate__footer {
+  display: block;
+  padding: 0 12px 10px;
+  color: rgba(214, 240, 234, 0.5);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+/* ── Drawing language ──────────────────────────────────────── */
+
+.demo-plate__ruler line {
+  stroke: rgba(252, 177, 49, 0.32);
+  stroke-width: 1;
+}
+
+.demo-plate__tick {
+  stroke: rgba(252, 177, 49, 0.4);
+  stroke-width: 1;
+  transform-box: fill-box;
+  transform-origin: 0 0;
+}
+
+.demo-plate__ticks {
+  animation: dp-tick-sweep 8s var(--dp-curve) infinite;
+  opacity: 0.8;
+}
+
+@keyframes dp-tick-sweep {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translate(196px, 178px) rotate(-14deg);
+  }
+  16% {
+    opacity: 0.9;
+  }
+  34%,
+  100% {
+    opacity: 0.9;
+    transform: translate(196px, 178px) rotate(26deg);
+  }
+  40%,
+  62% {
+    opacity: 0;
+  }
+  70%,
+  90% {
+    opacity: 0.5;
+    transform: translate(196px, 178px) rotate(26deg);
+  }
+}
+
+.demo-plate__bone {
+  fill: none;
+  stroke: var(--dp-paper);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.92;
+}
+
+.demo-plate__bone--dim {
+  opacity: 0.45;
+}
+
+.demo-plate__joint {
+  fill: var(--dp-paper);
+}
+
+.demo-plate__path {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.demo-plate__path-ideal {
+  stroke: var(--dp-brass);
+  stroke-width: 1.6;
+  stroke-dasharray: 4 6;
+  opacity: 0.55;
+}
+
+.demo-plate__path-a {
+  stroke: var(--dp-teal);
+  stroke-width: 2;
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: dp-draw-a 8s var(--dp-curve) infinite;
+}
+
+.demo-plate__path-c {
+  stroke: var(--dp-teal);
+  stroke-width: 2;
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: dp-draw-c 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-draw-a {
+  0%,
+  8% {
+    stroke-dashoffset: 220;
+    opacity: 1;
+  }
+  30% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  42%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes dp-draw-c {
+  0%,
+  74% {
+    stroke-dashoffset: 220;
+    opacity: 1;
+  }
+  92% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  98%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+/* ── Phase A: forearm curls while the elbow drifts forward ── */
+
+.demo-plate__phaseA {
+  animation: dp-phase-a 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-phase-a {
+  0%,
+  36% {
+    opacity: 1;
+  }
+  42%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Elbow slides forward = the fault. */
+.demo-plate__elbow-a {
+  animation: dp-elbow-a 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-elbow-a {
+  0%,
+  8% {
+    transform: translate(196px, 178px);
+  }
+  34%,
+  100% {
+    transform: translate(214px, 170px);
+  }
+}
+
+.demo-plate__forearm-a {
+  animation: dp-curl-a 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-curl-a {
+  0%,
+  8% {
+    transform: rotate(8deg);
+  }
+  30%,
+  36% {
+    transform: rotate(-118deg);
+  }
+  42%,
+  100% {
+    transform: rotate(-118deg);
+  }
+}
+
+.demo-plate__callout {
+  opacity: 0;
+  animation: dp-callout 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-callout {
+  0%,
+  26% {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  32%,
+  36% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  40%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+.demo-plate__leader {
+  stroke: var(--dp-teal);
+  stroke-width: 1.2;
+  fill: none;
+}
+
+.demo-plate__leader-dot {
+  fill: var(--dp-teal);
+}
+
+.demo-plate__callout-text,
+.demo-plate__cue {
+  fill: var(--dp-paper);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 15px;
+  font-style: italic;
+}
+
+.demo-plate__cue {
+  fill: var(--dp-brass);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* ── Phase B: cue + coach arm demonstrates ────────────────── */
+
+.demo-plate__phaseB {
+  opacity: 0;
+  animation: dp-phase-b 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-phase-b {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  46%,
+  70% {
+    opacity: 1;
+  }
+  76%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.demo-plate__cue {
+  opacity: 0;
+  animation: dp-cue 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-cue {
+  0%,
+  44% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  50%,
+  68% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  74%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.demo-plate__panel {
+  fill: rgba(4, 22, 25, 0.85);
+  stroke: var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  stroke-width: 1;
+  filter: drop-shadow(0 0 14px rgba(252, 177, 49, 0.28));
+}
+
+.demo-plate__panel-base {
+  stroke: rgba(214, 240, 234, 0.3);
+  stroke-width: 1;
+}
+
+.demo-plate__coach-base {
+  fill: var(--dp-paper);
+  opacity: 0.8;
+}
+
+.demo-plate__coach-bone {
+  stroke: var(--dp-brass);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.demo-plate__link1 {
+  animation: dp-link1 8s var(--dp-curve) infinite;
+  transform-origin: 0 0;
+}
+
+@keyframes dp-link1 {
+  0%,
+  48% {
+    transform: translate(37px, 66px) rotate(30deg);
+  }
+  66%,
+  100% {
+    transform: translate(37px, 66px) rotate(-12deg);
+  }
+}
+
+.demo-plate__link2 {
+  animation: dp-link2 8s var(--dp-curve) infinite;
+  transform-origin: 0 0;
+}
+
+@keyframes dp-link2 {
+  0%,
+  48% {
+    transform: translate(0, -30px) rotate(20deg);
+  }
+  66%,
+  100% {
+    transform: translate(0, -30px) rotate(-6deg);
+  }
+}
+
+.demo-plate__coach-joint {
+  fill: var(--dp-teal);
+  opacity: 0;
+}
+
+.demo-plate__j1 {
+  animation: dp-joint 8s var(--dp-curve) infinite;
+}
+
+.demo-plate__j2 {
+  animation: dp-joint 8s var(--dp-curve) infinite;
+  animation-delay: 0s;
+}
+
+.demo-plate__j3 {
+  animation: dp-joint 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-joint {
+  0%,
+  50% {
+    opacity: 0;
+  }
+  54%,
+  70% {
+    opacity: 1;
+  }
+  76%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ── Phase C: clean rep + stamp ────────────────────────────── */
+
+.demo-plate__phaseC {
+  opacity: 0;
+  animation: dp-phase-c 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-phase-c {
+  0%,
+  70% {
+    opacity: 0;
+  }
+  76%,
+  96% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Pinned elbow — forearm curls, no translation. */
+.demo-plate__forearm-c {
+  animation: dp-curl-c 8s var(--dp-curve) infinite;
+}
+
+@keyframes dp-curl-c {
+  0%,
+  74% {
+    transform: rotate(8deg);
+  }
+  90%,
+  100% {
+    transform: rotate(-118deg);
+  }
+}
+
+/* Stamp slam — the one arcade punctuation, spring overshoot. */
+.demo-plate__stamp {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dp-stamp 8s var(--dp-spring) infinite;
+}
+
+@keyframes dp-stamp {
+  0%,
+  80% {
+    opacity: 0;
+    transform: translate(322px, 258px) scale(1.6) rotate(-8deg);
+  }
+  82% {
+    opacity: 1;
+    transform: translate(322px, 258px) scale(0.94) rotate(2deg);
+  }
+  86%,
+  96% {
+    opacity: 1;
+    transform: translate(322px, 258px) scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(322px, 258px) scale(1) rotate(0deg);
+  }
+}
+
+.demo-plate__stamp-box {
+  fill: rgba(6, 16, 19, 0.7);
+  stroke: var(--dp-brass);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 12px rgba(252, 177, 49, 0.5));
+}
+
+.demo-plate__stamp-text {
+  fill: var(--dp-brass);
+  font-family: var(--font-press-start), monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+/* ── Loop control + reduced motion ─────────────────────────── */
+
+.demo-plate[data-playing='false'] * {
+  animation-play-state: paused !important;
+}
+
+/* Static final frame: clean rep + stamp + captions, nothing moving. */
+.demo-plate.is-static * {
+  animation: none !important;
+}
+
+.demo-plate.is-static .demo-plate__phaseA,
+.demo-plate.is-static .demo-plate__phaseB {
+  opacity: 0;
+}
+
+.demo-plate.is-static .demo-plate__phaseC {
+  opacity: 1;
+}
+
+.demo-plate.is-static .demo-plate__forearm-c {
+  transform: rotate(-118deg);
+}
+
+.demo-plate.is-static .demo-plate__path-c {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+.demo-plate.is-static .demo-plate__stamp {
+  opacity: 1;
+  transform: translate(322px, 258px) scale(1) rotate(0deg);
+}
+
+.demo-plate.is-static .demo-plate__tick,
+.demo-plate.is-static .demo-plate__ticks {
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-plate * {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .demo-plate__caption {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+  }
+}

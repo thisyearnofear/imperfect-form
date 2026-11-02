@@ -548,3 +548,42 @@ body[data-shell='studio'] .studio-topbar {
     scrollbar-width: thin;
   }
 }
+
+/* Day-0 topbar wallet affordance — quiet text link, same connect flow as
+   WalletStatusPill but without the pill chrome (P5 keeps it optional). */
+.studio-topbar__wallet-quiet {
+  padding: 0.25rem 0;
+  color: var(--studio-muted, #9bb5b1);
+  background: transparent;
+  border: 0;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.studio-topbar__wallet-quiet--link {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(155, 181, 177, 0.4);
+  transition:
+    color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    text-decoration-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.studio-topbar__wallet-quiet--link:hover:not(:disabled) {
+  color: #eafff9;
+  text-decoration-color: rgba(234, 255, 249, 0.7);
+}
+
+.studio-topbar__wallet-quiet--link:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.studio-topbar__wallet-quiet--link:focus-visible {
+  outline: 2px solid var(--studio-teal, #56d9c3);
+  outline-offset: 3px;
+  border-radius: 2px;
+}

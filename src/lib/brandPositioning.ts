@@ -89,9 +89,10 @@ const ARCADE_FOYER: FoyerCopy = {
 };
 
 const STUDIO_FOYER: FoyerCopy = {
-  brand: 'IMPERFECT FORM.FUN',
+  brand: 'Imperfect Form',
   line1: 'Make one rep better.',
-  line2: 'Camera catches one thing. Coach shows you the fix. Next rep, you see the difference.',
+  line2:
+    'Your camera catches one form error. The coach arm shows the fix. No video leaves your device.',
   provenance: 'Britain invented the form-check in 1897. We finished it.',
   loopLabel: 'ONE REP / ONE FIX',
   invitation: 'Start imperfect. Get one useful cue.',
@@ -237,7 +238,7 @@ export const BRAND = {
   visionLine:
     'Camera coaching for imperfect humans — with a physical coach that can show the fix when connected.',
   loopLabel: 'ONE REP / ONE FIX',
-  trustLine: 'Pose runs on your device. Nothing leaves the browser until you choose.',
+  trustLine: 'Pose runs on your device. No video leaves the browser.',
   roboticsHint:
     'Built toward physical AI that can demonstrate the correction — not just describe it.',
   /** Recap / foyer heritage — visible in the main flow, not only on /lore. */

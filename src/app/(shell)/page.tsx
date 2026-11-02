@@ -35,6 +35,7 @@ import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { getHasTrained } from '@/lib/hasTrained';
 import { trackEngagementEvent } from '@/lib/analyticsDispatch';
 import { UniversalConnectButton, WalletStatusPill } from '@/components/wallet';
+import { useClientOnly } from '@/hooks/useClientOnly';
 import { ScreenTransition } from '@/components/ui/ScreenTransition';
 import { CountUp } from '@/components/ui/CountUp';
 
@@ -91,6 +92,33 @@ const ExpandedLeaderboardModal = dynamic(
 import { Score } from '@/types';
 
 type ActiveTab = 'workout' | 'dashboard' | 'roadmap' | 'challenges';
+
+/** Day-0 topbar wallet affordance — a quiet text link, not a pill. It opens
+ *  the same connect flow as WalletStatusPill and never gates the loop. */
+function Day0ConnectLink() {
+  const { wallet, actions } = usePlatform();
+  const hasMounted = useClientOnly();
+
+  if (!hasMounted) return null;
+
+  if (wallet.isConnected) {
+    const short = wallet.address
+      ? `${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`
+      : 'Wallet connected';
+    return <span className="studio-topbar__wallet-quiet">{short}</span>;
+  }
+
+  return (
+    <button
+      type="button"
+      className="studio-topbar__wallet-quiet studio-topbar__wallet-quiet--link"
+      disabled={wallet.isConnecting}
+      onClick={() => void actions.connect()}
+    >
+      {wallet.isConnecting ? 'Connecting…' : 'Connect wallet (optional)'}
+    </button>
+  );
+}
 
 export default function Home() {
   const { platform, user } = usePlatform();
@@ -240,7 +268,7 @@ export default function Home() {
         </p>
         <div className="flex items-center gap-3">
           <p className="studio-wordmark-sub hidden sm:block">Private camera coaching</p>
-          <WalletStatusPill />
+          <Day0ConnectLink />
         </div>
       </div>
     </div>

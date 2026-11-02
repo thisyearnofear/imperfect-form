@@ -2,16 +2,21 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { guidanceFor } from '@/lib/exerciseGuidance';
+import { usePainIntent } from '@/hooks/usePainIntent';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import './first-rep-celebration.css';
 
 interface FirstRepCelebrationProps {
   show: boolean;
   mode: ExerciseMode;
+  /** Optional personal line replacing the generic guidance line. */
+  personalLine?: string;
 }
 
-export function FirstRepCelebration({ show, mode }: FirstRepCelebrationProps) {
+export function FirstRepCelebration({ show, mode, personalLine }: FirstRepCelebrationProps) {
   const guidance = guidanceFor(mode);
+  const { painIntent } = usePainIntent();
+  const line = personalLine ?? (painIntent?.mode === mode ? painIntent.firstRepLine : undefined);
   const [visible, setVisible] = useState(show);
 
   const particles = useMemo(
@@ -45,9 +50,7 @@ export function FirstRepCelebration({ show, mode }: FirstRepCelebrationProps) {
           <span className="first-rep-celebration__index">01</span>
         </div>
         <span>First signal captured</span>
-        <small>
-          {guidance.label} · {guidance.focus}
-        </small>
+        <small>{line ?? `${guidance.label} · ${guidance.focus}`}</small>
         <div className="first-rep-celebration__sequence" aria-hidden="true">
           <span className="is-complete">READ</span>
           <i />

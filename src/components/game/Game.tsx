@@ -575,14 +575,6 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Camera setup and viewport tracking
   const { stopAllCameras } = useCameraSetup();
 
-  // Log address changes for debugging
-  useEffect(() => {
-    // Only log in development environment to reduce production noise
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Game: Using universal wallet address:', finalAddress);
-    }
-  }, [finalAddress]);
-
   // Store the address in localStorage for persistence (client-side only)
   useEffect(() => {
     if (finalAddress && typeof window !== 'undefined') {

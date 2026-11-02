@@ -1,26 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ArrowRight,
-  Camera,
-  LockKeyhole,
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  Hand,
-  Sparkles,
-  Activity,
-} from 'lucide-react';
-import { BRAND, getIntentDef } from '@/lib/brandPositioning';
-import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Camera, ChevronDown, ChevronUp, Sparkles, Activity } from 'lucide-react';
+import { getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useImmersive } from '@/hooks/useImmersive';
 import { coachStation, type StationStatus } from '@/services/coachStation';
 import type { ExerciseMode } from '@/utils/biomechanics';
-import { cleanupCameraStream, requestCameraPermission } from '@/utils/cameraPermissions';
-import { MovementPreview } from '@/components/game/MovementPreview';
+import { LandingSections } from '@/components/home/LandingSections';
+import { DemoPlate } from '@/components/home/DemoPlate';
+import { PAIN_INTENTS, resolveRestoredPainIntentMode } from '@/lib/painIntents';
+import { usePainIntent } from '@/hooks/usePainIntent';
 import '@/styles/coach-foyer.css';
 
 type CoachFoyerProps = {
@@ -37,145 +27,35 @@ type ExerciseOption = {
   category: 'primary' | 'extra';
 };
 
-const howItWorks = [
-  {
-    icon: Eye,
-    title: 'Camera reads form',
-    body: 'Pose detection runs on your device — no video upload.',
-  },
-  {
-    icon: Hand,
-    title: 'Coach catches the issue',
-    body: 'Live cues explain what to change while you move.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Robot shows the fix',
-    body: 'For upper-body corrections, the robot arm can demonstrate the movement in the bay when Coach is connected.',
-  },
-];
-
 const exercises: ExerciseOption[] = [
   {
     mode: 'curls',
     label: 'Curls',
-    detail: 'Camera catches elbow swing · Coach shows the correction',
+    detail: 'Elbow swing · arm demo',
     category: 'primary',
   },
   { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line', category: 'primary' },
   {
     mode: 'squats',
     label: 'Squats',
-    detail: 'Mobility · depth · knee tracking',
+    detail: 'Mobility · depth · knees',
     category: 'extra',
   },
   { mode: 'pullups', label: 'Pull-ups', detail: 'Extension · symmetry', category: 'extra' },
-  { mode: 'jumps', label: 'Jumps', detail: 'Landing · knee track', category: 'extra' },
+  { mode: 'jumps', label: 'Jumps', detail: 'Landing · knees', category: 'extra' },
 ];
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
 
 /** Warm the camera + pose chunk while the user reads the foyer so START is instant. */
 function prefetchWebcamChunk() {
   void import('./Webcam').catch(() => {
     /* prefetch is best-effort; LazyWebcam loads on demand otherwise */
   });
-}
-
-function CoachSystemMap({
-  status,
-  enabled,
-  className,
-}: {
-  status: StationStatus;
-  enabled: boolean;
-  className?: string;
-}) {
-  const coachLabel = 'Ready';
-  const stationLabel = !enabled
-    ? 'When connected'
-    : status === 'connected'
-      ? 'Connected'
-      : status === 'connecting'
-        ? 'Connecting'
-        : 'Offline';
-
-  return (
-    <div
-      className={`coach-foyer__system-map ${className || ''}`}
-      role="img"
-      aria-label={`Camera waiting for you, form coach ready, robot arm ${stationLabel.toLowerCase()}`}
-    >
-      <div className="coach-foyer__system-node is-camera">
-        <Camera size={16} strokeWidth={2} aria-hidden="true" />
-        <span className="coach-foyer__system-node-name">Camera</span>
-        <small>Waiting for you</small>
-      </div>
-      <span className="coach-foyer__system-link" aria-hidden="true">
-        →
-      </span>
-      <div className="coach-foyer__system-node is-coach">
-        <Eye size={16} strokeWidth={2} aria-hidden="true" />
-        <span className="coach-foyer__system-node-name">Coach</span>
-        <small>{coachLabel}</small>
-      </div>
-      <span className="coach-foyer__system-link" aria-hidden="true">
-        →
-      </span>
-      <div className={`coach-foyer__system-node is-robot is-${status}`}>
-        <Sparkles size={16} strokeWidth={2} aria-hidden="true" />
-        <span className="coach-foyer__system-node-name">Coach arm (SO-101)</span>
-        <small>{stationLabel}</small>
-      </div>
-    </div>
-  );
-}
-
-function FramingDiagram({ mode }: { mode: ExerciseMode }) {
-  const upperBody = mode === 'curls';
-  return (
-    <div
-      className={`coach-foyer__frame-visual${upperBody ? ' is-upper-body' : ' is-full-body'}`}
-      aria-hidden="true"
-    >
-      <div className="coach-foyer__frame-visual-label">
-        <Camera size={11} strokeWidth={2} />
-        Ideal camera view
-      </div>
-      <svg viewBox="0 0 180 128" focusable="false">
-        <rect
-          className="coach-foyer__frame-outline"
-          x="13"
-          y="13"
-          width="154"
-          height="102"
-          rx="8"
-        />
-        <path
-          className="coach-foyer__frame-corner"
-          d="M25 37V25h12M143 25h12v12M25 91v12h12M143 103h12V91"
-        />
-        <circle className="coach-foyer__frame-head" cx="90" cy="42" r="11" />
-        <path
-          className="coach-foyer__frame-body"
-          d={upperBody ? 'M90 54v34M68 67h44' : 'M90 54v34M68 67h44M90 88l-18 25M90 88l18 25'}
-        />
-        <path
-          className="coach-foyer__frame-arms"
-          d={upperBody ? 'M68 67L48 78M112 67l20 11' : 'M68 67L53 81M112 67l15 14'}
-        />
-        <circle className="coach-foyer__frame-landmark" cx="68" cy="67" r="2.5" />
-        <circle className="coach-foyer__frame-landmark" cx="112" cy="67" r="2.5" />
-        {!upperBody && (
-          <>
-            <circle className="coach-foyer__frame-landmark" cx="72" cy="113" r="2.5" />
-            <circle className="coach-foyer__frame-landmark" cx="108" cy="113" r="2.5" />
-          </>
-        )}
-      </svg>
-      <span className="coach-foyer__frame-visual-caption">
-        {upperBody ? 'Head · shoulders · hips · arms' : 'Head · shoulders · hips · feet'}
-      </span>
-    </div>
-  );
 }
 
 export function CoachFoyer({
@@ -186,94 +66,28 @@ export function CoachFoyer({
 }: CoachFoyerProps) {
   const foyer = getIntentDef('understand').foyer;
   const { triggerHaptic } = useHapticFeedback();
-  const { immersive, setImmersive } = useImmersive();
   const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [showExtras, setShowExtras] = useState(false);
-  const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const [showFrameGuide, setShowFrameGuide] = useState(false);
+  const [ctaOutOfView, setCtaOutOfView] = useState(false);
+  const { painIntent, setPainIntent, hydrated } = usePainIntent();
   const extrasTouchedRef = useRef(false);
   const firstExtraRef = useRef<HTMLButtonElement>(null);
   const moreToggleRef = useRef<HTMLButtonElement>(null);
-  const previewVideoRef = useRef<HTMLVideoElement>(null);
-  const previewStreamRef = useRef<MediaStream | null>(null);
-  const previewRequestRef = useRef(0);
-  const [previewStatus, setPreviewStatus] = useState<'closed' | 'starting' | 'ready' | 'error'>(
-    'closed'
-  );
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const startButtonRef = useRef<HTMLButtonElement>(null);
 
   const primaryExercises = exercises.filter((e) => e.category === 'primary');
   const extraExercises = exercises.filter((e) => e.category === 'extra');
   const selectedExercise = exercises.find((exercise) => exercise.mode === mode) ?? exercises[0];
 
-  const stopCameraPreview = useCallback(() => {
-    previewRequestRef.current += 1;
-    if (previewStreamRef.current) {
-      cleanupCameraStream(previewStreamRef.current);
-      previewStreamRef.current = null;
-    }
-    if (previewVideoRef.current) {
-      previewVideoRef.current.srcObject = null;
-    }
-    setPreviewStatus('closed');
-    setPreviewError(null);
-  }, []);
-
-  const startCameraPreview = useCallback(async () => {
-    if (previewStatus === 'starting' || previewStreamRef.current) return;
-
-    const requestId = ++previewRequestRef.current;
-    setPreviewStatus('starting');
-    setPreviewError(null);
-
-    const result = await requestCameraPermission({
-      video: {
-        width: { ideal: 640 },
-        height: { ideal: 480 },
-        facingMode: 'user',
-      },
-      audio: false,
-    });
-
-    if (requestId !== previewRequestRef.current) {
-      if (result.stream) cleanupCameraStream(result.stream);
-      return;
-    }
-
-    if (!result.granted || !result.stream) {
-      setPreviewStatus('error');
-      setPreviewError('Camera preview was not available. You can still start and try again.');
-      return;
-    }
-
-    previewStreamRef.current = result.stream;
-    setPreviewStatus('ready');
-  }, [previewStatus]);
-
-  useEffect(() => {
-    const video = previewVideoRef.current;
-    const stream = previewStreamRef.current;
-    if (!video || !stream) return;
-
-    video.srcObject = stream;
-    void video.play().catch(() => {
-      setPreviewError('Preview opened, but the browser needs a tap on the video to play it.');
-    });
-
-    return () => {
-      if (video.srcObject === stream) video.srcObject = null;
-    };
-  }, [previewStatus]);
-
-  useEffect(() => {
-    return () => {
-      previewRequestRef.current += 1;
-      if (previewStreamRef.current) {
-        cleanupCameraStream(previewStreamRef.current);
-        previewStreamRef.current = null;
-      }
-    };
-  }, []);
+  // When an extra movement is picked while the extras list is closed (e.g. by a
+  // pain chip), promote it into the visible pair instead of expanding the full
+  // list — expanding all three extras pushes the CTA below the fold on short
+  // viewports. Once the user opens "More movements", primaries go back to the
+  // top slot and the selected extra shows selected inside the extras list.
+  const pickedExtra = !showExtras ? extraExercises.find((e) => e.mode === mode) : undefined;
+  const visibleExercises = pickedExtra
+    ? [pickedExtra, ...primaryExercises].slice(0, 2)
+    : primaryExercises;
 
   // Station-aware robot-demo chip on the flagship Curls card: live when the
   // Coach link is up, dormant when it isn't — the robot demo is signposted at
@@ -314,8 +128,63 @@ export function CoachFoyer({
     }
   }, [showExtras]);
 
+  // A chip restored from storage arrives after mount (usePainIntent hydrates in
+  // an effect), so apply its move once and bring it into view. Without this the
+  // subhead, plate and "Sound familiar" content follow the chip while the move
+  // stays at the default. An incoming challenge keeps its own movement.
+  const restoredChipAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!hydrated || restoredChipAppliedRef.current) return;
+    restoredChipAppliedRef.current = true;
+    if (!painIntent) return;
+    const restoredMode = resolveRestoredPainIntentMode(
+      painIntent,
+      mode,
+      Boolean(incomingChallenge)
+    );
+    if (restoredMode) onModeChange(restoredMode);
+    const prefersReduced = prefersReducedMotion();
+    requestAnimationFrame(() => {
+      document.querySelector('.coach-foyer__pain-chip.is-selected')?.scrollIntoView({
+        inline: 'center',
+        block: 'nearest',
+        behavior: prefersReduced ? 'auto' : 'smooth',
+      });
+    });
+    // Applied once per mount, when hydration completes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  // Sticky mini CTA: fades in once BOTH the hero button and the final CTA are
+  // scrolled out of view. Mobile only via CSS (<768px).
+  useEffect(() => {
+    const start = startButtonRef.current;
+    const finale = document.querySelector('.ls-final .coach-foyer__start');
+    if (!start || !finale) return;
+    const inView = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return r.bottom > 0 && r.top < window.innerHeight;
+    };
+    let startVisible = inView(start);
+    let finalVisible = inView(finale);
+    const update = () => setCtaOutOfView(!startVisible && !finalVisible);
+    update();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.target === start) startVisible = entry.isIntersecting;
+          else finalVisible = entry.isIntersecting;
+        }
+        update();
+      },
+      { threshold: 0 }
+    );
+    io.observe(start);
+    io.observe(finale);
+    return () => io.disconnect();
+  }, []);
+
   const handleStart = () => {
-    stopCameraPreview();
     playStudioCue('press');
     triggerHaptic([50, 100]);
     onStart();
@@ -329,7 +198,6 @@ export function CoachFoyer({
         type="button"
         ref={exercise.category === 'extra' && index === 0 ? firstExtraRef : undefined}
         className={`coach-foyer__exercise${selected ? ' is-selected' : ''}`}
-        style={{ animationDelay: `${180 + index * 40}ms` }}
         aria-pressed={selected}
         onClick={() => {
           playStudioCue('soft');
@@ -365,365 +233,230 @@ export function CoachFoyer({
       aria-labelledby="coach-foyer-title"
       data-coach-mode={mode}
     >
+      <a className="coach-foyer__skip" href="#startButton">
+        Skip to start
+      </a>
+
       <div className="coach-foyer__atmosphere" aria-hidden="true">
         <div className="coach-foyer__glow" />
-        <div className="coach-foyer__grid" />
-        <div className="coach-foyer__orbit" />
       </div>
 
       <div className="coach-foyer__inner">
-        <p className="coach-foyer__brand motion-enter motion-delay-1">{foyer.brand}</p>
+        <div className="coach-foyer__hero">
+          <div className="coach-foyer__hero-copy">
+            <p className="coach-foyer__brand lf-rise" style={{ animationDelay: '0ms' }}>
+              <span className="coach-foyer__brand-rule" aria-hidden="true" />
+              {foyer.brand}
+            </p>
 
-        <h2 id="coach-foyer-title" className="coach-foyer__title motion-enter motion-delay-2">
-          {foyer.line1}
-        </h2>
-        <p className="coach-foyer__lede motion-enter motion-delay-2">{foyer.line2}</p>
-
-        <p className="sandow-provenance motion-enter motion-delay-3">{foyer.provenance}</p>
-
-        {incomingChallenge && (
-          <div
-            className="coach-foyer__incoming-challenge motion-enter"
-            role="status"
-            aria-live="polite"
-          >
-            <div className="coach-foyer__incoming-challenge-mark" aria-hidden="true">
-              <Sparkles size={16} strokeWidth={2} />
-            </div>
-            <div>
-              <strong>A movement line was sent to you</strong>
-              <span>Meet the ghost, try the same movement, and find your own correction.</span>
-            </div>
-          </div>
-        )}
-
-        <div
-          className={`coach-foyer__coach-status is-${coachStation.enabled ? coachStatus : 'camera-only'} motion-enter`}
-          style={{ animationDelay: '150ms' }}
-          role="status"
-          aria-live="polite"
-        >
-          <span className="coach-foyer__coach-status-dot" aria-hidden="true" />
-          <span>
-            {coachStation.enabled && coachStatus === 'connected'
-              ? 'Coach bay connected · camera coaching ready'
-              : coachStation.enabled && coachStatus === 'connecting'
-                ? 'Coach bay connecting · camera coaching ready'
-                : coachStation.enabled
-                  ? 'Camera coaching ready · coach bay offline'
-                  : 'Private camera coaching · robot shows the fix when connected'}
-          </span>
-        </div>
-
-        {/* Two defaults, pre-answered — the only decision offered before START */}
-        <fieldset className="coach-foyer__exercise-list motion-enter motion-delay-3">
-          <legend className="sr-only">Pick a movement</legend>
-          {primaryExercises.map(renderExerciseButton)}
-        </fieldset>
-
-        {/* The chosen movement comes alive before the camera does — the pick
-            becomes a moment. Keyed by mode so switching restarts the loop. */}
-        <div className="coach-foyer__preview-wrap motion-enter motion-delay-3">
-          <MovementPreview key={mode} mode={mode} label={selectedExercise.label} />
-        </div>
-
-        <button
-          type="button"
-          id="startButton"
-          className="coach-foyer__start coach-foyer__start--hero feel-press motion-enter"
-          style={{ animationDelay: '320ms' }}
-          aria-label={`Try one rep of ${selectedExercise.label} with camera coaching`}
-          disabled={previewStatus === 'starting'}
-          onPointerEnter={prefetchWebcamChunk}
-          onTouchStart={prefetchWebcamChunk}
-          onClick={handleStart}
-        >
-          <Camera size={18} strokeWidth={2} aria-hidden="true" />
-          <span>{incomingChallenge ? 'Meet the ghost' : 'Try one rep'}</span>
-          <span className="coach-foyer__start-mode" aria-hidden="true">
-            · {selectedExercise.label}
-          </span>
-          <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
-        </button>
-
-        <p
-          className="coach-foyer__trust coach-foyer__trust--under-start motion-enter"
-          style={{ animationDelay: '380ms' }}
-        >
-          <LockKeyhole size={14} strokeWidth={2} aria-hidden="true" />
-          {BRAND.trustLine}
-        </p>
-
-        {/* The longitudinal promise. Previously written into BRAND.studio.hint
-            and never rendered anywhere — the day-0 surface did not state the
-            thing the product actually does, which is compare you to you over
-            time. Deliberately a quiet line under the CTA, not a second button:
-            this is context, not an action. */}
-        <p className="coach-foyer__promise motion-enter" style={{ animationDelay: '400ms' }}>
-          {foyer.hint}
-        </p>
-
-        <div className="coach-foyer__story-links coach-foyer__story-links--secondary motion-enter">
-          <button
-            type="button"
-            className="coach-foyer__how-it-works-toggle"
-            aria-expanded={showHowItWorks}
-            aria-controls="coach-foyer-loop"
-            onClick={() => {
-              playStudioCue('soft');
-              triggerHaptic(40);
-              setShowHowItWorks((prev) => !prev);
-            }}
-          >
-            {showHowItWorks ? 'Hide how it works' : 'How it works'}
-            {showHowItWorks ? (
-              <ChevronUp size={14} aria-hidden="true" />
-            ) : (
-              <ChevronDown size={14} aria-hidden="true" />
-            )}
-          </button>
-          <button
-            type="button"
-            className="coach-foyer__how-it-works-toggle"
-            aria-expanded={showFrameGuide}
-            aria-controls="coach-foyer-frame"
-            onClick={() => {
-              playStudioCue('soft');
-              triggerHaptic(40);
-              setShowFrameGuide((prev) => {
-                if (prev) stopCameraPreview();
-                return !prev;
-              });
-            }}
-          >
-            {showFrameGuide ? 'Hide framing' : 'Set your frame'}
-            {showFrameGuide ? (
-              <ChevronUp size={14} aria-hidden="true" />
-            ) : (
-              <ChevronDown size={14} aria-hidden="true" />
-            )}
-          </button>
-        </div>
-
-        {/* "Why a physical coach?" was a third brass button sitting beside the
-            two disclosures, so the primary action had two rivals. It is the most
-            interesting question the page can ask, so it keeps its place — but as
-            a quiet line of copy that hands off to /lore, not a call to action
-            competing with "Try one rep". */}
-        <p className="coach-foyer__why-robot motion-enter" style={{ animationDelay: '440ms' }}>
-          <span>Why a physical coach?</span>
-          <a href="/lore" className="coach-foyer__why-robot-link">
-            The build <ArrowRight size={13} aria-hidden="true" />
-          </a>
-        </p>
-
-        {showFrameGuide && (
-          <div
-            id="coach-foyer-frame"
-            className="coach-foyer__setup-guide motion-enter"
-            role="note"
-            aria-label="Camera setup"
-          >
-            <div className="coach-foyer__setup-guide-heading">
-              <Camera size={15} strokeWidth={2} aria-hidden="true" />
-              <strong>Set your frame</strong>
-              <span
-                className={`coach-foyer__setup-guide-status${previewStatus === 'ready' ? ' is-live' : ''}`}
+            {/* Serif display, words staggered; "better." is the italic brass beat. */}
+            <h2 id="coach-foyer-title" className="coach-foyer__title">
+              <span className="coach-foyer__title-word lf-rise" style={{ animationDelay: '70ms' }}>
+                Make
+              </span>{' '}
+              <span className="coach-foyer__title-word lf-rise" style={{ animationDelay: '120ms' }}>
+                one
+              </span>{' '}
+              <span className="coach-foyer__title-word lf-rise" style={{ animationDelay: '170ms' }}>
+                rep
+              </span>{' '}
+              <em
+                className="coach-foyer__title-word coach-foyer__title-brass lf-rise"
+                style={{ animationDelay: '220ms' }}
               >
-                {previewStatus === 'ready' ? 'Camera preview on' : 'Camera stays off'}
-              </span>
-            </div>
-            <div className="coach-foyer__setup-layout">
-              {previewStatus === 'ready' ? (
-                <div className="coach-foyer__frame-visual coach-foyer__frame-visual--live">
-                  <div className="coach-foyer__frame-visual-label">
-                    <Camera size={11} strokeWidth={2} />
-                    Live framing preview
-                  </div>
-                  <div className="coach-foyer__frame-live-window">
-                    <video
-                      ref={previewVideoRef}
-                      className="coach-foyer__frame-live-video"
-                      muted
-                      playsInline
-                      autoPlay
-                      onClick={(event) => {
-                        void event.currentTarget
-                          .play()
-                          .then(() => setPreviewError(null))
-                          .catch(() => undefined);
+                better.
+              </em>
+            </h2>
+            <p
+              key={painIntent?.id ?? 'default'}
+              className="coach-foyer__lede lf-swap"
+              style={{ animationDelay: '280ms' }}
+            >
+              {painIntent?.subhead ?? foyer.line2}
+            </p>
+
+            {/* Pain-intent chips — picking one adapts the subhead, the move
+                cards and the "Sound familiar" section. None selected = the
+                default page. */}
+            <div
+              className="coach-foyer__pain lf-rise"
+              style={{ animationDelay: '320ms' }}
+              role="group"
+              aria-label="What brings you here?"
+            >
+              <span className="coach-foyer__pain-label">What brings you here?</span>
+              <div className="coach-foyer__pain-chips">
+                {PAIN_INTENTS.map((chip) => {
+                  const selected = painIntent?.id === chip.id;
+                  return (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      className={`coach-foyer__pain-chip${selected ? ' is-selected' : ''}`}
+                      aria-pressed={selected}
+                      onClick={(e) => {
+                        playStudioCue('soft');
+                        triggerHaptic(30);
+                        const next = selected ? null : chip.id;
+                        setPainIntent(next);
+                        if (next) {
+                          onModeChange(chip.mode);
+                          // Keep the active chip visible in the scroll row.
+                          e.currentTarget.scrollIntoView({
+                            inline: 'center',
+                            block: 'nearest',
+                            behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+                          });
+                        }
                       }}
-                      aria-label="Live camera framing preview"
-                    />
-                    <span className="coach-foyer__frame-live-target" aria-hidden="true" />
-                    <span className="coach-foyer__frame-live-caption" aria-hidden="true">
-                      {mode === 'curls' ? 'Keep head + hips visible' : 'Keep full body visible'}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <FramingDiagram mode={mode} />
-              )}
-              <div className="coach-foyer__setup-guide-grid">
-                <span>
-                  <b>Distance</b>
-                  Start far enough back that the required landmarks fit comfortably; most desktop
-                  setups need about 1.5–2.5 m.
-                </span>
-                <span>
-                  <b>In view</b>
-                  {mode === 'curls'
-                    ? 'For curls, keep your head, shoulders, hips and both arms visible.'
-                    : mode === 'pushups'
-                      ? 'For push-ups, include your head, shoulders, hips, knees and feet.'
-                      : 'For this move, keep your full body and both feet visible.'}
-                </span>
-                <span>
-                  <b>Light</b>
-                  Face a light source and clear the space behind you. Keep the camera still.
-                </span>
+                    >
+                      {chip.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="coach-foyer__setup-guide-actions">
-              <button
-                type="button"
-                className="coach-foyer__preview-toggle"
-                onClick={previewStatus === 'ready' ? stopCameraPreview : startCameraPreview}
-                disabled={previewStatus === 'starting'}
-                aria-pressed={previewStatus === 'ready'}
-              >
-                <Camera size={14} strokeWidth={2} aria-hidden="true" />
-                {previewStatus === 'starting'
-                  ? 'Opening camera…'
-                  : previewStatus === 'ready'
-                    ? 'Hide camera preview'
-                    : 'Preview my framing'}
-              </button>
-              {previewError && (
-                <span className="coach-foyer__preview-error" role="status" aria-live="polite">
-                  {previewError}
-                </span>
-              )}
-              {previewStatus === 'ready' && previewError && (
-                <button
-                  type="button"
-                  className="coach-foyer__preview-play"
-                  onClick={() => {
-                    const video = previewVideoRef.current;
-                    if (!video) return;
-                    void video
-                      .play()
-                      .then(() => setPreviewError(null))
-                      .catch(() => undefined);
-                  }}
-                >
-                  Play preview
-                </button>
-              )}
-            </div>
-            <p className="coach-foyer__setup-guide-note">
-              {previewStatus === 'ready'
-                ? 'Preview is local and temporary. It stops when you hide it or start the session.'
-                : 'The live camera stays off until you preview or start a rep.'}
-            </p>
-          </div>
-        )}
 
-        {showHowItWorks && (
-          <div id="coach-foyer-loop" className="coach-foyer__how-it-works motion-enter">
-            <CoachSystemMap status={coachStatus} enabled={coachStation.enabled} />
-            {howItWorks.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="coach-foyer__how-it-works-item">
-                  <Icon size={16} aria-hidden="true" />
-                  <div>
-                    <strong>{item.title}</strong>
-                    <span>{item.body}</span>
-                  </div>
+            {incomingChallenge && (
+              <div className="coach-foyer__incoming-challenge" role="status" aria-live="polite">
+                <div className="coach-foyer__incoming-challenge-mark" aria-hidden="true">
+                  <Sparkles size={16} strokeWidth={2} />
                 </div>
-              );
-            })}
-            <div className="coach-foyer__credibility-row coach-foyer__credibility-row--disclosed">
-              <p className="coach-foyer__credibility">
-                Physical coach arm (SO-101) · shows the fix when connected
-              </p>
-              <a href="/collaborate" className="coach-foyer__collaborate-link">
-                Help make the coach <ArrowRight size={11} aria-hidden="true" />
-              </a>
-            </div>
-            <label
-              className="coach-foyer__immersive-toggle"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                margin: '0.75rem 0 0',
-                cursor: 'pointer',
-                fontSize: '0.72rem',
-                color: 'var(--cf-soft, #7a9692)',
-                userSelect: 'none',
+                <div>
+                  <strong>A movement line was sent to you</strong>
+                  <span>Meet the ghost, try the same movement, and find your own correction.</span>
+                </div>
+              </div>
+            )}
+
+            {/* Two defaults, pre-answered — the only decision offered before START */}
+            <fieldset
+              className="coach-foyer__exercise-list lf-rise"
+              style={{ animationDelay: '210ms' }}
+            >
+              <legend className="sr-only">Pick a movement</legend>
+              {visibleExercises.map(renderExerciseButton)}
+            </fieldset>
+
+            <button
+              type="button"
+              ref={moreToggleRef}
+              className="coach-foyer__more lf-rise"
+              style={{ animationDelay: '240ms' }}
+              aria-expanded={showExtras}
+              aria-controls="coach-foyer-more-movements"
+              onClick={() => {
+                extrasTouchedRef.current = true;
+                playStudioCue('soft');
+                triggerHaptic(40);
+                setShowExtras((prev) => !prev);
               }}
             >
-              <input
-                type="checkbox"
-                checked={immersive}
-                onChange={(e) => {
-                  playStudioCue('soft');
-                  triggerHaptic(40);
-                  setImmersive(e.target.checked);
-                }}
-                style={{ accentColor: 'var(--cf-teal, #56d9c3)' }}
-                aria-label="Immersive heritage mode"
+              {showExtras ? (
+                <>
+                  <ChevronUp size={14} /> Fewer movements
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={14} /> More movements
+                </>
+              )}
+            </button>
+
+            {showExtras && (
+              <fieldset
+                id="coach-foyer-more-movements"
+                className="coach-foyer__exercise-list coach-foyer__exercise-list--extras"
+              >
+                <legend>More movements</legend>
+                {extraExercises.map(renderExerciseButton)}
+              </fieldset>
+            )}
+
+            <button
+              type="button"
+              id="startButton"
+              ref={startButtonRef}
+              className="coach-foyer__start coach-foyer__start--hero feel-press lf-rise"
+              style={{ animationDelay: '340ms' }}
+              aria-label={`Try one rep of ${selectedExercise.label} with camera coaching`}
+              onPointerEnter={prefetchWebcamChunk}
+              onTouchStart={prefetchWebcamChunk}
+              onClick={handleStart}
+            >
+              <Camera size={18} strokeWidth={2} aria-hidden="true" />
+              <span>{incomingChallenge ? 'Meet the ghost' : 'Try one rep'}</span>
+              <ArrowRight
+                size={18}
+                strokeWidth={2}
+                aria-hidden="true"
+                className="coach-foyer__start-arrow"
               />
-              Immersive heritage
-            </label>
+            </button>
+
+            {coachStation.enabled && coachStatus === 'connected' && (
+              <p className="coach-foyer__coach-chip lf-rise" role="status">
+                <span className="coach-foyer__coach-chip-dot" aria-hidden="true" />
+                Coach arm connected
+              </p>
+            )}
+
+            <p className="coach-foyer__assist lf-rise" style={{ animationDelay: '400ms' }}>
+              Pose detection runs on your device. No video upload.
+            </p>
+            <p className="coach-foyer__assist lf-rise" style={{ animationDelay: '400ms' }}>
+              Stand 1.5 to 2.5 m back so your head and hips are in frame.
+            </p>
+
+            {/* Plate I peeks under the CTA on narrow layouts; the --aside
+                plate owns the right column on wide ones. */}
+            <div
+              className="coach-foyer__arm coach-foyer__arm--inline lf-rise"
+              style={{ animationDelay: '440ms' }}
+            >
+              <DemoPlate
+                mode={mode}
+                selectedExerciseLabel={selectedExercise.label}
+                callout={painIntent?.plateCallout}
+              />
+            </div>
           </div>
-        )}
 
-        {/* Sandow lineage stamp — always in the main flow. Immersive mode
-            still unlocks denser heritage copy; the grade line itself is not opt-in. */}
-        <p className="sandow-lineage motion-enter" style={{ animationDelay: '420ms' }}>
-          <SandowGradeMark variant="link" />
-        </p>
+          <div
+            className="coach-foyer__arm coach-foyer__arm--aside lf-rise"
+            style={{ animationDelay: '200ms' }}
+          >
+            <DemoPlate
+              mode={mode}
+              selectedExerciseLabel={selectedExercise.label}
+              callout={painIntent?.plateCallout}
+            />
+          </div>
+        </div>
 
-        {/* The robot-native proof case is signposted on the Curls card itself;
-            the credibility line stays secondary to the user's coaching need. */}
+        <LandingSections
+          mode={mode}
+          selectedExerciseLabel={selectedExercise.label}
+          onStart={handleStart}
+          painIntent={painIntent}
+        />
+      </div>
+
+      {/* Sticky mini CTA — mobile only, once every start button is offscreen. */}
+      <div
+        className={`coach-foyer__mini-cta${ctaOutOfView ? ' is-visible' : ''}`}
+        data-visible={ctaOutOfView}
+      >
         <button
           type="button"
-          ref={moreToggleRef}
-          className="coach-foyer__more motion-enter"
-          style={{ animationDelay: '420ms' }}
-          aria-expanded={showExtras}
-          aria-controls="coach-foyer-more-movements"
-          onClick={() => {
-            extrasTouchedRef.current = true;
-            playStudioCue('soft');
-            triggerHaptic(40);
-            setShowExtras((prev) => !prev);
-          }}
+          className="coach-foyer__start"
+          aria-label={`Try one rep of ${selectedExercise.label} with camera coaching`}
+          onClick={handleStart}
         >
-          {showExtras ? (
-            <>
-              <ChevronUp size={14} /> Fewer movements
-            </>
-          ) : (
-            <>
-              <ChevronDown size={14} /> More movements
-            </>
-          )}
+          <Camera size={16} strokeWidth={2} aria-hidden="true" />
+          <span>Try one rep</span>
+          <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
         </button>
-
-        {showExtras && (
-          <fieldset
-            id="coach-foyer-more-movements"
-            className="coach-foyer__exercise-list motion-enter"
-          >
-            <legend>More movements</legend>
-            {extraExercises.map(renderExerciseButton)}
-          </fieldset>
-        )}
       </div>
     </section>
   );

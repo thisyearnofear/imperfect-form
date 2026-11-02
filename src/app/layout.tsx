@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope, Press_Start_2P } from 'next/font/google';
+import { Manrope, Press_Start_2P, Fraunces } from 'next/font/google';
 import './globals.css';
 import '@/styles/studio-shell.css';
 // Component-scoped stylesheets are imported by their (lazy-loaded) consumers
@@ -29,6 +29,18 @@ const pressStart = Press_Start_2P({
   display: 'swap',
   preload: false,
   variable: '--font-press-start',
+});
+
+// Display serif for the day-0 engraved-plate register (hero H1, plate
+// captions, section headings, tagline). Self-hosted via next/font, not
+// preloaded — Manrope remains the UI face and stays on the first paint path.
+const fraunces = Fraunces({
+  weight: ['400', '600'],
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-display',
 });
 
 const STUDIO_BG = '#061013';
@@ -185,7 +197,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${pressStart.variable}`}
+      className={`${manrope.variable} ${pressStart.variable} ${fraunces.variable}`}
       suppressHydrationWarning
     >
       <head>
