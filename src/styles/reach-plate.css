@@ -1,0 +1,199 @@
+/* ReachPlate — "Fig 1 · The Reach". Engraved instrument-plate drawing
+   language: brass rules, teal hairline figure, paper joints. All motion is
+   prop-driven (progress), so the SVG itself carries no animation — reduced
+   motion renders the raised pose and nothing moves. */
+
+.reach-plate {
+  --rp-brass: var(--sandow-brass, #fcb131);
+  --rp-paper: var(--sandow-paper, #f4ecd8);
+  --rp-teal: #7aebd8;
+
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Frame + engraved chrome ─────────────────────────────── */
+.rp-frame {
+  fill: rgba(6, 16, 19, 0.55);
+  stroke: var(--sandow-rule, rgba(252, 177, 49, 0.4));
+  stroke-width: 0.9;
+}
+
+.rp-frame--inner {
+  fill: none;
+  stroke: var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  stroke-width: 0.5;
+}
+
+.rp-corner {
+  fill: none;
+  stroke: var(--rp-brass);
+  stroke-width: 0.8;
+  opacity: 0.75;
+}
+
+.rp-hatch-line {
+  stroke: rgba(244, 236, 216, 0.045);
+  stroke-width: 0.6;
+}
+
+.rp-caption,
+.rp-plate-num {
+  fill: var(--rp-brass);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.rp-plate-num {
+  font-size: 8.5px;
+  letter-spacing: 0.42em;
+  opacity: 0.7;
+}
+
+.rp-caption-rule {
+  stroke: var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  stroke-width: 0.5;
+}
+
+/* ── Protractor ──────────────────────────────────────────── */
+.rp-plumb {
+  stroke: rgba(252, 177, 49, 0.12);
+  stroke-width: 0.5;
+  stroke-dasharray: 3 5;
+}
+
+.rp-arc-ideal {
+  fill: none;
+  stroke: rgba(252, 177, 49, 0.3);
+  stroke-width: 0.7;
+  opacity: 0.55;
+}
+
+.rp-arc-drawn {
+  fill: none;
+  stroke: var(--rp-teal);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+}
+
+.rp-deg-tick {
+  stroke: rgba(252, 177, 49, 0.32);
+  stroke-width: 0.6;
+}
+
+.rp-deg-tick--major {
+  stroke: rgba(252, 177, 49, 0.55);
+  stroke-width: 0.8;
+}
+
+.rp-deg-label {
+  fill: rgba(252, 177, 49, 0.6);
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+/* ── Figure ──────────────────────────────────────────────── */
+.rp-bone {
+  fill: none;
+  stroke: var(--rp-teal);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.rp-bone--dim {
+  opacity: 0.4;
+}
+
+.rp-bone--faint {
+  opacity: 0.25;
+}
+
+.rp-joint--dim {
+  fill: var(--rp-teal);
+  opacity: 0.45;
+}
+
+.rp-ground {
+  stroke: rgba(122, 235, 216, 0.14);
+  stroke-width: 0.6;
+}
+
+/* ── Ghost trail (smear — low-opacity paths, no filters) ─── */
+.rp-ghost {
+  fill: none;
+  stroke: var(--rp-teal);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rp-ghost--mirror {
+  stroke: var(--rp-brass);
+}
+
+/* ── Working arm + pulse ─────────────────────────────────── */
+.rp-arm {
+  fill: none;
+  stroke: var(--rp-paper);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rp-pulse {
+  fill: none;
+  stroke: var(--rp-teal);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.rp-hand {
+  fill: var(--rp-teal);
+}
+
+.rp-pivot {
+  fill: var(--rp-brass);
+}
+
+.rp-control-ring {
+  fill: none;
+  stroke: var(--rp-brass);
+  stroke-width: 1;
+  stroke-dasharray: 2.5 3;
+}
+
+/* ── Engraved footnote + pips ────────────────────────────── */
+.rp-footnote {
+  fill: rgba(244, 236, 216, 0.42);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 8.5px;
+  font-style: italic;
+  letter-spacing: 0.04em;
+}
+
+.rp-pip {
+  fill: transparent;
+  stroke: rgba(252, 177, 49, 0.45);
+  stroke-width: 0.8;
+  transition: fill 300ms ease;
+}
+
+.rp-pip.is-lit {
+  fill: var(--rp-brass);
+  stroke: var(--rp-brass);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rp-pip {
+    transition: none;
+  }
+}

@@ -18,7 +18,8 @@
   /* The day-0 foyer is content, not a fixed-height game viewport. Let it grow
      and scroll instead of clipping its own primary action. */
   #screen:has(.coach-foyer),
-  #screen:has(.prestart-foyer) {
+  #screen:has(.prestart-foyer),
+  #screen:has(.receiving-foyer) {
     max-height: none !important;
     min-height: 0 !important;
     height: auto !important;

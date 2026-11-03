@@ -154,7 +154,11 @@ identity, og assets.
    TBD" question in favour of the pure-local channel for the nudge itself.
    Also shipped: shared niggle links (`?niggle=<joint>:<context>` +
    `&from=<name>`) pre-fill the intake and carry a sender greeting — the
-   send-a-friend doorway for the pain-ICP; per-protocol readings history
+   send-a-friend doorway for the pain-ICP, now with the **receiving
+   experience** (docs/RECEIVING_EXPERIENCE.md): link arrivals get the "Fig 1"
+   living plate instead of the intake wall — envelope, animated reach
+   plate, five scroll beats (question → company → read → ritual →
+   honesty), CTA iris into the camera. Per-protocol readings history
    (reach reads now surface, previously curls-only); a plain-language
    `readingSentence` lead on a valid recap; an "Ease it · under 2 min"
    reach routine (post-read stretches + a subjective 1–5 feel log).

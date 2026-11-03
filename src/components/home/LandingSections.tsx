@@ -43,7 +43,7 @@ const howItWorks = [
   },
 ];
 
-const FAQ_ITEMS: { q: string; a: string }[] = [
+export const FAQ_ITEMS: { q: string; a: string }[] = [
   {
     q: 'Does video leave my device?',
     a: 'No. Pose detection runs on your device in the browser. No video is uploaded, and the optional framing preview is local and temporary.',

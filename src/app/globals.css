@@ -68,8 +68,10 @@ html {
     box-shadow 300ms ease-in-out;
 }
 
-/* Day-0 foyer: sit in the coaching bay, not a black card floating in a void */
-#screen:has(.coach-foyer) {
+/* Day-0 foyer: sit in the coaching bay, not a black card floating in a void.
+   The receiving foyer (?niggle= shared link) is the same scrolling document. */
+#screen:has(.coach-foyer),
+#screen:has(.receiving-foyer) {
   aspect-ratio: auto;
   height: auto;
   min-height: min(520px, 70vh);
@@ -79,7 +81,8 @@ html {
   box-shadow: none;
 }
 
-#game-container:has(.coach-foyer) {
+#game-container:has(.coach-foyer),
+#game-container:has(.receiving-foyer) {
   background: transparent;
   min-height: calc(100vh - 72px);
 }

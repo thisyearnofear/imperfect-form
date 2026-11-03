@@ -87,6 +87,10 @@ import { saveLocalMovementAssessment } from '@/services/integrations/MovementAss
 
 import { Score } from '@/types';
 
+// The shared-link receiving experience ("Fig 1") only renders for
+// `?niggle=` arrivals — code-split so organic visits never pay for it.
+const ReceivingFoyer = dynamic(() => import('@/components/receive/ReceivingFoyer'));
+
 // Use LazyWebcam for better performance - only loads TensorFlow when needed
 const LazyWebcam = dynamic(() => import('./LazyWebcam'), {
   ssr: false,
@@ -178,6 +182,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   );
   const [isRace, setIsRace] = useState(false);
   const [hasIncomingChallenge, setHasIncomingChallenge] = useState(false);
+  // `?niggle=` arrivals (no challenge/race) get the receiving experience.
+  const [receivedLink, setReceivedLink] = useState(false);
   const [movementChallenge, setMovementChallenge] = useState<MovementChallengePayload | null>(null);
   const challengeUrlParsedRef = useRef(false);
   const assessmentStartedRef = useRef(false);
@@ -992,6 +998,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     if (!decodedAssessment && !raceParam) {
       const linked = parseNiggleParam(searchParams.get('niggle'));
       if (linked) {
+        setReceivedLink(true);
         storeNiggle(linked);
         const joint = getNiggleJoint(linked.joint);
         if (joint) setMode(joint.mode);
@@ -1244,6 +1251,30 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                     isConnecting={wallet.isConnecting}
                     level={xpProgress.currentLevel}
                     onConnect={() => void actions.connect()}
+                  />
+                </div>
+              ) : receivedLink && !hasIncomingChallenge ? (
+                // `?niggle=` arrivals get the receiving experience — the same
+                // start closure as the CoachFoyer (it already resolves
+                // reading:true), the iris rides the shared start fade.
+                <div
+                  className={isStarting ? 'coach-foyer--starting receiving-foyer--starting' : ''}
+                >
+                  <ReceivingFoyer
+                    mode={mode}
+                    onModeChange={setMode}
+                    onStart={() =>
+                      handleStart({
+                        isRace: hasIncomingChallenge,
+                        trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
+                        challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
+                        oneRepTrial:
+                          !hasIncomingChallenge && !(niggleJoint && assessmentProtocolFor(mode)),
+                        reading: Boolean(
+                          !hasIncomingChallenge && niggleJoint && assessmentProtocolFor(mode)
+                        ),
+                      })
+                    }
                   />
                 </div>
               ) : (

@@ -1,0 +1,631 @@
+/* Receiving foyer — "Fig 1". Studio register throughout: calm, brass
+   hairlines, engraved instrument voice. No Press Start, no arcade.
+   Mobile 390x844 first; one shared reduced-motion guard at the bottom. */
+
+.receiving-foyer {
+  --rf-ink: #effcf9;
+  --rf-muted: #9bb5b1;
+  --rf-soft: #7a9692;
+  --rf-teal-bright: #7aebd8;
+  --rf-brass: var(--sandow-brass, #fcb131);
+  --rf-paper: var(--sandow-paper, #f4ecd8);
+  --rf-curve: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: relative;
+  width: 100%;
+  color: var(--rf-ink);
+  background: transparent;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Same width budget the day-0 foyer negotiated from the cabinet #screen. */
+#screen:has(.receiving-foyer) {
+  max-width: 1180px;
+}
+
+@media (max-width: 768px) {
+  #screen:has(.receiving-foyer) {
+    max-width: 100%;
+  }
+}
+
+/* Keep the session controls below the page topbar while the foyer is open. */
+#game-container:has(.receiving-foyer) .game-container__top-controls {
+  top: 4.5rem;
+  z-index: 110;
+}
+
+/* The foyer zooms gently toward the camera frame on START — the iris is the
+   plate, the whole page becoming the HUD. Overrides the shared
+   coach-foyer--starting fade on the wrapper (which also carries it). */
+#game-container .receiving-foyer--starting {
+  transform: scale(1.045);
+  transition-duration: 460ms;
+}
+
+/* ═══ Act 0 — the envelope ═══════════════════════════════════════════ */
+
+.rf-envelope {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 44%, rgba(11, 42, 44, 0.75), transparent 75%),
+    #061013;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.rf-envelope.is-dissolving {
+  /* The canvas is the surface now — its cells carry the dark. */
+  background: transparent;
+}
+
+.rf-envelope.is-dissolving .rf-envelope__inner {
+  display: none;
+}
+
+.rf-envelope__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* mobile-wallet-browser.css paints every canvas with a 2px !important
+     border for the game stage — the dissolve surfaces are invisible chrome. */
+  border-width: 0 !important;
+  pointer-events: none;
+}
+
+.rf-envelope__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  gap: 20px;
+}
+
+/* The ReadGauge idiom, enlarged: a hairline brass ring drawing itself. */
+.rf-envelope__ring {
+  width: min(62vw, 236px);
+  height: auto;
+  overflow: visible;
+}
+
+.rf-envelope__ring-track {
+  fill: none;
+  stroke: var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  stroke-width: 1;
+}
+
+.rf-envelope__ring-draw {
+  fill: none;
+  stroke: var(--rf-brass);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transform: rotate(-90deg);
+  transform-origin: 120px 120px;
+  animation: rf-ring-draw 780ms var(--rf-curve) 140ms both;
+}
+
+@keyframes rf-ring-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.rf-envelope__ring-tick {
+  stroke: rgba(252, 177, 49, 0.5);
+  stroke-width: 1;
+  opacity: 0;
+  animation: rf-fade-in 400ms var(--rf-curve) 900ms both;
+}
+
+@keyframes rf-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+.rf-envelope__greeting {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 18%;
+  margin: 0;
+  color: var(--rf-paper);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.15rem;
+  font-style: italic;
+  letter-spacing: 0.01em;
+}
+
+.rf-envelope__word {
+  display: inline-block;
+  margin-right: 0.28em;
+  opacity: 0;
+  filter: blur(7px);
+  animation: rf-word-in 520ms var(--rf-curve) both;
+}
+
+.rf-envelope__word:last-child {
+  margin-right: 0;
+}
+
+@keyframes rf-word-in {
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* ═══ Act 1 — Fig 1, the living plate ════════════════════════════════ */
+
+.rf-inner {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 28px 20px 0;
+}
+
+.rf-hero {
+  min-height: min(92svh, 780px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 18px;
+}
+
+.rf-plate {
+  position: relative;
+  margin: 0 auto;
+  width: min(76vw, 300px);
+  filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 44px rgba(252, 177, 49, 0.06));
+}
+
+.rf-hero__plate {
+  cursor: grab;
+  touch-action: pan-y; /* vertical scroll stays free; the hold-scrub is angular */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rf-hero__plate:active {
+  cursor: grabbing;
+}
+
+.rf-hero__plate:focus-visible {
+  outline: 2px solid var(--rf-teal-bright);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.rf-plate__hint {
+  display: block;
+  margin-top: 8px;
+  color: var(--rf-soft);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  opacity: 0.75;
+}
+
+/* The iris: the plate's frame scales + fades to become the camera HUD. */
+.rf-plate.is-iris {
+  animation: rf-iris 500ms var(--rf-curve) both;
+}
+
+@keyframes rf-iris {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}
+
+.rf-hero__copy {
+  min-width: 0;
+  max-width: 36rem;
+}
+
+.rf-sent-by {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: rgba(153, 246, 228, 0.6);
+}
+
+.rf-title {
+  margin: 0;
+  color: var(--rf-paper);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.rf-title-brass {
+  color: var(--rf-brass);
+  font-style: italic;
+  text-shadow: 0 0 22px rgba(252, 177, 49, 0.38);
+}
+
+@media (min-width: 768px) {
+  .rf-title {
+    font-size: 2.75rem;
+  }
+}
+
+.rf-line {
+  margin: 14px 0 0;
+  color: var(--rf-muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* The one quiet text door under the CTA. */
+.rf-change {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 4px 0;
+  color: rgba(153, 246, 228, 0.6);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(153, 246, 228, 0.25);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    color 200ms var(--rf-curve),
+    border-color 200ms var(--rf-curve);
+}
+
+.rf-change:hover {
+  color: rgba(153, 246, 228, 0.9);
+  border-bottom-color: rgba(153, 246, 228, 0.5);
+}
+
+.rf-change:focus-visible {
+  outline: 2px solid var(--rf-teal-bright);
+  outline-offset: 3px;
+}
+
+/* The intake unfold — grid-rows trick so height animates without JS. */
+.rf-intake {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 480ms var(--rf-curve);
+}
+
+.rf-intake.is-open {
+  grid-template-rows: 1fr;
+}
+
+.rf-intake__content {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 380ms var(--rf-curve) 60ms;
+}
+
+.rf-intake.is-open .rf-intake__content {
+  opacity: 1;
+}
+
+/* ═══ Seams — canvas pixel dissolve over a brass hairline ═════════════ */
+
+.rf-seam {
+  position: relative;
+  height: 72px;
+  margin: 8px 0;
+}
+
+.rf-seam__rule {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18)) 18%,
+    var(--sandow-rule, rgba(252, 177, 49, 0.4)) 50%,
+    var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18)) 82%,
+    transparent
+  );
+}
+
+/* A brass seed dot the hairline grows from once the seam has opened. */
+.rf-seam__rule::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: var(--rf-brass);
+  opacity: 0;
+  transition: opacity 600ms var(--rf-curve);
+}
+
+.rf-seam.is-open .rf-seam__rule::after {
+  opacity: 0.8;
+}
+
+.rf-seam__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-width: 0 !important;
+  pointer-events: none;
+}
+
+/* ═══ Act 2 — the five beats ═════════════════════════════════════════ */
+
+.rf-beat {
+  padding: 48px 4px;
+  text-align: center;
+}
+
+.rf-beat__eyebrow {
+  margin: 0 0 14px;
+  color: var(--rf-brass);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.rf-beat__title {
+  margin: 0 auto;
+  max-width: 22ch;
+  color: var(--rf-paper);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+
+@media (min-width: 768px) {
+  .rf-beat__title {
+    font-size: 2rem;
+  }
+}
+
+.rf-beat__body {
+  margin: 16px auto 0;
+  max-width: 36rem;
+  color: var(--rf-muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.rf-beat__figure {
+  margin: 22px auto 0;
+}
+
+.rf-beat__figure--plate {
+  width: min(64vw, 240px);
+}
+
+.rf-beat__footnote {
+  margin: 18px auto 0;
+  max-width: 30rem;
+  padding-top: 12px;
+  color: var(--rf-soft);
+  border-top: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.8125rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Beat 2 — the company: five figure marks, two lit brass. */
+.rf-marks {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 20px 0 4px;
+}
+
+.rf-mark {
+  width: 30px;
+  height: auto;
+  fill: none;
+  stroke: rgba(122, 235, 216, 0.4);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rf-mark.is-lit {
+  stroke: var(--rf-brass);
+  filter: drop-shadow(0 0 6px rgba(252, 177, 49, 0.35));
+}
+
+/* Beat 3 — the three watched things light as the rep scrubs through. */
+.rf-read-labels {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 18px 0 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.rf-read-labels span {
+  color: var(--rf-soft);
+  transition: color 400ms var(--rf-curve);
+}
+
+.rf-read-labels span.is-lit {
+  color: var(--rf-brass);
+}
+
+.rf-read-labels__sep {
+  opacity: 0.5;
+}
+
+/* Beat 4 — the three pairings as hairline rows. */
+.rf-ritual {
+  margin: 20px auto 0;
+  max-width: 34rem;
+  text-align: left;
+}
+
+.rf-ritual__row {
+  margin: 0;
+  padding: 13px 2px;
+  color: var(--rf-muted);
+  border-top: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.rf-ritual__row:last-child {
+  border-bottom: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+}
+
+/* Beat 5 — the trust ledger, one hairline list. */
+.rf-ledger {
+  margin: 20px auto 0;
+  padding: 0;
+  max-width: 20rem;
+  list-style: none;
+  text-align: left;
+}
+
+.rf-ledger li {
+  position: relative;
+  padding: 11px 2px 11px 18px;
+  color: var(--rf-muted);
+  border-top: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+}
+
+.rf-ledger li:last-child {
+  border-bottom: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+}
+
+.rf-ledger li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 1.15em;
+  width: 6px;
+  height: 1px;
+  background: var(--rf-brass);
+  opacity: 0.7;
+}
+
+/* ═══ Outro ══════════════════════════════════════════════════════════ */
+
+.rf-outro {
+  padding: 48px 4px 40px;
+}
+
+.rf-outro__title {
+  text-align: center;
+}
+
+.rf-outro .ls-faq__list {
+  margin-top: 20px;
+}
+
+.rf-final {
+  margin: 44px auto 0;
+  max-width: 26rem;
+  text-align: center;
+}
+
+.rf-final__plate {
+  width: min(56vw, 220px);
+  margin-bottom: 20px;
+}
+
+.rf-final__note {
+  text-align: center;
+}
+
+/* Wide layout — plate left, copy right, the plate owns the column. */
+@media (min-width: 900px) {
+  .rf-hero {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 48px;
+  }
+
+  .rf-hero__plate {
+    width: min(100%, 380px);
+  }
+
+  .rf-beat__figure--plate {
+    width: min(100%, 280px);
+  }
+}
+
+@media (max-width: 520px) {
+  .rf-inner {
+    padding: 20px 16px 0;
+  }
+}
+
+/* ═══ Reduced motion — every seam a cut, the figure rests raised ══════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-envelope__ring-draw,
+  .rf-envelope__ring-tick,
+  .rf-envelope__word {
+    animation: none;
+  }
+
+  .rf-envelope__ring-draw {
+    stroke-dashoffset: 0;
+  }
+
+  .rf-envelope__ring-tick,
+  .rf-envelope__word {
+    opacity: 1;
+    filter: none;
+  }
+
+  .rf-intake,
+  .rf-intake__content,
+  .rf-seam__rule::after,
+  .rf-read-labels span {
+    transition: none;
+  }
+
+  .rf-plate.is-iris {
+    animation: none;
+  }
+}

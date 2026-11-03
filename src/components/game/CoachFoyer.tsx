@@ -54,14 +54,14 @@ const exercises: ExerciseOption[] = [
   { mode: 'jumps', label: 'Jumps', detail: 'Landing · knees', category: 'extra' },
 ];
 
-function prefersReducedMotion(): boolean {
+export function prefersReducedMotion(): boolean {
   return (
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
 }
 
 /** Warm the camera + pose chunk while the user reads the foyer so START is instant. */
-function prefetchWebcamChunk() {
+export function prefetchWebcamChunk() {
   void import('./Webcam').catch(() => {
     /* prefetch is best-effort; LazyWebcam loads on demand otherwise */
   });

@@ -1,0 +1,130 @@
+# The Receiving Experience — "Fig 1"
+
+Spec for the shared-link landing (`?niggle=<joint>:<context>&from=<name>`).
+Written 2026-11-03. Design sources: ai-iso-skill (plate figures that DO
+something), smear-blur-showreel (motion carries meaning text can't),
+motionsites-web-builder (one artifact per viewport, spec→screenshot→fix),
+codrops/atelier-north (scroll-driven pixel reveals, minimal gallery pacing),
+codrops/SeamTransitions (seam vocabulary between hero and content).
+
+**Who:** a non-technical person arriving from a friend's link — sore
+trap/neck, possibly anxious, definitely not reading a wall of copy.
+**What she must feel:** this was made for me; I already understand what it
+does; the button is the only thing left.
+
+## Invariants
+
+- Only `?niggle=` arrivals get this experience. `parseNiggleParam` returning
+  null → normal CoachFoyer. Incoming challenge/race → normal flow.
+- The CTA must never wait on animation: it starts `reading: true` exactly as
+  CoachFoyer does; the iris plays _during_ the existing start fade.
+- Reduced motion = every seam a cut, figure static at the raised pose,
+  pips fill instantly. One `prefers-reduced-motion` check, shared.
+- Mobile 390x844 first. No Lenis for v1. GSAP + ScrollTrigger lazy-loaded
+  only on this path (dynamic import inside an effect — never in the main
+  bundle for organic visitors).
+- No video/audio assets. The figure is hand-drawn inline SVG (zero deps).
+- All copy stays in the instrument voice: honest, never clinical, never
+  hype. "A meter, not a diagnosis" discipline from brandPositioning.
+
+## Structure
+
+### Act 0 — envelope (~1.2s, skippable on tap)
+
+Dark studio. A hairline brass ring (the ReadGauge idiom, enlarged) draws
+itself via stroke-dashoffset. Inside: "{name} sent you this" materializes
+word-by-word blur→sharp. The ring seams apart — a canvas-2D pixel dissolve
+(or clip-path wipe fallback) — into Act 1. On repeat view same session:
+skip straight to Act 1 (no replay).
+
+### Act 1 — Fig 1, the living plate (the entire first viewport)
+
+A numbered plate: `· FIG 1 · THE REACH ·` engraved top, `PLATE I` bottom.
+Inside, a hairline figure (head/shoulders/spine/pelvis, one arm) in the
+studio-teal hairline style. The arm raises on a ~4s loop: a light pulse
+travels up the arm (stroke-dashoffset chase), 2–3 ghost poses trail behind
+(smear — low-opacity duplicate paths, not filters), and 5 pips along the
+plate's base edge fill once per raise. Tap the plate → one slow rep plays
+through; holding scrubs it (pointer-position → arm angle).
+
+Type: greeting line, then `Your neck & shoulders, measured.` (joint-aware:
+resolve the niggle joint's short phrase — neck & shoulders / lower back /
+knee / arm), then one line `Five slow raises. The camera watches; nothing
+leaves your phone.`, then the button `Take a 5-rep reading`, then one
+quiet link `not your niggle? change it` which unfolds the standard intake
+chips (reuse the CoachFoyer intake block markup/styles — do not rebuild).
+
+### Act 2 — scroll story, five beats, seam between each
+
+Seam = canvas-2D pixel dissolve at 0.6 progress of the viewport crossing,
+or a brass hairline wipe on reduced budget. Each beat: one figure idea +
+max two lines of copy + a hairline.
+
+- Beat 1 THE QUESTION — "Tension can't be photographed." / "But how the
+  arm travels can — range, control, left-right. A meter, not a mirror."
+  Figure: the plate arm frozen mid-raise, ghost trail emphasized.
+- Beat 2 THE COMPANY — "You're in enormous, invisible company." /
+  "Somewhere between one in five and two in five adults report
+  neck-and-shoulder discomfort in any three-month stretch — desk work
+  makes it nearly universal. What isn't common is measuring it. Almost
+  everyone guesses." Footnote hairline: "US CDC 2019, GP surveys — the
+  table this instrument was designed from." Visual: a row of five small
+  figure marks, two lit brass. (Honest: reuse the epidemiology framing in
+  DESIGN_EVOLUTION, no new citations.)
+- Beat 3 THE READ — "The meter watches three things." Scroll-scrubbed:
+  scroll progress IS the rep — range arc draws, a control dot steadies,
+  L/R mirror fills. Label: `Range · Control · Balance`. No gate numbers.
+- Beat 4 THE RITUAL — "A healthy way to hold a niggle." /
+  "Once a week, same setup, five slow raises. Feels better and the meter
+  agrees — confidence. Numbers moved but it feels the same — healing on a
+  schedule you can't feel yet. Hurts more and nothing moved — see a
+  professional; that's the body's job, not the meter's." Three hairline
+  rows for the three pairings (DESIGN_EVOLUTION §F, in plain words).
+- Beat 5 THE HONESTY — "A meter that can't read says so." Trust ledger,
+  one hairline list: `video never uploads` · `reads stay in this browser`
+  · `wellness guidance, not medicine`.
+
+### Outro
+
+Compact "Common questions" (reuse the existing FAQ data/accordion if it
+extracts cleanly from LandingSections, else port the same Q&As into a
+minimal accordion here — keep the same answers verbatim where possible).
+Final CTA mirrors the hero: plate figure frozen mid-pulse + button.
+
+### Act 3 — the iris into the camera (signature)
+
+On CTA press: the plate's frame scales + fades to become the camera HUD
+frame (~500ms, GSAP or WAAPI), pips carry into the live HUD. Start camera
+prefetch on ReceivingFoyer mount (reuse `prefetchWebcamChunk`). Do NOT
+request permission early — the OS prompt still fires on press.
+
+### Stretch (do last, cut first)
+
+- SessionRecap re-cast as "Fig 2 · Your reading" header for protocol modes.
+- Smear-fill on the HUD `ReadingPips` for reading sessions.
+
+## Architecture
+
+- New `src/components/receive/ReceivingFoyer.tsx` (+ `.css`) rendered by
+  Game in place of CoachFoyer when `receivedLink && !hasIncomingChallenge`
+  && !raceParam. `receivedLink` = state set in the existing URL-param
+  effect where `parseNiggleParam` succeeds. Props it needs: mode, onStart
+  (same closure as CoachFoyer's), plus whatever the intake-unfold reuses.
+- SVG figure as its own component `src/components/receive/ReachPlate.tsx`
+  (arm pose driven by a `progress` 0–1 prop so scroll-scrub and tap both
+  drive the same drawing).
+- Seams/scrub/iris in `src/components/receive/useReceivingMotion.ts` —
+  all GSAP imports dynamic; no-op under reduced motion.
+- Copy constants local to the component (don't grow brandPositioning for
+  one-surface copy unless a string is genuinely shared).
+- LandingSections NOT rendered on the receiving path.
+
+## Verification
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm vitest run` touched tests.
+- Update `e2e/niggle-link.spec.ts`: receiving hero shows greeting + CTA +
+  plate; "not your niggle" reveals chips; `?niggle=bogus` → normal foyer.
+- agent-browser `--session imperfect-form-receive` 390x844: screenshot
+  envelope mid-frame, settled hero, each beat, intake unfolded, and a
+  reduced-motion variant. /tmp/imf-shots/. Close session, pgrep check.
+- No commit. Leave dev server running.
