@@ -456,8 +456,17 @@ export function SessionRecap({
       <div
         className={`session-recap__one-fix motion-enter${validReading ? ' session-recap__one-fix--read' : ''}`}
       >
-        <p className="session-recap__one-fix-eyebrow">
-          {inconclusive ? 'Honest answer' : BRAND.loopLabel}
+        {/* A valid protocol read closes the instrument journey: Fig 1 was the
+            reach drawn in the foyer, Fig 2 is this — your reading. The
+            inconclusive read stays an honest answer, not a figure. */}
+        <p
+          className={`session-recap__one-fix-eyebrow${validReading ? ' session-recap__one-fix-eyebrow--fig' : ''}`}
+        >
+          {inconclusive
+            ? 'Honest answer'
+            : validReading
+              ? '· Fig 2 · Your reading ·'
+              : BRAND.loopLabel}
         </p>
         <h2 id="session-recap-title">
           {inconclusive

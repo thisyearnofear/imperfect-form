@@ -1068,6 +1068,30 @@
   color: rgba(252, 177, 49, 0.5);
 }
 
+/* Plate veil — the Fig 1 frame stays mounted through boot (studio source
+   only; the arcade register keeps the bare ring). The drawing that opened
+   the experience becomes the viewfinder the meter wakes inside. */
+.rf-boot__plate {
+  position: relative;
+  width: min(72vw, 264px);
+}
+
+.rf-boot__plate-fig {
+  width: 100%;
+  height: auto;
+}
+
+/* The sweeping ring centered inside the plate frame — over the figure, not
+   beside it. */
+.rf-boot__ring--plate {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rf-boot__ring {
     animation: none;

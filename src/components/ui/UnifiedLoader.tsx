@@ -339,6 +339,16 @@ export default function UnifiedLoader({
         `}
         data-phase={phase}
       >
+        {/* Plate chrome — the same instrument frame the fullscreen card
+            wears: corner ticks + hairline rules mount the surface on the
+            camera stage. */}
+        <span className="studio-loader__corner-ticks" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+
         {/* Animated Background Ring for 'Ready' state */}
         {phase === 'ready' && (
           <div className="studio-loader__ready-ring absolute inset-0 flex items-center justify-center overflow-hidden">
@@ -364,6 +374,9 @@ export default function UnifiedLoader({
             ${phase === 'ready' ? 'scale-110' : 'scale-100'}
           `}
         >
+          <p className="studio-loader__eyebrow" aria-hidden="true">
+            · The meter ·
+          </p>
           <h3
             className={`
             font-bold leading-tight tracking-tight
@@ -484,10 +497,18 @@ export default function UnifiedLoader({
         {config.title}. {phase === 'ai' && progress > 0 ? `${progress}% complete.` : ''}
       </span>
 
-      {/* Premium calibration card */}
+      {/* Premium calibration card — dressed as an instrument plate: engraved
+          eyebrow, brass hairline rules, corner ticks. */}
       <div
         className={`studio-loader__card relative z-10 text-center space-y-8 max-w-md w-full mx-auto px-6 sm:px-8 ${config.bgGradient} ${config.borderColor}`}
       >
+        <span className="studio-loader__corner-ticks" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+
         {/* Icon with entrance animation */}
         <div className="studio-loader__icon studio-loader__icon--enter flex justify-center transition-all duration-700 ease-out">
           <div className={config.color}>{config.icon}</div>
@@ -495,6 +516,7 @@ export default function UnifiedLoader({
 
         {/* Header */}
         <div className="space-y-3">
+          <p className="studio-loader__eyebrow">· The meter ·</p>
           <h2 className={`${config.color} text-2xl sm:text-3xl font-bold leading-tight`}>
             {displayTitle}
           </h2>

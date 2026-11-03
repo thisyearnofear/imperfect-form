@@ -161,6 +161,14 @@ CoachFoyer; `?intent=train` still routes to the arcade foyer.
 - No movement picker, no "Sound familiar" essay, no standalone trust
   section — all folded into beats or the outro.
 
+Shipped 2026-11-03 — the one-instrument-object journey completed: the
+Fig 1 plate stays mounted through the boot veil (`.rf-boot` re-renders
+`ReachPlate` frozen mid-raise with the woken ring sweeping inside the
+frame), `UnifiedLoader` wears the plate idiom (`· THE METER ·` engraved
+eyebrow, brass hairline rules, corner ticks), and a valid protocol read
+stamps the recap `· FIG 2 · YOUR READING ·` (inconclusive stays "Honest
+answer").
+
 ## Verification
 
 - `pnpm typecheck`, `pnpm lint`, `pnpm vitest run` touched tests.

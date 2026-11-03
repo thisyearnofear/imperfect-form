@@ -25,6 +25,25 @@
   text-transform: uppercase;
 }
 
+/* Valid protocol read — engraved figure label in the plate idiom (wider
+   tracking, Manrope, a brass hairline rule running off to the right). */
+.session-recap__one-fix-eyebrow--fig {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+}
+
+.session-recap__one-fix-eyebrow--fig::after {
+  content: '';
+  height: 1px;
+  flex: 0 1 5rem;
+  background: var(--sandow-rule, rgba(252, 177, 49, 0.4));
+  opacity: 0.6;
+}
+
 .session-recap__one-fix h2 {
   margin: 0;
   color: #f4ecd8;

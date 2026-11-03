@@ -228,10 +228,111 @@
   color: var(--loader-ink);
   background: rgba(7, 27, 30, 0.82);
   border: 1px solid rgba(117, 223, 205, 0.2);
-  border-radius: 1rem;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  /* Plate idiom: squarer corners + a whisper of brass inside the teal rule. */
+  border-radius: 6px;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 217, 122, 0.06);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+}
+
+/* Brass hairline rules above and below the surface — the plate mounted in
+   the field, not a floating card. */
+.studio-loader__card::before,
+.studio-loader__card::after {
+  content: '';
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  height: 1px;
+  background: rgba(255, 217, 122, 0.28);
+  pointer-events: none;
+}
+
+.studio-loader__card::before {
+  top: -0.85rem;
+}
+
+.studio-loader__card::after {
+  bottom: -0.85rem;
+}
+
+/* Corner tick marks — the same L-engraving the Fig 1 frame carries. */
+.studio-loader__corner-ticks {
+  position: absolute;
+  inset: 0.55rem;
+  pointer-events: none;
+}
+
+.studio-loader__corner-ticks i {
+  position: absolute;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 0 solid rgba(255, 217, 122, 0.45);
+}
+
+.studio-loader__corner-ticks i:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.studio-loader__corner-ticks i:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.studio-loader__corner-ticks i:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.studio-loader__corner-ticks i:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+/* Engraved eyebrow — the instrument's nameplate over the phase title. */
+.studio-loader__eyebrow {
+  margin: 0;
+  color: rgba(255, 217, 122, 0.72);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* Overlay surface (the live loader, mounted on the camera stage): the same
+   hairlines and a slightly wider tick inset frame the stage itself. */
+.studio-loader--overlay::before,
+.studio-loader--overlay::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: rgba(255, 217, 122, 0.3);
+  pointer-events: none;
+}
+
+.studio-loader--overlay::before {
+  top: 0.9rem;
+}
+
+.studio-loader--overlay::after {
+  bottom: 0.9rem;
+}
+
+.studio-loader--overlay .studio-loader__corner-ticks {
+  inset: 0.95rem;
 }
 
 .studio-loader__subtitle {

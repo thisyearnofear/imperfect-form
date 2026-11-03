@@ -39,6 +39,11 @@ import { consumePendingSelfRace } from '@/services/ghostRaceBus';
 import { normalizeExerciseMode } from '@/utils/biomechanics';
 // session-register.css defers with this lazy GameWrapper chunk (was global).
 import '@/styles/session-register.css';
+// The boot veil uses rf-* classes (and now the Fig 1 plate frame) for every
+// studio-source start — including coach-foyer starts where the dynamic
+// ReceivingFoyer chunk never loads. Import the stylesheet here so the veil
+// is styled regardless of which studio foyer mounted.
+import '@/styles/receiving-foyer.css';
 
 import { useFullscreen } from '../../hooks/useFullscreen';
 import { useOrientation } from '../../hooks/useOrientation';
@@ -92,6 +97,10 @@ import { Score } from '@/types';
 // The shared-link receiving experience ("Fig 1") only renders for
 // `?niggle=` arrivals — code-split so organic visits never pay for it.
 const ReceivingFoyer = dynamic(() => import('@/components/receive/ReceivingFoyer'));
+// The Fig 1 plate also frames the studio boot veil — the drawing becomes the
+// viewfinder. Tiny SVG; it is already on the page via ReceivingFoyer on the
+// dominant path, so a static import keeps the veil deterministic.
+import ReachPlate from '@/components/receive/ReachPlate';
 
 // Use LazyWebcam for better performance - only loads TensorFlow when needed
 const LazyWebcam = dynamic(() => import('./LazyWebcam'), {
@@ -1381,13 +1390,35 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               the fading foyer never leaves a half-empty page (stray backdrop
               imagery was all that showed while the OS prompt was up). */}
           {isStarting && !started && (
-            <div className="rf-boot" role="status" aria-live="polite">
-              {/* The same brass ring the envelope drew on arrival — the
-                  instrument waking up, not a generic spinner. */}
-              <svg className="rf-boot__ring" viewBox="0 0 240 240" aria-hidden="true">
-                <circle className="rf-envelope__ring-track" cx="120" cy="120" r="104" />
-                <circle className="rf-envelope__ring-draw" cx="120" cy="120" r="104" />
-              </svg>
+            <div
+              className={`rf-boot${sessionRegister !== 'arcade' ? ' rf-boot--plate' : ''}`}
+              role="status"
+              aria-live="polite"
+            >
+              {sessionRegister !== 'arcade' ? (
+                /* Studio source (receiving OR coach foyer): the plate stays
+                   mounted through boot — Fig 1 frozen mid-raise becomes the
+                   frame the woken ring sweeps inside. ReachPlate motion is
+                   prop-driven, so a fixed progress idles it statically. */
+                <div className="rf-boot__plate" aria-hidden="true">
+                  <ReachPlate progress={0.75} className="rf-boot__plate-fig" />
+                  <svg
+                    className="rf-boot__ring rf-boot__ring--plate"
+                    viewBox="0 0 240 240"
+                    aria-hidden="true"
+                  >
+                    <circle className="rf-envelope__ring-track" cx="120" cy="120" r="104" />
+                    <circle className="rf-envelope__ring-draw" cx="120" cy="120" r="104" />
+                  </svg>
+                </div>
+              ) : (
+                /* The same brass ring the envelope drew on arrival — the
+                   instrument waking up, not a generic spinner. */
+                <svg className="rf-boot__ring" viewBox="0 0 240 240" aria-hidden="true">
+                  <circle className="rf-envelope__ring-track" cx="120" cy="120" r="104" />
+                  <circle className="rf-envelope__ring-draw" cx="120" cy="120" r="104" />
+                </svg>
+              )}
               <p className="rf-boot__eyebrow">· Waking the meter ·</p>
               <p className="rf-boot__line">
                 Allow the camera when asked — nothing leaves this device.
