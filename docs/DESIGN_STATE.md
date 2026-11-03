@@ -197,6 +197,49 @@ Capped at 620px deliberately: past that the measure gets long enough to hurt
 reading and the scrim stops being able to carry contrast where the copy overlaps
 the photo.
 
+### The live session screen, measured on a phone
+
+The landing page was fixed by scoping the `45vh` cap to live sessions. Measuring
+the live session itself showed that scoping **stopped one surface short**: the
+cap is exempted for the foyer and for the desktop bay, but the _mobile_ session
+renders neither — its stage is `#canvasContainerMobile` — so on a phone the cap
+applied exactly where it does the most damage. `68svh` was being cut to `45vh`.
+
+- **The stage was clipped, not merely short.** On a 393x852 phone the camera ran
+  y=87→658 behind a `#screen` ending at 468, so ~190px of it — the curl
+  instrument and the coaching sentence, the product's own words — were gone, and
+  "End session" was laid at y=496 over what remained. `#screen` now exempts
+  `:has(#canvasContainerMobile)`: stage 571px, controls at y=688, screen 575px.
+- **The bottom band fought the boot loader.** Only once the stage had its real
+  height did this become visible: the loader's centred step rail met the band's
+  pain exit on the same line, printing "It hurts — stop" across "Your line".
+  The band now waits for the pose model on the same `!isBooting` flag the HUD
+  already used.
+- **Two coach captions were live at once.** `.studio-atmosphere__caption-default`
+  had no `display: none`, so it never stood down when a state caption took over.
+  The single paragraph rendered "Camera sees you · coach shows the fix" and
+  "Find your frame" inline — the mashed "…SHOWS THE FIXFIND YOUR FRAME". It now
+  hides for every non-`selected` state.
+- **The joint chips overflowed their column.** The row was 660px inside a 538px
+  column, so "Not sure — just check me" ran across the plate illustration and
+  was cut off. `min-width: 0` on the plate's inner wrapper contains it; above
+  560px the chips wrap so all six stay visible, and phones keep the swipe row.
+- **The first-signal labels were decorative, not readable.** READ / NOTICE /
+  ADJUST sat at 8px and ~48% opacity inside a 2.2s overlay. Raised to 10px / 78%,
+  with the eyebrow at ~10.5px.
+- **"Pick what fits above" told the athlete what to do but not why.** The
+  unselected hint now reads "Tap the closest match above to see your coaching
+  plan."
+
+Verified by measurement at 1280x800, 393x852 and 375x667.
+
+**Not verified:** the fully-booted mobile HUD on screen. Headless Chromium cannot
+initialise MoveNet here — `Cannot set flag WEBGL_FORCE_F16_PIPELINES as it has not
+been registered` — so the session stayed in its boot state for the whole pass.
+The band's gating uses the same flag as the HUD, and the band's own stacking was
+measured before gating (pain exit 457–505, instrument 512–572, coaching line
+579–649, no overlap), but a real phone should confirm the booted end state.
+
 ### Craft
 
 - `#fcb131` and `#56d9c3` were declared nine times across six stylesheets under
@@ -284,7 +327,7 @@ Worth re-checking on the real host — if Vercel 404s properly, the comment in
 ## Verification
 
 ```bash
-pnpm test                  # 326 vitest
+pnpm test                  # 356 vitest
 pnpm lint                  # 0 errors
 npx tsc --noEmit           # clean
 pnpm build                 # green

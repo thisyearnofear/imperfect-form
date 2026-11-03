@@ -68,8 +68,10 @@ See [PERFORMANCE_BASELINE.md](./PERFORMANCE_BASELINE.md).
 **Shipped (mobile in-session layout):** one bottom stack — instrument docks
 above, the live coaching sentence owns the bottom edge and is never occluded;
 the full-screen rep flash is replaced by a pill pulse + milestone chip, and
-tracking-state copy is hysteresis-latched so it stops strobing. See
-ARCHITECTURE.md.
+tracking-state copy is hysteresis-latched so it stops strobing. The stage keeps
+its reserved `68svh` portrait height — the portrait `#screen` cap no longer clips
+it, and the band mounts with the pose model instead of fighting the boot loader.
+See ARCHITECTURE.md.
 
 **Shipped (curl evidence surface):** live `CurlFormInstrument` shows elbow angle,
 target range, curl phase, drift. Active-arm selection prevents alternating-curl

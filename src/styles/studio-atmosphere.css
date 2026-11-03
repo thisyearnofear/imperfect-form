@@ -778,6 +778,12 @@ body[data-coach-depth] .studio-atmosphere__arc {
   display: none;
 }
 
+/* Only one caption may be live at a time; the default has to stand down
+   once a state caption takes over, or both render inline and mash together. */
+body[data-coach-state]:not([data-coach-state='selected']) .studio-atmosphere__caption-default {
+  display: none;
+}
+
 body[data-coach-state='selected'] .studio-atmosphere__caption-default,
 body[data-coach-state='starting'] .studio-atmosphere__caption-state.caption-state--starting,
 body[data-coach-state='camera'] .studio-atmosphere__caption-state.caption-state--camera,

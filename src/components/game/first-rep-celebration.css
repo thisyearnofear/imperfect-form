@@ -39,7 +39,7 @@
 .first-rep-celebration__eyebrow .sandow-grade {
   color: #7aebd8;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.58rem;
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.16em;
 }
@@ -47,7 +47,7 @@
 .first-rep-celebration__index {
   color: rgba(255, 217, 122, 0.72);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.58rem;
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.12em;
 }
@@ -57,9 +57,9 @@
   align-items: center;
   gap: 0.42rem;
   margin-top: 0.25rem;
-  color: rgba(185, 213, 207, 0.48);
+  color: rgba(185, 213, 207, 0.78);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.5rem;
+  font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }

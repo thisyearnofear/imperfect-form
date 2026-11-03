@@ -491,17 +491,47 @@ occlude the sentence, and nothing may strobe at the pose publish rate.
 
 ```
 .session-bottom-stack (z-76, pointer-events: none)
+  ├── pain exit            ("It hurts — stop", studio sessions only)
   ├── CurlFormInstrument   (docked above, static in-stack)
   └── live coaching line   (owns the bottom edge, centered)
 ```
 
 - The stack is the only bottom-positioned element on mobile; safe-area inset
   padding is applied once on the stack, not per widget.
+- The stack mounts with the pose model, not with the session: like the HUD it is
+  gated on `!isBooting`. While the boot overlay is centred on the stage there is
+  nothing to coach, and an unmounted stack cannot collide with the loader's
+  step rail.
 - **No full-screen rep flash on mobile.** The rep beat is a HUD pill pulse
   (`hud-pill__rep--flash`); every 5th rep adds a brief milestone chip under
   the pill. The camera view, instrument, and coaching line stay legible
   through every rep.
 - Desktop keeps the original absolutely-positioned layout.
+
+### Stage height contract
+
+`.session-camera-stage--mobile` reserves `height: min(68svh, 38rem)` in
+portrait — a tall, stable framing window, deliberately not a flex-compressed
+tile. Any ancestor that caps the screen's height will clip that stage through
+`#screen`'s `overflow: hidden`, and what sits at the bottom of the stage is the
+instrument and the coaching sentence.
+
+`mobile-wallet-browser.css` caps `#screen` at `45vh` on every portrait phone. It
+is exempted for the foyer (`:has(.coach-foyer)`, `:has(.prestart-foyer)`) and for
+the desktop bay (`:has(.session-bay)`) — but the mobile session renders neither
+of those; its stage is `#canvasContainerMobile`. That gap clipped ~190px off the
+stage on a 393x852 phone and left the controls laid over it. The live mobile
+stage is now exempted too:
+
+```css
+#screen:has(#canvasContainerMobile) {
+  max-height: none !important;
+}
+```
+
+Measured at 393x852: `#screen` 383px → 575px against a 571px stage, and the
+controls moved from y=496 (over the stage) to y=688 (below it). **If you add
+another surface that sizes against the viewport, check it against this cap.**
 
 ### Anti-strobe: `useStableTracking`
 
@@ -518,16 +548,20 @@ pure class (`TrackingLatch`) with its own unit test — no DOM required.
 3. Tracking-state copy changes only through the latch, never raw per-frame.
 4. The rotate-hint dismiss keeps a 44 px touch floor (visual stays 18 px via
    a pseudo-element hit area).
+5. Only one coach caption is live at a time. The studio-atmosphere default and
+   the per-state captions share one paragraph, so the default must stand down
+   for every non-`selected` state or the two render inline and mash together.
 
 ### Key files
 
-| Piece             | Path                                  |
-| ----------------- | ------------------------------------- |
-| Mobile branch     | `src/components/game/GameCanvas.tsx`  |
-| Pill pulse + chip | `src/components/game/GameHUD.tsx`     |
-| Hysteresis latch  | `src/hooks/useStableTracking.ts`      |
-| Stack CSS         | `src/styles/session-bay.css`          |
-| Mobile beats CSS  | `src/styles/mobile-optimizations.css` |
+| Piece               | Path                                   |
+| ------------------- | -------------------------------------- |
+| Mobile branch       | `src/components/game/GameCanvas.tsx`   |
+| Pill pulse + chip   | `src/components/game/GameHUD.tsx`      |
+| Hysteresis latch    | `src/hooks/useStableTracking.ts`       |
+| Stack CSS           | `src/styles/session-bay.css`           |
+| Mobile beats CSS    | `src/styles/mobile-optimizations.css`  |
+| Portrait screen cap | `src/styles/mobile-wallet-browser.css` |
 
 ## Operator analytics (`/analytics`)
 

@@ -214,29 +214,34 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             elevated
           />
           {/* Bottom band = one stack, no overlap: instrument above, the
-              coaching sentence owns the bottom edge (closest to the eye). */}
-          <div className="session-bottom-stack">
-            {/* The gentle pain exit docks right, above the coaching line —
+              coaching sentence owns the bottom edge (closest to the eye).
+              It waits for the pose model like the HUD does: while the boot
+              overlay is centred on the stage there is nothing to coach yet,
+              and the band would collide with the loader's step rail. */}
+          {!isBooting && (
+            <div className="session-bottom-stack">
+              {/* The gentle pain exit docks right, above the coaching line —
                 always reachable mid-set, never covering the sentence. */}
-            {studioSession && onPainExit && (
-              <button
-                type="button"
-                className="hud-pain-exit session-pain-exit"
-                onClick={onPainExit}
-              >
-                It hurts — stop
-              </button>
-            )}
-            {mode === 'curls' ? (
-              <CurlFormInstrument
-                telemetry={curlTelemetry}
-                tracking={poseState.poseDetected}
-                repCount={repCount}
-                onFormScore={onFormScore}
-              />
-            ) : null}
-            <LiveCoachingStatus {...coachingStatusProps} />
-          </div>
+              {studioSession && onPainExit && (
+                <button
+                  type="button"
+                  className="hud-pain-exit session-pain-exit"
+                  onClick={onPainExit}
+                >
+                  It hurts — stop
+                </button>
+              )}
+              {mode === 'curls' ? (
+                <CurlFormInstrument
+                  telemetry={curlTelemetry}
+                  tracking={poseState.poseDetected}
+                  repCount={repCount}
+                  onFormScore={onFormScore}
+                />
+              ) : null}
+              <LiveCoachingStatus {...coachingStatusProps} />
+            </div>
+          )}
         </div>
         <CoachTwinPeek session mode={mode} twin={twin} suppressed={showSeeShow} />
       </div>

@@ -1122,6 +1122,13 @@
   display: none;
 }
 
+@media (min-width: 561px) {
+  .coach-foyer__pain-chips {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
 .coach-foyer__pain-chip {
   flex: 0 0 auto;
   scroll-snap-align: start;
@@ -1251,6 +1258,9 @@
   display: flex;
   align-items: center;
   gap: 14px;
+}
+.coach-foyer__plate > div {
+  min-width: 0;
 }
 @media (max-width: 560px) {
   .body-plate { width: 88px; }

@@ -27,6 +27,15 @@
     margin-bottom: 0 !important;
   }
 
+  /* A live camera session reserves 68svh for its stage (see
+     .session-camera-stage--mobile). The 45vh cap above was clipping that
+     stage through #screen's overflow, which hid the coaching line and the
+     curl instrument underneath the controls. Let the live stage size itself;
+     the controls sit below it and the page scrolls if the chrome is tall. */
+  #screen:has(#canvasContainerMobile) {
+    max-height: none !important;
+  }
+
   /* Once the foyer gives way to a live session, the container goes back to
      filling the viewport so the camera stage can size against it. */
   #game-container:has(.session-bay) {

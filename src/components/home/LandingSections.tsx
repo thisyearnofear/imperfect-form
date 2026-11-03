@@ -523,7 +523,11 @@ export function LandingSections({
       {/* 0 — Sound familiar? Reflects the selected chip. */}
       <Reveal className="ls-section ls-familiar">
         <h2 className="ls-h2">Sound familiar?</h2>
-        {!painIntent && <p className="ls-familiar__hint">Pick what fits above.</p>}
+        {!painIntent && (
+          <p className="ls-familiar__hint">
+            Tap the closest match above to see your coaching plan.
+          </p>
+        )}
         <div className="ls-familiar__body lf-swap" key={familiar.id}>
           <div className="ls-familiar__beat">
             <span className="ls-familiar__num" aria-hidden="true">
