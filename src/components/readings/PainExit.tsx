@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, PersonStanding } from 'lucide-react';
 import BodyPlate from '@/components/body/BodyPlate';
-import { NIGGLE_JOINTS, type NiggleJointId } from '@/lib/niggleIntents';
+import { NIGGLE_JOINTS, getNiggleJoint, type NiggleJointId } from '@/lib/niggleIntents';
 import { addNiggleEntry } from '@/lib/niggleEntries';
 import { useNiggle } from '@/hooks/useNiggle';
+import SendTheMeter from '@/components/receive/SendTheMeter';
 import StretchSequence from '@/components/recovery/StretchSequence';
 
 type PainExitProps = {
@@ -51,6 +52,12 @@ export function PainExit({ onDone, variant = 'pain' }: PainExitProps) {
     });
   }, [variant, hydrated, joint, context]);
 
+  // The quiet "maybe it helps someone you know" door — the reading's own
+  // joint when one is stored, else neck & shoulders (the reading this
+  // surface most often serves). The send card is the same one the foyer
+  // unfold and the recap carry.
+  const sendJoint = joint ?? getNiggleJoint('neck-shoulders');
+
   const markJoint = (id: NiggleJointId) => {
     touchedRef.current = true;
     if (marked === id) {
@@ -73,6 +80,16 @@ export function PainExit({ onDone, variant = 'pain' }: PainExitProps) {
             no reading is saved, and it&rsquo;s noted in your logbook. Try again another day, only
             as high as feels comfortable.
           </p>
+
+          {sendJoint && (
+            <SendTheMeter
+              joint={sendJoint}
+              contextId={context?.id}
+              giftLine={context?.giftLine}
+              lead="Maybe it helps someone you know."
+              surface="pain-exit"
+            />
+          )}
 
           {easing ? (
             <StretchSequence mode="reach" tone="dark" onComplete={() => setEasing(false)} />
@@ -101,6 +118,16 @@ export function PainExit({ onDone, variant = 'pain' }: PainExitProps) {
           A meter shouldn&rsquo;t hurt to use. Pain is a stop signal, not a rep to push through — if
           it persists or sharpens, see a professional. The meter will be here when it settles.
         </p>
+
+        {sendJoint && (
+          <SendTheMeter
+            joint={sendJoint}
+            contextId={context?.id}
+            giftLine={context?.giftLine}
+            lead="Maybe it helps someone you know."
+            surface="pain-exit"
+          />
+        )}
 
         <div className="pain-exit__mark">
           <p className="pain-exit__mark-label">Mark where it hurt — it goes in your logbook.</p>

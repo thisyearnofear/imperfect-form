@@ -103,9 +103,10 @@ test.describe('Shared niggle link', () => {
     await page.goto('/?niggle=bogus');
     const foyer = page.locator('.receiving-foyer');
     await expect(foyer).toBeVisible({ timeout: 20000 });
-    // No sender greeting — the wordmark eyebrow instead.
+    // No sender greeting at all on the organic variant — the wordmark lives
+    // in the envelope greeting (covered below), never in the hero copy.
     await expect(foyer.getByText(/sent you this/)).toHaveCount(0);
-    await expect(foyer.locator('.rf-sent-by')).toHaveText('NIGGLEOMETER');
+    await expect(foyer.locator('.rf-sent-by')).toHaveCount(0);
     // The intake is the hero: chips visible without unfolding anything, and
     // the organic hero keeps its CTA — the learn-first restructure is
     // link-only.

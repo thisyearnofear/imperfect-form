@@ -99,7 +99,9 @@ const MovementAssessmentHistory = dynamic(
 );
 
 import { Score } from '@/types';
-import { NIGGLE_JOINTS } from '@/lib/niggleIntents';
+import { NIGGLE_JOINTS, getNiggleJoint } from '@/lib/niggleIntents';
+import { useNiggle } from '@/hooks/useNiggle';
+import SendTheMeter from '@/components/receive/SendTheMeter';
 import { addNiggleEntry, listNiggleEntries, type NiggleEntry } from '@/lib/niggleEntries';
 import { daysUntil, nextReadingDate } from '@/lib/nextReading';
 import { getEffectiveUserId } from '@/services/guestIdentity';
@@ -234,6 +236,27 @@ function NextReadings({ onTakeReading }: { onTakeReading: () => void }) {
         </div>
       ))}
     </>
+  );
+}
+
+/** "Send the meter to a friend" — the same SendTheMeter card the foyer and
+ *  recap carry, parked under the weekly readings. Uses the stored niggle;
+ *  falls back to neck & shoulders (the doorway the meter was built for). */
+function SendMeterRow() {
+  const { joint, context, hydrated } = useNiggle();
+  if (!hydrated) return null;
+  const resolved = joint ?? getNiggleJoint('neck-shoulders');
+  if (!resolved) return null;
+  return (
+    <div className="motion-enter motion-delay-1">
+      <SendTheMeter
+        joint={resolved}
+        contextId={context?.id}
+        giftLine={context?.giftLine}
+        lead="Know someone with a nagging joint?"
+        surface="readings-tab"
+      />
+    </div>
   );
 }
 
@@ -598,6 +621,7 @@ export default function Home() {
                     </button>
                   </div>
                   <NextReadings onTakeReading={() => setActiveTab('workout')} />
+                  <SendMeterRow />
                   <NiggleLog />
                   <div className="motion-enter motion-delay-2">
                     <MovementAssessmentHistory />

@@ -294,6 +294,11 @@ export const SENT_BY_KEY = 'imf_sent_by_v1';
  *  foyer — the gift, not the diagnosis. Wins over the context's giftLine. */
 export const GIFT_NOTE_KEY = 'imf_gift_note_v1';
 
+/** The sender's own name on the send side ("your name"), persisted so every
+ *  SendTheMeter card greets with it prefilled — the meter remembers who is
+ *  passing it on. Sanitized on write; read once per card mount. */
+export const SENDER_NAME_KEY = 'imf_sender_name_v1';
+
 /** Persist the intake exactly as useNiggle does — storage + same-tab event. */
 export function storeNiggle(stored: StoredNiggle | null): void {
   if (typeof window === 'undefined') return;

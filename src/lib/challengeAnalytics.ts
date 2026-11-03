@@ -18,6 +18,7 @@ export type MovementChallengeEventType = Extract<
   | 'assessment_started'
   | 'assessment_completed'
   | 'assessment_replied'
+  | 'send_link_created'
 >;
 
 const ANONYMOUS_ANALYTICS_KEY = 'imf_assessment_analytics_id';

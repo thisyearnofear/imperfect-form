@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Activity, ArrowRight, Camera, ChevronDown, Send, Sparkles } from 'lucide-react';
+import { Activity, ArrowRight, Camera, ChevronDown, Sparkles } from 'lucide-react';
 import { playStudioCue } from '@/lib/uiSound';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { coachStation, type StationStatus } from '@/services/coachStation';
@@ -11,8 +11,6 @@ import {
   GIFT_NOTE_KEY,
   SENT_BY_KEY,
   parseStoredNiggle,
-  sanitizeNote,
-  sanitizeSenderName,
   NIGGLE_KEY,
   type NiggleJointId,
   type StoredNiggle,
@@ -23,6 +21,7 @@ import { prefetchWebcamChunk, prefersReducedMotion } from '@/components/game/Coa
 import type { ExerciseMode } from '@/utils/biomechanics';
 import { FAQ_ITEMS } from '@/components/home/LandingSections';
 import ReachPlate from '@/components/receive/ReachPlate';
+import SendTheMeter from '@/components/receive/SendTheMeter';
 import {
   useArmCycle,
   usePrefersReducedMotion,
@@ -114,11 +113,6 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
   const [giftNote, setGiftNote] = useState<string | null>(null);
   const [intakeOpen, setIntakeOpen] = useState(false);
   const [movesOpen, setMovesOpen] = useState(false);
-  const [shareStatus, setShareStatus] = useState<'idle' | 'copied'>('idle');
-  // The send-side "add your name + a line" fields — their values travel on
-  // the shared URL as &from=/&note= so the gift greets by name.
-  const [shareName, setShareName] = useState('');
-  const [shareNote, setShareNote] = useState('');
   const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [beat3Progress, setBeat3Progress] = useState(() =>
     typeof window !== 'undefined' && prefersReducedMotion() ? 1 : 0.35
@@ -344,30 +338,6 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     onStart();
   };
 
-  const handleSendToFriend = async () => {
-    if (!joint) return;
-    const params = new URLSearchParams();
-    params.set('niggle', `${joint.id}:${context?.id ?? joint.contexts[0].id}`);
-    const from = sanitizeSenderName(shareName);
-    const note = sanitizeNote(shareNote);
-    if (from) params.set('from', from);
-    if (note) params.set('note', note);
-    const url = `${window.location.origin}/?${params.toString()}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Take this reading', url });
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-      } else {
-        return;
-      }
-      setShareStatus('copied');
-      window.setTimeout(() => setShareStatus('idle'), 2500);
-    } catch {
-      /* share cancelled or clipboard unavailable — nothing to repair */
-    }
-  };
-
   const readingProtocol = joint ? assessmentProtocolFor(mode) : null;
   // CTA honesty: promise the exact rep count only when a joint is answered
   // AND this movement has a fixed protocol; everything else is one rep.
@@ -484,45 +454,13 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
             </>
           )}
           {joint && (
-            <div className="rf-send">
-              {/* "add your name + a line" — the values ride the shared URL as
-                  &from=/&note= so the receiver's greeting block can quote the
-                  sender's own words instead of the context's giftLine. */}
-              <div className="rf-send__fields">
-                <input
-                  type="text"
-                  className="rf-send__input"
-                  value={shareName}
-                  onChange={(e) => setShareName(e.target.value)}
-                  placeholder="your name"
-                  aria-label="Your name — added to the link"
-                  maxLength={24}
-                  autoComplete="name"
-                />
-                <input
-                  type="text"
-                  className="rf-send__input rf-send__input--note"
-                  value={shareNote}
-                  onChange={(e) => setShareNote(e.target.value)}
-                  placeholder="a line for them"
-                  aria-label="A line for them — added to the link"
-                  maxLength={140}
-                />
-              </div>
-              <div className="rf-send__row">
-                <button
-                  type="button"
-                  className="rf-send__button"
-                  onClick={() => void handleSendToFriend()}
-                >
-                  <Send size={11} aria-hidden="true" />
-                  Send this to a friend
-                </button>
-                <span className="rf-send__status" role="status" aria-live="polite">
-                  {shareStatus === 'copied' ? 'Link copied' : ''}
-                </span>
-              </div>
-            </div>
+            <SendTheMeter
+              joint={joint}
+              contextId={context?.id}
+              giftLine={context?.giftLine}
+              buttonLabel="Send this to a friend"
+              surface="receiving-foyer"
+            />
           )}
         </div>
       </div>

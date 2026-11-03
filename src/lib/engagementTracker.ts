@@ -29,6 +29,7 @@ export type EngagementEventType =
   | 'assessment_started'
   | 'assessment_completed'
   | 'assessment_replied'
+  | 'send_link_created'
   | 'chain_switched'
   | 'wallet_connected'
   | 'pose_detection_started'

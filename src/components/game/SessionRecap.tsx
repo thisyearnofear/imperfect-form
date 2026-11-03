@@ -32,7 +32,8 @@ import MovementAssessmentHistory from './MovementAssessmentHistory';
 import { usePainIntent } from '@/hooks/usePainIntent';
 import { useNiggle } from '@/hooks/useNiggle';
 import { addNiggleEntry } from '@/lib/niggleEntries';
-import type { NiggleJointId } from '@/lib/niggleIntents';
+import { getNiggleJoint, type NiggleJointId } from '@/lib/niggleIntents';
+import SendTheMeter from '@/components/receive/SendTheMeter';
 import { assessmentProtocolFor } from '@/lib/movementAssessment';
 import { buildReadingIcs, nextReadingDate } from '@/lib/nextReading';
 import { readingSentence } from '@/lib/readingSentence';
@@ -69,6 +70,16 @@ const JOINT_FOR_MODE: Partial<Record<ExerciseMode, NiggleJointId>> = {
   reach: 'neck-shoulders',
   curls: 'arm',
   squats: 'knee',
+};
+
+/** Joint-aware phrase for the post-session "pass it on" card — null joints
+ *  fall back to the generic nagging-joint line. */
+const SEND_JOINT_PHRASE: Record<NiggleJointId, string | null> = {
+  'neck-shoulders': 'neck nags',
+  back: 'back nags',
+  knee: 'knee nags',
+  arm: 'arm nags',
+  'not-sure': null,
 };
 
 /** Weekly re-read titles, per protocol mode. */
@@ -421,6 +432,16 @@ export function SessionRecap({
     (mode === 'reach' || painIntent?.mode === mode) && Boolean(STRETCHES[mode]?.length);
   const easeJoint = niggleJoint?.id ?? JOINT_FOR_MODE[mode];
 
+  // "Send the meter to a friend": offered on protocol-mode sessions — a
+  // reading was taken (or could have been) or a niggle was named. The link
+  // carries the current niggle joint+context, else the mode's fallback joint.
+  const sendJoint =
+    niggleJoint || protocol ? getNiggleJoint(niggleJoint?.id ?? JOINT_FOR_MODE[mode]) : null;
+  const sendPhrase = sendJoint ? SEND_JOINT_PHRASE[sendJoint.id] : null;
+  const sendLead = sendPhrase
+    ? `Know someone whose ${sendPhrase}? Send them the same reading.`
+    : 'Know someone with a nagging joint? Send them the same reading.';
+
   // A valid reading earns the weekly cadence line + calendar door.
   const validReading =
     protocol && movementAssessment?.status === 'valid' ? movementAssessment : null;
@@ -676,6 +697,19 @@ export function SessionRecap({
         <p className="session-recap__ease-logged" role="status">
           Logged — that&rsquo;s how it felt, not what the meter saw.
         </p>
+      )}
+
+      {/* The loop closes by being passed on — the same SendTheMeter card the
+          foyer unfold carries, personalized to the niggle this reading was
+          for. */}
+      {sendJoint && (
+        <SendTheMeter
+          joint={sendJoint}
+          contextId={niggleContext?.id}
+          giftLine={niggleContext?.giftLine}
+          lead={sendLead}
+          surface="session-recap"
+        />
       )}
 
       {/* Everything below is instrumentation, not story. It stays reachable but
