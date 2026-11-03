@@ -16,6 +16,7 @@ import {
   type StoredNiggle,
 } from '@/lib/niggleIntents';
 import { assessmentProtocolFor } from '@/lib/movementAssessment';
+import { getLocalMovementAssessments } from '@/services/integrations/MovementAssessmentDataAdapter';
 import { useNiggle } from '@/hooks/useNiggle';
 import { prefetchWebcamChunk, prefersReducedMotion } from '@/components/game/CoachFoyer';
 import type { ExerciseMode } from '@/utils/biomechanics';
@@ -129,6 +130,32 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     setSentBy(localStorage.getItem(SENT_BY_KEY));
     setGiftNote(localStorage.getItem(GIFT_NOTE_KEY));
   }, []);
+
+  // Return-visit continuity: a prior VALID local read earns one hairline
+  // under the title — "Last read: a clean read — N days ago". Assessments
+  // carry no grade (M0 is honest reads, not verdicts), so the line names
+  // the read, not a score. Anything missing or inconclusive → silence; the
+  // CTA is never gated on it.
+  const [lastReadDays, setLastReadDays] = useState<number | null>(null);
+  useEffect(() => {
+    if (!organic) return;
+    let alive = true;
+    void getLocalMovementAssessments()
+      .then((records) => {
+        if (!alive) return;
+        const valid = records.filter((r) => r.assessment.status === 'valid');
+        if (valid.length === 0) return;
+        const latest = valid.reduce((a, b) =>
+          a.assessment.capturedAt > b.assessment.capturedAt ? a : b
+        );
+        const days = Math.floor((Date.now() - latest.assessment.capturedAt) / 86_400_000);
+        setLastReadDays(Math.max(0, days));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [organic]);
 
   // A joint restored from storage (organic return visit) carries its protocol
   // movement — apply it once so the CTA and the read stay honest. Link
@@ -608,6 +635,19 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
             <h1 id="rf-title" className="rf-title" aria-label={`${titleLead} ${titleEm}`}>
               {titleLeadPieces.nodes} <em className="rf-title-brass">{titleEmPieces.nodes}</em>
             </h1>
+
+            {/* Return-visit continuity — one quiet hairline under the title.
+                Organic only, and only when a prior read actually exists. */}
+            {organic && lastReadDays !== null && (
+              <p className="rf-lastread">
+                Last read: a clean read —{' '}
+                {lastReadDays === 0
+                  ? 'today'
+                  : lastReadDays === 1
+                    ? 'yesterday'
+                    : `${lastReadDays} days ago`}
+              </p>
+            )}
 
             {/* Organic: the intake IS the hero — hairline chips under the
                 title; picking a joint unfolds its context row and retitles

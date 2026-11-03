@@ -12,6 +12,7 @@ import { useCoachingMoment } from '@/hooks/useCoachingMoment';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { useStableTracking } from '@/hooks/useStableTracking';
 import { isTwinHeroActive, useCoachTwin } from '@/hooks/useCoachTwin';
+import FramingGhost from '@/components/receive/FramingGhost';
 import CurlFormInstrument from './CurlFormInstrument';
 import { SeeShowMoment } from './SeeShowMoment';
 import { ReadinessHint } from './ReadinessHint';
@@ -83,6 +84,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   useEffect(() => {
     if (poseState.poseDetected) setHasLockedPose(true);
   }, [poseState.poseDetected]);
+
+  // The framing ghost holds one beat past the first lock so its fade can
+  // land — then it unmounts instead of idling invisible on the stage.
+  const [ghostGone, setGhostGone] = useState(false);
+  useEffect(() => {
+    if (!hasLockedPose || ghostGone) return;
+    const t = setTimeout(() => setGhostGone(true), 650);
+    return () => clearTimeout(t);
+  }, [hasLockedPose, ghostGone]);
+  // Reading sessions only: the plate figure is the framing target until
+  // the pose locks. Non-reading sessions keep the plain boot loader.
+  const showFramingGhost = readingTargetReps != null && !ghostGone;
 
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
@@ -178,6 +191,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             progress={detectionProgress?.percentage}
             isVisible={isLoadingVisible}
           />
+          {/* The framing ghost rides above the boot loader — the loader
+              dims the feed while the model warms, so the guide must sit on
+              top to stay legible. It fades on the first pose lock. */}
+          {showFramingGhost && <FramingGhost leaving={hasLockedPose} />}
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           {qualityMessage && (
@@ -293,6 +310,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             isVisible={isLoadingVisible}
             isOverlay={true}
           />
+          {showFramingGhost && <FramingGhost leaving={hasLockedPose} />}
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />

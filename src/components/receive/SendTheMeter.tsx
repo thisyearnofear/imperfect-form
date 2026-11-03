@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { CornerUpLeft, Send } from 'lucide-react';
 import { usePlatform } from '@/contexts/PlatformContext';
 import { trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
 import {
   SENDER_NAME_KEY,
+  SENT_BY_KEY,
   sanitizeNote,
   sanitizeSenderName,
   type NiggleJoint,
@@ -31,6 +32,15 @@ type SendTheMeterProps = {
 };
 
 type ShareStatus = 'idle' | 'copied' | 'shared';
+
+/** The reply's gift line, in the receiver's voice — "how it went", not a
+ *  fresh ask. The trap line names the flagship joint; every other joint
+ *  gets the same sentence without the anatomy. */
+function replyGiftLine(joint: NiggleJoint): string {
+  return joint.id === 'neck-shoulders'
+    ? 'the trap says thanks — the meter saw it move'
+    : 'it says thanks — the meter saw it move';
+}
 
 /**
  * "Send the meter to a friend" — the shared send card (docs/RECEIVING_EXPERIENCE).
@@ -64,6 +74,19 @@ export function SendTheMeter({
     if (!noteTouchedRef.current) setNote(giftLine ?? '');
   }, [giftLine]);
 
+  // Reply-to-sender: a `?from=` arrival remembers who sent the meter
+  // (SENT_BY_KEY), so the card can offer a way back — "Tell her how it
+  // went". The reply link greets her with THIS user's name, so `&from=`
+  // rides the shared name field, not hers.
+  const [sentBy] = useState(() =>
+    typeof window === 'undefined' ? null : localStorage.getItem(SENT_BY_KEY)
+  );
+  const [replyNote, setReplyNote] = useState(() => replyGiftLine(joint));
+  const replyTouchedRef = useRef(false);
+  useEffect(() => {
+    if (!replyTouchedRef.current) setReplyNote(replyGiftLine(joint));
+  }, [joint]);
+
   // Debounced persistence — the name is theirs, kept for the next card.
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -88,11 +111,26 @@ export function SendTheMeter({
     return `/?${params.toString()}`;
   }, [joint.id, resolvedContext, name, note]);
 
-  const handleShare = async () => {
+  // The reply link: same niggle + context this card carries, `&from=` the
+  // replier's own name, `&note=` their how-it-went line. Same sanitizers the
+  // foyer's parser already trusts.
+  const replyHref = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('niggle', `${joint.id}:${resolvedContext}`);
+    const from = sanitizeSenderName(name);
+    const line = sanitizeNote(replyNote);
+    if (from) params.set('from', from);
+    if (line) params.set('note', line);
+    return `/?${params.toString()}`;
+  }, [joint.id, resolvedContext, name, replyNote]);
+
+  // One share path for both doors — the send link and the reply-to-sender
+  // differ only in the URL and the surface the analytics carry.
+  const share = async (link: string, shareSurface: string | undefined, noteText: string) => {
     const from = sanitizeSenderName(name);
     // On share the name is committed right away — no waiting on the debounce.
     if (from) localStorage.setItem(SENDER_NAME_KEY, from);
-    const url = `${window.location.origin}${href}`;
+    const url = `${window.location.origin}${link}`;
     const shared = Boolean(navigator.share);
     try {
       if (navigator.share) {
@@ -105,9 +143,9 @@ export function SendTheMeter({
       trackMovementChallengeEvent('send_link_created', user?.fid, {
         joint: joint.id,
         context: resolvedContext,
-        hasNote: Boolean(sanitizeNote(note)),
+        hasNote: Boolean(sanitizeNote(noteText)),
         hasName: Boolean(from),
-        ...(surface ? { surface } : {}),
+        ...(shareSurface ? { surface: shareSurface } : {}),
       });
       setStatus(shared ? 'shared' : 'copied');
       window.setTimeout(() => setStatus('idle'), 2500);
@@ -115,6 +153,11 @@ export function SendTheMeter({
       /* share cancelled or clipboard unavailable — nothing to repair */
     }
   };
+
+  const handleShare = () => share(href, surface, note);
+  // The reply is its own funnel — `surface: 'reply'` separates a thank-you
+  // link from a fresh send, whichever card it was shared from.
+  const handleReply = () => share(replyHref, 'reply', replyNote);
 
   return (
     <div className={`stm${className ? ` ${className}` : ''}`}>
@@ -160,6 +203,33 @@ export function SendTheMeter({
           {status === 'copied' ? 'Link copied' : status === 'shared' ? 'Ready to send' : ''}
         </span>
       </div>
+      {/* Reply-to-sender — only when this meter arrived as a gift. The
+          name field above is shared (the reply greets her with it); the
+          line back is its own, editable like "a line for them". */}
+      {sentBy && (
+        <div className="stm__reply">
+          <input
+            type="text"
+            className="stm__input stm__input--note"
+            value={replyNote}
+            onChange={(e) => {
+              replyTouchedRef.current = true;
+              setReplyNote(e.target.value);
+            }}
+            placeholder="a line back"
+            aria-label={`A line back to ${sentBy} — added to the reply link`}
+            maxLength={140}
+          />
+          <button
+            type="button"
+            className="stm__button stm__button--reply"
+            onClick={() => void handleReply()}
+          >
+            <CornerUpLeft size={11} aria-hidden="true" />
+            Tell {sentBy} how it went
+          </button>
+        </div>
+      )}
     </div>
   );
 }

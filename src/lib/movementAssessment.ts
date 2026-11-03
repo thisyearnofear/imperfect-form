@@ -183,15 +183,33 @@ function inconclusiveReason(
 }
 
 /**
+ * The warm-up rep every reading session gives away for free: the first
+ * detected rep is rehearsal — it never lands in the protocol count, the HUD
+ * says "warm-up" for it, and the session end is pushed out by exactly one
+ * rep so the meter still sees the five counted raises it promised.
+ */
+export const READING_REHEARSAL_REPS = 1;
+
+/**
  * Reading mode ends exactly on the protocol rep count — no extra rep can
  * slip in between the last counted rep and the stop (the one-rep trial's
- * first-signal delay is deliberately not reused here).
+ * first-signal delay is deliberately not reused here). `rehearsalReps`
+ * shifts that threshold past the uncounted warm-up reps: the reading stops
+ * at `targetReps + rehearsalReps` raw reps, i.e. exactly `targetReps` reps
+ * on the meter. Callers strip the same count off the session summary, so
+ * the exact-rep-count gate in `inconclusiveReason` still sees 5.
  */
 export function shouldEndReading(
   count: number,
-  protocol: MovementAssessmentProtocol | null
+  protocol: MovementAssessmentProtocol | null,
+  rehearsalReps = 0
 ): boolean {
-  return protocol !== null && count >= protocol.targetReps;
+  return protocol !== null && count >= protocol.targetReps + rehearsalReps;
+}
+
+/** The rep count the meter counts: raw detector reps minus the warm-up. */
+export function countedReadingReps(repCount: number, rehearsalReps = 0): number {
+  return Math.max(0, repCount - rehearsalReps);
 }
 
 /**

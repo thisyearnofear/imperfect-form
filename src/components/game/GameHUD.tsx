@@ -2,8 +2,11 @@ import React from 'react';
 import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
 import { useImmersive } from '@/hooks/useImmersive';
 import { useSessionIntent } from '@/hooks/useSessionIntent';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { zIndexClasses } from '@/lib/zTokens';
 import { readableFormWarning } from '@/lib/coachingStory';
+import { countedReadingReps, READING_REHEARSAL_REPS } from '@/lib/movementAssessment';
+import { playStudioCue } from '@/lib/uiSound';
 import ReadGauge from '@/components/readings/ReadGauge';
 import type { ReadLevel } from '@/lib/readQuality';
 
@@ -32,19 +35,52 @@ interface GameHUDProps {
   readingTargetReps?: number | null;
 }
 
-function ReadingPips({ count, target }: { count: number; target: number }) {
+/**
+ * The protocol pip counter. `repCount` is the detector's raw count — every
+ * reading opens with `rehearsal` uncounted warm-up reps, so the meter only
+ * ever tallies `counted = repCount - rehearsal`. The first rep of the set
+ * is the free one: "warm-up" until it lands, one line of coaching while the
+ * counted set is still empty, then "Reading · N of 5".
+ */
+function ReadingPips({
+  repCount,
+  target,
+  rehearsal = 0,
+}: {
+  repCount: number;
+  target: number;
+  rehearsal?: number;
+}) {
+  const counted = countedReadingReps(repCount, rehearsal);
+  const { triggerHaptic } = useHapticFeedback();
+  // The pip tick — a quiet cue riding the same rep beat the plate's pips
+  // latch on. Only counted reps tick; the warm-up rep makes no mark.
+  const prevCountedRef = React.useRef(counted);
+  React.useEffect(() => {
+    if (counted > prevCountedRef.current) {
+      playStudioCue('soft');
+      triggerHaptic(18);
+    }
+    prevCountedRef.current = counted;
+  }, [counted, triggerHaptic]);
+
+  const label =
+    rehearsal > 0 && counted === 0
+      ? repCount >= rehearsal
+        ? `That's it — ${target} for the meter now`
+        : 'Warm-up — this one’s free'
+      : `Reading · ${Math.min(counted, target)} of ${target}`;
+
   return (
     <div
-      className="hud-reading"
+      className={`hud-reading${counted === 0 ? ' hud-reading--warmup' : ''}`}
       role="status"
-      aria-label={`Reading · ${Math.min(count, target)} of ${target}`}
+      aria-label={label}
     >
-      <span className="hud-reading__label">
-        Reading · {Math.min(count, target)} of {target}
-      </span>
+      <span className="hud-reading__label">{label}</span>
       <span className="hud-reading__pips" aria-hidden="true">
         {Array.from({ length: target }, (_, i) => (
-          <span key={i} className={`hud-reading__pip${i < count ? ' is-filled' : ''}`} />
+          <span key={i} className={`hud-reading__pip${i < counted ? ' is-filled' : ''}`} />
         ))}
       </span>
     </div>
@@ -74,6 +110,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   const studio = register !== 'arcade';
   const { immersive } = useImmersive();
 
+  // Rehearsed readings hide the warm-up rep from every counted surface —
+  // the tally, the milestone chip, and the pips all read counted reps only.
+  const rehearsalReps = readingTargetReps ? READING_REHEARSAL_REPS : 0;
+  const countedReps = countedReadingReps(repCount, rehearsalReps);
+
   // Logic for scaling based on rep count to create "delight"
   // Calculate a "beat" effect based on time to make the UI feel alive
   const [pulse, setPulse] = React.useState(1);
@@ -94,7 +135,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   // arcade register grows the count with the rep total; that is a deliberate
   // arcade flourish, but a number you must read mid-set should not change size
   // as the set goes on — so the studio path never accumulates growth.
-  const repScale = studio ? pulse : 1 + Math.min(repCount * 0.005, 0.2) * pulse;
+  const repScale = studio ? pulse : 1 + Math.min(countedReps * 0.005, 0.2) * pulse;
 
   const raceBannerEl = isRace ? (
     <div className={`absolute -top-1 left-1/2 -translate-x-1/2 ${zIndexClasses.raceBanner}`}>
@@ -134,7 +175,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   // chip — the full-screen flash is desktop-only, so the coaching line and
   // instrument are never occluded mid-set on a phone.
   if (isMobile) {
-    const milestone = repPulse && repCount > 0 && repCount % 5 === 0;
+    const milestone = repPulse && countedReps > 0 && countedReps % 5 === 0;
     return (
       <div
         className={`game-hud-container game-hud-container--compact ${isOverlay ? 'hud-overlay-fs' : ''}`}
@@ -150,19 +191,21 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             ·
           </span>
           <span
-            key={repCount}
+            key={countedReps}
             className={`hud-value motion-rep hud-pill__rep ${studio ? 'text-teal-200' : 'text-brass'}${repPulse ? ' hud-pill__rep--flash' : ''}`}
           >
-            {repCount}
+            {countedReps}
           </span>
           <span className="hud-label hud-pill__label">
             {studio ? (immersive ? 'Graded' : 'Reps') : 'Score'}
           </span>
         </div>
-        {readingTargetReps ? <ReadingPips count={repCount} target={readingTargetReps} /> : null}
+        {readingTargetReps ? (
+          <ReadingPips repCount={repCount} target={readingTargetReps} rehearsal={rehearsalReps} />
+        ) : null}
         {milestone && (
           <div className="hud-milestone" role="status" aria-live="polite">
-            {repMilestoneMessage(repCount, studio)}
+            {repMilestoneMessage(countedReps, studio)}
           </div>
         )}
         {/* Depth stays mounted at 0. Hiding it when the joint is fully extended
@@ -225,15 +268,17 @@ export const GameHUD: React.FC<GameHUDProps> = ({
           {studio ? (immersive ? 'Graded' : 'Reps') : 'Score'}
         </span>
         <span
-          key={repCount}
+          key={countedReps}
           className={`hud-value motion-rep sandow-gauge__value ${studio ? 'text-teal-200' : 'text-brass'}`}
         >
-          {repCount}
+          {countedReps}
         </span>
         <SandowGradeMark className="hud-sandow-stamp" />
       </div>
 
-      {readingTargetReps ? <ReadingPips count={repCount} target={readingTargetReps} /> : null}
+      {readingTargetReps ? (
+        <ReadingPips repCount={repCount} target={readingTargetReps} rehearsal={rehearsalReps} />
+      ) : null}
 
       {/* Quiet depth indicator — replaces the loud on-canvas depth gauge bar.
           Studio aesthetic: a thin teal fill, not a red gradient. Mounted at 0

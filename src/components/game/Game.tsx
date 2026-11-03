@@ -73,7 +73,9 @@ import { zIndexClasses } from '@/lib/zTokens';
 import { trackChallengeEvent, trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
 import {
   assessmentProtocolFor,
+  countedReadingReps,
   evaluateMovementAssessment,
+  READING_REHEARSAL_REPS,
   shouldEndReading,
 } from '@/lib/movementAssessment';
 import {
@@ -186,6 +188,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // state drives the HUD pip counter.
   const readingProtocolRef = useRef<MovementAssessmentProtocol | null>(null);
   const [readingTargetReps, setReadingTargetReps] = useState<number | null>(null);
+  // Rehearsed reading: the first detected rep is a free warm-up — it delays
+  // the auto-stop by one rep and is stripped from the session summary so the
+  // protocol (and every saved record) still sees exactly targetReps.
+  const readingRehearsalRef = useRef(0);
 
   const [pbTrace, setPbTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(null);
   const [raceTrace, setRaceTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(
@@ -204,18 +210,32 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const handleSessionEnd = useCallback(
     (summary: import('@/services/sessionLogger').SessionSummary) => {
       console.log('📊 Session ended with summary:', summary);
-      setSessionSummary(summary);
+      // Rehearsed readings end at targetReps + 1 raw reps. The protocol gate
+      // in evaluateMovementAssessment demands exactly targetReps, so the
+      // warm-up rep is stripped here — before the recap, the PB check, the
+      // saved workout, and the assessment all read repCount. The raw trace
+      // still holds the rehearsal movement; only the count is adjusted.
+      // (Chosen over teaching the protocol a 6-rep variant: one gate, one
+      // count, and the warm-up can never leak into a saved record.)
+      const countedSummary =
+        readingRehearsalRef.current > 0
+          ? {
+              ...summary,
+              repCount: countedReadingReps(summary.repCount, readingRehearsalRef.current),
+            }
+          : summary;
+      setSessionSummary(countedSummary);
       // Feed this session's rep tempo into the persona-suggestion model, then
       // clear the buffer for the next set.
       recordPersonaTempo(repTimestampsRef.current);
       repTimestampsRef.current = [];
-      const protocol = assessmentProtocolFor(summary.mode);
-      const assessment = protocol ? evaluateMovementAssessment(summary, protocol) : null;
+      const protocol = assessmentProtocolFor(countedSummary.mode);
+      const assessment = protocol ? evaluateMovementAssessment(countedSummary, protocol) : null;
       setMovementAssessment(assessment);
       if (isRace) {
         trackChallengeEvent('challenge_completed', user?.fid, {
-          mode: summary.mode,
-          reps: summary.repCount,
+          mode: countedSummary.mode,
+          reps: countedSummary.repCount,
         });
       }
       if (
@@ -224,7 +244,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       ) {
         assessmentCompletedRef.current = movementChallenge?.challengeId ?? 'baseline';
         trackMovementChallengeEvent('assessment_completed', user?.fid, {
-          mode: summary.mode,
+          mode: countedSummary.mode,
           protocolId: movementChallenge?.protocolId ?? protocol?.id ?? CURL_BASELINE_PROTOCOL.id,
           source: movementChallenge ? 'incoming-challenge' : 'baseline',
           ...(movementChallenge ? { challengeId: movementChallenge.challengeId } : {}),
@@ -233,22 +253,22 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       }
 
       // Auto-save workout locally for freemium model
-      if (summary.repCount > 0) {
+      if (countedSummary.repCount > 0) {
         // Use the session start as the local join key so a duplicate end event
         // updates the same workout/assessment instead of creating another record.
         const exerciseMode =
-          (summary.mode as import('@/utils/biomechanics').ExerciseMode) || 'pushups';
+          (countedSummary.mode as import('@/utils/biomechanics').ExerciseMode) || 'pushups';
 
         // Guests get a stable local ID so PBs/XP/ghosts work without a wallet
         const effectiveUserId = getEffectiveUserId(finalAddress);
         // Include the local user in the fallback key so simultaneous users cannot
         // overwrite one another when they share a start timestamp.
-        const workoutId = `session-${summary.startTime}-${summary.mode}-${effectiveUserId}`;
+        const workoutId = `session-${countedSummary.startTime}-${countedSummary.mode}-${effectiveUserId}`;
 
         void (async () => {
           // Check if this is a new PB BEFORE saving the current one
           const pb = await getPersonalBestWorkout(effectiveUserId, exerciseMode);
-          const isNewPB = !pb || summary.repCount > pb.reps;
+          const isNewPB = !pb || countedSummary.repCount > pb.reps;
           // Keep the assessment in its own local-only namespace. An assessment
           // write must never prevent the workout itself from being saved if
           // browser storage is unavailable.
@@ -262,12 +282,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
           await saveLocalWorkout({
             id: workoutId,
-            reps: summary.repCount,
-            timestamp: summary.startTime,
+            reps: countedSummary.repCount,
+            timestamp: countedSummary.startTime,
             synced: false,
             type: exerciseMode,
             userAddress: effectiveUserId,
-            formSignature: buildFormSignature(summary),
+            formSignature: buildFormSignature(countedSummary),
             // Persist the form grade with the workout so XP recomputation
             // (which replays the whole history) can reward control over volume.
             formScoreAvg:
@@ -279,7 +299,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
           if (isNewPB) {
             console.log('🔥 NEW PERSONAL BEST! Saving trace...');
-            await saveWorkoutTrace(workoutId, summary.trace);
+            await saveWorkoutTrace(workoutId, countedSummary.trace);
           }
         })().catch((err) => console.error('❌ Failed to auto-save workout:', err));
       }
@@ -460,8 +480,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       playStudioCue('chime');
     },
     (count, exerciseMode) => {
-      // Record rep timestamp for tempo-based persona suggestion.
-      repTimestampsRef.current.push(Date.now());
+      // Record rep timestamp for tempo-based persona suggestion. The
+      // rehearsal warm-up rep is real motion but not part of the read —
+      // keep the tempo record to the counted reps only.
+      if (count > readingRehearsalRef.current) {
+        repTimestampsRef.current.push(Date.now());
+      }
       if (user?.fid) {
         void trackEngagementEvent({
           fid: user.fid,
@@ -498,11 +522,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
   // The rep callback fans out to the hook, then asks whether a reading just
   // completed — the stop is immediate so a sixth rep can never slip in.
+  // (Seven raw reps with the warm-up: the rehearsal count shifts the same
+  // "stop on the exact rep" discipline by one.)
   const handleRepCount = useCallback(
     (count: number) => {
       reportRepCount(count);
       const protocol = readingProtocolRef.current;
-      if (protocol && shouldEndReading(count, protocol)) {
+      if (protocol && shouldEndReading(count, protocol, readingRehearsalRef.current)) {
         readingProtocolRef.current = null;
         playStudioCue('chime');
         handleStopRef.current?.();
@@ -720,6 +746,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       oneRepTrialRef.current = Boolean(options?.oneRepTrial);
       const readingProtocol = options?.reading ? assessmentProtocolFor(mode) : null;
       readingProtocolRef.current = readingProtocol;
+      // Protocol readings get one uncounted warm-up rep before the meter
+      // starts counting — see readingRehearsalRef's summary strip below.
+      readingRehearsalRef.current = readingProtocol ? READING_REHEARSAL_REPS : 0;
       setReadingTargetReps(readingProtocol?.targetReps ?? null);
       if (
         !showCameraPrimer &&
@@ -1105,6 +1134,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setRetryFocus(null);
     setMovementAssessment(null);
     readingProtocolRef.current = null;
+    readingRehearsalRef.current = 0;
     setReadingTargetReps(null);
 
     // Also stop the camera when resetting
@@ -1528,7 +1558,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
             reading: assessmentProtocolFor(mode) != null,
           });
         }}
-        repCount={repCount}
+        // Rehearsed readings count the meter's reps only — the warm-up rep
+        // must not leak into the recap score, medal, or share text.
+        repCount={countedReadingReps(repCount, readingRehearsalRef.current)}
         timeLeft={timeLeft}
         mode={mode}
         address={finalAddress}

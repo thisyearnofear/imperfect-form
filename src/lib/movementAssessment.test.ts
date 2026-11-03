@@ -3,7 +3,9 @@ import type { SessionSummary } from '@/services/sessionLogger';
 import { CURL_BASELINE_PROTOCOL } from '@/types/movementAssessment';
 import {
   compareMovementAssessments,
+  countedReadingReps,
   evaluateMovementAssessment,
+  READING_REHEARSAL_REPS,
   shouldEndReading,
 } from '@/lib/movementAssessment';
 
@@ -176,5 +178,59 @@ describe('shouldEndReading', () => {
 
   it('never ends without a protocol', () => {
     expect(shouldEndReading(5, null)).toBe(false);
+  });
+
+  it('waits out the warm-up rep before ending a rehearsed reading', () => {
+    // The rehearsal rep is rep 1 raw, rep 0 on the meter: five counted reps
+    // land at raw count 6 — not a rep earlier.
+    expect(shouldEndReading(5, CURL_BASELINE_PROTOCOL, READING_REHEARSAL_REPS)).toBe(false);
+    expect(
+      shouldEndReading(
+        CURL_BASELINE_PROTOCOL.targetReps + READING_REHEARSAL_REPS,
+        CURL_BASELINE_PROTOCOL,
+        READING_REHEARSAL_REPS
+      )
+    ).toBe(true);
+  });
+});
+
+describe('countedReadingReps', () => {
+  it('strips the warm-up rep and never goes negative', () => {
+    expect(countedReadingReps(0, READING_REHEARSAL_REPS)).toBe(0);
+    expect(countedReadingReps(1, READING_REHEARSAL_REPS)).toBe(0);
+    expect(countedReadingReps(6, READING_REHEARSAL_REPS)).toBe(5);
+    expect(countedReadingReps(3)).toBe(3);
+  });
+});
+
+describe('rehearsed reading — the meter still sees exactly five reps', () => {
+  it('a rehearsal-stripped summary evaluates as a valid protocol read', () => {
+    // The rep callback ends the session at raw count 6; Game subtracts the
+    // warm-up before anything downstream (assessment, PB check, recap,
+    // saved workout) reads repCount. The exact-count protocol gate must
+    // still see 5 — otherwise the warm-up poisons every reading.
+    const raw = summary({ repCount: CURL_BASELINE_PROTOCOL.targetReps + READING_REHEARSAL_REPS });
+    const counted = {
+      ...raw,
+      repCount: countedReadingReps(raw.repCount, READING_REHEARSAL_REPS),
+    };
+
+    const result = evaluateMovementAssessment(counted);
+    expect(result.status).toBe('valid');
+    expect(result.quality.repCount).toBe(CURL_BASELINE_PROTOCOL.targetReps);
+  });
+
+  it('a rehearsal-stripped summary still fails honestly when reps were short', () => {
+    // Stopping mid-reading (raw 4 = warm-up + 3 counted) must stay
+    // inconclusive — the warm-up rep can never paper over a short set.
+    const raw = summary({ repCount: 4 });
+    const counted = {
+      ...raw,
+      repCount: countedReadingReps(raw.repCount, READING_REHEARSAL_REPS),
+    };
+
+    const result = evaluateMovementAssessment(counted);
+    expect(result.status).toBe('inconclusive');
+    expect(result.inconclusiveReason).toBe('insufficient_reps');
   });
 });

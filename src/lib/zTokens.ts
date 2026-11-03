@@ -43,6 +43,9 @@ export const Z = {
   overlaySeeShow: 88,
   /** Loading overlay during pose-detection warm-up */
   overlayLoader: 90,
+  /** Framing-ghost figure over the boot loader during a reading session —
+   *  the loader dims the feed, so the guide must ride above it. */
+  overlayFraming: 95,
 
   // ── Modal stack ─────────────────────────────────────────────────────────
   modalBackdrop: 900,
@@ -84,6 +87,7 @@ export const zIndexClasses: Record<keyof typeof Z, string> = {
   overlayFeedback: 'z-[85]',
   overlaySeeShow: 'z-[88]',
   overlayLoader: 'z-[90]',
+  overlayFraming: 'z-[95]',
   modalBackdrop: 'z-[900]',
   modalContent: 'z-[1000]',
   modalNested: 'z-[1002]',

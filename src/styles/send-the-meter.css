@@ -157,3 +157,32 @@
     transition: none;
   }
 }
+
+/* Reply-to-sender — the way back lives inside the same card: a hairline-
+   separated row of the reply's own line + a quieter underlined action. */
+.stm__reply {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(122, 235, 216, 0.12);
+}
+
+.stm__reply .stm__input {
+  flex: 1 1 12rem;
+}
+
+/* The reply door reads a whisper quieter than the send — same idiom,
+   brass instead of teal, so the way back is legible as a reply. */
+.stm__button--reply {
+  color: rgba(255, 217, 122, 0.62);
+  border-bottom-color: rgba(255, 217, 122, 0.22);
+}
+
+.stm__button--reply:hover {
+  color: rgba(255, 217, 122, 0.88);
+  border-bottom-color: rgba(255, 217, 122, 0.45);
+}

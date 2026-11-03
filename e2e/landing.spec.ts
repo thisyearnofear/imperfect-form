@@ -192,7 +192,8 @@ test.describe('landing — organic intake chips', () => {
     await page.goto('/');
     const foyer = page.locator('.receiving-foyer');
     await expect(foyer).toBeVisible({ timeout: 20000 });
-    await expect(foyer.locator('.rf-sent-by')).toHaveText('NIGGLEOMETER');
+    // No sender line on organic — the wordmark only lives in the envelope.
+    await expect(foyer.locator('.rf-sent-by')).toHaveCount(0);
     await expect(foyer.locator('#rf-title')).toContainText('niggle');
     await expect(foyer.locator('.rf-chip.is-selected')).toHaveCount(0);
     await expect(foyer.locator('#startButton')).toContainText('Try one rep');
