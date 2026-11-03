@@ -18,9 +18,19 @@
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Same width budget the day-0 foyer negotiated from the cabinet #screen. */
+/* Same width budget the day-0 foyer negotiated from the cabinet #screen —
+   and the same scroll document. globals.css pairs this with .coach-foyer,
+   but the bundled :has() selector list can drop entries, so the receiving
+   foyer carries its own copy (scroll + aspect unlock, studio chrome off). */
 #screen:has(.receiving-foyer) {
   max-width: 1180px;
+  aspect-ratio: auto;
+  height: auto;
+  min-height: min(520px, 70vh);
+  overflow-y: auto;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 @media (max-width: 768px) {
@@ -146,6 +156,17 @@
   letter-spacing: 0.01em;
 }
 
+/* Organic envelope — the wordmark materializes instead of a sender line. */
+.rf-envelope__greeting--brand {
+  color: var(--rf-brass);
+  font-style: normal;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em; /* optical centre for the tracked-out wordmark */
+  text-shadow: 0 0 24px rgba(252, 177, 49, 0.35);
+}
+
 .rf-envelope__word {
   display: inline-block;
   margin-right: 0.28em;
@@ -180,7 +201,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: center;
-  gap: 18px;
+  gap: 14px;
 }
 
 .rf-plate {
@@ -188,6 +209,14 @@
   margin: 0 auto;
   width: min(76vw, 300px);
   filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 44px rgba(252, 177, 49, 0.06));
+}
+
+/* Short phones: the plate yields height before the CTA yields the fold —
+   the intake chips and the button both stay above it. */
+@media (max-width: 899px) and (max-height: 880px) {
+  .rf-hero__plate {
+    width: min(72vw, 300px, 32svh);
+  }
 }
 
 .rf-hero__plate {
@@ -270,7 +299,7 @@
 }
 
 .rf-line {
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   color: var(--rf-muted);
   font-size: 0.9375rem;
   font-weight: 500;
@@ -327,6 +356,162 @@
 
 .rf-intake.is-open .rf-intake__content {
   opacity: 1;
+}
+
+/* ═══ The intake, in plate idiom — hero chips (organic) and the same
+       chips inside the folded "change it" section (niggle link) ══════ */
+
+.rf-pick {
+  margin: 14px 0 2px;
+}
+
+.rf-pick__label {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--rf-soft);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.rf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Phones keep each chip row to one scrolling line — wrap height stays out
+   of the hero so the CTA keeps its fold. */
+@media (max-width: 768px) {
+  .rf-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -4px;
+    padding: 0 4px;
+  }
+
+  .rf-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rf-chip {
+    flex-shrink: 0;
+  }
+}
+
+/* A hairline chip — thin rules, letterspaced label, brass on select: the
+   ReachPlate engraving idiom carried into a control. */
+.rf-chip {
+  padding: 7px 13px;
+  color: var(--rf-muted);
+  background: rgba(122, 235, 216, 0.03);
+  border: 1px solid rgba(122, 235, 216, 0.22);
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    color 200ms var(--rf-curve),
+    border-color 200ms var(--rf-curve),
+    background 200ms var(--rf-curve),
+    box-shadow 200ms var(--rf-curve);
+}
+
+.rf-chip:hover {
+  color: var(--rf-ink);
+  border-color: rgba(122, 235, 216, 0.45);
+}
+
+.rf-chip:focus-visible {
+  outline: 2px solid var(--rf-teal-bright);
+  outline-offset: 2px;
+}
+
+.rf-chip.is-selected {
+  color: var(--rf-brass);
+  background: rgba(252, 177, 49, 0.08);
+  border-color: rgba(252, 177, 49, 0.55);
+  box-shadow: 0 0 14px rgba(252, 177, 49, 0.12);
+}
+
+/* Context chips sit one register quieter than the joint row. */
+.rf-chip--context {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  border-color: rgba(122, 235, 216, 0.16);
+}
+
+/* The context row unfolds on pick — same grid-rows trick as .rf-intake. */
+.rf-unfold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 420ms var(--rf-curve);
+}
+
+.rf-unfold.is-open {
+  grid-template-rows: 1fr;
+}
+
+.rf-unfold__content {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 340ms var(--rf-curve) 40ms;
+}
+
+.rf-unfold.is-open .rf-unfold__content {
+  opacity: 1;
+}
+
+.rf-unfold__content .rf-pick__label {
+  margin-top: 10px;
+}
+
+/* "Send this to a friend" — the quiet door inside the unfolded intake. */
+.rf-send {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.rf-send__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 0;
+  color: rgba(153, 246, 228, 0.65);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(153, 246, 228, 0.25);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    color 200ms var(--rf-curve),
+    border-color 200ms var(--rf-curve);
+}
+
+.rf-send__button:hover {
+  color: rgba(153, 246, 228, 0.9);
+  border-bottom-color: rgba(153, 246, 228, 0.5);
+}
+
+.rf-send__button:focus-visible {
+  outline: 2px solid var(--rf-teal-bright);
+  outline-offset: 3px;
+}
+
+.rf-send__status {
+  color: var(--rf-soft);
+  font-size: 0.6875rem;
 }
 
 /* ═══ Seams — canvas pixel dissolve over a brass hairline ═════════════ */
@@ -446,27 +631,116 @@
   line-height: 1.5;
 }
 
-/* Beat 2 — the company: five figure marks, two lit brass. */
-.rf-marks {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  margin: 20px 0 4px;
+/* Beat 2 — the company: the three flagship zones, the answered niggle's
+   block lit brass. */
+.rf-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 22px auto 4px;
+  max-width: 30rem;
 }
 
-.rf-mark {
-  width: 30px;
+.rf-stat {
+  padding: 14px 10px 12px;
+  border-top: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  border-bottom: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  text-align: center;
+  transition:
+    border-color 400ms var(--rf-curve),
+    background 400ms var(--rf-curve);
+}
+
+.rf-stat__zone {
+  display: block;
+  color: var(--rf-soft);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.rf-stat__figure {
+  display: block;
+  margin-top: 6px;
+  color: var(--rf-ink);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.rf-stat.is-lit {
+  border-top-color: var(--rf-brass);
+  border-bottom-color: var(--rf-brass);
+  background: rgba(252, 177, 49, 0.06);
+}
+
+.rf-stat.is-lit .rf-stat__zone {
+  color: var(--rf-brass);
+}
+
+.rf-stat.is-lit .rf-stat__figure {
+  color: var(--rf-brass);
+  text-shadow: 0 0 16px rgba(252, 177, 49, 0.3);
+}
+
+@media (max-width: 420px) {
+  .rf-stat__figure {
+    font-size: 1.05rem;
+  }
+}
+
+/* Fig 2 — the coach arm as a plate: brass-ruled frame, engraved captions. */
+.rf-arm-plate {
+  margin: 22px auto 0;
+  width: min(78vw, 300px);
+  padding: 10px 10px 8px;
+  border: 1px solid var(--sandow-rule, rgba(252, 177, 49, 0.4));
+  border-radius: 3px;
+  outline: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+  outline-offset: 3px;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 40%, rgba(11, 42, 44, 0.5), transparent 80%),
+    rgba(6, 16, 19, 0.55);
+  filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.45));
+}
+
+.rf-arm-plate__caption,
+.rf-arm-plate__num {
+  display: block;
+  color: var(--rf-soft);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.rf-arm-plate__caption {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+}
+
+.rf-arm-plate__media {
+  padding: 10px 4px 6px;
+}
+
+.rf-arm-plate__img {
+  display: block;
+  width: 100%;
   height: auto;
-  fill: none;
-  stroke: rgba(122, 235, 216, 0.4);
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
-.rf-mark.is-lit {
-  stroke: var(--rf-brass);
-  filter: drop-shadow(0 0 6px rgba(252, 177, 49, 0.35));
+.rf-arm-plate__num {
+  padding-top: 6px;
+  border-top: 1px solid var(--sandow-rule-quiet, rgba(252, 177, 49, 0.18));
+}
+
+@media (min-width: 900px) {
+  .rf-arm-plate {
+    width: min(100%, 340px);
+  }
 }
 
 /* Beat 3 — the three watched things light as the rep scrubs through. */
@@ -595,7 +869,7 @@
 
 @media (max-width: 520px) {
   .rf-inner {
-    padding: 20px 16px 0;
+    padding: 14px 16px 0;
   }
 }
 
@@ -620,6 +894,9 @@
 
   .rf-intake,
   .rf-intake__content,
+  .rf-unfold,
+  .rf-unfold__content,
+  .rf-stat,
   .rf-seam__rule::after,
   .rf-read-labels span {
     transition: none;

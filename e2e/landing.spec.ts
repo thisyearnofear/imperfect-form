@@ -38,6 +38,7 @@ test.describe('landing — CTA is reachable', () => {
     const context = await browser.newContext(PHONE);
     const page = await context.newPage();
     try {
+      await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
       await page.goto('/');
       await expect(page.locator(CTA)).toBeAttached({ timeout: 20000 });
       // Let the foyer finish entering before measuring.
@@ -68,6 +69,7 @@ test.describe('landing — CTA is reachable', () => {
     const context = await browser.newContext(PHONE);
     const page = await context.newPage();
     try {
+      await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
       await page.goto('/');
       await expect(page.locator(CTA)).toBeAttached({ timeout: 20000 });
       await page.waitForTimeout(1200);
@@ -98,6 +100,7 @@ test.describe('landing — CTA is reachable', () => {
     const context = await browser.newContext(PHONE);
     const page = await context.newPage();
     try {
+      await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
       await page.goto('/');
       await expect(page.locator(CTA)).toBeAttached({ timeout: 20000 });
       await page.waitForTimeout(1200);
@@ -118,18 +121,20 @@ test.describe('landing — CTA is reachable', () => {
 });
 
 test.describe('landing — copy is not painted over', () => {
-  test('the hero arm cutout never overlaps the copy column', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
+  });
+
+  test('the Fig 1 plate never overlaps the copy column', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#startButton')).toBeVisible({ timeout: 20000 });
     await page.waitForTimeout(1000);
 
     const overlap = await page.evaluate(() => {
-      const arm =
-        document.querySelector('.coach-foyer__arm--aside .demo-plate') ||
-        document.querySelector('.coach-foyer__arm--inline .demo-plate');
-      const copy = document.querySelector('.coach-foyer__hero-copy');
-      if (!arm || !copy) return { found: false, overlap: false };
-      const ra = arm.getBoundingClientRect();
+      const plate = document.querySelector('.rf-hero__plate .reach-plate');
+      const copy = document.querySelector('.rf-hero__copy');
+      if (!plate || !copy) return { found: false, overlap: false };
+      const ra = plate.getBoundingClientRect();
       const rb = copy.getBoundingClientRect();
       return {
         found: true,
@@ -137,8 +142,8 @@ test.describe('landing — copy is not painted over', () => {
           ra.left < rb.right && rb.left < ra.right && ra.top < rb.bottom && rb.top < ra.bottom,
       };
     });
-    expect(overlap.found, 'hero arm image not found').toBe(true);
-    expect(overlap.overlap, 'arm image overlaps the copy column').toBe(false);
+    expect(overlap.found, 'Fig 1 plate not found').toBe(true);
+    expect(overlap.overlap, 'Fig 1 plate overlaps the copy column').toBe(false);
   });
 
   test('no session controls render before a set starts', async ({ page }) => {
@@ -164,6 +169,7 @@ test('landing — mobile: the primary CTA is operable on a phone', async ({ brow
   });
   const page = await context.newPage();
   try {
+    await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
     await page.goto('/');
     const cta = page.locator(CTA);
     await expect(cta).toBeVisible({ timeout: 20000 });
@@ -176,70 +182,49 @@ test('landing — mobile: the primary CTA is operable on a phone', async ({ brow
   }
 });
 
-test.describe('landing — pain intent chips', () => {
-  const SUBHEAD_DEFAULT =
-    'The camera reads how the joint moves today. Come back in a week and see what changed.';
-
-  test('no chip selected: default subhead, curls preselected', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('.coach-foyer__lede')).toHaveText(SUBHEAD_DEFAULT, {
-      timeout: 20000,
-    });
-    await expect(page.locator('.coach-foyer__pain-chip.is-selected')).toHaveCount(0);
-    await expect(
-      page.locator('.coach-foyer__exercise.is-selected', { hasText: 'Curls' })
-    ).toHaveCount(1);
-    await expect(page.locator('.ls-familiar__hint')).toBeVisible();
+test.describe('landing — organic intake chips', () => {
+  test.beforeEach(async ({ page }) => {
+    // Settled hero, not Act 0 — the envelope is covered in niggle-link.spec.
+    await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
   });
 
-  test('each chip changes subhead, move, familiar beats; persists across reload', async ({
+  test('no chip selected: wordmark hero, niggle title, one-rep CTA', async ({ page }) => {
+    await page.goto('/');
+    const foyer = page.locator('.receiving-foyer');
+    await expect(foyer).toBeVisible({ timeout: 20000 });
+    await expect(foyer.locator('.rf-sent-by')).toHaveText('NIGGLEOMETER');
+    await expect(foyer.locator('#rf-title')).toContainText('niggle');
+    await expect(foyer.locator('.rf-chip.is-selected')).toHaveCount(0);
+    await expect(foyer.locator('#startButton')).toContainText('Try one rep');
+  });
+
+  test('each chip retitles the hero and carries its protocol move; persists across reload', async ({
     page,
   }) => {
-    const cases: { chip: string; move: string; subhead: RegExp; familiar: RegExp }[] = [
+    const cases: { chip: string; move: string; title: RegExp; ctaLabel: RegExp }[] = [
       {
         chip: 'My neck & shoulders',
-        move: 'Curls',
-        subhead: /cannot photograph tension/,
-        familiar: /most-searched ache/,
+        move: 'reach',
+        title: /neck & shoulders/,
+        ctaLabel: /Take a \d+-rep reading/,
       },
-      {
-        chip: 'My lower back',
-        move: 'Squats',
-        subhead: /chair-shaped ache/,
-        familiar: /Hours in a chair/,
-      },
-      {
-        chip: 'My knee',
-        move: 'Squats',
-        subhead: /Stairs ask for controlled depth/,
-        familiar: /Stair pain usually travels/,
-      },
-      {
-        chip: 'My arm or elbow',
-        move: 'Curls',
-        subhead: /Grip is downstream/,
-        familiar: /Weak-feeling grip/,
-      },
-      {
-        chip: 'Not sure',
-        move: 'Curls',
-        subhead: /camera sees the rep/,
-        familiar: /cannot see it/,
-      },
+      { chip: 'My lower back', move: 'squats', title: /lower back/, ctaLabel: /Try one rep/ },
+      { chip: 'My knee', move: 'squats', title: /knee/, ctaLabel: /Try one rep/ },
+      { chip: 'My arm or elbow', move: 'curls', title: /arm/, ctaLabel: /Take a \d+-rep reading/ },
+      { chip: 'Not sure', move: 'curls', title: /movement/, ctaLabel: /Take a \d+-rep reading/ },
     ];
     for (const c of cases) {
       await page.goto('/');
       const chip = page.getByRole('button', { name: new RegExp(c.chip) });
       await expect(chip).toBeVisible({ timeout: 20000 });
       await chip.click();
-      await expect(page.locator('.coach-foyer__lede')).toHaveText(c.subhead);
-      await expect(
-        page.locator('.coach-foyer__exercise.is-selected', { hasText: c.move })
-      ).toHaveCount(1);
-      await expect(page.locator('.ls-familiar__body')).toContainText(c.familiar);
+      const foyer = page.locator('.receiving-foyer');
+      await expect(foyer.locator('#rf-title')).toContainText(c.title);
+      await expect(page.locator('body')).toHaveAttribute('data-coach-mode', c.move);
+      await expect(foyer.locator('#startButton')).toContainText(c.ctaLabel);
       // Second click clears.
       await chip.click();
-      await expect(page.locator('.coach-foyer__lede')).toHaveText(SUBHEAD_DEFAULT);
+      await expect(foyer.locator('#rf-title')).toContainText('niggle');
     }
 
     // Persistence across reload — joint + its resolved context both stay lit.
@@ -248,32 +233,49 @@ test.describe('landing — pain intent chips', () => {
       '{"joint":"neck-shoulders","context":"desk"}'
     );
     await page.reload();
-    await expect(page.locator('.coach-foyer__lede')).toHaveText(/cannot photograph tension/);
-    await expect(page.locator('.coach-foyer__pain-chip.is-selected')).toHaveCount(2);
+    const foyer = page.locator('.receiving-foyer');
+    await expect(foyer.locator('#rf-title')).toContainText('neck & shoulders');
+    await expect(foyer.locator('.rf-chip.is-selected')).toHaveCount(2);
   });
 
   test('chips are keyboard operable with visible focus', async ({ page }) => {
     await page.goto('/');
-    const chip = page.getByRole('button', { name: /My knee/ });
+    const chip = page.getByRole('button', { name: 'My knee' });
     await expect(chip).toBeVisible({ timeout: 20000 });
     await chip.focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('.coach-foyer__lede')).toHaveText(/Stairs ask for controlled depth/);
+    await expect(page.locator('.receiving-foyer #rf-title')).toContainText('knee');
     await expect(chip).toBeFocused();
     const outline = await chip.evaluate((el) => getComputedStyle(el).outlineWidth);
     expect(parseFloat(outline)).toBeGreaterThan(0);
   });
 
-  test('trust section table shows the real gate numbers', async ({ page }) => {
+  test('the honesty beat carries the trust ledger', async ({ page }) => {
     await page.goto('/');
-    const details = page.locator('.ls-trust__details');
-    await expect(details).toBeAttached({ timeout: 20000 });
-    await details.locator('summary').click();
-    const table = details.locator('table');
-    await expect(table).toContainText('critical < 0.3');
-    await expect(table).toContainText('critical > 45 deg');
-    await expect(table).toContainText('flag > 30 deg');
-    await expect(table).toContainText('squats only');
+    const honesty = page.locator('.rf-beat[aria-label="The honesty"]');
+    await honesty.scrollIntoViewIfNeeded();
+    await expect(honesty).toBeVisible({ timeout: 20000 });
+    await expect(honesty).toContainText('video never uploads');
+    await expect(honesty).toContainText('reads stay in this browser');
+    await expect(honesty).toContainText('wellness guidance, not medicine');
+  });
+
+  test('the company beat shows all three flagship zones and lights the answered one', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const company = page.locator('.rf-beat[aria-label="The company"]');
+    await company.scrollIntoViewIfNeeded();
+    await expect(company).toContainText('Back');
+    await expect(company).toContainText('Neck & shoulders');
+    await expect(company).toContainText('Knee');
+    await expect(company.locator('.rf-stat.is-lit')).toHaveCount(0);
+    await expect(company.locator('h2')).toContainText('Whichever it is');
+
+    await page.getByRole('button', { name: 'My knee' }).click();
+    await expect(company.locator('.rf-stat.is-lit')).toHaveCount(1);
+    await expect(company.locator('.rf-stat.is-lit')).toContainText('Knee');
+    await expect(company.locator('h2')).toContainText('enormous, invisible company');
   });
 
   test('CTA stays above the fold with a chip selected', async ({ browser }) => {
@@ -288,8 +290,9 @@ test.describe('landing — pain intent chips', () => {
       });
       const page = await context.newPage();
       try {
+        await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
         await page.goto('/');
-        const chip = page.getByRole('button', { name: /My back or knees/ });
+        const chip = page.getByRole('button', { name: 'My knee' });
         await expect(chip).toBeVisible({ timeout: 20000 });
         await chip.click();
         const bottom = await page
@@ -308,23 +311,29 @@ test.describe('landing — pain intent chips', () => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
     try {
+      await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
       await page.goto('/');
-      const chip = page.getByRole('button', { name: /I train alone/ });
+      const chip = page.getByRole('button', { name: 'My knee' });
       await expect(chip).toBeVisible({ timeout: 20000 });
       await chip.click();
-      // lf-swap is animation:none under reduced motion; the text is simply there.
-      await expect(page.locator('.coach-foyer__lede')).toHaveText(/No spotter, no trainer/);
-      const anim = await page
-        .locator('.coach-foyer__lede')
-        .evaluate((el) => getComputedStyle(el).animationName);
-      expect(anim).toBe('none');
+      // The context-row unfold is transition:none under reduced motion; the
+      // retitle is instant.
+      await expect(page.locator('.receiving-foyer #rf-title')).toContainText('knee');
+      const transition = await page
+        .locator('.rf-unfold')
+        .first()
+        .evaluate((el) => getComputedStyle(el).transitionDuration);
+      // Chromium reports transition:none as a ~0s duration (1e-05s).
+      expect(Number.parseFloat(transition)).toBeLessThan(0.05);
     } finally {
       await context.close();
     }
   });
 });
 
-test('landing — mobile: squat chip selects and reveals the Squats card', async ({ browser }) => {
+test('landing — mobile: knee chip selects squats; the Squats card confirms in the unfold', async ({
+  browser,
+}) => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,
@@ -333,32 +342,36 @@ test('landing — mobile: squat chip selects and reveals the Squats card', async
   });
   const page = await context.newPage();
   try {
+    await page.addInitScript(() => sessionStorage.setItem('imf_rf_envelope_v1', '1'));
     await page.goto('/');
-    const chip = page.getByRole('button', { name: /My back or knees/ });
+    const chip = page.getByRole('button', { name: 'My knee' });
     await expect(chip).toBeVisible({ timeout: 20000 });
     await chip.click();
-    await page.waitForTimeout(1000);
 
     await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'squats');
 
-    const squatsCard = page.locator('.coach-foyer__exercise', { hasText: 'Squats' });
+    // The movement picker is unfolded on demand — the Squats card shows the
+    // same selection the chip already committed.
+    await page.getByRole('button', { name: 'or pick a movement' }).click();
+    const squatsCard = page
+      .locator('#rf-moves .coach-foyer__exercise', { hasText: 'Squats' })
+      .first();
+    await expect(squatsCard).toBeVisible();
     await expect(squatsCard).toHaveAttribute('aria-pressed', 'true');
-    const cardRect = await squatsCard.boundingBox();
-    expect(cardRect && cardRect.y >= 0 && cardRect.y + cardRect.height <= 844).toBeTruthy();
 
-    // The selected chip is fully visible inside its horizontal scroll row.
+    // The selected chip is fully visible inside its wrap row.
     const chipFullyVisible = await chip.evaluate((el) => {
       const chipRect = el.getBoundingClientRect();
       const row = el.parentElement!.getBoundingClientRect();
       return chipRect.left >= row.left - 1 && chipRect.right <= row.right + 1;
     });
-    expect(chipFullyVisible, 'selected chip clipped by the scroll row').toBe(true);
+    expect(chipFullyVisible, 'selected chip clipped by the chip row').toBe(true);
   } finally {
     await context.close();
   }
 });
 
-test('landing — mobile: a chip restored from storage applies its mode', async ({ browser }) => {
+test('landing — mobile: a joint restored from storage applies its mode', async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,
@@ -367,11 +380,17 @@ test('landing — mobile: a chip restored from storage applies its mode', async 
   });
   const page = await context.newPage();
   try {
-    await page.addInitScript(() => localStorage.setItem('imf_painIntent_v1', 'squat'));
+    await page.addInitScript(() => {
+      localStorage.setItem('imf_niggle_v1', '{"joint":"knee","context":"chairs"}');
+      sessionStorage.setItem('imf_rf_envelope_v1', '1');
+    });
     await page.goto('/');
-    const squatsCard = page.locator('.coach-foyer__exercise', { hasText: 'Squats' });
-    await expect(squatsCard).toHaveAttribute('aria-pressed', 'true', { timeout: 20000 });
-    await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'squats');
+    await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'squats', {
+      timeout: 20000,
+    });
+    const foyer = page.locator('.receiving-foyer');
+    await expect(foyer.locator('#rf-title')).toContainText('knee');
+    await expect(foyer.locator('.rf-chip.is-selected').first()).toBeVisible();
   } finally {
     await context.close();
   }

@@ -5,11 +5,18 @@ import { test, expect } from '@playwright/test';
  * the core loop must be fully usable with NO wallet, NO sign-in, NOTHING.
  * If any of these fail, someone has re-gated the front door.
  *
- * Day-0 doorway is CoachFoyer (studio). One screen, one button, one
- * permission: the foyer IS the landing experience (no boot gate, no
- * pre-screens); the browser's camera prompt is the consent UX; the primer
- * survives only as denial-recovery.
+ * Day-0 doorway is the receiving foyer ("Fig 1", studio register) — the same
+ * surface for organic arrivals and `?niggle=` links (docs/RECEIVING_EXPERIENCE.md
+ * "Organic variant"). One screen, one button, one permission: the foyer IS
+ * the landing experience (no boot gate, no pre-screens); the browser's camera
+ * prompt is the consent UX; the primer survives only as denial-recovery.
  */
+
+// Skip Act 0 — the envelope only plays once per session and is covered by
+// niggle-link.spec.ts; these tests assert the settled surface.
+const SKIP_ENVELOPE = () => {
+  sessionStorage.setItem('imf_rf_envelope_v1', '1');
+};
 
 test.describe('Ring 0 - wallet-free core loop', () => {
   // Dev-mode cold compiles on mobile UA bundles can be slow.
@@ -21,6 +28,7 @@ test.describe('Ring 0 - wallet-free core loop', () => {
       localStorage.clear();
       localStorage.setItem('imf_seenOnboarding_v1', '1'); // skip onboarding modal
       localStorage.setItem('imf_skipWalletIntro', '1'); // skip intro dialog
+      sessionStorage.setItem('imf_rf_envelope_v1', '1'); // settled hero, not Act 0
     });
   });
 
@@ -36,11 +44,12 @@ test.describe('Ring 0 - wallet-free core loop', () => {
 
   test('day-0 foyer is studio coaching doorway, not XP chrome', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.coach-foyer__brand')).toHaveText('Imperfect Form');
-    await expect(page.getByRole('heading', { name: /Your niggle/i })).toBeVisible({
-      timeout: 20000,
-    });
-    await expect(page.getByText(/Your camera catches one form error/i)).toBeVisible();
+    const foyer = page.locator('.receiving-foyer');
+    await expect(foyer).toBeVisible({ timeout: 20000 });
+    // Organic arrivals get the wordmark, not a sender line.
+    await expect(foyer.locator('.rf-sent-by')).toHaveText('NIGGLEOMETER');
+    await expect(page.getByRole('heading', { name: /Your niggle/i })).toBeVisible();
+    await expect(foyer.getByText(/camera watches; nothing leaves your phone/i)).toBeVisible();
     // The status pill, provenance and promise lines were removed from the hero.
     await expect(page.locator('.coach-foyer__coach-status')).toHaveCount(0);
     await expect(page.locator('.sandow-provenance')).toHaveCount(0);
@@ -81,23 +90,38 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.getByText(/^🔧 Debug$/)).toHaveCount(0);
     const start = page.locator('#startButton');
     await expect(start).toBeEnabled();
-    await expect(start).toHaveText(/Take a reading/i);
-    await expect(start).toHaveAccessibleName(/Take a Curls reading/i);
+    // No niggle answered yet — the CTA honestly promises a single rep.
+    await expect(start).toHaveText(/Try one rep/i);
+    await expect(start).toHaveAccessibleName(/Try one rep/i);
     // Day-0 is coaching, not a wallet/tutorial wall.
     await expect(page.getByText(/Connect to sync/i)).toHaveCount(0);
     await expect(page.getByText(/on-chain at 5/i)).toHaveCount(0);
-    await expect(page.getByText(/1\.5–2\.5/)).toHaveCount(0);
-    await expect(page.getByRole('button', { name: /Set your frame/i })).toBeVisible();
+    // Framing guidance lives in the outro FAQ now, not a hero disclosure.
+    await expect(page.getByText(/How should I set up the camera\?/i).first()).toBeAttached();
   });
 
-  test('foyer leads with robot-native coaching; depth is earned/demoted', async ({ page }) => {
+  test('foyer leads with the niggle intake; the movement picker stays demoted', async ({
+    page,
+  }) => {
     await page.goto('/');
-    await expect(page.locator('#startButton')).toBeEnabled({ timeout: 20000 });
+    const start = page.locator('#startButton');
+    await expect(start).toBeEnabled({ timeout: 20000 });
 
-    // Primary movements lead with the flagship robot-native path, plus a
-    // familiar camera-coaching exercise.
-    const curls = page.getByRole('button', { name: /Curls/i }).first();
-    const pushups = page.getByRole('button', { name: /Push-ups/i }).first();
+    // The intake is the hero: joint chips before any exercise card.
+    const neck = page.getByRole('button', { name: 'My neck & shoulders' });
+    await expect(neck).toBeVisible();
+    await expect(neck).toHaveAttribute('aria-pressed', 'false');
+
+    // All six movements live behind one quiet link — the unfold starts
+    // collapsed (clipped, so assert the toggle state rather than visibility).
+    const movesToggle = page.getByRole('button', { name: 'or pick a movement' });
+    await expect(movesToggle).toHaveAttribute('aria-expanded', 'false');
+    await movesToggle.click();
+    await expect(movesToggle).toHaveAttribute('aria-expanded', 'true');
+
+    const moves = page.locator('#rf-moves');
+    const curls = moves.getByRole('button', { name: /Curls/i });
+    const pushups = moves.getByRole('button', { name: /Push-ups/i });
     await expect(curls).toBeVisible();
     await expect(pushups).toBeVisible();
     await expect(curls).toHaveAttribute('aria-pressed', 'true');
@@ -106,30 +130,38 @@ test.describe('Ring 0 - wallet-free core loop', () => {
     await expect(page.locator('body')).toHaveAttribute('data-coach-mode', 'pushups');
     await expect(curls).toHaveAttribute('aria-pressed', 'false');
     await expect(pushups).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('#startButton')).toHaveText(/Take a reading/i);
-    await expect(page.locator('#startButton')).toHaveAccessibleName(/Take a Push-ups reading/i);
+    await expect(start).toHaveText(/Try one rep/i);
     // The robot-native proof case is signposted at the point of choice:
-    // exactly one chip, on the Curls card, never on the camera-only card.
-    await expect(page.locator('.coach-foyer__robot-chip')).toHaveCount(1);
+    // one robot chip on the Curls card, never on the camera-only card.
+    // (Squats carries its own "Mobility check" chip in the same unfold.)
+    await expect(page.locator('.coach-foyer__robot-chip:not(.is-mobility)')).toHaveCount(1);
     await expect(curls.locator('.coach-foyer__robot-chip')).toBeVisible();
     await expect(pushups.locator('.coach-foyer__robot-chip')).toHaveCount(0);
+    // Squats, pull-ups, jumps ride the same unfold — no second tier.
+    const squats = moves.getByRole('button', { name: /Squats/i });
+    await expect(squats).toBeVisible();
+    await expect(squats.locator('.coach-foyer__robot-chip.is-mobility')).toHaveCount(1);
 
-    // Lower-body and additional movements stay behind explicit, demoted toggles.
-    await expect(page.getByRole('button', { name: /Squats/i })).toHaveCount(0);
-    // The privacy line is stated plainly under the CTA, not behind a toggle.
-    await expect(page.getByText(/Pose detection runs on your device/i).first()).toBeVisible();
+    // Let the unfold + ScrollTrigger refresh settle before measuring beats.
+    await page.waitForTimeout(800);
 
-    await page.getByRole('button', { name: /More movements/i }).click();
-    await expect(page.getByRole('button', { name: /Squats/i }).first()).toBeVisible();
+    // The privacy promise is a hairline ledger line in the honesty beat.
+    const honesty = page.locator('.rf-beat[aria-label="The honesty"]');
+    await honesty.scrollIntoViewIfNeeded();
+    await expect(honesty.getByText(/video never uploads/i)).toBeVisible();
 
-    // How it works is a landing section, not a hero disclosure.
-    await page.locator('.ls-how').scrollIntoViewIfNeeded();
-    await expect(page.getByText(/Camera reads your form/i)).toBeVisible();
-    await expect(page.getByText(/Coach names one fix/i)).toBeVisible();
-    await expect(page.getByText(/The arm shows it/i)).toBeVisible();
+    // How it works is compressed to three hairline rows on the coach-arm beat.
+    const arm = page.locator('.rf-beat[aria-label="The coach arm"]');
+    await arm.scrollIntoViewIfNeeded();
+    await expect(arm.getByText(/Camera reads your form/i)).toBeVisible();
+    await expect(arm.getByText(/Coach names one fix/i)).toBeVisible();
+    await expect(arm.getByText(/The arm shows it/i)).toBeVisible();
 
-    await page.getByRole('button', { name: /Set your frame/i }).click();
-    await expect(page.getByText(/1\.5–2\.5/)).toBeVisible();
+    // Camera framing is a FAQ answer now — same guidance, no hero toggle.
+    const frameQ = page.locator('.ls-faq__item', { hasText: 'How should I set up the camera?' });
+    await frameQ.scrollIntoViewIfNeeded();
+    await frameQ.locator('summary').click();
+    await expect(frameQ.getByText(/1\.5 to 2\.5/)).toBeVisible();
   });
 
   test('first START asks the browser directly — denial gets the recovery card', async ({
@@ -189,6 +221,7 @@ test.describe('Ring 0 - landing hero', () => {
     localStorage.clear();
     localStorage.setItem('imf_seenOnboarding_v1', '1');
     localStorage.setItem('imf_skipWalletIntro', '1');
+    SKIP_ENVELOPE();
   };
 
   test('hero CTA is fully visible without scrolling at 1280x720', async ({ browser }) => {
@@ -234,7 +267,7 @@ test.describe('Ring 0 - landing hero', () => {
     }
   });
 
-  test('Plate I is visible on a 390x844 phone, under the fold-safe CTA', async ({ browser }) => {
+  test('Fig 1 — the living plate is visible on a 390x844 phone', async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       deviceScaleFactor: 2,
@@ -245,44 +278,48 @@ test.describe('Ring 0 - landing hero', () => {
     try {
       await page.addInitScript(FRESH_GUEST);
       await page.goto('/');
-      const plate = page.locator('.coach-foyer__arm--inline .demo-plate');
+      const plate = page.locator('.rf-hero__plate .reach-plate');
       await expect(plate).toBeVisible({ timeout: 20000 });
       const box = await plate.boundingBox();
-      expect(box && box.height > 80, 'demo plate collapsed on mobile').toBeTruthy();
+      expect(box && box.height > 80, 'hero plate collapsed on mobile').toBeTruthy();
+      // The engraved caption keeps "Fig 1 · The Reach" regardless of joint.
+      await expect(plate.locator('.rp-caption')).toHaveText('· Fig 1 · The Reach ·');
     } finally {
       await context.close();
     }
   });
 
-  test('demo plate pauses when scrolled offscreen', async ({ page }) => {
+  test('the Fig 2 coach arm plate rides the scroll story', async ({ page }) => {
     await page.addInitScript(FRESH_GUEST);
     await page.goto('/');
-    const plate = page.locator('.demo-plate:visible').first();
-    await expect(plate).toBeAttached({ timeout: 20000 });
-    await expect(plate).toHaveAttribute('data-playing', 'true');
-    await page.locator('.ls-final').scrollIntoViewIfNeeded();
-    await expect(plate).toHaveAttribute('data-playing', 'false');
+    const arm = page.locator('.rf-beat[aria-label="The coach arm"]');
+    await arm.scrollIntoViewIfNeeded();
+    await expect(arm).toBeVisible({ timeout: 20000 });
+    await expect(arm.locator('.rf-arm-plate')).toBeVisible();
+    await expect(arm.locator('.rf-arm-plate__img')).toHaveAttribute(
+      'src',
+      /so101-follower-cutout\.webp/
+    );
+    await expect(arm.locator('.rf-arm-plate')).toContainText('Fig 2 · The Coach Arm');
   });
 
-  test('reduced motion renders the static final frame', async ({ browser }) => {
+  test('reduced motion rests the plate at the raised pose, pips filled', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
     try {
       await page.addInitScript(FRESH_GUEST);
       await page.goto('/');
-      const plate = page.locator('.demo-plate:visible').first();
-      await expect(plate).toBeAttached({ timeout: 20000 });
-      await expect(plate.locator('.demo-plate__stamp-text')).toBeAttached();
-      const animName = await plate
-        .locator('.demo-plate__stamp')
-        .evaluate((el) => getComputedStyle(el).animationName);
-      expect(animName).toBe('none');
+      // Reduced motion: no envelope, the figure static at the raised pose.
+      await expect(page.locator('.rf-envelope')).toHaveCount(0);
+      const plate = page.locator('.rf-hero__plate .reach-plate');
+      await expect(plate).toBeVisible({ timeout: 20000 });
+      await expect(plate.locator('.rp-pip.is-lit')).toHaveCount(5);
     } finally {
       await context.close();
     }
   });
 
-  test('sticky mini CTA appears on mobile and starts the same flow', async ({ browser }) => {
+  test('the outro CTA mirrors the hero and starts the same flow', async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       deviceScaleFactor: 2,
@@ -293,12 +330,11 @@ test.describe('Ring 0 - landing hero', () => {
     try {
       await page.addInitScript(FRESH_GUEST);
       await page.goto('/');
-      const mini = page.locator('.coach-foyer__mini-cta');
-      await expect(mini).toHaveAttribute('data-visible', 'false');
-      // Land the viewport between the hero CTA and the final CTA.
-      await page.locator('.ls-faq').evaluate((el) => el.scrollIntoView({ block: 'end' }));
-      await expect(mini).toHaveAttribute('data-visible', 'true');
-      await mini.locator('.coach-foyer__start').click();
+      const finale = page.locator('.rf-final');
+      await expect(finale).toBeAttached({ timeout: 20000 });
+      await finale.scrollIntoViewIfNeeded();
+      await expect(finale.locator('.reach-plate')).toBeVisible({ timeout: 20000 });
+      await finale.locator('.rf-cta').click();
       // Same side effect as the hero CTA: camera flow starts, denial recovery shows.
       await expect(page.getByText('Camera is off')).toBeVisible({ timeout: 8000 });
     } finally {
@@ -326,71 +362,31 @@ test.describe('Ring 0 - landing hero', () => {
     }
   });
 
-  test('tagline words reach full opacity after scrolling through them', async ({ page }) => {
+  test('every beat reveals on scroll — nothing stays hidden', async ({ page }) => {
     await page.addInitScript(FRESH_GUEST);
     await page.goto('/');
-    const tagline = page.locator('.ls-tagline');
-    await expect(tagline).toBeAttached({ timeout: 20000 });
-    await tagline.scrollIntoViewIfNeeded();
-    // Scroll until the LAST word sits above the 70% trigger line, then let the
-    // transitions land.
-    await page.evaluate(() => {
-      const words = document.querySelectorAll('.ls-tagline .ls-word');
-      const last = words[words.length - 1];
-      const top = last.getBoundingClientRect().top;
-      window.scrollBy(0, Math.ceil(top - window.innerHeight * 0.6));
-    });
-    await page.waitForTimeout(800);
-    const dimmed = await page.locator('.ls-tagline .ls-word:not(.is-on)').count();
-    expect(dimmed, 'tagline words stayed at rest opacity after scrolling').toBe(0);
-  });
-
-  test('tagline renders each line once — no duplicated words', async ({ page }) => {
-    await page.addInitScript(FRESH_GUEST);
-    await page.goto('/');
-    const lines = page.locator('.ls-tagline .ls-tagline__line');
-    await expect(lines.first()).toHaveText('One rep. One fix.', { timeout: 20000 });
-    await expect(lines.nth(1)).toHaveText('See the difference on the next rep.');
-  });
-
-  test('plate caption stays on one line at 390px', async ({ browser }) => {
-    const context = await browser.newContext({
-      viewport: { width: 390, height: 844 },
-      deviceScaleFactor: 2,
-      isMobile: true,
-      hasTouch: true,
-    });
-    const page = await context.newPage();
-    try {
-      await page.addInitScript(FRESH_GUEST);
-      await page.goto('/');
-      const caption = page.locator('.coach-foyer__arm--inline .demo-plate__caption');
-      await expect(caption).toBeVisible({ timeout: 20000 });
-      const metrics = await caption.evaluate((el) => {
-        const cs = getComputedStyle(el);
-        const r = el.getBoundingClientRect();
-        const pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
-        return { contentHeight: r.height - pad, lineHeight: parseFloat(cs.lineHeight) };
-      });
-      expect(metrics.contentHeight).toBeLessThan(metrics.lineHeight * 1.5);
-    } finally {
-      await context.close();
+    const beats = page.locator('.rf-beat');
+    await expect(beats).toHaveCount(6, { timeout: 20000 });
+    for (let i = 0; i < 6; i++) {
+      const beat = beats.nth(i);
+      await beat.scrollIntoViewIfNeeded();
+      await expect(beat).toBeVisible();
     }
   });
 
-  test('tagline is fully visible immediately with reduced motion', async ({ browser }) => {
+  test('beats are fully visible immediately with reduced motion', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
     try {
       await page.addInitScript(FRESH_GUEST);
       await page.goto('/');
-      const tagline = page.locator('.ls-tagline');
-      await expect(tagline).toBeAttached({ timeout: 20000 });
-      await tagline.scrollIntoViewIfNeeded();
-      const opacities = await page
-        .locator('.ls-tagline .ls-word')
-        .evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
-      expect(opacities.length).toBeGreaterThan(0);
+      const beats = page.locator('.rf-beat');
+      await expect(beats).toHaveCount(6, { timeout: 20000 });
+      // The scroll choreography no-ops under reduced motion: every beat sits
+      // at full opacity before any scrolling.
+      const opacities = await beats.evaluateAll((els) =>
+        els.map((el) => getComputedStyle(el).opacity)
+      );
       for (const opacity of opacities) {
         expect(Number(opacity)).toBe(1);
       }
@@ -430,13 +426,13 @@ test.describe('Ring 0 - mobile doorway', () => {
       localStorage.clear();
       localStorage.setItem('imf_seenOnboarding_v1', '1');
       localStorage.setItem('imf_skipWalletIntro', '1');
+      sessionStorage.setItem('imf_rf_envelope_v1', '1');
     });
   });
 
   test('portrait phone is not gate-kept by the rotate modal before START', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#startButton')).toBeEnabled({ timeout: 20000 });
-    // Landscape guidance belongs inside a running session, not over the foyer.
-    await expect(page.getByText('Rotate your phone')).toHaveCount(0);
+    await expect(page.getByText(/Rotate your phone|Turn your phone/i)).toHaveCount(0);
   });
 });

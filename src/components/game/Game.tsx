@@ -182,7 +182,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   );
   const [isRace, setIsRace] = useState(false);
   const [hasIncomingChallenge, setHasIncomingChallenge] = useState(false);
-  // `?niggle=` arrivals (no challenge/race) get the receiving experience.
+  // `?niggle=` arrivals (no challenge/race) get the receiving experience's
+  // sender variant; everyone else gets the organic variant — same foyer.
   const [receivedLink, setReceivedLink] = useState(false);
   const [movementChallenge, setMovementChallenge] = useState<MovementChallengePayload | null>(null);
   const challengeUrlParsedRef = useRef(false);
@@ -1253,16 +1254,19 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                     onConnect={() => void actions.connect()}
                   />
                 </div>
-              ) : receivedLink && !hasIncomingChallenge ? (
-                // `?niggle=` arrivals get the receiving experience — the same
-                // start closure as the CoachFoyer (it already resolves
-                // reading:true), the iris rides the shared start fade.
+              ) : !hasIncomingChallenge && !movementChallenge && !searchParams.get('race') ? (
+                // The receiving experience IS the landing: `?niggle=` arrivals
+                // get the sender variant, organic traffic the wordmark variant.
+                // Incoming challenge/race keeps the normal CoachFoyer flow.
+                // Same start closure as the CoachFoyer (it already resolves
+                // reading:true / oneRepTrial), the iris rides the shared fade.
                 <div
                   className={isStarting ? 'coach-foyer--starting receiving-foyer--starting' : ''}
                 >
                   <ReceivingFoyer
                     mode={mode}
                     onModeChange={setMode}
+                    organic={!receivedLink}
                     onStart={() =>
                       handleStart({
                         isRace: hasIncomingChallenge,

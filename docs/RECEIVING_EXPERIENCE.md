@@ -119,11 +119,36 @@ request permission early — the OS prompt still fires on press.
   one-surface copy unless a string is genuinely shared).
 - LandingSections NOT rendered on the receiving path.
 
+## Organic variant (2026-11-03) — this becomes THE landing
+
+The receiving experience replaces the wall-copy foyer for everyone, not
+just `?niggle=` arrivals. Incoming challenge/race still routes to
+CoachFoyer; `?intent=train` still routes to the arcade foyer.
+
+- **Envelope:** organic visitors see the ring + `NIGGLEOMETER`
+  materializing (no sender line). `?from=` keeps "{name} sent you this".
+- **Hero intake:** "Where does it nag?" renders as plate-idiom hairline
+  chips under the title (not a form block). Context row unfolds on pick.
+  CTA stays honest: `Take a N-rep reading` when joint+protocol,
+  `Try one rep` otherwise. "or pick a movement" unfolds the exercise
+  cards for non-niggle visitors; "Send this to a friend" lives in the
+  unfolded intake only.
+- **Company beat generalizes:** show all three flagship zones with their
+  figures (back ~39%, neck/shoulder ~18–43%, knee ~17–36%); highlight the
+  selected joint's stat. Headline adapts: "Whichever it is, you're in
+  company."
+- **Coach arm beat:** one plate-style beat for the SO-101 (Fig 2 · The
+  Coach Arm, existing public/atmosphere imagery + 3-step how-it-works
+  compressed to one line each) between Ritual and Honesty.
+- No movement picker, no "Sound familiar" essay, no standalone trust
+  section — all folded into beats or the outro.
+
 ## Verification
 
 - `pnpm typecheck`, `pnpm lint`, `pnpm vitest run` touched tests.
-- Update `e2e/niggle-link.spec.ts`: receiving hero shows greeting + CTA +
-  plate; "not your niggle" reveals chips; `?niggle=bogus` → normal foyer.
+- Update `e2e/niggle-link.spec.ts`: valid link → greeting + plate + CTA;
+  "not your niggle" reveals chips; `?niggle=bogus` → the organic variant
+  (receiving experience, no sender greeting, intake visible).
 - agent-browser `--session imperfect-form-receive` 390x844: screenshot
   envelope mid-frame, settled hero, each beat, intake unfolded, and a
   reduced-motion variant. /tmp/imf-shots/. Close session, pgrep check.

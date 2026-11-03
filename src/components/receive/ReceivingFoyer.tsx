@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, Camera, ChevronDown, Send } from 'lucide-react';
+import { Activity, ArrowRight, Camera, ChevronDown, Send, Sparkles } from 'lucide-react';
 import { playStudioCue } from '@/lib/uiSound';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { coachStation, type StationStatus } from '@/services/coachStation';
 import {
   getNiggleJoint,
   NIGGLE_JOINTS,
@@ -15,7 +16,6 @@ import {
 } from '@/lib/niggleIntents';
 import { assessmentProtocolFor } from '@/lib/movementAssessment';
 import { useNiggle } from '@/hooks/useNiggle';
-import BodyPlate from '@/components/body/BodyPlate';
 import { prefetchWebcamChunk, prefersReducedMotion } from '@/components/game/CoachFoyer';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import { FAQ_ITEMS } from '@/components/home/LandingSections';
@@ -34,6 +34,10 @@ type ReceivingFoyerProps = {
   mode: ExerciseMode;
   onModeChange: (mode: ExerciseMode) => void;
   onStart: () => void;
+  /** Organic landing variant — wordmark envelope, hero intake chips, the
+   *  movement picker behind "or pick a movement". `?niggle=` arrivals pass
+   *  false and keep the sender greeting + collapsed change-it intake. */
+  organic: boolean;
 };
 
 /** Same-session repeat views skip the envelope straight to Act 1. */
@@ -48,18 +52,40 @@ const JOINT_PHRASE: Record<NiggleJointId, string> = {
   'not-sure': 'movement',
 };
 
-/** Joint-aware zone for the Beat-2 epidemiology line. */
-const JOINT_DISCOMFORT: Record<NiggleJointId, string> = {
-  'neck-shoulders': 'neck-and-shoulder',
-  back: 'lower-back',
-  knee: 'knee',
-  arm: 'arm',
-  'not-sure': 'musculoskeletal',
+/** The company beat — the three flagship zones from the DESIGN_EVOLUTION
+ *  epidemiology table (US CDC 2019 / GP surveys), one stat block each. */
+const COMPANY_STATS: {
+  id: 'back' | 'neck' | 'knee';
+  label: string;
+  stat: string;
+  /** Joints whose selection lights this block. */
+  joints: NiggleJointId[];
+}[] = [
+  { id: 'back', label: 'Back', stat: '~39%', joints: ['back'] },
+  { id: 'neck', label: 'Neck & shoulders', stat: '~18–43%', joints: ['neck-shoulders'] },
+  { id: 'knee', label: 'Knee', stat: '~17–36%', joints: ['knee'] },
+];
+
+type ExerciseOption = {
+  mode: ExerciseMode;
+  label: string;
+  detail: string;
 };
+
+/** The movement picker behind "or pick a movement" — the CoachFoyer card
+ *  list, all six exercises in one unfold (the unfold itself is the demotion). */
+const RF_EXERCISES: ExerciseOption[] = [
+  { mode: 'curls', label: 'Curls', detail: 'Elbow swing · arm demo' },
+  { mode: 'pushups', label: 'Push-ups', detail: 'Chest · elbows · line' },
+  { mode: 'reach', label: 'Overhead reach', detail: 'Shoulder range · trunk sway' },
+  { mode: 'squats', label: 'Squats', detail: 'Mobility · depth · knees' },
+  { mode: 'pullups', label: 'Pull-ups', detail: 'Extension · symmetry' },
+  { mode: 'jumps', label: 'Jumps', detail: 'Landing · knees' },
+];
 
 type EnvelopePhase = 'show' | 'dissolving' | 'done';
 
-export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerProps) {
+export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: ReceivingFoyerProps) {
   const reduced = usePrefersReducedMotion();
   const { triggerHaptic } = useHapticFeedback();
   const niggle = useNiggle();
@@ -76,7 +102,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerPr
 
   const [sentBy, setSentBy] = useState<string | null>(null);
   const [intakeOpen, setIntakeOpen] = useState(false);
+  const [movesOpen, setMovesOpen] = useState(false);
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied'>('idle');
+  const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [beat3Progress, setBeat3Progress] = useState(() =>
     typeof window !== 'undefined' && prefersReducedMotion() ? 1 : 0.35
   );
@@ -92,7 +120,43 @@ export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerPr
     setSentBy(localStorage.getItem(SENT_BY_KEY));
   }, []);
 
-  const greeting = sentBy ? `${sentBy} sent you this` : 'A friend sent you this';
+  // A joint restored from storage (organic return visit) carries its protocol
+  // movement — apply it once so the CTA and the read stay honest. Link
+  // arrivals already get this from Game's URL-param effect; same value.
+  const restoredModeAppliedRef = useRef(false);
+  useEffect(() => {
+    if (restoredModeAppliedRef.current) return;
+    restoredModeAppliedRef.current = true;
+    if (joint) onModeChange(joint.mode);
+    // Applied once per mount — later movement picks stay picked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Station status only feeds the exercise cards' robot-demo chip — the same
+  // dormant/live reading the CoachFoyer list shows. No station → dormant.
+  useEffect(() => {
+    if (!coachStation.enabled) return;
+    const unsubscribe = coachStation.onStatus(setCoachStatus);
+    coachStation.connect();
+    return unsubscribe;
+  }, []);
+
+  // Unfolds grow the page height — ScrollTrigger's cached seam/beat offsets go
+  // stale, so nudge a refresh (it listens on window resize) once the grid-rows
+  // transition settles. No-op under reduced motion, where no triggers exist.
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const t = setTimeout(() => window.dispatchEvent(new Event('resize')), 560);
+    return () => clearTimeout(t);
+  }, [movesOpen, intakeOpen, joint?.id]);
+
+  // Organic arrivals get the wordmark materializing in the ring; a `?from=`
+  // name (or a niggle link without one) keeps the sender greeting.
+  const greeting = sentBy
+    ? `${sentBy} sent you this`
+    : organic
+      ? 'NIGGLEOMETER'
+      : 'A friend sent you this';
 
   // —— Act 0: the envelope ————————————————————————————————
   const [envelope, setEnvelope] = useState<EnvelopePhase>(() => {
@@ -268,16 +332,148 @@ export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerPr
   };
 
   const readingProtocol = joint ? assessmentProtocolFor(mode) : null;
+  // CTA honesty: promise the exact rep count only when a joint is answered
+  // AND this movement has a fixed protocol; everything else is one rep.
   const ctaLabel = readingProtocol
     ? `Take a ${readingProtocol.targetReps}-rep reading`
-    : 'Take a reading';
-  const phrase = joint ? JOINT_PHRASE[joint.id] : 'movement';
-  const discomfort = joint ? JOINT_DISCOMFORT[joint.id] : 'musculoskeletal';
+    : 'Try one rep';
+  const phrase = joint ? JOINT_PHRASE[joint.id] : 'niggle';
+  const litStat = joint ? COMPANY_STATS.find((s) => s.joints.includes(joint.id))?.id : undefined;
   const ritualLine = readingProtocol
     ? `Once a week, same setup, ${readingProtocol.targetReps} slow raises.`
     : 'Once a week, same setup, a few slow reps.';
 
   const greetingWords = greeting.split(' ');
+
+  const robotChipState =
+    !coachStation.enabled || coachStatus === 'offline'
+      ? 'dormant'
+      : coachStatus === 'connected'
+        ? 'live'
+        : 'connecting';
+
+  const pickJoint = (j: (typeof NIGGLE_JOINTS)[number], el?: HTMLButtonElement) => {
+    playStudioCue('soft');
+    triggerHaptic(30);
+    if (joint?.id === j.id) {
+      setJoint(null);
+      return;
+    }
+    setJoint(j.id);
+    onModeChange(j.mode);
+    el?.scrollIntoView({
+      inline: 'center',
+      block: 'nearest',
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
+  };
+
+  // The intake, in plate idiom — the same hairline chips render in the hero
+  // (organic) and inside the folded "change it" section (niggle link).
+  const intakeChips = (
+    <div className="rf-pick" role="group" aria-label="Where does it nag?">
+      <span className="rf-pick__label">Where does it nag?</span>
+      <div className="rf-chips">
+        {NIGGLE_JOINTS.map((j) => {
+          const selected = joint?.id === j.id;
+          return (
+            <button
+              key={j.id}
+              type="button"
+              className={`rf-chip${selected ? ' is-selected' : ''}`}
+              aria-pressed={selected}
+              onClick={(e) => pickJoint(j, e.currentTarget)}
+            >
+              {j.label}
+            </button>
+          );
+        })}
+      </div>
+      {/* Picking a joint unfolds its context row — and "Send this to a
+          friend" lives here, in the unfolded intake only. */}
+      <div className={`rf-unfold${joint ? ' is-open' : ''}`}>
+        <div className="rf-unfold__content">
+          {joint && joint.contexts.length > 1 && (
+            <>
+              <span className="rf-pick__label">What does it do?</span>
+              <div className="rf-chips">
+                {joint.contexts.map((c) => {
+                  const selected = context?.id === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`rf-chip rf-chip--context${selected ? ' is-selected' : ''}`}
+                      aria-pressed={selected}
+                      onClick={() => {
+                        playStudioCue('soft');
+                        triggerHaptic(30);
+                        setContext(c.id);
+                      }}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+          {joint && (
+            <div className="rf-send">
+              <button
+                type="button"
+                className="rf-send__button"
+                onClick={() => void handleSendToFriend()}
+              >
+                <Send size={11} aria-hidden="true" />
+                Send this to a friend
+              </button>
+              <span className="rf-send__status" role="status" aria-live="polite">
+                {shareStatus === 'copied' ? 'Link copied' : ''}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // The CoachFoyer exercise card, verbatim — the unfold is the demotion.
+  const renderExerciseButton = (exercise: ExerciseOption) => {
+    const selected = exercise.mode === mode;
+    return (
+      <button
+        key={exercise.mode}
+        type="button"
+        className={`coach-foyer__exercise${selected ? ' is-selected' : ''}`}
+        aria-pressed={selected}
+        onClick={() => {
+          playStudioCue('soft');
+          triggerHaptic(40);
+          onModeChange(exercise.mode);
+        }}
+      >
+        <span className="coach-foyer__exercise-copy">
+          <span className="coach-foyer__exercise-title">
+            <strong>{exercise.label}</strong>
+            {exercise.mode === 'curls' ? (
+              <span className={`coach-foyer__robot-chip is-${robotChipState}`}>
+                <Sparkles size={10} strokeWidth={2} aria-hidden="true" />
+                Robot demo
+              </span>
+            ) : exercise.mode === 'squats' ? (
+              <span className="coach-foyer__robot-chip is-mobility">
+                <Activity size={10} strokeWidth={2} aria-hidden="true" />
+                Mobility check
+              </span>
+            ) : null}
+          </span>
+          <small>{exercise.detail}</small>
+        </span>
+        <span className="coach-foyer__radio" aria-hidden="true" />
+      </button>
+    );
+  };
 
   return (
     <section
@@ -316,7 +512,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerPr
               })}
               <circle className="rf-envelope__ring-draw" cx="120" cy="120" r="104" pathLength={1} />
             </svg>
-            <p className="rf-envelope__greeting">
+            <p
+              className={`rf-envelope__greeting${!sentBy && organic ? ' rf-envelope__greeting--brand' : ''}`}
+            >
               {greetingWords.map((word, i) => (
                 <span
                   key={i}
@@ -362,6 +560,13 @@ export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerPr
             <h1 id="rf-title" className="rf-title">
               Your {phrase}, <em className="rf-title-brass">measured.</em>
             </h1>
+
+            {/* Organic: the intake IS the hero — hairline chips under the
+                title; picking a joint unfolds its context row and retitles
+                the plate copy. Link arrivals keep the collapsed change-it
+                door under the CTA instead. */}
+            {organic && intakeChips}
+
             <p className="rf-line">
               {readingProtocol
                 ? `${readingProtocol.targetReps} slow raises. The camera watches; nothing leaves your phone.`
@@ -386,127 +591,56 @@ export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerPr
               />
             </button>
 
-            <button
-              type="button"
-              className="rf-change"
-              aria-expanded={intakeOpen}
-              aria-controls="rf-intake"
-              onClick={() => {
-                playStudioCue('soft');
-                triggerHaptic(30);
-                setIntakeOpen((v) => !v);
-              }}
-            >
-              not your niggle? change it
-            </button>
+            {organic ? (
+              <>
+                <button
+                  type="button"
+                  className="rf-change"
+                  aria-expanded={movesOpen}
+                  aria-controls="rf-moves"
+                  onClick={() => {
+                    playStudioCue('soft');
+                    triggerHaptic(30);
+                    setMovesOpen((v) => !v);
+                  }}
+                >
+                  or pick a movement
+                </button>
 
-            <div id="rf-intake" className={`rf-intake${intakeOpen ? ' is-open' : ''}`}>
-              <div className="rf-intake__content">
-                {/* The standard intake — same markup/styles as the CoachFoyer
-                    pain block, unfolded under the CTA. */}
-                <div className="coach-foyer__pain" role="group" aria-label="Where does it nag?">
-                  <span className="coach-foyer__pain-label">Where does it nag?</span>
-                  <div className="coach-foyer__plate">
-                    <BodyPlate
-                      selected={joint?.id ?? null}
-                      annotateAll
-                      onSelect={(id) => {
-                        playStudioCue('soft');
-                        triggerHaptic(30);
-                        if (joint?.id === id) {
-                          setJoint(null);
-                          return;
-                        }
-                        const j = getNiggleJoint(id);
-                        if (!j) return;
-                        setJoint(j.id);
-                        onModeChange(j.mode);
-                      }}
-                    />
-                    <div>
-                      <div className="coach-foyer__pain-chips">
-                        {NIGGLE_JOINTS.map((j) => {
-                          const selected = joint?.id === j.id;
-                          return (
-                            <button
-                              key={j.id}
-                              type="button"
-                              className={`coach-foyer__pain-chip${selected ? ' is-selected' : ''}`}
-                              aria-pressed={selected}
-                              onClick={(e) => {
-                                playStudioCue('soft');
-                                triggerHaptic(30);
-                                if (selected) {
-                                  setJoint(null);
-                                  return;
-                                }
-                                setJoint(j.id);
-                                onModeChange(j.mode);
-                                e.currentTarget.scrollIntoView({
-                                  inline: 'center',
-                                  block: 'nearest',
-                                  behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-                                });
-                              }}
-                            >
-                              {j.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {joint && joint.contexts.length > 1 && (
-                        <>
-                          <span className="coach-foyer__pain-label">What does it do?</span>
-                          <div className="coach-foyer__pain-chips">
-                            {joint.contexts.map((c) => {
-                              const selected = context?.id === c.id;
-                              return (
-                                <button
-                                  key={c.id}
-                                  type="button"
-                                  className={`coach-foyer__pain-chip${selected ? ' is-selected' : ''}`}
-                                  aria-pressed={selected}
-                                  onClick={() => {
-                                    playStudioCue('soft');
-                                    triggerHaptic(30);
-                                    setContext(c.id);
-                                  }}
-                                >
-                                  {c.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </>
-                      )}
-                      {joint && (
-                        <div className="coach-foyer__send">
-                          <button
-                            type="button"
-                            className="coach-foyer__send-button"
-                            onClick={() => void handleSendToFriend()}
-                          >
-                            <Send size={11} aria-hidden="true" />
-                            Send this to a friend
-                          </button>
-                          <span
-                            className="coach-foyer__send-status"
-                            role="status"
-                            aria-live="polite"
-                          >
-                            {shareStatus === 'copied' ? 'Link copied' : ''}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                <div id="rf-moves" className={`rf-intake${movesOpen ? ' is-open' : ''}`}>
+                  <div className="rf-intake__content">
+                    <fieldset className="coach-foyer__exercise-list coach-foyer__exercise-list--extras">
+                      <legend className="sr-only">Pick a movement</legend>
+                      {RF_EXERCISES.map(renderExerciseButton)}
+                    </fieldset>
                   </div>
                 </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="rf-change"
+                  aria-expanded={intakeOpen}
+                  aria-controls="rf-intake"
+                  onClick={() => {
+                    playStudioCue('soft');
+                    triggerHaptic(30);
+                    setIntakeOpen((v) => !v);
+                  }}
+                >
+                  not your niggle? change it
+                </button>
+
+                <div id="rf-intake" className={`rf-intake${intakeOpen ? ' is-open' : ''}`}>
+                  <div className="rf-intake__content">{intakeChips}</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* ——— Act 2 — five beats, a seam between each ——— */}
+        {/* ——— Act 2 — the scroll story, a seam between each beat ——— */}
         <div className="rf-seam" aria-hidden="true">
           <span className="rf-seam__rule" />
           <canvas className="rf-seam__canvas" />
@@ -530,25 +664,25 @@ export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerPr
 
         <section className="rf-beat" aria-label="The company">
           <p className="rf-beat__eyebrow">The company</p>
-          <h2 className="rf-beat__title">You&rsquo;re in enormous, invisible company.</h2>
-          <div className="rf-marks" aria-hidden="true">
-            {Array.from({ length: 5 }, (_, i) => (
-              <svg
-                key={i}
-                className={`rf-mark${i === 1 || i === 3 ? ' is-lit' : ''}`}
-                viewBox="0 0 24 34"
-              >
-                <circle cx="12" cy="7" r="4.5" />
-                <path d="M6 16 Q12 13 18 16" />
-                <line x1="12" y1="12" x2="12" y2="27" />
-                <path d="M7 28 Q12 30 17 28" />
-              </svg>
+          <h2 className="rf-beat__title">
+            {joint
+              ? 'You’re in enormous, invisible company.'
+              : 'Whichever it is, you’re in company.'}
+          </h2>
+          {/* The three flagship zones from the epidemiology table the
+              instrument was designed from — the answered niggle's block
+              lights brass; arm / not-sure / unanswered light none. */}
+          <div className="rf-stats">
+            {COMPANY_STATS.map((s) => (
+              <div key={s.id} className={`rf-stat${litStat === s.id ? ' is-lit' : ''}`}>
+                <span className="rf-stat__zone">{s.label}</span>
+                <span className="rf-stat__figure">{s.stat}</span>
+              </div>
             ))}
           </div>
           <p className="rf-beat__body">
-            Somewhere between one in five and two in five adults report {discomfort} discomfort in
-            any three-month stretch — desk work makes it nearly universal. What isn&rsquo;t common
-            is measuring it. Almost everyone guesses.
+            Share of adults reporting pain in any three-month stretch — desk work makes it nearly
+            universal. What isn&rsquo;t common is measuring it. Almost everyone guesses.
           </p>
           <p className="rf-beat__footnote">
             US CDC 2019, GP surveys — the table this instrument was designed from.
@@ -600,6 +734,44 @@ export function ReceivingFoyer({ mode, onModeChange, onStart }: ReceivingFoyerPr
               Hurts more and nothing moved — see a professional; that&rsquo;s the body&rsquo;s job,
               not the meter&rsquo;s.
             </p>
+          </div>
+        </section>
+
+        <div className="rf-seam" aria-hidden="true">
+          <span className="rf-seam__rule" />
+          <canvas className="rf-seam__canvas" />
+        </div>
+
+        <section className="rf-beat" aria-label="The coach arm">
+          <p className="rf-beat__eyebrow">The coach arm</p>
+          <h2 className="rf-beat__title">The fix, shown in steel.</h2>
+          <figure className="rf-arm-plate">
+            <span className="rf-arm-plate__caption" aria-hidden="true">
+              · Fig 2 · The Coach Arm ·
+            </span>
+            <div className="rf-arm-plate__media">
+              <img
+                className="rf-arm-plate__img"
+                src="/atmosphere/so101-follower-cutout.webp"
+                alt="The SO-101 coach arm, a small desktop robot arm used to demonstrate corrections"
+                width={1280}
+                height={960}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <figcaption className="rf-arm-plate__num" aria-hidden="true">
+              Plate II
+            </figcaption>
+          </figure>
+          <p className="rf-beat__body">
+            A small robot arm demonstrates the fix when the coach bay is connected — without it, the
+            on-screen coach shows the same.
+          </p>
+          <div className="rf-ritual">
+            <p className="rf-ritual__row">Camera reads your form.</p>
+            <p className="rf-ritual__row">Coach names one fix.</p>
+            <p className="rf-ritual__row">The arm shows it.</p>
           </div>
         </section>
 
