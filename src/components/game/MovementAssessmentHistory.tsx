@@ -33,6 +33,13 @@ import MovementTrajectoryView from './MovementTrajectory';
 type MovementAssessmentHistoryProps = {
   userAddress?: string;
   currentAssessment?: MovementAssessment | null;
+  /** One protocol's reads only. Absent = one block per protocol with records. */
+  protocolId?: string;
+};
+
+const PROTOCOL_HEADINGS: Record<string, string> = {
+  'curls-baseline': 'Curl reading',
+  'reach-baseline': 'Neck & shoulders reading',
 };
 
 type DataAction = 'idle' | 'exported' | 'reset' | 'error';
@@ -78,14 +85,38 @@ function downloadExport(payload: ReturnType<typeof createMovementAssessmentExpor
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function mergeCurrentRecord(
+  stored: StoredMovementAssessment[],
+  currentAssessment: MovementAssessment | null | undefined,
+  hiddenCapturedAt: number | null,
+  effectiveUserId: string
+): StoredMovementAssessment[] {
+  const currentRecord =
+    currentAssessment && currentAssessment.capturedAt !== hiddenCapturedAt
+      ? {
+          id: `current-${currentAssessment.capturedAt}`,
+          userId: effectiveUserId,
+          sourceSessionId: `current-${currentAssessment.capturedAt}`,
+          savedAt: currentAssessment.capturedAt,
+          assessment: currentAssessment,
+        }
+      : null;
+  return currentRecord
+    ? [
+        currentRecord,
+        ...stored.filter(
+          (record) => record.assessment.capturedAt !== currentAssessment?.capturedAt
+        ),
+      ]
+    : stored;
+}
+
 export function MovementAssessmentHistory({
   userAddress,
   currentAssessment,
+  protocolId,
 }: MovementAssessmentHistoryProps) {
   const [stored, setStored] = useState<StoredMovementAssessment[]>([]);
-  const [dataAction, setDataAction] = useState<DataAction>('idle');
-  const [confirmReset, setConfirmReset] = useState(false);
-  const [hiddenCurrentCapturedAt, setHiddenCurrentCapturedAt] = useState<number | null>(null);
   const effectiveUserId = useMemo(() => getEffectiveUserId(userAddress), [userAddress]);
 
   useEffect(() => {
@@ -102,33 +133,75 @@ export function MovementAssessmentHistory({
     };
   }, [effectiveUserId, currentAssessment?.capturedAt]);
 
+  // One protocol named → that protocol only. Otherwise a block per protocol
+  // that has records, so a reach reading is as visible as a curl one.
+  if (protocolId) {
+    return (
+      <ProtocolHistory
+        protocolId={protocolId}
+        stored={stored}
+        currentAssessment={currentAssessment}
+        effectiveUserId={effectiveUserId}
+        onStoredCleared={() => setStored([])}
+      />
+    );
+  }
+  const protocols = Object.keys(PROTOCOL_HEADINGS).filter((id) =>
+    [...stored, ...(currentAssessment ? [{ assessment: currentAssessment }] : [])].some(
+      (record) => record.assessment.protocolId === id
+    )
+  );
+  if (protocols.length === 0) return null;
+  return (
+    <>
+      {protocols.map((id) => (
+        <ProtocolHistory
+          key={id}
+          protocolId={id}
+          heading={PROTOCOL_HEADINGS[id]}
+          stored={stored}
+          currentAssessment={currentAssessment}
+          effectiveUserId={effectiveUserId}
+          onStoredCleared={() => setStored([])}
+        />
+      ))}
+    </>
+  );
+}
+
+function ProtocolHistory({
+  protocolId,
+  heading,
+  stored,
+  currentAssessment,
+  effectiveUserId,
+  onStoredCleared,
+}: {
+  protocolId: string;
+  heading?: string;
+  stored: StoredMovementAssessment[];
+  currentAssessment?: MovementAssessment | null;
+  effectiveUserId: string;
+  onStoredCleared: () => void;
+}) {
+  const [dataAction, setDataAction] = useState<DataAction>('idle');
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [hiddenCurrentCapturedAt, setHiddenCurrentCapturedAt] = useState<number | null>(null);
+
   useEffect(() => {
     if (currentAssessment?.capturedAt !== hiddenCurrentCapturedAt) {
       setDataAction('idle');
     }
   }, [currentAssessment?.capturedAt, hiddenCurrentCapturedAt]);
 
-  const records = useMemo(() => {
-    const currentRecord =
-      currentAssessment && currentAssessment.capturedAt !== hiddenCurrentCapturedAt
-        ? {
-            id: `current-${currentAssessment.capturedAt}`,
-            userId: effectiveUserId,
-            sourceSessionId: `current-${currentAssessment.capturedAt}`,
-            savedAt: currentAssessment.capturedAt,
-            assessment: currentAssessment,
-          }
-        : null;
-    const all = currentRecord
-      ? [
-          currentRecord,
-          ...stored.filter(
-            (record) => record.assessment.capturedAt !== currentAssessment?.capturedAt
-          ),
-        ]
-      : stored;
-    return buildMovementAssessmentHistory(all, 'curls-baseline');
-  }, [currentAssessment, effectiveUserId, hiddenCurrentCapturedAt, stored]);
+  const records = useMemo(
+    () =>
+      buildMovementAssessmentHistory(
+        mergeCurrentRecord(stored, currentAssessment, hiddenCurrentCapturedAt, effectiveUserId),
+        protocolId
+      ),
+    [currentAssessment, effectiveUserId, hiddenCurrentCapturedAt, stored, protocolId]
+  );
 
   const handleExport = async () => {
     try {
@@ -163,7 +236,7 @@ export function MovementAssessmentHistory({
   const handleReset = async () => {
     try {
       await clearLocalMovementAssessments(effectiveUserId);
-      setStored([]);
+      onStoredCleared();
       setHiddenCurrentCapturedAt(currentAssessment?.capturedAt ?? null);
       setConfirmReset(false);
       setDataAction('reset');
@@ -183,6 +256,7 @@ export function MovementAssessmentHistory({
 
   return (
     <section className="movement-history" aria-labelledby="movement-history-title">
+      {heading && <p className="movement-history__protocol-heading">{heading}</p>}
       <div className="movement-history__header">
         <div className="movement-history__title">
           <div className="movement-history__icon" aria-hidden="true">
@@ -334,7 +408,7 @@ export function MovementAssessmentHistory({
           {records.records.length > 4 && (
             <p className="movement-history__footer">Showing the latest four local reads.</p>
           )}
-          <MovementTrajectoryView records={records.records} protocolId="curls-baseline" />
+          <MovementTrajectoryView records={records.records} protocolId={protocolId} />
         </>
       )}
     </section>

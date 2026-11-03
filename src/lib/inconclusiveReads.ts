@@ -20,7 +20,7 @@ export const INCONCLUSIVE_COPY: Record<MovementAssessmentInconclusiveReason, Inc
   {
     invalid_protocol: {
       cause: 'This capture did not match the selected baseline protocol.',
-      fix: 'Retake the standard five-rep curl baseline — the card only reads that protocol.',
+      fix: 'Retake the standard five-rep reading — the card only reads that protocol.',
     },
     insufficient_reps: {
       cause: 'The read ended before the five-rep baseline finished.',

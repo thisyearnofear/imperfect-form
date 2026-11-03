@@ -58,7 +58,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         label: 'Tension after desk work',
         subhead:
           'A camera cannot photograph tension — but it can read how your shoulder and arm actually move.',
-        pain: `Neck-and-shoulder tension is the most-searched ache there is, and words cannot measure it. This read watches how your arm travels under light load — drift, control, left-right difference. A dedicated shoulder read is coming; this is the honest version today. ${SAFETY}`,
+        pain: `Neck-and-shoulder tension is the most-searched ache there is, and words cannot measure it. This read watches how your arm travels through a slow, comfortable arm raise — only as high as feels OK — drift, control, left-right difference. A dedicated shoulder read is coming; this is the honest version today. ${SAFETY}`,
         firstRepLine:
           'On your first reps the meter watches shoulder drift and control — the baseline for your tension question.',
         recapLine:
@@ -69,7 +69,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         id: 'strained',
         label: 'Strained it training',
         subhead:
-          'A tweaked shoulder needs watching, not guessing. The meter reads the arm under light load.',
+          'A tweaked shoulder needs watching, not guessing. The meter reads the arm through a slow, comfortable arm raise — only as high as feels OK.',
         pain: `Whether it is settling is a question you cannot feel the answer to — soreness one day tells you nothing about trajectory. This read measures range, drift and control on the side that complained, so a week from now you can see whether it is actually improving. ${SAFETY}`,
         firstRepLine:
           'First reps set the baseline — range and control on the side that complained.',
@@ -82,7 +82,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         label: 'Overhead feels limited',
         subhead:
           'Reaching up should not feel like a negotiation. The meter reads how far and how cleanly the arm travels.',
-        pain: `Limited overhead movement usually shows up first as compensation — arching, shrugging, drifting. You cannot see your own substitution; the camera can. This read measures how the arm travels under light load. ${SAFETY}`,
+        pain: `Limited overhead movement usually shows up first as compensation — arching, shrugging, drifting. You cannot see your own substitution; the camera can. This read measures how the arm travels through a slow, comfortable arm raise — only as high as feels OK. ${SAFETY}`,
         firstRepLine:
           'First reps: the meter watches how the arm travels — drift and control, not just the top.',
         recapLine:
@@ -188,7 +188,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         id: 'tweaked',
         label: 'Tweaked it lifting',
         subhead:
-          'A tweaked elbow needs a baseline, not a wait-and-see. The meter reads the arm under light load.',
+          'A tweaked elbow needs a baseline, not a wait-and-see. The meter reads the arm through a slow, comfortable arm raise — only as high as feels OK.',
         pain: `The question is never "does it hurt today" but "is it settling week to week." The meter reads range, drift and control so a week from now you can see the answer. ${SAFETY}`,
         firstRepLine: 'First reps set the baseline — range and control on that side.',
         recapLine:
@@ -262,4 +262,44 @@ export function resolveNiggleIntent(stored: StoredNiggle | null): PainIntent | n
     recapLine: context.recapLine,
     plateCallout: context.plateCallout,
   };
+}
+
+export const NIGGLE_LOCAL_EVENT = 'imf:niggle';
+
+/** Sender greeting for shared niggle links (`&from=<name>`), read once by the foyer. */
+export const SENT_BY_KEY = 'imf_sent_by_v1';
+
+/** Persist the intake exactly as useNiggle does — storage + same-tab event. */
+export function storeNiggle(stored: StoredNiggle | null): void {
+  if (typeof window === 'undefined') return;
+  if (stored) localStorage.setItem(NIGGLE_KEY, JSON.stringify(stored));
+  else localStorage.removeItem(NIGGLE_KEY);
+  window.dispatchEvent(new Event(NIGGLE_LOCAL_EVENT));
+}
+
+/**
+ * `?niggle=<jointId>[:<contextId>]` — unknown joints are ignored; a missing
+ * or unknown context resolves to the joint's first (same rule as intake).
+ */
+export function parseNiggleParam(raw: string | null | undefined): StoredNiggle | null {
+  if (!raw) return null;
+  const [jointId, contextId] = raw.split(':');
+  const joint = getNiggleJoint(jointId);
+  if (!joint) return null;
+  const context = joint.contexts.find((c) => c.id === contextId)?.id ?? joint.contexts[0].id;
+  return { joint: joint.id, context };
+}
+
+/**
+ * `&from=<name>` — rendered as text, never markup; still trimmed to a
+ * name-sized line so a crafted link cannot stretch the foyer.
+ */
+export function sanitizeSenderName(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const cleaned = raw
+    .replace(/[\u0000-\u001f\u007f<>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24);
+  return cleaned.length > 0 ? cleaned : null;
 }

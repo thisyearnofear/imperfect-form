@@ -183,6 +183,18 @@ function inconclusiveReason(
 }
 
 /**
+ * Reading mode ends exactly on the protocol rep count — no extra rep can
+ * slip in between the last counted rep and the stop (the one-rep trial's
+ * first-signal delay is deliberately not reused here).
+ */
+export function shouldEndReading(
+  count: number,
+  protocol: MovementAssessmentProtocol | null
+): boolean {
+  return protocol !== null && count >= protocol.targetReps;
+}
+
+/**
  * Evaluate a fixed protocol from existing session telemetry. No new detector,
  * population data, or medical interpretation is introduced here.
  */

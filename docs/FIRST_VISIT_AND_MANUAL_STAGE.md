@@ -33,6 +33,10 @@ Record the participant’s first answer to each question:
 
 1. What do you think this is?
 2. What do you think will happen if you press **Try one rep**?
+   _(With a niggle joint selected on a protocol movement, the CTA reads
+   "Take a 5-rep reading" and the session stops itself on the last rep —
+   ask the same question with either label; both are honest about what
+   the button does.)_
 3. What is the difference between this and a normal workout counter?
 4. Which movement would you choose, and why?
 5. Did you notice that camera coaching is private/on-device?

@@ -98,6 +98,15 @@ const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete, ton
       >
         {current.cue}
       </p>
+      {mode === 'reach' && (
+        <p
+          className={`text-[11px] font-light text-center ${
+            light ? 'text-slate-500' : 'text-teal-300/50'
+          }`}
+        >
+          Gentle only — stop if anything hurts or tingles.
+        </p>
+      )}
 
       <button
         type="button"

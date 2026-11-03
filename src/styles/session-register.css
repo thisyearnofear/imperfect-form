@@ -625,3 +625,32 @@
     transition: none;
   }
 }
+
+/* Reading-mode pip counter — the fixed-protocol rep tally, studio quiet. */
+.hud-reading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+.hud-reading__label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(153, 246, 228, 0.75);
+}
+.hud-reading__pips {
+  display: inline-flex;
+  gap: 5px;
+}
+.hud-reading__pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(153, 246, 228, 0.45);
+  background: transparent;
+}
+.hud-reading__pip.is-filled {
+  background: #5eead4;
+  border-color: #5eead4;
+}

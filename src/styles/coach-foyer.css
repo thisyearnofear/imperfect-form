@@ -1293,3 +1293,41 @@
 @media (prefers-reduced-motion: reduce) {
   .read-gauge__needle { transition: none; }
 }
+
+/* Sender greeting on a shared niggle link — one quiet line above the brand. */
+.coach-foyer__sent-by {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(153, 246, 228, 0.6);
+}
+
+/* "Send this to a friend" — a small text door under the context chips. */
+.coach-foyer__send {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.coach-foyer__send-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(153, 246, 228, 0.6);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(153, 246, 228, 0.25);
+}
+.coach-foyer__send-button:hover {
+  color: rgba(153, 246, 228, 0.9);
+}
+.coach-foyer__send-status {
+  font-size: 11px;
+  color: rgba(153, 246, 228, 0.55);
+}

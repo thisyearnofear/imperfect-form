@@ -109,6 +109,38 @@ export const STRETCHES: Record<string, Stretch[]> = {
       cue: 'Arm across the chest, gentle pull. Switch halfway.',
     },
   ],
+  reach: [
+    {
+      name: 'Shoulder Rolls',
+      emoji: '🔄',
+      seconds: 15,
+      cue: 'Slow circles backwards, then forwards. Let the shoulders drop.',
+    },
+    {
+      name: 'Chin Tucks',
+      emoji: '🙂',
+      seconds: 15,
+      cue: 'Glide your chin straight back, hold a breath, release. Gentle repeats.',
+    },
+    {
+      name: 'Upper-Trap Stretch',
+      emoji: '🧘',
+      seconds: 25,
+      cue: 'Sit tall, ear toward shoulder, opposite hand relaxed down. Switch halfway.',
+    },
+    {
+      name: 'Levator Stretch',
+      emoji: '🌿',
+      seconds: 25,
+      cue: 'Turn your nose toward your armpit and let your head drop gently. Switch halfway.',
+    },
+    {
+      name: 'Doorway Opener',
+      emoji: '🚪',
+      seconds: 20,
+      cue: 'Forearms on a door frame, step through softly until the chest opens.',
+    },
+  ],
   jumps: [
     {
       name: 'Calf Stretch',

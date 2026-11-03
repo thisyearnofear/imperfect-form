@@ -3,6 +3,7 @@
 import React from 'react';
 import { Activity, AlertTriangle, Gauge, Move, Scale } from 'lucide-react';
 import { inconclusiveRead } from '@/lib/inconclusiveReads';
+import { guidanceFor } from '@/lib/exerciseGuidance';
 import type { MovementAssessment } from '@/types/movementAssessment';
 
 type MovementCardProps = {
@@ -63,7 +64,7 @@ export function MovementCard({ assessment }: MovementCardProps) {
     .sort((a, b) => (a.value ?? 1) - (b.value ?? 1))[0];
   const insightCopy = insight
     ? `${insight.label} is the signal to watch this set — ${percent(insight.value)}.`
-    : 'A private baseline from this five-rep curl protocol.';
+    : 'A private baseline from this five-rep reading.';
 
   return (
     <section className="movement-card" aria-labelledby="movement-card-title">
@@ -78,8 +79,9 @@ export function MovementCard({ assessment }: MovementCardProps) {
         <span className="movement-card__confidence">{confidenceLabel(assessment.confidence)}</span>
       </div>
       <p className="movement-card__copy">
-        <strong className="movement-card__insight">{insightCopy}</strong> Curls show what the robot
-        can mirror — a movement signal, not a medical assessment.
+        <strong className="movement-card__insight">{insightCopy}</strong>{' '}
+        {guidanceFor(assessment.mode).label} show what the robot can mirror — a movement signal, not
+        a medical assessment.
       </p>
       <div className="movement-card__dimensions">
         {dimensions.map(({ label, value, icon: Icon }) => (

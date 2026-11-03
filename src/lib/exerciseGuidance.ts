@@ -48,8 +48,9 @@ export const EXERCISE_GUIDANCE: Record<ExerciseMode, ExerciseGuidance> = {
   reach: {
     label: 'Overhead reaches',
     singular: 'Overhead reach',
-    camera: 'Stand far enough back that your hands stay in frame at full reach.',
-    setup: 'Feet planted, arms relaxed at your sides to start.',
+    camera:
+      'Prop your phone at chest height and step back until your hands stay in frame with your arms overhead. Portrait is fine.',
+    setup: 'Feet planted, arms relaxed at your sides. Raise slowly, only as high as feels OK.',
     focus: 'We will watch arm elevation, control, and trunk sway.',
   },
 };

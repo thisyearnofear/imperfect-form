@@ -5,6 +5,7 @@ import '@/styles/recovery.css';
 import { Check, Wind, X, PersonStanding } from 'lucide-react';
 import BreathingCooldown from './BreathingCooldown';
 import StretchSequence from './StretchSequence';
+import { getStretches } from '@/lib/recovery/recoveryContent';
 import { CountUp } from '@/components/ui/CountUp';
 
 /**
@@ -25,6 +26,11 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
   const [active, setActive] = useState<ActiveRecovery>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [showAttention, setShowAttention] = useState(false);
+  const stretches = getStretches(mode);
+  const stretchMinutes = Math.max(
+    1,
+    Math.round(stretches.reduce((total, stretch) => total + stretch.seconds, 0) / 60)
+  );
   const attentionPlayedRef = useRef(false);
   const panel = variant === 'panel';
   const tone = panel ? 'light' : 'dark';
@@ -126,7 +132,8 @@ const RecoveryCard: React.FC<RecoveryCardProps> = ({ mode, variant = 'card', onD
                 Stretch
               </span>
               <span className={`text-[11px] ${panel ? 'text-slate-500' : 'text-teal-300/50'}`}>
-                <CountUp to={3} duration={600} /> moves · <CountUp to={1} duration={600} /> min
+                <CountUp to={stretches.length} duration={600} /> moves ·{' '}
+                <CountUp to={stretchMinutes} duration={600} /> min
               </span>
             </button>
           </div>

@@ -66,9 +66,21 @@ import { ghostService } from '@/services/GhostService';
 import { playStudioCue } from '@/lib/uiSound';
 import { zIndexClasses } from '@/lib/zTokens';
 import { trackChallengeEvent, trackMovementChallengeEvent } from '@/lib/challengeAnalytics';
-import { assessmentProtocolFor, evaluateMovementAssessment } from '@/lib/movementAssessment';
+import {
+  assessmentProtocolFor,
+  evaluateMovementAssessment,
+  shouldEndReading,
+} from '@/lib/movementAssessment';
+import {
+  getNiggleJoint,
+  parseNiggleParam,
+  sanitizeSenderName,
+  storeNiggle,
+  SENT_BY_KEY,
+} from '@/lib/niggleIntents';
+import { useNiggle } from '@/hooks/useNiggle';
 import { CURL_BASELINE_PROTOCOL } from '@/types/movementAssessment';
-import type { MovementAssessment } from '@/types/movementAssessment';
+import type { MovementAssessment, MovementAssessmentProtocol } from '@/types/movementAssessment';
 import type { MovementChallengePayload } from '@/types/movementChallenge';
 import { decodeMovementChallenge, MOVEMENT_CHALLENGE_PARAM } from '@/lib/movementChallenge';
 import { saveLocalMovementAssessment } from '@/services/integrations/MovementAssessmentDataAdapter';
@@ -128,6 +140,8 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // The designed stop-for-pain surface (PHASE_B_PLAN §B2): the session ends
   // the same way Stop ends it — the landing surface is what changes.
   const [painExit, setPainExit] = useState(false);
+  const [painExitVariant, setPainExitVariant] = useState<'pain' | 'stalled'>('pain');
+  const { joint: niggleJoint } = useNiggle();
 
   // Rep timestamps for tempo-based persona suggestion (see usePersonaSuggestion).
   // Captured per-rep, consumed + cleared at session end.
@@ -152,6 +166,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // after the first detected rep + first-signal beat, and the recap takes
   // over with the one fix. Full 120s sets are an explicit second step.
   const oneRepTrialRef = useRef(false);
+  // Reading mode: a fixed-protocol session that stops itself on the exact
+  // target rep. The ref mirrors readingTargetReps for the rep callback; the
+  // state drives the HUD pip counter.
+  const readingProtocolRef = useRef<MovementAssessmentProtocol | null>(null);
+  const [readingTargetReps, setReadingTargetReps] = useState<number | null>(null);
 
   const [pbTrace, setPbTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(null);
   const [raceTrace, setRaceTrace] = useState<import('@/types/workout').SessionSnapshot[] | null>(
@@ -403,7 +422,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   const {
     repCount,
     repFeedback,
-    onRepDetected: handleRepCount,
+    onRepDetected: reportRepCount,
     resetReps,
   } = useRepCounter(
     () => {
@@ -458,6 +477,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     handleCurlPoseData,
     handleReadiness,
   } = usePoseDetection();
+
+  // The rep callback fans out to the hook, then asks whether a reading just
+  // completed — the stop is immediate so a sixth rep can never slip in.
+  const handleRepCount = useCallback(
+    (count: number) => {
+      reportRepCount(count);
+      const protocol = readingProtocolRef.current;
+      if (protocol && shouldEndReading(count, protocol)) {
+        readingProtocolRef.current = null;
+        playStudioCue('chime');
+        handleStopRef.current?.();
+      }
+    },
+    [reportRepCount]
+  );
 
   // The atmosphere is a low-cost visual readout of the same session state as
   // the camera loop: no prop drilling and no implication that the robot is live
@@ -521,7 +555,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, []);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const handleStopRef = useRef<(destination?: 'recap' | 'pain') => void>(() => {}); // Initialize with empty function
+  const handleStopRef = useRef<(destination?: 'recap' | 'pain' | 'stalled') => void>(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
 
   // Check if fullscreen is available in current context (not restricted by iframe)
@@ -598,7 +632,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   };
 
   const handleStop = useCallback(
-    (destination: 'recap' | 'pain' = 'recap') => {
+    (destination: 'recap' | 'pain' | 'stalled' = 'recap') => {
       exitFullscreen();
       unlock();
       setIsLandscapeLocked(false);
@@ -622,8 +656,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       // exit lands on its own designed surface instead of the recap — the
       // session record is still produced and saved either way.
       const summaryTimer = setTimeout(() => {
-        if (destination === 'pain') setPainExit(true);
-        else setShowSummary(true);
+        if (destination === 'recap') setShowSummary(true);
+        else {
+          setPainExitVariant(destination);
+          setPainExit(true);
+        }
       }, 100);
 
       // Force camera to stop by accessing the video tracks and stopping them
@@ -643,6 +680,16 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // landing is the designed PainExit surface, not the coaching recap.
   const handlePainExit = useCallback(() => handleStop('pain'), [handleStop]);
 
+  // Stall exit: once the user is framed, 20s without a newly counted rep ends
+  // the reading on the designed stalled surface — a no-read is information
+  // too, and it must never spin a 120s clock at someone who cannot reach.
+  const readyForReading = Boolean(readiness?.canProceed);
+  useEffect(() => {
+    if (!started || !readingTargetReps || !readyForReading || mode !== 'reach') return;
+    const timer = setTimeout(() => handleStopRef.current?.('stalled'), 20_000);
+    return () => clearTimeout(timer);
+  }, [started, readingTargetReps, readyForReading, repCount, mode]);
+
   const handleStart = useCallback(
     async (options?: {
       trace?: import('@/types/workout').SessionSnapshot[] | null;
@@ -650,8 +697,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       retryFocus?: string;
       challengeSource?: 'incoming' | 'self' | 'external';
       oneRepTrial?: boolean;
+      reading?: boolean;
     }) => {
       oneRepTrialRef.current = Boolean(options?.oneRepTrial);
+      const readingProtocol = options?.reading ? assessmentProtocolFor(mode) : null;
+      readingProtocolRef.current = readingProtocol;
+      setReadingTargetReps(readingProtocol?.targetReps ?? null);
       if (
         !showCameraPrimer &&
         typeof document !== 'undefined' &&
@@ -935,6 +986,20 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       if (decodedAssessment.mode === 'curls') setMode('curls');
     }
 
+    // Shared niggle link: `?niggle=<joint>:<context>` restores the sender's
+    // intake chip (and its movement) exactly like a tap on the body plate —
+    // unless an incoming challenge/race already owns this session.
+    if (!decodedAssessment && !raceParam) {
+      const linked = parseNiggleParam(searchParams.get('niggle'));
+      if (linked) {
+        storeNiggle(linked);
+        const joint = getNiggleJoint(linked.joint);
+        if (joint) setMode(joint.mode);
+      }
+    }
+    const sender = sanitizeSenderName(searchParams.get('from'));
+    if (sender) localStorage.setItem(SENT_BY_KEY, sender);
+
     if (raceParam) {
       try {
         const decodedTrace = ghostService.decompress(raceParam);
@@ -1013,8 +1078,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     setShowTutorial(true);
     setShowSummary(false);
     setPainExit(false);
+    setPainExitVariant('pain');
     setRetryFocus(null);
     setMovementAssessment(null);
+    readingProtocolRef.current = null;
+    setReadingTargetReps(null);
 
     // Also stop the camera when resetting
     stopAllCameras();
@@ -1188,10 +1256,15 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
                         isRace: hasIncomingChallenge,
                         trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
                         challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
-                        // "Try one rep" means one rep: the day-0 hero CTA ends
-                        // after the first rep + first-signal beat. Incoming
-                        // challenges ("Meet the ghost") run the full set.
-                        oneRepTrial: !hasIncomingChallenge,
+                        // A niggle joint on a protocol movement takes the
+                        // fixed-rep reading; otherwise the day-0 hero CTA is
+                        // still the one-rep trial. Incoming challenges
+                        // ("Meet the ghost") run the full set either way.
+                        oneRepTrial:
+                          !hasIncomingChallenge && !(niggleJoint && assessmentProtocolFor(mode)),
+                        reading: Boolean(
+                          !hasIncomingChallenge && niggleJoint && assessmentProtocolFor(mode)
+                        ),
                       })
                     }
                     incomingChallenge={hasIncomingChallenge}
@@ -1253,12 +1326,13 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               showRotateHint={showRotateHint}
               onDismissRotateHint={() => setDismissRotateHint(true)}
               onPainExit={handlePainExit}
+              readingTargetReps={readingTargetReps}
             />
           )}
 
           {painExit && (
             <div id="instructions" className="!bg-transparent">
-              <PainExit onDone={handleReset} />
+              <PainExit onDone={handleReset} variant={painExitVariant} />
             </div>
           )}
         </div>
@@ -1352,7 +1426,12 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
           // the next camera session can begin immediately without returning
           // the user to a second foyer decision.
           handleReset();
-          void handleStart({ retryFocus: focus, isRace: false, trace: null });
+          void handleStart({
+            retryFocus: focus,
+            isRace: false,
+            trace: null,
+            reading: assessmentProtocolFor(mode) != null,
+          });
         }}
         repCount={repCount}
         timeLeft={timeLeft}

@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   getNiggleJoint,
   NIGGLE_KEY,
+  NIGGLE_LOCAL_EVENT,
   parseStoredNiggle,
+  storeNiggle,
   type NiggleJoint,
   type NiggleContextDef,
   type StoredNiggle,
@@ -12,7 +14,7 @@ import {
 import { usePainIntent } from '@/hooks/usePainIntent';
 import type { PainIntent } from '@/lib/painIntents';
 
-const LOCAL_EVENT = 'imf:niggle';
+const LOCAL_EVENT = NIGGLE_LOCAL_EVENT;
 
 /**
  * Niggle intake ("name the niggle") — persisted {joint, context}, default
@@ -48,9 +50,7 @@ export function useNiggle() {
   }, [readAll]);
 
   const persist = useCallback((next: StoredNiggle | null) => {
-    if (next) localStorage.setItem(NIGGLE_KEY, JSON.stringify(next));
-    else localStorage.removeItem(NIGGLE_KEY);
-    window.dispatchEvent(new Event(LOCAL_EVENT));
+    storeNiggle(next);
   }, []);
 
   const setJoint = useCallback(

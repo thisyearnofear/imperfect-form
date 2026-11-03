@@ -14,6 +14,8 @@ type LandingSectionsProps = {
   mode: ExerciseMode;
   selectedExerciseLabel: string;
   onStart: () => void;
+  /** Reading-mode CTA ("Take a 5-rep reading") — defaults to "Try one rep". */
+  finalCtaLabel?: string;
   /** Optional looping clip for the coach-arm figure; falls back to the still. */
   clipSrc?: string;
   /** Selected pain-intent chip; null = default page. */
@@ -503,6 +505,7 @@ export function LandingSections({
   mode,
   selectedExerciseLabel,
   onStart,
+  finalCtaLabel = 'Try one rep',
   clipSrc,
   painIntent,
 }: LandingSectionsProps) {
@@ -728,7 +731,7 @@ export function LandingSections({
           onClick={handleFinalStart}
         >
           <Camera size={18} strokeWidth={2} aria-hidden="true" />
-          <span>Try one rep</span>
+          <span>{finalCtaLabel}</span>
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </Reveal>

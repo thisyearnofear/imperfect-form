@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import '@/styles/session-recap.css';
-import { ArrowUpRight, CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
+import { ArrowUpRight, CalendarPlus, CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
 import type { ExerciseMode } from '@/utils/biomechanics';
 import type { SessionSummary } from '@/services/sessionLogger';
 import FormLine from './FormLine';
@@ -30,6 +30,14 @@ import { usePlatform } from '@/contexts/PlatformContext';
 import MovementCard from './MovementCard';
 import MovementAssessmentHistory from './MovementAssessmentHistory';
 import { usePainIntent } from '@/hooks/usePainIntent';
+import { useNiggle } from '@/hooks/useNiggle';
+import { addNiggleEntry } from '@/lib/niggleEntries';
+import type { NiggleJointId } from '@/lib/niggleIntents';
+import { assessmentProtocolFor } from '@/lib/movementAssessment';
+import { buildReadingIcs, nextReadingDate } from '@/lib/nextReading';
+import { readingSentence } from '@/lib/readingSentence';
+import { STRETCHES } from '@/lib/recovery/recoveryContent';
+import StretchSequence from '@/components/recovery/StretchSequence';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { LocalWorkout } from '@/types/workout';
 import type { MovementChallengePayload } from '@/types/movementChallenge';
@@ -53,6 +61,20 @@ type SessionRecapProps = {
 type ReceiptAction = 'idle' | 'copied' | 'shared' | 'cancelled' | 'error';
 
 const DEFAULT_RECEIPT_ORIGIN = 'https://imperfectform.fun';
+
+/** Mode → the joint a post-session "how does it feel" entry belongs to when
+ *  no niggle chip is selected. */
+const JOINT_FOR_MODE: Partial<Record<ExerciseMode, NiggleJointId>> = {
+  reach: 'neck-shoulders',
+  curls: 'arm',
+  squats: 'knee',
+};
+
+/** Weekly re-read titles, per protocol mode. */
+const READING_EVENT_TITLE: Partial<Record<ExerciseMode, string>> = {
+  reach: 'Niggleometer: weekly neck & shoulders reading',
+  curls: 'Niggleometer: weekly curl reading',
+};
 
 function receiptOrigin() {
   if (typeof window !== 'undefined') return window.location.origin;
@@ -374,6 +396,10 @@ export function SessionRecap({
   isRace = false,
 }: SessionRecapProps) {
   const { painIntent } = usePainIntent();
+  const { joint: niggleJoint, context: niggleContext } = useNiggle();
+  const [easing, setEasing] = useState(false);
+  const [awaitingSeverity, setAwaitingSeverity] = useState(false);
+  const [easeLogged, setEaseLogged] = useState(false);
   const takeaway = coachingTakeaway(summary, mode);
   const story = sessionStory(summary, mode, reps);
   const avgScore = averageFormScore(formScores);
@@ -386,13 +412,50 @@ export function SessionRecap({
     movementAssessment?.status === 'inconclusive'
       ? inconclusiveRead(movementAssessment.inconclusiveReason)
       : null;
+  const protocol = assessmentProtocolFor(mode);
+  // The "Ease it" door: the reach reading always offers it (the joint it
+  // serves asked for relief, not just a number); other modes offer it when
+  // this session was their niggle's read and a routine exists.
+  const canEase =
+    (mode === 'reach' || painIntent?.mode === mode) && Boolean(STRETCHES[mode]?.length);
+  const easeJoint = niggleJoint?.id ?? JOINT_FOR_MODE[mode];
+
+  // A valid reading earns the weekly cadence line + calendar door.
+  const validReading =
+    protocol && movementAssessment?.status === 'valid' ? movementAssessment : null;
+  const nextReading = validReading ? nextReadingDate(validReading.capturedAt) : null;
+
+  const downloadReadingIcs = () => {
+    if (!nextReading) return;
+    const origin = receiptOrigin();
+    const url = niggleJoint
+      ? `${origin}/?niggle=${niggleJoint.id}:${niggleContext?.id ?? niggleJoint.contexts[0].id}`
+      : origin;
+    const ics = buildReadingIcs({
+      start: nextReading,
+      title: READING_EVENT_TITLE[mode] ?? `Niggleometer: weekly ${mode} reading`,
+      url,
+      description: 'Same setup as last time: phone propped, 5 slow reps. Stop if anything hurts.',
+    });
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = 'niggleometer-reading.ics';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(href), 1000);
+  };
 
   return (
     <section
       className="session-recap studio-card studio-card__body motion-enter"
       aria-labelledby="session-recap-title"
     >
-      <div className="session-recap__one-fix motion-enter">
+      <div
+        className={`session-recap__one-fix motion-enter${validReading ? ' session-recap__one-fix--read' : ''}`}
+      >
         <p className="session-recap__one-fix-eyebrow">
           {inconclusive ? 'Honest answer' : BRAND.loopLabel}
         </p>
@@ -403,6 +466,11 @@ export function SessionRecap({
               ? 'The one fix'
               : 'Keep this line'}
         </h2>
+        {validReading?.measurements && (
+          <p className="session-recap__reading-line">
+            {readingSentence(validReading.measurements)}
+          </p>
+        )}
         {painIntent?.mode === mode && (
           <p className="session-recap__personal">
             {painIntent.recapLine}
@@ -425,6 +493,23 @@ export function SessionRecap({
           )}
         </div>
         {sandowGrade ? <SandowGradeMark variant="lineage" style={{ margin: 0 }} /> : null}
+
+        {nextReading && (
+          <p className="session-recap__next-reading">
+            <span>
+              Next reading:{' '}
+              {nextReading.toLocaleDateString(undefined, {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+              })}
+            </span>
+            <button type="button" className="session-recap__calendar" onClick={downloadReadingIcs}>
+              <CalendarPlus size={13} aria-hidden="true" />
+              Add to calendar
+            </button>
+          </p>
+        )}
 
         {/* The arm that closes the loop — a quiet door into the build, kept in
             the studio chassis (calm, no arcade flash). Threads the prize
@@ -512,6 +597,67 @@ export function SessionRecap({
         </button>
       )}
 
+      {canEase && !easing && !awaitingSeverity && !easeLogged && (
+        <button
+          type="button"
+          className="studio-card__button studio-card__button--quiet min-h-11"
+          onClick={() => setEasing(true)}
+        >
+          <span>Ease it · under 2 min</span>
+        </button>
+      )}
+      {easing && !awaitingSeverity && !easeLogged && (
+        <StretchSequence
+          mode={mode}
+          tone="dark"
+          onComplete={() => {
+            setEasing(false);
+            setAwaitingSeverity(true);
+          }}
+        />
+      )}
+      {awaitingSeverity && !easeLogged && (
+        <div className="session-recap__ease-check">
+          <p>How does it feel now?</p>
+          <div
+            className="session-recap__ease-chips"
+            role="group"
+            aria-label="How does it feel now?"
+          >
+            {[1, 2, 3, 4, 5].map((severity) => (
+              <button
+                key={severity}
+                type="button"
+                className="session-recap__ease-chip"
+                onClick={() => {
+                  if (easeJoint) {
+                    addNiggleEntry({
+                      joint: easeJoint,
+                      context: niggleContext?.label,
+                      severity,
+                      note: 'After easing routine',
+                    });
+                  }
+                  setAwaitingSeverity(false);
+                  setEaseLogged(true);
+                }}
+              >
+                {severity}
+              </button>
+            ))}
+          </div>
+          <div className="session-recap__ease-scale">
+            <span>barely there</span>
+            <span>a lot</span>
+          </div>
+        </div>
+      )}
+      {easeLogged && (
+        <p className="session-recap__ease-logged" role="status">
+          Logged — that&rsquo;s how it felt, not what the meter saw.
+        </p>
+      )}
+
       {/* Everything below is instrumentation, not story. It stays reachable but
           behind one disclosure: the recap used to render roughly a dozen panels
           at once, which buried the one sentence the session actually produced.
@@ -520,16 +666,19 @@ export function SessionRecap({
       <details className="session-recap__more">
         <summary>Session detail and history</summary>
 
+        {/* Grade arc stays curls-only — the grade series is a curl-form
+            instrument. The movement card + history follow the mode's
+            protocol, so a reach reading surfaces the same way. */}
         {mode === 'curls' && (
+          <GradeArc series={buildGradeSeries(workouts ?? [], mode)} modeLabel={mode} />
+        )}
+        {protocol && (
           <>
-            {/* Grade arc — your control across graded sessions, not just this
-                set. Draws only when >=2 graded sessions exist, so it never
-                fabricates a trend from a single data point. */}
-            <GradeArc series={buildGradeSeries(workouts ?? [], mode)} modeLabel={mode} />
             <MovementCard assessment={movementAssessment} />
             <MovementAssessmentHistory
               userAddress={userAddress}
               currentAssessment={movementAssessment}
+              protocolId={protocol.id}
             />
           </>
         )}

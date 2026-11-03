@@ -27,6 +27,28 @@ interface GameHUDProps {
   read?: { needle: number; level: ReadLevel };
   /** Gentle persistent exit for the pain-ICP — "It hurts — stop". */
   onPainExit?: () => void;
+  /** Reading mode: a 1–N pip counter ("Reading · 3 of 5") replaces the open
+   *  rep tally when the session is a fixed-protocol reading. */
+  readingTargetReps?: number | null;
+}
+
+function ReadingPips({ count, target }: { count: number; target: number }) {
+  return (
+    <div
+      className="hud-reading"
+      role="status"
+      aria-label={`Reading · ${Math.min(count, target)} of ${target}`}
+    >
+      <span className="hud-reading__label">
+        Reading · {Math.min(count, target)} of {target}
+      </span>
+      <span className="hud-reading__pips" aria-hidden="true">
+        {Array.from({ length: target }, (_, i) => (
+          <span key={i} className={`hud-reading__pip${i < count ? ' is-filled' : ''}`} />
+        ))}
+      </span>
+    </div>
+  );
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -42,6 +64,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   repPulse = false,
   read,
   onPainExit,
+  readingTargetReps = null,
 }) => {
   const { register } = useSessionIntent();
   // The live HUD follows the session register: an explicit Train session keeps
@@ -136,6 +159,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             {studio ? (immersive ? 'Graded' : 'Reps') : 'Score'}
           </span>
         </div>
+        {readingTargetReps ? <ReadingPips count={repCount} target={readingTargetReps} /> : null}
         {milestone && (
           <div className="hud-milestone" role="status" aria-live="polite">
             {repMilestoneMessage(repCount, studio)}
@@ -208,6 +232,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         </span>
         <SandowGradeMark className="hud-sandow-stamp" />
       </div>
+
+      {readingTargetReps ? <ReadingPips count={repCount} target={readingTargetReps} /> : null}
 
       {/* Quiet depth indicator — replaces the loud on-canvas depth gauge bar.
           Studio aesthetic: a thin teal fill, not a red gradient. Mounted at 0

@@ -51,6 +51,8 @@ interface GameCanvasProps {
   /** Gentle persistent exit for the pain-ICP — routes to the designed
    *  PainExit surface, never an error (docs/PHASE_B_PLAN §B2). */
   onPainExit?: () => void;
+  /** Reading mode: fixed-protocol rep target for the HUD pip counter. */
+  readingTargetReps?: number | null;
 }
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
@@ -75,6 +77,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   showRotateHint = false,
   onDismissRotateHint,
   onPainExit,
+  readingTargetReps = null,
 }) => {
   const [hasLockedPose, setHasLockedPose] = useState(false);
   useEffect(() => {
@@ -160,6 +163,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             warnings={metrics?.warnings}
             repPulse={repFeedback.show}
             read={read}
+            readingTargetReps={readingTargetReps}
           />
         )}
         <div
@@ -262,6 +266,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           warnings={metrics?.warnings}
           read={read}
           onPainExit={onPainExit}
+          readingTargetReps={readingTargetReps}
         />
       )}
       <div className="session-bay__stage">

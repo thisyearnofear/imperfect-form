@@ -101,6 +101,9 @@ const MovementAssessmentHistory = dynamic(
 import { Score } from '@/types';
 import { NIGGLE_JOINTS } from '@/lib/niggleIntents';
 import { addNiggleEntry, listNiggleEntries, type NiggleEntry } from '@/lib/niggleEntries';
+import { daysUntil, nextReadingDate } from '@/lib/nextReading';
+import { getEffectiveUserId } from '@/services/guestIdentity';
+import { getLatestValidMovementAssessment } from '@/services/integrations/MovementAssessmentDataAdapter';
 
 /** The logbook — quick subjective entries between readings. Context, never
  *  a measurement (docs/DESIGN_EVOLUTION.md §F). */
@@ -171,6 +174,68 @@ function NiggleLog() {
 }
 
 type ActiveTab = 'workout' | 'readings' | 'dashboard' | 'roadmap' | 'challenges';
+
+/** Protocol → the name the countdown uses (the niggle's words, not the mode's). */
+const NEXT_READING_CARDS: { protocolId: string; label: string }[] = [
+  { protocolId: 'reach-baseline', label: 'neck & shoulders' },
+  { protocolId: 'curls-baseline', label: 'curl' },
+];
+
+/** Weekly re-read countdown — one quiet line per protocol with a valid
+ *  baseline; hidden entirely until the first valid reading exists. */
+function NextReadings({ onTakeReading }: { onTakeReading: () => void }) {
+  const [readings, setReadings] = useState<{ protocolId: string; label: string; days: number }[]>(
+    []
+  );
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const userId = getEffectiveUserId(undefined);
+      const found = await Promise.all(
+        NEXT_READING_CARDS.map(async ({ protocolId, label }) => {
+          const latest = await getLatestValidMovementAssessment(userId, protocolId);
+          return latest
+            ? {
+                protocolId,
+                label,
+                days: daysUntil(nextReadingDate(latest.assessment.capturedAt)),
+              }
+            : null;
+        })
+      );
+      if (active) setReadings(found.filter((r): r is NonNullable<typeof r> => r !== null));
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+  if (readings.length === 0) return null;
+  return (
+    <>
+      {readings.map(({ protocolId, label, days }) => (
+        <div key={protocolId} className="motion-enter motion-delay-1 earned-surface p-4">
+          <p className="text-sm" style={{ color: 'var(--studio-muted)' }}>
+            {days === 0
+              ? `Ready for your weekly ${label} reading`
+              : `Next ${label} reading in ${days} day${days === 1 ? '' : 's'}`}
+          </p>
+          <button
+            type="button"
+            onClick={onTakeReading}
+            className="mt-3 px-3 py-1.5 rounded-md text-sm font-bold border"
+            style={{
+              color: 'var(--studio-teal, #7aebd8)',
+              borderColor: 'rgba(122, 235, 216, 0.35)',
+              background: 'rgba(122, 235, 216, 0.08)',
+            }}
+          >
+            Take a reading
+          </button>
+        </div>
+      ))}
+    </>
+  );
+}
 
 /** Day-0 topbar wallet affordance — a quiet text link, not a pill. It opens
  *  the same connect flow as WalletStatusPill and never gates the loop. */
@@ -532,6 +597,7 @@ export default function Home() {
                       Take a reading
                     </button>
                   </div>
+                  <NextReadings onTakeReading={() => setActiveTab('workout')} />
                   <NiggleLog />
                   <div className="motion-enter motion-delay-2">
                     <MovementAssessmentHistory />

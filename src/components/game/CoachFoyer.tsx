@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Camera, ChevronDown, ChevronUp, Sparkles, Activity } from 'lucide-react';
+import { ArrowRight, Camera, ChevronDown, ChevronUp, Send, Sparkles, Activity } from 'lucide-react';
 import { getIntentDef } from '@/lib/brandPositioning';
 import { playStudioCue } from '@/lib/uiSound';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -10,7 +10,8 @@ import type { ExerciseMode } from '@/utils/biomechanics';
 import { LandingSections } from '@/components/home/LandingSections';
 import { DemoPlate } from '@/components/home/DemoPlate';
 import { resolveRestoredPainIntentMode } from '@/lib/painIntents';
-import { getNiggleJoint, NIGGLE_JOINTS } from '@/lib/niggleIntents';
+import { getNiggleJoint, NIGGLE_JOINTS, SENT_BY_KEY } from '@/lib/niggleIntents';
+import { assessmentProtocolFor } from '@/lib/movementAssessment';
 import { useNiggle } from '@/hooks/useNiggle';
 import BodyPlate from '@/components/body/BodyPlate';
 import '@/styles/coach-foyer.css';
@@ -78,6 +79,40 @@ export function CoachFoyer({
   const [showExtras, setShowExtras] = useState(false);
   const [ctaOutOfView, setCtaOutOfView] = useState(false);
   const { joint, context, niggleIntent, setJoint, setContext, hydrated } = useNiggle();
+  const [sentBy, setSentBy] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copied'>('idle');
+  // A shared niggle link carries the sender's name (`&from=`); the foyer
+  // greets them quietly above the brand — text only, never markup.
+  useEffect(() => {
+    setSentBy(localStorage.getItem(SENT_BY_KEY));
+  }, []);
+
+  // Reading mode: a niggle joint is selected AND this movement has a fixed
+  // protocol — the CTA promises the exact rep count the meter reads.
+  const readingProtocol = joint ? assessmentProtocolFor(mode) : null;
+  const ctaLabel = incomingChallenge
+    ? 'Meet the ghost'
+    : readingProtocol
+      ? `Take a ${readingProtocol.targetReps}-rep reading`
+      : 'Take a reading';
+
+  const handleSendToFriend = async () => {
+    if (!joint) return;
+    const url = `${window.location.origin}/?niggle=${joint.id}:${context?.id ?? joint.contexts[0].id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Take this reading', url });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        return;
+      }
+      setShareStatus('copied');
+      window.setTimeout(() => setShareStatus('idle'), 2500);
+    } catch {
+      /* share cancelled or clipboard unavailable — nothing to repair */
+    }
+  };
   const extrasTouchedRef = useRef(false);
   const firstExtraRef = useRef<HTMLButtonElement>(null);
   const moreToggleRef = useRef<HTMLButtonElement>(null);
@@ -252,6 +287,7 @@ export function CoachFoyer({
       <div className="coach-foyer__inner">
         <div className="coach-foyer__hero">
           <div className="coach-foyer__hero-copy">
+            {sentBy && <p className="coach-foyer__sent-by">{sentBy} sent you this</p>}
             <p className="coach-foyer__brand lf-rise" style={{ animationDelay: '0ms' }}>
               <span className="coach-foyer__brand-rule" aria-hidden="true" />
               {foyer.brand}
@@ -364,6 +400,21 @@ export function CoachFoyer({
                       </div>
                     </>
                   )}
+                  {joint && (
+                    <div className="coach-foyer__send">
+                      <button
+                        type="button"
+                        className="coach-foyer__send-button"
+                        onClick={() => void handleSendToFriend()}
+                      >
+                        <Send size={11} aria-hidden="true" />
+                        Send this to a friend
+                      </button>
+                      <span className="coach-foyer__send-status" role="status" aria-live="polite">
+                        {shareStatus === 'copied' ? 'Link copied' : ''}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -436,7 +487,7 @@ export function CoachFoyer({
               onClick={handleStart}
             >
               <Camera size={18} strokeWidth={2} aria-hidden="true" />
-              <span>{incomingChallenge ? 'Meet the ghost' : 'Take a reading'}</span>
+              <span>{ctaLabel}</span>
               <ArrowRight
                 size={18}
                 strokeWidth={2}
@@ -496,6 +547,7 @@ export function CoachFoyer({
           selectedExerciseLabel={selectedExercise.label}
           onStart={handleStart}
           painIntent={niggleIntent}
+          finalCtaLabel={readingProtocol ? ctaLabel : undefined}
         />
       </div>
 
@@ -511,7 +563,7 @@ export function CoachFoyer({
           onClick={handleStart}
         >
           <Camera size={16} strokeWidth={2} aria-hidden="true" />
-          <span>Take a reading</span>
+          <span>{ctaLabel}</span>
           <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>

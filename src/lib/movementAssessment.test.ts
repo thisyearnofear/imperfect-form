@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionSummary } from '@/services/sessionLogger';
 import { CURL_BASELINE_PROTOCOL } from '@/types/movementAssessment';
-import { compareMovementAssessments, evaluateMovementAssessment } from '@/lib/movementAssessment';
+import {
+  compareMovementAssessments,
+  evaluateMovementAssessment,
+  shouldEndReading,
+} from '@/lib/movementAssessment';
 
 const keypointNames = [
   'left_shoulder',
@@ -160,5 +164,17 @@ describe('movement assessment M0', () => {
     expect(comparison.rangeDelta).toBeCloseTo(0.2);
     expect(comparison.similarity).not.toBeNull();
     expect(comparison.repeatable).toBe(true);
+  });
+});
+
+describe('shouldEndReading', () => {
+  it('ends exactly on the protocol rep count', () => {
+    expect(shouldEndReading(4, CURL_BASELINE_PROTOCOL)).toBe(false);
+    expect(shouldEndReading(5, CURL_BASELINE_PROTOCOL)).toBe(true);
+    expect(shouldEndReading(6, CURL_BASELINE_PROTOCOL)).toBe(true);
+  });
+
+  it('never ends without a protocol', () => {
+    expect(shouldEndReading(5, null)).toBe(false);
   });
 });

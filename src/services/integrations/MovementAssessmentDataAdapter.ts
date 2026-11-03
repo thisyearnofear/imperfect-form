@@ -95,6 +95,22 @@ export async function getLocalMovementAssessments(
   return userId ? records.filter((record) => record.userId === userId) : records;
 }
 
+/** Latest VALID local read for one protocol — the anchor for the weekly
+ *  next-reading cadence. Inconclusive reads never move the date. */
+export async function getLatestValidMovementAssessment(
+  userId: string | undefined,
+  protocolId: string
+): Promise<StoredMovementAssessment | null> {
+  const records = await getLocalMovementAssessments(userId);
+  const valid = records.filter(
+    (record) => record.assessment.protocolId === protocolId && record.assessment.status === 'valid'
+  );
+  if (valid.length === 0) return null;
+  return valid.reduce((latest, record) =>
+    record.assessment.capturedAt > latest.assessment.capturedAt ? record : latest
+  );
+}
+
 export function createMovementAssessmentExport(
   records: StoredMovementAssessment[],
   userId?: string,

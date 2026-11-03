@@ -137,10 +137,28 @@ identity, og assets.
    readQuality shipped and wired live in the session chrome; the designed
    `PainExit` surface ("It hurts — stop" → right-call copy + joint mark into
    the logbook) and the recap's inconclusive lead branch (`inconclusiveReads`
-   shared copy, cause + fix per reason) shipped next. Remaining: protocol-
-   language copy pass (§B2) and the optional shader finish (§B5).
-3. **C — ritual** (surfaces): readings tab ✅ (shipped with A), weekly check
-   cadence, niggle-cleared card.
+   shared copy, cause + fix per reason) shipped next. **Reading mode** now
+   exists as a session shape (2026-11-03): when a niggle joint is selected
+   on a protocol movement the CTA is "Take a N-rep reading", the HUD counts
+   protocol pips, and the session stops itself exactly on `targetReps` — the
+   one-rep trial can never produce a reading, and a 120s set can never
+   overshoot one. A reach reading that stalls (20s framed, no rep) lands on
+   the `PainExit` 'stalled' variant — the no-read is logged as logbook
+   context. Remaining: protocol-language copy pass (§B2) and the optional
+   shader finish (§B5).
+3. **C — ritual** (surfaces): readings tab ✅ (shipped with A). Weekly check
+   cadence **shipped 2026-11-03** in the privacy-preserving form: recap shows
+   "Next reading: {date}" with an on-device `.ics` (no server, no bot
+   channel), and the Readings tab counts down per protocol ("Next neck &
+   shoulders reading in 4 days"). This resolves part of §F's open "shape
+   TBD" question in favour of the pure-local channel for the nudge itself.
+   Also shipped: shared niggle links (`?niggle=<joint>:<context>` +
+   `&from=<name>`) pre-fill the intake and carry a sender greeting — the
+   send-a-friend doorway for the pain-ICP; per-protocol readings history
+   (reach reads now surface, previously curls-only); a plain-language
+   `readingSentence` lead on a valid recap; an "Ease it · under 2 min"
+   reach routine (post-read stretches + a subjective 1–5 feel log).
+   Remaining: niggle-cleared card, nudge-as-bot decision still open.
 4. **D — catalog** (the real build): joint-screen protocols, validated like
    curls-baseline was — one at a time, publish the protocol. **In progress** —
    `reach` (overhead reach, the neck/shoulder screen) shipped: arm-elevation
