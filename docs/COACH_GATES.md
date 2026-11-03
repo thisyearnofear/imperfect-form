@@ -23,8 +23,15 @@ everything after it.
 
 A gate that a given exercise cannot answer is **omitted**, not reported as a
 pass. Curls are not graded on normalized depth (they have a dedicated
-elbow-angle instrument in the live session), and ankle mobility is only
-observable in a squat.
+elbow-angle instrument in the live session), ankle mobility is only
+observable in a squat, and the overhead-reach screen omits knee valgus (the
+upper-body frame cannot see knees).
+
+The reach read keeps the same thresholds but speaks its own lines — the cues
+below are the fitness-move register; on a reach session the analyzer swaps
+them for instrument copy ("Raise slowly — let the arm do the work.", "Easy —
+no lean-back.", "Both arms — keep them matched.", "Slower. Control is what
+the meter reads.", "That's the overhead line — hold, then down.").
 
 Verdict precedence, matching the movement-retest report:
 

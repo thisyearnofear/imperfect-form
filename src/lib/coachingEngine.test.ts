@@ -27,7 +27,7 @@ function ideal(overrides: Partial<BiomechanicalState> = {}): BiomechanicalState 
   };
 }
 
-const ALL_MODES: ExerciseMode[] = ['pushups', 'squats', 'pullups', 'jumps', 'curls'];
+const ALL_MODES: ExerciseMode[] = ['pushups', 'squats', 'pullups', 'jumps', 'curls', 'reach'];
 
 function issueTypes(analysis: CoachingAnalysis): string[] {
   return analysis.issues.map((issue) => issue.type);
@@ -232,6 +232,70 @@ describe('coaching engine — symmetry', () => {
 
   it('is silent at exactly 0.7', () => {
     expect(issueTypes(analyzeForm(ideal({ symmetry: 0.7 }), 'pullups'))).not.toContain('symmetry');
+  });
+});
+
+describe('coaching engine — the reach read', () => {
+  it('never speaks fitness-move vocabulary', () => {
+    for (const metrics of [
+      ideal({ depth: 0.1 }),
+      ideal({ depth: 0.5 }),
+      ideal({ depth: 0.95 }),
+      ideal({ trunkLean: 20 }),
+      ideal({ trunkLean: 50 }),
+      ideal({ symmetry: 0.5 }),
+      ideal({ isStable: false }),
+    ]) {
+      for (const issue of analyzeForm(metrics, 'reach').issues) {
+        expect(issue.cue).not.toMatch(/\b(lower|deeper|depth|knee|upright|plank|weight)\b/i);
+      }
+    }
+  });
+
+  it('asks for a slow raise while the arm is still down, not "lower down"', () => {
+    expect(analyzeForm(ideal({ depth: 0.1 }), 'reach').primaryIssue?.cue).toBe(
+      'Raise slowly — let the arm do the work.'
+    );
+  });
+
+  it('coaches control mid-raise', () => {
+    expect(analyzeForm(ideal({ depth: 0.5 }), 'reach').primaryIssue?.cue).toBe(
+      'Slower. Control is what the meter reads.'
+    );
+  });
+
+  it('names the overhead line at full elevation', () => {
+    expect(analyzeForm(ideal({ depth: 0.95 }), 'reach').primaryIssue?.cue).toBe(
+      "That's the overhead line — hold, then down."
+    );
+  });
+
+  it('reads lean-back, not forward lean', () => {
+    expect(analyzeForm(ideal({ trunkLean: 20 }), 'reach').primaryIssue?.cue).toBe(
+      'Easy — no lean-back.'
+    );
+    expect(analyzeForm(ideal({ trunkLean: 50 }), 'reach').primaryIssue?.cue).toBe(
+      'Easy — no lean-back.'
+    );
+  });
+
+  it('keeps the two arms matched instead of balancing weight', () => {
+    expect(analyzeForm(ideal({ symmetry: 0.5 }), 'reach').primaryIssue?.cue).toBe(
+      'Both arms — keep them matched.'
+    );
+  });
+
+  it('skips knee valgus — the reach screen cannot see knees', () => {
+    expect(issueTypes(analyzeForm(ideal({ kneeValgus: 80 }), 'reach'))).not.toContain(
+      'knee_valgus'
+    );
+  });
+
+  it('summarizes in the instrument register', () => {
+    expect(analyzeForm(ideal(), 'reach').summary).toBe('A clean read.');
+    expect(analyzeForm(ideal({ depth: 0.95 }), 'reach').summary).toBe(
+      "That's the overhead line — hold, then down."
+    );
   });
 });
 

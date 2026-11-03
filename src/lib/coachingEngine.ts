@@ -94,14 +94,14 @@ export interface CoachingAnalysis {
 /**
  * Analyze stability (isStable, warnings)
  */
-function analyzeStability(metrics: BiomechanicalState, _mode: ExerciseMode): CoachingIssue | null {
+function analyzeStability(metrics: BiomechanicalState, mode: ExerciseMode): CoachingIssue | null {
   if (!metrics.isStable) {
     return {
       type: 'stability',
       severity: 'critical',
       current: 0,
       target: 1,
-      cue: 'Stabilize your form!',
+      cue: mode === 'reach' ? 'Slower. Control is what the meter reads.' : 'Stabilize your form!',
       priority: 1,
       confidence: FORM_CHECK_CONFIDENCE.stability,
     };
@@ -120,9 +120,14 @@ function analyzeDepth(metrics: BiomechanicalState, mode: ExerciseMode): Coaching
   const { depth } = metrics;
   const { critical, warning, target, good } = FORM_CHECK_THRESHOLDS.depth;
 
-  // Critical: Too shallow
+  // Critical: Too shallow — for the reach read, the arm still hanging.
   if (depth < critical) {
-    const cue = mode === 'squats' ? 'Go deeper!' : 'Lower down more!';
+    const cue =
+      mode === 'squats'
+        ? 'Go deeper!'
+        : mode === 'reach'
+          ? 'Raise slowly — let the arm do the work.'
+          : 'Lower down more!';
     return {
       type: 'depth',
       severity: 'critical',
@@ -134,9 +139,14 @@ function analyzeDepth(metrics: BiomechanicalState, mode: ExerciseMode): Coaching
     };
   }
 
-  // Warning: Slightly shallow
+  // Warning: Slightly shallow — mid-raise for the reach read.
   if (depth < warning) {
-    const cue = mode === 'squats' ? 'Add more depth' : 'Extend further';
+    const cue =
+      mode === 'squats'
+        ? 'Add more depth'
+        : mode === 'reach'
+          ? 'Slower. Control is what the meter reads.'
+          : 'Extend further';
     return {
       type: 'depth',
       severity: 'warning',
@@ -148,14 +158,14 @@ function analyzeDepth(metrics: BiomechanicalState, mode: ExerciseMode): Coaching
     };
   }
 
-  // Info: Good depth
+  // Info: Good depth — overhead for the reach read.
   if (depth > good) {
     return {
       type: 'depth',
       severity: 'info',
       current: depth,
       target,
-      cue: 'Perfect depth!',
+      cue: mode === 'reach' ? "That's the overhead line — hold, then down." : 'Perfect depth!',
       priority: FORM_CHECK_PRIORITY.positive,
       confidence: FORM_CHECK_CONFIDENCE.depthGood,
     };
@@ -174,14 +184,15 @@ function analyzeTrunkLean(metrics: BiomechanicalState, mode: ExerciseMode): Coac
   // Squats allow more lean than the default.
   const target = mode === 'squats' ? squatsWarning : warning;
 
-  // Critical: Extreme lean
+  // Critical: Extreme lean — for the reach read, the back doing the
+  // arm's work (lean-back, not forward bend).
   if (trunkLean > critical) {
     return {
       type: 'trunk_lean',
       severity: 'critical',
       current: trunkLean,
       target,
-      cue: 'Stay upright!',
+      cue: mode === 'reach' ? 'Easy — no lean-back.' : 'Stay upright!',
       priority: FORM_CHECK_PRIORITY.critical,
       confidence: FORM_CHECK_CONFIDENCE.trunkLeanCritical,
     };
@@ -194,7 +205,7 @@ function analyzeTrunkLean(metrics: BiomechanicalState, mode: ExerciseMode): Coac
       severity: 'warning',
       current: trunkLean,
       target,
-      cue: 'Reduce forward lean',
+      cue: mode === 'reach' ? 'Easy — no lean-back.' : 'Reduce forward lean',
       priority: FORM_CHECK_PRIORITY.warning,
       confidence: FORM_CHECK_CONFIDENCE.trunkLeanWarning,
     };
@@ -206,7 +217,11 @@ function analyzeTrunkLean(metrics: BiomechanicalState, mode: ExerciseMode): Coac
 /**
  * Analyze knee alignment (valgus = inward collapse)
  */
-function analyzeKneeValgus(metrics: BiomechanicalState, _mode: ExerciseMode): CoachingIssue | null {
+function analyzeKneeValgus(metrics: BiomechanicalState, mode: ExerciseMode): CoachingIssue | null {
+  // The reach screen reads shoulders and arms — a knee check it cannot see
+  // is a wrong-vocabulary cue waiting to happen.
+  if (mode === 'reach') return null;
+
   const { kneeValgus } = metrics;
   const { warning, critical, target } = FORM_CHECK_THRESHOLDS.kneeValgus;
 
@@ -269,7 +284,7 @@ function analyzeAnkleFlexion(
 /**
  * Analyze symmetry (left/right balance)
  */
-function analyzeSymmetry(metrics: BiomechanicalState, _mode: ExerciseMode): CoachingIssue | null {
+function analyzeSymmetry(metrics: BiomechanicalState, mode: ExerciseMode): CoachingIssue | null {
   const { symmetry } = metrics;
   const { warning, target } = FORM_CHECK_THRESHOLDS.symmetry;
 
@@ -279,7 +294,7 @@ function analyzeSymmetry(metrics: BiomechanicalState, _mode: ExerciseMode): Coac
       severity: 'warning',
       current: symmetry,
       target,
-      cue: 'Balance weight evenly',
+      cue: mode === 'reach' ? 'Both arms — keep them matched.' : 'Balance weight evenly',
       priority: FORM_CHECK_PRIORITY.symmetryWarning,
       confidence: FORM_CHECK_CONFIDENCE.symmetry,
     };
@@ -291,9 +306,9 @@ function analyzeSymmetry(metrics: BiomechanicalState, _mode: ExerciseMode): Coac
 /**
  * Generate one-liner summary from issues
  */
-function generateSummary(issues: CoachingIssue[]): string {
+function generateSummary(issues: CoachingIssue[], mode: ExerciseMode): string {
   if (issues.length === 0) {
-    return 'Excellent form!';
+    return mode === 'reach' ? 'A clean read.' : 'Excellent form!';
   }
 
   const critical = issues.find((i) => i.severity === 'critical');
@@ -311,7 +326,7 @@ function generateSummary(issues: CoachingIssue[]): string {
   }
 
   // All info-level (positive feedback)
-  return 'Perfect form!';
+  return mode === 'reach' ? "That's the overhead line — hold, then down." : 'Perfect form!';
 }
 
 /** Every analyzer, in the order issues are collected before the priority sort. */
@@ -365,7 +380,10 @@ export function evaluateFormGates(metrics: BiomechanicalState, mode: ExerciseMod
       id: 'depth',
       name: 'range of motion',
       limit: `${T.depth.critical}-${T.depth.good}`,
-      failure: `Depth is outside ${T.depth.critical}-${T.depth.good}.`,
+      failure:
+        mode === 'reach'
+          ? `Arm elevation is outside ${T.depth.critical}-${T.depth.good} of full range.`
+          : `Depth is outside ${T.depth.critical}-${T.depth.good}.`,
     }),
     gateForIssue(byType.get('trunk_lean'), metrics.trunkLean, {
       id: 'trunk_lean',
@@ -394,13 +412,15 @@ export function evaluateFormGates(metrics: BiomechanicalState, mode: ExerciseMod
   ];
 
   // Depth is not graded for curls, which have a dedicated elbow-angle
-  // instrument in the live session, and ankle mobility is only observable in a
-  // squat. Drop the checks this exercise cannot answer rather than report a
-  // pass for something that was never measured.
+  // instrument in the live session, ankle mobility is only observable in a
+  // squat, and the reach screen cannot see knees at all. Drop the checks this
+  // exercise cannot answer rather than report a pass for something that was
+  // never measured.
   return buildVerdict(
     gates.filter((gate) => {
       if (gate.id === 'depth') return mode !== 'curls';
       if (gate.id === 'ankle_flexion') return mode === 'squats';
+      if (gate.id === 'knee_valgus') return mode !== 'reach';
       return true;
     })
   );
@@ -450,7 +470,7 @@ export function analyzeForm(
 
   return {
     issues: allIssues,
-    summary: generateSummary(allIssues),
+    summary: generateSummary(allIssues, mode),
     primaryIssue,
     isForming: metrics.isStable === false, // Still transitioning between reps
     confidence,

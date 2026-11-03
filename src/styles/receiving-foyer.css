@@ -197,6 +197,7 @@
 }
 
 .rf-hero {
+  position: relative;
   min-height: min(92svh, 780px);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -334,6 +335,79 @@
   font-weight: 500;
   line-height: 1.5;
   text-wrap: pretty;
+}
+
+/* Link-variant hero footer — the scroll cue that names what is below, plus
+   the one quiet link that jumps the impatient reader to the outro CTA.
+   Pinned to the hero's bottom edge so the ask stays below the fold. */
+/* The cue owns a reserved strip at the hero's foot — the padding keeps the
+   centered plate+copy clear of it on short screens. */
+.rf-hero:has(.rf-next) {
+  padding-bottom: 76px;
+}
+
+.rf-next {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.rf-next__cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rf-soft);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.rf-next__chevron {
+  animation: rf-next-drift 2.4s var(--rf-curve) infinite;
+}
+
+@keyframes rf-next-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(3px);
+    opacity: 1;
+  }
+}
+
+/* The quiet link — same hairline register as .rf-change, an anchor not a
+   button. */
+.rf-next__skip {
+  padding: 4px 0;
+  color: rgba(153, 246, 228, 0.6);
+  border-bottom: 1px solid rgba(153, 246, 228, 0.25);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition:
+    color 200ms var(--rf-curve),
+    border-color 200ms var(--rf-curve);
+}
+
+.rf-next__skip:hover {
+  color: rgba(153, 246, 228, 0.9);
+  border-bottom-color: rgba(153, 246, 228, 0.5);
+}
+
+.rf-next__skip:focus-visible {
+  outline: 2px solid var(--rf-teal-bright);
+  outline-offset: 3px;
 }
 
 /* The one quiet text door under the CTA. */
@@ -929,8 +1003,20 @@
   margin-bottom: 20px;
 }
 
+/* The framing line that moved here with the ask for link recipients. */
+.rf-final__line {
+  margin: 0 auto 18px;
+  max-width: 24rem;
+  text-align: center;
+}
+
 .rf-final__note {
   text-align: center;
+}
+
+/* Jump anchors land under the studio topbar, not behind it. */
+.rf-final {
+  scroll-margin-top: 5rem;
 }
 
 /* Wide layout — plate left, copy right, the plate owns the column. */
@@ -986,6 +1072,10 @@
   }
 
   .rf-plate.is-iris {
+    animation: none;
+  }
+
+  .rf-next__chevron {
     animation: none;
   }
 }

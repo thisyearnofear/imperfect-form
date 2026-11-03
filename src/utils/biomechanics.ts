@@ -350,6 +350,9 @@ export function analyzeBiomechanics(keypoints: Keypoint[], mode: ExerciseMode): 
       }
       if (rightElev !== null) {
         metrics.symmetry = Math.max(0, 1 - Math.abs(leftElev - rightElev) / 90);
+        // One arm markedly ahead of the other — the two-arm read wants them
+        // matched. Same 30° asymmetry line the pull-up check uses.
+        if (Math.abs(leftElev - rightElev) > 30) metrics.warnings.push('MATCH ARMS');
       }
     }
   }

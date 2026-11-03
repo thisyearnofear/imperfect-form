@@ -32,7 +32,7 @@ test.describe('Shared niggle link', () => {
     await page.addInitScript(SKIP_ENVELOPE);
   });
 
-  test('a valid link lands on the receiving hero', async ({ page }) => {
+  test('a valid link lands on the receiving hero — learning first, ask last', async ({ page }) => {
     await page.goto('/?niggle=neck-shoulders:desk&from=Udi');
     const foyer = page.locator('.receiving-foyer');
     await expect(foyer).toBeVisible({ timeout: 20000 });
@@ -42,7 +42,24 @@ test.describe('Shared niggle link', () => {
     // is quoted; the headline promises the thing a worried person wants.
     await expect(foyer.locator('.rf-gift')).toContainText("Heard it's been tight lately");
     await expect(foyer.locator('#rf-title')).toContainText('See if it’s actually getting better.');
-    await expect(foyer.locator('#startButton')).toContainText('Take a 5-rep reading');
+
+    // Onboarding-first for link recipients: the hero teaches, it does not
+    // ask — no CTA button in the hero, a scroll cue naming what is below,
+    // and one quiet link that jumps to the reading in the outro.
+    const hero = foyer.locator('.rf-hero');
+    await expect(hero.locator('#startButton')).toHaveCount(0);
+    await expect(hero.locator('.coach-foyer__start')).toHaveCount(0);
+    await expect(foyer.getByText('the meter, explained')).toBeVisible();
+    const skip = foyer.getByRole('link', { name: 'Skip to the reading' });
+    await expect(skip).toBeVisible();
+    await expect(skip).toHaveAttribute('href', '#rf-reading');
+
+    // The CTA block is the finale: plate + reading CTA + change-it door.
+    const finale = foyer.locator('#rf-reading');
+    await finale.scrollIntoViewIfNeeded();
+    await expect(finale.locator('.rf-plate')).toBeVisible();
+    await expect(finale.locator('#startButton')).toContainText('Take a 5-rep reading');
+    await expect(finale.getByRole('button', { name: 'not your niggle? change it' })).toBeVisible();
   });
 
   test('a &note= link quotes the sender’s own words', async ({ page }) => {
@@ -63,8 +80,11 @@ test.describe('Shared niggle link', () => {
     const foyer = page.locator('.receiving-foyer');
     await expect(foyer).toBeVisible({ timeout: 20000 });
 
-    // Intake starts folded — the chips are inside the collapsed region.
-    await page.getByRole('button', { name: 'not your niggle? change it' }).click();
+    // The change-it door lives in the outro finale for link recipients —
+    // the intake starts folded, chips inside the collapsed region.
+    const finale = foyer.locator('#rf-reading');
+    await finale.scrollIntoViewIfNeeded();
+    await finale.getByRole('button', { name: 'not your niggle? change it' }).click();
     const intake = page.locator('#rf-intake');
     const chip = intake.getByRole('button', { name: 'My neck & shoulders' });
     await expect(chip).toBeVisible();
@@ -76,7 +96,7 @@ test.describe('Shared niggle link', () => {
     await expect(foyer.locator('.rf-gift')).toContainText('Heard the stairs have been a thing');
     await expect(foyer.locator('#rf-title')).toContainText('See if it’s actually getting better.');
     // Squats has no fixed-rep protocol — the CTA drops to the honest one rep.
-    await expect(foyer.locator('#startButton')).toContainText('Try one rep');
+    await expect(finale.locator('#startButton')).toContainText('Try one rep');
   });
 
   test('an unknown joint lands on the organic variant', async ({ page }) => {
@@ -86,10 +106,13 @@ test.describe('Shared niggle link', () => {
     // No sender greeting — the wordmark eyebrow instead.
     await expect(foyer.getByText(/sent you this/)).toHaveCount(0);
     await expect(foyer.locator('.rf-sent-by')).toHaveText('NIGGLEOMETER');
-    // The intake is the hero: chips visible without unfolding anything.
+    // The intake is the hero: chips visible without unfolding anything, and
+    // the organic hero keeps its CTA — the learn-first restructure is
+    // link-only.
     await expect(foyer.locator('.rf-chip', { hasText: 'My neck & shoulders' })).toBeVisible();
     await expect(foyer.locator('.rf-chip.is-selected')).toHaveCount(0);
-    await expect(foyer.locator('#startButton')).toContainText('Try one rep');
+    await expect(foyer.locator('.rf-hero #startButton')).toContainText('Try one rep');
+    await expect(foyer.getByRole('link', { name: 'Skip to the reading' })).toHaveCount(0);
   });
 });
 

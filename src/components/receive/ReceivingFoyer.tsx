@@ -635,36 +635,40 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
 
             {/* Organic: the intake IS the hero — hairline chips under the
                 title; picking a joint unfolds its context row and retitles
-                the plate copy. Link arrivals keep the collapsed change-it
-                door under the CTA instead. */}
+                the plate copy. Link arrivals learn first: no CTA here, the
+                reading ask waits in the outro as the finale. */}
             {organic && intakeChips}
 
-            <p className="rf-line">
-              {readingProtocol
-                ? `${readingProtocol.targetReps} slow raises. The camera watches; nothing leaves your phone.`
-                : 'Slow reps. The camera watches; nothing leaves your phone.'}
-            </p>
+            {/* The framing line rides with the ask: organic keeps it beside
+                the hero CTA; link arrivals meet it at the finale instead. */}
+            {organic && (
+              <p className="rf-line">
+                {readingProtocol
+                  ? `${readingProtocol.targetReps} slow raises. The camera watches; nothing leaves your phone.`
+                  : 'Slow reps. The camera watches; nothing leaves your phone.'}
+              </p>
+            )}
 
-            <button
-              type="button"
-              id="startButton"
-              className="coach-foyer__start coach-foyer__start--hero feel-press rf-cta"
-              onPointerEnter={prefetchWebcamChunk}
-              onTouchStart={prefetchWebcamChunk}
-              onClick={() => handleStart(heroPlateRef.current)}
-            >
-              <Camera size={18} strokeWidth={2} aria-hidden="true" />
-              <span>{ctaLabel}</span>
-              <ArrowRight
-                size={18}
-                strokeWidth={2}
-                aria-hidden="true"
-                className="coach-foyer__start-arrow"
-              />
-            </button>
-
-            {organic ? (
+            {organic && (
               <>
+                <button
+                  type="button"
+                  id="startButton"
+                  className="coach-foyer__start coach-foyer__start--hero feel-press rf-cta"
+                  onPointerEnter={prefetchWebcamChunk}
+                  onTouchStart={prefetchWebcamChunk}
+                  onClick={() => handleStart(heroPlateRef.current)}
+                >
+                  <Camera size={18} strokeWidth={2} aria-hidden="true" />
+                  <span>{ctaLabel}</span>
+                  <ArrowRight
+                    size={18}
+                    strokeWidth={2}
+                    aria-hidden="true"
+                    className="coach-foyer__start-arrow"
+                  />
+                </button>
+
                 <button
                   type="button"
                   className="rf-change"
@@ -688,28 +692,23 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
                   </div>
                 </div>
               </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="rf-change"
-                  aria-expanded={intakeOpen}
-                  aria-controls="rf-intake"
-                  onClick={() => {
-                    playStudioCue('soft');
-                    triggerHaptic(30);
-                    setIntakeOpen((v) => !v);
-                  }}
-                >
-                  not your niggle? change it
-                </button>
-
-                <div id="rf-intake" className={`rf-intake${intakeOpen ? ' is-open' : ''}`}>
-                  <div className="rf-intake__content">{intakeChips}</div>
-                </div>
-              </>
             )}
           </div>
+
+          {/* Link recipients only: the hero teaches, it does not ask. A scroll
+              cue names what is below; one quiet link lets an impatient reader
+              jump straight to the reading in the outro. */}
+          {!organic && (
+            <div className="rf-next">
+              <span className="rf-next__cue" aria-hidden="true">
+                the meter, explained
+                <ChevronDown size={13} className="rf-next__chevron" />
+              </span>
+              <a className="rf-next__skip" href="#rf-reading">
+                Skip to the reading
+              </a>
+            </div>
+          )}
         </div>
 
         {/* ——— Act 2 — the scroll story, a seam between each beat ——— */}
@@ -882,12 +881,24 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
             ))}
           </div>
 
-          <div className="rf-final">
+          {/* The finale — the same CTA block the organic hero carries, held
+              until after the story for link recipients. #rf-reading is the
+              hero's "Skip to the reading" anchor; #startButton stays the
+              single start target whichever variant mounted it. */}
+          <div className="rf-final" id="rf-reading">
             <div ref={finalPlateRef} className="rf-plate rf-final__plate">
               <ReachPlate progress={0.62} ghostBoost={1.4} pips={5} litPips={3} />
             </div>
+            {!organic && (
+              <p className="rf-line rf-final__line">
+                {readingProtocol
+                  ? `${readingProtocol.targetReps} slow raises. The camera watches; nothing leaves your phone.`
+                  : 'Slow reps. The camera watches; nothing leaves your phone.'}
+              </p>
+            )}
             <button
               type="button"
+              id={organic ? undefined : 'startButton'}
               className="coach-foyer__start feel-press rf-cta"
               onClick={() => handleStart(finalPlateRef.current)}
             >
@@ -900,6 +911,29 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
                 className="coach-foyer__start-arrow"
               />
             </button>
+            {/* The "change it" door moved here with the ask — the hero no
+                longer carries any action for link arrivals. */}
+            {!organic && (
+              <>
+                <button
+                  type="button"
+                  className="rf-change"
+                  aria-expanded={intakeOpen}
+                  aria-controls="rf-intake"
+                  onClick={() => {
+                    playStudioCue('soft');
+                    triggerHaptic(30);
+                    setIntakeOpen((v) => !v);
+                  }}
+                >
+                  not your niggle? change it
+                </button>
+
+                <div id="rf-intake" className={`rf-intake${intakeOpen ? ' is-open' : ''}`}>
+                  <div className="rf-intake__content">{intakeChips}</div>
+                </div>
+              </>
+            )}
             <p className="coach-foyer__assist coach-foyer__assist--meter rf-final__note">
               A meter, not a diagnosis. If it hurts, stop.
             </p>

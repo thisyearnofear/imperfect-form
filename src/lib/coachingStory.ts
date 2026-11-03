@@ -1,4 +1,5 @@
 import type { ExerciseMode } from '@/utils/biomechanics';
+import { countedLabel } from '@/lib/exerciseGuidance';
 import type { SessionSummary } from '@/services/sessionLogger';
 
 const NEXT_FOCUS: Record<ExerciseMode, string> = {
@@ -29,6 +30,7 @@ export function readableFormWarning(warning: string): string {
   if (normalized === 'trunk_sway' || normalized === 'trunk_lean') {
     return 'Reach with the arm, not the back';
   }
+  if (normalized === 'match_arms') return 'Both arms — keep them matched';
   return warning.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
@@ -49,11 +51,13 @@ export function sessionStory(
   // clean baseline still gets the exercise-specific next focus, but we never
   // invent a correction that the coach did not observe.
   const focus = firstWarning ? readableFormWarning(firstWarning) : nextFocusFor(mode);
+  // "5 overhead reaches", not "5 reach" — the raw mode id is not a noun.
+  const movementNoun = countedLabel(mode, reps).toLowerCase();
 
   if (!summary) {
     return {
       title: 'Your first coached baseline starts here.',
-      body: `${reps} ${mode} gave the coach a starting line. Try another set when you are ready to make one adjustment.`,
+      body: `${reps} ${movementNoun} gave the coach a starting line. Try another set when you are ready to make one adjustment.`,
       focus,
     };
   }
@@ -68,7 +72,7 @@ export function sessionStory(
 
   return {
     title: 'You gave the coach a clean baseline.',
-    body: `The camera followed ${reps} ${mode} without a major form observation. Keep this line and use the next set to make it repeatable.`,
+    body: `The camera followed ${reps} ${movementNoun} without a major form observation. Keep this line and use the next set to make it repeatable.`,
     focus,
   };
 }

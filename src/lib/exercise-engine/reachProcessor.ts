@@ -144,8 +144,8 @@ export const processReach = ({
 
   if (leaning) {
     reachState.leanSinceLastRep = true;
-    feedback = 'Reach with the arm — keep your trunk still.';
-    formCheckSpeak = { issue: 'trunk_lean', phrase: 'Keep your trunk still' };
+    feedback = 'Easy — no lean-back.';
+    formCheckSpeak = { issue: 'trunk_lean', phrase: 'Easy — no lean-back' };
   }
 
   // Per-arm hysteresis (each arm counts independently — alternating reaches work).
