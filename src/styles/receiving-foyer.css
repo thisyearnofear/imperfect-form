@@ -1220,11 +1220,19 @@
    renders the raised pose and only transitions freeze. Frame chrome reuses
    the .rp-* tokens. */
 
-.joint-plate {
+.joint-plate,
+.jp-anatomy {
   --jp-brass: var(--sandow-brass, #fcb131);
   --jp-paper: var(--sandow-paper, #f4ecd8);
   --jp-teal: #7aebd8;
+  /* The teardown's torso + arm strokes come from the reach-plate idiom —
+     give them their tokens when the figure draws outside a .reach-plate. */
+  --rp-brass: var(--sandow-brass, #fcb131);
+  --rp-paper: var(--sandow-paper, #f4ecd8);
+  --rp-teal: #7aebd8;
+}
 
+.joint-plate {
   display: block;
   width: 100%;
   height: auto;

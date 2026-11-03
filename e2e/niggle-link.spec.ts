@@ -37,7 +37,9 @@ test.describe('Shared niggle link', () => {
     const foyer = page.locator('.receiving-foyer');
     await expect(foyer).toBeVisible({ timeout: 20000 });
     await expect(foyer.getByText('Udi sent you this')).toBeVisible();
-    await expect(foyer.locator('.reach-plate').first()).toBeVisible();
+    // The hero plate is the shoulder teardown for neck-shoulders links —
+    // scope to the hero so the beats' own plates don't steal .first().
+    await expect(foyer.locator('.rf-hero .joint-plate')).toBeVisible();
     // The gift, not the diagnosis: without &note= the context's empathy line
     // is quoted; the headline promises the thing a worried person wants.
     await expect(foyer.locator('.rf-gift')).toContainText("Heard it's been tight lately");

@@ -47,6 +47,16 @@ export type ReachProcessorResult = ProcessorResult & { reachState?: ReachState }
 
 const score = (k: EngineKeypoint | undefined): number => k?.score ?? 0;
 
+/**
+ * Arm elevation from straight-down: arm hanging reads ~0°, horizontal ~90°,
+ * overhead ~180°. Image y grows downward, so "elbow above shoulder" is
+ * elbow.y < shoulder.y. Exported so the session's live joint inset and the
+ * rep counter share one definition of "how high the arm is".
+ */
+export function armElevationDeg(shoulder: EngineKeypoint, elbow: EngineKeypoint): number {
+  return Math.atan2(Math.abs(elbow.x - shoulder.x), elbow.y - shoulder.y) * (180 / Math.PI);
+}
+
 interface ArmReading {
   /** Arm elevation: shoulder→elbow angle from straight-down, 0..180. */
   elevation: number;
@@ -68,11 +78,7 @@ function readArm(keypoints: EngineKeypoint[], side: 'left' | 'right'): ArmReadin
   const visible =
     score(shoulder) > MIN_SCORE && score(elbow) > MIN_SCORE && score(wrist) > MIN_SCORE;
 
-  // Arm elevation from straight-down: arm hanging reads ~0°, horizontal ~90°,
-  // overhead ~180°. Image y grows downward, so "elbow above shoulder" is
-  // elbow.y < shoulder.y.
-  const elevation =
-    Math.atan2(Math.abs(elbow.x - shoulder.x), elbow.y - shoulder.y) * (180 / Math.PI);
+  const elevation = armElevationDeg(shoulder, elbow);
 
   const lean =
     hip && score(hip) > MIN_SCORE

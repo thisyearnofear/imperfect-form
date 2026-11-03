@@ -771,7 +771,12 @@ export function usePoseDetection(
           } else if (data.type === 'result') {
             const detected = data.keypoints && data.keypoints.length > 0;
             notifyStateChange({ poseDetected: detected });
-            onCurlPoseDataRef.current?.(modeRef.current === 'curls' ? data.poseData : undefined);
+            // curls feed the form instrument; reach feeds the live joint
+            // inset — the engine's poseData already carries the measured
+            // angles, so keypoints never enter the React render path.
+            onCurlPoseDataRef.current?.(
+              modeRef.current === 'curls' || modeRef.current === 'reach' ? data.poseData : undefined
+            );
             // Progressive framing-readiness during the pre-workout settling
             // window. Runs on the main thread against the worker's keypoints;
             // self-terminates once the first rep lands.
@@ -1232,7 +1237,9 @@ export function usePoseDetection(
                 }
               }
               onCurlPoseDataRef.current?.(
-                activeMode === 'curls' ? engineDetector?.lastPoseData : undefined
+                activeMode === 'curls' || activeMode === 'reach'
+                  ? engineDetector?.lastPoseData
+                  : undefined
               );
 
               onMetricsRef.current?.(metrics);

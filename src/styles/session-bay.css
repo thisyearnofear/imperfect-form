@@ -398,3 +398,34 @@
     transition-duration: 1ms;
   }
 }
+
+/* —— Live joint inset — the muscle talking ———————————————————————————
+   Reach readings only: once the pose locks and the framing ghost retires,
+   this small anatomical plate stays in the corner of the stage — the same
+   shoulder teardown, driven by the measured raise. Hairline-only, no
+   labels, region glow only; a readout, not a second instrument panel. */
+.jp-live {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.7rem;
+  z-index: 74; /* under the bottom stack (76) and the ghost (95) */
+  width: 6.5rem; /* ~104px — small enough never to block framing */
+  padding: 0.3rem;
+  border: 1px solid rgba(252, 177, 49, 0.3);
+  border-radius: 4px;
+  background: rgba(4, 15, 18, 0.55);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* Mobile: the bottom band owns the edge — the inset docks above it. */
+.session-camera-stage--mobile .jp-live {
+  bottom: 4.6rem;
+}
+
+.jp-live__plate {
+  display: block;
+  width: 100%;
+  height: auto;
+}

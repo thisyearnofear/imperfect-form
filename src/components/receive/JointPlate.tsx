@@ -1,6 +1,19 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
+import { JointFigure, type JointRegionId } from './JointFigure';
+import {
+  JP_A0 as A0,
+  JP_A1 as A1,
+  JP_PIVOT as PIVOT,
+  JP_R as R,
+  JP_REP_A as REP_A,
+  JP_TICKS as TICKS,
+  clamp01,
+  jpArmPose as armPose,
+  jpRound as f,
+  jointSeq,
+} from './shoulderAnatomy';
 import '@/styles/receiving-foyer.css';
 
 /**
@@ -20,7 +33,7 @@ import '@/styles/receiving-foyer.css';
  * and peel still read.
  */
 
-type PeelId = 'trapezius' | 'scapula' | 'arm';
+type PeelId = JointRegionId;
 
 export type JointPlateProps = {
   /** 0..1 — 0 arm hanging, 1 arm overhead (same contract as ReachPlate). */
@@ -40,55 +53,9 @@ export type JointPlateProps = {
   className?: string;
 };
 
-// —— Plate geometry (viewBox 0 0 320 372, shared with ReachPlate) ————————
-const PIVOT = { x: 192, y: 142 }; // glenoid — the instrument's origin
-const UPPER = 48; // humerus
-const FORE = 44; // forearm
-const R = UPPER + FORE; // protractor / hand radius
-const A0 = 0.1; // resting angle off straight-down
-const A1 = Math.PI - 0.1; // overhead
-const ARM_PATH_LEN = UPPER + FORE + 8;
-
-// The reach protocol's real counting line: a rep counts past 135° of
-// elevation (reachProcessor.RAISED_DEG). Drawn on the protractor.
-const REP_DEG = 135;
-const REP_A = (REP_DEG * Math.PI) / 180;
-const REP_P = (REP_A - A0) / (A1 - A0);
-
-const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
-const f = (n: number) => Math.round(n * 100) / 100;
-
-/** Glenoid → elbow → wrist for a given raise amount (ReachPlate's pose). */
-function armPose(pp: number) {
-  const t = clamp01(pp);
-  const a = A0 + t * (A1 - A0);
-  const ex = PIVOT.x + UPPER * Math.sin(a);
-  const ey = PIVOT.y + UPPER * Math.cos(a);
-  const af = a - 0.15 * (1 - t);
-  const wx = ex + FORE * Math.sin(af);
-  const wy = ey + FORE * Math.cos(af);
-  return { ex, ey, wx, wy };
-}
-
-function armPath(pp: number) {
-  const { ex, ey, wx, wy } = armPose(pp);
-  return `M${PIVOT.x} ${PIVOT.y} L${f(ex)} ${f(ey)} L${f(wx)} ${f(wy)}`;
-}
-
-const TICKS = Array.from({ length: 7 }, (_, i) => i * 30); // 0..180
-
-// —— Anatomy paths ————————————————————————————————————————————
-// Muscle regions: brass-outlined soft tissue over the bone layer.
-const TRAPEZIUS = 'M160 92 Q150 110 156 126 L196 138 L195 146 Q170 140 159 130 Q153 108 162 94 Z';
-const LEVATOR = 'M162 94 Q165 120 169 148 L175 146 Q171 118 168 92 Z';
-const DELTOID =
-  'M180 126 Q192 117 205 128 Q215 140 210 156 Q202 147 194 146 Q184 148 178 158 Q174 141 180 126 Z';
-// Bones: clavicle (fixed) + scapula (rotates upward as the arm rises) +
-// humerus (the working arm path itself).
-const CLAVICLE = 'M158 124 Q178 124 197 138';
-const SCAPULA = 'M170 150 Q186 142 201 149 L197 200 Q185 209 177 201 Z';
-const SCAP_PIVOT = { x: 196, y: 148 }; // glenoid corner — rotation origin
-const SCAP_ROT = -13; // upward rotation at full raise, degrees
+// —— Plate geometry + anatomy paths live in ./shoulderAnatomy — the same
+// constants drive the framing ghost and the live session inset, so the
+// teardown reads identically on all three surfaces.
 
 const PEEL_COPY: Record<PeelId, { name: string; lines: string[]; ax: number; ay: number }> = {
   trapezius: {
@@ -125,7 +92,6 @@ export function JointPlate({
   const p = clamp01(progress);
   const pose = armPose(p);
   const lit = litPips ?? Math.min(pips, Math.floor(p * (pips + 0.001)));
-  const pulseOffset = 22 - ARM_PATH_LEN * p;
   const elevDeg = (A0 + p * (A1 - A0)) * (180 / Math.PI);
 
   // —— Live margin readouts, in the meter's own metric names ————————
@@ -136,14 +102,8 @@ export function JointPlate({
   const lrRatio = (0.94 + 0.06 * Math.min(1, p * 1.2)).toFixed(2);
 
   // —— The tour sequence — each region lights as its role plays ——————
-  const seq = {
-    deltoid: p > 0.06,
-    trapezius: p > 0.3,
-    scapula: p > 0.5,
-    levator: p > 0.55,
-    counted: p > REP_P,
-  };
-  const scapAngle = SCAP_ROT * Math.min(1, p * 1.15);
+  // Shared with the ghost + live inset via jointSeq (./shoulderAnatomy).
+  const seq = jointSeq(p);
 
   // —— Peel-the-part ———————————————————————————————————————————
   const [peeled, setPeeled] = useState<PeelId | null>(null);
@@ -334,83 +294,19 @@ export function JointPlate({
         <path className="jp-panel-rule" d="M22 114 H112" />
       </g>
 
-      {/* —— The figure — torso context, dim ———————————————————— */}
-      <g className="jp-figure">
-        <circle className="rp-bone rp-bone--dim" cx="158" cy="68" r="13" />
-        <line className="rp-bone rp-bone--dim" x1="152" y1="80" x2="152" y2="104" />
-        <line className="rp-bone rp-bone--dim" x1="167" y1="82" x2="167" y2="100" />
-        <line className="rp-bone rp-bone--dim" x1="158" y1="104" x2="158" y2="216" />
-        <path className="rp-bone rp-bone--dim" d="M124 148 Q160 136 198 144" />
-        <path className="rp-bone rp-bone--dim" d="M126 148 C120 176 122 200 130 218" />
-        <path className="rp-bone rp-bone--dim" d="M196 146 C202 174 200 198 192 216" />
-        <path className="rp-bone rp-bone--faint" d="M132 222 Q162 230 190 220" />
-        <path className="rp-bone rp-bone--dim" d="M124 148 L120 186 Q119 200 118 212" />
-        <circle className="rp-joint rp-joint--dim" cx="118" cy="213" r="2.4" />
-        <path className="rp-bone rp-bone--faint" d="M140 224 L136 276" />
-        <path className="rp-bone rp-bone--faint" d="M184 222 L186 276" />
-        <line className="rp-ground" x1="104" y1="280" x2="220" y2="280" />
-      </g>
-
-      {/* —— Soft tissue: brass-outlined muscle regions —————————— */}
-      <path className={`jp-muscle${seq.deltoid ? ' is-lit' : ''}`} d={DELTOID} />
-      <path className={`jp-muscle jp-muscle--strap${seq.levator ? ' is-lit' : ''}`} d={LEVATOR} />
-      <g
-        className={`jp-region${seq.trapezius ? ' is-lit' : ''}${peeled === 'trapezius' ? ' is-peeled' : ''}`}
-        aria-label="Upper trapezius — tap to peel"
-        {...regionProps('trapezius')}
-      >
-        <path className="jp-hit" d={TRAPEZIUS} />
-        <path className="jp-muscle" d={TRAPEZIUS} />
-      </g>
-
-      {/* —— Bone layer —————————————————————————————————————————— */}
-      <path className="jp-bone" d={CLAVICLE} />
-      <g
-        className={`jp-region jp-region--scap${seq.scapula ? ' is-lit' : ''}${peeled === 'scapula' ? ' is-peeled' : ''}`}
-        aria-label="Scapula — tap to peel"
-        transform={`rotate(${f(scapAngle)} ${SCAP_PIVOT.x} ${SCAP_PIVOT.y})`}
-        {...regionProps('scapula')}
-      >
-        <path className="jp-hit" d={SCAPULA} />
-        <path className="jp-bone jp-bone--scap" d={SCAPULA} />
-      </g>
-
-      {/* Ghost trail — earlier poses of the same arm, smeared back. */}
-      {GHOST_OFFSETS.map((off, i) =>
-        p - off > 0.02 ? (
-          <path
-            key={off}
-            className="rp-ghost"
-            d={armPath(p - off)}
-            style={{ opacity: GHOST_OPACITY[i] }}
-          />
-        ) : null
-      )}
-
-      {/* The working arm — humerus + forearm, peelable. */}
-      <g
-        className={`jp-region jp-region--arm${seq.counted ? ' is-lit' : ''}${peeled === 'arm' ? ' is-peeled' : ''}`}
-        aria-label="Humerus — the arm. Tap to peel"
-        {...regionProps('arm')}
-      >
-        <path className="jp-hit jp-hit--arm" d={armPath(p)} />
-        <path className={`jp-arm${seq.counted ? ' is-counted' : ''}`} d={armPath(p)} />
-        <path
-          className="rp-pulse"
-          d={armPath(p)}
-          strokeDasharray="22 999"
-          strokeDashoffset={pulseOffset}
-        />
-        <circle
-          className="rp-hand"
-          cx={f(pose.wx)}
-          cy={f(pose.wy)}
-          r="3"
-          style={{ opacity: 0.45 + p * 0.55 }}
-        />
-        <circle className="jp-elbow" cx={f(pose.ex)} cy={f(pose.ey)} r="2.2" />
-      </g>
-      <circle className="rp-pivot" cx={PIVOT.x} cy={PIVOT.y} r="2.6" />
+      {/* —— The anatomical teardown — figure, muscle regions, bones and
+          the working arm, shared with the framing ghost and the live
+          session inset (./JointFigure). Peel wiring stays here. ———————— */}
+      <JointFigure
+        progress={p}
+        peeled={peeled}
+        regionProps={regionProps}
+        ghostTrail={GHOST_OFFSETS.map((off, i) => ({
+          offset: off,
+          opacity: GHOST_OPACITY[i],
+        }))}
+        pulse
+      />
 
       {/* —— Engraved micro-labels with hairline leaders —————————— */}
       <g className="jp-labels" aria-hidden="true">

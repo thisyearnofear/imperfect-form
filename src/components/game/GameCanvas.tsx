@@ -13,6 +13,7 @@ import { useSessionIntent } from '@/hooks/useSessionIntent';
 import { useStableTracking } from '@/hooks/useStableTracking';
 import { isTwinHeroActive, useCoachTwin } from '@/hooks/useCoachTwin';
 import FramingGhost from '@/components/receive/FramingGhost';
+import LiveJointInset from '@/components/receive/LiveJointInset';
 import CurlFormInstrument from './CurlFormInstrument';
 import { SeeShowMoment } from './SeeShowMoment';
 import { ReadinessHint } from './ReadinessHint';
@@ -96,6 +97,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   // Reading sessions only: the plate figure is the framing target until
   // the pose locks. Non-reading sessions keep the plain boot loader.
   const showFramingGhost = readingTargetReps != null && !ghostGone;
+
+  // Reach readings: the engine already computes arm elevation
+  // (shoulder→elbow angle from straight-down — reachProcessor.readArm) and
+  // publishes it on the poseData shoulder-angle channels, so the live
+  // joint inset lights with the same numbers the rep counter uses.
+  // Keypoints never cross into the React render path.
+  const reachElevationDeg = React.useMemo(() => {
+    if (mode !== 'reach' || !curlPoseData) return null;
+    const direct = curlPoseData.activeShoulderAngle ?? curlPoseData.observedShoulderAngle;
+    if (typeof direct === 'number' && Number.isFinite(direct)) return direct;
+    const arms = [curlPoseData.leftShoulderAngle, curlPoseData.rightShoulderAngle].filter(
+      (v): v is number => typeof v === 'number' && Number.isFinite(v)
+    );
+    return arms.length ? Math.max(...arms) : null;
+  }, [mode, curlPoseData]);
+
+  // Once the pose locks and the ghost retires, a small anatomical inset
+  // stays in the corner of the stage — the live "what the muscle is
+  // doing" readout for the read itself.
+  const showJointInset = mode === 'reach' && readingTargetReps != null && hasLockedPose;
 
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
@@ -194,7 +215,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           {/* The framing ghost rides above the boot loader — the loader
               dims the feed while the model warms, so the guide must sit on
               top to stay legible. It fades on the first pose lock. */}
-          {showFramingGhost && <FramingGhost leaving={hasLockedPose} />}
+          {showFramingGhost && <FramingGhost leaving={hasLockedPose} mode={mode} />}
+          {showJointInset && <LiveJointInset elevationDeg={reachElevationDeg} />}
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           {qualityMessage && (
@@ -310,7 +332,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             isVisible={isLoadingVisible}
             isOverlay={true}
           />
-          {showFramingGhost && <FramingGhost leaving={hasLockedPose} />}
+          {showFramingGhost && <FramingGhost leaving={hasLockedPose} mode={mode} />}
+          {showJointInset && <LiveJointInset elevationDeg={reachElevationDeg} />}
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
