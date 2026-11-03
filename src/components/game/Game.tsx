@@ -1382,9 +1382,21 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               imagery was all that showed while the OS prompt was up). */}
           {isStarting && !started && (
             <div className="rf-boot" role="status" aria-live="polite">
-              <div className="rf-boot__ring" aria-hidden="true" />
-              <p className="rf-boot__line">Waking the meter…</p>
-              <p className="rf-boot__sub">Video stays on this device.</p>
+              {/* The same brass ring the envelope drew on arrival — the
+                  instrument waking up, not a generic spinner. */}
+              <svg className="rf-boot__ring" viewBox="0 0 240 240" aria-hidden="true">
+                <circle className="rf-envelope__ring-track" cx="120" cy="120" r="104" />
+                <circle className="rf-envelope__ring-draw" cx="120" cy="120" r="104" />
+              </svg>
+              <p className="rf-boot__eyebrow">· Waking the meter ·</p>
+              <p className="rf-boot__line">
+                Allow the camera when asked — nothing leaves this device.
+              </p>
+              <div className="rf-boot__steps" aria-hidden="true">
+                <span>Camera</span>
+                <span>The meter</span>
+                <span>Your reading</span>
+              </div>
             </div>
           )}
         </div>
