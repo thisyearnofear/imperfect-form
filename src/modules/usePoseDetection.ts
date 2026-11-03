@@ -623,6 +623,26 @@ export function usePoseDetection(
         let workerReady = false;
         let workerFailed = false;
 
+        // If the worker never reports ready — init error, unsupported
+        // module-worker features, a stalled model fetch — the 'ai' phase
+        // would hold forever and read as a hung app. Fail over to the
+        // main-thread pipeline instead of waiting indefinitely.
+        const workerFallback = (reason: string) => {
+          if (workerReady || workerFailed || cancelled) return;
+          workerFailed = true;
+          console.warn(`Pose worker unavailable (${reason}) — falling back to main thread`);
+          pendingWorkerFrame?.bitmap.close();
+          pendingWorkerFrame = null;
+          inferenceInFlight = false;
+          worker.terminate();
+          workerRef.current = null;
+          void startMainThreadDetection();
+        };
+        const workerReadyTimeout = setTimeout(
+          () => workerFallback('no ready signal within 20s'),
+          20_000
+        );
+
         const dispatchPendingFrame = () => {
           if (cancelled || workerFailed || !workerRef.current) {
             pendingWorkerFrame?.bitmap.close();
@@ -737,6 +757,7 @@ export function usePoseDetection(
           }
           if (data.type === 'ready') {
             workerReady = true;
+            clearTimeout(workerReadyTimeout);
             notifyStateChange({ hasPoseDetection: true, isLoading: false });
             emitProgress({
               phase: 'ready',
@@ -785,15 +806,8 @@ export function usePoseDetection(
         };
 
         worker.onerror = () => {
-          // A crashed worker cannot consume the staged bitmap; release it so
-          // a failed session never leaks camera-frame memory.
-          pendingWorkerFrame?.bitmap.close();
-          pendingWorkerFrame = null;
-          inferenceInFlight = false;
-          workerFailed = true;
-          workerReady = false;
-          worker.terminate();
-          workerRef.current = null;
+          clearTimeout(workerReadyTimeout);
+          workerFallback('worker error');
         };
       } catch (error) {
         console.error('Failed to start worker-based detection:', error);
