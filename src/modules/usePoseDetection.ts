@@ -600,7 +600,7 @@ export function usePoseDetection(
         notifyStateChange({ hasCamera: true });
         emitProgress({
           phase: 'ai',
-          message: 'Initializing AI Model...',
+          message: 'Waking the meter…',
           percentage: 40,
         });
 
@@ -912,7 +912,7 @@ export function usePoseDetection(
         // STEP 2: Initialize TensorFlow AFTER camera is running
         emitProgress({
           phase: 'ai',
-          message: isFarcaster ? 'Initializing AI for Farcaster...' : 'Initializing AI...',
+          message: 'Waking the meter…',
           percentage: 40,
         });
 

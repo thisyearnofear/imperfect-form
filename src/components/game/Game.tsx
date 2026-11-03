@@ -1376,6 +1376,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
               <PainExit onDone={handleReset} variant={painExitVariant} />
             </div>
           )}
+
+          {/* Boot veil — covers the START → permission → session-live gap so
+              the fading foyer never leaves a half-empty page (stray backdrop
+              imagery was all that showed while the OS prompt was up). */}
+          {isStarting && !started && (
+            <div className="rf-boot" role="status" aria-live="polite">
+              <div className="rf-boot__ring" aria-hidden="true" />
+              <p className="rf-boot__line">Waking the meter…</p>
+              <p className="rf-boot__sub">Video stays on this device.</p>
+            </div>
+          )}
         </div>
 
         {(started ||

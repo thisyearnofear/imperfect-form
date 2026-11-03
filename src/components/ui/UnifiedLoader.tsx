@@ -191,9 +191,9 @@ const PHASE_CONFIG: Record<
   }
 > = {
   initial: {
-    title: 'Opening the coaching bay…',
-    subtitle: 'Video is processed on this device · not uploaded',
-    guidance: 'Allow camera access when prompted, then show us one rep.',
+    title: 'Waking the meter…',
+    subtitle: 'Video stays on this device · nothing is uploaded',
+    guidance: 'Allow camera when asked — the meter only needs to see you move.',
     color: 'studio-loader__phase-color studio-loader__phase-color--initial',
     bgGradient: 'studio-loader__surface--initial',
     borderColor: 'studio-loader__border--initial',
@@ -201,9 +201,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: '< 5 seconds',
   },
   camera: {
-    title: 'Finding your frame…',
-    subtitle: 'Video is processed on this device · waking up the camera coach',
-    guidance: 'Step back — head to toes visible.',
+    title: 'Opening the camera…',
+    subtitle: 'Video stays on this device · nothing is uploaded',
+    guidance: 'Prop the phone and step back — head and arms in frame.',
     color: 'studio-loader__phase-color studio-loader__phase-color--camera',
     bgGradient: 'studio-loader__surface--camera',
     borderColor: 'studio-loader__border--camera',
@@ -211,9 +211,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: '2-3 seconds',
   },
   ai: {
-    title: 'Reading your movement…',
-    subtitle: 'Motion is processed on this device · coaching your form',
-    guidance: 'This first read can take a little longer.',
+    title: 'Reading your joints…',
+    subtitle: 'The first load can take a little longer · it stays on this device',
+    guidance: 'A quiet moment — the meter is setting up.',
     color: 'studio-loader__phase-color studio-loader__phase-color--ai',
     bgGradient: 'studio-loader__surface--ai',
     borderColor: 'studio-loader__border--ai',
@@ -221,9 +221,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: '10-30 seconds',
   },
   positioning: {
-    title: 'Looking for one useful signal…',
-    subtitle: 'Finding your joints and movement line',
-    guidance: 'Hold still for a moment, then show us one rep.',
+    title: 'Step into view…',
+    subtitle: 'The meter is finding your joints',
+    guidance: 'Hold still for a moment, then one slow rep.',
     color: 'studio-loader__phase-color studio-loader__phase-color--positioning',
     bgGradient: 'studio-loader__surface--positioning',
     borderColor: 'studio-loader__border--positioning',
@@ -231,9 +231,9 @@ const PHASE_CONFIG: Record<
     estimatedTime: '2-5 seconds',
   },
   ready: {
-    title: 'I see your movement.',
-    subtitle: 'Coach is watching',
-    guidance: 'Show me one rep.',
+    title: 'The meter sees you.',
+    subtitle: 'Your read is live',
+    guidance: 'One rep — your own pace.',
     color: 'studio-loader__phase-color studio-loader__phase-color--ready',
     bgGradient: 'studio-loader__surface--ready',
     borderColor: 'studio-loader__border--ready',
@@ -246,7 +246,7 @@ const PHASE_CONFIG: Record<
 // milestones, so the post-START wait reads as progress — not N random dialogs.
 // The labels echo the loop vocabulary (Camera → Coach → your line) so the
 // boot reads as the machine preparing for ONE REP / ONE FIX.
-const BOOT_STEPS = ['Camera', 'Coach', 'Your line'] as const;
+const BOOT_STEPS = ['Camera', 'The meter', 'Your reading'] as const;
 const ACTIVE_STEP: Record<LoadingPhase, number> = {
   initial: 0,
   camera: 0,
