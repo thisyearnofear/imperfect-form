@@ -2010,3 +2010,65 @@
     animation: none;
   }
 }
+
+/* Fig 2's verdict stamp — a brief over-scale + blur, then the sentence snaps
+   crisp like a die hitting paper (~380ms), and a brass hairline rule draws
+   under it. Everything lives under no-preference: reduced motion reads the
+   line instantly, with no hidden state and no rule to wait on. */
+.session-recap__reading-line {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .session-recap__reading-line {
+    opacity: 0;
+    transform-origin: 0 50%;
+  }
+
+  .session-recap__reading-line.is-stamped {
+    opacity: 1;
+    animation: session-recap-stamp 380ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+  }
+
+  .session-recap__reading-line.is-stamped::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -4px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      var(--sandow-brass, #c9a227) 0%,
+      color-mix(in srgb, var(--sandow-brass, #c9a227) 55%, transparent) 55%,
+      transparent 92%
+    );
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    animation: session-recap-reading-rule 420ms cubic-bezier(0.3, 0.7, 0.3, 1) 220ms both;
+  }
+}
+
+@keyframes session-recap-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.07);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.995);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes session-recap-reading-rule {
+  to {
+    transform: scaleX(1);
+  }
+}

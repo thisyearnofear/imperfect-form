@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import '@/styles/session-recap.css';
 import { ArrowUpRight, CalendarPlus, CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
@@ -36,6 +36,7 @@ import type { NiggleJointId } from '@/lib/niggleIntents';
 import { assessmentProtocolFor } from '@/lib/movementAssessment';
 import { buildReadingIcs, nextReadingDate } from '@/lib/nextReading';
 import { readingSentence } from '@/lib/readingSentence';
+import { useInViewOnce } from '@/lib/textMotion';
 import { STRETCHES } from '@/lib/recovery/recoveryContent';
 import StretchSequence from '@/components/recovery/StretchSequence';
 import type { MovementAssessment } from '@/types/movementAssessment';
@@ -425,6 +426,13 @@ export function SessionRecap({
     protocol && movementAssessment?.status === 'valid' ? movementAssessment : null;
   const nextReading = validReading ? nextReadingDate(validReading.capturedAt) : null;
 
+  // Fig 2's verdict stamps in once the line is actually on stage — the
+  // IntersectionObserver latches on first crossing (~35% visible), and the
+  // whole effect lives under no-preference media so reduced motion reads
+  // the sentence instantly, unhidden.
+  const readingLineRef = useRef<HTMLParagraphElement>(null);
+  const readingStamped = useInViewOnce(readingLineRef, [Boolean(validReading?.measurements)]);
+
   const downloadReadingIcs = () => {
     if (!nextReading) return;
     const origin = receiptOrigin();
@@ -476,7 +484,10 @@ export function SessionRecap({
               : 'Keep this line'}
         </h2>
         {validReading?.measurements && (
-          <p className="session-recap__reading-line">
+          <p
+            ref={readingLineRef}
+            className={`session-recap__reading-line${readingStamped ? ' is-stamped' : ''}`}
+          >
             {readingSentence(validReading.measurements)}
           </p>
         )}

@@ -29,6 +29,7 @@ import {
   useReceivingScroll,
   pixelDissolve,
 } from '@/components/receive/useReceivingMotion';
+import { charPieces, useTypewriter } from '@/lib/textMotion';
 import '@/styles/coach-foyer.css';
 import '@/styles/landing-sections.css';
 import '@/styles/receiving-foyer.css';
@@ -214,6 +215,16 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     return () => clearTimeout(t);
   }, [envelope, startDissolve]);
 
+  // The gift note types itself once the envelope lifts — a note tucked into
+  // the parcel, written while she reads, capped under ~2.5s however long
+  // the sender's line runs. Reduced motion returns the full string instantly.
+  const giftTyped = useTypewriter(giftQuote, {
+    enabled: envelope !== 'show',
+    msPerChar: 16,
+    maxDuration: 2300,
+    startDelay: 420,
+  });
+
   useEffect(() => {
     if (envelope !== 'dissolving') return;
     const canvas = envelopeCanvasRef.current;
@@ -369,7 +380,35 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     ? `Once a week, same setup, ${readingProtocol.targetReps} slow raises.`
     : 'Once a week, same setup, a few slow reps.';
 
-  const greetingWords = greeting.split(' ');
+  // —— The character grammar — one effect per text role ————————————————
+  // Envelope greeting: handwritten per-char reveal (chars inside the word
+  // spans; the greeting is a flex row so words keep their CSS margin).
+  const greetingChars = charPieces(greeting, {
+    charClassName: 'rf-envelope__char',
+    wordClassName: 'rf-envelope__word',
+    baseDelay: 300,
+    step: 20,
+  });
+  // Headline: letterpress settle — the whole line presses in fast, then the
+  // brass <em> lands a beat late like the heaviest sort in the forme.
+  const titleLead = organic ? `Your ${phrase},` : 'See if it’s actually';
+  const titleEm = organic ? 'measured.' : 'getting better.';
+  const titleLeadPieces = charPieces(titleLead, {
+    charClassName: 'rf-title__char',
+    wordClassName: 'rf-title__word',
+    baseDelay: 140,
+    step: 13,
+    includeSpaces: true,
+  });
+  const titleEmPieces = charPieces(titleEm, {
+    charClassName: 'rf-title__char',
+    wordClassName: 'rf-title__word',
+    baseDelay: 140,
+    step: 13,
+    startIndex: titleLeadPieces.count,
+    extraDelay: 170,
+    includeSpaces: true,
+  });
 
   const robotChipState =
     !coachStation.enabled || coachStatus === 'offline'
@@ -566,16 +605,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
             </svg>
             <p
               className={`rf-envelope__greeting${!sentBy && organic ? ' rf-envelope__greeting--brand' : ''}`}
+              aria-label={greeting}
             >
-              {greetingWords.map((word, i) => (
-                <span
-                  key={i}
-                  className="rf-envelope__word"
-                  style={{ animationDelay: `${380 + i * 130}ms` }}
-                >
-                  {word}
-                </span>
-              ))}
+              {greetingChars.nodes}
             </p>
           </div>
         </div>
@@ -612,25 +644,29 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
             {/* The gift, not the diagnosis — a note tucked under the sender
                 line: their &note= words, else the context's empathy line. */}
             {giftQuote && (
-              <blockquote className="rf-gift">
+              <blockquote
+                className={`rf-gift${giftTyped.done ? ' is-typed' : ''}`}
+                aria-label={giftQuote}
+              >
                 <span className="rf-gift__mark" aria-hidden="true">
                   &ldquo;
                 </span>
-                {giftQuote}
+                {/* The ghost holds the card's final height so typing never
+                    shifts the layout; the live line types over it and the
+                    brass caret fades once the last character lands. */}
+                <span className="rf-gift__body" aria-hidden="true">
+                  <span className="rf-gift__ghost">{giftQuote}</span>
+                  <span className="rf-gift__live">
+                    {giftTyped.text}
+                    <span className="rf-gift__cursor" />
+                  </span>
+                </span>
               </blockquote>
             )}
             {/* Link recipients get the promise a worried person wants; the
                 joint-aware "Your ___, measured." stays the organic title. */}
-            <h1 id="rf-title" className="rf-title">
-              {organic ? (
-                <>
-                  Your {phrase}, <em className="rf-title-brass">measured.</em>
-                </>
-              ) : (
-                <>
-                  See if it&rsquo;s actually <em className="rf-title-brass">getting better.</em>
-                </>
-              )}
+            <h1 id="rf-title" className="rf-title" aria-label={`${titleLead} ${titleEm}`}>
+              {titleLeadPieces.nodes} <em className="rf-title-brass">{titleEmPieces.nodes}</em>
             </h1>
 
             {/* Organic: the intake IS the hero — hairline chips under the

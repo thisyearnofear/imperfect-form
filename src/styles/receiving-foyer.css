@@ -167,22 +167,31 @@
   text-shadow: 0 0 24px rgba(252, 177, 49, 0.35);
 }
 
+/* The greeting is a flex row — whitespace text nodes collapse inside flex
+   containers, so the word spans carry the spacing and the per-char spans
+   carry the handwriting: blur(6px) → sharp with a ~6px rise, ~20ms stagger. */
 .rf-envelope__word {
   display: inline-block;
   margin-right: 0.28em;
-  opacity: 0;
-  filter: blur(7px);
-  animation: rf-word-in 520ms var(--rf-curve) both;
 }
 
 .rf-envelope__word:last-child {
   margin-right: 0;
 }
 
-@keyframes rf-word-in {
+.rf-envelope__char {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(6px);
+  animation: rf-char-in 480ms var(--rf-curve) both;
+}
+
+@keyframes rf-char-in {
   to {
     opacity: 1;
     filter: blur(0);
+    transform: translateY(0);
   }
 }
 
@@ -305,6 +314,50 @@
   line-height: 1;
 }
 
+/* The typewriter: an invisible ghost holds the card at its final height so
+   typing never moves the headline below; the live line types over it and a
+   brass hairline caret rides the last character, then fades once done. */
+.rf-gift__body {
+  display: block;
+  position: relative;
+}
+
+.rf-gift__ghost {
+  visibility: hidden;
+}
+
+.rf-gift__live {
+  position: absolute;
+  inset: 0;
+}
+
+.rf-gift__cursor {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: var(--rf-brass);
+  animation: rf-caret-blink 850ms steps(1, end) infinite;
+}
+
+.rf-gift.is-typed .rf-gift__cursor {
+  animation: none;
+  opacity: 0;
+  transition: opacity 450ms ease;
+}
+
+@keyframes rf-caret-blink {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .rf-title {
   margin: 0;
   color: var(--rf-paper);
@@ -320,6 +373,37 @@
   color: var(--rf-brass);
   font-style: italic;
   text-shadow: 0 0 22px rgba(252, 177, 49, 0.38);
+}
+
+/* Letterpress settle: each character presses in — scale 1.04 → 1, a 2px
+   drop, opacity — on a fast stagger; the brass <em> characters carry an
+   extra ~170ms so the heaviest words land a beat late. */
+.rf-title__word {
+  display: inline-block;
+}
+
+.rf-title__char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(2px) scale(1.04);
+  transform-origin: 50% 100%;
+  animation: rf-press-in 360ms cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+
+@keyframes rf-press-in {
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* While the envelope covers the hero the press is cocked, not spent —
+   animations resume from their delays the moment Act 1 begins. */
+.receiving-foyer[data-envelope='show'] .rf-title__char {
+  animation-play-state: paused;
 }
 
 @media (min-width: 768px) {
@@ -1047,7 +1131,9 @@
 @media (prefers-reduced-motion: reduce) {
   .rf-envelope__ring-draw,
   .rf-envelope__ring-tick,
-  .rf-envelope__word {
+  .rf-envelope__char,
+  .rf-title__char,
+  .rf-gift__cursor {
     animation: none;
   }
 
@@ -1056,9 +1142,17 @@
   }
 
   .rf-envelope__ring-tick,
-  .rf-envelope__word {
+  .rf-envelope__char,
+  .rf-title__char {
     opacity: 1;
     filter: none;
+    transform: none;
+  }
+
+  /* The typewriter returns its full string instantly under reduced motion —
+     the caret simply never shows. */
+  .rf-gift__cursor {
+    display: none;
   }
 
   .rf-intake,
