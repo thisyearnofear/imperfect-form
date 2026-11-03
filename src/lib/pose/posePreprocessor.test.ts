@@ -244,12 +244,15 @@ describe('posePreprocessor', () => {
       }
       expect(changed).toBeGreaterThan(0);
 
-      // Output dimensions and alpha should be unchanged.
+      // Output dimensions and alpha should be unchanged. Alpha is checked in
+      // one assertion: a per-pixel expect() over 360k pixels is too slow.
       expect(imageData.width).toBe(width);
       expect(imageData.height).toBe(height);
+      let alphaOk = true;
       for (let i = 3; i < data.length; i += 4) {
-        expect(data[i]).toBe(255);
+        if (data[i] !== 255) alphaOk = false;
       }
+      expect(alphaOk).toBe(true);
     });
   });
 
@@ -325,9 +328,11 @@ describe('posePreprocessor', () => {
 
       expect(imageData.width).toBe(width);
       expect(imageData.height).toBe(height);
+      let alphaOk = true;
       for (let i = 3; i < data.length; i += 4) {
-        expect(data[i]).toBe(255);
+        if (data[i] !== 255) alphaOk = false;
       }
+      expect(alphaOk).toBe(true);
     });
   });
 });
