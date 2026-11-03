@@ -28,6 +28,9 @@ export interface NiggleContextDef {
   pain: string;
   firstRepLine: string;
   recapLine: string;
+  /** Empathy line quoted under the sender greeting when a shared link
+   *  arrives without `&note=` — the gift, in the sender's voice. */
+  giftLine: string;
   plateCallout?: string;
 }
 
@@ -63,6 +66,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
           'On your first reps the meter watches shoulder drift and control — the baseline for your tension question.',
         recapLine:
           'Your shoulder-movement baseline. Tension cannot be photographed — drift and control can. Re-check next week; if it persists or worsens, see a professional.',
+        giftLine: "Heard it's been tight lately — here's a way to see if it's actually settling.",
         plateCallout: 'Shoulder drift · control',
       },
       {
@@ -75,6 +79,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
           'First reps set the baseline — range and control on the side that complained.',
         recapLine:
           'Baseline set. The same read next week shows whether it is settling. Stop if it hurts — a meter is not a diagnosis.',
+        giftLine: "Heard you tweaked it — here's a way to watch whether it's healing.",
         plateCallout: 'Range · drift',
       },
       {
@@ -87,6 +92,8 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
           'First reps: the meter watches how the arm travels — drift and control, not just the top.',
         recapLine:
           'Your movement baseline on the overhead question. The same read in a week shows whether anything moved.',
+        giftLine:
+          "Heard reaching up's been limited — here's a way to see how it's actually moving.",
         plateCallout: 'Arm travel · control',
       },
     ],
@@ -106,6 +113,8 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         firstRepLine: 'Your first reps set the baseline — depth, trunk lean, control.',
         recapLine:
           'This read is your baseline for the after-sitting ache. Same protocol next week, compare the numbers.',
+        giftLine:
+          "Heard it's been complaining after long sits — here's a way to see if it's actually settling.",
         plateCallout: 'Trunk lean · depth',
       },
       {
@@ -117,6 +126,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         firstRepLine: 'First reps set the baseline — depth and trunk control.',
         recapLine:
           'Baseline set. Take the same read next week and see whether the numbers agree with how it feels.',
+        giftLine: "Heard mornings have been stiff — here's a way to see if anything's loosening.",
         plateCallout: 'Depth · trunk lean',
       },
       {
@@ -127,6 +137,8 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         firstRepLine: 'First reps: trunk lean and control — the baseline read.',
         recapLine:
           'Your bending baseline. Same read next week shows what moved. If pain sharpens or shoots down a leg, see a professional.',
+        giftLine:
+          "Heard it's been complaining when you bend — here's a way to see how it's actually moving.",
         plateCallout: 'Lean · control',
       },
     ],
@@ -145,6 +157,8 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         firstRepLine: 'First reps set the baseline — depth, tracking, control.',
         recapLine:
           'Your knee baseline. Same read next week; compare the numbers, not the soreness.',
+        giftLine:
+          "Heard the stairs have been a thing — here's a way to see if it's actually settling.",
         plateCallout: 'Depth · knee track',
       },
       {
@@ -155,6 +169,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         firstRepLine: 'First reps: depth and knee tracking — your post-run baseline.',
         recapLine:
           'Baseline set. Re-check after your next run week and compare. If swelling or sharp pain persists, see a professional.',
+        giftLine: "Heard it's been sore after runs — here's a way to see whether it's settling.",
         plateCallout: 'Depth · tracking',
       },
       {
@@ -164,6 +179,8 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         pain: `Rising from a chair is a squat you never see. Depth, lean, and how the knees track under control are all readable — and all worth a baseline. ${SAFETY}`,
         firstRepLine: 'First reps set the baseline — depth, lean, tracking.',
         recapLine: 'Your standing baseline. Same read next week shows whether control is building.',
+        giftLine:
+          "Heard getting up's been a negotiation — here's a way to see how it's actually moving.",
         plateCallout: 'Lean · tracking',
       },
     ],
@@ -182,6 +199,8 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         pain: `Weak-feeling grip often hides in the rep — the elbow drifting, the tempo rushed, one side doing more. The meter reads the travel, not the feeling. ${SAFETY}`,
         firstRepLine: 'First reps: elbow travel and control — your baseline.',
         recapLine: 'Baseline set. Same read next week and the numbers do the comparing.',
+        giftLine:
+          "Heard the grip's been feeling off — here's a way to see how the arm's actually moving.",
         plateCallout: 'Elbow drift',
       },
       {
@@ -193,6 +212,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         firstRepLine: 'First reps set the baseline — range and control on that side.',
         recapLine:
           'Baseline set. Same read next week shows the direction. Stop if it hurts — a meter is not a diagnosis.',
+        giftLine: "Heard you tweaked it — here's a way to watch whether it's healing.",
         plateCallout: 'Range · drift',
       },
     ],
@@ -211,6 +231,7 @@ export const NIGGLE_JOINTS: readonly NiggleJoint[] = [
         firstRepLine:
           'On your first rep you get one read — the most important thing the meter saw.',
         recapLine: 'This read is your starting point for the next one.',
+        giftLine: 'A way to see how it actually moves — no guessing.',
         plateCallout: 'Baseline read',
       },
     ],
@@ -269,6 +290,10 @@ export const NIGGLE_LOCAL_EVENT = 'imf:niggle';
 /** Sender greeting for shared niggle links (`&from=<name>`), read once by the foyer. */
 export const SENT_BY_KEY = 'imf_sent_by_v1';
 
+/** The sender's own line on a shared link (`&note=<line>`), read once by the
+ *  foyer — the gift, not the diagnosis. Wins over the context's giftLine. */
+export const GIFT_NOTE_KEY = 'imf_gift_note_v1';
+
 /** Persist the intake exactly as useNiggle does — storage + same-tab event. */
 export function storeNiggle(stored: StoredNiggle | null): void {
   if (typeof window === 'undefined') return;
@@ -301,5 +326,20 @@ export function sanitizeSenderName(raw: string | null | undefined): string | nul
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 24);
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+/**
+ * `&note=<line>` — the sender's own words on a shared link, rendered as a
+ * quote under the greeting. Same discipline as the sender name (text, never
+ * markup) at a sentence-sized length.
+ */
+export function sanitizeNote(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const cleaned = raw
+    .replace(/[\u0000-\u001f\u007f<>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 140);
   return cleaned.length > 0 ? cleaned : null;
 }

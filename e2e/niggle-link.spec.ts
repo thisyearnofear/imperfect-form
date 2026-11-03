@@ -38,8 +38,24 @@ test.describe('Shared niggle link', () => {
     await expect(foyer).toBeVisible({ timeout: 20000 });
     await expect(foyer.getByText('Udi sent you this')).toBeVisible();
     await expect(foyer.locator('.reach-plate').first()).toBeVisible();
-    await expect(foyer.locator('#rf-title')).toContainText('neck & shoulders');
+    // The gift, not the diagnosis: without &note= the context's empathy line
+    // is quoted; the headline promises the thing a worried person wants.
+    await expect(foyer.locator('.rf-gift')).toContainText("Heard it's been tight lately");
+    await expect(foyer.locator('#rf-title')).toContainText('See if it’s actually getting better.');
     await expect(foyer.locator('#startButton')).toContainText('Take a 5-rep reading');
+  });
+
+  test('a &note= link quotes the sender’s own words', async ({ page }) => {
+    await page.goto(
+      '/?niggle=neck-shoulders:desk&from=Papa&note=sorry%20the%20trap%27s%20been%20tight'
+    );
+    const foyer = page.locator('.receiving-foyer');
+    await expect(foyer).toBeVisible({ timeout: 20000 });
+    await expect(foyer.getByText('Papa sent you this')).toBeVisible();
+    // The sender's note wins over the context giftLine.
+    await expect(foyer.locator('.rf-gift')).toContainText("sorry the trap's been tight");
+    await expect(foyer.locator('.rf-gift')).not.toContainText('Heard');
+    await expect(foyer.locator('#rf-title')).toContainText('See if it’s actually getting better.');
   });
 
   test('"not your niggle" unfolds the standard intake chips', async ({ page }) => {
@@ -54,9 +70,11 @@ test.describe('Shared niggle link', () => {
     await expect(chip).toBeVisible();
     await expect(chip).toHaveAttribute('aria-pressed', 'true');
 
-    // Picking a different joint retitles the hero and remaps the reading.
+    // Picking a different joint remaps the reading — and the quoted gift
+    // line follows the selected context (knee defaults to stairs).
     await intake.locator('.rf-chip', { hasText: 'My knee' }).click();
-    await expect(foyer.locator('#rf-title')).toContainText('knee');
+    await expect(foyer.locator('.rf-gift')).toContainText('Heard the stairs have been a thing');
+    await expect(foyer.locator('#rf-title')).toContainText('See if it’s actually getting better.');
     // Squats has no fixed-rep protocol — the CTA drops to the honest one rep.
     await expect(foyer.locator('#startButton')).toContainText('Try one rep');
   });
@@ -98,7 +116,7 @@ test.describe('Organic landing', () => {
     await page.goto('/');
     const foyer = page.locator('.receiving-foyer');
     await expect(foyer).toBeVisible({ timeout: 20000 });
-    await expect(foyer.locator('#rf-title')).toContainText('niggle');
+    await expect(foyer.locator('#rf-title')).toContainText('Your niggle, measured.');
     await expect(foyer.locator('#startButton')).toContainText('Try one rep');
 
     // Picking a joint unfolds the context row, retitles the hero, and the

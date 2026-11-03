@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseNiggleParam, sanitizeSenderName } from '@/lib/niggleIntents';
+import { parseNiggleParam, sanitizeNote, sanitizeSenderName } from '@/lib/niggleIntents';
 
 describe('parseNiggleParam', () => {
   it('parses joint and context from a shared link', () => {
@@ -40,5 +40,29 @@ describe('sanitizeSenderName', () => {
     expect(sanitizeSenderName('   ')).toBeNull();
     expect(sanitizeSenderName('')).toBeNull();
     expect(sanitizeSenderName(null)).toBeNull();
+  });
+});
+
+describe('sanitizeNote', () => {
+  it('trims and collapses whitespace', () => {
+    expect(sanitizeNote('  sorry   the  trap’s   been   tight ')).toBe(
+      'sorry the trap’s been tight'
+    );
+  });
+
+  it('strips angle brackets and control characters', () => {
+    expect(sanitizeNote('<b>feel</b> better')).toBe('bfeel/b better');
+    expect(sanitizeNote('hi\u0007there')).toBe('hithere');
+  });
+
+  it('caps at 140 characters', () => {
+    expect(sanitizeNote('x'.repeat(200))).toBe('x'.repeat(140));
+  });
+
+  it('returns null for empty or missing input', () => {
+    expect(sanitizeNote('   ')).toBeNull();
+    expect(sanitizeNote('')).toBeNull();
+    expect(sanitizeNote(null)).toBeNull();
+    expect(sanitizeNote(undefined)).toBeNull();
   });
 });

@@ -47,12 +47,30 @@ travels up the arm (stroke-dashoffset chase), 2–3 ghost poses trail behind
 plate's base edge fill once per raise. Tap the plate → one slow rep plays
 through; holding scrubs it (pointer-position → arm angle).
 
-Type: greeting line, then `Your neck & shoulders, measured.` (joint-aware:
-resolve the niggle joint's short phrase — neck & shoulders / lower back /
-knee / arm), then one line `Five slow raises. The camera watches; nothing
-leaves your phone.`, then the button `Take a 5-rep reading`, then one
-quiet link `not your niggle? change it` which unfolds the standard intake
-chips (reuse the CoachFoyer intake block markup/styles — do not rebuild).
+Type: greeting block, then headline, then one practical line, then the
+button, then one quiet link `not your niggle? change it` which unfolds
+the standard intake chips (reuse the CoachFoyer intake block
+markup/styles — do not rebuild).
+
+**Greeting block (2026-11-03 revision — the gift, not the diagnosis):**
+"{name} sent you this" stays the small sender line. Under it, an italic
+note line — `&note=` param (sanitized like the sender name, ~140 chars,
+stored as `imf_gift_note_v1`) when the sender wrote one, else the
+context's `giftLine` (new field per niggle context, empathy voice —
+e.g. desk → "Heard it's been tight lately — here's a way to see if it's
+actually settling."). Note-without-sender still renders the quote alone.
+
+**Headline by variant:** link recipients get `See if it's actually
+getting better.` — the promise a worried person wants. Organic keeps
+`Your niggle, measured.` (joint-aware title on selection still applies:
+"Your knee, measured." etc.).
+
+**Practical line:** `5 slow raises. The camera watches; nothing leaves
+your phone.` — unchanged. The CTA stays the honest action label.
+
+**Send-side:** "Send this to a friend" gains a small "add your name +
+a line" affordance — two compact inputs whose values build the shared
+URL's `&from=`/`&note=` params live; copy/share uses that URL.
 
 ### Act 2 — scroll story, five beats, seam between each
 

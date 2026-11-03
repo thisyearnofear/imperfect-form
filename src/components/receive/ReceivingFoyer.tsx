@@ -8,8 +8,11 @@ import { coachStation, type StationStatus } from '@/services/coachStation';
 import {
   getNiggleJoint,
   NIGGLE_JOINTS,
+  GIFT_NOTE_KEY,
   SENT_BY_KEY,
   parseStoredNiggle,
+  sanitizeNote,
+  sanitizeSenderName,
   NIGGLE_KEY,
   type NiggleJointId,
   type StoredNiggle,
@@ -97,13 +100,24 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     typeof window === 'undefined' ? null : parseStoredNiggle(localStorage.getItem(NIGGLE_KEY))
   );
   const joint = niggle.hydrated ? niggle.joint : getNiggleJoint(initialStored?.joint);
-  const context = niggle.context;
+  // Same lazy-stored fallback for the context — its giftLine is part of the
+  // first-paint greeting, so it can't wait on useNiggle's hydration either.
+  const initialContext = initialStored
+    ? (getNiggleJoint(initialStored.joint)?.contexts.find((c) => c.id === initialStored.context) ??
+      null)
+    : null;
+  const context = niggle.hydrated ? niggle.context : initialContext;
   const { setJoint, setContext } = niggle;
 
   const [sentBy, setSentBy] = useState<string | null>(null);
+  const [giftNote, setGiftNote] = useState<string | null>(null);
   const [intakeOpen, setIntakeOpen] = useState(false);
   const [movesOpen, setMovesOpen] = useState(false);
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied'>('idle');
+  // The send-side "add your name + a line" fields — their values travel on
+  // the shared URL as &from=/&note= so the gift greets by name.
+  const [shareName, setShareName] = useState('');
+  const [shareNote, setShareNote] = useState('');
   const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [beat3Progress, setBeat3Progress] = useState(() =>
     typeof window !== 'undefined' && prefersReducedMotion() ? 1 : 0.35
@@ -118,6 +132,7 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
 
   useEffect(() => {
     setSentBy(localStorage.getItem(SENT_BY_KEY));
+    setGiftNote(localStorage.getItem(GIFT_NOTE_KEY));
   }, []);
 
   // A joint restored from storage (organic return visit) carries its protocol
@@ -157,6 +172,11 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     : organic
       ? 'NIGGLEOMETER'
       : 'A friend sent you this';
+
+  // The gift, not the diagnosis: the sender's own `&note=` line wins; the
+  // context's empathy line covers a link without one. Renders alone when a
+  // note arrives with no `&from=`.
+  const giftQuote = giftNote ?? context?.giftLine ?? null;
 
   // —— Act 0: the envelope ————————————————————————————————
   const [envelope, setEnvelope] = useState<EnvelopePhase>(() => {
@@ -315,7 +335,13 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
 
   const handleSendToFriend = async () => {
     if (!joint) return;
-    const url = `${window.location.origin}/?niggle=${joint.id}:${context?.id ?? joint.contexts[0].id}`;
+    const params = new URLSearchParams();
+    params.set('niggle', `${joint.id}:${context?.id ?? joint.contexts[0].id}`);
+    const from = sanitizeSenderName(shareName);
+    const note = sanitizeNote(shareNote);
+    if (from) params.set('from', from);
+    if (note) params.set('note', note);
+    const url = `${window.location.origin}/?${params.toString()}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: 'Take this reading', url });
@@ -420,17 +446,43 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
           )}
           {joint && (
             <div className="rf-send">
-              <button
-                type="button"
-                className="rf-send__button"
-                onClick={() => void handleSendToFriend()}
-              >
-                <Send size={11} aria-hidden="true" />
-                Send this to a friend
-              </button>
-              <span className="rf-send__status" role="status" aria-live="polite">
-                {shareStatus === 'copied' ? 'Link copied' : ''}
-              </span>
+              {/* "add your name + a line" — the values ride the shared URL as
+                  &from=/&note= so the receiver's greeting block can quote the
+                  sender's own words instead of the context's giftLine. */}
+              <div className="rf-send__fields">
+                <input
+                  type="text"
+                  className="rf-send__input"
+                  value={shareName}
+                  onChange={(e) => setShareName(e.target.value)}
+                  placeholder="your name"
+                  aria-label="Your name — added to the link"
+                  maxLength={24}
+                  autoComplete="name"
+                />
+                <input
+                  type="text"
+                  className="rf-send__input rf-send__input--note"
+                  value={shareNote}
+                  onChange={(e) => setShareNote(e.target.value)}
+                  placeholder="a line for them"
+                  aria-label="A line for them — added to the link"
+                  maxLength={140}
+                />
+              </div>
+              <div className="rf-send__row">
+                <button
+                  type="button"
+                  className="rf-send__button"
+                  onClick={() => void handleSendToFriend()}
+                >
+                  <Send size={11} aria-hidden="true" />
+                  Send this to a friend
+                </button>
+                <span className="rf-send__status" role="status" aria-live="polite">
+                  {shareStatus === 'copied' ? 'Link copied' : ''}
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -557,8 +609,28 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
 
           <div className="rf-hero__copy">
             <p className="rf-sent-by">{greeting}</p>
+            {/* The gift, not the diagnosis — a note tucked under the sender
+                line: their &note= words, else the context's empathy line. */}
+            {giftQuote && (
+              <blockquote className="rf-gift">
+                <span className="rf-gift__mark" aria-hidden="true">
+                  &ldquo;
+                </span>
+                {giftQuote}
+              </blockquote>
+            )}
+            {/* Link recipients get the promise a worried person wants; the
+                joint-aware "Your ___, measured." stays the organic title. */}
             <h1 id="rf-title" className="rf-title">
-              Your {phrase}, <em className="rf-title-brass">measured.</em>
+              {organic ? (
+                <>
+                  Your {phrase}, <em className="rf-title-brass">measured.</em>
+                </>
+              ) : (
+                <>
+                  See if it&rsquo;s actually <em className="rf-title-brass">getting better.</em>
+                </>
+              )}
             </h1>
 
             {/* Organic: the intake IS the hero — hairline chips under the

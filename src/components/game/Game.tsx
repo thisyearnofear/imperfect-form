@@ -74,8 +74,10 @@ import {
 import {
   getNiggleJoint,
   parseNiggleParam,
+  sanitizeNote,
   sanitizeSenderName,
   storeNiggle,
+  GIFT_NOTE_KEY,
   SENT_BY_KEY,
 } from '@/lib/niggleIntents';
 import { useNiggle } from '@/hooks/useNiggle';
@@ -1007,6 +1009,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     }
     const sender = sanitizeSenderName(searchParams.get('from'));
     if (sender) localStorage.setItem(SENT_BY_KEY, sender);
+    // The sender's own line (`&note=`) travels with or without `&from=` —
+    // it is the gift the greeting block quotes under the sender line.
+    const giftNote = sanitizeNote(searchParams.get('note'));
+    if (giftNote) localStorage.setItem(GIFT_NOTE_KEY, giftNote);
 
     if (raceParam) {
       try {
