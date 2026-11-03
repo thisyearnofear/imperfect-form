@@ -1211,3 +1211,230 @@
   height: 1px;
   background: rgba(252, 177, 49, 0.45);
 }
+
+/* ═══ JointPlate — Fig 1 as a live anatomical teardown ═════════════════
+   The shoulder joint drawn in the technical-illustration register: teal
+   hairline bones, brass-outlined muscle regions, engraved micro-labels
+   with leader lines, live margin panels. All motion is prop-driven
+   (progress) — the SVG carries no animation of its own, so reduced motion
+   renders the raised pose and only transitions freeze. Frame chrome reuses
+   the .rp-* tokens. */
+
+.joint-plate {
+  --jp-brass: var(--sandow-brass, #fcb131);
+  --jp-paper: var(--sandow-paper, #f4ecd8);
+  --jp-teal: #7aebd8;
+
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Muscle regions — brass-outlined soft tissue over the bones ── */
+.jp-muscle {
+  fill: rgba(122, 235, 216, 0.05);
+  stroke: rgba(252, 177, 49, 0.42);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+  transition:
+    fill 320ms ease,
+    stroke 320ms ease;
+}
+
+.jp-muscle--strap {
+  stroke-width: 0.7;
+}
+
+.jp-muscle.is-lit,
+.jp-region.is-lit .jp-muscle {
+  fill: rgba(252, 177, 49, 0.14);
+  stroke: var(--jp-brass);
+}
+
+/* ── Peelable parts — tap targets + the peeled state ───────────── */
+.jp-region {
+  cursor: pointer;
+  outline: none;
+}
+
+.jp-region:focus-visible .jp-muscle,
+.jp-region:focus-visible .jp-bone--scap,
+.jp-region:focus-visible .jp-arm {
+  stroke: var(--jp-brass);
+  stroke-width: 1.3;
+}
+
+.jp-hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 14;
+}
+
+.jp-hit--arm {
+  stroke-width: 18;
+}
+
+.jp-region.is-peeled .jp-muscle {
+  fill: rgba(252, 177, 49, 0.22);
+  stroke: var(--jp-brass);
+  stroke-width: 1.2;
+}
+
+.jp-region.is-peeled .jp-bone--scap {
+  fill: rgba(252, 177, 49, 0.16);
+  stroke: var(--jp-brass);
+  stroke-width: 1.2;
+}
+
+.jp-region.is-peeled .jp-arm {
+  stroke: var(--jp-brass);
+}
+
+/* ── Bone layer ─────────────────────────────────────────────────── */
+.jp-bone {
+  fill: none;
+  stroke: var(--jp-teal);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.jp-bone--scap {
+  fill: rgba(122, 235, 216, 0.06);
+  transition:
+    fill 320ms ease,
+    stroke 320ms ease;
+}
+
+.jp-region.is-lit .jp-bone--scap {
+  fill: rgba(252, 177, 49, 0.1);
+  stroke: var(--jp-brass);
+}
+
+/* ── The working arm — humerus + forearm ────────────────────────── */
+.jp-arm {
+  fill: none;
+  stroke: var(--jp-paper);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 320ms ease;
+}
+
+.jp-arm.is-counted,
+.jp-region.is-lit .jp-arm {
+  stroke: var(--jp-brass);
+}
+
+.jp-elbow {
+  fill: var(--jp-teal);
+  opacity: 0.6;
+}
+
+/* ── The 135° counting line on the protractor ───────────────────── */
+.jp-rep-tick {
+  stroke: rgba(252, 177, 49, 0.4);
+  stroke-width: 0.8;
+  transition: stroke 320ms ease;
+}
+
+.jp-rep-tick.is-lit {
+  stroke: var(--jp-brass);
+  stroke-width: 1.4;
+}
+
+.jp-rep-label.is-lit {
+  fill: var(--jp-brass);
+}
+
+/* ── Engraved micro-labels + hairline leaders ───────────────────── */
+.jp-label {
+  fill: rgba(244, 236, 216, 0.55);
+  font-size: 6.5px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.jp-leader {
+  fill: none;
+  stroke: rgba(244, 236, 216, 0.26);
+  stroke-width: 0.5;
+}
+
+/* ── Live margin panels — the meter's metric names ──────────────── */
+.jp-panel-eyebrow {
+  fill: var(--jp-brass);
+  font-size: 5.5px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.jp-panel-label {
+  fill: rgba(244, 236, 216, 0.42);
+  font-size: 5.5px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.jp-panel-value {
+  fill: var(--jp-brass);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.jp-panel-rule {
+  stroke: rgba(252, 177, 49, 0.18);
+  stroke-width: 0.5;
+}
+
+/* ── Peel callout — the hairline card ───────────────────────────── */
+.jp-callout__card {
+  fill: rgba(6, 16, 19, 0.94);
+  stroke: rgba(252, 177, 49, 0.55);
+  stroke-width: 0.7;
+}
+
+.jp-callout__name {
+  fill: var(--jp-brass);
+  font-size: 6.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.jp-callout__line {
+  fill: rgba(244, 236, 216, 0.85);
+  font-size: 6.8px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.jp-callout__leader {
+  fill: none;
+  stroke: rgba(252, 177, 49, 0.55);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-muscle,
+  .jp-bone--scap,
+  .jp-arm,
+  .jp-rep-tick {
+    transition: none;
+  }
+}
+
+/* SessionRecap mini — the static teardown that marks a reach read. */
+.session-recap__joint-plate {
+  width: min(58vw, 176px);
+  margin: 14px auto 4px;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.4));
+}

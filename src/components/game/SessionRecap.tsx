@@ -34,6 +34,7 @@ import { useNiggle } from '@/hooks/useNiggle';
 import { addNiggleEntry } from '@/lib/niggleEntries';
 import { getNiggleJoint, type NiggleJointId } from '@/lib/niggleIntents';
 import SendTheMeter from '@/components/receive/SendTheMeter';
+import JointPlate from '@/components/receive/JointPlate';
 import { assessmentProtocolFor } from '@/lib/movementAssessment';
 import { buildReadingIcs, nextReadingDate } from '@/lib/nextReading';
 import { readingSentence } from '@/lib/readingSentence';
@@ -534,6 +535,22 @@ export function SessionRecap({
           )}
         </div>
         {sandowGrade ? <SandowGradeMark variant="lineage" style={{ margin: 0 }} /> : null}
+
+        {/* The read drawn as the teardown it came from: Fig 1's shoulder
+            plate, static, arm raised to this read's measured excursion —
+            the elevation arc is the mark. Decorative echo; the numbers
+            live in the movement card below. */}
+        {mode === 'reach' && validReading?.measurements && (
+          <div className="session-recap__joint-plate" aria-hidden="true">
+            <JointPlate
+              progress={validReading.measurements.range}
+              caption="· This read ·"
+              plateNum=""
+              pips={0}
+              interactive={false}
+            />
+          </div>
+        )}
 
         {nextReading && (
           <p className="session-recap__next-reading">

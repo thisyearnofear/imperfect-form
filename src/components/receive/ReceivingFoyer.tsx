@@ -22,6 +22,7 @@ import { prefetchWebcamChunk, prefersReducedMotion } from '@/components/game/Coa
 import type { ExerciseMode } from '@/utils/biomechanics';
 import { FAQ_ITEMS } from '@/components/home/LandingSections';
 import ReachPlate from '@/components/receive/ReachPlate';
+import JointPlate from '@/components/receive/JointPlate';
 import SendTheMeter from '@/components/receive/SendTheMeter';
 import {
   useArmCycle,
@@ -322,6 +323,12 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
   const onPlatePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const down = downRef.current;
     if (!down) return;
+    // A JointPlate peel tap swallows pointerup before it reaches here —
+    // drop the stale press instead of scrubbing on the next hover move.
+    if (e.buttons === 0) {
+      downRef.current = null;
+      return;
+    }
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     if (!scrubbingRef.current && moved > 8) {
       scrubbingRef.current = true;
@@ -598,7 +605,14 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
               }
             }}
           >
-            <ReachPlate progress={progress} litPips={litPips} />
+            {/* Neck & shoulders runs the reach read — Fig 1 becomes the
+                anatomical teardown for it. Every other joint/movement keeps
+                the reach figure's plate. */}
+            {joint?.id === 'neck-shoulders' && mode === 'reach' ? (
+              <JointPlate progress={progress} litPips={litPips} />
+            ) : (
+              <ReachPlate progress={progress} litPips={litPips} />
+            )}
             <span className="rf-plate__hint" aria-hidden="true">
               tap for one raise · hold to scrub
             </span>
