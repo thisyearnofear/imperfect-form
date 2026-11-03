@@ -168,10 +168,10 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
 
   // Organic arrivals get the wordmark materializing in the ring; a `?from=`
   // name (or a niggle link without one) keeps the sender greeting.
-  const greeting = sentBy
-    ? `${sentBy} sent you this`
-    : organic
-      ? 'NIGGLEOMETER'
+  const greeting = organic
+    ? 'NIGGLEOMETER'
+    : sentBy
+      ? `${sentBy} sent you this`
       : 'A friend sent you this';
 
   // The gift, not the diagnosis: the sender's own `&note=` line wins; the
@@ -640,10 +640,12 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
           </div>
 
           <div className="rf-hero__copy">
-            <p className="rf-sent-by">{greeting}</p>
+            {/* Sender line + gift quote are link arrivals only — the stored
+                greeting must never leak onto the organic landing. */}
+            {!organic && sentBy && <p className="rf-sent-by">{greeting}</p>}
             {/* The gift, not the diagnosis — a note tucked under the sender
                 line: their &note= words, else the context's empathy line. */}
-            {giftQuote && (
+            {!organic && giftQuote && (
               <blockquote
                 className={`rf-gift${giftTyped.done ? ' is-typed' : ''}`}
                 aria-label={giftQuote}
