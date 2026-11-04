@@ -102,6 +102,7 @@ import { Score } from '@/types';
 import { NIGGLE_JOINTS, getNiggleJoint } from '@/lib/niggleIntents';
 import { useNiggle } from '@/hooks/useNiggle';
 import SendTheMeter from '@/components/receive/SendTheMeter';
+import TodayBlock from '@/components/readings/TodayBlock';
 import { addNiggleEntry, listNiggleEntries, type NiggleEntry } from '@/lib/niggleEntries';
 import { daysUntil, nextReadingDate } from '@/lib/nextReading';
 import { getEffectiveUserId } from '@/services/guestIdentity';
@@ -621,6 +622,9 @@ export default function Home() {
                     </button>
                   </div>
                   <NextReadings onTakeReading={() => setActiveTab('workout')} />
+                  {/* The daily beat after the weekly countdown: how it
+                      feels, two minutes of ease, today's morsel. */}
+                  <TodayBlock />
                   <SendMeterRow />
                   <NiggleLog />
                   <div className="motion-enter motion-delay-2">

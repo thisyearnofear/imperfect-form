@@ -13,12 +13,20 @@ interface StretchSequenceProps {
   mode: string;
   onComplete: () => void;
   tone?: 'dark' | 'light';
+  /** Open mid-sequence — a morsel's easeMoveId points at one move. */
+  startIndex?: number;
 }
 
-const StretchSequence: React.FC<StretchSequenceProps> = ({ mode, onComplete, tone = 'dark' }) => {
+const StretchSequence: React.FC<StretchSequenceProps> = ({
+  mode,
+  onComplete,
+  tone = 'dark',
+  startIndex = 0,
+}) => {
   const stretches = getStretches(mode);
-  const [index, setIndex] = useState(0);
-  const [remaining, setRemaining] = useState(stretches[0]?.seconds ?? 20);
+  const initialIndex = Math.min(Math.max(0, startIndex), Math.max(0, stretches.length - 1));
+  const [index, setIndex] = useState(initialIndex);
+  const [remaining, setRemaining] = useState(stretches[initialIndex]?.seconds ?? 20);
   const done = index >= stretches.length;
   const current = stretches[index];
   const light = tone === 'light';

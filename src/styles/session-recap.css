@@ -1952,6 +1952,50 @@
   color: rgba(204, 251, 241, 0.9);
 }
 
+/* "The week" — numbers vs feelings inside the verdict card: an engraved
+   eyebrow like the figure idiom, one honest headline, the numbers quiet
+   underneath. */
+.session-recap__week {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.55rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(117, 223, 205, 0.18);
+}
+.session-recap__week-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  color: var(--sandow-brass, #fcb131);
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.session-recap__week-eyebrow::after {
+  content: '';
+  height: 1px;
+  flex: 0 1 4rem;
+  background: var(--sandow-rule, rgba(252, 177, 49, 0.4));
+  opacity: 0.6;
+}
+.session-recap__week-headline {
+  margin: 0;
+  color: #effcf9;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.session-recap__week-detail {
+  margin: 0;
+  color: #8aa8a3;
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
 /* Weekly cadence + calendar door — quiet instrumentation under the header. */
 .session-recap__next-reading {
   display: flex;

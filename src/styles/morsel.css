@@ -1,0 +1,201 @@
+/* Morsel + Today — the daily engraving and the readings-tab check-in.
+   Studio register throughout: calm, brass/teal hairlines, engraved
+   eyebrow — the send-the-meter.css idiom, a size quieter. */
+
+.morsel {
+  --morsel-ink: #effcf9;
+  --morsel-muted: #9bb5b1;
+  --morsel-soft: #7a9692;
+  --morsel-brass: var(--sandow-brass, #fcb131);
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px 13px;
+  color: var(--morsel-ink);
+  background: rgba(122, 235, 216, 0.03);
+  border: 1px solid rgba(122, 235, 216, 0.14);
+  border-radius: 2px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  text-align: left;
+}
+
+/* Engraved eyebrow — same register as .stm__eyebrow. */
+.morsel__eyebrow {
+  margin: 0;
+  color: var(--morsel-brass);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* The plate name — the muscle or idea the morsel teaches. */
+.morsel__figure {
+  margin: 0;
+  color: var(--morsel-ink);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+/* The one honest fact — engraved, not shouted. */
+.morsel__line {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--morsel-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* The ease door — a quiet underlined action, same idiom as .stm__button. */
+.morsel__ease {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  color: rgba(153, 246, 228, 0.65);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(153, 246, 228, 0.25);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.morsel__ease:hover {
+  color: rgba(153, 246, 228, 0.9);
+  border-bottom-color: rgba(153, 246, 228, 0.5);
+}
+
+.morsel__ease:focus-visible {
+  outline: 2px solid #7aebd8;
+  outline-offset: 3px;
+}
+
+/* —— Today — the readings-tab check-in block ———————————————————————— */
+
+.today {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px 14px;
+  color: #effcf9;
+  background: rgba(122, 235, 216, 0.03);
+  border: 1px solid rgba(122, 235, 216, 0.14);
+  border-radius: 2px;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+.today__eyebrow {
+  margin: 0;
+  color: var(--sandow-brass, #fcb131);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.today__prompt {
+  margin: 0;
+  color: #9bb5b1;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* The 1–5 feel chips — the same round-chip register as the recap's
+   post-ease check-in. */
+.today__chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.today__chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(153, 246, 228, 0.3);
+  background: rgba(45, 212, 191, 0.06);
+  color: #ccfbf1;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.today__chip:hover {
+  background: rgba(45, 212, 191, 0.16);
+}
+
+.today__chip:focus-visible {
+  outline: 2px solid #7aebd8;
+  outline-offset: 2px;
+}
+
+.today__scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(153, 246, 228, 0.45);
+}
+
+/* The quiet count after a tap — a count, never a streak. */
+.today__noted {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: rgba(153, 246, 228, 0.7);
+}
+
+/* The ease door — same underlined idiom as the morsel's. */
+.today__ease-door {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  color: rgba(255, 217, 122, 0.62);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 217, 122, 0.22);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.today__ease-door:hover {
+  color: rgba(255, 217, 122, 0.88);
+  border-bottom-color: rgba(255, 217, 122, 0.45);
+}
+
+.today__ease-door:focus-visible {
+  outline: 2px solid #7aebd8;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .morsel__ease,
+  .today__ease-door {
+    transition: none;
+  }
+}

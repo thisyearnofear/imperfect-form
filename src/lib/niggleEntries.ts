@@ -17,8 +17,25 @@ export interface NiggleEntry {
   timestamp: number;
 }
 
-const KEY = 'imf_niggle_entries_v1';
+export const NIGGLE_ENTRIES_KEY = 'imf_niggle_entries_v1';
+const KEY = NIGGLE_ENTRIES_KEY;
 const MAX_ENTRIES = 200;
+
+/**
+ * A "feel" entry is a 1–5 self-report — the shape the post-ease check-in
+ * ("How does it feel now?", severity + 'After easing routine') and the
+ * Today check-in both write. Note-only logbook lines (pain marks, stalled
+ * reads) are context, not feels — the weekly pairing reads feel entries
+ * only.
+ */
+export function isFeelEntry(entry: NiggleEntry): boolean {
+  return (
+    typeof entry.severity === 'number' &&
+    Number.isFinite(entry.severity) &&
+    entry.severity >= 1 &&
+    entry.severity <= 5
+  );
+}
 
 export function listNiggleEntries(): NiggleEntry[] {
   if (typeof window === 'undefined') return [];

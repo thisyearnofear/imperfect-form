@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import '@/styles/session-recap.css';
 import { ArrowUpRight, CalendarPlus, CheckCircle2, Copy, RotateCcw, Share2 } from 'lucide-react';
@@ -32,7 +32,10 @@ import MovementAssessmentHistory from './MovementAssessmentHistory';
 import ReadingDetail from './ReadingDetail';
 import { usePainIntent } from '@/hooks/usePainIntent';
 import { useNiggle } from '@/hooks/useNiggle';
-import { addNiggleEntry } from '@/lib/niggleEntries';
+import { addNiggleEntry, listNiggleEntries } from '@/lib/niggleEntries';
+import { weeklyPairingFor, type WeekPairing } from '@/lib/movementCompare';
+import { getLocalMovementAssessments } from '@/services/integrations/MovementAssessmentDataAdapter';
+import { getEffectiveUserId } from '@/services/guestIdentity';
 import { getNiggleJoint, type NiggleJointId } from '@/lib/niggleIntents';
 import SendTheMeter from '@/components/receive/SendTheMeter';
 import JointPlate from '@/components/receive/JointPlate';
@@ -464,6 +467,37 @@ export function SessionRecap({
     protocol && movementAssessment?.status === 'valid' ? movementAssessment : null;
   const nextReading = validReading ? nextReadingDate(validReading.capturedAt) : null;
 
+  // "The week" — numbers vs feelings, told in one of three honest lines.
+  // Renders only on a valid read with an earlier valid read on the same
+  // protocol AND a feel log thick enough to average (≥2 check-ins in the
+  // last ~10 days plus a prior baseline); thin data renders nothing.
+  const [weekPairing, setWeekPairing] = useState<WeekPairing | null>(null);
+  const validCapturedAt = validReading?.capturedAt;
+  useEffect(() => {
+    if (!validReading || validCapturedAt === undefined) {
+      setWeekPairing(null);
+      return;
+    }
+    let active = true;
+    void (async () => {
+      const stored = await getLocalMovementAssessments(getEffectiveUserId(userAddress));
+      const result = weeklyPairingFor({
+        current: validReading,
+        stored,
+        entries: listNiggleEntries(),
+        joint: easeJoint,
+      });
+      if (active) setWeekPairing(result);
+    })().catch(() => {
+      if (active) setWeekPairing(null);
+    });
+    return () => {
+      active = false;
+    };
+    // The read's identity is its timestamp — recompute when a new valid
+    // read lands or the joint it serves changes.
+  }, [validCapturedAt, validReading, easeJoint, userAddress]);
+
   // Fig 2's verdict stamps in once the line is actually on stage — the
   // IntersectionObserver latches on first crossing (~35% visible), and the
   // whole effect lives under no-preference media so reduced motion reads
@@ -805,6 +839,15 @@ export function SessionRecap({
           >
             {readingSentence(validReading.measurements)}
           </p>
+        )}
+        {/* The week — numbers vs feelings in one honest line, only when
+            both halves are thick enough to compare. */}
+        {weekPairing && (
+          <div className="session-recap__week">
+            <p className="session-recap__week-eyebrow">· The week ·</p>
+            <p className="session-recap__week-headline">{weekPairing.headline}</p>
+            <p className="session-recap__week-detail">{weekPairing.detail}</p>
+          </div>
         )}
         {painIntent?.mode === mode && (
           <p className="session-recap__personal">

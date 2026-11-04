@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SessionRecap } from '@/components/game/SessionRecap';
 import ReadingDetail from '@/components/game/ReadingDetail';
 import { GameHUD } from '@/components/game/GameHUD';
@@ -9,6 +9,9 @@ import { reachExpectationLine } from '@/lib/reachReading';
 import { OVERHEAD_REACH_PROTOCOL } from '@/types/movementAssessment';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { SessionSummary } from '@/services/sessionLogger';
+import { NIGGLE_ENTRIES_KEY, type NiggleEntry } from '@/lib/niggleEntries';
+import { saveLocalMovementAssessment } from '@/services/integrations/MovementAssessmentDataAdapter';
+import { getEffectiveUserId } from '@/services/guestIdentity';
 
 /**
  * Dev-only fixture surface for the reach-reading UX pass: the compressed
@@ -114,19 +117,82 @@ const assessment: MovementAssessment = {
 
 const fmt = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
 
+const DAY = 86_400_000;
+
+/**
+ * `?pairing=agree|lag|hurts` — seed the two halves "The week" needs: an
+ * earlier valid reach read (worse range, so this read moved) plus a feel
+ * log around it. The pairing line is honest only when both halves exist,
+ * so the fixture writes the same stores the app itself writes.
+ */
+function pairingSeed(kind: string): { prior: MovementAssessment; entries: NiggleEntry[] } {
+  const now = Date.now();
+  const prior: MovementAssessment = {
+    ...assessment,
+    capturedAt: now - 8 * DAY,
+    measurements: { range: 0.5, control: 0.74, symmetry: 0.84, traceStability: 0.7 },
+  };
+  const feel = (daysAgo: number, severity: number): NiggleEntry => ({
+    joint: 'neck-shoulders',
+    context: 'Tension after desk work',
+    severity,
+    note: 'How it felt today',
+    timestamp: now - daysAgo * DAY,
+  });
+  const entries: Record<string, NiggleEntry[]> = {
+    // Numbers up + feels better → "you felt it too — the numbers agree"
+    agree: [feel(12, 4), feel(11, 4), feel(2, 2), feel(1, 3)],
+    // Numbers up + feels flat → "the meter moved first — feeling often lags"
+    lag: [feel(12, 3), feel(11, 3), feel(2, 3), feel(1, 3)],
+    // Feels worse (regardless of numbers) → the professional door
+    hurts: [feel(12, 3), feel(11, 3), feel(2, 5), feel(1, 4)],
+  };
+  return { prior, entries: entries[kind] ?? entries.lag };
+}
+
 export default function DebugRecapPage() {
+  const [pairing, setPairing] = useState<string | null>(null);
+  const [seeded, setSeeded] = useState(false);
+
+  useEffect(() => {
+    const kind = new URLSearchParams(window.location.search).get('pairing');
+    if (!kind) {
+      setSeeded(true);
+      return;
+    }
+    let active = true;
+    void (async () => {
+      const seed = pairingSeed(kind);
+      await saveLocalMovementAssessment(
+        seed.prior,
+        getEffectiveUserId(undefined),
+        `debug-pairing-${kind}`
+      );
+      localStorage.setItem(NIGGLE_ENTRIES_KEY, JSON.stringify(seed.entries));
+      if (active) {
+        setPairing(kind);
+        setSeeded(true);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div style={{ maxWidth: 420, margin: '0 auto', padding: '12px' }}>
       <h2 style={{ color: '#83e8d5', fontSize: 11, letterSpacing: '0.1em' }}>
-        STAGED RECAP — compressed (scroll)
+        STAGED RECAP — compressed (scroll){pairing ? ` · week pairing: ${pairing}` : ''}
       </h2>
-      <SessionRecap
-        mode="reach"
-        reps={5}
-        summary={summary}
-        movementAssessment={assessment}
-        workouts={[]}
-      />
+      {seeded && (
+        <SessionRecap
+          mode="reach"
+          reps={5}
+          summary={summary}
+          movementAssessment={assessment}
+          workouts={[]}
+        />
+      )}
 
       <h2 style={{ color: '#83e8d5', fontSize: 11, letterSpacing: '0.1em', marginTop: 32 }}>
         ADVANCED ANALYSIS — populated accordion
