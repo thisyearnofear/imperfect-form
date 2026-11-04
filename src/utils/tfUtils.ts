@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
-import { getDefaultPoseConfig } from '../lib/pose/trackerRegistry';
+import { getDefaultPoseConfig, type PoseConfigOptions } from '../lib/pose/trackerRegistry';
 import type { PoseDetectorConfig } from '../types/mediapipe';
 
 // Flag to track if TensorFlow has been initialized
@@ -152,15 +152,15 @@ export const mobileTFUtils = {
    * Gets the optimal tracker for the current device
    * @param isMobile Whether the app is running on a mobile device
    */
-  getOptimalModelType: (isMobile: boolean): string => {
-    return getDefaultPoseConfig(isMobile).tracker;
+  getOptimalModelType: (isMobile: boolean, options?: PoseConfigOptions): string => {
+    return getDefaultPoseConfig(isMobile, options).tracker;
   },
 
   /**
    * Gets the resolved detector configuration based on device type
    * @param isMobile Whether the app is running on a mobile device
    */
-  getDetectorConfig: (isMobile: boolean): PoseDetectorConfig => {
-    return getDefaultPoseConfig(isMobile);
+  getDetectorConfig: (isMobile: boolean, options?: PoseConfigOptions): PoseDetectorConfig => {
+    return getDefaultPoseConfig(isMobile, options);
   },
 };

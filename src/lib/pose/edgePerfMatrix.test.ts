@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_POSE_CONFIG,
+  READING_POSE_CONFIG,
   TRACKERS,
   getDefaultPoseConfig,
   getTracker,
@@ -67,6 +68,44 @@ describe('pose config resolution', () => {
 
   it('keeps an explicit multiPoseMaxDimension on mobile', () => {
     expect(resolvePoseConfig({ multiPoseMaxDimension: 256 }, true).multiPoseMaxDimension).toBe(256);
+  });
+
+  it('runs MoveNet Thunder for protocol reading sessions', () => {
+    const reading = getDefaultPoseConfig(false, { forReading: true });
+    expect(reading.tracker).toBe('movenet-thunder');
+    expect(reading.backend).toBe('webgl');
+    expect(reading.multiPoseMaxDimension).toBe(512);
+    // The live default is untouched — non-reading sessions keep lightning.
+    expect(DEFAULT_POSE_CONFIG.tracker).toBe('movenet-lightning');
+  });
+
+  it('keeps the multi-pose cap on mobile readings too', () => {
+    const reading = getDefaultPoseConfig(true, { forReading: true });
+    expect(reading.tracker).toBe('movenet-thunder');
+    expect(reading.multiPoseMaxDimension).toBe(512);
+    // The mobile score floor still applies — readings do not raise it.
+    expect(reading.minPoseScore).toBe(0.2);
+  });
+
+  it('downgrades a reading to lightning on a low-tier device', () => {
+    const reading = getDefaultPoseConfig(false, {
+      forReading: true,
+      performanceLevel: 'low',
+    });
+    expect(reading.tracker).toBe('movenet-lightning');
+    // Medium and high tiers take the reading config.
+    for (const performanceLevel of ['medium', 'high'] as const) {
+      expect(getDefaultPoseConfig(false, { forReading: true, performanceLevel }).tracker).toBe(
+        'movenet-thunder'
+      );
+    }
+  });
+
+  it('resolves the reading config through the options knob', () => {
+    expect(resolvePoseConfig(undefined, true, { forReading: true })).toEqual(
+      getDefaultPoseConfig(true, { forReading: true })
+    );
+    expect(READING_POSE_CONFIG.tracker).toBe('movenet-thunder');
   });
 });
 

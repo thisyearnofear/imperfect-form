@@ -7,7 +7,11 @@
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 import type { PoseDetector } from '@tensorflow-models/pose-detection';
-import { createPoseDetector, getDefaultPoseConfig } from '@/lib/pose/trackerRegistry';
+import {
+  createPoseDetector,
+  getDefaultPoseConfig,
+  type PoseConfigOptions,
+} from '@/lib/pose/trackerRegistry';
 
 export interface PoseDetectionProgress {
   phase: 'initial' | 'tensorflow-init' | 'model-download' | 'warmup' | 'ready';
@@ -50,17 +54,17 @@ export class PoseDetectionService {
   /**
    * Get the optimal model type for device
    */
-  static getOptimalModelType(isMobile: boolean): string {
+  static getOptimalModelType(isMobile: boolean, options?: PoseConfigOptions): string {
     // Delegates to the shared registry so this cannot drift from the detector
     // the worker and main-thread fallback actually build.
-    return getDefaultPoseConfig(isMobile).tracker;
+    return getDefaultPoseConfig(isMobile, options).tracker;
   }
 
   /**
    * Get detector config based on device type
    */
-  static getDetectorConfig(isMobile: boolean) {
-    return getDefaultPoseConfig(isMobile);
+  static getDetectorConfig(isMobile: boolean, options?: PoseConfigOptions) {
+    return getDefaultPoseConfig(isMobile, options);
   }
 
   /**

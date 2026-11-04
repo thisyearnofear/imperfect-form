@@ -25,6 +25,8 @@ interface LazyWebcamProps {
   pbTrace?: import('@/types/workout').SessionSnapshot[];
   /** Progressive framing-readiness score during the pre-workout settling window. */
   onReadiness?: (score: import('@/lib/exercise-engine').ReadinessScore) => void;
+  /** True while the session is a fixed-protocol reading (see Webcam). */
+  forReading?: boolean;
 }
 
 /**
@@ -106,6 +108,7 @@ export default function LazyWebcam(props: LazyWebcamProps) {
         onSessionEnd={props.onSessionEnd}
         pbTrace={props.pbTrace}
         onReadiness={props.onReadiness}
+        forReading={props.forReading}
       />
     );
   }

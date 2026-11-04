@@ -39,12 +39,51 @@ export const DEFAULT_POSE_CONFIG: PoseDetectorConfig = {
   enableTracking: false,
 };
 
-/** Mobile uses a lower score floor and no multi-pose dimension cap. */
-export function getDefaultPoseConfig(isMobile: boolean): PoseDetectorConfig {
+/**
+ * Protocol reading sessions (the fixed-rep baselines selected by
+ * `assessmentProtocolFor` — the session carries `readingTargetReps`) run the
+ * heavier MoveNet variant: the meter's honesty lives in these reads, so the
+ * accurate tracker is worth the latency. The multi-pose dimension cap stays
+ * on mobile too — a reading is exactly where a cropped inference input would
+ * quietly cost real keypoints.
+ */
+export const READING_POSE_CONFIG: PoseDetectorConfig = {
+  ...DEFAULT_POSE_CONFIG,
+  tracker: 'movenet-thunder',
+  multiPoseMaxDimension: 512,
+};
+
+/** Knobs that pick the per-session detector config. */
+export interface PoseConfigOptions {
+  /**
+   * True for protocol reading sessions. Readings take the accuracy-first
+   * config; every other session keeps the latency-first default.
+   */
+  forReading?: boolean;
+  /**
+   * Device tier from `getDeviceInfo().performanceLevel`. A 'low' device
+   * downgrades a reading back to lightning — honest capacity beats an
+   * aspirational config the hardware cannot sustain.
+   */
+  performanceLevel?: 'low' | 'medium' | 'high';
+}
+
+/**
+ * Per-session detector defaults. Mobile uses a lower score floor; it also
+ * drops the multi-pose dimension cap for ordinary sessions, but readings
+ * keep it — see READING_POSE_CONFIG.
+ */
+export function getDefaultPoseConfig(
+  isMobile: boolean,
+  options: PoseConfigOptions = {}
+): PoseDetectorConfig {
+  const { forReading = false, performanceLevel } = options;
+  const reading = forReading && performanceLevel !== 'low';
+  const base = reading ? READING_POSE_CONFIG : DEFAULT_POSE_CONFIG;
   return {
-    ...DEFAULT_POSE_CONFIG,
-    minPoseScore: isMobile ? 0.2 : DEFAULT_POSE_CONFIG.minPoseScore,
-    multiPoseMaxDimension: isMobile ? undefined : DEFAULT_POSE_CONFIG.multiPoseMaxDimension,
+    ...base,
+    minPoseScore: isMobile ? 0.2 : base.minPoseScore,
+    multiPoseMaxDimension: isMobile && !reading ? undefined : base.multiPoseMaxDimension,
   };
 }
 
@@ -177,9 +216,10 @@ export function supportedOptions(tracker: PoseTrackerId): Array<keyof PoseDetect
 /** Normalize a partial/loose config into a complete one. */
 export function resolvePoseConfig(
   partial: Partial<PoseDetectorConfig> | undefined,
-  isMobile = false
+  isMobile = false,
+  options: PoseConfigOptions = {}
 ): PoseDetectorConfig {
-  const base = getDefaultPoseConfig(isMobile);
+  const base = getDefaultPoseConfig(isMobile, options);
   if (!partial) return base;
   return {
     ...base,

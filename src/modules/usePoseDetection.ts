@@ -116,7 +116,15 @@ export function usePoseDetection(
    * raw keypoints never cross into the React render path. Optional — the
    * pipeline behaves exactly as before when omitted.
    */
-  onReadiness?: (score: ReadinessScore) => void
+  onReadiness?: (score: ReadinessScore) => void,
+  /**
+   * True for protocol reading sessions (the fixed-rep baselines a niggle
+   * intake can start). Readings resolve to the accuracy-first tracker via
+   * trackerRegistry's `forReading` knob; every other session keeps the
+   * latency-first default. Set before `isActive` goes true — the detector is
+   * built once at session start.
+   */
+  forReading?: boolean
 ) {
   // Platform detection variables - defined once at function level
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -385,6 +393,14 @@ export function usePoseDetection(
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const isMobileDevice = isMobile || isMobileUA || (window.innerWidth < 768 && isTouchDevice);
     const isFarcasterSession = isFarcasterMiniApp();
+    // One config per session, resolved here where the reading flag and the
+    // device tier are both known; the worker receives it verbatim so its
+    // recorded `activeConfig` is the config that actually ran. A 'low'
+    // performanceLevel keeps lightning even for readings — honest capacity.
+    const sessionPoseConfig = resolvePoseConfig(undefined, isMobileDevice, {
+      forReading: forReading === true,
+      performanceLevel: getDeviceInfo().performanceLevel,
+    });
     const mobileQualityController =
       isMobileDevice && !isFarcasterSession
         ? new AdaptiveMobileQualityController('balanced')
@@ -616,6 +632,7 @@ export function usePoseDetection(
           isMobile,
           pbTrace,
           preprocessor: preprocessorSettingsRef.current,
+          config: sessionPoseConfig,
         };
         worker.postMessage(initMessage, [offscreen]);
 
@@ -1013,12 +1030,11 @@ export function usePoseDetection(
           percentage: 60,
         });
 
-        // STEP 3: Create the latency-friendly detector only after the user
-        // has started coaching. Built through the same registry the worker
-        // uses, so the main-thread fallback can never drift from it.
-        detectorRef.current = await createPoseDetector(
-          resolvePoseConfig(undefined, isMobileDevice)
-        );
+        // STEP 3: Create the session's detector only after the user
+        // has started coaching. Built from the same resolved config the
+        // worker path posts in `init`, so the two paths can never drift —
+        // including the reading-session tracker upgrade.
+        detectorRef.current = await createPoseDetector(sessionPoseConfig);
         if (cancelled || !isActiveRef.current) {
           try {
             (detectorRef.current as any)?.dispose?.();
@@ -1421,6 +1437,7 @@ export function usePoseDetection(
     emitProgress,
     supportsOffscreenCanvas,
     pbTrace,
+    forReading,
   ]);
 
   return videoRef;

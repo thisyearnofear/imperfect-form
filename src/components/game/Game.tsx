@@ -1195,6 +1195,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
         onSessionEnd={handleSessionEnd}
         pbTrace={activeTrace || undefined}
         onReadiness={handleReadiness}
+        // Protocol readings run the accuracy tracker — set by handleStart
+        // before `started` flips, so the detector is built with it.
+        forReading={readingTargetReps != null}
       />
     ),
     [
@@ -1208,6 +1211,7 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       handleSessionEnd,
       activeTrace,
       handleReadiness,
+      readingTargetReps,
     ]
   );
 

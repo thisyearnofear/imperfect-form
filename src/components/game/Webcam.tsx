@@ -38,6 +38,11 @@ interface WebcamProps {
   pbTrace?: import('@/types/workout').SessionSnapshot[];
   /** Progressive framing-readiness score during the pre-workout settling window. */
   onReadiness?: (score: import('@/lib/exercise-engine').ReadinessScore) => void;
+  /**
+   * True while the session is a fixed-protocol reading — the detector is
+   * built once at session start, so this must be settled before isActive.
+   */
+  forReading?: boolean;
 }
 
 // Initialize logger for the Webcam component
@@ -55,6 +60,7 @@ const Webcam: React.FC<WebcamProps> = ({
   onSessionEnd,
   pbTrace,
   onReadiness,
+  forReading,
 }) => {
   // Must pass curls/pullups/jumps through so the exercise engine runs.
   const safeMode = normalizeExerciseMode(mode);
@@ -80,7 +86,8 @@ const Webcam: React.FC<WebcamProps> = ({
     pbTrace,
     canvasEpoch,
     onCanvasPoisoned,
-    onReadiness
+    onReadiness,
+    forReading
   );
   const containerRef = useRef<HTMLDivElement | null>(null);
 
