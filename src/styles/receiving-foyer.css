@@ -62,8 +62,7 @@
   display: grid;
   place-items: center;
   background:
-    radial-gradient(ellipse 70% 55% at 50% 44%, rgba(11, 42, 44, 0.75), transparent 75%),
-    #061013;
+    radial-gradient(ellipse 70% 55% at 50% 44%, rgba(11, 42, 44, 0.75), transparent 75%), #061013;
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -218,7 +217,8 @@
   position: relative;
   margin: 0 auto;
   width: min(76vw, 300px);
-  filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 44px rgba(252, 177, 49, 0.06));
+  filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 44px rgba(252, 177, 49, 0.06));
 }
 
 /* Short phones: the plate yields height before the CTA yields the fold —
@@ -519,6 +519,43 @@
 }
 
 .rf-change:focus-visible {
+  outline: 2px solid var(--rf-teal-bright);
+  outline-offset: 3px;
+}
+
+/* The stored-niggle quiet line — a returning visitor's intake is already
+   answered, so the hero carries one sentence in place of the chip grid.
+   "change" is the only actionable word: the same hairline door idiom as
+   .rf-change, riding inside the sentence instead of under a button. */
+.rf-still {
+  display: inline-block;
+  margin: 14px 0 2px;
+  padding: 4px 0;
+  color: var(--rf-muted);
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.rf-still__action {
+  margin-left: 0.35em;
+  color: rgba(153, 246, 228, 0.65);
+  border-bottom: 1px solid rgba(153, 246, 228, 0.25);
+  transition:
+    color 200ms var(--rf-curve),
+    border-color 200ms var(--rf-curve);
+}
+
+.rf-still:hover .rf-still__action {
+  color: rgba(153, 246, 228, 0.9);
+  border-bottom-color: rgba(153, 246, 228, 0.5);
+}
+
+.rf-still:focus-visible {
   outline: 2px solid var(--rf-teal-bright);
   outline-offset: 3px;
 }
@@ -1002,6 +1039,12 @@
   text-align: center;
 }
 
+/* The organic send card — moved out of the hero intake into the outro,
+   beside the final ask. Breathing room above, centered in the column. */
+.rf-send {
+  margin: 28px auto 0;
+}
+
 /* Jump anchors land under the studio topbar, not behind it. */
 .rf-final {
   scroll-margin-top: 5rem;
@@ -1357,6 +1400,22 @@
   fill: var(--jp-brass);
 }
 
+/* ── The detail chrome's entrance — mounting .jp-detail is the "wake":
+   labels and live panels fade up together. Quiet plates never mount it;
+   reduced motion lands it instantly. */
+.jp-detail {
+  animation: jp-detail-in 560ms ease-out both;
+}
+
+@keyframes jp-detail-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* ── Engraved micro-labels + hairline leaders ───────────────────── */
 .jp-label {
   fill: rgba(244, 236, 216, 0.55);
@@ -1437,6 +1496,10 @@
   .jp-arm,
   .jp-rep-tick {
     transition: none;
+  }
+
+  .jp-detail {
+    animation: none;
   }
 }
 

@@ -114,6 +114,14 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
   const [sentBy, setSentBy] = useState<string | null>(null);
   const [giftNote, setGiftNote] = useState<string | null>(null);
   const [intakeOpen, setIntakeOpen] = useState(false);
+  // Organic progressive disclosure: a stored niggle pre-selects the intake,
+  // so the hero carries one quiet line ("still your ___? change") instead of
+  // the chip grid — tapping unfolds the same chips a first visit shows.
+  const [heroIntakeOpen, setHeroIntakeOpen] = useState(false);
+  // The link hero already knows the joint — its Fig 1 plate starts quiet
+  // and the teaching chrome (anatomy labels + live-read panels) wakes on a
+  // beat after the envelope lifts, not all at once.
+  const [linkPlateAwake, setLinkPlateAwake] = useState(false);
   const [movesOpen, setMovesOpen] = useState(false);
   const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [beat3Progress, setBeat3Progress] = useState(() =>
@@ -186,7 +194,7 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     if (prefersReducedMotion()) return;
     const t = setTimeout(() => window.dispatchEvent(new Event('resize')), 560);
     return () => clearTimeout(t);
-  }, [movesOpen, intakeOpen, joint?.id]);
+  }, [movesOpen, intakeOpen, heroIntakeOpen, joint?.id]);
 
   // Organic arrivals get the wordmark materializing in the ring; a `?from=`
   // name (or a niggle link without one) keeps the sender greeting.
@@ -275,6 +283,17 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     active: envelope !== 'show',
     reduced,
   });
+
+  // Link hero: the plate's teaching chrome wakes ~600ms after Act 1 begins
+  // (the envelope lifting, or first paint when the seen-flag skips it). A
+  // smooth reveal — .jp-detail fades in; reduced motion lands it instantly.
+  // Organic heroes wake on the answered joint instead (a picked or stored
+  // chip), so this timer is link-only.
+  useEffect(() => {
+    if (organic || linkPlateAwake || envelope === 'show') return;
+    const t = setTimeout(() => setLinkPlateAwake(true), 600);
+    return () => clearTimeout(t);
+  }, [organic, linkPlateAwake, envelope]);
 
   // Scroll choreography — GSAP + ScrollTrigger dynamic, no-op when reduced.
   useReceivingScroll({
@@ -380,6 +399,22 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
     : 'Try one rep';
   const phrase = joint ? JOINT_PHRASE[joint.id] : 'niggle';
   const litStat = joint ? COMPANY_STATS.find((s) => s.joints.includes(joint.id))?.id : undefined;
+
+  // A stored niggle pre-selects the intake on organic — the hero collapses
+  // the chip grid to one quiet line until "change" unfolds it. A joint
+  // picked THIS visit keeps the grid; the collapse is the stored answer's.
+  const intakeCollapsed = organic && Boolean(initialStored) && Boolean(joint);
+
+  // The organic outro send card personalizes to the answered niggle; with
+  // none yet it falls back to the flagship joint (same as the readings tab).
+  const sendJoint = joint ?? getNiggleJoint('neck-shoulders');
+  const sendContext = context ?? sendJoint?.contexts[0] ?? null;
+
+  // The hero plate's detail chrome is earned, not default: organic wakes it
+  // when the joint is answered (a picked or stored chip); the link hero
+  // wakes on the post-envelope beat. ReachPlate heroes have no chrome to
+  // quiet — the prop only reaches JointPlate.
+  const heroPlateQuiet = organic ? !joint : !linkPlateAwake;
   const ritualLine = readingProtocol
     ? `Once a week, same setup, ${readingProtocol.targetReps} slow raises.`
     : 'Once a week, same setup, a few slow reps.';
@@ -458,8 +493,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
           );
         })}
       </div>
-      {/* Picking a joint unfolds its context row — and "Send this to a
-          friend" lives here, in the unfolded intake only. */}
+      {/* Picking a joint unfolds its context row — and for link arrivals
+          "Send this to a friend" lives here, in the unfolded finale intake.
+          Organic moved its send card to the outro (the hero stays ask-only). */}
       <div className={`rf-unfold${joint ? ' is-open' : ''}`}>
         <div className="rf-unfold__content">
           {joint && joint.contexts.length > 1 && (
@@ -487,7 +523,7 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
               </div>
             </>
           )}
-          {joint && (
+          {joint && !organic && (
             <SendTheMeter
               joint={joint}
               contextId={context?.id}
@@ -609,7 +645,7 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
                 anatomical teardown for it. Every other joint/movement keeps
                 the reach figure's plate. */}
             {joint?.id === 'neck-shoulders' && mode === 'reach' ? (
-              <JointPlate progress={progress} litPips={litPips} />
+              <JointPlate progress={progress} litPips={litPips} quiet={heroPlateQuiet} />
             ) : (
               <ReachPlate progress={progress} litPips={litPips} />
             )}
@@ -663,12 +699,6 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
               </p>
             )}
 
-            {/* Organic: the intake IS the hero — hairline chips under the
-                title; picking a joint unfolds its context row and retitles
-                the plate copy. Link arrivals learn first: no CTA here, the
-                reading ask waits in the outro as the finale. */}
-            {organic && intakeChips}
-
             {/* The framing line rides with the ask: organic keeps it beside
                 the hero CTA; link arrivals meet it at the finale instead. */}
             {organic && (
@@ -678,6 +708,39 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
                   : 'Slow reps. The camera watches; nothing leaves your phone.'}
               </p>
             )}
+
+            {/* Organic: the intake IS the hero — hairline chips under the
+                title; picking a joint unfolds its context row and retitles
+                the plate copy. A stored niggle already answered, so its hero
+                carries one quiet line instead — "change" unfolds the same
+                chips. Link arrivals learn first: no CTA here, the reading
+                ask waits in the outro as the finale. */}
+            {organic &&
+              (intakeCollapsed ? (
+                <>
+                  <button
+                    type="button"
+                    className="rf-still"
+                    aria-expanded={heroIntakeOpen}
+                    aria-controls="rf-hero-intake"
+                    onClick={() => {
+                      playStudioCue('soft');
+                      triggerHaptic(30);
+                      setHeroIntakeOpen((v) => !v);
+                    }}
+                  >
+                    still your {phrase}? <span className="rf-still__action">change</span>
+                  </button>
+                  <div
+                    id="rf-hero-intake"
+                    className={`rf-unfold${heroIntakeOpen ? ' is-open' : ''}`}
+                  >
+                    <div className="rf-unfold__content">{intakeChips}</div>
+                  </div>
+                </>
+              ) : (
+                intakeChips
+              ))}
 
             {organic && (
               <>
@@ -963,6 +1026,19 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
                   <div className="rf-intake__content">{intakeChips}</div>
                 </div>
               </>
+            )}
+            {/* Organic moved the send card out of the hero intake — it lives
+                here, after the story, beside the final ask. The reply row
+                still only appears when a stored sender exists (earned). */}
+            {organic && sendJoint && (
+              <SendTheMeter
+                joint={sendJoint}
+                contextId={sendContext?.id}
+                giftLine={sendContext?.giftLine}
+                lead="Pass the meter to someone whose joint nags."
+                surface="receiving-foyer-outro"
+                className="rf-send"
+              />
             )}
             <p className="coach-foyer__assist coach-foyer__assist--meter rf-final__note">
               A meter, not a diagnosis. If it hurts, stop.

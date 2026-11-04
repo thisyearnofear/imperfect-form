@@ -39,7 +39,13 @@ test.describe('Shared niggle link', () => {
     await expect(foyer.getByText('Udi sent you this')).toBeVisible();
     // The hero plate is the shoulder teardown for neck-shoulders links —
     // scope to the hero so the beats' own plates don't steal .first().
-    await expect(foyer.locator('.rf-hero .joint-plate')).toBeVisible();
+    const heroPlate = foyer.locator('.rf-hero .joint-plate');
+    await expect(heroPlate).toBeVisible();
+    // Fig 1 arrives quiet — the teaching chrome (anatomy labels + live-read
+    // panels) wakes on a beat after first paint, not all at once.
+    await expect(heroPlate.locator('.jp-detail')).toHaveCount(0);
+    await expect(heroPlate.locator('.jp-label')).toHaveCount(6);
+    await expect(heroPlate.locator('.jp-panel-value')).toHaveCount(3);
     // The gift, not the diagnosis: without &note= the context's empathy line
     // is quoted; the headline promises the thing a worried person wants.
     await expect(foyer.locator('.rf-gift')).toContainText("Heard it's been tight lately");
@@ -151,7 +157,12 @@ test.describe('Organic landing', () => {
     await expect(foyer.locator('#rf-title')).toContainText('neck & shoulders');
     await expect(foyer.locator('.rf-chip--context', { hasText: 'desk work' })).toBeVisible();
     await expect(foyer.locator('#startButton')).toContainText('Take a 5-rep reading');
-    await expect(foyer.getByRole('button', { name: 'Send this to a friend' })).toBeVisible();
+    // The send card left the organic hero — it waits in the outro beside
+    // the final ask, personalized to the answered joint.
+    await expect(foyer.locator('.rf-hero .stm')).toHaveCount(0);
+    const send = foyer.locator('.rf-final .stm');
+    await send.scrollIntoViewIfNeeded();
+    await expect(send).toContainText('Pass the meter to someone whose joint nags.');
 
     // The company beat lights the answered joint's stat block.
     const company = page.locator('.rf-beat[aria-label="The company"]');

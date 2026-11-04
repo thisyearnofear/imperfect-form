@@ -50,6 +50,13 @@ export type JointPlateProps = {
   litPips?: number;
   /** Tap-to-peel region callouts. Off for static minis (SessionRecap). */
   interactive?: boolean;
+  /** Quiet figure — hides the anatomy micro-labels and the live-read
+   *  margin panels; frame, figure, arc, loop, pips and peel all stay. The
+   *  teaching chrome is earned: the parent decides when the instrument
+   *  wakes (a picked joint, the post-envelope beat, the Read beat's full
+   *  plate). Flipping quiet off mounts `.jp-detail`, whose entrance
+   *  animation is the reveal — instant under reduced motion. */
+  quiet?: boolean;
   className?: string;
 };
 
@@ -86,6 +93,7 @@ export function JointPlate({
   pips = 5,
   litPips,
   interactive = true,
+  quiet = false,
   className = '',
 }: JointPlateProps) {
   const uid = useId().replace(/:/g, '');
@@ -266,33 +274,39 @@ export function JointPlate({
         135°
       </text>
 
-      {/* —— Margin panels: live values in the meter's own names ———— */}
-      <g className="jp-panels" aria-hidden="true">
-        <text className="jp-panel-eyebrow" x="22" y="58">
-          live read
-        </text>
-        <text className="jp-panel-label" x="22" y="72">
-          elevation
-        </text>
-        <text className="jp-panel-value" x="112" y="72" textAnchor="end">
-          ~{Math.round(elevDeg)}°
-        </text>
-        <path className="jp-panel-rule" d="M22 78 H112" />
-        <text className="jp-panel-label" x="22" y="90">
-          sway
-        </text>
-        <text className="jp-panel-value" x="112" y="90" textAnchor="end">
-          ~{swayDeg}°
-        </text>
-        <path className="jp-panel-rule" d="M22 96 H112" />
-        <text className="jp-panel-label" x="22" y="108">
-          L–R
-        </text>
-        <text className="jp-panel-value" x="112" y="108" textAnchor="end">
-          {lrRatio}
-        </text>
-        <path className="jp-panel-rule" d="M22 114 H112" />
-      </g>
+      {/* —— Margin panels: live values in the meter's own names ————
+          Detail chrome (panels + labels below) mounts only when the plate
+          is awake — quiet heroes keep the figure without the teaching. */}
+      {!quiet && (
+        <g className="jp-detail" aria-hidden="true">
+          <g className="jp-panels">
+            <text className="jp-panel-eyebrow" x="22" y="58">
+              live read
+            </text>
+            <text className="jp-panel-label" x="22" y="72">
+              elevation
+            </text>
+            <text className="jp-panel-value" x="112" y="72" textAnchor="end">
+              ~{Math.round(elevDeg)}°
+            </text>
+            <path className="jp-panel-rule" d="M22 78 H112" />
+            <text className="jp-panel-label" x="22" y="90">
+              sway
+            </text>
+            <text className="jp-panel-value" x="112" y="90" textAnchor="end">
+              ~{swayDeg}°
+            </text>
+            <path className="jp-panel-rule" d="M22 96 H112" />
+            <text className="jp-panel-label" x="22" y="108">
+              L–R
+            </text>
+            <text className="jp-panel-value" x="112" y="108" textAnchor="end">
+              {lrRatio}
+            </text>
+            <path className="jp-panel-rule" d="M22 114 H112" />
+          </g>
+        </g>
+      )}
 
       {/* —— The anatomical teardown — figure, muscle regions, bones and
           the working arm, shared with the framing ghost and the live
@@ -309,32 +323,36 @@ export function JointPlate({
       />
 
       {/* —— Engraved micro-labels with hairline leaders —————————— */}
-      <g className="jp-labels" aria-hidden="true">
-        <text className="jp-label" x="30" y="140">
-          trapezius
-        </text>
-        <path className="jp-leader" d="M92 138 L150 122" />
-        <text className="jp-label" x="30" y="164">
-          levator
-        </text>
-        <path className="jp-leader" d="M74 162 L162 128" />
-        <text className="jp-label" x="224" y="106">
-          clavicle
-        </text>
-        <path className="jp-leader" d="M222 108 L194 127" />
-        <text className="jp-label" x="238" y="184">
-          deltoid
-        </text>
-        <path className="jp-leader" d="M236 181 L211 155" />
-        <text className="jp-label" x="30" y="206">
-          scapula
-        </text>
-        <path className="jp-leader" d="M74 203 L172 194" />
-        <text className="jp-label" x="244" y="258">
-          humerus
-        </text>
-        <path className="jp-leader" d="M242 255 L202 200" />
-      </g>
+      {!quiet && (
+        <g className="jp-detail" aria-hidden="true">
+          <g className="jp-labels">
+            <text className="jp-label" x="30" y="140">
+              trapezius
+            </text>
+            <path className="jp-leader" d="M92 138 L150 122" />
+            <text className="jp-label" x="30" y="164">
+              levator
+            </text>
+            <path className="jp-leader" d="M74 162 L162 128" />
+            <text className="jp-label" x="224" y="106">
+              clavicle
+            </text>
+            <path className="jp-leader" d="M222 108 L194 127" />
+            <text className="jp-label" x="238" y="184">
+              deltoid
+            </text>
+            <path className="jp-leader" d="M236 181 L211 155" />
+            <text className="jp-label" x="30" y="206">
+              scapula
+            </text>
+            <path className="jp-leader" d="M74 203 L172 194" />
+            <text className="jp-label" x="244" y="258">
+              humerus
+            </text>
+            <path className="jp-leader" d="M242 255 L202 200" />
+          </g>
+        </g>
+      )}
 
       {/* —— Peel callout: hairline card + leader to the part ————— */}
       {peelInfo && peelAnchor && (

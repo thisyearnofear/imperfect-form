@@ -330,6 +330,41 @@ test.describe('landing — organic intake chips', () => {
       await context.close();
     }
   });
+
+  test('the hero plate carries no .jp-label chrome until a joint chip wakes it', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const hero = page.locator('.receiving-foyer .rf-hero');
+    await expect(hero).toBeVisible({ timeout: 20000 });
+    // No joint picked — quiet figure, no teaching chrome.
+    await expect(hero.locator('.jp-label')).toHaveCount(0);
+    await expect(hero.locator('.jp-panel-value')).toHaveCount(0);
+
+    // Picking neck & shoulders mounts the teardown already awake.
+    await page.getByRole('button', { name: 'My neck & shoulders' }).click();
+    await expect(hero.locator('.joint-plate')).toBeVisible();
+    await expect(hero.locator('.jp-label')).toHaveCount(6);
+    await expect(hero.locator('.jp-panel-value')).toHaveCount(3);
+  });
+
+  test('no send card in the organic hero — it waits in the outro', async ({ page }) => {
+    await page.goto('/');
+    const foyer = page.locator('.receiving-foyer');
+    await expect(foyer).toBeVisible({ timeout: 20000 });
+    await expect(foyer.locator('.rf-hero .stm')).toHaveCount(0);
+
+    // Even after a joint is answered the hero stays ask-only — the send
+    // affordance moved to the outro beside the final CTA.
+    await page.getByRole('button', { name: 'My neck & shoulders' }).click();
+    await expect(foyer.locator('.rf-hero .stm')).toHaveCount(0);
+
+    const send = foyer.locator('.rf-final .stm');
+    await send.scrollIntoViewIfNeeded();
+    await expect(send).toBeVisible();
+    await expect(send).toContainText('Pass the meter to someone whose joint nags.');
+    await expect(send.getByRole('button', { name: 'Send the meter to a friend' })).toBeVisible();
+  });
 });
 
 test('landing — mobile: knee chip selects squats; the Squats card confirms in the unfold', async ({
@@ -391,7 +426,14 @@ test('landing — mobile: a joint restored from storage applies its mode', async
     });
     const foyer = page.locator('.receiving-foyer');
     await expect(foyer.locator('#rf-title')).toContainText('knee');
-    await expect(foyer.locator('.rf-chip.is-selected').first()).toBeVisible();
+
+    // The stored answer collapses the hero intake to one quiet line — the
+    // chip grid stays mounted but folded until "change" unfolds it.
+    const still = foyer.getByRole('button', { name: /still your knee\?/ });
+    await expect(still).toBeVisible();
+    await expect(foyer.locator('.rf-hero .rf-chip.is-selected')).toHaveCount(2);
+    await still.click();
+    await expect(foyer.locator('.rf-hero .rf-chip.is-selected').first()).toBeVisible();
   } finally {
     await context.close();
   }
