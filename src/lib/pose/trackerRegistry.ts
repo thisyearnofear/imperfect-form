@@ -20,6 +20,15 @@ import type {
   MoveNetModelConfig,
 } from '@tensorflow-models/pose-detection';
 import type { PoseBackendId, PoseDetectorConfig, PoseTrackerId } from '@/types/mediapipe';
+import type { PoseLandmarkerSession } from './poseLandmarkerAdapter';
+
+/**
+ * Either detector family the registry can build. tfjs trackers return the
+ * library's `PoseDetector`; tasks-vision trackers return the adapter's
+ * `PoseLandmarkerSession`. Both expose `estimatePoses(image)` and `dispose()`,
+ * which is all the worker and the main-thread loop call.
+ */
+export type SessionPoseDetector = TfPoseDetector | PoseLandmarkerSession;
 
 /**
  * Live-session defaults.
@@ -92,11 +101,23 @@ export interface TrackerSpec {
   label: string;
   /** Human note on cost/accuracy, kept honest — no unmeasured claims. */
   note: string;
-  model: SupportedModels;
+  /**
+   * Which inference runtime builds this tracker. 'tfjs' trackers go through
+   * @tensorflow-models/pose-detection; 'tasks-vision' trackers go through
+   * @mediapipe/tasks-vision and the adapter in poseLandmarkerAdapter.ts.
+   */
+  runtime: 'tfjs' | 'tasks-vision';
+  /** tfjs model family, or 'landmarker' for the tasks-vision runtime. */
+  model: SupportedModels | 'landmarker';
   /** Model type string passed to the library; typed per model family. */
   modelType: string;
   /** Narrowed modelType for BlazePose, which requires its own union. */
   blazeposeModelType?: BlazePoseModelType;
+  /**
+   * tasks-vision trackers load a `.task` model bundle from this local path
+   * (served from public/, never a CDN).
+   */
+  modelFile?: string;
   /**
    * BlazePose reports 33 landmarks including hands and face; the exercise
    * engine consumes the MoveNet-shaped 17. Callers must not assume keypoint
@@ -116,6 +137,7 @@ export const TRACKERS: Record<PoseTrackerId, TrackerSpec> = {
     id: 'movenet-lightning',
     label: 'MoveNet Lightning',
     note: 'Shipped live default. Fastest MoveNet variant.',
+    runtime: 'tfjs',
     model: SupportedModels.MoveNet,
     modelType: 'SinglePose.Lightning',
     keypointShape: 'movenet-17',
@@ -124,6 +146,7 @@ export const TRACKERS: Record<PoseTrackerId, TrackerSpec> = {
     id: 'movenet-thunder',
     label: 'MoveNet Thunder',
     note: 'Heavier MoveNet variant, kept for an explicit accuracy benchmark.',
+    runtime: 'tfjs',
     model: SupportedModels.MoveNet,
     modelType: 'SinglePose.Thunder',
     keypointShape: 'movenet-17',
@@ -135,6 +158,7 @@ export const TRACKERS: Record<PoseTrackerId, TrackerSpec> = {
     // is not available here because @mediapipe/pose is stubbed out; see
     // src/stubs/mediapipe-pose.js.
     note: '33 landmarks incl. hands and face. Slower and heavier than MoveNet.',
+    runtime: 'tfjs',
     model: SupportedModels.BlazePose,
     modelType: 'full',
     blazeposeModelType: 'full',
@@ -142,6 +166,22 @@ export const TRACKERS: Record<PoseTrackerId, TrackerSpec> = {
     // The MediaPipe wasm backend is what BlazePose normally uses; the tfjs
     // path runs on webgl. Kept honest rather than assumed.
     unsupportedBackends: ['wasm'],
+  },
+  'poselandmarker-full': {
+    id: 'poselandmarker-full',
+    label: 'PoseLandmarker Full (tasks-vision)',
+    // Separate runtime from the tfjs family: FilesetResolver loads the local
+    // WASM fileset and PoseLandmarker loads this .task bundle — both served
+    // from public/mediapipe, no CDN at runtime.
+    note: 'MediaPipe runtime. 33 landmarks with real per-landmark visibility. Benchmark row only — not a session default.',
+    runtime: 'tasks-vision',
+    model: 'landmarker',
+    modelType: 'full',
+    modelFile: '/mediapipe/models/pose_landmarker_full.task',
+    keypointShape: 'blazepose-33',
+    // tasks-vision ships GPU (WebGL) and CPU delegates only — there is no
+    // WebGPU delegate to request.
+    unsupportedBackends: ['webgpu'],
   },
 };
 
@@ -163,7 +203,8 @@ export function isConfigSupported(
   if (spec.unsupportedBackends?.includes(config.backend)) return false;
   if (config.backend === 'webgpu' && !device.webGPUSupport) return false;
   if (config.backend === 'webgl' && !device.webglSupport) return false;
-  // wasm and cpu are always constructible; tf falls back internally.
+  // wasm and cpu are always constructible. For tasks-vision trackers 'wasm'
+  // and 'cpu' both select the CPU delegate; tfjs trackers fall back internally.
   return true;
 }
 
@@ -174,8 +215,18 @@ export function isConfigSupported(
  * while BlazePose requires `runtime: 'tfjs'` (or 'mediapipe'). The tfjs runtime
  * is used deliberately — @mediapipe/pose is stubbed out in this app.
  */
-export async function createPoseDetector(config: PoseDetectorConfig): Promise<TfPoseDetector> {
+export async function createPoseDetector(config: PoseDetectorConfig): Promise<SessionPoseDetector> {
   const spec = getTracker(config.tracker);
+
+  if (spec.runtime === 'tasks-vision') {
+    // Lazy import: the tasks-vision bundle and its WASM/model fetches stay
+    // out of the MoveNet path until a session actually requests this tracker.
+    if (!spec.modelFile) {
+      throw new Error(`Tracker ${spec.id} has no modelFile configured`);
+    }
+    const { createPoseLandmarker } = await import('./poseLandmarkerAdapter');
+    return createPoseLandmarker(config, spec.modelFile);
+  }
 
   if (spec.model === SupportedModels.BlazePose) {
     // BlazePose's config genuinely has no minPoseScore / multiPoseMaxDimension /
@@ -197,7 +248,8 @@ export async function createPoseDetector(config: PoseDetectorConfig): Promise<Tf
     multiPoseMaxDimension: config.multiPoseMaxDimension,
     enableTracking: config.enableTracking,
   };
-  return createDetector(spec.model, movenetConfig);
+  // runtime === 'tfjs' guarantees a SupportedModels family here.
+  return createDetector(spec.model as SupportedModels, movenetConfig);
 }
 
 /**
@@ -207,7 +259,15 @@ export async function createPoseDetector(config: PoseDetectorConfig): Promise<Tf
  * two were configured identically — BlazePose ignores minPoseScore entirely.
  */
 export function supportedOptions(tracker: PoseTrackerId): Array<keyof PoseDetectorConfig> {
-  if (getTracker(tracker).model === SupportedModels.BlazePose) {
+  const spec = getTracker(tracker);
+  if (spec.runtime === 'tasks-vision') {
+    // The landmarker honours exactly two config fields beyond its identity:
+    // 'backend' selects the GPU/CPU delegate, and 'minPoseScore' maps onto
+    // minPoseDetectionConfidence. It ignores inputSize (its graph resizes
+    // internally), enableSmoothing, enableTracking and multiPoseMaxDimension.
+    return ['tracker', 'backend', 'minPoseScore'];
+  }
+  if (spec.model === SupportedModels.BlazePose) {
     return ['tracker', 'backend', 'inputSize', 'enableSmoothing'];
   }
   return ['tracker', 'backend', 'inputSize', 'enableSmoothing', 'minPoseScore', 'enableTracking'];

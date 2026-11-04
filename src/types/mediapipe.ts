@@ -30,7 +30,8 @@ export interface PoseDetector {
 }
 
 /** Which pose architecture to run. */
-export type PoseTrackerId = 'movenet-lightning' | 'movenet-thunder' | 'blazepose';
+export type PoseTrackerId =
+  'movenet-lightning' | 'movenet-thunder' | 'blazepose' | 'poselandmarker-full';
 
 /** Which tfjs backend to run inference on. */
 export type PoseBackendId = 'webgpu' | 'webgl' | 'wasm' | 'cpu';

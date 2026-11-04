@@ -45,6 +45,7 @@
     "@farcaster/miniapp-sdk": "0.3.0",
     "@farcaster/miniapp-wagmi-connector": "^2.0.0",
     "@google/genai": "2.11.0",
+    "@mediapipe/tasks-vision": "1.2.0",
     "@radix-ui/react-dialog": "^1.1.19",
     "@radix-ui/react-tabs": "^1.1.17",
     "@radix-ui/react-visually-hidden": "^1.2.7",

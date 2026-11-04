@@ -1,0 +1,235 @@
+{
+  "capturedAt": "2026-11-04T01:43:45.160Z",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/149.0.7827.55 Safari/537.36",
+  "images": ["images/sandow.jpg", "images/bodi.jpg", "images/yoga.jpg", "images/tango.jpg"],
+  "warmupIters": 3,
+  "latencyIters": 15,
+  "stabilityRepeats": 8,
+  "rows": [
+    {
+      "label": "movenet-thunder/webgl",
+      "tracker": "movenet-thunder",
+      "backend": "webgl",
+      "resolvedDelegate": null,
+      "initMs": 2737,
+      "medianMs": 560.8,
+      "p95Ms": 984.7,
+      "minMs": 437.1,
+      "maxMs": 984.7,
+      "framesPerSecond": 1.8,
+      "perImage": [
+        {
+          "image": "images/sandow.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.37242799591930476,
+          "allKeypointConfidence": 0.37242799591930476
+        },
+        {
+          "image": "images/bodi.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.5546941529302036,
+          "allKeypointConfidence": 0.5546941529302036
+        },
+        {
+          "image": "images/yoga.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.20123533773071625,
+          "allKeypointConfidence": 0.20123533773071625
+        },
+        {
+          "image": "images/tango.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.4112468925030792,
+          "allKeypointConfidence": 0.4112468925030792
+        }
+      ],
+      "detectedFrames": 4,
+      "meanCoco17Confidence": 0.38490109477082596,
+      "meanArmChainJitterPct": 0.736213813469035
+    },
+    {
+      "label": "movenet-lightning/webgl",
+      "tracker": "movenet-lightning",
+      "backend": "webgl",
+      "resolvedDelegate": null,
+      "initMs": 2776,
+      "medianMs": 89.3,
+      "p95Ms": 196.1,
+      "minMs": 67,
+      "maxMs": 196.1,
+      "framesPerSecond": 11.2,
+      "perImage": [
+        {
+          "image": "images/sandow.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.2765534127898076,
+          "allKeypointConfidence": 0.2765534127898076
+        },
+        {
+          "image": "images/bodi.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.7026988460737116,
+          "allKeypointConfidence": 0.7026988460737116
+        },
+        {
+          "image": "images/yoga.jpg",
+          "poseDetected": false,
+          "keypointCount": 0,
+          "coco17Confidence": null,
+          "allKeypointConfidence": null
+        },
+        {
+          "image": "images/tango.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.35359116030089993,
+          "allKeypointConfidence": 0.35359116030089993
+        }
+      ],
+      "detectedFrames": 3,
+      "meanCoco17Confidence": 0.3332108547911048,
+      "meanArmChainJitterPct": 1.7165430998511981
+    },
+    {
+      "label": "movenet-thunder/cpu",
+      "tracker": "movenet-thunder",
+      "backend": "cpu",
+      "resolvedDelegate": null,
+      "initMs": 2563,
+      "medianMs": 1689.8,
+      "p95Ms": 2080.3,
+      "minMs": 1626.7,
+      "maxMs": 2080.3,
+      "framesPerSecond": 0.6,
+      "perImage": [
+        {
+          "image": "images/sandow.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.372500355793711,
+          "allKeypointConfidence": 0.372500355793711
+        },
+        {
+          "image": "images/bodi.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.5546682634774376,
+          "allKeypointConfidence": 0.5546682634774376
+        },
+        {
+          "image": "images/yoga.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.20139549804084442,
+          "allKeypointConfidence": 0.20139549804084442
+        },
+        {
+          "image": "images/tango.jpg",
+          "poseDetected": true,
+          "keypointCount": 17,
+          "coco17Confidence": 0.41127673602279496,
+          "allKeypointConfidence": 0.41127673602279496
+        }
+      ],
+      "detectedFrames": 4,
+      "meanCoco17Confidence": 0.38496021333369695,
+      "meanArmChainJitterPct": 0.7365300811398694
+    },
+    {
+      "label": "poselandmarker-full/gpu-delegate",
+      "tracker": "poselandmarker-full",
+      "backend": "webgl",
+      "resolvedDelegate": "GPU",
+      "initMs": 279,
+      "medianMs": 135.9,
+      "p95Ms": 156,
+      "minMs": 113.5,
+      "maxMs": 156,
+      "framesPerSecond": 7.4,
+      "perImage": [
+        {
+          "image": "images/sandow.jpg",
+          "poseDetected": true,
+          "keypointCount": 33,
+          "coco17Confidence": 0.740781802464934,
+          "allKeypointConfidence": 0.6776538012605725
+        },
+        {
+          "image": "images/bodi.jpg",
+          "poseDetected": true,
+          "keypointCount": 33,
+          "coco17Confidence": 0.7480855882167816,
+          "allKeypointConfidence": 0.6843039348269954
+        },
+        {
+          "image": "images/yoga.jpg",
+          "poseDetected": true,
+          "keypointCount": 33,
+          "coco17Confidence": 0.7234078119782841,
+          "allKeypointConfidence": 0.6604327207261865
+        },
+        {
+          "image": "images/tango.jpg",
+          "poseDetected": true,
+          "keypointCount": 33,
+          "coco17Confidence": 0.7361521484220729,
+          "allKeypointConfidence": 0.6749548708850687
+        }
+      ],
+      "detectedFrames": 4,
+      "meanCoco17Confidence": 0.7371068377705182,
+      "meanArmChainJitterPct": 14.50392003587172
+    },
+    {
+      "label": "poselandmarker-full/cpu-delegate",
+      "tracker": "poselandmarker-full",
+      "backend": "cpu",
+      "resolvedDelegate": "CPU",
+      "initMs": 166,
+      "medianMs": 31.8,
+      "p95Ms": 51.1,
+      "minMs": 21.3,
+      "maxMs": 51.1,
+      "framesPerSecond": 31.4,
+      "perImage": [
+        {
+          "image": "images/sandow.jpg",
+          "poseDetected": true,
+          "keypointCount": 33,
+          "coco17Confidence": 0.7458619422772351,
+          "allKeypointConfidence": 0.6812598732384768
+        },
+        {
+          "image": "images/bodi.jpg",
+          "poseDetected": true,
+          "keypointCount": 33,
+          "coco17Confidence": 0.7553904626299354,
+          "allKeypointConfidence": 0.6918518827720122
+        },
+        {
+          "image": "images/yoga.jpg",
+          "poseDetected": true,
+          "keypointCount": 33,
+          "coco17Confidence": 0.7261851088089102,
+          "allKeypointConfidence": 0.6634581531539108
+        },
+        {
+          "image": "images/tango.jpg",
+          "poseDetected": true,
+          "keypointCount": 33,
+          "coco17Confidence": 0.7374110870501575,
+          "allKeypointConfidence": 0.6751070009036497
+        }
+      ],
+      "detectedFrames": 4,
+      "meanCoco17Confidence": 0.7412121501915595,
+      "meanArmChainJitterPct": 10.492804425661559
+    }
+  ]
+}

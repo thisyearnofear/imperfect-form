@@ -1,5 +1,18 @@
 # Pose stack — tasks-vision PoseLandmarker spike
 
+> **Status update (2026-11-04): integrated, not promoted.** The integration
+> below has landed as a _new tracker option_, gated exactly as this note
+> recommended — `'poselandmarker-full'` is in `TRACKERS`, built through
+> `createPoseDetector` via `src/lib/pose/poseLandmarkerAdapter.ts`, runs in
+> both the worker and main-thread paths, and is a row in the edge perf
+> matrix. WASM + `.task` assets are served from `public/mediapipe/` — no
+> runtime CDN. `DEFAULT_POSE_CONFIG` stays MoveNet Lightning and
+> `READING_POSE_CONFIG` stays MoveNet Thunder. First headless benchmark
+> numbers: `evidence/pose-landmarker-benchmark.md` (runner:
+> `scripts/pose-landmarker-benchmark.mjs`). `@mediapipe/tasks-vision@1.2.0`
+> is in `package.json`; the `@mediapipe/pose` stub remains — it services the
+> tfjs pose-detection import, not the tasks runtime.
+
 Spike note only. No dependency added, no integration landed. (`@mediapipe/tasks-vision`
 is absent from `package.json`; `@mediapipe/pose` is deliberately stubbed — see
 `src/stubs/mediapipe-pose.js` and the aliases in `next.config.mjs`.)

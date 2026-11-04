@@ -1,7 +1,6 @@
 /// <reference lib="webworker" />
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
-import { PoseDetector } from '@tensorflow-models/pose-detection';
 import {
   Keypoint,
   WorkerMessage,
@@ -13,7 +12,12 @@ import {
   getDefaultPreprocessorSettings,
   preprocessImageBitmap,
 } from '../lib/pose/posePreprocessor';
-import { createPoseDetector, resolvePoseConfig } from '../lib/pose/trackerRegistry';
+import {
+  createPoseDetector,
+  getTracker,
+  resolvePoseConfig,
+  type SessionPoseDetector,
+} from '../lib/pose/trackerRegistry';
 import {
   ExerciseMode,
   RepCounterState,
@@ -30,7 +34,7 @@ import {
 import { drawSkeleton } from '../utils/poseDrawing';
 import { PoseSmoother } from '../lib/pose/poseSmoother';
 
-let detector: PoseDetector;
+let detector: SessionPoseDetector;
 let ctx: OffscreenCanvasRenderingContext2D;
 // Biomechanical Helpers removed - consolidated into src/utils/biomechanics.ts
 
@@ -85,6 +89,20 @@ async function initTfBackend(requested?: PoseBackendId): Promise<PoseBackendId> 
   return (tf.getBackend() as PoseBackendId) ?? 'webgl';
 }
 
+/**
+ * Backend selection per tracker family. tfjs trackers run the backend
+ * cascade; tasks-vision trackers (PoseLandmarker) own their WASM+delegate
+ * stack entirely — the registry's `createPoseDetector` picks GPU/CPU delegate
+ * from `config.backend`, so there is no tf backend to initialize. The
+ * reported label stays honest about which stack actually runs the model.
+ */
+async function initDetectorBackend(config: PoseDetectorConfig): Promise<string> {
+  if (getTracker(config.tracker).runtime === 'tasks-vision') {
+    return 'tasks-vision';
+  }
+  return initTfBackend(config.backend);
+}
+
 // calculateAngle removed - consolidated into src/utils/biomechanics.ts
 
 // detectPushup and detectSquat removed - consolidated into src/utils/biomechanics.ts
@@ -101,7 +119,7 @@ async function disposeDetector() {
 }
 
 // Warm up the model with a dummy inference to avoid first-run latency
-async function warmupDetector(detector: PoseDetector, _width: number, _height: number) {
+async function warmupDetector(detector: SessionPoseDetector, _width: number, _height: number) {
   try {
     // Create a small dummy buffer/canvas
     const offscreen = new OffscreenCanvas(256, 256);
@@ -136,7 +154,7 @@ self.addEventListener('message', async (event) => {
       offscreen.height = data.height;
       ctx = offscreen.getContext('2d', { alpha: true }) as OffscreenCanvasRenderingContext2D;
 
-      const backend = await initTfBackend(activeConfig.backend);
+      const backend = await initDetectorBackend(activeConfig);
       self.postMessage({ type: 'backend', backend });
 
       await disposeDetector();
@@ -154,7 +172,7 @@ self.addEventListener('message', async (event) => {
       // Swap the detector mid-session so a benchmark measures the config it
       // labels, rather than re-measuring the live one under a new name.
       activeConfig = resolvePoseConfig(data.config);
-      const backend = await initTfBackend(activeConfig.backend);
+      const backend = await initDetectorBackend(activeConfig);
       self.postMessage({ type: 'backend', backend });
       await disposeDetector();
       detector = await createPoseDetector(activeConfig);

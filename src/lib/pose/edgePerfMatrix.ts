@@ -27,6 +27,7 @@ import {
   TRACKERS,
   isConfigSupported,
   resolvePoseConfig,
+  supportedOptions,
 } from './trackerRegistry';
 import type { PoseBackendId, PoseDetectorConfig, PoseTrackerId } from '@/types/mediapipe';
 
@@ -75,7 +76,12 @@ export interface MatrixOptions {
 
 // ─── Configuration Presets ──────────────────────────────────────────────────────
 
-const TRACKER_IDS: PoseTrackerId[] = ['movenet-lightning', 'movenet-thunder', 'blazepose'];
+const TRACKER_IDS: PoseTrackerId[] = [
+  'movenet-lightning',
+  'movenet-thunder',
+  'blazepose',
+  'poselandmarker-full',
+];
 const INPUT_SIZES = [192, 256, 640];
 const BACKENDS: PoseBackendId[] = ['webgl', 'wasm', 'cpu', 'webgpu'];
 
@@ -100,7 +106,11 @@ export function getMatrixConfigurations(
   const configs: EdgePerfConfig[] = [];
 
   for (const tracker of TRACKER_IDS) {
-    for (const inputSize of INPUT_SIZES) {
+    // Trackers that ignore inputSize (PoseLandmarker resizes internally) get a
+    // single canonical size — nine identical rows would imply a knob that
+    // does not exist and waste nine measurement windows.
+    const sizes = supportedOptions(tracker).includes('inputSize') ? INPUT_SIZES : [256];
+    for (const inputSize of sizes) {
       for (const backend of BACKENDS) {
         const config = { tracker, inputSize, backend };
         if (!isConfigSupported(toDetectorConfig(config), device)) continue;
@@ -453,9 +463,11 @@ export function exportMatrixMarkdown(matrix: EdgePerfMatrix): string {
   lines.push(
     '## Caveats',
     '',
-    "- BlazePose reports 33 landmarks against MoveNet's 17, so keypoint confidence is",
-    '  not directly comparable between tracker families. The composite score weights',
-    '  confidence heavily; compare within a family before comparing across.',
+    "- BlazePose and PoseLandmarker report 33 landmarks against MoveNet's 17, so",
+    '  keypoint confidence is not directly comparable between tracker families.',
+    '  The composite score weights confidence heavily; compare within a family',
+    '  before comparing across. PoseLandmarker scores are genuine per-landmark',
+    '  `visibility` values, which read differently from MoveNet soft scores.',
     '- Jitter and absence-detection behaviour have not been measured across these',
     '  trackers. Do not carry a keypoint-confidence threshold from one family to',
     '  another without measuring it.',

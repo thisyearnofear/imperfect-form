@@ -18,10 +18,13 @@ import { drawSkeleton } from '../utils/poseDrawing';
 import { PoseSmoother } from '../lib/pose/poseSmoother';
 import { SessionLogger, SessionSummary } from '../services/sessionLogger';
 import { coachStation } from '../services/coachStation';
-import type { PoseDetector } from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
-import { createPoseDetector, resolvePoseConfig } from '../lib/pose/trackerRegistry';
+import {
+  createPoseDetector,
+  resolvePoseConfig,
+  type SessionPoseDetector,
+} from '../lib/pose/trackerRegistry';
 import {
   requestCameraPermission,
   cleanupCameraStream,
@@ -137,7 +140,7 @@ export function usePoseDetection(
   const videoRef = useRef<HTMLVideoElement>(null);
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const detectorRef = useRef<PoseDetector | null>(null);
+  const detectorRef = useRef<SessionPoseDetector | null>(null);
   const poseSmootherRef = useRef<PoseSmoother | null>(null);
   const preprocessCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const preprocessorSettingsRef = useRef<PosePreprocessorSettings>(

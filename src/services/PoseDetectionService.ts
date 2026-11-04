@@ -6,11 +6,11 @@
 
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
-import type { PoseDetector } from '@tensorflow-models/pose-detection';
 import {
   createPoseDetector,
   getDefaultPoseConfig,
   type PoseConfigOptions,
+  type SessionPoseDetector,
 } from '@/lib/pose/trackerRegistry';
 
 export interface PoseDetectionProgress {
@@ -40,7 +40,7 @@ type ProgressCallback = (progress: PoseDetectionProgress) => void;
 type StateCallback = (state: PoseDetectionState) => void;
 
 export class PoseDetectionService {
-  private detector: PoseDetector | null = null;
+  private detector: SessionPoseDetector | null = null;
   private config: DetectionConfig | null = null;
   private progressCallbacks: ProgressCallback[] = [];
   private stateCallbacks: StateCallback[] = [];
@@ -150,7 +150,7 @@ export class PoseDetectionService {
   /**
    * Initialize pose detection detector
    */
-  async initializeDetector(isMobile: boolean): Promise<PoseDetector> {
+  async initializeDetector(isMobile: boolean): Promise<SessionPoseDetector> {
     this.emitStateChange({ isLoading: true });
 
     try {
@@ -213,7 +213,7 @@ export class PoseDetectionService {
   /**
    * Warm up detector with dummy inference to avoid first-run latency
    */
-  private async warmupDetector(detector: PoseDetector) {
+  private async warmupDetector(detector: SessionPoseDetector) {
     try {
       // Create a small dummy canvas
       const canvas = document.createElement('canvas');
@@ -235,7 +235,7 @@ export class PoseDetectionService {
   /**
    * Get detector instance
    */
-  getDetector(): PoseDetector | null {
+  getDetector(): SessionPoseDetector | null {
     return this.detector;
   }
 

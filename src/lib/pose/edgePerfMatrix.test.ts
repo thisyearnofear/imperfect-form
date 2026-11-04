@@ -110,15 +110,57 @@ describe('pose config resolution', () => {
 });
 
 describe('tracker registry', () => {
-  const ids: PoseTrackerId[] = ['movenet-lightning', 'movenet-thunder', 'blazepose'];
+  const ids: PoseTrackerId[] = [
+    'movenet-lightning',
+    'movenet-thunder',
+    'blazepose',
+    'poselandmarker-full',
+  ];
 
-  it('registers all three trackers with a keypoint shape', () => {
+  it('registers all four trackers with a keypoint shape', () => {
     for (const id of ids) {
       const spec = getTracker(id);
       expect(spec.id).toBe(id);
       expect(spec.label.length).toBeGreaterThan(0);
       expect(['movenet-17', 'blazepose-33']).toContain(spec.keypointShape);
     }
+  });
+
+  it('registers PoseLandmarker as a tasks-vision runtime with a local model', () => {
+    const spec = getTracker('poselandmarker-full');
+    expect(spec.runtime).toBe('tasks-vision');
+    expect(spec.keypointShape).toBe('blazepose-33');
+    // Local-first: the .task bundle is served from this origin, not a CDN.
+    expect(spec.modelFile).toMatch(/^\//);
+    expect(spec.modelFile).not.toMatch(/^https?:/);
+    // Live defaults stay MoveNet — the landmarker is opt-in via config.
+    expect(DEFAULT_POSE_CONFIG.tracker).toBe('movenet-lightning');
+    expect(READING_POSE_CONFIG.tracker).toBe('movenet-thunder');
+  });
+
+  it('maps only the options PoseLandmarker actually consumes', () => {
+    const options = supportedOptions('poselandmarker-full');
+    // backend selects the GPU/CPU delegate; minPoseScore maps onto
+    // minPoseDetectionConfidence. Everything MoveNet-specific is ignored.
+    expect(options).toEqual(['tracker', 'backend', 'minPoseScore']);
+    expect(options).not.toContain('enableTracking');
+    expect(options).not.toContain('inputSize');
+  });
+
+  it('rejects webgpu for PoseLandmarker and allows CPU delegates without webgl', () => {
+    expect(
+      isConfigSupported(
+        toDetectorConfig({ tracker: 'poselandmarker-full', inputSize: 256, backend: 'webgpu' }),
+        device({ webGPUSupport: true })
+      )
+    ).toBe(false);
+    // The CPU delegate does not need WebGL — honest capability reporting.
+    expect(
+      isConfigSupported(
+        toDetectorConfig({ tracker: 'poselandmarker-full', inputSize: 256, backend: 'cpu' }),
+        device({ webglSupport: false })
+      )
+    ).toBe(true);
   });
 
   it('reports that BlazePose cannot use the wasm backend', () => {
@@ -196,6 +238,26 @@ describe('edge perf matrix', () => {
   it('includes BlazePose rows now that it is constructible', () => {
     const configs = getMatrixConfigurations(device());
     expect(configs.some((c) => c.tracker === 'blazepose')).toBe(true);
+  });
+
+  it('includes PoseLandmarker rows but never on webgpu', () => {
+    const configs = getMatrixConfigurations(device({ webGPUSupport: true }));
+    const landmarker = configs.filter((c) => c.tracker === 'poselandmarker-full');
+    expect(landmarker.length).toBeGreaterThan(0);
+    expect(landmarker.every((c) => c.backend !== 'webgpu')).toBe(true);
+  });
+
+  it('emits one input size for trackers that ignore inputSize', () => {
+    // PoseLandmarker resizes internally — nine identical rows would imply a
+    // knob that does not exist.
+    const landmarker = getMatrixConfigurations(device()).filter(
+      (c) => c.tracker === 'poselandmarker-full'
+    );
+    expect(new Set(landmarker.map((c) => c.inputSize)).size).toBe(1);
+    const movenet = getMatrixConfigurations(device()).filter(
+      (c) => c.tracker === 'movenet-thunder'
+    );
+    expect(new Set(movenet.map((c) => c.inputSize)).size).toBe(3);
   });
 
   it('labels a config readably', () => {

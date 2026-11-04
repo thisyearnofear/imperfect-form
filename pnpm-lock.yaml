@@ -33,6 +33,9 @@ importers:
       '@google/genai':
         specifier: 2.11.0
         version: 2.11.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@mediapipe/tasks-vision':
+        specifier: 1.2.0
+        version: 1.2.0
       '@radix-ui/react-dialog':
         specifier: ^1.1.19
         version: 1.1.19(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -857,6 +860,9 @@ packages:
 
   '@mediapipe/pose@0.5.1675469404':
     resolution: {integrity: sha512-DFZsNWTsSphRIZppnUCuunzBiHP2FdJXR9ehc7mMi4KG+oPaOH0Em3d6kr7Py+TSyTXC1doH88KcF28k2sBxsQ==}
+
+  '@mediapipe/tasks-vision@1.2.0':
+    resolution: {integrity: sha512-7+dr9GbGyTtcuLh11wE5TOn4dNFRncIT9oAWs72620WX99KW5FfzF6rFJ/ChTgXG9vJ6dCiE9FrEEY4CnwPWKQ==}
 
   '@metamask/eth-json-rpc-provider@1.0.1':
     resolution: {integrity: sha512-whiUMPlAOrVGmX8aKYVPvlKyG4CpQXiNNyt74vE1xb5sPvmx5oA7B/kOi/JdBvhGQq97U1/AVdXEdk2zkP8qyA==}
@@ -6970,6 +6976,8 @@ snapshots:
       '@lit-labs/ssr-dom-shim': 1.6.0
 
   '@mediapipe/pose@0.5.1675469404': {}
+
+  '@mediapipe/tasks-vision@1.2.0': {}
 
   '@metamask/eth-json-rpc-provider@1.0.1':
     dependencies:

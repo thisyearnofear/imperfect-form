@@ -106,6 +106,17 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // MediaPipe tasks-vision runtime (WASM + .task models) served
+        // locally — large, content-stable assets worth caching hard.
+        source: "/mediapipe/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
         source: "/.well-known/:path*",
         headers: [
           {
