@@ -1,4 +1,9 @@
-import type { NiggleJointId } from '@/lib/niggleIntents';
+import {
+  getNiggleJoint,
+  sanitizeNote,
+  sanitizeSenderName,
+  type NiggleJointId,
+} from '@/lib/niggleIntents';
 import { STRETCHES, type Stretch } from '@/lib/recovery/recoveryContent';
 
 /**
@@ -248,6 +253,30 @@ export function morselForToday(
   const deck = morselsForJoint(joint);
   const dayNumber = Math.floor(now / 86_400_000);
   return deck[dayNumber % deck.length];
+}
+
+/**
+ * The morsel's share path — `?niggle=<joint>:<context>` carrying the morsel's
+ * own line as `&note=` (it renders as the gift quote on the receiving page;
+ * morsel lines are already inside the 140-char note cap) and `&from=` only
+ * when a sender name is remembered. `context` is honored only when it belongs
+ * to the morsel's joint; anything else resolves to the joint's first context,
+ * the same rule as intake and `parseNiggleParam`.
+ */
+export function morselSharePath(
+  morsel: JointMorsel,
+  opts: { context?: string | null; senderName?: string | null } = {}
+): { href: string; contextId: string } {
+  const joint = getNiggleJoint(morsel.joint);
+  const contextId =
+    joint?.contexts.find((c) => c.id === opts.context)?.id ?? joint?.contexts[0].id ?? 'general';
+  const params = new URLSearchParams();
+  params.set('niggle', `${joint?.id ?? morsel.joint}:${contextId}`);
+  const from = sanitizeSenderName(opts.senderName);
+  const line = sanitizeNote(morsel.line);
+  if (from) params.set('from', from);
+  if (line) params.set('note', line);
+  return { href: `/?${params.toString()}`, contextId };
 }
 
 export interface EaseMoveTarget {

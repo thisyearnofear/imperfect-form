@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   JOINT_MORSELS,
   morselForToday,
+  morselSharePath,
   morselsForJoint,
   stretchForEaseMove,
 } from '@/lib/jointWisdom';
@@ -67,6 +68,51 @@ describe('morselForToday', () => {
     expect(morselForToday('not-sure', now)).toBe(expected);
     expect(morselForToday('bogus', now)).toBe(expected);
     expect(morselForToday(null, now)).toBe(expected);
+  });
+});
+
+describe('morselSharePath', () => {
+  const morsel = JOINT_MORSELS.find((m) => m.joint === 'knee')!;
+
+  /** Parse the built `/?…` path back into its params, the way the foyer does. */
+  const paramsOf = (href: string) => new URLSearchParams(href.split('?')[1]);
+
+  it('carries the morsel line as &note= and the joint+context as ?niggle=', () => {
+    const { href, contextId } = morselSharePath(morsel, {
+      context: 'stairs',
+      senderName: 'Udi',
+    });
+    const params = paramsOf(href);
+    expect(params.get('niggle')).toBe('knee:stairs');
+    expect(params.get('note')).toBe(morsel.line);
+    expect(params.get('from')).toBe('Udi');
+    expect(contextId).toBe('stairs');
+  });
+
+  it('resolves a foreign or absent context to the joint’s first', () => {
+    for (const context of ['desk', 'bogus', null, undefined]) {
+      const { href, contextId } = morselSharePath(morsel, { context });
+      expect(paramsOf(href).get('niggle')).toBe('knee:stairs');
+      expect(contextId).toBe('stairs');
+    }
+  });
+
+  it('shares without &from= when no name is remembered', () => {
+    for (const senderName of [null, undefined, '', '   ', '<>']) {
+      const { href } = morselSharePath(morsel, { senderName });
+      const params = paramsOf(href);
+      expect(params.get('from')).toBeNull();
+      // …and the line alone still reads as care.
+      expect(params.get('note')).toBe(morsel.line);
+    }
+  });
+
+  it('keeps the note inside the receiving cap for every morsel in the deck', () => {
+    for (const m of JOINT_MORSELS) {
+      const params = paramsOf(morselSharePath(m).href);
+      expect(params.get('note')).toBe(m.line);
+      expect(params.get('niggle')).toMatch(/^[a-z-]+:[a-z-]+$/);
+    }
   });
 });
 

@@ -53,8 +53,10 @@
   text-wrap: pretty;
 }
 
-/* The ease door — a quiet underlined action, same idiom as .stm__button. */
-.morsel__ease {
+/* The ease + send doors — quiet underlined actions, same idiom as
+   .stm__button. */
+.morsel__ease,
+.morsel__send {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -73,12 +75,14 @@
     border-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.morsel__ease:hover {
+.morsel__ease:hover,
+.morsel__send:hover {
   color: rgba(153, 246, 228, 0.9);
   border-bottom-color: rgba(153, 246, 228, 0.5);
 }
 
-.morsel__ease:focus-visible {
+.morsel__ease:focus-visible,
+.morsel__send:focus-visible {
   outline: 2px solid #7aebd8;
   outline-offset: 3px;
 }
@@ -195,6 +199,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .morsel__ease,
+  .morsel__send,
   .today__ease-door {
     transition: none;
   }
