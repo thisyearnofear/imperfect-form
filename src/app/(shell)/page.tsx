@@ -103,6 +103,7 @@ import { NIGGLE_JOINTS, getNiggleJoint } from '@/lib/niggleIntents';
 import { useNiggle } from '@/hooks/useNiggle';
 import SendTheMeter from '@/components/receive/SendTheMeter';
 import TodayBlock from '@/components/readings/TodayBlock';
+import WeekHandoff from '@/components/readings/WeekHandoff';
 import { addNiggleEntry, listNiggleEntries, type NiggleEntry } from '@/lib/niggleEntries';
 import { daysUntil, nextReadingDate } from '@/lib/nextReading';
 import { getEffectiveUserId } from '@/services/guestIdentity';
@@ -258,6 +259,23 @@ function SendMeterRow() {
         surface="readings-tab"
       />
     </div>
+  );
+}
+
+/** "Take your week to a professional" — the handoff door parked under the
+ *  history it summarizes. One quiet row, never a card: the summary it
+ *  builds (reads + feel log, plain text, on-device) is the artifact. */
+function WeekHandoffRow() {
+  const { joint, context, hydrated } = useNiggle();
+  if (!hydrated) return null;
+  return (
+    <p className="motion-enter motion-delay-2 text-sm" style={{ color: 'var(--studio-muted)' }}>
+      <WeekHandoff
+        joint={joint}
+        context={context}
+        label="take your week to a professional — copy a summary"
+      />
+    </p>
   );
 }
 
@@ -630,6 +648,7 @@ export default function Home() {
                   <div className="motion-enter motion-delay-2">
                     <MovementAssessmentHistory />
                   </div>
+                  <WeekHandoffRow />
                 </div>
               </div>
             </ScreenTransition>

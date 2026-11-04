@@ -21,6 +21,10 @@ export const NIGGLE_ENTRIES_KEY = 'imf_niggle_entries_v1';
 const KEY = NIGGLE_ENTRIES_KEY;
 const MAX_ENTRIES = 200;
 
+/** The note the post-ease check-in writes — the only trace an ease session
+ *  leaves, so the week handoff counts completed routines by it. */
+export const EASE_ROUTINE_NOTE = 'After easing routine';
+
 /**
  * A "feel" entry is a 1–5 self-report — the shape the post-ease check-in
  * ("How does it feel now?", severity + 'After easing routine') and the

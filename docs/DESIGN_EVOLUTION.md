@@ -228,3 +228,40 @@ camera reading remains the honest instrument record.
   most careful protocol design (a fold is easy to do badly).
 - **The intake joint list** — keep it to the readable zones + "not sure,
   just check me", or include out-of-scope joints with honest routing?
+
+## Product positioning (2026-11)
+
+The ICP, stated plainly: **an adult with a persistent mild niggle who wants
+to know whether it is settling** — not injured enough for a doctor, not
+well enough to forget it. The second, differentiated role is the
+**sender-carer**: the partner/friend/child-of-aging-parent who sends the
+meter because they are the one who worries. A real ICP sits adjacent:
+post-physio patients who leave with a sheet of exercises and no way to know
+whether doing them is working — the adherence gap the clinic cannot see.
+
+**Painkiller vs vitamin.** The actual pains are (a) _uncertainty_ — is it
+getting better, or am I just used to it; (b) _loneliness_ — a mild niggle
+is too small to talk about, so nobody does; (c) _drift_ — doing nothing
+because nothing feels urgent. A single read is vitamin-ish: nice to have,
+easy to skip. What converts it to a painkiller is retention — the second
+and third read, the week pairing, the answer to "is it settling." The
+product earns painkiller status only across reads, never in one session.
+
+**The four-moment medical handoff model.** Wellness, not medicine — held
+honestly at four designed points:
+
+1. **Intake screen-out.** When a joint is actively named, one hairline
+   line routes injury/numbness/swelling to a physio or doctor first —
+   a signpost, never a gate; nothing stored.
+2. **During the read.** Stop-for-pain is a designed exit (`PainExit`),
+   not an error — the no-read lands as logbook context.
+3. **Verdict tri-state.** Valid / inconclusive / see-a-professional. The
+   third is a real outcome — the week pairing's "still hurts" headline —
+   never a hidden failure.
+4. **The handoff artifact.** "Take this to a physio" — a plain-text week
+   summary (reads + dates, feel log, ease sessions) copied off-device,
+   honest about what the meter is.
+
+**Positioning: lead with the sender-carer.** The worried-about-someone
+door (the sendable meter, the gift note) is the front of the story — the
+self-serve niggle holder is who stays, but the carer is who arrives.

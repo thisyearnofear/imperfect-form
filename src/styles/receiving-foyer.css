@@ -696,6 +696,49 @@
   margin-top: 10px;
 }
 
+/* The medical screen-out — one hairline line inside the intake unfold,
+   after a joint is picked and before the context row. A signpost, never a
+   gate: the brass hairline marks it as the meter's honesty, and the small
+   continue link rides inside the sentence like .rf-still__action. */
+.rf-screenout {
+  margin: 10px 0 0;
+  padding: 9px 0 0;
+  border-top: 1px solid rgba(252, 177, 49, 0.22);
+  color: var(--rf-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.rf-screenout__go {
+  display: inline;
+  padding: 0;
+  margin-left: 0.35em;
+  color: rgba(153, 246, 228, 0.65);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(153, 246, 228, 0.25);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    color 200ms var(--rf-curve),
+    border-color 200ms var(--rf-curve);
+}
+
+.rf-screenout__go:hover {
+  color: rgba(153, 246, 228, 0.9);
+  border-bottom-color: rgba(153, 246, 228, 0.5);
+}
+
+.rf-screenout__go:focus-visible {
+  outline: 2px solid var(--rf-teal-bright);
+  outline-offset: 3px;
+}
+
 /* ═══ Seams — canvas pixel dissolve over a brass hairline ═════════════ */
 
 .rf-seam {

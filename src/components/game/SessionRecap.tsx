@@ -32,12 +32,13 @@ import MovementAssessmentHistory from './MovementAssessmentHistory';
 import ReadingDetail from './ReadingDetail';
 import { usePainIntent } from '@/hooks/usePainIntent';
 import { useNiggle } from '@/hooks/useNiggle';
-import { addNiggleEntry, listNiggleEntries } from '@/lib/niggleEntries';
+import { addNiggleEntry, EASE_ROUTINE_NOTE, listNiggleEntries } from '@/lib/niggleEntries';
 import { weeklyPairingFor, type WeekPairing } from '@/lib/movementCompare';
 import { getLocalMovementAssessments } from '@/services/integrations/MovementAssessmentDataAdapter';
 import { getEffectiveUserId } from '@/services/guestIdentity';
 import { getNiggleJoint, type NiggleJointId } from '@/lib/niggleIntents';
 import SendTheMeter from '@/components/receive/SendTheMeter';
+import WeekPairingBlock from '@/components/readings/WeekPairingBlock';
 import JointPlate from '@/components/receive/JointPlate';
 import { assessmentProtocolFor } from '@/lib/movementAssessment';
 import { buildReadingIcs, nextReadingDate } from '@/lib/nextReading';
@@ -765,7 +766,7 @@ export function SessionRecap({
                       joint: easeJoint,
                       context: niggleContext?.label,
                       severity,
-                      note: 'After easing routine',
+                      note: EASE_ROUTINE_NOTE,
                     });
                   }
                   setAwaitingSeverity(false);
@@ -841,13 +842,15 @@ export function SessionRecap({
           </p>
         )}
         {/* The week — numbers vs feelings in one honest line, only when
-            both halves are thick enough to compare. */}
+            both halves are thick enough to compare. The still-hurts
+            pairing adds the "take your week with you" handoff door. */}
         {weekPairing && (
-          <div className="session-recap__week">
-            <p className="session-recap__week-eyebrow">· The week ·</p>
-            <p className="session-recap__week-headline">{weekPairing.headline}</p>
-            <p className="session-recap__week-detail">{weekPairing.detail}</p>
-          </div>
+          <WeekPairingBlock
+            pairing={weekPairing}
+            joint={niggleJoint}
+            context={niggleContext}
+            userAddress={userAddress}
+          />
         )}
         {painIntent?.mode === mode && (
           <p className="session-recap__personal">

@@ -1995,6 +1995,12 @@
   font-size: 0.66rem;
   line-height: 1.5;
 }
+/* The handoff door — only under "worth seeing a professional". Quiet text,
+   a breath smaller than the headline, riding the pairing's own grid. */
+.session-recap__week-handoff {
+  margin: 0.1rem 0 0;
+  font-size: 0.72rem;
+}
 
 /* Weekly cadence + calendar door — quiet instrumentation under the header. */
 .session-recap__next-reading {

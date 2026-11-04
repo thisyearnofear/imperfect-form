@@ -97,10 +97,14 @@ test.describe('Shared niggle link', () => {
     const chip = intake.getByRole('button', { name: 'My neck & shoulders' });
     await expect(chip).toBeVisible();
     await expect(chip).toHaveAttribute('aria-pressed', 'true');
+    // The link's pre-set joint is not an active pick — no screen-out yet.
+    await expect(foyer.locator('.rf-screenout')).toHaveCount(0);
 
     // Picking a different joint remaps the reading — and the quoted gift
-    // line follows the selected context (knee defaults to stairs).
+    // line follows the selected context (knee defaults to stairs). The
+    // active pick earns the screen-out's one showing.
     await intake.locator('.rf-chip', { hasText: 'My knee' }).click();
+    await expect(foyer.locator('.rf-screenout')).toContainText('physio or doctor first');
     await expect(foyer.locator('.rf-gift')).toContainText('Heard the stairs have been a thing');
     await expect(foyer.locator('#rf-title')).toContainText('See if it’s actually getting better.');
     // Squats has no fixed-rep protocol — the CTA drops to the honest one rep.
@@ -170,6 +174,58 @@ test.describe('Organic landing', () => {
     await expect(company.locator('.rf-stat.is-lit')).toHaveCount(1);
     await expect(company.locator('.rf-stat.is-lit')).toContainText('Neck & shoulders');
     await expect(company.locator('h2')).toContainText('enormous, invisible company');
+  });
+
+  test('the intake screen-out signposts injury — a line, not a gate', async ({ page }) => {
+    await page.addInitScript(SKIP_ENVELOPE);
+    await page.goto('/');
+    const foyer = page.locator('.receiving-foyer');
+    await expect(foyer).toBeVisible({ timeout: 20000 });
+    await expect(foyer.locator('.rf-screenout')).toHaveCount(0);
+
+    // Picking a joint earns the signpost: injury/numbness routes to a
+    // professional first, and the context chips arrive alongside it —
+    // nothing is gated.
+    await foyer.locator('.rf-chip', { hasText: 'My neck & shoulders' }).click();
+    const screenout = foyer.locator('.rf-screenout');
+    await expect(screenout).toBeVisible();
+    await expect(screenout).toContainText('physio or doctor first');
+    await expect(screenout).toContainText('gentle improvement');
+    await expect(foyer.locator('.rf-chip--context').first()).toBeVisible();
+
+    // "I'm good — continue" just dismisses it; the intake keeps flowing.
+    await screenout.getByRole('button', { name: 'I’m good — continue' }).click();
+    await expect(foyer.locator('.rf-screenout')).toHaveCount(0);
+    await expect(foyer.locator('.rf-chip--context').first()).toBeVisible();
+  });
+
+  test('the stored-niggle return path never shows the screen-out', async ({ page }) => {
+    await page.addInitScript(SKIP_ENVELOPE);
+    // A returning visitor's intake is already answered — the hero shows
+    // the collapsed "still your…" line instead of the chip grid. A second
+    // init script (SKIP_ENVELOPE can't serialize inside a closure) writes
+    // the stored niggle after the clear.
+    await page.addInitScript(() => {
+      localStorage.setItem('imf_niggle_v1', JSON.stringify({ joint: 'knee', context: 'stairs' }));
+    });
+    await page.goto('/');
+    const foyer = page.locator('.receiving-foyer');
+    await expect(foyer).toBeVisible({ timeout: 20000 });
+    await expect(foyer.locator('.rf-still')).toBeVisible();
+    await expect(foyer.locator('.rf-screenout')).toHaveCount(0);
+
+    // Even unfolded, the stored joint stays silent — the line is keyed to
+    // an ACTIVE pick, not to the presence of a joint.
+    await foyer.locator('.rf-still').click();
+    await expect(foyer.getByRole('button', { name: 'My knee' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await expect(foyer.locator('.rf-screenout')).toHaveCount(0);
+
+    // A fresh pick is a new intake — the signpost earns its one showing.
+    await foyer.locator('.rf-chip', { hasText: 'My neck & shoulders' }).click();
+    await expect(foyer.locator('.rf-screenout')).toBeVisible();
   });
 
   test('"or pick a movement" unfolds the exercise cards', async ({ page }) => {

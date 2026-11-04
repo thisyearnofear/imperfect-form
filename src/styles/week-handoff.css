@@ -1,0 +1,47 @@
+/* "Take this to a physio" — the quiet handoff door. One hairline text
+   button plus a whispered status, in the same register as .rf-change /
+   .session-recap__calendar: a link, not a button-chrome. */
+
+.week-handoff {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.week-handoff__button {
+  padding: 2px 0;
+  color: rgba(153, 246, 228, 0.65);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(153, 246, 228, 0.25);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.week-handoff__button:hover {
+  color: rgba(153, 246, 228, 0.9);
+  border-bottom-color: rgba(153, 246, 228, 0.5);
+}
+
+.week-handoff__button:focus-visible {
+  outline: 2px solid rgba(153, 246, 228, 0.7);
+  outline-offset: 3px;
+}
+
+.week-handoff__button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.week-handoff__status {
+  color: var(--studio-muted, #8aa8a3);
+  font-size: 0.85em;
+}

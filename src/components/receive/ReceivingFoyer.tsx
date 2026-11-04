@@ -140,6 +140,12 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
   // beat after the envelope lifts, not all at once.
   const [linkPlateAwake, setLinkPlateAwake] = useState(false);
   const [movesOpen, setMovesOpen] = useState(false);
+  // The medical screen-out (four-moment handoff §1): shown once per intake
+  // completion — keyed on a joint actively picked THIS visit, so the
+  // collapsed "still your…" stored-niggle return path never triggers it.
+  // A signpost, never a gate; the tap just dismisses it, nothing is stored.
+  const [jointPickedThisVisit, setJointPickedThisVisit] = useState(false);
+  const [screenOutDone, setScreenOutDone] = useState(false);
   const [coachStatus, setCoachStatus] = useState<StationStatus>(coachStation.status);
   const [beat3Progress, setBeat3Progress] = useState(() =>
     typeof window !== 'undefined' && prefersReducedMotion() ? 1 : 0.35
@@ -507,6 +513,10 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
       setJoint(null);
       return;
     }
+    // A fresh pick is an intake completion — the screen-out earns its one
+    // showing; a joint restored from storage never passes through here.
+    setJointPickedThisVisit(true);
+    setScreenOutDone(false);
     setJoint(j.id);
     onModeChange(j.mode);
     el?.scrollIntoView({
@@ -542,6 +552,27 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
           Organic moved its send card to the outro (the hero stays ask-only). */}
       <div className={`rf-unfold${joint ? ' is-open' : ''}`}>
         <div className="rf-unfold__content">
+          {/* The honest signpost — after a joint is picked, before the
+              context row. Injury or numbness/swelling routes to a
+              professional first; "I'm good — continue" just dismisses it
+              (no gate, nothing stored, once per intake). */}
+          {jointPickedThisVisit && joint && !screenOutDone && (
+            <p className="rf-screenout">
+              Started after an injury, or numbness&nbsp;/&nbsp;swelling? A physio or doctor first —
+              the meter tracks gentle improvement.{' '}
+              <button
+                type="button"
+                className="rf-screenout__go"
+                onClick={() => {
+                  playStudioCue('soft');
+                  triggerHaptic(20);
+                  setScreenOutDone(true);
+                }}
+              >
+                I&rsquo;m good — continue
+              </button>
+            </p>
+          )}
           {joint && joint.contexts.length > 1 && (
             <>
               <span className="rf-pick__label">What does it do?</span>
