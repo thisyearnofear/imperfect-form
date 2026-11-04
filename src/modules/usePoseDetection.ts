@@ -39,8 +39,10 @@ import {
   publishPoseRuntimeStatus,
   readForcePoseWorkerFlag,
   shouldUsePoseWorker,
+  workerReadyTimeoutMsForTracker,
   type PoseRuntimeWindow,
 } from '../lib/pose/poseRuntime';
+import { cloneTransferredCanvasHost } from '../lib/pose/poseCanvasHost';
 import {
   recordPoseBaselineCaptureFailure,
   recordPoseBaselineFrame,
@@ -650,6 +652,8 @@ export function usePoseDetection(
         const workerFallback = (reason: string) => {
           if (workerReady || workerFailed || cancelled) return;
           workerFailed = true;
+          clearTimeout(workerReadyTimeout);
+          clearTimeout(workerReadyHeartbeat);
           console.warn(`Pose worker unavailable (${reason}) — falling back to main thread`);
           pendingWorkerFrame?.bitmap.close();
           pendingWorkerFrame = null;
@@ -658,10 +662,26 @@ export function usePoseDetection(
           workerRef.current = null;
           void startMainThreadDetection();
         };
+        // Thunder and the tasks-vision landmarker boot materially slower
+        // than lightning (bigger model + backend compile) — scale the
+        // watchdog by the resolved tracker so a legitimate slow boot
+        // doesn't read as a stall.
+        const workerReadyTimeoutMs = workerReadyTimeoutMsForTracker(sessionPoseConfig.tracker);
         const workerReadyTimeout = setTimeout(
-          () => workerFallback('no ready signal within 20s'),
-          20_000
+          () => workerFallback(`no ready signal within ${workerReadyTimeoutMs / 1000}s`),
+          workerReadyTimeoutMs
         );
+        // Half-way heartbeat — a slow first boot still reads as alive
+        // instead of frozen at 'Waking the meter…'.
+        const workerReadyHeartbeat = setTimeout(() => {
+          if (!workerReady && !workerFailed && !cancelled) {
+            emitProgress({
+              phase: 'ai',
+              message: 'still waking the meter — first load can take a little while',
+              percentage: 55,
+            });
+          }
+        }, workerReadyTimeoutMs / 2);
 
         const dispatchPendingFrame = () => {
           if (cancelled || workerFailed || !workerRef.current) {
@@ -778,6 +798,7 @@ export function usePoseDetection(
           if (data.type === 'ready') {
             workerReady = true;
             clearTimeout(workerReadyTimeout);
+            clearTimeout(workerReadyHeartbeat);
             notifyStateChange({ hasPoseDetection: true, isLoading: false });
             emitProgress({
               phase: 'ready',
@@ -843,6 +864,18 @@ export function usePoseDetection(
 
     async function startMainThreadDetection() {
       if (cancelled) return;
+      // A worker fallback leaves the host <canvas> neutered — after
+      // transferControlToOffscreen, sizing it throws InvalidStateError and
+      // getContext('2d') returns null. Rebind to a drawable clone before
+      // anything below reads it; the clone slots in next to the dead
+      // element (which stays for React) and canvasRef is repointed so the
+      // draw loop and orientation handler see the same live host.
+      let canvas = canvasRef.current;
+      if (!canvas) return;
+      if ((canvas as any)._isTransferred) {
+        canvas = cloneTransferredCanvasHost(canvas);
+        (canvasRef as { current: HTMLCanvasElement | null }).current = canvas;
+      }
       console.log('Using main-thread pose detection');
 
       try {
@@ -866,7 +899,11 @@ export function usePoseDetection(
                   },
             };
 
-        const cameraResult = await requestCameraPermission(constraints);
+        // A worker fallback lands here with the camera already open —
+        // reuse that stream instead of prompting/acquiring a second one.
+        const cameraResult: Awaited<ReturnType<typeof requestCameraPermission>> = streamRef.current
+          ? { granted: true, stream: streamRef.current }
+          : await requestCameraPermission(constraints);
         if (cancelled) return;
 
         if (!cameraResult.granted) {

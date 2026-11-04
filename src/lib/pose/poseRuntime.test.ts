@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shouldUsePoseWorker } from './poseRuntime';
+import { shouldUsePoseWorker, workerReadyTimeoutMsForTracker } from './poseRuntime';
 
 describe('shouldUsePoseWorker', () => {
   const desktopCapable = {
@@ -58,5 +58,19 @@ describe('shouldUsePoseWorker', () => {
         forceWorker: true,
       })
     ).toBe(false);
+  });
+});
+
+describe('workerReadyTimeoutMsForTracker', () => {
+  it('keeps the 20s watchdog for lightning', () => {
+    expect(workerReadyTimeoutMsForTracker('movenet-lightning')).toBe(20_000);
+  });
+
+  it('widens the watchdog for slow-booting trackers', () => {
+    // Thunder/landmarker model fetch + backend compile outlast a
+    // lightning-tight watchdog on a cold device.
+    expect(workerReadyTimeoutMsForTracker('movenet-thunder')).toBe(45_000);
+    expect(workerReadyTimeoutMsForTracker('poselandmarker-full')).toBe(45_000);
+    expect(workerReadyTimeoutMsForTracker('blazepose')).toBe(45_000);
   });
 });

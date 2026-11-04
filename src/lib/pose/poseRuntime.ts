@@ -70,3 +70,14 @@ export function readForcePoseWorkerFlag(): boolean {
   if (typeof window === 'undefined') return false;
   return (window as PoseRuntimeWindow)[POSE_RUNTIME_FORCE_WORKER_KEY] === true;
 }
+
+/**
+ * Ready-watchdog budget for the worker pipeline, scaled by the resolved
+ * session tracker. Thunder and the tasks-vision landmarker boot
+ * materially slower than lightning (bigger model + backend compile); a
+ * lightning-tight watchdog would convert a legitimate slow boot into an
+ * unnecessary main-thread fallback.
+ */
+export function workerReadyTimeoutMsForTracker(tracker: string): number {
+  return tracker === 'movenet-lightning' ? 20_000 : 45_000;
+}
