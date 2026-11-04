@@ -1,26 +1,37 @@
 # Pose stack — tasks-vision PoseLandmarker spike
 
-> **Status update (2026-11-04): integrated, not promoted.** The integration
-> below has landed as a _new tracker option_, gated exactly as this note
-> recommended — `'poselandmarker-full'` is in `TRACKERS`, built through
+> **Status update (2026-11-04, rev 2): promoted for reliability, not
+> benchmark.** `'poselandmarker-full'` is in `TRACKERS`, built through
 > `createPoseDetector` via `src/lib/pose/poseLandmarkerAdapter.ts`, runs in
 > both the worker and main-thread paths, and is a row in the edge perf
 > matrix. WASM + `.task` assets are served from `public/mediapipe/` — no
-> runtime CDN. `DEFAULT_POSE_CONFIG` stays MoveNet Lightning and
-> `READING_POSE_CONFIG` stays MoveNet Thunder. First headless benchmark
-> numbers: `evidence/pose-landmarker-benchmark.md` (runner:
-> `scripts/pose-landmarker-benchmark.mjs`). `@mediapipe/tasks-vision@1.2.0`
-> is in `package.json`; the `@mediapipe/pose` stub remains — it services the
-> tfjs pose-detection import, not the tasks runtime.
+> runtime CDN. `DEFAULT_POSE_CONFIG` stays MoveNet Lightning; as of this
+> revision `READING_POSE_CONFIG` runs **`poselandmarker-full`**, promoted
+> after two real-device failures where the reading session hung silently —
+> MoveNet Thunder downloads its weights from tfhub.dev at session start and
+> that fetch stalls on some networks without ever rejecting. The landmarker
+> assets come from this origin, so the tfhub failure class is gone for
+> readings. It also benchmarks ahead (74% vs 38% COCO-17 confidence on the
+> bench frames — `evidence/pose-landmarker-benchmark.md`, runner:
+> `scripts/pose-landmarker-benchmark.mjs`), but that is not why it was
+> promoted; jitter on real camera streams remains **unverified** — the
+> mitigations are the existing `PoseSmoother` adaptive smoothing plus the
+> engine's per-keypoint visibility gates, and landmarker visibility scores
+> are genuine per-landmark values rather than MoveNet's soft score.
+> `@mediapipe/tasks-vision@1.2.0` is in `package.json`; the `@mediapipe/pose`
+> stub remains — it services the tfjs pose-detection import, not the tasks
+> runtime. A 28s watchdog now covers the main-thread detector build so a
+> future load stall lands on an honest "the meter couldn't wake" surface
+> instead of falling through to the reach-stall exit.
 
 Spike note only. No dependency added, no integration landed. (`@mediapipe/tasks-vision`
 is absent from `package.json`; `@mediapipe/pose` is deliberately stubbed — see
 `src/stubs/mediapipe-pose.js` and the aliases in `next.config.mjs`.)
 
-Related live change: protocol reading sessions now run MoveNet Thunder via
+Related live change: protocol reading sessions run PoseLandmarker via
 `READING_POSE_CONFIG` / the `forReading` knob in
-`src/lib/pose/trackerRegistry.ts`. This note asks whether PoseLandmarker is the
-next step beyond that.
+`src/lib/pose/trackerRegistry.ts` (previously MoveNet Thunder — see the status
+block above for why it moved).
 
 ## Current stack (what we'd be replacing)
 

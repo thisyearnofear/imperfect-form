@@ -28,6 +28,13 @@ type SendTheMeterProps = {
   buttonLabel?: string;
   /** Placement name, sent with the `send_link_created` event. */
   surface?: string;
+  /**
+   * Render folded: eyebrow + the surface's one line + a "pass it on" door
+   * that unfolds the full card (fields, live link, share row, reply). The
+   * reply row only ever renders inside the unfolded card. For tight exit
+   * surfaces — the recap and foyer keep the default open card.
+   */
+  collapsed?: boolean;
   className?: string;
 };
 
@@ -57,10 +64,15 @@ export function SendTheMeter({
   eyebrow = '· Pass the meter on ·',
   buttonLabel = 'Send the meter to a friend',
   surface,
+  collapsed = false,
   className,
 }: SendTheMeterProps) {
   const { user } = usePlatform();
   const [status, setStatus] = useState<ShareStatus>('idle');
+  // Collapsed cards stay folded until the door is tapped — then the full
+  // card takes over in place. `collapsed` is a mount-time shape, so the
+  // initial value never needs re-syncing.
+  const [expanded, setExpanded] = useState(!collapsed);
   // The sender's name is remembered across cards — read it once, lazily, so
   // first paint already carries it (same discipline as the foyer's greeting).
   const [name, setName] = useState(() =>
@@ -158,6 +170,28 @@ export function SendTheMeter({
   // The reply is its own funnel — `surface: 'reply'` separates a thank-you
   // link from a fresh send, whichever card it was shared from.
   const handleReply = () => share(replyHref, 'reply', replyNote);
+
+  // Folded shape: the engraved mark, the surface's one line, and a single
+  // door that unfolds the real card in place — keeps exit surfaces inside
+  // a phone viewport. Fields, the live link, and the reply row only exist
+  // unfolded.
+  if (!expanded) {
+    return (
+      <div className={`stm stm--collapsed${className ? ` ${className}` : ''}`}>
+        <p className="stm__eyebrow">{eyebrow}</p>
+        {lead && <p className="stm__lead">{lead}</p>}
+        <button
+          type="button"
+          className="stm__button stm__button--expand"
+          aria-expanded="false"
+          onClick={() => setExpanded(true)}
+        >
+          <Send size={11} aria-hidden="true" />
+          Pass it on
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={`stm${className ? ` ${className}` : ''}`}>

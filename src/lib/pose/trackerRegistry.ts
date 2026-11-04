@@ -51,14 +51,26 @@ export const DEFAULT_POSE_CONFIG: PoseDetectorConfig = {
 /**
  * Protocol reading sessions (the fixed-rep baselines selected by
  * `assessmentProtocolFor` — the session carries `readingTargetReps`) run the
- * heavier MoveNet variant: the meter's honesty lives in these reads, so the
- * accurate tracker is worth the latency. The multi-pose dimension cap stays
- * on mobile too — a reading is exactly where a cropped inference input would
- * quietly cost real keypoints.
+ * tasks-vision PoseLandmarker. The promotion was for *reliability*, not a
+ * benchmark win: MoveNet Thunder downloads its weights from tfhub.dev at
+ * session start and that fetch was the observed hang on real devices, while
+ * the landmarker's WASM + `.task` bundle are served from public/mediapipe —
+ * same origin, no runtime CDN. It also happens to benchmark ahead
+ * (74% vs 38% COCO-17 confidence, evidence/pose-landmarker-benchmark.md).
+ *
+ * Jitter on real camera streams is not yet verified — the bench used still
+ * frames. The mitigations already in the pipeline: PoseSmoother's adaptive
+ * smoothing runs before the engine, and the reach/curl processors gate on
+ * per-keypoint visibility, which is exactly what the landmarker reports
+ * honestly.
+ *
+ * The multi-pose dimension cap stays set even though the landmarker ignores
+ * it — it documents intent and re-applies automatically if a reading ever
+ * returns to a tfjs tracker.
  */
 export const READING_POSE_CONFIG: PoseDetectorConfig = {
   ...DEFAULT_POSE_CONFIG,
-  tracker: 'movenet-thunder',
+  tracker: 'poselandmarker-full',
   multiPoseMaxDimension: 512,
 };
 
@@ -173,7 +185,7 @@ export const TRACKERS: Record<PoseTrackerId, TrackerSpec> = {
     // Separate runtime from the tfjs family: FilesetResolver loads the local
     // WASM fileset and PoseLandmarker loads this .task bundle — both served
     // from public/mediapipe, no CDN at runtime.
-    note: 'MediaPipe runtime. 33 landmarks with real per-landmark visibility. Benchmark row only — not a session default.',
+    note: 'MediaPipe runtime. 33 landmarks with real per-landmark visibility. Runs protocol reading sessions (local assets — promoted for reliability, see docs/POSE_STACK.md).',
     runtime: 'tasks-vision',
     model: 'landmarker',
     modelType: 'full',

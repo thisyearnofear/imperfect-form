@@ -485,6 +485,10 @@
   padding: 1.25rem 1rem;
   color: #effcf9;
   font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  /* Viewport safety: even collapsed, a short landscape window can clip the
+     panel — scroll inside the surface rather than losing the way back. */
+  max-height: 100dvh;
+  overflow-y: auto;
 }
 
 .pain-exit__panel {

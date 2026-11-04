@@ -18,6 +18,12 @@ export interface PoseState {
   hasPoseDetection: boolean;
   poseDetected: boolean;
   isLoading: boolean;
+  /**
+   * Terminal: the detector/model never finished loading (main-thread
+   * watchdog in src/modules/usePoseDetection.ts). A load failure is not a
+   * body result — consumers route to the honest couldn't-wake surface.
+   */
+  poseLoadFailed?: boolean;
 }
 
 export interface DetectionProgress {
@@ -113,7 +119,8 @@ export function usePoseDetection(): UsePoseDetectionReturn {
         prev.isLoading === state.isLoading &&
         prev.hasCamera === state.hasCamera &&
         prev.hasPoseDetection === state.hasPoseDetection &&
-        prev.poseDetected === state.poseDetected
+        prev.poseDetected === state.poseDetected &&
+        prev.poseLoadFailed === state.poseLoadFailed
       ) {
         return prev;
       }

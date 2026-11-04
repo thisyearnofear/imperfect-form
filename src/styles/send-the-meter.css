@@ -186,3 +186,23 @@
   color: rgba(255, 217, 122, 0.88);
   border-bottom-color: rgba(255, 217, 122, 0.45);
 }
+
+/* Collapsed — the folded shape for exit surfaces where the full card
+   overflows the viewport (PainExit stalled/pain/couldn't-wake): tighter
+   padding, same engraved register, one door that unfolds in place. */
+.stm--collapsed {
+  gap: 7px;
+  padding: 9px 14px 10px;
+}
+
+/* The unfold door — same underlined idiom as the share button, brass like
+   the eyebrow so it reads as "open the gift" rather than another action. */
+.stm__button--expand {
+  color: rgba(255, 217, 122, 0.62);
+  border-bottom-color: rgba(255, 217, 122, 0.22);
+}
+
+.stm__button--expand:hover {
+  color: rgba(255, 217, 122, 0.88);
+  border-bottom-color: rgba(255, 217, 122, 0.45);
+}

@@ -70,9 +70,12 @@ describe('pose config resolution', () => {
     expect(resolvePoseConfig({ multiPoseMaxDimension: 256 }, true).multiPoseMaxDimension).toBe(256);
   });
 
-  it('runs MoveNet Thunder for protocol reading sessions', () => {
+  it('runs PoseLandmarker for protocol reading sessions', () => {
     const reading = getDefaultPoseConfig(false, { forReading: true });
-    expect(reading.tracker).toBe('movenet-thunder');
+    // Promoted for reliability, not benchmark: the .task bundle is served
+    // from this origin while Thunder fetched weights from tfhub.dev at
+    // session start — the observed real-device hang. See docs/POSE_STACK.md.
+    expect(reading.tracker).toBe('poselandmarker-full');
     expect(reading.backend).toBe('webgl');
     expect(reading.multiPoseMaxDimension).toBe(512);
     // The live default is untouched — non-reading sessions keep lightning.
@@ -81,7 +84,7 @@ describe('pose config resolution', () => {
 
   it('keeps the multi-pose cap on mobile readings too', () => {
     const reading = getDefaultPoseConfig(true, { forReading: true });
-    expect(reading.tracker).toBe('movenet-thunder');
+    expect(reading.tracker).toBe('poselandmarker-full');
     expect(reading.multiPoseMaxDimension).toBe(512);
     // The mobile score floor still applies — readings do not raise it.
     expect(reading.minPoseScore).toBe(0.2);
@@ -96,7 +99,7 @@ describe('pose config resolution', () => {
     // Medium and high tiers take the reading config.
     for (const performanceLevel of ['medium', 'high'] as const) {
       expect(getDefaultPoseConfig(false, { forReading: true, performanceLevel }).tracker).toBe(
-        'movenet-thunder'
+        'poselandmarker-full'
       );
     }
   });
@@ -105,7 +108,7 @@ describe('pose config resolution', () => {
     expect(resolvePoseConfig(undefined, true, { forReading: true })).toEqual(
       getDefaultPoseConfig(true, { forReading: true })
     );
-    expect(READING_POSE_CONFIG.tracker).toBe('movenet-thunder');
+    expect(READING_POSE_CONFIG.tracker).toBe('poselandmarker-full');
   });
 });
 
@@ -133,9 +136,10 @@ describe('tracker registry', () => {
     // Local-first: the .task bundle is served from this origin, not a CDN.
     expect(spec.modelFile).toMatch(/^\//);
     expect(spec.modelFile).not.toMatch(/^https?:/);
-    // Live defaults stay MoveNet — the landmarker is opt-in via config.
+    // The live coaching default stays MoveNet — the landmarker runs
+    // protocol readings only (local assets; see docs/POSE_STACK.md).
     expect(DEFAULT_POSE_CONFIG.tracker).toBe('movenet-lightning');
-    expect(READING_POSE_CONFIG.tracker).toBe('movenet-thunder');
+    expect(READING_POSE_CONFIG.tracker).toBe('poselandmarker-full');
   });
 
   it('maps only the options PoseLandmarker actually consumes', () => {

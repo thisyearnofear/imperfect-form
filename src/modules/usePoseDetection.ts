@@ -22,6 +22,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import {
   createPoseDetector,
+  getTracker,
   resolvePoseConfig,
   type SessionPoseDetector,
 } from '../lib/pose/trackerRegistry';
@@ -77,6 +78,17 @@ import {
 let repCounter: RepCounterState = createInitialRepCounterState();
 let engineDetector: EngineRepDetectorState | null = null;
 
+/**
+ * Watchdog for the main-thread detector build. The model fetch is the long
+ * pole and the observed failure mode — a tfhub.dev weight download can stall
+ * on some networks without ever resolving or rejecting. On expiry the hook
+ * publishes `poseLoadFailed` so the session lands on an honest surface
+ * instead of hanging the 'ai' phase forever (or worse, falling through to
+ * the reach-stall exit as if a load failure were a body result). ~28s
+ * covers a cold model fetch without masking a genuinely dead stall.
+ */
+const POSE_LOAD_TIMEOUT_MS = 28_000;
+
 let cachedInitialPreprocessorSettings: PosePreprocessorSettings | null = null;
 function getInitialPreprocessorSettings(): PosePreprocessorSettings {
   if (cachedInitialPreprocessorSettings) {
@@ -101,6 +113,8 @@ export function usePoseDetection(
     hasPoseDetection: boolean;
     poseDetected: boolean;
     isLoading: boolean;
+    /** Terminal: the detector/model never finished loading (watchdog). */
+    poseLoadFailed?: boolean;
   }) => void,
   onDetectionProgress?: (progress: {
     phase: 'initial' | 'camera' | 'ai' | 'positioning' | 'ready';
@@ -159,6 +173,8 @@ export function usePoseDetection(
     poseDetected: boolean;
     isLoading: boolean;
     lastError?: string;
+    /** Terminal: the detector/model never finished loading (watchdog). */
+    poseLoadFailed?: boolean;
   }>({
     hasCamera: false,
     hasPoseDetection: false,
@@ -364,7 +380,7 @@ export function usePoseDetection(
       coalescedFrames: number;
     } | null = null;
 
-    notifyStateChange({ isLoading: true });
+    notifyStateChange({ isLoading: true, poseLoadFailed: false });
     emitProgress({
       phase: 'initial',
       message: 'Starting...',
@@ -406,6 +422,10 @@ export function usePoseDetection(
       forReading: forReading === true,
       performanceLevel: getDeviceInfo().performanceLevel,
     });
+    // tasks-vision trackers (PoseLandmarker) carry their own WASM+delegate
+    // stack — there is no tfjs backend for them to wake, and model assets
+    // are local. The main-thread path skips TF init entirely for them.
+    const sessionTrackerRuntime = getTracker(sessionPoseConfig.tracker).runtime;
     const mobileQualityController =
       isMobileDevice && !isFarcasterSession
         ? new AdaptiveMobileQualityController('balanced')
@@ -978,88 +998,93 @@ export function usePoseDetection(
           percentage: 40,
         });
 
-        // Use Farcaster-optimized TensorFlow initialization
-        const tfResult = await initializeTensorFlow({
-          isFarcaster,
-          isMobile,
-          preferWebGL: true,
-          memoryLimit: isFarcaster ? 256 : 512,
-        });
-        if (cancelled || !isActiveRef.current) return;
-        if (!tfResult.success) {
-          const farcasterError = handleFarcasterError(
-            new Error('TensorFlow initialization failed'),
-            'tensorflow-init'
-          );
-
-          notifyStateChange({
-            isLoading: false,
-            lastError: farcasterError.userMessage,
+        // tasks-vision trackers own their WASM+delegate stack end to end —
+        // waking tfjs for them is pure cost and a second failure surface,
+        // so the whole TF init block is skipped.
+        if (sessionTrackerRuntime !== 'tasks-vision') {
+          // Use Farcaster-optimized TensorFlow initialization
+          const tfResult = await initializeTensorFlow({
+            isFarcaster,
+            isMobile,
+            preferWebGL: true,
+            memoryLimit: isFarcaster ? 256 : 512,
           });
+          if (cancelled || !isActiveRef.current) return;
+          if (!tfResult.success) {
+            const farcasterError = handleFarcasterError(
+              new Error('TensorFlow initialization failed'),
+              'tensorflow-init'
+            );
 
-          emitProgress({
-            phase: 'ai',
-            message: farcasterError.userMessage,
-            percentage: 0,
-          });
+            notifyStateChange({
+              isLoading: false,
+              lastError: farcasterError.userMessage,
+            });
 
-          return;
-        }
+            emitProgress({
+              phase: 'ai',
+              message: farcasterError.userMessage,
+              percentage: 0,
+            });
 
-        // Apply optimizations based on platform
-        try {
-          if (isIOS) {
-            tf.env().set('WEBGL_CONV_MATH_WITH_OPTIMIZED_CHANNELS', true);
-            tf.env().set('WEBGL_MAX_TEXTURE_SIZE', 4096); // Limit texture size for iOS
-          } else if (isMobile) {
-            // General mobile optimizations
-            tf.env().set('WEBGL_FORCE_F16_PIPELINES', true);
-            tf.env().set('WEBGL_PACK', true);
+            return;
           }
 
-          await tf.ready();
-          console.log(
-            `TensorFlow WebGL backend initialized (${isIOS && isSafari ? 'iOS Safari optimized' : 'standard'})`
-          );
-
-          // Warm up backend with small operations
-          if (isIOS) {
-            const dummyTensor = tf.tensor2d([
-              [1, 2],
-              [3, 4],
-            ]);
-            dummyTensor.mul(dummyTensor).dispose();
-            dummyTensor.dispose();
-          }
-        } catch (webglError) {
-          console.warn(
-            `WebGL backend failed${isIOS && isSafari ? ' on iOS Safari' : ''}, falling back to CPU:`,
-            webglError
-          );
-
+          // Apply optimizations based on platform
           try {
-            // Import CPU backend if not already loaded
-            await import('@tensorflow/tfjs-backend-cpu');
-            await tf.setBackend('cpu');
-            await tf.ready();
-            console.log('TensorFlow CPU backend initialized');
-
-            // iOS CPU optimization
             if (isIOS) {
-              console.log('Applying iOS CPU optimizations');
-              tf.env().set('WEBGL_FORCE_FLOAT', false);
+              tf.env().set('WEBGL_CONV_MATH_WITH_OPTIMIZED_CHANNELS', true);
+              tf.env().set('WEBGL_MAX_TEXTURE_SIZE', 4096); // Limit texture size for iOS
+            } else if (isMobile) {
+              // General mobile optimizations
+              tf.env().set('WEBGL_FORCE_F16_PIPELINES', true);
+              tf.env().set('WEBGL_PACK', true);
             }
-          } catch (cpuError) {
-            const errorMsg = `Failed to initialize TensorFlow backends. WebGL: ${webglError}, CPU: ${cpuError}`;
-            console.error(errorMsg);
 
-            // Provide user-friendly error for iOS Safari
-            if (isIOS && isSafari) {
-              throw new Error(
-                'Unable to initialize pose detection on iOS Safari. Please try: 1) Closing other tabs/apps, 2) Restarting Safari, or 3) Using a different browser.'
-              );
-            } else {
-              throw new Error(`Pose detection initialization failed: ${cpuError}`);
+            await tf.ready();
+            console.log(
+              `TensorFlow WebGL backend initialized (${isIOS && isSafari ? 'iOS Safari optimized' : 'standard'})`
+            );
+
+            // Warm up backend with small operations
+            if (isIOS) {
+              const dummyTensor = tf.tensor2d([
+                [1, 2],
+                [3, 4],
+              ]);
+              dummyTensor.mul(dummyTensor).dispose();
+              dummyTensor.dispose();
+            }
+          } catch (webglError) {
+            console.warn(
+              `WebGL backend failed${isIOS && isSafari ? ' on iOS Safari' : ''}, falling back to CPU:`,
+              webglError
+            );
+
+            try {
+              // Import CPU backend if not already loaded
+              await import('@tensorflow/tfjs-backend-cpu');
+              await tf.setBackend('cpu');
+              await tf.ready();
+              console.log('TensorFlow CPU backend initialized');
+
+              // iOS CPU optimization
+              if (isIOS) {
+                console.log('Applying iOS CPU optimizations');
+                tf.env().set('WEBGL_FORCE_FLOAT', false);
+              }
+            } catch (cpuError) {
+              const errorMsg = `Failed to initialize TensorFlow backends. WebGL: ${webglError}, CPU: ${cpuError}`;
+              console.error(errorMsg);
+
+              // Provide user-friendly error for iOS Safari
+              if (isIOS && isSafari) {
+                throw new Error(
+                  'Unable to initialize pose detection on iOS Safari. Please try: 1) Closing other tabs/apps, 2) Restarting Safari, or 3) Using a different browser.'
+                );
+              } else {
+                throw new Error(`Pose detection initialization failed: ${cpuError}`);
+              }
             }
           }
         }
@@ -1074,7 +1099,49 @@ export function usePoseDetection(
         // has started coaching. Built from the same resolved config the
         // worker path posts in `init`, so the two paths can never drift —
         // including the reading-session tracker upgrade.
-        detectorRef.current = await createPoseDetector(sessionPoseConfig);
+        //
+        // The build is raced against a watchdog: the model fetch (tfhub.dev
+        // for the tfjs trackers, a local .task + WASM fileset for
+        // tasks-vision) can stall without ever resolving, and an 'ai' phase
+        // that never ends reads as a hung app — then the reach-stall exit
+        // mislabels it "your arms didn't reach". On expiry the session gets
+        // an honest terminal signal instead.
+        const detectorPromise = createPoseDetector(sessionPoseConfig);
+        detectorPromise.catch(() => {}); // handled via the race result below
+        const detector = await Promise.race<SessionPoseDetector | null>([
+          detectorPromise,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), POSE_LOAD_TIMEOUT_MS)),
+        ]);
+        if (!detector) {
+          // The load may still complete after the deadline — dispose the
+          // late-arriving model so it cannot leak a live detector past the
+          // honest failure.
+          detectorPromise
+            .then((late) => {
+              try {
+                (late as any)?.dispose?.();
+              } catch (e) {
+                console.warn('Error disposing late-arriving detector:', e);
+              }
+            })
+            .catch(() => {});
+          if (cancelled) return;
+          console.warn(
+            `Pose detector did not load within ${POSE_LOAD_TIMEOUT_MS / 1000}s — reporting load failure`
+          );
+          notifyStateChange({
+            isLoading: false,
+            hasPoseDetection: false,
+            poseLoadFailed: true,
+          });
+          emitProgress({
+            phase: 'ai',
+            message: "The meter couldn't wake — check your connection and try again.",
+            percentage: 0,
+          });
+          return;
+        }
+        detectorRef.current = detector;
         if (cancelled || !isActiveRef.current) {
           try {
             (detectorRef.current as any)?.dispose?.();
@@ -1236,7 +1303,11 @@ export function usePoseDetection(
             // Reuse the session-start flag — isFarcasterMiniApp() does five
             // DOM checks and pushes a remote-log entry, so it must never run
             // inside the per-frame loop.
-            if ((isFarcasterSession || isIOS) && Math.random() < 0.01) {
+            if (
+              sessionTrackerRuntime !== 'tasks-vision' &&
+              (isFarcasterSession || isIOS) &&
+              Math.random() < 0.01
+            ) {
               // 1% chance per frame to check memory
               const memoryCheck = monitorTensorFlowMemory();
 
@@ -1358,7 +1429,10 @@ export function usePoseDetection(
           errorMessage = 'iOS Safari: AI initialization failed. Try restarting the app.';
         }
 
-        notifyStateChange({ isLoading: false, hasPoseDetection: false });
+        // A startup throw is a terminal load failure — mark it so the
+        // session lands on the honest "couldn't wake" surface instead of
+        // sitting in a dead 'ai' phase until a stall timer mislabels it.
+        notifyStateChange({ isLoading: false, hasPoseDetection: false, poseLoadFailed: true });
         emitProgress({
           phase: 'ai',
           message: errorMessage,
@@ -1464,7 +1538,12 @@ export function usePoseDetection(
       // Do not call tf.disposeVariables() here: it is global and can dispose
       // variables belonging to another active TensorFlow consumer.
 
-      notifyStateChange({ hasCamera: false, hasPoseDetection: false, poseDetected: false });
+      notifyStateChange({
+        hasCamera: false,
+        hasPoseDetection: false,
+        poseDetected: false,
+        poseLoadFailed: false,
+      });
     };
     // Mode is hot-swapped via modeRef — do not restart the pipeline on exercise change.
     // eslint-disable-next-line react-hooks/exhaustive-deps

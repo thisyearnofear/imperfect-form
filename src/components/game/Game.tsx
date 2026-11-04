@@ -157,7 +157,9 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // The designed stop-for-pain surface (PHASE_B_PLAN §B2): the session ends
   // the same way Stop ends it — the landing surface is what changes.
   const [painExit, setPainExit] = useState(false);
-  const [painExitVariant, setPainExitVariant] = useState<'pain' | 'stalled'>('pain');
+  const [painExitVariant, setPainExitVariant] = useState<
+    'pain' | 'stalled' | 'stalled-no-signal' | 'meter-couldnt-wake'
+  >('pain');
   const { joint: niggleJoint } = useNiggle();
 
   // Rep timestamps for tempo-based persona suggestion (see usePersonaSuggestion).
@@ -599,7 +601,11 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   }, []);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const handleStopRef = useRef<(destination?: 'recap' | 'pain' | 'stalled') => void>(() => {}); // Initialize with empty function
+  const handleStopRef = useRef<
+    (
+      destination?: 'recap' | 'pain' | 'stalled' | 'stalled-no-signal' | 'meter-couldnt-wake'
+    ) => void
+  >(() => {}); // Initialize with empty function
   const timeLeftRef = useRef(timeLeft); // Add ref to track timeLeft without causing re-renders
 
   // Check if fullscreen is available in current context (not restricted by iframe)
@@ -676,7 +682,10 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   };
 
   const handleStop = useCallback(
-    (destination: 'recap' | 'pain' | 'stalled' = 'recap') => {
+    (
+      destination:
+        'recap' | 'pain' | 'stalled' | 'stalled-no-signal' | 'meter-couldnt-wake' = 'recap'
+    ) => {
       exitFullscreen();
       unlock();
       setIsLandscapeLocked(false);
@@ -727,12 +736,28 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
   // Stall exit: once the user is framed, 20s without a newly counted rep ends
   // the reading on the designed stalled surface — a no-read is information
   // too, and it must never spin a 120s clock at someone who cannot reach.
+  // If the meter never locked a pose this session the stall is a signal
+  // problem, not a reach result — the no-signal variant says so instead of
+  // claiming "your arms didn't reach the line".
   const readyForReading = Boolean(readiness?.canProceed);
   useEffect(() => {
     if (!started || !readingTargetReps || !readyForReading || mode !== 'reach') return;
-    const timer = setTimeout(() => handleStopRef.current?.('stalled'), 20_000);
+    const timer = setTimeout(
+      () => handleStopRef.current?.(poseLockedRef.current ? 'stalled' : 'stalled-no-signal'),
+      20_000
+    );
     return () => clearTimeout(timer);
   }, [started, readingTargetReps, readyForReading, repCount, mode]);
+
+  // A detector that never loaded is a terminal signal failure, not a body
+  // result — end the session on the honest couldn't-wake surface before any
+  // stall timer can mislabel it. (The watchdog lives in
+  // src/modules/usePoseDetection.ts; this just routes the state.)
+  useEffect(() => {
+    if (started && poseState.poseLoadFailed) {
+      handleStopRef.current?.('meter-couldnt-wake');
+    }
+  }, [started, poseState.poseLoadFailed]);
 
   const handleStart = useCallback(
     async (options?: {
@@ -1141,6 +1166,23 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
     stopAllCameras();
   }, [stopAllCameras, exitFullscreen, unlock, resetReps]);
 
+  // Retry door on the honest-exit surfaces ("the meter couldn't wake" /
+  // "couldn't see you") — re-runs the session start the foyer would have
+  // run. A protocol reading stays a reading; an ordinary start keeps the
+  // one-rep trial shape. The attempt type is captured before reset clears
+  // the reading state.
+  const handleRetryStart = useCallback(() => {
+    const wasReading = readingTargetReps != null;
+    handleReset();
+    void handleStart({
+      isRace: hasIncomingChallenge,
+      trace: hasIncomingChallenge ? raceTrace || undefined : undefined,
+      challengeSource: hasIncomingChallenge ? 'incoming' : undefined,
+      oneRepTrial: !wasReading && !hasIncomingChallenge,
+      reading: wasReading,
+    });
+  }, [handleReset, handleStart, readingTargetReps, hasIncomingChallenge, raceTrace]);
+
   // Leaving Breathe intent closes the calm panel (register commit stays until they re-pick)
   useEffect(() => {
     if (sessionIntent !== 'recover') setCalmSessionActive(false);
@@ -1416,7 +1458,16 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
 
           {painExit && (
             <div id="instructions" className="!bg-transparent">
-              <PainExit onDone={handleReset} variant={painExitVariant} />
+              <PainExit
+                onDone={handleReset}
+                variant={painExitVariant}
+                onRetry={
+                  painExitVariant === 'meter-couldnt-wake' ||
+                  painExitVariant === 'stalled-no-signal'
+                    ? handleRetryStart
+                    : undefined
+                }
+              />
             </div>
           )}
 
