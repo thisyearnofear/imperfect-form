@@ -176,6 +176,10 @@ export interface EngineRepDetectorState {
     observedShoulderAngle?: number;
     activeElbowAngle?: number;
     activeShoulderAngle?: number;
+    /** Reach reading: transient coaching cue inside its hold window. */
+    reachCue?: { kind: 'near-miss' | 're-arm'; message: string } | null;
+    /** Reach reading: which arm has been under the visibility floor >~1s. */
+    missingArm?: 'left' | 'right' | 'both' | null;
   };
   lastElbowAngle?: number;
 }
@@ -223,6 +227,8 @@ export function detectEngineRep(
     observedShoulderAngle: result.poseData.observedShoulderAngle,
     activeElbowAngle: result.poseData.activeElbowAngle,
     activeShoulderAngle: result.poseData.activeShoulderAngle,
+    reachCue: result.poseData.reachCue,
+    missingArm: result.poseData.missingArm,
   };
   state.lastElbowAngle =
     result.poseData.observedElbowAngle ??

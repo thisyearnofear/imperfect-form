@@ -34,6 +34,8 @@ export {
   createReachState,
   resetReachState,
   type ReachState,
+  type ReachArmMotion,
+  type ReachCueKind,
   type ReachProcessorParams,
   type ReachProcessorResult,
 } from './reachProcessor';

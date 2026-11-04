@@ -14,6 +14,7 @@ import { useStableTracking } from '@/hooks/useStableTracking';
 import { isTwinHeroActive, useCoachTwin } from '@/hooks/useCoachTwin';
 import FramingGhost from '@/components/receive/FramingGhost';
 import LiveJointInset from '@/components/receive/LiveJointInset';
+import { ReachCueLine } from './ReachCueLine';
 import CurlFormInstrument from './CurlFormInstrument';
 import { SeeShowMoment } from './SeeShowMoment';
 import { ReadinessHint } from './ReadinessHint';
@@ -118,6 +119,21 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   // doing" readout for the read itself.
   const showJointInset = mode === 'reach' && readingTargetReps != null && hasLockedPose;
 
+  // The reach read explains itself in one line. A missing arm is the most
+  // specific framing advice and wins; otherwise the processor's fired cue
+  // (near-miss at the line, mid-band re-arm) speaks while it is held. When
+  // this line talks, the generic readiness hint stands down — one voice.
+  const reachCueText = React.useMemo(() => {
+    if (mode !== 'reach' || !curlPoseData) return null;
+    const missing = curlPoseData.missingArm;
+    if (missing) {
+      return missing === 'both'
+        ? "Can't see your arms — step back so your shoulders and elbows are in frame."
+        : `Can't see your ${missing} arm — step back or light that side.`;
+    }
+    return curlPoseData.reachCue?.message ?? null;
+  }, [mode, curlPoseData]);
+
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
     : !poseState.hasPoseDetection
@@ -198,6 +214,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             repPulse={repFeedback.show}
             read={read}
             readingTargetReps={readingTargetReps}
+            reachElevationDeg={reachElevationDeg}
           />
         )}
         <div
@@ -250,12 +267,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             userElbowDeg={curlTelemetry?.elbowAngle}
             yieldToFirstSignal={showFirstRepCelebration}
           />
-          <ReadinessHint
-            readiness={readiness}
-            repCount={repCount}
-            hasLockedPose={hasLockedPose}
-            elevated
-          />
+          {reachCueText ? (
+            <ReachCueLine text={reachCueText} elevated />
+          ) : (
+            <ReadinessHint
+              readiness={readiness}
+              repCount={repCount}
+              hasLockedPose={hasLockedPose}
+              elevated
+            />
+          )}
           {/* Bottom band = one stack, no overlap: instrument above, the
               coaching sentence owns the bottom edge (closest to the eye).
               It waits for the pose model like the HUD does: while the boot
@@ -306,6 +327,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           read={read}
           onPainExit={onPainExit}
           readingTargetReps={readingTargetReps}
+          reachElevationDeg={reachElevationDeg}
         />
       )}
       <div className="session-bay__stage">
@@ -337,7 +359,15 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
-          <ReadinessHint readiness={readiness} repCount={repCount} hasLockedPose={hasLockedPose} />
+          {reachCueText ? (
+            <ReachCueLine text={reachCueText} />
+          ) : (
+            <ReadinessHint
+              readiness={readiness}
+              repCount={repCount}
+              hasLockedPose={hasLockedPose}
+            />
+          )}
         </div>
         <aside className="session-bay__rail session-bay__rail--trail">
           {mode === 'curls' ? (

@@ -130,6 +130,12 @@ export interface CurlPoseData {
   activeElbowAngle?: number;
   /** Active-arm elbow drift selected by the curl processor. */
   activeShoulderAngle?: number;
+  /** Reach reading: transient coaching cue from the reach processor, inside
+      its hold window (near-miss at the rep line, mid-band re-arm nudge). */
+  reachCue?: { kind: 'near-miss' | 're-arm'; message: string } | null;
+  /** Reach reading: which arm has been under the visibility floor for longer
+      than ~1s — drives the "can't see your … arm" line. */
+  missingArm?: 'left' | 'right' | 'both' | null;
 }
 
 export interface CurlTelemetry {

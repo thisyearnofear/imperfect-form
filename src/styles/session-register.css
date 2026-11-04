@@ -688,3 +688,57 @@
     transform: scaleX(1);
   }
 }
+
+/* Live elevation gauge — the reach read's arm angle against the 135°
+   counting line. Hairline instrument, same register as the pips: a thin
+   track, a teal fill that rises as the arm rises, one brass tick at the
+   rep line. Mounted even when the arm is out of frame ("elev —") so the
+   instrument never vanishes mid-read. */
+.hud-elev {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+.hud-elev__readout {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(153, 246, 228, 0.75);
+  font-variant-numeric: tabular-nums;
+  min-width: 5.5em;
+}
+.hud-elev__track {
+  position: relative;
+  width: 3px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(153, 246, 228, 0.14);
+}
+.hud-elev__fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(153, 246, 228, 0.75);
+  transition: height 120ms linear;
+}
+.hud-elev__line {
+  position: absolute;
+  left: -3px;
+  width: 9px;
+  height: 1px;
+  background: var(--sandow-brass, #fcb131);
+}
+.hud-elev__caption {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(252, 177, 49, 0.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-elev__fill {
+    transition: none;
+  }
+}

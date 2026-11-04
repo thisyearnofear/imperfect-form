@@ -56,8 +56,21 @@ export interface PoseAngles {
   activeShoulderAngle?: number;
 }
 
+/** A transient coaching cue fired by the reach processor. It stays on
+    poseData for a short hold window so the live line can read it. */
+export interface ReachCue {
+  kind: 'near-miss' | 're-arm';
+  message: string;
+}
+
 export interface PoseData extends PoseAngles {
   keypoints: EngineKeypoint[];
+  /** Reach reading: the fired cue, while it is inside its hold window. */
+  reachCue?: ReachCue | null;
+  /** Reach reading: which arm has been under the visibility floor for longer
+      than ~1s — the missing-limb guidance channel ('both' when neither arm
+      reads). */
+  missingArm?: 'left' | 'right' | 'both' | null;
 }
 
 export interface RepCompletionData {

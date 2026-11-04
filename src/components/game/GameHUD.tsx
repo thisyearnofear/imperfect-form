@@ -33,6 +33,9 @@ interface GameHUDProps {
   /** Reading mode: a 1–N pip counter ("Reading · 3 of 5") replaces the open
    *  rep tally when the session is a fixed-protocol reading. */
   readingTargetReps?: number | null;
+  /** Reach readings: live arm elevation (the same smoothed degrees the rep
+   *  counter uses) — drives the hairline gauge beside the pips. */
+  reachElevationDeg?: number | null;
 }
 
 /**
@@ -87,6 +90,44 @@ function ReadingPips({
   );
 }
 
+/**
+ * Live elevation gauge — her arm angle against the rep line while the read
+ * runs. The number is reachProcessor's own smoothed elevation, so the meter
+ * registers exactly what the counter sees; the brass hairline sits at the
+ * 135° counting line so a raise visibly approaches — and crosses — the
+ * threshold that counts it. This is the fix for "unpredictable": the meter
+ * shows its work.
+ */
+function ReachElevGauge({ elevationDeg }: { elevationDeg: number | null }) {
+  const deg =
+    typeof elevationDeg === 'number' && Number.isFinite(elevationDeg)
+      ? Math.max(0, Math.min(180, elevationDeg))
+      : null;
+  const fillPct = deg === null ? 0 : (deg / 180) * 100;
+  // The counting line as a fraction of the 0–180° travel.
+  const linePct = (135 / 180) * 100;
+  return (
+    <div
+      className="hud-elev"
+      role="meter"
+      aria-label="Arm elevation — the rep counts past 135 degrees"
+      aria-valuemin={0}
+      aria-valuemax={180}
+      aria-valuenow={deg === null ? 0 : Math.round(deg)}
+      aria-valuetext={deg === null ? 'arm not in frame' : `${Math.round(deg)} degrees`}
+    >
+      <span className="hud-elev__readout">
+        {deg === null ? 'elev —' : `elev ~${Math.round(deg)}°`}
+      </span>
+      <span className="hud-elev__track" aria-hidden="true">
+        <span className="hud-elev__fill" style={{ height: `${fillPct}%` }} />
+        <span className="hud-elev__line" style={{ bottom: `${linePct}%` }} />
+      </span>
+      <span className="hud-elev__caption">135° line</span>
+    </div>
+  );
+}
+
 export const GameHUD: React.FC<GameHUDProps> = ({
   mode,
   timeLeft,
@@ -101,6 +142,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   read,
   onPainExit,
   readingTargetReps = null,
+  reachElevationDeg = null,
 }) => {
   const { register } = useSessionIntent();
   // The live HUD follows the session register: an explicit Train session keeps
@@ -203,6 +245,9 @@ export const GameHUD: React.FC<GameHUDProps> = ({
         {readingTargetReps ? (
           <ReadingPips repCount={repCount} target={readingTargetReps} rehearsal={rehearsalReps} />
         ) : null}
+        {readingTargetReps && mode === 'reach' ? (
+          <ReachElevGauge elevationDeg={reachElevationDeg} />
+        ) : null}
         {milestone && (
           <div className="hud-milestone" role="status" aria-live="polite">
             {repMilestoneMessage(countedReps, studio)}
@@ -278,6 +323,10 @@ export const GameHUD: React.FC<GameHUDProps> = ({
 
       {readingTargetReps ? (
         <ReadingPips repCount={repCount} target={readingTargetReps} rehearsal={rehearsalReps} />
+      ) : null}
+
+      {readingTargetReps && mode === 'reach' ? (
+        <ReachElevGauge elevationDeg={reachElevationDeg} />
       ) : null}
 
       {/* Quiet depth indicator — replaces the loud on-canvas depth gauge bar.
