@@ -395,6 +395,21 @@ function FormReceipt({
   );
 }
 
+/** One breath of the staged Fig 2 recap — an IntersectionObserver-latched
+ *  fade + rise, the same in-view register as the receiving beats. The
+ *  hiding state lives under no-preference media so reduced motion reads
+ *  everything instantly, and a missing IO resolves seen immediately, so
+ *  content can never stay hidden. */
+function RecapStage({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInViewOnce(ref);
+  return (
+    <div ref={ref} className={`session-recap__stage${inView ? ' is-in' : ''}`}>
+      {children}
+    </div>
+  );
+}
+
 export function SessionRecap({
   mode,
   reps,
@@ -478,116 +493,95 @@ export function SessionRecap({
     window.setTimeout(() => URL.revokeObjectURL(href), 1000);
   };
 
-  return (
-    <section
-      className="session-recap studio-card studio-card__body motion-enter"
-      aria-labelledby="session-recap-title"
-    >
-      <div
-        className={`session-recap__one-fix motion-enter${validReading ? ' session-recap__one-fix--read' : ''}`}
-      >
-        {/* A valid protocol read closes the instrument journey: Fig 1 was the
-            reach drawn in the foyer, Fig 2 is this — your reading. The
-            inconclusive read stays an honest answer, not a figure. */}
-        <p
-          className={`session-recap__one-fix-eyebrow${validReading ? ' session-recap__one-fix-eyebrow--fig' : ''}`}
-        >
-          {inconclusive
-            ? 'Honest answer'
-            : validReading
-              ? '· Fig 2 · Your reading ·'
-              : BRAND.loopLabel}
-        </p>
-        <h2 id="session-recap-title">
-          {inconclusive
-            ? 'The meter couldn’t get a clean read'
-            : hasCorrection
-              ? 'The one fix'
-              : 'Keep this line'}
-        </h2>
-        {validReading?.measurements && (
-          <p
-            ref={readingLineRef}
-            className={`session-recap__reading-line${readingStamped ? ' is-stamped' : ''}`}
-          >
-            {readingSentence(validReading.measurements)}
-          </p>
-        )}
-        {painIntent?.mode === mode && (
-          <p className="session-recap__personal">
-            {painIntent.recapLine}
-            {painIntent.id === 'stuck' &&
-              ' Your movement history is under Session detail and history below.'}
-          </p>
-        )}
-        <strong>{inconclusive ? inconclusive.fix : story.focus}</strong>
-        <div className="session-recap__one-fix-meta">
-          <span>
-            {reps} {countedLabel(mode, reps)}
-            {summary ? ` · ${Math.round(summary.duration)}s` : ''}
-          </span>
-          {sandowGrade ? (
-            <span className="sandow-grade" style={{ color: sandowGrade.color }}>
-              Grade {sandowGrade.grade}
-            </span>
-          ) : (
-            <SandowGradeMark />
-          )}
-        </div>
-        {sandowGrade ? <SandowGradeMark variant="lineage" style={{ margin: 0 }} /> : null}
+  // —— Staged Fig 2 — three breaths ————————————————————————————
+  // A protocol recap (a reading was taken — valid or honestly
+  // inconclusive) used to stack verdict + plate + ease + send + cadence
+  // all at once. Now it breathes: (1) the verdict — the Fig 2 eyebrow and
+  // the stamped sentence, alone on first paint; (2) "the numbers" — the
+  // mini JointPlate arc, the one fix, the metrics; (3) the calm block —
+  // ease + feel log, then send/reply + next reading + calendar. Breaths
+  // 2 and 3 sit in RecapStage (IO in-view fade+rise); the Session detail
+  // and history accordion stays put at the end.
+  const staged = Boolean(protocol && movementAssessment);
 
+  const miniPlate =
+    mode === 'reach' && validReading?.measurements ? (
+      <div className="session-recap__joint-plate" aria-hidden="true">
         {/* The read drawn as the teardown it came from: Fig 1's shoulder
             plate, static, arm raised to this read's measured excursion —
             the elevation arc is the mark. Decorative echo; the numbers
             live in the movement card below. */}
-        {mode === 'reach' && validReading?.measurements && (
-          <div className="session-recap__joint-plate" aria-hidden="true">
-            <JointPlate
-              progress={validReading.measurements.range}
-              caption="· This read ·"
-              plateNum=""
-              pips={0}
-              interactive={false}
-            />
-          </div>
-        )}
+        <JointPlate
+          progress={validReading.measurements.range}
+          caption="· This read ·"
+          plateNum=""
+          pips={0}
+          interactive={false}
+        />
+      </div>
+    ) : null;
 
-        {nextReading && (
-          <p className="session-recap__next-reading">
-            <span>
-              Next reading:{' '}
-              {nextReading.toLocaleDateString(undefined, {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-              })}
-            </span>
-            <button type="button" className="session-recap__calendar" onClick={downloadReadingIcs}>
-              <CalendarPlus size={13} aria-hidden="true" />
-              Add to calendar
-            </button>
-          </p>
-        )}
-
-        {/* The arm that closes the loop — a quiet door into the build, kept in
-            the studio chassis (calm, no arcade flash). Threads the prize
-            journey (loop → build → collaborate) into the product loop itself. */}
-        {hasCorrection && (
-          <p className="session-recap__arm-door">
-            <ArrowUpRight size={13} aria-hidden="true" />
-            <Link href="/build">The SO-101 arm shows this correction — see the build</Link>
-          </p>
+  const fixAndMetrics = (
+    <>
+      <strong>{inconclusive ? inconclusive.fix : story.focus}</strong>
+      <div className="session-recap__one-fix-meta">
+        <span>
+          {reps} {countedLabel(mode, reps)}
+          {summary ? ` · ${Math.round(summary.duration)}s` : ''}
+        </span>
+        {sandowGrade ? (
+          <span className="sandow-grade" style={{ color: sandowGrade.color }}>
+            Grade {sandowGrade.grade}
+          </span>
+        ) : (
+          <SandowGradeMark />
         )}
       </div>
+      {sandowGrade ? <SandowGradeMark variant="lineage" style={{ margin: 0 }} /> : null}
+    </>
+  );
 
-      <p className="session-recap__flywheel" role="status">
-        <span className="session-recap__flywheel-mark" aria-hidden="true" />
-        <span>
-          <strong>{BRAND.flywheelLine}</strong>
-          {BRAND.flywheelTrust}
-        </span>
-      </p>
+  // The arm that closes the loop — a quiet door into the build, kept in
+  // the studio chassis (calm, no arcade flash). Threads the prize
+  // journey (loop → build → collaborate) into the product loop itself.
+  const armDoor = hasCorrection ? (
+    <p className="session-recap__arm-door">
+      <ArrowUpRight size={13} aria-hidden="true" />
+      <Link href="/build">The SO-101 arm shows this correction — see the build</Link>
+    </p>
+  ) : null;
 
+  const nextReadingLine = nextReading ? (
+    <p className="session-recap__next-reading">
+      <span>
+        Next reading:{' '}
+        {nextReading.toLocaleDateString(undefined, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        })}
+      </span>
+      <button type="button" className="session-recap__calendar" onClick={downloadReadingIcs}>
+        <CalendarPlus size={13} aria-hidden="true" />
+        Add to calendar
+      </button>
+    </p>
+  ) : null;
+
+  const flywheelLine = (
+    <p className="session-recap__flywheel" role="status">
+      <span className="session-recap__flywheel-mark" aria-hidden="true" />
+      <span>
+        <strong>{BRAND.flywheelLine}</strong>
+        {BRAND.flywheelTrust}
+      </span>
+    </p>
+  );
+
+  // "What it means" — curl form scores, the coach's story, what went
+  // well, the movement signature. Rides with breath 2 in a staged recap.
+  const meaningBlock = (
+    <>
       {mode === 'curls' && formScores.length > 0 && (
         <div className="session-recap__form-scores motion-enter motion-delay-1">
           <div className="session-recap__form-scores-header">
@@ -638,7 +632,13 @@ export function SessionRecap({
       {summary?.trace && summary.trace.length > 0 && (
         <FormLine trace={summary.trace} avgDepth={summary.avgDepth} />
       )}
+    </>
+  );
 
+  // The calm block — the try-again door, the "Ease it" flow + feel log,
+  // and the send/reply card that passes the meter on.
+  const calmBlock = (
+    <>
       {onTryAgain && (
         <button
           type="button"
@@ -716,9 +716,9 @@ export function SessionRecap({
         </p>
       )}
 
-      {/* The loop closes by being passed on — the same SendTheMeter card the
-          foyer unfold carries, personalized to the niggle this reading was
-          for. */}
+      {/* The loop closes by being passed on — the same SendTheMeter card
+          the foyer unfold carries, personalized to the niggle this
+          reading was for. */}
       {sendJoint && (
         <SendTheMeter
           joint={sendJoint}
@@ -727,6 +727,93 @@ export function SessionRecap({
           lead={sendLead}
           surface="session-recap"
         />
+      )}
+    </>
+  );
+
+  return (
+    <section
+      className="session-recap studio-card studio-card__body motion-enter"
+      aria-labelledby="session-recap-title"
+    >
+      <div
+        className={`session-recap__one-fix motion-enter${validReading ? ' session-recap__one-fix--read' : ''}`}
+      >
+        {/* A valid protocol read closes the instrument journey: Fig 1 was the
+            reach drawn in the foyer, Fig 2 is this — your reading. The
+            inconclusive read stays an honest answer, not a figure. */}
+        <p
+          className={`session-recap__one-fix-eyebrow${validReading ? ' session-recap__one-fix-eyebrow--fig' : ''}`}
+        >
+          {inconclusive
+            ? 'Honest answer'
+            : validReading
+              ? '· Fig 2 · Your reading ·'
+              : BRAND.loopLabel}
+        </p>
+        <h2 id="session-recap-title">
+          {inconclusive
+            ? 'The meter couldn’t get a clean read'
+            : hasCorrection
+              ? 'The one fix'
+              : 'Keep this line'}
+        </h2>
+        {validReading?.measurements && (
+          <p
+            ref={readingLineRef}
+            className={`session-recap__reading-line${readingStamped ? ' is-stamped' : ''}`}
+          >
+            {readingSentence(validReading.measurements)}
+          </p>
+        )}
+        {painIntent?.mode === mode && (
+          <p className="session-recap__personal">
+            {painIntent.recapLine}
+            {painIntent.id === 'stuck' &&
+              ' Your movement history is under Session detail and history below.'}
+          </p>
+        )}
+        {/* Non-staged recaps (no assessment data) keep the single card:
+            fix, metrics, plate, cadence and the arm door all inside. A
+            protocol reading splits these out into the breaths below. */}
+        {!staged && (
+          <>
+            {fixAndMetrics}
+            {miniPlate}
+            {nextReadingLine}
+            {armDoor}
+          </>
+        )}
+      </div>
+
+      {staged ? (
+        <>
+          {/* Breath 2 — "the numbers": the mini JointPlate arc, the one
+              fix and the metrics, then what the coach learned from them.
+              A quieter sibling of the verdict card, not a second stamp. */}
+          <RecapStage>
+            <div className="session-recap__one-fix session-recap__one-fix--quiet">
+              {miniPlate}
+              {fixAndMetrics}
+              {armDoor}
+            </div>
+            {meaningBlock}
+          </RecapStage>
+
+          {/* Breath 3 — the calm block: ease + feel log, then send/reply,
+              the weekly cadence and the trust line. */}
+          <RecapStage>
+            {calmBlock}
+            {nextReadingLine}
+            {flywheelLine}
+          </RecapStage>
+        </>
+      ) : (
+        <>
+          {flywheelLine}
+          {meaningBlock}
+          {calmBlock}
+        </>
       )}
 
       {/* Everything below is instrumentation, not story. It stays reachable but

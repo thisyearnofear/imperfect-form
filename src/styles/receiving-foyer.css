@@ -751,8 +751,24 @@
 /* ═══ Act 2 — the five beats ═════════════════════════════════════════ */
 
 .rf-beat {
+  position: relative;
   padding: 48px 4px;
   text-align: center;
+}
+
+/* Beat progress marks — hairline roman orientation at the left edge of
+   each beat (the five story beats: question · company · read · ritual ·
+   honesty). Engraved like the plate captions, quiet — orientation only,
+   never links. */
+.rf-beat__num {
+  position: absolute;
+  left: 4px;
+  top: 56px;
+  color: var(--rf-soft);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.625rem;
+  letter-spacing: 0.22em;
+  opacity: 0.55;
 }
 
 .rf-beat__eyebrow {
@@ -1035,6 +1051,15 @@
   text-align: center;
 }
 
+/* The expectation hairline under the finale ask — "one to warm up ·
+   five to count". Same hairline register, spaced for sitting below the
+   button instead of above it, and a touch quieter. */
+.rf-final__expect {
+  margin: 12px auto 0;
+  color: var(--rf-soft);
+  font-size: 0.8125rem;
+}
+
 .rf-final__note {
   text-align: center;
 }
@@ -1253,6 +1278,25 @@
   width: 18px;
   height: 1px;
   background: rgba(252, 177, 49, 0.45);
+}
+
+/* Return-visit memory — the last read's elevation imprinted faintly over
+   the living hero plate: a static copy of the same figure stacked
+   absolute (same 320×372 viewBox, so it registers pixel-for-pixel),
+   arm held at the stored max range. The swept arc is re-inked brass —
+   memory, not now — while the live teal loop keeps reading as present.
+   Decorative only; the .rf-lastread line carries the fact. */
+.rf-lastarc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  opacity: 0.26;
+  pointer-events: none;
+}
+
+.rf-lastarc .rp-arc-drawn {
+  stroke: var(--sandow-brass, #fcb131);
 }
 
 /* ═══ JointPlate — Fig 1 as a live anatomical teardown ═════════════════

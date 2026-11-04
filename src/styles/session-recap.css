@@ -2072,3 +2072,37 @@
     transform: scaleX(1);
   }
 }
+
+/* Staged Fig 2 — the protocol recap breathes in three sections: the
+   verdict alone on first paint, then "the numbers", then the calm block.
+   Sections 2 & 3 wait below the fold behind an IntersectionObserver
+   latch and fade + rise like the receiving beats. The hidden state lives
+   under no-preference media only — reduced motion (or a missing IO, which
+   the hook resolves as seen) renders them instantly, unhidden. */
+.session-recap__stage {
+  display: grid;
+  gap: var(--studio-card-body-gap, 0.75rem);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .session-recap__stage {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 620ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 620ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .session-recap__stage.is-in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Breath 2's panel — the verdict card's quieter sibling: same register
+   and padding, a teal hairline instead of the stamped brass gradient. */
+.session-recap__one-fix--quiet {
+  background: rgba(7, 22, 24, 0.4);
+  border-color: rgba(117, 223, 205, 0.22);
+  box-shadow: none;
+}

@@ -15,7 +15,7 @@ import {
   type NiggleJointId,
   type StoredNiggle,
 } from '@/lib/niggleIntents';
-import { assessmentProtocolFor } from '@/lib/movementAssessment';
+import { assessmentProtocolFor, READING_REHEARSAL_REPS } from '@/lib/movementAssessment';
 import { getLocalMovementAssessments } from '@/services/integrations/MovementAssessmentDataAdapter';
 import { useNiggle } from '@/hooks/useNiggle';
 import { prefetchWebcamChunk, prefersReducedMotion } from '@/components/game/CoachFoyer';
@@ -47,6 +47,23 @@ type ReceivingFoyerProps = {
 
 /** Same-session repeat views skip the envelope straight to Act 1. */
 const ENVELOPE_SEEN_KEY = 'imf_rf_envelope_v1';
+
+/** Rep counts read as words in the expectation line — "one to warm up ·
+ *  five to count" — engraved register, digits fall through past ten. */
+const REP_WORDS = [
+  'zero',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+];
+const repWord = (n: number) => REP_WORDS[n] ?? String(n);
 
 /** Joint-aware short phrase for "Your ___, measured." */
 const JOINT_PHRASE: Record<NiggleJointId, string> = {
@@ -146,6 +163,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
   // the read, not a score. Anything missing or inconclusive → silence; the
   // CTA is never gated on it.
   const [lastReadDays, setLastReadDays] = useState<number | null>(null);
+  // The last read's measured range — the hero plate remembers it (see the
+  // .rf-lastarc imprint on the plate below).
+  const [lastReadRange, setLastReadRange] = useState<number | null>(null);
   useEffect(() => {
     if (!organic) return;
     let alive = true;
@@ -159,6 +179,7 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
         );
         const days = Math.floor((Date.now() - latest.assessment.capturedAt) / 86_400_000);
         setLastReadDays(Math.max(0, days));
+        setLastReadRange(latest.assessment.measurements?.range ?? null);
       })
       .catch(() => {});
     return () => {
@@ -414,7 +435,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
   // when the joint is answered (a picked or stored chip); the link hero
   // wakes on the post-envelope beat. ReachPlate heroes have no chrome to
   // quiet — the prop only reaches JointPlate.
-  const heroPlateQuiet = organic ? !joint : !linkPlateAwake;
+  // A return visit with a stored read wakes the plate too — the meter
+  // remembers, so its detail chrome is earned even before a joint answer.
+  const heroPlateQuiet = organic ? !(joint || lastReadRange !== null) : !linkPlateAwake;
   const ritualLine = readingProtocol
     ? `Once a week, same setup, ${readingProtocol.targetReps} slow raises.`
     : 'Once a week, same setup, a few slow reps.';
@@ -649,6 +672,39 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
             ) : (
               <ReachPlate progress={progress} litPips={litPips} />
             )}
+            {/* Return-visit memory — chosen over holding the loop's first
+                pose (that would mean teaching useArmCycle a start pose;
+                this is ~15 lines). A faint static copy of the same plate
+                stacks absolute over the living figure — same viewBox — at
+                the SessionRecap "· This read ·" mini's pose:
+                progress={last read's range} fixes the arm at the stored
+                max elevation and the swept range arc draws proportional
+                to progress. CSS dims it to an imprint and shifts the arc
+                brass — memory, not now. */}
+            {organic && lastReadRange !== null && (
+              <div className="rf-lastarc" aria-hidden="true">
+                {joint?.id === 'neck-shoulders' && mode === 'reach' ? (
+                  <JointPlate
+                    progress={lastReadRange}
+                    caption=""
+                    plateNum=""
+                    pips={0}
+                    ghostCount={0}
+                    interactive={false}
+                    quiet
+                  />
+                ) : (
+                  <ReachPlate
+                    progress={lastReadRange}
+                    caption=""
+                    plateNum=""
+                    drawArc
+                    ghostCount={0}
+                    pips={0}
+                  />
+                )}
+              </div>
+            )}
             <span className="rf-plate__hint" aria-hidden="true">
               tap for one raise · hold to scrub
             </span>
@@ -811,6 +867,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
         </div>
 
         <section className="rf-beat" aria-label="The question">
+          <span className="rf-beat__num" aria-hidden="true">
+            · I ·
+          </span>
           <p className="rf-beat__eyebrow">The question</p>
           <h2 className="rf-beat__title">Tension can&rsquo;t be photographed.</h2>
           <p className="rf-beat__body">
@@ -827,6 +886,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
         </div>
 
         <section className="rf-beat" aria-label="The company">
+          <span className="rf-beat__num" aria-hidden="true">
+            · II ·
+          </span>
           <p className="rf-beat__eyebrow">The company</p>
           <h2 className="rf-beat__title">
             {joint
@@ -859,6 +921,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
         </div>
 
         <section ref={beat3Ref} className="rf-beat" aria-label="The read">
+          <span className="rf-beat__num" aria-hidden="true">
+            · III ·
+          </span>
           <p className="rf-beat__eyebrow">The read</p>
           <h2 className="rf-beat__title">The meter watches three things.</h2>
           <div className="rf-beat__figure rf-beat__figure--plate">
@@ -886,6 +951,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
         </div>
 
         <section className="rf-beat" aria-label="The ritual">
+          <span className="rf-beat__num" aria-hidden="true">
+            · IV ·
+          </span>
           <p className="rf-beat__eyebrow">The ritual</p>
           <h2 className="rf-beat__title">A healthy way to hold a niggle.</h2>
           <p className="rf-beat__body">{ritualLine}</p>
@@ -945,6 +1013,9 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
         </div>
 
         <section className="rf-beat" aria-label="The honesty">
+          <span className="rf-beat__num" aria-hidden="true">
+            · V ·
+          </span>
           <p className="rf-beat__eyebrow">The honesty</p>
           <h2 className="rf-beat__title">A meter that can&rsquo;t read says so.</h2>
           <ul className="rf-ledger">
@@ -1004,6 +1075,15 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
                 className="coach-foyer__start-arrow"
               />
             </button>
+            {/* The expectation hairline — names the rehearsal rep the
+                meter gives away before the counted ones. Protocol modes
+                only; renders under the finale ask in both variants. */}
+            {readingProtocol && READING_REHEARSAL_REPS > 0 && (
+              <p className="rf-line rf-final__line rf-final__expect">
+                {repWord(READING_REHEARSAL_REPS)} to warm up · {repWord(readingProtocol.targetReps)}{' '}
+                to count
+              </p>
+            )}
             {/* The "change it" door moved here with the ask — the hero no
                 longer carries any action for link arrivals. */}
             {!organic && (
