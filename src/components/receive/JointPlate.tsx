@@ -1,7 +1,10 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useId, useRef, useState } from 'react';
 import { JointFigure, type JointRegionId } from './JointFigure';
+import { ReachFigure } from './ReachPlate';
+import { ZOOM_REGISTERS, useZoomRegister, type ZoomRegister } from './zoomRegister';
 import {
   JP_A0 as A0,
   JP_A1 as A1,
@@ -15,6 +18,13 @@ import {
   jointSeq,
 } from './shoulderAnatomy';
 import '@/styles/receiving-foyer.css';
+
+// The `built` register is earned and lazy — three.js + the Z-Anatomy
+// meshes only load after its notch is tapped, never on first load.
+const BuiltShoulder = dynamic(() => import('./BuiltShoulder'), {
+  ssr: false,
+  loading: () => <div className="jp-built jp-built--loading">etching the built layer ···</div>,
+});
 
 /**
  * JointPlate — "Fig 1 · The Shoulder". ReachPlate's frame chrome (brass
@@ -31,6 +41,13 @@ import '@/styles/receiving-foyer.css';
  * names what it honestly contributes (proxies, not diagnosis). Under
  * reduced motion the parent loop parks the arm raised; the labels, panels
  * and peel still read.
+ *
+ * The plate is a zoom, not a ladder — engraved notches on the bottom frame
+ * edge flip one register: `move` (the ReachPlate hairline figure — the
+ * movement itself, glanceable), `anatomy` (this teardown — what's
+ * moving), `built` (a peelable 3D shoulder — how it's built, lazy-loaded
+ * on first tap). Context defaults to `anatomy`; quiet plates and static
+ * minis never show the notches and always draw `anatomy`.
  */
 
 type PeelId = JointRegionId;
@@ -99,6 +116,13 @@ export function JointPlate({
   const uid = useId().replace(/:/g, '');
   const p = clamp01(progress);
   const pose = armPose(p);
+
+  // —— The zoom register — one shared magnification per session ————
+  // Quiet plates and static minis teach nothing: they draw `anatomy`
+  // and hide the notches (see .jp-notch CSS).
+  const [zoom, setZoom] = useZoomRegister();
+  const register: ZoomRegister = interactive && !quiet ? zoom : 'anatomy';
+  const showNotches = interactive && !quiet;
   const lit = litPips ?? Math.min(pips, Math.floor(p * (pips + 0.001)));
   const elevDeg = (A0 + p * (A1 - A0)) * (180 / Math.PI);
 
@@ -146,6 +170,21 @@ export function JointPlate({
     if (!(e.target as Element).closest?.('.jp-region')) setPeeled(null);
   };
 
+  // —— Frame-edge notches — a register flip is not a rep; keep the
+  // plate's tap-to-raise and hold-to-scrub out of notch taps entirely.
+  const notchDown = (e: React.PointerEvent) => e.stopPropagation();
+  const notchPick = (id: ZoomRegister) => (e: React.PointerEvent | React.MouseEvent) => {
+    e.stopPropagation();
+    setZoom(id);
+  };
+  const notchKey = (id: ZoomRegister) => (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      setZoom(id);
+    }
+  };
+
   const peelInfo = peeled ? PEEL_COPY[peeled] : null;
   const peelAnchor: { x: number; y: number } | null =
     peeled === 'arm'
@@ -172,7 +211,7 @@ export function JointPlate({
       className={`joint-plate${className ? ` ${className}` : ''}`}
       viewBox="0 0 320 372"
       role="img"
-      aria-label="Engraved anatomical plate: the shoulder joint — clavicle, scapula and humerus under labeled muscle regions — raising one arm while margin panels read elevation, sway and left-right."
+      aria-label="Engraved anatomical plate: the shoulder joint — clavicle, scapula and humerus under labeled muscle regions — raising one arm while margin panels read elevation, sway and left-right. Notches on the frame edge zoom the figure: move, anatomy, or built."
       onPointerDown={onPlateDown}
     >
       <defs>
@@ -258,26 +297,32 @@ export function JointPlate({
         180°
       </text>
 
-      {/* The protocol's counting line, marked on the protractor. */}
-      <line
-        className={`jp-rep-tick${seq.counted ? ' is-lit' : ''}`}
-        x1={PIVOT.x + (R + 2) * Math.sin(REP_A)}
-        y1={PIVOT.y + (R + 2) * Math.cos(REP_A)}
-        x2={PIVOT.x + (R + 15) * Math.sin(REP_A)}
-        y2={PIVOT.y + (R + 15) * Math.cos(REP_A)}
-      />
-      <text
-        className={`rp-deg-label jp-rep-label${seq.counted ? ' is-lit' : ''}`}
-        x={PIVOT.x + (R + 19) * Math.sin(REP_A)}
-        y={PIVOT.y + (R + 19) * Math.cos(REP_A) + 2}
-      >
-        135°
-      </text>
+      {/* The protocol's counting line, marked on the protractor —
+          an anatomy-register detail: move stays glanceable. */}
+      {register === 'anatomy' && (
+        <>
+          <line
+            className={`jp-rep-tick${seq.counted ? ' is-lit' : ''}`}
+            x1={PIVOT.x + (R + 2) * Math.sin(REP_A)}
+            y1={PIVOT.y + (R + 2) * Math.cos(REP_A)}
+            x2={PIVOT.x + (R + 15) * Math.sin(REP_A)}
+            y2={PIVOT.y + (R + 15) * Math.cos(REP_A)}
+          />
+          <text
+            className={`rp-deg-label jp-rep-label${seq.counted ? ' is-lit' : ''}`}
+            x={PIVOT.x + (R + 19) * Math.sin(REP_A)}
+            y={PIVOT.y + (R + 19) * Math.cos(REP_A) + 2}
+          >
+            135°
+          </text>
+        </>
+      )}
 
       {/* —— Margin panels: live values in the meter's own names ————
           Detail chrome (panels + labels below) mounts only when the plate
-          is awake — quiet heroes keep the figure without the teaching. */}
-      {!quiet && (
+          is awake — quiet heroes keep the figure without the teaching,
+          and the move/built registers keep the interior to themselves. */}
+      {register === 'anatomy' && !quiet && (
         <g className="jp-detail" aria-hidden="true">
           <g className="jp-panels">
             <text className="jp-panel-eyebrow" x="22" y="58">
@@ -308,22 +353,49 @@ export function JointPlate({
         </g>
       )}
 
-      {/* —— The anatomical teardown — figure, muscle regions, bones and
-          the working arm, shared with the framing ghost and the live
-          session inset (./JointFigure). Peel wiring stays here. ———————— */}
-      <JointFigure
-        progress={p}
-        peeled={peeled}
-        regionProps={regionProps}
-        ghostTrail={GHOST_OFFSETS.map((off, i) => ({
-          offset: off,
-          opacity: GHOST_OPACITY[i],
-        }))}
-        pulse
-      />
+      {/* —— The interior, by register ————————————————————————————
+          anatomy: the teardown (shared with the framing ghost and the
+          live session inset — ./JointFigure; peel wiring stays here).
+          move: the reach figure's hairline person (./ReachFigure).
+          built: the peelable 3D shoulder, mounted in the same frame —
+          foreignObject so the engraved chrome around it stays SVG. */}
+      {register === 'anatomy' && (
+        <JointFigure
+          progress={p}
+          peeled={peeled}
+          regionProps={regionProps}
+          ghostTrail={GHOST_OFFSETS.map((off, i) => ({
+            offset: off,
+            opacity: GHOST_OPACITY[i],
+          }))}
+          pulse
+        />
+      )}
+      {register === 'move' && (
+        <ReachFigure
+          progress={p}
+          ghostTrail={GHOST_OFFSETS.map((off, i) => ({
+            offset: off,
+            opacity: GHOST_OPACITY[i],
+          }))}
+        />
+      )}
+      {register === 'built' && (
+        <foreignObject x="16" y="46" width="288" height="274">
+          <div
+            className="jp-built-host"
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            onPointerCancel={(e) => e.stopPropagation()}
+          >
+            <BuiltShoulder />
+          </div>
+        </foreignObject>
+      )}
 
       {/* —— Engraved micro-labels with hairline leaders —————————— */}
-      {!quiet && (
+      {register === 'anatomy' && !quiet && (
         <g className="jp-detail" aria-hidden="true">
           <g className="jp-labels">
             <text className="jp-label" x="30" y="140">
@@ -355,7 +427,7 @@ export function JointPlate({
       )}
 
       {/* —— Peel callout: hairline card + leader to the part ————— */}
-      {peelInfo && peelAnchor && (
+      {register === 'anatomy' && peelInfo && peelAnchor && (
         <g className="jp-callout" pointerEvents="none">
           <path
             className="jp-callout__leader"
@@ -387,6 +459,42 @@ export function JointPlate({
       <text className="rp-footnote" x="20" y="300">
         — measured at the shoulder
       </text>
+
+      {/* —— The zoom notches — engraved tabs on the bottom frame edge.
+          The figure isn't a ladder; the register is a magnification and
+          the user picks it. Awake interactive plates only — quiet heroes
+          and static minis stay `anatomy`, notch-free. */}
+      {showNotches && (
+        <g
+          className="jp-notches"
+          role="radiogroup"
+          aria-label="Magnification — move, anatomy, or built"
+        >
+          {ZOOM_REGISTERS.map((id, i) => {
+            const x = 22 + i * 46;
+            return (
+              <g
+                key={id}
+                className={`jp-notch${register === id ? ' is-active' : ''}`}
+                role="radio"
+                aria-checked={register === id}
+                aria-label={id}
+                tabIndex={0}
+                onPointerDown={notchDown}
+                onPointerUp={notchPick(id)}
+                onClick={notchPick(id)}
+                onKeyDown={notchKey(id)}
+              >
+                <rect className="jp-notch__hit" x={x - 5} y={332} width={42} height={24} />
+                <text className="jp-notch__label" x={x} y={346}>
+                  · {id} ·
+                </text>
+                <line className="jp-notch__tick" x1={x + 1} y1={350} x2={x + 1} y2={356} />
+              </g>
+            );
+          })}
+        </g>
+      )}
 
       {/* Base-edge pips: one marks each raise. */}
       {pips > 0 && (

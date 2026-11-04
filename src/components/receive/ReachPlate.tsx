@@ -1,6 +1,16 @@
 'use client';
 
 import { useId } from 'react';
+import {
+  JP_ARM_PATH_LEN as ARM_PATH_LEN,
+  JP_PIVOT as PIVOT,
+  JP_R as R,
+  JP_TICKS as TICKS,
+  clamp01,
+  jpArmPath as armPath,
+  jpArmPose as armPose,
+  jpRound as f,
+} from './shoulderAnatomy';
 import '@/styles/reach-plate.css';
 
 /**
@@ -40,39 +50,116 @@ export type ReachPlateProps = {
   className?: string;
 };
 
-// —— Plate geometry (viewBox 0 0 320 372) ————————————————
-const PIVOT = { x: 192, y: 142 }; // right shoulder — the instrument's origin
-const UPPER = 48; // upper arm
-const FORE = 44; // forearm
-const R = UPPER + FORE; // protractor / hand radius
-const A0 = 0.1; // resting angle off straight-down
-const A1 = Math.PI - 0.1; // overhead
-const ARM_PATH_LEN = UPPER + FORE + 8; // dash budget for the pulse chase
+// —— Plate geometry, arm pose and degree ticks live in ./shoulderAnatomy —
+// the same constants drive JointPlate's frame, so the reach figure this
+// plate draws drops into the JointPlate frame unchanged when the zoom
+// register flips to `move`.
 
-const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+/**
+ * ReachFigure — the hairline figure itself (torso, ghost trail, working
+ * arm, pulse, hand, pivot ring) with no frame chrome. ReachPlate mounts
+ * it inside the engraved plate; JointPlate mounts the same drawing when
+ * the zoom register flips to `move` — the movement itself, glanceable.
+ * Needs the `.rp-*` tokens (reach-plate.css) on an ancestor.
+ */
+export type ReachFigureProps = {
+  /** 0..1 — 0 arm hanging, 1 arm overhead. */
+  progress: number;
+  /** Trailing smear poses — earlier positions of the same arm, fading back. */
+  ghostTrail?: ReadonlyArray<{ offset: number; opacity: number }>;
+  /** Multiplies ghost opacity — "emphasized" for Beat 1. */
+  ghostBoost?: number;
+  /** Mirrored left arm fading in over the last third (Beat 3 balance). */
+  mirror?: boolean;
+  /** Steadying ring at the shoulder pivot, middle third (Beat 3 control). */
+  controlRing?: boolean;
+};
 
-/** Shoulder → elbow → wrist for a given raise amount. */
-function armPose(pp: number) {
-  const t = clamp01(pp);
-  const a = A0 + t * (A1 - A0);
-  const ex = PIVOT.x + UPPER * Math.sin(a);
-  const ey = PIVOT.y + UPPER * Math.cos(a);
-  // A hanging arm carries a slight inward elbow bend; it straightens as it rises.
-  const af = a - 0.15 * (1 - t);
-  const wx = ex + FORE * Math.sin(af);
-  const wy = ey + FORE * Math.cos(af);
-  return { ex, ey, wx, wy };
+export function ReachFigure({
+  progress,
+  ghostTrail = [],
+  ghostBoost = 1,
+  mirror = false,
+  controlRing = false,
+}: ReachFigureProps) {
+  const p = clamp01(progress);
+  const pose = armPose(p);
+  const pulseOffset = 22 - ARM_PATH_LEN * p;
+  const ringAlpha = controlRing ? clamp01((p - 0.3) * 3) : 0;
+  const mirrorAlpha = mirror ? clamp01((p - 0.64) * 3) : 0;
+
+  return (
+    <g className="rp-figure-root">
+      {/* The figure — hairline studio teal. */}
+      <g className="rp-figure">
+        <circle className="rp-bone" cx="160" cy="100" r="14" />
+        <line className="rp-bone" x1="160" y1="114" x2="160" y2="124" />
+        <path className="rp-bone" d="M124 142 Q160 132 196 142" />
+        <line className="rp-bone" x1="160" y1="124" x2="160" y2="212" />
+        <path className="rp-bone" d="M130 214 Q160 220 190 214" />
+        {/* ribcage suggestion, dim */}
+        <path className="rp-bone rp-bone--dim" d="M128 142 C122 170 124 196 132 214" />
+        <path className="rp-bone rp-bone--dim" d="M190 142 C196 170 194 196 186 214" />
+        {/* resting arm + legs, dimmer still */}
+        <path className="rp-bone rp-bone--dim" d="M128 142 L124 180 Q123 196 122 210" />
+        <circle className="rp-joint rp-joint--dim" cx="122" cy="211" r="2.4" />
+        <path className="rp-bone rp-bone--faint" d="M138 216 L134 268" />
+        <path className="rp-bone rp-bone--faint" d="M184 216 L186 268" />
+        <line className="rp-ground" x1="104" y1="274" x2="220" y2="274" />
+      </g>
+
+      {/* Ghost trail — earlier poses of the same arm, smeared back. */}
+      {ghostTrail.map((ghost) =>
+        p - ghost.offset > 0.02 ? (
+          <path
+            key={ghost.offset}
+            className="rp-ghost"
+            d={armPath(p - ghost.offset)}
+            style={{ opacity: ghost.opacity * ghostBoost }}
+          />
+        ) : null
+      )}
+
+      {/* Mirrored arm (Beat 3 — balance fills in over the last third). */}
+      {mirror && mirrorAlpha > 0.01 && (
+        <path
+          className="rp-ghost rp-ghost--mirror"
+          d={armPath(p)}
+          transform="translate(320 0) scale(-1 1)"
+          style={{ opacity: mirrorAlpha * 0.55 }}
+        />
+      )}
+
+      {/* The working arm. */}
+      <path className="rp-arm" d={armPath(p)} />
+      {/* Light pulse — one lit dash chasing up the arm each raise. */}
+      <path
+        className="rp-pulse"
+        d={armPath(p)}
+        strokeDasharray="22 999"
+        strokeDashoffset={pulseOffset}
+      />
+      <circle
+        className="rp-hand"
+        cx={f(pose.wx)}
+        cy={f(pose.wy)}
+        r="3"
+        style={{ opacity: 0.45 + p * 0.55 }}
+      />
+      {/* Control ring steadies at the pivot (Beat 3 — control). */}
+      {controlRing && ringAlpha > 0.01 && (
+        <circle
+          className="rp-control-ring"
+          cx={PIVOT.x}
+          cy={PIVOT.y}
+          r="9"
+          style={{ opacity: ringAlpha }}
+        />
+      )}
+      <circle className="rp-pivot" cx={PIVOT.x} cy={PIVOT.y} r="2.6" />
+    </g>
+  );
 }
-
-function armPath(pp: number) {
-  const { ex, ey, wx, wy } = armPose(pp);
-  return `M${PIVOT.x} ${PIVOT.y} L${f(ex)} ${f(ey)} L${f(wx)} ${f(wy)}`;
-}
-
-const f = (n: number) => Math.round(n * 100) / 100;
-
-/** Degree ticks + protractor arc around the pivot, right semicircle. */
-const TICKS = Array.from({ length: 7 }, (_, i) => i * 30); // 0..180
 
 export function ReachPlate({
   progress,
@@ -89,9 +176,7 @@ export function ReachPlate({
 }: ReachPlateProps) {
   const uid = useId().replace(/:/g, '');
   const p = clamp01(progress);
-  const pose = armPose(p);
   const lit = litPips ?? Math.min(pips, Math.floor(p * (pips + 0.001)));
-  const pulseOffset = 22 - ARM_PATH_LEN * p;
 
   // Ghost poses trail the raise — earlier poses, fading back.
   const GHOST_OFFSETS = [0.09, 0.18, 0.27].slice(0, Math.max(0, ghostCount));
@@ -100,8 +185,6 @@ export function ReachPlate({
   // Beat 3 helpers: the range arc draws, a ring steadies at the pivot,
   // and a mirrored arm fills in over the last third.
   const arcDrawn = drawArc ? Math.min(1, p * 1.04) : 1;
-  const ringAlpha = controlRing ? clamp01((p - 0.3) * 3) : 0;
-  const mirrorAlpha = mirror ? clamp01((p - 0.64) * 3) : 0;
 
   return (
     <svg
@@ -193,73 +276,18 @@ export function ReachPlate({
         180°
       </text>
 
-      {/* The figure — hairline studio teal. */}
-      <g className="rp-figure">
-        <circle className="rp-bone" cx="160" cy="100" r="14" />
-        <line className="rp-bone" x1="160" y1="114" x2="160" y2="124" />
-        <path className="rp-bone" d="M124 142 Q160 132 196 142" />
-        <line className="rp-bone" x1="160" y1="124" x2="160" y2="212" />
-        <path className="rp-bone" d="M130 214 Q160 220 190 214" />
-        {/* ribcage suggestion, dim */}
-        <path className="rp-bone rp-bone--dim" d="M128 142 C122 170 124 196 132 214" />
-        <path className="rp-bone rp-bone--dim" d="M190 142 C196 170 194 196 186 214" />
-        {/* resting arm + legs, dimmer still */}
-        <path className="rp-bone rp-bone--dim" d="M128 142 L124 180 Q123 196 122 210" />
-        <circle className="rp-joint rp-joint--dim" cx="122" cy="211" r="2.4" />
-        <path className="rp-bone rp-bone--faint" d="M138 216 L134 268" />
-        <path className="rp-bone rp-bone--faint" d="M184 216 L186 268" />
-        <line className="rp-ground" x1="104" y1="274" x2="220" y2="274" />
-      </g>
-
-      {/* Ghost trail — earlier poses of the same arm, smeared back. */}
-      {GHOST_OFFSETS.map((off, i) =>
-        p - off > 0.02 ? (
-          <path
-            key={off}
-            className="rp-ghost"
-            d={armPath(p - off)}
-            style={{ opacity: GHOST_OPACITY[i] * ghostBoost }}
-          />
-        ) : null
-      )}
-
-      {/* Mirrored arm (Beat 3 — balance fills in over the last third). */}
-      {mirror && mirrorAlpha > 0.01 && (
-        <path
-          className="rp-ghost rp-ghost--mirror"
-          d={armPath(p)}
-          transform="translate(320 0) scale(-1 1)"
-          style={{ opacity: mirrorAlpha * 0.55 }}
-        />
-      )}
-
-      {/* The working arm. */}
-      <path className="rp-arm" d={armPath(p)} />
-      {/* Light pulse — one lit dash chasing up the arm each raise. */}
-      <path
-        className="rp-pulse"
-        d={armPath(p)}
-        strokeDasharray="22 999"
-        strokeDashoffset={pulseOffset}
+      {/* The figure — hairline studio teal (./ReachFigure, shared with
+          JointPlate's `move` register). */}
+      <ReachFigure
+        progress={p}
+        ghostTrail={GHOST_OFFSETS.map((off, i) => ({
+          offset: off,
+          opacity: GHOST_OPACITY[i],
+        }))}
+        ghostBoost={ghostBoost}
+        mirror={mirror}
+        controlRing={controlRing}
       />
-      <circle
-        className="rp-hand"
-        cx={f(pose.wx)}
-        cy={f(pose.wy)}
-        r="3"
-        style={{ opacity: 0.45 + p * 0.55 }}
-      />
-      {/* Control ring steadies at the pivot (Beat 3 — control). */}
-      {controlRing && ringAlpha > 0.01 && (
-        <circle
-          className="rp-control-ring"
-          cx={PIVOT.x}
-          cy={PIVOT.y}
-          r="9"
-          style={{ opacity: ringAlpha }}
-        />
-      )}
-      <circle className="rp-pivot" cx={PIVOT.x} cy={PIVOT.y} r="2.6" />
 
       {/* Engraved footnote. */}
       <text className="rp-footnote" x="20" y="298">

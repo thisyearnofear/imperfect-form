@@ -265,3 +265,24 @@ honestly at four designed points:
 **Positioning: lead with the sender-carer.** The worried-about-someone
 door (the sendable meter, the gift note) is the front of the story — the
 self-serve niggle holder is who stays, but the carer is who arrives.
+
+## Magnification grammar (2026-11-04)
+
+The joint figure isn't a ladder — stick → anatomy is not an upgrade, it's
+a **zoom**. One frame, three magnifications, all honest:
+
+- `· move ·` — the hairline figure: the movement itself, glanceable.
+  Live-session register; what the meter actually sees.
+- `· anatomy ·` — the plate teardown: what's moving. Learning register;
+  the hero plate's default because the teaching is the gift.
+- `· built ·` — the 3D peelable model: how it's built. Earned deep-dive;
+  lazy-loaded (three.js + meshes only on first tap), peel reveals the
+  structures beneath.
+
+Context picks the default, the user toggles on the plate's frame-edge
+notches. Shared per session (module state — a preference of the moment,
+not a stored identity); quiet plates and static minis stay `anatomy`.
+
+Attribution: `built` meshes are Z-Anatomy (CC-BY-SA 4.0, derived from
+BodyParts3D © DBCLS, CC-BY-SA 2.1 Japan), decimated at build time by
+`scripts/build-anatomy.mjs` — credit rides in the layer's footer.

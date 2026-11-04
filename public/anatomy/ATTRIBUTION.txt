@@ -1,0 +1,4 @@
+Shoulder meshes: Z-Anatomy — the libre 3D atlas of anatomy (CC-BY-SA 4.0)
+https://github.com/LluisV/Z-Anatomy
+Derived from BodyParts3D, © The Database Center for Life Science (DBCLS),
+CC-BY-SA 2.1 Japan. Decimated subsets for the Fig 1 "built" register.

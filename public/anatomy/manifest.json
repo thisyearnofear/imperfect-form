@@ -1,0 +1,41 @@
+{
+  "parts": {
+    "trapezius": {
+      "file": "trapezius.glb",
+      "bytes": 145048,
+      "tris": 5994,
+      "sha1": "b03b9fb13f"
+    },
+    "deltoid": {
+      "file": "deltoid.glb",
+      "bytes": 121260,
+      "tris": 5000,
+      "sha1": "cacc629191"
+    },
+    "levator": {
+      "file": "levator.glb",
+      "bytes": 73188,
+      "tris": 3000,
+      "sha1": "8b562b4537"
+    },
+    "scapula": {
+      "file": "scapula.glb",
+      "bytes": 193176,
+      "tris": 7999,
+      "sha1": "cbc2153541"
+    },
+    "clavicle": {
+      "file": "clavicle.glb",
+      "bytes": 37184,
+      "tris": 1500,
+      "sha1": "acf0a6d32a"
+    },
+    "humerus": {
+      "file": "humerus.glb",
+      "bytes": 97212,
+      "tris": 4000,
+      "sha1": "b8327c12b0"
+    }
+  },
+  "attribution": "Z-Anatomy (CC-BY-SA 4.0), derived from BodyParts3D (© DBCLS, CC-BY-SA 2.1 Japan)"
+}

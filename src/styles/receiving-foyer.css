@@ -1577,6 +1577,169 @@
   stroke-dasharray: 2 2;
 }
 
+/* ── The zoom notches — engraved tabs on the bottom frame edge ───────
+   Three hairline labels — move · anatomy · built — one shared register
+   per session, the active one brass-lit. Quiet/minis never mount them. */
+.jp-notch {
+  cursor: pointer;
+  outline: none;
+}
+
+.jp-notch__hit {
+  fill: transparent;
+}
+
+.jp-notch__label {
+  fill: rgba(244, 236, 216, 0.38);
+  font-size: 6px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  transition: fill 320ms ease;
+}
+
+.jp-notch__tick {
+  stroke: rgba(252, 177, 49, 0.22);
+  stroke-width: 0.7;
+  transition: stroke 320ms ease;
+}
+
+.jp-notch.is-active .jp-notch__label,
+.jp-notch:focus-visible .jp-notch__label {
+  fill: var(--jp-brass);
+}
+
+.jp-notch.is-active .jp-notch__tick,
+.jp-notch:focus-visible .jp-notch__tick {
+  stroke: var(--jp-brass);
+  stroke-width: 1.2;
+}
+
+/* ── The built layer — a peelable 3D shoulder inside the same frame ──
+   Mounted via foreignObject; dark teal surfaces + brass edges come from
+   the scene, the DOM side stays engraved: hairline labels, brass credit. */
+.jp-built-host {
+  width: 100%;
+  height: 100%;
+}
+
+.jp-built {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+}
+
+.jp-built--loading {
+  align-items: center;
+  justify-content: center;
+  font-size: 6px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(244, 236, 216, 0.35);
+}
+
+.jp-built__stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: grab;
+  touch-action: none; /* a drag orbits; it never scrolls the plate away */
+}
+
+.jp-built__stage:active {
+  cursor: grabbing;
+}
+
+.jp-built__stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+.jp-built__status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  font-size: 6px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  line-height: 2;
+  text-transform: uppercase;
+  text-align: center;
+  color: rgba(244, 236, 216, 0.4);
+}
+
+/* Engraved eyebrow part list — tap to peel, brass strike when away. */
+.jp-built__side {
+  flex: 0 0 84px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 2px 2px 8px;
+  border-left: 0.5px solid rgba(252, 177, 49, 0.16);
+}
+
+.jp-built__eyebrow {
+  margin: 0 0 3px;
+  font-size: 5.5px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--jp-brass);
+  opacity: 0.85;
+}
+
+.jp-built__parts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.jp-built__part {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 2.5px 0;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 6px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: left;
+  color: rgba(244, 236, 216, 0.6);
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.jp-built__part:hover,
+.jp-built__part:focus-visible {
+  color: var(--jp-paper);
+}
+
+.jp-built__part.is-off {
+  color: rgba(252, 177, 49, 0.55);
+  text-decoration: line-through;
+  text-decoration-thickness: 0.5px;
+}
+
+.jp-built__credit {
+  margin: auto 0 0;
+  padding-top: 4px;
+  font-size: 4.6px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.7;
+  text-transform: uppercase;
+  color: rgba(244, 236, 216, 0.32);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .jp-muscle,
   .jp-bone--scap,
@@ -1587,6 +1750,12 @@
 
   .jp-detail {
     animation: none;
+  }
+
+  .jp-notch__label,
+  .jp-notch__tick,
+  .jp-built__part {
+    transition: none;
   }
 }
 
