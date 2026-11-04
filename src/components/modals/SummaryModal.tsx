@@ -52,6 +52,8 @@ import { sessionStory } from '@/lib/coachingStory';
 import { countedLabel } from '@/lib/exerciseGuidance';
 import { SandowGradeMark } from '@/components/ui/SandowGradeMark';
 import { getFormGrade } from '@/lib/formGrade';
+import { assessmentProtocolFor } from '@/lib/movementAssessment';
+import ReadingDetail from '@/components/game/ReadingDetail';
 import type { MovementAssessment } from '@/types/movementAssessment';
 import type { MovementChallengePayload } from '@/types/movementChallenge';
 import type { LocalWorkout } from '@/types/workout';
@@ -439,6 +441,9 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
       ? Math.round(formScores.reduce((a, b) => a + b, 0) / formScores.length)
       : null;
   const formGrade = avgFormScore !== null ? getFormGrade(avgFormScore) : null;
+  // The protocol this mode can honestly be assessed against, if one exists —
+  // Advanced analysis renders the read's own numbers for reach readings.
+  const reachProtocol = mode === 'reach' ? assessmentProtocolFor(mode) : null;
 
   return (
     <>
@@ -903,25 +908,44 @@ const SummaryModal: React.FC<SummaryModalProps> = ({
                 </div>
               )}
 
-              {/* Advanced analysis — collapsible */}
-              <details className="recap-details">
-                <summary className="recap-details__summary cursor-pointer list-none px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-teal-100/90 transition-colors [&::-webkit-details-marker]:hidden">
-                  <span>Advanced analysis</span>
-                  <span className="recap-details__chevron" aria-hidden="true">
-                    ›
-                  </span>
-                </summary>
-                <div className="px-0 pb-2 space-y-4">
-                  {(sessionSummary || reportStatus !== 'idle') && (
-                    <LabAnalysisCard
-                      report={report}
-                      status={reportStatus}
-                      personality={personality}
-                      onGenerate={handleGenerateReport}
-                    />
-                  )}
-                </div>
-              </details>
+              {/* Advanced analysis — collapsible. For a protocol reading the
+                  reach detail answers here directly (per-raise peaks, sway,
+                  balance, quality gates — the record's own numbers). The lab
+                  card only mounts when AI coaching is actually enabled —
+                  otherwise its "Run coaching analysis" button dead-ends, and
+                  a section that would render nothing stays hidden. */}
+              {(mode === 'reach' && movementAssessment) ||
+              (sessionSummary &&
+                (process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() === 'post' ||
+                  reportStatus !== 'idle')) ? (
+                <details className="recap-details">
+                  <summary className="recap-details__summary cursor-pointer list-none px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-teal-100/90 transition-colors [&::-webkit-details-marker]:hidden">
+                    <span>Advanced analysis</span>
+                    <span className="recap-details__chevron" aria-hidden="true">
+                      ›
+                    </span>
+                  </summary>
+                  <div className="px-0 pb-2 space-y-4">
+                    {mode === 'reach' && movementAssessment && reachProtocol && (
+                      <ReadingDetail
+                        assessment={movementAssessment}
+                        protocol={reachProtocol}
+                        summary={sessionSummary ?? null}
+                      />
+                    )}
+                    {sessionSummary &&
+                      (process.env.NEXT_PUBLIC_AI_COACHING?.toLowerCase() === 'post' ||
+                        reportStatus !== 'idle') && (
+                        <LabAnalysisCard
+                          report={report}
+                          status={reportStatus}
+                          personality={personality}
+                          onGenerate={handleGenerateReport}
+                        />
+                      )}
+                  </div>
+                </details>
+              ) : null}
 
               {/* ===== SHARE: one quiet disclosure, not six competing CTAs =====
                   Farcaster/X/highlight all live behind a single collapsed

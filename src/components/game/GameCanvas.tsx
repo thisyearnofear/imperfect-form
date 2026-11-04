@@ -20,6 +20,8 @@ import { SeeShowMoment } from './SeeShowMoment';
 import { ReadinessHint } from './ReadinessHint';
 import { deriveCurlTelemetry } from '@/lib/curlTelemetry';
 import { readQuality, type ReadLevel } from '@/lib/readQuality';
+import { countedReadingReps, READING_REHEARSAL_REPS } from '@/lib/movementAssessment';
+import { reachExpectationLine } from '@/lib/reachReading';
 import '@/styles/session-bay.css';
 
 interface RepFeedback {
@@ -133,6 +135,34 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     }
     return curlPoseData.reachCue?.message ?? null;
   }, [mode, curlPoseData]);
+
+  // Reach readings only: the protocol's own expectations, stated quietly.
+  // Before the first raise the line says what the target IS (135°, her own
+  // max, her own pace — a protocol target, never a norm); once a rep has
+  // landed and the arm is back down it says what a complete rep needs. Both
+  // stand down for the louder voices: the missing-arm line, the processor's
+  // own cue (both inside reachCueText) and the framing hint before the pose
+  // locks.
+  const reachExpectation = React.useMemo(() => {
+    if (mode !== 'reach' || readingTargetReps == null) return null;
+    if (reachCueText || !hasLockedPose) return null;
+    // The framing hint only has a voice before the first rep — while it has
+    // a fix to offer, the target line waits its turn (one voice).
+    if (repCount === 0 && readiness && !readiness.canProceed) return null;
+    return reachExpectationLine({
+      repCount,
+      countedReps: countedReadingReps(repCount, READING_REHEARSAL_REPS),
+      elevationDeg: reachElevationDeg,
+    });
+  }, [
+    mode,
+    readingTargetReps,
+    reachCueText,
+    hasLockedPose,
+    repCount,
+    readiness,
+    reachElevationDeg,
+  ]);
 
   const loadingPhase = !poseState.hasCamera
     ? 'camera'
@@ -267,8 +297,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             userElbowDeg={curlTelemetry?.elbowAngle}
             yieldToFirstSignal={showFirstRepCelebration}
           />
-          {reachCueText ? (
-            <ReachCueLine text={reachCueText} elevated />
+          {reachCueText || reachExpectation ? (
+            <ReachCueLine text={reachCueText ?? reachExpectation} elevated />
           ) : (
             <ReadinessHint
               readiness={readiness}
@@ -359,8 +389,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           <DebugOverlay started={true} poseDetected={poseState.poseDetected} />
           <RepFeedbackOverlay show={repFeedback.show} count={repFeedback.count} />
           <FirstRepCelebration show={showFirstRepCelebration} mode={mode} />
-          {reachCueText ? (
-            <ReachCueLine text={reachCueText} />
+          {reachCueText || reachExpectation ? (
+            <ReachCueLine text={reachCueText ?? reachExpectation} />
           ) : (
             <ReadinessHint
               readiness={readiness}

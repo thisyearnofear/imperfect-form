@@ -2106,3 +2106,172 @@
   border-color: rgba(117, 223, 205, 0.22);
   box-shadow: none;
 }
+
+/* Staged-recap quiet footnote inside the coach-learned card — the folded-in
+   "what went well" sentence, one line instead of a second block. */
+.session-recap__story-foot {
+  display: block;
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed rgba(117, 223, 205, 0.14);
+  color: #9eb8b2;
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+/* The single cadence line a staged recap ends on — storage + next reading +
+   the calendar door merged into one quiet sentence (the flywheel card and
+   the next-reading row it replaces stay for non-staged recaps). */
+.session-recap__cadence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.5rem;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  color: #8aa8a3;
+  border-top: 1px dashed rgba(117, 223, 205, 0.14);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+.session-recap__cadence > span:last-child {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.45rem;
+  color: #a9c7c2;
+}
+
+/* The read in detail — inside "Session detail and history" (and the modal's
+   Advanced analysis for reach). The record's own numbers, hairline quiet. */
+.read-detail {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.2rem 0 0;
+  padding: 0.85rem;
+  background: rgba(7, 24, 26, 0.5);
+  border: 1px solid rgba(117, 223, 205, 0.16);
+  border-radius: 6px;
+}
+.read-detail__eyebrow {
+  margin: 0;
+  color: #83e8d5;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.read-detail h3 {
+  margin: -0.4rem 0 0;
+  color: #f1fffc;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.read-detail__section {
+  display: grid;
+  gap: 0.35rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(117, 223, 205, 0.12);
+}
+.read-detail__label {
+  margin: 0;
+  color: #829e98;
+  font-size: 0.55rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.read-detail__value {
+  margin: 0;
+  color: #dff7f1;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+.read-detail__peaks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.read-detail__peak {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 3.4rem;
+  padding: 0.4rem 0.5rem;
+  background: rgba(117, 223, 205, 0.05);
+  border: 1px solid rgba(117, 223, 205, 0.14);
+  border-radius: 4px;
+  text-align: center;
+}
+.read-detail__peak span {
+  color: #f4ecd8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.read-detail__peak em {
+  color: #829e98;
+  font-size: 0.52rem;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.read-detail__peak.is-counted {
+  border-color: rgba(252, 177, 49, 0.3);
+}
+.read-detail__peak.is-counted em {
+  color: #d19a32;
+}
+.read-detail__note {
+  margin: 0;
+  color: #718d88;
+  font-size: 0.58rem;
+  line-height: 1.4;
+}
+.read-detail__gates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.read-detail__gate {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.45rem 0.5rem;
+  background: rgba(117, 223, 205, 0.04);
+  border: 1px solid rgba(117, 223, 205, 0.12);
+  border-radius: 4px;
+}
+.read-detail__gate > span {
+  color: #829e98;
+  font-size: 0.52rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.read-detail__gate strong {
+  color: #f4ecd8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+.read-detail__gate strong em {
+  color: #829e98;
+  font-style: normal;
+  font-size: 0.58rem;
+}
+.read-detail__gate.is-short strong {
+  color: #f6c5a8;
+}
+.read-detail__gate.is-short strong em {
+  color: #d19a32;
+}
+@media (max-width: 360px) {
+  .read-detail__gates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

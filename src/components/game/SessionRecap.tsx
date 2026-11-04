@@ -29,6 +29,7 @@ import {
 import { usePlatform } from '@/contexts/PlatformContext';
 import MovementCard from './MovementCard';
 import MovementAssessmentHistory from './MovementAssessmentHistory';
+import ReadingDetail from './ReadingDetail';
 import { usePainIntent } from '@/hooks/usePainIntent';
 import { useNiggle } from '@/hooks/useNiggle';
 import { addNiggleEntry } from '@/lib/niggleEntries';
@@ -568,6 +569,32 @@ export function SessionRecap({
     </p>
   ) : null;
 
+  // One quiet line instead of the three honesty statements the staged recap
+  // used to stack: the storage note, the "saved locally" line, and the
+  // come-back cadence. Same facts — saved on this device, nothing uploaded,
+  // when to re-read — merged so the calm block stays calm.
+  const cadenceLine = (
+    <p className="session-recap__cadence">
+      <span>Saved on this device — nothing was uploaded.</span>
+      {nextReading ? (
+        <span>
+          Next reading{' '}
+          {nextReading.toLocaleDateString(undefined, {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+          })}
+          <button type="button" className="session-recap__calendar" onClick={downloadReadingIcs}>
+            <CalendarPlus size={13} aria-hidden="true" />
+            Add to calendar
+          </button>
+        </span>
+      ) : (
+        <span>Same setup when you repeat it — the next read is the one that counts.</span>
+      )}
+    </p>
+  );
+
   const flywheelLine = (
     <p className="session-recap__flywheel" role="status">
       <span className="session-recap__flywheel-mark" aria-hidden="true" />
@@ -616,19 +643,30 @@ export function SessionRecap({
           <p className="session-recap__story-eyebrow">What the coach learned</p>
           <h3>{inconclusive ? 'Why it stayed quiet' : story.title}</h3>
           <strong>{inconclusive ? inconclusive.cause : story.body}</strong>
+          {/* Staged recaps fold the separate "what went well" item into this
+              card's quiet footer — same sentence, one block instead of two. */}
+          {staged && (
+            <span className="session-recap__story-foot">
+              {inconclusive
+                ? 'An unclear read never moves your baseline — repeat the same setup and the next one counts.'
+                : takeaway.strength}
+            </span>
+          )}
         </div>
       </div>
-      <div className="session-recap__item studio-card__item session-recap__item--good motion-enter motion-delay-1">
-        <CheckCircle2 size={17} />
-        <div>
-          <p>{inconclusive ? 'What it means for your line' : 'What went well'}</p>
-          <strong>
-            {inconclusive
-              ? 'An unclear read never moves your baseline — repeat the same setup and the next one counts.'
-              : takeaway.strength}
-          </strong>
+      {!staged && (
+        <div className="session-recap__item studio-card__item session-recap__item--good motion-enter motion-delay-1">
+          <CheckCircle2 size={17} />
+          <div>
+            <p>{inconclusive ? 'What it means for your line' : 'What went well'}</p>
+            <strong>
+              {inconclusive
+                ? 'An unclear read never moves your baseline — repeat the same setup and the next one counts.'
+                : takeaway.strength}
+            </strong>
+          </div>
         </div>
-      </div>
+      )}
       {summary?.trace && summary.trace.length > 0 && (
         <FormLine trace={summary.trace} avgDepth={summary.avgDepth} />
       )}
@@ -718,7 +756,8 @@ export function SessionRecap({
 
       {/* The loop closes by being passed on — the same SendTheMeter card
           the foyer unfold carries, personalized to the niggle this
-          reading was for. */}
+          reading was for. On the recap it stays folded behind the "pass it
+          on" door: the send is an offer, not a second verdict. */}
       {sendJoint && (
         <SendTheMeter
           joint={sendJoint}
@@ -726,6 +765,7 @@ export function SessionRecap({
           giftLine={niggleContext?.giftLine}
           lead={sendLead}
           surface="session-recap"
+          collapsed
         />
       )}
     </>
@@ -801,11 +841,10 @@ export function SessionRecap({
           </RecapStage>
 
           {/* Breath 3 — the calm block: ease + feel log, then send/reply,
-              the weekly cadence and the trust line. */}
+              and the single cadence line (saved + next reading + calendar). */}
           <RecapStage>
             {calmBlock}
-            {nextReadingLine}
-            {flywheelLine}
+            {cadenceLine}
           </RecapStage>
         </>
       ) : (
@@ -833,6 +872,13 @@ export function SessionRecap({
         {protocol && (
           <>
             <MovementCard assessment={movementAssessment} />
+            {movementAssessment && (
+              <ReadingDetail
+                assessment={movementAssessment}
+                protocol={protocol}
+                summary={summary}
+              />
+            )}
             <MovementAssessmentHistory
               userAddress={userAddress}
               currentAssessment={movementAssessment}
