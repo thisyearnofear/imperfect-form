@@ -18,6 +18,7 @@ test.describe('PoseRuntime - worker path + curls', () => {
       localStorage.setItem('imf_seenOnboarding_v1', '1');
       localStorage.setItem('imf_skipWalletIntro', '1');
       localStorage.setItem('cameraPrimerSeen', 'true');
+      sessionStorage.setItem('imf_rf_envelope_v1', '1');
       // Force the production OffscreenCanvas worker path in development.
       (window as unknown as { __IMF_FORCE_POSE_WORKER__?: boolean }).__IMF_FORCE_POSE_WORKER__ =
         true;
@@ -37,6 +38,9 @@ test.describe('PoseRuntime - worker path + curls', () => {
       timeout: 20000,
     });
 
+    // The exercise cards live behind the "or pick a movement" unfold on
+    // the receiving-foyer landing.
+    await page.getByRole('button', { name: /or pick a movement/i }).click();
     // Curls lead the foyer because they are the clearest robot-demo path.
     // `.first()` — the start button's aria-label also mentions Curls.
     await page.getByRole('button', { name: /Curls/i }).first().click();
@@ -51,7 +55,9 @@ test.describe('PoseRuntime - worker path + curls', () => {
 
     await expect(
       page
-        .getByText(/Opening the coaching bay|Finding your frame|Reading your movement|Starting/i)
+        .getByText(
+          /Waking the meter|Opening the camera|Reading your joints|Step into view|Starting/i
+        )
         .first()
     ).toBeVisible({
       timeout: 15000,

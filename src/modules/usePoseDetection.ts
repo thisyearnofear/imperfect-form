@@ -44,6 +44,7 @@ import {
   type PoseRuntimeWindow,
 } from '../lib/pose/poseRuntime';
 import { cloneTransferredCanvasHost } from '../lib/pose/poseCanvasHost';
+import { adoptWarmPoseDetector, discardWarmPoseDetector } from '../lib/pose/poseWarmup';
 import {
   recordPoseBaselineCaptureFailure,
   recordPoseBaselineFrame,
@@ -535,13 +536,17 @@ export function usePoseDetection(
       if (decision) applyMobileQualityDecision(decision);
     };
 
-    // Path selection: see src/lib/pose/poseRuntime.ts + docs/ARCHITECTURE.md
+    // Path selection: see src/lib/pose/poseRuntime.ts + docs/ARCHITECTURE.md.
+    // tasks-vision trackers can never init in a module worker (importScripts
+    // is unsupported — the load hangs silently until the watchdog), so they
+    // are routed straight to the main thread instead of paying the fallback.
     const preferWorker = shouldUsePoseWorker({
       isMobileDevice,
       supportsOffscreenCanvas,
       canTransferControl: typeof canvas.transferControlToOffscreen === 'function',
       nodeEnv: process.env.NODE_ENV,
       forceWorker: readForcePoseWorkerFlag(),
+      trackerRuntime: sessionTrackerRuntime,
     });
 
     publishPoseRuntimeStatus({
@@ -551,8 +556,17 @@ export function usePoseDetection(
     });
 
     if (preferWorker) {
+      // A worker builds its own detector inside the worker — a prewarmed
+      // main-thread detector can't cross that boundary. Drop it so it can't
+      // leak past a session that will never adopt it.
+      discardWarmPoseDetector();
       startWorkerBasedDetection();
     } else {
+      if (sessionTrackerRuntime === 'tasks-vision') {
+        console.log(
+          `Pose runtime: ${sessionPoseConfig.tracker} on main thread (module-worker init unsupported)`
+        );
+      }
       startMainThreadDetection();
     }
 
@@ -1100,18 +1114,46 @@ export function usePoseDetection(
         // worker path posts in `init`, so the two paths can never drift —
         // including the reading-session tracker upgrade.
         //
+        // A prewarmed build (the foyer's idle warm of this exact resolved
+        // config) is adopted instead of building cold; the key match inside
+        // adoptWarmPoseDetector guarantees a warm detector is never adopted
+        // for a different config.
+        //
         // The build is raced against a watchdog: the model fetch (tfhub.dev
         // for the tfjs trackers, a local .task + WASM fileset for
         // tasks-vision) can stall without ever resolving, and an 'ai' phase
         // that never ends reads as a hung app — then the reach-stall exit
         // mislabels it "your arms didn't reach". On expiry the session gets
-        // an honest terminal signal instead.
-        const detectorPromise = createPoseDetector(sessionPoseConfig);
-        detectorPromise.catch(() => {}); // handled via the race result below
-        const detector = await Promise.race<SessionPoseDetector | null>([
-          detectorPromise,
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), POSE_LOAD_TIMEOUT_MS)),
-        ]);
+        // an honest terminal signal instead. A clean rejection (not a stall)
+        // earns exactly one same-tracker retry before that surface — no
+        // third hop.
+        const loadTimeout = new Promise<null>((resolve) =>
+          setTimeout(() => resolve(null), POSE_LOAD_TIMEOUT_MS)
+        );
+        const raceLoad = (p: Promise<SessionPoseDetector>) => {
+          p.catch(() => {}); // handled via the race result below
+          return Promise.race<SessionPoseDetector | null>([p, loadTimeout]);
+        };
+
+        let detectorPromise = adoptWarmPoseDetector(sessionPoseConfig);
+        const detectorWarm = detectorPromise !== null;
+        if (detectorWarm) {
+          console.log(`Pose detector: adopted prewarmed ${sessionPoseConfig.tracker} build`);
+        }
+        detectorPromise ??= createPoseDetector(sessionPoseConfig);
+        let detector: SessionPoseDetector | null;
+        try {
+          detector = await raceLoad(detectorPromise);
+        } catch (buildError) {
+          console.warn('Pose detector build failed — retrying once on main thread:', buildError);
+          detectorPromise = createPoseDetector(sessionPoseConfig);
+          try {
+            detector = await raceLoad(detectorPromise);
+          } catch (retryError) {
+            console.error('Pose detector build failed twice — reporting load failure:', retryError);
+            detector = null;
+          }
+        }
         if (!detector) {
           // The load may still complete after the deadline — dispose the
           // late-arriving model so it cannot leak a live detector past the
@@ -1152,6 +1194,14 @@ export function usePoseDetection(
           return;
         }
 
+        // e2e/debug marker: main-thread path live, and whether the detector
+        // was adopted warm rather than built cold on the press.
+        publishPoseRuntimeStatus({
+          path: 'main',
+          mode: modeRef.current,
+          startedAt: sessionStartTimeRef.current || Date.now(),
+          detectorWarm,
+        });
         notifyStateChange({ hasPoseDetection: true, isLoading: false });
         emitProgress({
           phase: 'ready',

@@ -59,6 +59,42 @@ describe('shouldUsePoseWorker', () => {
       })
     ).toBe(false);
   });
+
+  it('never routes tasks-vision trackers to the worker', () => {
+    // Module workers don't support importScripts, which the tasks-vision WASM
+    // loader calls — the init hangs silently until the watchdog. The tracker
+    // goes straight to the main thread even on capable production desktops.
+    expect(
+      shouldUsePoseWorker({
+        ...desktopCapable,
+        nodeEnv: 'production',
+        trackerRuntime: 'tasks-vision',
+      })
+    ).toBe(false);
+  });
+
+  it('keeps tasks-vision on main thread even when worker is forced', () => {
+    // forceWorker is a smoke tool for the production path — but a forced
+    // worker still cannot init tasks-vision, so the runtime check wins.
+    expect(
+      shouldUsePoseWorker({
+        ...desktopCapable,
+        nodeEnv: 'development',
+        forceWorker: true,
+        trackerRuntime: 'tasks-vision',
+      })
+    ).toBe(false);
+  });
+
+  it('still routes tfjs trackers to the worker on production desktop', () => {
+    expect(
+      shouldUsePoseWorker({
+        ...desktopCapable,
+        nodeEnv: 'production',
+        trackerRuntime: 'tfjs',
+      })
+    ).toBe(true);
+  });
 });
 
 describe('workerReadyTimeoutMsForTracker', () => {

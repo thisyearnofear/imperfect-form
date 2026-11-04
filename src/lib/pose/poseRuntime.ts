@@ -12,6 +12,8 @@ export type PoseRuntimeStatus = {
   mode: string;
   /** Wall time when this session's pipeline last started */
   startedAt: number;
+  /** True when the session adopted a prewarmed detector instead of building cold. */
+  detectorWarm?: boolean;
 };
 
 /** Window key for e2e / debug inspection (never a product UI dependency). */
@@ -43,11 +45,22 @@ export type ShouldUsePoseWorkerArgs = {
   nodeEnv: string | undefined;
   /** window.__IMF_FORCE_POSE_WORKER__ (e2e / manual) */
   forceWorker?: boolean;
+  /**
+   * Runtime family of the resolved session tracker ('tfjs' | 'tasks-vision').
+   * tasks-vision can never run inside this app's module worker: its WASM
+   * loader calls importScripts, which module workers don't support, and the
+   * failure is a silent hang — the observed cause of the 45s watchdog → cold
+   * main-thread fallback on real devices. Routing it straight to the main
+   * thread skips the impossible init entirely.
+   */
+  trackerRuntime?: 'tfjs' | 'tasks-vision';
 };
 
 /**
  * Decide worker vs main-thread detection for this session start.
  *
+ * - tasks-vision tracker → main thread (always; importScripts is
+ *   unavailable in module workers — see trackerRuntime above)
  * - Mobile / no OffscreenCanvas → main thread (always)
  * - forceWorker → worker (smoke tests against the prod path)
  * - development → main thread (avoids Strict Mode OffscreenCanvas races)
@@ -59,7 +72,9 @@ export function shouldUsePoseWorker({
   canTransferControl,
   nodeEnv,
   forceWorker = false,
+  trackerRuntime,
 }: ShouldUsePoseWorkerArgs): boolean {
+  if (trackerRuntime === 'tasks-vision') return false;
   if (isMobileDevice) return false;
   if (!supportsOffscreenCanvas || !canTransferControl) return false;
   if (forceWorker) return true;

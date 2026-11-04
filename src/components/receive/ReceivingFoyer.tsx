@@ -413,6 +413,27 @@ export function ReceivingFoyer({ mode, onModeChange, onStart, organic }: Receivi
   };
 
   const readingProtocol = joint ? assessmentProtocolFor(mode) : null;
+
+  // A pending protocol reading means the press will build the tasks-vision
+  // landmarker on the main thread (module-worker init is impossible for that
+  // runtime). Warm its WASM + model build on idle — after the envelope lifts
+  // — so the press adopts the in-flight build instead of paying it cold.
+  // Keyed on the resolved config; a non-matching session simply builds fresh.
+  // Lazy import: the warm chain pulls the tracker stack — same boundary
+  // prefetchWebcamChunk guards, so it must not enter the foyer chunk.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (envelope === 'show' || !readingProtocol) return;
+    const warm = () => {
+      void import('@/lib/pose/poseWarmup').then((m) => m.warmReadingPoseDetector()).catch(() => {});
+    };
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(warm, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = setTimeout(warm, 1200);
+    return () => clearTimeout(timer);
+  }, [envelope, readingProtocol]);
   // CTA honesty: promise the exact rep count only when a joint is answered
   // AND this movement has a fixed protocol; everything else is one rep.
   const ctaLabel = readingProtocol

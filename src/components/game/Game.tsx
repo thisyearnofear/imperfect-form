@@ -771,6 +771,17 @@ const Game: React.FC<GameProps> = ({ thirdwebAddress }) => {
       oneRepTrialRef.current = Boolean(options?.oneRepTrial);
       const readingProtocol = options?.reading ? assessmentProtocolFor(mode) : null;
       readingProtocolRef.current = readingProtocol;
+      // A protocol reading boots the tasks-vision landmarker on the main
+      // thread (it can't init inside a module worker). Warm the build
+      // synchronously with the press — if the foyer's idle warm is already
+      // in flight this reuses that promise; either way the session adopts
+      // the in-flight build instead of starting cold. Lazy import: the warm
+      // chain pulls the tracker stack, which must stay out of this chunk.
+      if (readingProtocol) {
+        void import('@/lib/pose/poseWarmup')
+          .then((m) => m.warmReadingPoseDetector(isMobile))
+          .catch(() => {});
+      }
       // Protocol readings get one uncounted warm-up rep before the meter
       // starts counting — see readingRehearsalRef's summary strip below.
       readingRehearsalRef.current = readingProtocol ? READING_REHEARSAL_REPS : 0;
